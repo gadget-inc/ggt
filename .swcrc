@@ -1,0 +1,17 @@
+{
+  "env": {
+    "targets": {
+      "node": 12
+    }
+  },
+  "jsc": {
+    "parser": {
+      "syntax": "typescript"
+    },
+    "target": "es2019"
+  },
+  "module": {
+    "type": "commonjs",
+    "lazy": true
+  }
+}

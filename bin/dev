@@ -1,0 +1,16 @@
+#!/usr/bin/env node
+
+process.env.NODE_ENV = "development";
+process.env.GGT_ENV = "development";
+
+const oclif = require("@oclif/core");
+const path = require("path");
+
+require("ts-node").register({ project: path.join(__dirname, "..", "tsconfig.json"), swc: true });
+
+// show stack traces
+oclif.settings.debug = true;
+
+process.on("unhandledRejection", oclif.Errors.handle);
+
+oclif.run().then(oclif.flush).catch(oclif.Errors.handle);

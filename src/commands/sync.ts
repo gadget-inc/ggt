@@ -6,6 +6,7 @@ import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { prompt } from "inquirer";
 import debounce from "lodash/debounce";
+import normalizePath from "normalize-path";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
@@ -379,14 +380,18 @@ export const machine = createMachine(
               async ([filepath, file]) => {
                 if (file) {
                   try {
-                    changed.push({ path: context.relative(filepath), mode: file.mode, content: await fs.readFile(filepath, "utf-8") });
+                    changed.push({
+                      path: normalizePath(context.relative(filepath)),
+                      mode: file.mode,
+                      content: await fs.readFile(filepath, "utf-8"),
+                    });
                   } catch (error) {
                     // A file could have been changed and then deleted before we process the change event, so the readFile above will raise
                     // an ENOENT. This is normal operation, so just ignore this event.
                     ignoreEnoent(error);
                   }
                 } else {
-                  deleted.push({ path: context.relative(filepath) });
+                  deleted.push({ path: normalizePath(context.relative(filepath)) });
                 }
               },
               { stopOnError: false }

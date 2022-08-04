@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 import type { ExecutionResult, Sink } from "graphql-ws";
+import normalizePath from "normalize-path";
 import path from "path";
 import type { JsonObject } from "type-fest";
 import type { GraphQLClient, Payload, Query } from "../src/lib/client";
@@ -28,7 +29,7 @@ export async function sleepUntil(fn: () => boolean, { interval = 0, timeout = 10
 export async function expectDir(dir: string, expected: Record<string, string>): Promise<void> {
   const actual: Record<string, string> = {};
   for await (const filepath of walkDir(dir)) {
-    actual[path.relative(dir, filepath)] = await fs.readFile(filepath, "utf-8");
+    actual[normalizePath(path.relative(dir, filepath))] = await fs.readFile(filepath, "utf-8");
   }
   expect(actual).toEqual(expected);
 }
@@ -36,7 +37,7 @@ export async function expectDir(dir: string, expected: Record<string, string>): 
 export function expectDirSync(dir: string, expected: Record<string, string>): void {
   const actual: Record<string, string> = {};
   for (const filepath of walkDirSync(dir)) {
-    actual[path.relative(dir, filepath)] = fs.readFileSync(filepath, "utf-8");
+    actual[normalizePath(path.relative(dir, filepath))] = fs.readFileSync(filepath, "utf-8");
   }
   expect(actual).toEqual(expected);
 }

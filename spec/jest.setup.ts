@@ -6,7 +6,7 @@ import path from "path";
 jest.setTimeout(1000);
 
 export function testDirPath(): string {
-  return path.join(__dirname, "../tmp/tests", expect.getState().currentTestName.replace(/[ /]/g, "-"));
+  return path.join(__dirname, "..", "tmp", "tests", expect.getState().currentTestName.replace(/[ /,?=]/g, "-"));
 }
 
 beforeEach(async () => {

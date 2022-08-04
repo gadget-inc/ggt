@@ -42,7 +42,6 @@ export function* walkDirSync(dir: string, options: WalkDirOptions = {}): Generat
   }
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export class WalkedTooManyFilesError extends Error {
   constructor(readonly maxFiles: number) {
     super(`Walked too many files (${maxFiles}).`);

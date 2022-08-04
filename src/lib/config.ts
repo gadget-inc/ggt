@@ -10,6 +10,11 @@ type WrittenConfig = { session?: string };
  */
 export class Config {
   /**
+   * The session token of the user.
+   */
+  static session?: string;
+
+  /**
    * The path to the configuration file.
    */
   static get filepath(): string {
@@ -17,14 +22,9 @@ export class Config {
   }
 
   /**
-   * The session token of the user.
-   */
-  static session?: string;
-
-  /**
    * Saves the configuration to the filesystem.
    */
-  static save(): void {
+  static save(this: void): void {
     const config: WrittenConfig = { session: Config.session };
     fs.outputJsonSync(Config.filepath, config, { spaces: 2, mode: 0o600 });
   }

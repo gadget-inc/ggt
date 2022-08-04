@@ -2,7 +2,6 @@ import { BaseCommand } from "../lib/base-command";
 import { Config } from "../lib/config";
 import { logger } from "../lib/logger";
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export default class Logout extends BaseCommand {
   static override summary = "Log out of your account.";
 

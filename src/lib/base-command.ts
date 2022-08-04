@@ -1,11 +1,10 @@
 import { Command, Flags } from "@oclif/core";
+import type { FlagInput, OptionFlag } from "@oclif/core/lib/interfaces";
 import { prompt } from "inquirer";
 import type { Level } from "pino";
-// eslint-disable-next-line workspaces/require-dependency
 import { Api } from "./api";
-import { configure } from "./logger";
+import { logger } from "./logger";
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export abstract class BaseCommand extends Command {
   static override globalFlags = {
     "log-level": Flags.string({
@@ -24,8 +23,8 @@ export abstract class BaseCommand extends Command {
 
   override async init(): Promise<void> {
     await super.init();
-    const { flags } = await this.parse();
-    configure({ stdout: flags["log-level"] as Level });
+    const { flags } = await this.parse<ParsedFlags<typeof BaseCommand>, any>();
+    logger.configure({ stdout: flags["log-level"] as Level });
 
     if (!this.requireUser) {
       return;
@@ -36,7 +35,7 @@ export abstract class BaseCommand extends Command {
       return;
     }
 
-    const { login } = await prompt({
+    const { login } = await prompt<{ login: string }>({
       type: "confirm",
       name: "login",
       message: "You must be logged in to use this command. Would you like to log in?",
@@ -49,3 +48,25 @@ export abstract class BaseCommand extends Command {
     }
   }
 }
+
+/**
+ * Type helper that turns a command's flags into its parsed representation.
+ *
+ * @example
+ * class MyCommand extends Command {
+ *   static globalFlags = {
+ *     foo: Flags.string({ ... }),
+ *   };
+ *
+ *   static flags = {
+ *     bar: Flags.number({ ... }),
+ *     baz: Flags.boolean({ ... }),
+ *   };
+ * }
+ *
+ * ParsedFlags<typeof MyCommand>
+ * // { foo: string, bar: number, baz: boolean }
+ */
+export type ParsedFlags<TCommand extends Command["ctor"], TFlags extends FlagInput<any> = TCommand["flags"] & TCommand["globalFlags"]> = {
+  [K in keyof TFlags]: TFlags[K] extends OptionFlag<infer FlagType> ? FlagType : never;
+};

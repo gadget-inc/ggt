@@ -34,6 +34,7 @@ beforeEach(async () => {
   jest.spyOn(logger, "warn");
   jest.spyOn(logger, "error");
   jest.spyOn(logger, "fatal");
+  jest.spyOn(logger, "configure").mockImplementation();
 
   // clear all mocks so that we can `expect(someFunction).not.toHaveBeenCalled()` in tests where someFunction was called in another test
   jest.clearAllMocks();

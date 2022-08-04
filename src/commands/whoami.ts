@@ -2,7 +2,6 @@ import { Api } from "../lib/api";
 import { BaseCommand } from "../lib/base-command";
 import { logger } from "../lib/logger";
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export default class Whoami extends BaseCommand {
   static override summary = "Show the name and email address of the currently logged in user.";
 

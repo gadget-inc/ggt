@@ -1,7 +1,6 @@
 import { Api } from "../lib/api";
 import { BaseCommand } from "../lib/base-command";
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export default class Login extends BaseCommand {
   static override summary = "Log in to your account.";
 

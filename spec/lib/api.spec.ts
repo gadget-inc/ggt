@@ -1,6 +1,6 @@
 import getPort from "get-port";
 import http from "http";
-import { noop } from "lodash";
+import noop from "lodash/noop";
 import nock from "nock";
 import open from "open";
 import { Api } from "../../src/lib/api";

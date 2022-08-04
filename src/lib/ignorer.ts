@@ -5,25 +5,24 @@ import path from "path";
 import { ignoreEnoent } from "./enoent";
 import { logger } from "./logger";
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export class Ignorer {
-  readonly filepath = path.join(this.rootDir, ".ignore");
+  readonly filepath = path.join(this._rootDir, ".ignore");
 
   private _ignorer!: Ignore;
 
-  constructor(private readonly rootDir: string, private readonly alwaysIgnore: string[]) {
+  constructor(private readonly _rootDir: string, private readonly _alwaysIgnore: string[]) {
     this.reload();
   }
 
   ignores(filepath: string): boolean {
-    const relative = path.relative(this.rootDir, filepath);
+    const relative = path.relative(this._rootDir, filepath);
     if (relative == "") return false;
     return this._ignorer.ignores(relative);
   }
 
   reload(): void {
     this._ignorer = ignore();
-    this._ignorer.add(this.alwaysIgnore);
+    this._ignorer.add(this._alwaysIgnore);
 
     try {
       this._ignorer.add(fs.readFileSync(this.filepath, "utf-8"));

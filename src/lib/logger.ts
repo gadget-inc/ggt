@@ -5,10 +5,6 @@ import pinoPretty from "pino-pretty";
 import { serializeError } from "serialize-error";
 import { Env } from "./env";
 
-export let logger: Logger;
-
-configure();
-
 export interface LoggerOptions {
   // The minimum level at which logs will be logged.
   level?: Level;
@@ -18,7 +14,11 @@ export interface LoggerOptions {
   file?: Level;
 }
 
-export function configure(options?: LoggerOptions): void {
+export let logger: Logger & { configure: (options: LoggerOptions) => void } = {} as any;
+
+configure();
+
+function configure(options?: LoggerOptions): void {
   options = {
     level: (process.env["GGT_LOG_LEVEL"] as Level) || "trace",
     stdout: Env.testLike ? "fatal" : "info",
@@ -26,10 +26,11 @@ export function configure(options?: LoggerOptions): void {
     ...options,
   };
 
-  const filename = new Date().toISOString().split("T")[0] + ".log";
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const filename = `${new Date().toISOString().split("T")[0]!}.log`;
 
   const customPrettifiers = {
-    files: (files: any) => `\n  - ${files.join("\n  - ")}`,
+    files: (files: any) => `\n  - ${files.join("\n  - ") as string}`,
     query: (query: any) => `\`${query}\``,
   };
 
@@ -76,7 +77,9 @@ export function configure(options?: LoggerOptions): void {
             }),
       },
     ])
-  );
+  ) as any;
+
+  logger.configure = configure;
 }
 
 export function slice<T>(items: Iterable<T>, mapper: (item: T) => string = String, keep = 10): string[] {

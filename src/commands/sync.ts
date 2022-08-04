@@ -1,17 +1,17 @@
 import { Flags } from "@oclif/core";
-import type { OutputFlags } from "@oclif/core/lib/interfaces";
 import { CLIError } from "@oclif/errors";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { prompt } from "inquirer";
-import { debounce } from "lodash";
+import debounce from "lodash/debounce";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
 import type { InterpreterFrom } from "xstate";
 import { createMachine, interpret } from "xstate";
+import type { ParsedFlags } from "../lib/base-command";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
 import { GraphQLClient } from "../lib/client";
@@ -32,7 +32,6 @@ import type {
 } from "../__generated__/graphql";
 import type { Typegen0 as SyncMachine } from "../__generated__/sync.typegen";
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export default class Sync extends BaseCommand {
   static override summary = "Sync your Gadget app's source files to your local file system.";
 
@@ -55,7 +54,7 @@ export default class Sync extends BaseCommand {
       parse: (value) => {
         const app = /^(https:\/\/)?(?<app>[\w-]+)(\..*)?/.exec(value)?.groups?.["app"];
         if (!app) throw new CLIError("Flag '-a, --app=<name>' is invalid");
-        return app as any;
+        return Promise.resolve(app);
       },
     }),
     "file-push-delay": Flags.integer({
@@ -105,8 +104,7 @@ $ ggt sync --app https://my-app.gadget.app `,
   service!: InterpreterFrom<typeof machine>;
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(Sync);
-
+    const { args, flags } = await this.parse<ParsedFlags<typeof Sync>, { directory: string }>();
     this.service ??= createService(args["directory"], flags);
 
     let stopping = false;
@@ -209,7 +207,7 @@ export const machine = createMachine(
         await fs.ensureDir(context.dir);
 
         try {
-          context.metadata = await fs.readJson(context.absolute(".ggt", "sync.json"));
+          context.metadata = (await fs.readJson(context.absolute(".ggt", "sync.json"))) as typeof context.metadata;
         } catch (error) {
           // use defaults if the metadata file doesn't exist
           ignoreEnoent(error);
@@ -510,7 +508,7 @@ export const machine = createMachine(
   }
 );
 
-export function createService(dir: string, options: OutputFlags<typeof Sync["flags"]>): InterpreterFrom<typeof machine> {
+export function createService(dir: string, flags: Omit<ParsedFlags<typeof Sync>, "log-level">): InterpreterFrom<typeof machine> {
   dir = path.resolve(dir);
 
   // local files that should never be published
@@ -522,9 +520,9 @@ export function createService(dir: string, options: OutputFlags<typeof Sync["fla
       relative: (to: string) => path.relative(dir, to),
       absolute: (...pathSegments: string[]) => path.resolve(dir, ...pathSegments),
       recentWrites: new Set(),
-      filePushDelay: options["file-push-delay"],
+      filePushDelay: flags["file-push-delay"],
       queue: new PQueue({ concurrency: 1 }),
-      client: new GraphQLClient(options.app),
+      client: new GraphQLClient(flags.app),
       ignorer: new Ignorer(dir, ignored),
       watcher: new FSWatcher({
         ignored,
@@ -533,7 +531,7 @@ export function createService(dir: string, options: OutputFlags<typeof Sync["fla
         // make sure stats are always present on add/change events
         alwaysStat: true,
         // wait for the entire file to be written before emitting add/change events
-        awaitWriteFinish: { pollInterval: options["file-poll-interval"], stabilityThreshold: options["file-stability-threshold"] },
+        awaitWriteFinish: { pollInterval: flags["file-poll-interval"], stabilityThreshold: flags["file-stability-threshold"] },
       }),
       metadata: {
         lastWritten: {

@@ -5,7 +5,7 @@ import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import { prompt } from "inquirer";
 import path from "path";
-import type { MarkRequired } from "ts-essentials";
+import type { SetRequired } from "type-fest";
 import type { InterpreterFrom } from "xstate";
 import { InterpreterStatus } from "xstate";
 import type { machine } from "../../src/commands/sync";
@@ -52,11 +52,15 @@ describe("sync", () => {
     jest.spyOn(context.watcher, "add").mockReturnThis();
     jest.spyOn(context.watcher, "close").mockImplementation();
     jest.spyOn(context.watcher, "on").mockImplementation((eventName, handler) => {
-      expect(["error", "all"]).toContain(eventName);
-      if (eventName === "error") {
-        context.watcher._emit.error = handler;
-      } else {
-        context.watcher._emit.all = handler;
+      switch (eventName) {
+        case "all":
+          context.watcher._emit.all = handler;
+          break;
+        case "error":
+          context.watcher._emit.error = handler;
+          break;
+        default:
+          throw new Error(`Unhandled eventName: ${eventName}`);
       }
       return context.watcher;
     });
@@ -1056,7 +1060,7 @@ interface MockContext extends Context {
       all: (
         eventName: "add" | "addDir" | "change" | "unlink" | "unlinkDir",
         path: string,
-        stats?: MarkRequired<Partial<Stats>, "mode" | "mtime">
+        stats?: SetRequired<Partial<Stats>, "mode" | "mtime">
       ) => void;
       error: (error: unknown) => void;
     };

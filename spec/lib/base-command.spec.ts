@@ -2,13 +2,12 @@ import { Config as OclifConfig } from "@oclif/core";
 import { prompt } from "inquirer";
 import { Api } from "../../src/lib/api";
 import { BaseCommand } from "../../src/lib/base-command";
-import * as log from "../../src/lib/logger";
+import { logger } from "../../src/lib/logger";
 
 describe("BaseCommand", () => {
   let oclifConfig: OclifConfig;
 
   beforeEach(async () => {
-    jest.spyOn(log, "configure").mockImplementation();
     oclifConfig = (await OclifConfig.load()) as OclifConfig;
   });
 
@@ -22,7 +21,7 @@ describe("BaseCommand", () => {
 
       await new Command(["--log-level", "error"], oclifConfig).init();
 
-      expect(log.configure).toHaveBeenCalledWith({ stdout: "error" });
+      expect(logger.configure).toHaveBeenCalledWith({ stdout: "error" });
     });
 
     it("prompts the user to log in if the command requires a user", async () => {

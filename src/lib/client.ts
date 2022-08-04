@@ -1,12 +1,11 @@
 import type { Client, ClientOptions, ExecutionResult, Sink, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
-import { isFunction, noop } from "lodash";
+import isFunction from "lodash/isFunction";
+import noop from "lodash/noop";
 import type { JsonObject } from "type-fest";
 import type { CloseEvent } from "ws";
 import WebSocket from "ws";
-// TODO: remove this once we move to separate repo
-// eslint-disable-next-line workspaces/require-dependency
 import { Api } from "./api";
 import { Env } from "./env";
 import { logger } from "./logger";
@@ -17,7 +16,6 @@ enum ConnectionStatus {
   RECONNECTING,
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export class GraphQLClient {
   // assume the client is going to connect
   status = ConnectionStatus.CONNECTED;
@@ -58,8 +56,11 @@ export class GraphQLClient {
           // let the other on connected listeners see what status we're in
           setImmediate(() => (this.status = ConnectionStatus.CONNECTED));
         },
-        closed: (e: any) => {
-          const event = { type: e.type, code: e.code, reason: e.reason, wasClean: e.wasClean } as CloseEvent;
+        closed: (ev) => {
+          const e = ev as CloseEvent;
+
+          // CloseEvent's get logged as `{}`, so we reconstruct it into an object here
+          const event = { type: e.type, code: e.code, reason: e.reason, wasClean: e.wasClean };
           if (event.wasClean) {
             logger.trace({ event }, "🛰  connection closed");
             return;
@@ -137,7 +138,6 @@ export class GraphQLClient {
   }
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export class GraphQLClientError extends Error {
   constructor(readonly payload: Payload<any, any>, override readonly cause: any) {
     super(cause.wasClean ? `Unexpected close event: ${cause.code} ${cause.reason}` : "Unexpected GraphQL error");

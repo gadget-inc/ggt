@@ -6,11 +6,12 @@
 # Commands
 
   <!-- commands -->
-* [`ggt help [COMMAND]`](#ggt-help-command)
-* [`ggt login`](#ggt-login)
-* [`ggt logout`](#ggt-logout)
-* [`ggt sync --app <name> [DIRECTORY]`](#ggt-sync---app-name-directory)
-* [`ggt whoami`](#ggt-whoami)
+
+- [`ggt help [COMMAND]`](#ggt-help-command)
+- [`ggt login`](#ggt-login)
+- [`ggt logout`](#ggt-logout)
+- [`ggt sync --app <name> [DIRECTORY]`](#ggt-sync---app-name-directory)
+- [`ggt whoami`](#ggt-whoami)
 
 ## `ggt help [COMMAND]`
 
@@ -94,7 +95,7 @@ EXAMPLES
       total: 1
       files:
         - routes/GET-ping.ts
-  
+
 
   # These are equivalent
 
@@ -119,4 +120,5 @@ EXAMPLES
 ```
 
 _See code: [dist/commands/whoami.ts](gadget-inc/ggt)_
+
 <!-- commandsstop -->

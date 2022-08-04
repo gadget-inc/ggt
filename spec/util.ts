@@ -10,7 +10,7 @@ export function sleep(ms = 0): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function sleepUntil(fn: () => boolean, { interval = 0, timeout = 100 } = {}): Promise<void> {
+export async function sleepUntil(fn: () => boolean, { interval = 0, timeout = 500 } = {}): Promise<void> {
   const start = Date.now();
 
   // eslint-disable-next-line no-constant-condition

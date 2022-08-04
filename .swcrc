@@ -1,14 +1,14 @@
 {
   "env": {
     "targets": {
-      "node": 12
+      "node": 16
     }
   },
   "jsc": {
     "parser": {
       "syntax": "typescript"
     },
-    "target": "es2019"
+    "target": "es2021"
   },
   "module": {
     "type": "commonjs",

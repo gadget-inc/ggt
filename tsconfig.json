@@ -37,8 +37,8 @@
     "isolatedModules": true,
 
     /* Language and Environment */
-    "lib": ["es2019"],
-    "target": "es2019",
+    "lib": ["es2021"],
+    "target": "es2021",
     "useDefineForClassFields": true,
 
     /* Completeness */

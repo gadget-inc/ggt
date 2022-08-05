@@ -6,7 +6,7 @@ import open from "open";
 import { Api } from "../../src/lib/api";
 import { Config } from "../../src/lib/config";
 import { logger } from "../../src/lib/logger";
-import { sleepUntil } from "../util";
+import { sleepUntil } from "../../src/lib/sleep";
 
 describe("Api", () => {
   it("sets the cookie header if the Config's session is set", () => {

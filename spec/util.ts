@@ -3,28 +3,9 @@ import type { ExecutionResult, Sink } from "graphql-ws";
 import normalizePath from "normalize-path";
 import path from "path";
 import type { JsonObject } from "type-fest";
-import type { GraphQLClient, Payload, Query } from "../src/lib/client";
+import type { Payload, Query } from "../src/lib/client";
+import { GraphQLClient } from "../src/lib/client";
 import { walkDir, walkDirSync } from "../src/lib/walk-dir";
-
-export function sleep(ms = 0): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export async function sleepUntil(fn: () => boolean, { interval = 0, timeout = 500 } = {}): Promise<void> {
-  const start = Date.now();
-
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    if (fn()) return;
-    await sleep(interval);
-
-    if (Date.now() - start > timeout) {
-      const error = new Error(`Timed out after ${timeout} milliseconds`);
-      Error.captureStackTrace(error, sleepUntil);
-      throw error;
-    }
-  }
-}
 
 export async function expectDir(dir: string, expected: Record<string, string>): Promise<void> {
   const actual: Record<string, string> = {};
@@ -60,21 +41,27 @@ export interface MockGraphQLClient extends GraphQLClient {
   _subscription<Data extends JsonObject, Variables extends JsonObject>(query: Query<Data, Variables>): MockSubscription<Data, Variables>;
 }
 
-export function mockClient(client: GraphQLClient): asserts client is MockGraphQLClient {
-  const mock = client as MockGraphQLClient;
+export function mockClient(): MockGraphQLClient {
+  const mock = {
+    ...GraphQLClient.prototype,
+    _subscriptions: new Map(),
+    _subscription: <Data, Variables extends JsonObject>(query: Query<Data, Variables>) => {
+      expect(mock._subscriptions.keys()).toContain(query);
+      const sub = mock._subscriptions.get(query);
+      expect(sub).toBeTruthy();
+      return sub as MockSubscription<Data, Variables>;
+    },
+  };
 
-  jest.spyOn(mock, "dispose");
-  jest.spyOn(mock, "subscribe").mockImplementation((payload, sink) => {
+  jest.spyOn(GraphQLClient.prototype, "dispose");
+  jest.spyOn(GraphQLClient.prototype, "subscribe").mockImplementation((payload, sink) => {
     const unsubscribe = jest.fn();
-    mock._subscriptions.set(payload.query, { sink, payload, unsubscribe });
+    jest.spyOn(sink, "next");
+    jest.spyOn(sink, "error");
+    jest.spyOn(sink, "complete");
+    mock._subscriptions.set(payload.query, { payload, sink, unsubscribe });
     return unsubscribe;
   });
 
-  mock._subscriptions = new Map();
-  mock._subscription = <Data, Variables extends JsonObject>(query: Query<Data, Variables>) => {
-    expect(mock._subscriptions.keys()).toContain(query);
-    const sub = mock._subscriptions.get(query);
-    expect(sub).toBeTruthy();
-    return sub as MockSubscription<Data, Variables>;
-  };
+  return mock as MockGraphQLClient;
 }

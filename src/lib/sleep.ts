@@ -3,14 +3,14 @@ export function sleep(ms = 0): Promise<void> {
 }
 
 export async function sleepUntil(fn: () => boolean, { interval = 0, timeout = 500 } = {}): Promise<void> {
-  const start = Date.now();
+  const start = isFinite(timeout) && Date.now();
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
     if (fn()) return;
     await sleep(interval);
 
-    if (Date.now() - start > timeout) {
+    if (start && Date.now() - start > timeout) {
       const error = new Error(`Timed out after ${timeout} milliseconds`);
       Error.captureStackTrace(error, sleepUntil);
       throw error;

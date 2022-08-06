@@ -1,5 +1,5 @@
 import assert from "assert";
-import type { Client, ClientOptions, ExecutionResult, Sink, SubscribePayload } from "graphql-ws";
+import type { ClientOptions, ExecutionResult, Sink, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
 import isFunction from "lodash/isFunction";
@@ -17,11 +17,11 @@ enum ConnectionStatus {
   RECONNECTING,
 }
 
-export class GraphQLClient {
+export class Client {
   // assume the client is going to connect
   status = ConnectionStatus.CONNECTED;
 
-  private _client: Client;
+  private _client: ReturnType<typeof createClient>;
 
   constructor(app: string, options?: ClientOptions) {
     this._client = createClient({
@@ -128,7 +128,7 @@ export class GraphQLClient {
     return new Promise((resolve, reject) => {
       this.subscribe<Data, Variables, Extensions>(payload, {
         next: resolve,
-        error: (error) => reject(new GraphQLClientError(payload, error)),
+        error: (error) => reject(new ClientError(payload, error)),
         complete: noop,
       });
     });
@@ -136,8 +136,8 @@ export class GraphQLClient {
 
   async unwrapQuery<Data extends JsonObject, Variables extends JsonObject>(payload: Payload<Data, Variables>): Promise<Data> {
     const result = await this.query(payload);
-    if (result.errors) throw new GraphQLClientError(payload, result.errors);
-    if (!result.data) throw new GraphQLClientError(payload, new Error("No data"));
+    if (result.errors) throw new ClientError(payload, result.errors);
+    if (!result.data) throw new ClientError(payload, new Error("No data"));
     return result.data;
   }
 
@@ -146,7 +146,7 @@ export class GraphQLClient {
   }
 }
 
-export class GraphQLClientError extends Error {
+export class ClientError extends Error {
   constructor(readonly payload: Payload<any, any>, override readonly cause: any) {
     super(cause.wasClean ? `Unexpected close event: ${cause.code} ${cause.reason}` : "Unexpected GraphQL error");
     this.name = "GraphQLClientError";

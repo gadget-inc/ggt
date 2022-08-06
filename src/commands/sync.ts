@@ -15,7 +15,7 @@ import PQueue from "p-queue";
 import path from "path";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
-import { GraphQLClient } from "../lib/client";
+import { Client } from "../lib/client";
 import { Config } from "../lib/config";
 import { ignoreEnoent } from "../lib/enoent";
 import { Ignorer } from "../lib/ignorer";
@@ -110,7 +110,7 @@ $ ggt sync --app https://my-app.gadget.app `,
 
   queue = new PQueue({ concurrency: 1 });
 
-  client!: GraphQLClient;
+  client!: Client;
 
   ignorer!: Ignorer;
 
@@ -145,7 +145,7 @@ $ ggt sync --app https://my-app.gadget.app `,
 
     this.filePushDelay = flags["file-push-delay"];
 
-    this.client = new GraphQLClient(flags["app"]);
+    this.client = new Client(flags["app"]);
 
     // local files that should never be published
     const ignored = ["node_modules/", ".gadget/", ".ggt/", ".git/"];

@@ -4,7 +4,7 @@ import normalizePath from "normalize-path";
 import path from "path";
 import type { JsonObject } from "type-fest";
 import type { Payload, Query } from "../src/lib/client";
-import { GraphQLClient } from "../src/lib/client";
+import { Client } from "../src/lib/client";
 import { walkDir, walkDirSync } from "../src/lib/walk-dir";
 
 export async function expectDir(dir: string, expected: Record<string, string>): Promise<void> {
@@ -36,14 +36,14 @@ export interface MockSubscription<Data, Variables extends JsonObject> {
   unsubscribe: () => void;
 }
 
-export interface MockGraphQLClient extends GraphQLClient {
+export interface MockClient extends Client {
   _subscriptions: Map<string, MockSubscription<JsonObject, JsonObject>>;
   _subscription<Data extends JsonObject, Variables extends JsonObject>(query: Query<Data, Variables>): MockSubscription<Data, Variables>;
 }
 
-export function mockClient(): MockGraphQLClient {
+export function mockClient(): MockClient {
   const mock = {
-    ...GraphQLClient.prototype,
+    ...Client.prototype,
     _subscriptions: new Map(),
     _subscription: <Data, Variables extends JsonObject>(query: Query<Data, Variables>) => {
       expect(mock._subscriptions.keys()).toContain(query);
@@ -53,8 +53,8 @@ export function mockClient(): MockGraphQLClient {
     },
   };
 
-  jest.spyOn(GraphQLClient.prototype, "dispose");
-  jest.spyOn(GraphQLClient.prototype, "subscribe").mockImplementation((payload, sink) => {
+  jest.spyOn(Client.prototype, "dispose");
+  jest.spyOn(Client.prototype, "subscribe").mockImplementation((payload, sink) => {
     const unsubscribe = jest.fn();
     jest.spyOn(sink, "next");
     jest.spyOn(sink, "error");
@@ -63,5 +63,5 @@ export function mockClient(): MockGraphQLClient {
     return unsubscribe;
   });
 
-  return mock as MockGraphQLClient;
+  return mock as MockClient;
 }

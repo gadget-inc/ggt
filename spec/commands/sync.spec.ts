@@ -16,7 +16,7 @@ import { logger } from "../../src/lib/logger";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
 import type { PublishFileSyncEventsMutationVariables } from "../../src/__generated__/graphql";
 import { testDirPath } from "../jest.setup";
-import type { MockGraphQLClient } from "../util";
+import type { MockClient } from "../util";
 import { expectDir, expectDirSync, mockClient, setupDir } from "../util";
 
 const stats = { mode: 420, mtime: new Date("2000-01-01T01:00:00Z") };
@@ -25,7 +25,7 @@ test.todo("publishing does not send file changes if you delete more than N files
 
 describe("Sync", () => {
   let dir: string;
-  let client: MockGraphQLClient;
+  let client: MockClient;
   let sync: Sync;
   const emit: {
     all: (

@@ -1,5 +1,6 @@
 import type { Config as OclifConfig } from "@oclif/core";
 import { Command, Flags } from "@oclif/core";
+import { CLIError } from "@oclif/errors";
 import getPort from "get-port";
 import type { Got } from "got";
 import got, { HTTPError } from "got";
@@ -8,15 +9,27 @@ import { createServer } from "http";
 import { prompt } from "inquirer";
 import open from "open";
 import type { Level } from "pino";
+import { Client } from "./client";
 import { Config } from "./config";
 import { Env } from "./env";
 import { logger } from "./logger";
-import type { User } from "./types";
+import type { App, User } from "./types";
 
 export const ENDPOINT = Env.productionLike ? "https://app.gadget.dev" : "https://app.ggt.dev:3000";
 
 export abstract class BaseCommand extends Command {
   static override globalFlags = {
+    app: Flags.string({
+      char: "A",
+      summary: "The Gadget app this command applies to.",
+      helpGroup: "global",
+      helpValue: "name",
+      parse: (value) => {
+        const app = /^(https:\/\/)?(?<app>[\w-]+)(\..*)?/.exec(value)?.groups?.["app"];
+        if (!app) throw new CLIError("Flag '-A, --app=<name>' is invalid");
+        return Promise.resolve(app);
+      },
+    }),
     "log-level": Flags.string({
       summary: "The log level.",
       helpGroup: "global",
@@ -28,12 +41,22 @@ export abstract class BaseCommand extends Command {
   };
 
   /**
-   * Indicates the command requires the user to be logged in or not.
+   * Determines whether the command requires the user to be logged in or not.
    * If true and the user is not logged in, the user will be prompted to login before the command is run.
    */
   readonly requireUser: boolean = false;
 
+  /**
+   * Determines whether the command requires a Gadget app to be selected or not.
+   * If true and an app hasn't been selected, the user will be prompted to select an app before the command is run.
+   *
+   * Implies {@linkcode requireUser requireUser = true}.
+   */
+  readonly requireApp: boolean = false;
+
   readonly http: Got;
+
+  client!: Client;
 
   constructor(argv: string[], config: OclifConfig) {
     super(argv, config);
@@ -42,6 +65,7 @@ export abstract class BaseCommand extends Command {
       hooks: {
         beforeRequest: [
           (options) => {
+            options.headers["user-agent"] = this.config.userAgent;
             if (options.url.origin === ENDPOINT && Config.session) {
               options.headers = { ...options.headers, cookie: `session=${encodeURIComponent(Config.session)};` };
             }
@@ -53,29 +77,53 @@ export abstract class BaseCommand extends Command {
 
   override async init(): Promise<void> {
     await super.init();
-    const { flags } = await this.parse({ flags: BaseCommand.globalFlags, strict: false });
+    const { flags, argv } = await this.parse({ flags: BaseCommand.globalFlags, strict: false });
     logger.configure({ stdout: flags["log-level"] as Level });
 
-    if (!this.requireUser) {
+    // remove global flags from argv
+    this.argv = argv;
+
+    if (!this.requireUser && !this.requireApp) {
       return;
     }
 
-    const user = await this.getCurrentUser();
-    if (user) {
-      return;
-    }
+    if (!(await this.getCurrentUser())) {
+      const { login } = await prompt<{ login: boolean }>({
+        type: "confirm",
+        name: "login",
+        message: "You must be logged in to use this command. Would you like to log in?",
+      });
 
-    const { login } = await prompt<{ login: string }>({
-      type: "confirm",
-      name: "login",
-      message: "You must be logged in to use this command. Would you like to log in?",
-    });
+      if (!login) {
+        return this.exit(0);
+      }
 
-    if (login) {
       await this.login();
-    } else {
-      this.exit(0);
     }
+
+    if (!this.requireApp) {
+      return;
+    }
+
+    let app = flags.app;
+    if (!app) {
+      ({ app } = await prompt<{ app: string }>({
+        type: "list",
+        name: "app",
+        message: "Please select the app to use with this command.",
+        choices: await this.getApps().then((apps) => apps.map((app) => app.slug)),
+      }));
+    }
+
+    this.client = new Client(app, {
+      ws: {
+        headers: {
+          "user-agent": this.config.userAgent,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          cookie: `session=${encodeURIComponent(Config.session!)};`,
+        },
+      },
+    });
   }
 
   async login(): Promise<void> {
@@ -150,5 +198,14 @@ export abstract class BaseCommand extends Command {
       }
       throw error;
     }
+  }
+
+  /**
+   * @returns A list of Gadget apps that the user has access to.
+   */
+  async getApps(): Promise<App[]> {
+    if (!Config.session) return [];
+
+    return await this.http(`${ENDPOINT}/auth/api/apps`).json<App[]>();
   }
 }

@@ -6,16 +6,14 @@ import { FSWatcher } from "chokidar";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { prompt } from "inquirer";
-// eslint-disable-next-line lodash/import-scope
 import type { DebouncedFunc } from "lodash";
-import debounce from "lodash/debounce";
+import { debounce } from "lodash";
 import normalizePath from "normalize-path";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
-import { Client } from "../lib/client";
 import { Config } from "../lib/config";
 import { ignoreEnoent } from "../lib/enoent";
 import { Ignorer } from "../lib/ignorer";
@@ -47,17 +45,6 @@ export default class Sync extends BaseCommand {
   ];
 
   static override flags = {
-    app: Flags.string({
-      char: "a",
-      summary: "Name of the app to sync to files to.",
-      helpValue: "name",
-      required: true,
-      parse: (value) => {
-        const app = /^(https:\/\/)?(?<app>[\w-]+)(\..*)?/.exec(value)?.groups?.["app"];
-        if (!app) throw new CLIError("Flag '-a, --app=<name>' is invalid");
-        return Promise.resolve(app);
-      },
-    }),
     "file-push-delay": Flags.integer({
       summary: "Delay in milliseconds before pushing files to your app.",
       helpGroup: "file",
@@ -100,7 +87,7 @@ $ ggt sync --app my-app.gadget.app
 $ ggt sync --app https://my-app.gadget.app `,
   ];
 
-  override readonly requireUser = true;
+  override readonly requireApp = true;
 
   dir!: string;
 
@@ -109,8 +96,6 @@ $ ggt sync --app https://my-app.gadget.app `,
   filePushDelay!: number;
 
   queue = new PQueue({ concurrency: 1 });
-
-  client!: Client;
 
   ignorer!: Ignorer;
 
@@ -144,8 +129,6 @@ $ ggt sync --app https://my-app.gadget.app `,
     this.dir = path.resolve(args["directory"] as string);
 
     this.filePushDelay = flags["file-push-delay"];
-
-    this.client = new Client(flags["app"]);
 
     // local files that should never be published
     const ignored = ["node_modules/", ".gadget/", ".ggt/", ".git/"];

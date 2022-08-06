@@ -75,9 +75,6 @@ USAGE
 ARGUMENTS
   DIRECTORY  [default: .] The directory to sync files to. If the directory doesn't exist, it will be created.
 
-FLAGS
-  -a, --app=name  (required) Name of the app to sync to files to.
-
 FILE FLAGS
   --file-poll-interval=ms        [default: 100] Interval in milliseconds between polling a file's size.
   --file-push-delay=ms           [default: 100] Delay in milliseconds before pushing files to your app.

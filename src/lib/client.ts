@@ -1,13 +1,10 @@
-import assert from "assert";
 import type { ClientOptions, ExecutionResult, Sink, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
-import isFunction from "lodash/isFunction";
-import noop from "lodash/noop";
+import { has, isFunction, noop } from "lodash";
 import type { JsonObject } from "type-fest";
 import type { CloseEvent } from "ws";
 import WebSocket from "ws";
-import { Config } from "./config";
 import { Env } from "./env";
 import { logger } from "./logger";
 
@@ -23,20 +20,13 @@ export class Client {
 
   private _client: ReturnType<typeof createClient>;
 
-  constructor(app: string, options?: ClientOptions) {
+  constructor(app: string, options?: Partial<ClientOptions> & { ws?: Partial<WebSocket.ClientOptions> }) {
     this._client = createClient({
       url: `wss://${app}.${Env.productionLike ? "gadget.app" : "ggt.pub:3000"}/edit/api/graphql-ws`,
       shouldRetry: () => true,
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
-          assert(Config.session, "Session is required to use the GraphQLClient");
-          super(address, protocols, {
-            ...wsOptions,
-            headers: {
-              ...wsOptions?.headers,
-              cookie: `session=${encodeURIComponent(Config.session)};`,
-            },
-          });
+          super(address, protocols, { ...wsOptions, ...options?.ws });
         }
       },
       on: {
@@ -148,8 +138,12 @@ export class Client {
 
 export class ClientError extends Error {
   constructor(readonly payload: Payload<any, any>, override readonly cause: any) {
-    super(cause.wasClean ? `Unexpected close event: ${cause.code} ${cause.reason}` : "Unexpected GraphQL error");
-    this.name = "GraphQLClientError";
+    function isCloseEvent(e: unknown): e is CloseEvent {
+      return has(e, "wasClean");
+    }
+
+    super(isCloseEvent(cause) ? `Unexpected close event: ${cause.code} ${cause.reason}` : "Unexpected GraphQL error");
+    this.name = "ClientError";
   }
 }
 

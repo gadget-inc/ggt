@@ -1,4 +1,3 @@
-import { Api } from "../lib/api";
 import { BaseCommand } from "../lib/base-command";
 import { logger } from "../lib/logger";
 
@@ -14,7 +13,7 @@ You are logged in as Jane Doe (jane@example.com)
   ];
 
   async run(): Promise<void> {
-    const user = await Api.getCurrentUser();
+    const user = await this.getCurrentUser();
     if (!user) {
       logger.info("You are not logged in");
       return;

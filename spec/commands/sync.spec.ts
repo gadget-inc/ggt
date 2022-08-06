@@ -12,7 +12,6 @@ import Sync, {
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/commands/sync";
-import { Api } from "../../src/lib/api";
 import { logger } from "../../src/lib/logger";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
 import type { PublishFileSyncEventsMutationVariables } from "../../src/__generated__/graphql";
@@ -24,7 +23,7 @@ const stats = { mode: 420, mtime: new Date("2000-01-01T01:00:00Z") };
 
 test.todo("publishing does not send file changes if you delete more than N files at once");
 
-describe("sync", () => {
+describe("Sync", () => {
   let dir: string;
   let client: MockGraphQLClient;
   let sync: Sync;
@@ -45,7 +44,7 @@ describe("sync", () => {
     client = mockClient();
     sync = new Sync(["--app", "test", "--file-push-delay", "10", dir], (await OclifConfig.load()) as OclifConfig);
 
-    jest.spyOn(Api, "getCurrentUser").mockResolvedValue({ name: "Jane Doe", email: "jane@example.come" });
+    jest.spyOn(sync, "getCurrentUser").mockResolvedValue({ name: "Jane Doe", email: "jane@example.come" });
 
     // TODO: we don't need to mock the watcher anymore since we're using the real filesystem
     jest.spyOn(FSWatcher.prototype, "add").mockReturnThis();

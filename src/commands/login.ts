@@ -1,4 +1,3 @@
-import { Api } from "../lib/api";
 import { BaseCommand } from "../lib/base-command";
 
 export default class Login extends BaseCommand {
@@ -14,6 +13,6 @@ Your browser has been opened. Please log in to your account.
   ];
 
   async run(): Promise<void> {
-    await Api.login();
+    await this.login();
   }
 }

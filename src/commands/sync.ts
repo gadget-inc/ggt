@@ -1,4 +1,5 @@
 import { Flags } from "@oclif/core";
+import type { OptionFlag } from "@oclif/core/lib/interfaces";
 import { CLIError } from "@oclif/errors";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
@@ -12,7 +13,6 @@ import normalizePath from "normalize-path";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
-import type { ParsedFlags } from "../lib/base-command";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
 import { GraphQLClient } from "../lib/client";
@@ -63,21 +63,21 @@ export default class Sync extends BaseCommand {
       helpGroup: "file",
       helpValue: "ms",
       default: 100,
-    }),
+    }) as OptionFlag<number>,
     "file-stability-threshold": Flags.integer({
       name: "file-stability-threshold",
       summary: "Time in milliseconds a file's size must remain the same.",
       helpGroup: "file",
       helpValue: "ms",
       default: 500,
-    }),
+    }) as OptionFlag<number>,
     "file-poll-interval": Flags.integer({
       name: "file-poll-interval",
       description: "Interval in milliseconds between polling a file's size.",
       helpGroup: "file",
       helpValue: "ms",
       default: 100,
-    }),
+    }) as OptionFlag<number>,
   };
 
   static override examples = [
@@ -139,9 +139,9 @@ $ ggt sync --app https://my-app.gadget.app `,
 
   override async init(): Promise<void> {
     await super.init();
-    const { args, flags } = await this.parse<ParsedFlags<typeof Sync>, { directory: string }>();
+    const { args, flags } = await this.parse(Sync);
 
-    this.dir = path.resolve(args["directory"]);
+    this.dir = path.resolve(args["directory"] as string);
 
     this.filePushDelay = flags["file-push-delay"];
 

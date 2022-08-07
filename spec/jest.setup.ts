@@ -3,7 +3,8 @@ process.env["GGT_ENV"] = "test";
 import fs from "fs-extra";
 import path from "path";
 
-jest.setTimeout(1000);
+// tests in CI take longer to run than in local development
+jest.setTimeout(process.env["CI"] ? 5000 : 1000);
 
 export function testDirPath(): string {
   return path.join(__dirname, "..", "tmp", "tests", expect.getState().currentTestName.replace(/[ /,?=]/g, "-"));

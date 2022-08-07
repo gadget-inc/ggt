@@ -1,3 +1,4 @@
+import debug from "debug";
 import fs from "fs-extra";
 import getPort from "get-port";
 import http from "http";
@@ -7,7 +8,6 @@ import nock from "nock";
 import open from "open";
 import path from "path";
 import { BaseCommand, ENDPOINT } from "../../src/lib/base-command";
-import { logger } from "../../src/lib/logger";
 import { sleepUntil } from "../../src/lib/sleep";
 import { config } from "../jest.setup";
 
@@ -47,12 +47,14 @@ describe("BaseCommand", () => {
   });
 
   describe("init", () => {
-    it("configures the logger's stdout log level", async () => {
-      base.argv = ["--log-level", "error"];
+    it.each(["--debug", "-D"])("enables debug when passed %s", async (flag) => {
+      jest.spyOn(debug, "enable").mockImplementation();
 
+      base.argv = [flag];
       await base.init();
 
-      expect(logger.configure).toHaveBeenCalledWith({ stdout: "error" });
+      expect(debug.enable).toHaveBeenCalledWith(`ggt:*`);
+      expect(base.debugEnabled).toBeTrue();
     });
 
     describe("with requireUser = true", () => {
@@ -131,7 +133,7 @@ describe("BaseCommand", () => {
       expect(open).toHaveBeenCalledWith(
         `${ENDPOINT}/auth/login?returnTo=${encodeURIComponent(`${ENDPOINT}/auth/cli/callback?port=${port}`)}`
       );
-      expect(logger.info).toHaveBeenCalledWith("Your browser has been opened. Please log in to your account.");
+      expect(base.log).toHaveBeenCalledWith("Your browser has been opened. Please log in to your account.");
 
       // we should be at `await receiveSession`
       expect(base.session).toBeUndefined();
@@ -149,7 +151,7 @@ describe("BaseCommand", () => {
       await sleepUntil(() => server.close.mock.calls.length > 0);
       expect(base.session).toBe("test");
       expect(base.getCurrentUser).toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith("👋 Hello, Jane Doe (test@example.com)");
+      expect(base.log.mock.lastCall[0]).toMatchInlineSnapshot(`"Hello, Jane Doe (test@example.com)"`);
       expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `${ENDPOINT}/auth/cli?success=true` });
       expect(res.end).toHaveBeenCalled();
       expect(server.close).toHaveBeenCalled();
@@ -168,7 +170,7 @@ describe("BaseCommand", () => {
       expect(open).toHaveBeenCalledWith(
         `${ENDPOINT}/auth/login?returnTo=${encodeURIComponent(`${ENDPOINT}/auth/cli/callback?port=${port}`)}`
       );
-      expect(logger.info).toHaveBeenCalledWith("Your browser has been opened. Please log in to your account.");
+      expect(base.log).toHaveBeenCalledWith("Your browser has been opened. Please log in to your account.");
 
       // we should be at `await receiveSession`
       expect(base.session).toBeUndefined();

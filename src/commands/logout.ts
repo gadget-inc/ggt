@@ -1,5 +1,5 @@
+import dedent from "dedent";
 import { BaseCommand } from "../lib/base-command";
-import { logger } from "../lib/logger";
 
 export default class Logout extends BaseCommand {
   static override summary = "Log out of your account.";
@@ -7,17 +7,18 @@ export default class Logout extends BaseCommand {
   static override usage = "logout";
 
   static override examples = [
-    `$ ggt logout
-👋 Goodbye
-`,
+    dedent`
+      $ ggt logout
+      Goodbye
+    `,
   ];
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async run(): Promise<void> {
     if (this.logout()) {
-      logger.info("👋 Goodbye");
+      this.log("Goodbye");
     } else {
-      logger.info("You are not logged in");
+      this.log("You are not logged in");
     }
   }
 }

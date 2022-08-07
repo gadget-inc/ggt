@@ -44,7 +44,7 @@ USAGE
 EXAMPLES
   $ ggt login
   Your browser has been opened. Please log in to your account.
-  👋 Hello, Jane Doe (jane@example.com)
+  Hello, Jane Doe (jane@example.com)
 ```
 
 _See code: [dist/commands/login.ts](gadget-inc/ggt)_
@@ -59,7 +59,7 @@ USAGE
 
 EXAMPLES
   $ ggt logout
-  👋 Goodbye
+  Goodbye
 ```
 
 _See code: [dist/commands/logout.ts](gadget-inc/ggt)_
@@ -82,23 +82,22 @@ FILE FLAGS
 
 EXAMPLES
   $ ggt sync --app my-app ~/gadget/my-app
-  👀 set up local file watcher
-  📡 set up remote file subscription
-  ✍️  wrote remote file changes
-      total: 1
-      files:
-        - routes/GET.js
-  🚀 sent local file changes
-      total: 1
-      files:
-        - routes/GET-ping.ts
-
+  Ready
+  Received
+  ← routes/GET.js
+  ← user/signUp/signIn.js
+  Sent
+  → routes/GET.js
+  ^C Stopping... (press Ctrl+C again to force)
+  Done
 
   # These are equivalent
 
+    $ ggt sync -A my-app
     $ ggt sync --app my-app
     $ ggt sync --app my-app.gadget.app
     $ ggt sync --app https://my-app.gadget.app
+    $ ggt sync --app https://my-app.gadget.app/edit
 ```
 
 _See code: [dist/commands/sync.ts](gadget-inc/ggt)_

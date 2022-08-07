@@ -3,6 +3,7 @@ import type { OptionFlag } from "@oclif/core/lib/interfaces";
 import { CLIError } from "@oclif/errors";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
+import dedent from "dedent";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { prompt } from "inquirer";
@@ -15,7 +16,6 @@ import path from "path";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
 import { ignoreEnoent, Ignorer, walkDir, WalkedTooManyFilesError } from "../lib/fs-utils";
-import { logger } from "../lib/logger";
 import { sleepUntil } from "../lib/sleep";
 import type {
   FileSyncChangedEventInput,
@@ -65,26 +65,30 @@ export default class Sync extends BaseCommand {
   };
 
   static override examples = [
-    `$ ggt sync --app my-app ~/gadget/my-app
-👀 set up local file watcher
-📡 set up remote file subscription
-✍️  wrote remote file changes
-    total: 1
-    files:
-      - routes/GET.js
-🚀 sent local file changes
-    total: 1
-    files:
-      - routes/GET-ping.ts
-  `,
-
-    `# These are equivalent
-$ ggt sync --app my-app
-$ ggt sync --app my-app.gadget.app
-$ ggt sync --app https://my-app.gadget.app `,
+    dedent`
+      $ ggt sync --app my-app ~/gadget/my-app
+      Ready
+      Received
+      ← routes/GET.js
+      ← user/signUp/signIn.js
+      Sent
+      → routes/GET.js
+      ^C Stopping... (press Ctrl+C again to force)
+      Done
+    `,
+    dedent`
+      # These are equivalent
+      $ ggt sync -A my-app
+      $ ggt sync --app my-app
+      $ ggt sync --app my-app.gadget.app
+      $ ggt sync --app https://my-app.gadget.app
+      $ ggt sync --app https://my-app.gadget.app/edit
+    `,
   ];
 
   override readonly requireApp = true;
+
+  status = SyncStatus.STARTING;
 
   dir!: string;
 
@@ -109,14 +113,28 @@ $ ggt sync --app https://my-app.gadget.app `,
 
   stop!: (error?: Error) => Promise<void>;
 
-  stopping = false;
-
   relative(to: string): string {
     return path.relative(this.dir, to);
   }
 
   absolute(...pathSegments: string[]): string {
     return path.resolve(this.dir, ...pathSegments);
+  }
+
+  normalize(filepath: string): string {
+    return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath);
+  }
+
+  logPaths(filepaths: string[], { limit = 10, sep = "-" } = {}): void {
+    let logged = 0;
+    for (const filepath of filepaths) {
+      this.log(`${sep} ${this.normalize(filepath)}`);
+      if (++logged == limit && !this.debugEnabled) break;
+    }
+
+    if (filepaths.length > logged) {
+      this.log(`… ${filepaths.length - logged} more`);
+    }
   }
 
   override async init(): Promise<void> {
@@ -142,7 +160,7 @@ $ ggt sync --app https://my-app.gadget.app `,
       awaitWriteFinish: { pollInterval: flags["file-poll-interval"], stabilityThreshold: flags["file-stability-threshold"] },
     });
 
-    logger.debug("⚙️  starting");
+    this.debug("starting");
     await fs.ensureDir(this.dir);
 
     try {
@@ -153,7 +171,7 @@ $ ggt sync --app https://my-app.gadget.app `,
 
       const d = await fs.opendir(this.dir);
       if ((await d.read()) != null) {
-        logger.warn("⚠️ Could not find .ggt/sync.json in a non empty directory");
+        this.warn("Could not find .ggt/sync.json in a non empty directory");
       }
       await d.close();
     }
@@ -175,13 +193,12 @@ $ ggt sync --app https://my-app.gadget.app `,
     const changedFiles = await getChangedFiles();
     const hasLocalChanges = changedFiles.size > 0;
     if (hasLocalChanges) {
-      logger.info(
-        { total: changedFiles.size, files: Array.from(changedFiles.keys()).map(this.relative.bind(this)) },
-        `ℹ️️  The following local files have changed since the last sync:`
-      );
+      this.log("Local files have changed since the last sync");
+      this.logPaths(Array.from(changedFiles.keys()), { limit: changedFiles.size });
+      this.log();
     }
 
-    logger.debug({ metadata: this.metadata, remoteFilesVersion, hasRemoteChanges, hasLocalChanges }, "⚙️  metadata");
+    this.debug("init %o", { metadata: this.metadata, remoteFilesVersion, hasRemoteChanges, hasLocalChanges });
 
     let action: Action | undefined;
     if (hasLocalChanges) {
@@ -189,9 +206,7 @@ $ ggt sync --app https://my-app.gadget.app `,
         type: "list",
         name: "action",
         choices: [Action.CANCEL, Action.MERGE, Action.RESET],
-        message: hasRemoteChanges
-          ? "Both local and remote files have changed since the last sync. How would you like to proceed?"
-          : "Local files have changed since the last sync. How would you like to proceed?",
+        message: hasRemoteChanges ? "Remote files have also changed. How would you like to proceed?" : "How would you like to proceed?",
       }));
     }
 
@@ -212,7 +227,7 @@ $ ggt sync --app https://my-app.gadget.app `,
                 }
 
                 return {
-                  path: normalizePath(this.relative(filepath)),
+                  path: this.normalize(filepath),
                   mode: stats.mode,
                   content: await fs.readFile(filepath, "utf-8"),
                 };
@@ -233,23 +248,24 @@ $ ggt sync --app https://my-app.gadget.app `,
       }
     }
 
-    logger.debug("⚙️  started");
+    this.debug("started");
   }
 
   async run(): Promise<void> {
     this.stop = async (error?: Error) => {
-      if (this.stopping) return;
-      this.stopping = true;
+      if (this.status != SyncStatus.RUNNING) return;
+
+      this.debug("stopping");
+      this.status = SyncStatus.STOPPING;
 
       try {
-        logger.debug("⚙️  stopping");
         unsubscribe();
         this.watcher.removeAllListeners();
         this.publish.flush();
         await this.queue.onIdle();
 
         if (!error) {
-          logger.info("👋 Goodbye");
+          this.log("Done");
           return;
         }
 
@@ -258,32 +274,40 @@ $ ggt sync --app https://my-app.gadget.app `,
         switch (true) {
           case error.message == "Unexpected server response: 401":
             this.logout();
-            logger.warn("⚠️ Session expired");
-            logger.info("ℹ️ Run `ggt auth login` to login again");
+            this.error("Session expired", {
+              suggestions: ["Run `ggt login` to login again"],
+            });
             break;
           case error instanceof WalkedTooManyFilesError:
-            logger.warn("⚠️ Too many files found while starting");
-            logger.info("ℹ️ Consider adding more files to your .ignore file");
+            this.error("Too many files found while starting", {
+              suggestions: ["Consider adding more files to your .ignore file"],
+            });
             break;
           default:
-            logger.error({ error }, "🚨 Unexpected error");
+            this.error(error);
         }
       } finally {
         await fs.outputJSON(this.absolute(".ggt", "sync.json"), this.metadata, { spaces: 2 });
         await Promise.allSettled([this.watcher.close(), this.client.dispose()]);
-        logger.debug("⚙️  stopped");
+
+        this.debug("stopped");
+        this.status = SyncStatus.STOPPED;
       }
     };
 
     for (const signal of ["SIGINT", "SIGTERM"] as const) {
       process.on(signal, () => {
-        if (this.stopping) return;
-        logger.info(" Stopping sync (press Ctrl+C again to force)");
+        if (this.status != SyncStatus.RUNNING) return;
+
+        this.log(" Stopping... (press Ctrl+C again to force)");
+        process.once("SIGINT", () => {
+          this.log(` Exiting immediately. Note that files may not have finished syncing.`);
+          process.exit(1);
+        });
+
         void this.stop();
       });
     }
-
-    logger.debug("📡 setting up remote file subscription...");
 
     const unsubscribe = this.client.subscribe(
       {
@@ -301,14 +325,11 @@ $ ggt sync --app https://my-app.gadget.app `,
 
           const { remoteFilesVersion, changed, deleted } = response.data.remoteFileSyncEvents;
           const remoteFiles = new Map([...deleted, ...changed].map((e) => [e.path, e]));
-          logger.debug({ remoteFilesVersion, total: remoteFiles.size, files: remoteFiles.keys() }, "📡 received remote file changes");
 
           void this.queue
             .add(async () => {
-              logger.debug(
-                { remoteFilesVersion, total: remoteFiles.size, files: remoteFiles.keys() },
-                "✍️  writing remote file changes..."
-              );
+              this.log("Received");
+              this.logPaths(Array.from(remoteFiles.keys()), { sep: "←" });
 
               await pMap(
                 remoteFiles,
@@ -331,16 +352,11 @@ $ ggt sync --app https://my-app.gadget.app `,
               );
 
               this.metadata.lastWritten.filesVersion = remoteFilesVersion;
-              logger.info({ total: remoteFiles.size, files: remoteFiles.keys() }, "✍️  wrote remote file changes");
             })
             .catch(this.stop);
         },
       }
     );
-
-    logger.info("📡 set up remote file subscription");
-
-    logger.debug("👀 setting up local file watcher...");
 
     const localFilesBuffer = new Map<string, { mode: number; mtime: number } | false>();
 
@@ -359,7 +375,7 @@ $ ggt sync --app https://my-app.gadget.app `,
               if (file) {
                 try {
                   changed.push({
-                    path: normalizePath(this.relative(filepath)),
+                    path: this.normalize(filepath),
                     mode: file.mode,
                     content: await fs.readFile(filepath, "utf-8"),
                   });
@@ -369,15 +385,15 @@ $ ggt sync --app https://my-app.gadget.app `,
                   ignoreEnoent(error);
                 }
               } else {
-                deleted.push({ path: normalizePath(this.relative(filepath)) });
+                deleted.push({ path: this.normalize(filepath) });
               }
             },
             { stopOnError: false }
           );
 
           if (changed.length > 0 || deleted.length > 0) {
-            const files = [...changed, ...deleted].map((e) => e.path);
-            logger.debug({ total: files.length, files }, "🚀 sending local file changes...");
+            this.log("Sent");
+            this.logPaths(Array.from(localFiles.keys()), { sep: "→" });
 
             const data = await this.client.unwrapQuery({
               query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
@@ -385,13 +401,11 @@ $ ggt sync --app https://my-app.gadget.app `,
             });
 
             const { remoteFilesVersion } = data.publishFileSyncEvents;
-            logger.debug({ remoteFilesVersion }, "remote files version after publishing");
+            this.debug("remote files version after publishing %s", remoteFilesVersion);
 
             if (BigInt(remoteFilesVersion) > BigInt(this.metadata.lastWritten.filesVersion)) {
               this.metadata.lastWritten.filesVersion = remoteFilesVersion;
             }
-
-            logger.info({ total: files.length, files }, "🚀 sent local file changes");
           }
         })
         .catch(this.stop);
@@ -401,20 +415,22 @@ $ ggt sync --app https://my-app.gadget.app `,
       .add(`${this.dir}/**/*`)
       .on("error", (error) => void this.stop(error))
       .on("all", (event, filepath, stats) => {
+        const relativePath = this.relative(filepath);
+
         if (event === "addDir") {
-          logger.trace({ path: this.relative(filepath), event, mode: stats?.mode }, "👀 skipping event caused by added directory");
+          this.debug("skipping event caused by added directory %s", relativePath);
           return;
         }
 
         if (stats?.isSymbolicLink?.()) {
-          logger.trace({ path: this.relative(filepath), event, mode: stats.mode }, "👀 skipping event caused by symlink");
+          this.debug("skipping event caused by symlink %s", relativePath);
           return;
         }
 
         if (filepath == this.ignorer.filepath) {
           this.ignorer.reload();
         } else if (this.ignorer.ignores(filepath)) {
-          logger.trace({ path: this.relative(filepath), event, mode: stats?.mode }, "👀 skipping event caused by ignored file");
+          this.debug("skipping event caused by ignored file %s", relativePath);
           return;
         }
 
@@ -426,11 +442,11 @@ $ ggt sync --app https://my-app.gadget.app `,
         }
 
         if (this.recentWrites.delete(filepath)) {
-          logger.trace({ path: this.relative(filepath), event, mode: stats?.mode }, "👀 skipping event caused by recent write");
+          this.debug("skipping event caused by recent write %s", relativePath);
           return;
         }
 
-        logger.trace({ path: this.relative(filepath), event, mode: stats?.mode }, "👀 file changed");
+        this.debug("file changed %s", relativePath);
 
         switch (event) {
           case "add":
@@ -447,16 +463,23 @@ $ ggt sync --app https://my-app.gadget.app `,
         this.publish();
       });
 
-    logger.info("👀 set up local file watcher");
-
-    await sleepUntil(() => this.stopping, { timeout: Infinity });
+    this.log("Ready");
+    this.status = SyncStatus.RUNNING;
+    await sleepUntil(() => this.status != SyncStatus.RUNNING, { timeout: Infinity });
   }
 }
 
+export enum SyncStatus {
+  STARTING,
+  RUNNING,
+  STOPPING,
+  STOPPED,
+}
+
 export enum Action {
-  CANCEL = "Cancel sync and do nothing",
-  MERGE = "Merge local files with remote",
-  RESET = "Reset local files to remote",
+  CANCEL = "Cancel (Ctrl+C)",
+  MERGE = "Merge local files with remote ones",
+  RESET = "Reset local files to remote ones",
 }
 
 export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION: Query<

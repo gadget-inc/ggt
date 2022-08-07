@@ -12,8 +12,8 @@ import open from "open";
 import path from "path";
 import type { Level } from "pino";
 import { Client } from "./client";
-import { ignoreEnoent } from "./enoent";
 import { Env } from "./env";
+import { ignoreEnoent } from "./fs-utils";
 import { logger } from "./logger";
 import type { App, User } from "./types";
 

@@ -14,11 +14,9 @@ import PQueue from "p-queue";
 import path from "path";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
-import { ignoreEnoent } from "../lib/enoent";
-import { Ignorer } from "../lib/ignorer";
+import { ignoreEnoent, Ignorer, walkDir, WalkedTooManyFilesError } from "../lib/fs-utils";
 import { logger } from "../lib/logger";
 import { sleepUntil } from "../lib/sleep";
-import { walkDir, WalkedTooManyFilesError } from "../lib/walk-dir";
 import type {
   FileSyncChangedEventInput,
   FileSyncDeletedEventInput,

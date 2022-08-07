@@ -5,7 +5,7 @@ import path from "path";
 import type { JsonObject } from "type-fest";
 import type { Payload, Query } from "../src/lib/client";
 import { Client } from "../src/lib/client";
-import { walkDir, walkDirSync } from "../src/lib/walk-dir";
+import { walkDir, walkDirSync } from "../src/lib/fs-utils";
 
 export async function expectDir(dir: string, expected: Record<string, string>): Promise<void> {
   const actual: Record<string, string> = {};

@@ -1,5 +1,5 @@
 process.env["GGT_ENV"] = "test";
-
+import type { Config } from "@oclif/core";
 import fs from "fs-extra";
 import path from "path";
 
@@ -10,21 +10,20 @@ export function testDirPath(): string {
   return path.join(__dirname, "..", "tmp", "tests", expect.getState().currentTestName.replace(/[ /,?=]/g, "-"));
 }
 
+export let config: Config;
+
 beforeEach(async () => {
   const testDir = testDirPath();
   await fs.remove(testDir);
 
-  const { Env } = await import("../src/lib/env");
-  jest.spyOn(Env, "paths", "get").mockReturnValue({
-    cache: path.join(testDir, "cache"),
-    config: path.join(testDir, "config"),
-    data: path.join(testDir, "data"),
-    log: path.join(testDir, "log"),
-    temp: path.join(testDir, "temp"),
-  });
+  // store files in the test's tmp directory
+  // https://github.com/oclif/core/blob/main/src/config/config.ts#L171
+  process.env["GGT_CONFIG_DIR"] = path.join(testDir, "config");
+  process.env["GGT_CACHE_DIR"] = path.join(testDir, "cache");
+  process.env["GGT_DATA_DIR"] = path.join(testDir, "data");
 
-  const { Config } = await import("../src/lib/config");
-  jest.spyOn(Config, "save");
+  const { Config } = await import("@oclif/core");
+  config = (await Config.load(path.join(__dirname, ".."))) as Config;
 
   const { logger } = await import("../src/lib/logger");
   logger.info({ test: expect.getState().currentTestName, path: expect.getState().testPath }, "starting test");

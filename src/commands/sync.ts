@@ -14,7 +14,6 @@ import PQueue from "p-queue";
 import path from "path";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
-import { Config } from "../lib/config";
 import { ignoreEnoent } from "../lib/enoent";
 import { Ignorer } from "../lib/ignorer";
 import { logger } from "../lib/logger";
@@ -260,9 +259,7 @@ $ ggt sync --app https://my-app.gadget.app `,
 
         switch (true) {
           case error.message == "Unexpected server response: 401":
-            Config.session = undefined;
-            Config.save();
-
+            this.logout();
             logger.warn("⚠️ Session expired");
             logger.info("ℹ️ Run `ggt auth login` to login again");
             break;

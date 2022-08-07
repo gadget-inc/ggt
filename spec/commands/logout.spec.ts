@@ -1,32 +1,29 @@
-import { Config as OclifConfig } from "@oclif/core";
 import Logout from "../../src/commands/logout";
-import { Config } from "../../src/lib/config";
+import { BaseCommand } from "../../src/lib/base-command";
 import { logger } from "../../src/lib/logger";
 
 describe("Logout", () => {
-  let oclifConfig: OclifConfig;
+  it("delegates to BaseCommand.logout", async () => {
+    jest.spyOn(BaseCommand.prototype, "logout").mockImplementation();
 
-  beforeEach(async () => {
-    oclifConfig = (await OclifConfig.load()) as OclifConfig;
+    await Logout.run();
+
+    expect(BaseCommand.prototype.logout).toHaveBeenCalled();
   });
 
-  it("deletes the Config's session", async () => {
-    Config.session = "test";
+  it("prints a message if the user is logged in", async () => {
+    jest.spyOn(BaseCommand.prototype, "logout").mockReturnValue(true);
 
-    await new Logout([], oclifConfig).run();
+    await Logout.run();
 
-    expect(Config.session).toBeUndefined();
-    expect(Config.save).toHaveBeenCalled();
-    expect(logger.info).toHaveBeenCalledWith("👋 goodbye!");
+    expect(logger.info.mock.calls[0]?.[0]).toMatchInlineSnapshot(`"👋 Goodbye"`);
   });
 
-  it("does not delete the Config's session if it is not set", async () => {
-    Config.session = undefined;
+  it("prints a different message if the user is logged out", async () => {
+    jest.spyOn(BaseCommand.prototype, "logout").mockReturnValue(false);
 
-    await new Logout([], oclifConfig).run();
+    await Logout.run();
 
-    expect(logger.info).toHaveBeenCalledWith("You are not logged in");
-    expect(Config.session).toBeUndefined();
-    expect(Config.save).not.toHaveBeenCalled();
+    expect(logger.info.mock.calls[0]?.[0]).toMatchInlineSnapshot(`"You are not logged in"`);
   });
 });

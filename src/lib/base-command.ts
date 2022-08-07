@@ -1,6 +1,7 @@
-import type { Config as OclifConfig } from "@oclif/core";
+import type { Config } from "@oclif/core";
 import { Command, Flags } from "@oclif/core";
 import { CLIError } from "@oclif/errors";
+import fs from "fs-extra";
 import getPort from "get-port";
 import type { Got } from "got";
 import got, { HTTPError } from "got";
@@ -8,9 +9,10 @@ import type { Server } from "http";
 import { createServer } from "http";
 import { prompt } from "inquirer";
 import open from "open";
+import path from "path";
 import type { Level } from "pino";
 import { Client } from "./client";
-import { Config } from "./config";
+import { ignoreEnoent } from "./enoent";
 import { Env } from "./env";
 import { logger } from "./logger";
 import type { App, User } from "./types";
@@ -54,11 +56,25 @@ export abstract class BaseCommand extends Command {
    */
   readonly requireApp: boolean = false;
 
+  /**
+   * The HTTP client to use for all HTTP requests.
+   *
+   * If a request is made to Gadget, the session token will be added to the request's headers.
+   */
   readonly http: Got;
 
+  /**
+   * The GraphQL client to use for all Gadget API requests.
+   *
+   * Will be `undefined` if the user is not logged in or if the user has not selected an app.
+   *
+   * @see {@linkcode requireApp requireApp}
+   */
   client!: Client;
 
-  constructor(argv: string[], config: OclifConfig) {
+  private _session?: string;
+
+  constructor(argv: string[], config: Config) {
     super(argv, config);
 
     this.http = got.extend({
@@ -66,13 +82,31 @@ export abstract class BaseCommand extends Command {
         beforeRequest: [
           (options) => {
             options.headers["user-agent"] = this.config.userAgent;
-            if (options.url.origin === ENDPOINT && Config.session) {
-              options.headers = { ...options.headers, cookie: `session=${encodeURIComponent(Config.session)};` };
+            if (options.url.origin === ENDPOINT && this.session) {
+              options.headers = { ...options.headers, cookie: `session=${encodeURIComponent(this.session)};` };
             }
           },
         ],
       },
     });
+  }
+
+  get session(): string | undefined {
+    try {
+      return (this._session ??= fs.readFileSync(path.join(this.config.configDir, "session.txt"), "utf-8"));
+    } catch (error) {
+      ignoreEnoent(error);
+      return undefined;
+    }
+  }
+
+  set session(value: string | undefined) {
+    this._session = value;
+    if (value) {
+      fs.outputFileSync(path.join(this.config.configDir, "session.txt"), value);
+    } else {
+      fs.removeSync(path.join(this.config.configDir, "session.txt"));
+    }
   }
 
   override async init(): Promise<void> {
@@ -119,8 +153,7 @@ export abstract class BaseCommand extends Command {
       ws: {
         headers: {
           "user-agent": this.config.userAgent,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          cookie: `session=${encodeURIComponent(Config.session!)};`,
+          cookie: `session=${encodeURIComponent(this.session as string)};`,
         },
       },
     });
@@ -143,7 +176,7 @@ export abstract class BaseCommand extends Command {
             const session = incomingUrl.searchParams.get("session");
             if (!session) throw new Error("missing session");
 
-            Config.session = session;
+            this.session = session;
 
             const user = await this.getCurrentUser();
             if (!user) throw new Error("missing current user");
@@ -154,11 +187,10 @@ export abstract class BaseCommand extends Command {
               logger.info(`👋 Hello, ${user.email}`);
             }
 
-            Config.save();
-
             redirectTo.searchParams.set("success", "true");
             resolve();
           } catch (error) {
+            this.session = undefined;
             redirectTo.searchParams.set("success", "false");
             reject(error);
           } finally {
@@ -183,17 +215,26 @@ export abstract class BaseCommand extends Command {
   }
 
   /**
+   * @returns Whether the user was logged in or not.
+   */
+  logout(): boolean {
+    if (!this.session) return false;
+
+    this.session = undefined;
+    return true;
+  }
+
+  /**
    * @returns The current user, or undefined if the user is not logged in.
    */
   async getCurrentUser(): Promise<User | undefined> {
-    if (!Config.session) return undefined;
+    if (!this.session) return undefined;
 
     try {
       return await this.http(`${ENDPOINT}/auth/api/current-user`).json<User>();
     } catch (error) {
       if (error instanceof HTTPError && error.response.statusCode === 401) {
-        Config.session = undefined;
-        Config.save();
+        this.logout();
         return undefined;
       }
       throw error;
@@ -204,7 +245,7 @@ export abstract class BaseCommand extends Command {
    * @returns A list of Gadget apps that the user has access to.
    */
   async getApps(): Promise<App[]> {
-    if (!Config.session) return [];
+    if (!this.session) return [];
 
     return await this.http(`${ENDPOINT}/auth/api/apps`).json<App[]>();
   }

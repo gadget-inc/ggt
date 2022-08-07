@@ -59,7 +59,7 @@ USAGE
 
 EXAMPLES
   $ ggt logout
-  👋 goodbye!
+  👋 Goodbye
 ```
 
 _See code: [dist/commands/logout.ts](gadget-inc/ggt)_

@@ -34,6 +34,32 @@ function configure(options?: LoggerOptions): void {
     query: (query: any) => `\`${query}\``,
   };
 
+  const stdout = pinoPretty({
+    minimumLevel: options.stdout,
+    ignore: "pid,hostname,time,level",
+    colorize: true,
+    sync: Env.testLike,
+    customPrettifiers,
+  });
+
+  const stream = Env.productionLike
+    ? stdout
+    : multistream([
+        stdout,
+        {
+          stream: pinoPretty({
+            minimumLevel: options.file,
+            destination: path.join(__dirname, "../../tmp/logs", Env.value, filename),
+            mkdir: true,
+            ignore: "pid,hostname",
+            colorize: false,
+            sync: Env.testLike,
+            customPrettifiers,
+            translateTime: "SYS:h:MM:ss.l TT",
+          }),
+        },
+      ]);
+
   logger = pino(
     {
       level: options.level,
@@ -44,39 +70,7 @@ function configure(options?: LoggerOptions): void {
       },
       redact: ["variables.input.changed[*].content"],
     },
-    multistream([
-      // stdout
-      {
-        level: options.stdout,
-        stream: pinoPretty({
-          ignore: "pid,hostname,time,level",
-          colorize: true,
-          sync: Env.testLike,
-          customPrettifiers,
-        }),
-      },
-      // file
-      {
-        level: options.file,
-        stream: Env.productionLike
-          ? pino.transport({
-              target: "pino/file",
-              options: {
-                destination: path.join(Env.paths.log, filename),
-                mkdir: true,
-              },
-            })
-          : pinoPretty({
-              destination: path.join(__dirname, "../../tmp/logs", Env.value, filename),
-              mkdir: true,
-              ignore: "pid,hostname",
-              colorize: false,
-              sync: Env.testLike,
-              customPrettifiers,
-              translateTime: "SYS:h:MM:ss.l TT",
-            }),
-      },
-    ])
+    stream
   ) as any;
 
   logger.configure = configure;

@@ -103,7 +103,10 @@ export class Client {
     }
 
     debug("sending query %s", subscribePayload.query);
-    const unsubscribe = this._client.subscribe(subscribePayload, sink);
+    const unsubscribe = this._client.subscribe(subscribePayload, {
+      ...sink,
+      error: (error) => sink.error(new ClientError(subscribePayload, error)),
+    });
 
     return () => {
       removeConnectedListener?.();

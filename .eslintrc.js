@@ -4,7 +4,7 @@ const config = {
   parserOptions: {
     project: ["./tsconfig.eslint.json", "./spec/tsconfig.json"],
   },
-  plugins: ["@typescript-eslint", "import", "jest"],
+  plugins: ["@typescript-eslint", "import", "jest", "lodash"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
@@ -43,6 +43,7 @@ const config = {
         additionalTestBlockFunctions: [],
       },
     ],
+    "lodash/import-scope": ["error", "member"],
     "lodash/prefer-lodash-method": ["off"],
     "lodash/prefer-constant": ["off"],
   },

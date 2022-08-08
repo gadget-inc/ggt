@@ -1,13 +1,10 @@
-import assert from "assert";
-import type { Client, ClientOptions, ExecutionResult, Sink, SubscribePayload } from "graphql-ws";
+import type { ClientOptions, ExecutionResult, Sink, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
-import isFunction from "lodash/isFunction";
-import noop from "lodash/noop";
+import { has, isFunction, noop } from "lodash";
 import type { JsonObject } from "type-fest";
 import type { CloseEvent } from "ws";
 import WebSocket from "ws";
-import { Config } from "./config";
 import { Env } from "./env";
 import { logger } from "./logger";
 
@@ -17,26 +14,19 @@ enum ConnectionStatus {
   RECONNECTING,
 }
 
-export class GraphQLClient {
+export class Client {
   // assume the client is going to connect
   status = ConnectionStatus.CONNECTED;
 
-  private _client: Client;
+  private _client: ReturnType<typeof createClient>;
 
-  constructor(app: string, options?: ClientOptions) {
+  constructor(app: string, options?: Partial<ClientOptions> & { ws?: Partial<WebSocket.ClientOptions> }) {
     this._client = createClient({
       url: `wss://${app}.${Env.productionLike ? "gadget.app" : "ggt.pub:3000"}/edit/api/graphql-ws`,
       shouldRetry: () => true,
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
-          assert(Config.session, "Session is required to use the GraphQLClient");
-          super(address, protocols, {
-            ...wsOptions,
-            headers: {
-              ...wsOptions?.headers,
-              cookie: `session=${encodeURIComponent(Config.session)};`,
-            },
-          });
+          super(address, protocols, { ...wsOptions, ...options?.ws });
         }
       },
       on: {
@@ -128,7 +118,7 @@ export class GraphQLClient {
     return new Promise((resolve, reject) => {
       this.subscribe<Data, Variables, Extensions>(payload, {
         next: resolve,
-        error: (error) => reject(new GraphQLClientError(payload, error)),
+        error: (error) => reject(new ClientError(payload, error)),
         complete: noop,
       });
     });
@@ -136,8 +126,8 @@ export class GraphQLClient {
 
   async unwrapQuery<Data extends JsonObject, Variables extends JsonObject>(payload: Payload<Data, Variables>): Promise<Data> {
     const result = await this.query(payload);
-    if (result.errors) throw new GraphQLClientError(payload, result.errors);
-    if (!result.data) throw new GraphQLClientError(payload, new Error("No data"));
+    if (result.errors) throw new ClientError(payload, result.errors);
+    if (!result.data) throw new ClientError(payload, new Error("No data"));
     return result.data;
   }
 
@@ -146,10 +136,14 @@ export class GraphQLClient {
   }
 }
 
-export class GraphQLClientError extends Error {
+export class ClientError extends Error {
   constructor(readonly payload: Payload<any, any>, override readonly cause: any) {
-    super(cause.wasClean ? `Unexpected close event: ${cause.code} ${cause.reason}` : "Unexpected GraphQL error");
-    this.name = "GraphQLClientError";
+    function isCloseEvent(e: unknown): e is CloseEvent {
+      return has(e, "wasClean");
+    }
+
+    super(isCloseEvent(cause) ? `Unexpected close event: ${cause.code} ${cause.reason}` : "Unexpected GraphQL error");
+    this.name = "ClientError";
   }
 }
 

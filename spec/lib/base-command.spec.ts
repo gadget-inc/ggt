@@ -2,7 +2,7 @@ import { Config as OclifConfig } from "@oclif/core";
 import getPort from "get-port";
 import http from "http";
 import { prompt } from "inquirer";
-import noop from "lodash/noop";
+import { noop } from "lodash";
 import nock from "nock";
 import open from "open";
 import { BaseCommand, ENDPOINT } from "../../src/lib/base-command";

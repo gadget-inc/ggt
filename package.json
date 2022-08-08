@@ -18,7 +18,7 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "shx rm -rf dist && tsc -b && oclif readme",
+    "build": "shx rm -rf dist && tsc -b && oclif readme && prettier --write README.md",
     "lint": "npm run lint:prettier && npm run lint:eslint",
     "lint:eslint": "eslint --quiet .",
     "lint:eslint:fix": "eslint --quiet --fix .",

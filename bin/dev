@@ -1,12 +1,19 @@
 #!/usr/bin/env node
 
+const path = require("path");
+
 process.env.NODE_ENV = "development";
 process.env.GGT_ENV = "development";
 
-const oclif = require("@oclif/core");
-const path = require("path");
+// store files in the project's tmp directory
+// https://github.com/oclif/core/blob/main/src/config/config.ts#L171
+process.env["GGT_CONFIG_DIR"] = path.join(__dirname, "..", "tmp", "config");
+process.env["GGT_CACHE_DIR"] = path.join(__dirname, "..", "tmp", "cache");
+process.env["GGT_DATA_DIR"] = path.join(__dirname, "..", "tmp", "data");
 
 require("ts-node").register({ project: path.join(__dirname, "..", "tsconfig.json"), swc: true });
+
+const oclif = require("@oclif/core");
 
 // show stack traces
 oclif.settings.debug = true;

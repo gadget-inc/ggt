@@ -1,4 +1,3 @@
-import { Config as OclifConfig } from "@oclif/core";
 import { FSWatcher } from "chokidar";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
@@ -15,7 +14,7 @@ import Sync, {
 import { logger } from "../../src/lib/logger";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
 import type { PublishFileSyncEventsMutationVariables } from "../../src/__generated__/graphql";
-import { testDirPath } from "../jest.setup";
+import { config, testDirPath } from "../jest.setup";
 import type { MockClient } from "../util";
 import { expectDir, expectDirSync, mockClient, setupDir } from "../util";
 
@@ -39,10 +38,10 @@ describe("Sync", () => {
     error: undefined as any,
   };
 
-  beforeEach(async () => {
+  beforeEach(() => {
     dir = path.join(testDirPath(), "app");
     client = mockClient();
-    sync = new Sync(["--app", "test", "--file-push-delay", "10", dir], (await OclifConfig.load()) as OclifConfig);
+    sync = new Sync(["--app", "test", "--file-push-delay", "10", dir], config);
 
     jest.spyOn(sync, "getCurrentUser").mockResolvedValue({ name: "Jane Doe", email: "jane@example.come" });
 

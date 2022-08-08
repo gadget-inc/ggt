@@ -1,5 +1,4 @@
 import { BaseCommand } from "../lib/base-command";
-import { Config } from "../lib/config";
 import { logger } from "../lib/logger";
 
 export default class Logout extends BaseCommand {
@@ -9,19 +8,16 @@ export default class Logout extends BaseCommand {
 
   static override examples = [
     `$ ggt logout
-👋 goodbye!
+👋 Goodbye
 `,
   ];
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async run(): Promise<void> {
-    if (!Config.session) {
+    if (this.logout()) {
+      logger.info("👋 Goodbye");
+    } else {
       logger.info("You are not logged in");
-      return;
     }
-
-    Config.session = undefined;
-    Config.save();
-    logger.info("👋 goodbye!");
   }
 }

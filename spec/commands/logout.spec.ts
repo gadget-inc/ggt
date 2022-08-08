@@ -3,7 +3,7 @@ import Logout from "../../src/commands/logout";
 import { Config } from "../../src/lib/config";
 import { logger } from "../../src/lib/logger";
 
-describe("logout", () => {
+describe("Logout", () => {
   let oclifConfig: OclifConfig;
 
   beforeEach(async () => {

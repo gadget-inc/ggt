@@ -1,3 +1,4 @@
+import assert from "assert";
 import type { Client, ClientOptions, ExecutionResult, Sink, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
@@ -6,7 +7,7 @@ import noop from "lodash/noop";
 import type { JsonObject } from "type-fest";
 import type { CloseEvent } from "ws";
 import WebSocket from "ws";
-import { Api } from "./api";
+import { Config } from "./config";
 import { Env } from "./env";
 import { logger } from "./logger";
 
@@ -28,7 +29,14 @@ export class GraphQLClient {
       shouldRetry: () => true,
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
-          super(address, protocols, { ...wsOptions, headers: Api.headers });
+          assert(Config.session, "Session is required to use the GraphQLClient");
+          super(address, protocols, {
+            ...wsOptions,
+            headers: {
+              ...wsOptions?.headers,
+              cookie: `session=${encodeURIComponent(Config.session)};`,
+            },
+          });
         }
       },
       on: {

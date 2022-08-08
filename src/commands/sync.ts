@@ -270,6 +270,11 @@ export default class Sync extends BaseCommand {
         }
 
         process.exitCode = 1;
+        this.notify({
+          title: "Gadget",
+          subtitle: "Uh oh!",
+          message: "An error occurred while syncing files",
+        });
 
         switch (true) {
           case error.message == "Unexpected server response: 401":

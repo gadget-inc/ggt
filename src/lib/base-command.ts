@@ -9,6 +9,13 @@ import got, { HTTPError } from "got";
 import type { Server } from "http";
 import { createServer } from "http";
 import { prompt } from "inquirer";
+import type { Notification } from "node-notifier";
+import { notify } from "node-notifier";
+import type WindowsBalloon from "node-notifier/notifiers/balloon";
+import type Growl from "node-notifier/notifiers/growl";
+import type NotificationCenter from "node-notifier/notifiers/notificationcenter";
+import type NotifySend from "node-notifier/notifiers/notifysend";
+import type WindowsToaster from "node-notifier/notifiers/toaster";
 import open from "open";
 import path from "path";
 import { Client } from "./client";
@@ -163,6 +170,34 @@ export abstract class BaseCommand extends Command {
         },
       },
     });
+  }
+
+  /**
+   * Sends a native OS notification to the user.
+   *
+   * @see {@link https://www.npmjs.com/package/node-notifier node-notifier}
+   */
+  notify(
+    notification:
+      | Notification
+      | NotificationCenter.Notification
+      | NotifySend.Notification
+      | WindowsToaster.Notification
+      | WindowsBalloon.Notification
+      | Growl.Notification
+  ): void {
+    notify(
+      {
+        contentImage: path.join(this.config.root, "assets", "favicon-128@4x.png"),
+        icon: path.join(this.config.root, "assets", "favicon-128@4x.png"),
+        sound: true,
+        timeout: false,
+        ...notification,
+      },
+      (error) => {
+        if (error) this.warn(error);
+      }
+    );
   }
 
   /**

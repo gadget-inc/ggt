@@ -165,6 +165,9 @@ export abstract class BaseCommand extends Command {
     });
   }
 
+  /**
+   * Opens the Gadget login page in the user's default browser and waits for the user to login.
+   */
   async login(): Promise<void> {
     let server: Server | undefined;
 

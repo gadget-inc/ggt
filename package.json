@@ -12,6 +12,7 @@
     "ggt": "./bin/run"
   },
   "files": [
+    "/assets",
     "/bin",
     "/dist",
     "/npm-shrinkwrap.json",
@@ -44,6 +45,7 @@
     "ignore": "^5.2.0",
     "inquirer": "^8.2.4",
     "lodash": "^4.17.21",
+    "node-notifier": "^10.0.1",
     "normalize-path": "^3.0.0",
     "open": "^8.4.0",
     "p-map": "^4.0.0",
@@ -64,6 +66,7 @@
     "@types/jest": "^28.1.6",
     "@types/lodash": "^4.14.182",
     "@types/node": "^18.6.3",
+    "@types/node-notifier": "^8.0.2",
     "@types/normalize-path": "^3.0.0",
     "@types/pino-pretty": "^4.7.5",
     "@types/ws": "^8.5.3",

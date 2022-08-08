@@ -3,6 +3,7 @@ import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import { prompt } from "inquirer";
+import { notify } from "node-notifier";
 import path from "path";
 import type { SetRequired } from "type-fest";
 import Sync, {
@@ -936,6 +937,27 @@ describe("Sync", () => {
       await expectDir(dir, {
         ".ggt/sync.json": JSON.stringify(defaultMetadata, null, 2) + "\n",
       });
+    });
+
+    it("notifies the user when an error occurs", async () => {
+      expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBeTrue();
+      expect(sync.watcher.on).toHaveBeenCalledTimes(2);
+
+      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new Error());
+
+      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
+      expect(notify).toHaveBeenCalledWith(
+        {
+          title: "Gadget",
+          subtitle: "Uh oh!",
+          message: "An error occurred while syncing files",
+          sound: true,
+          timeout: false,
+          icon: path.join(__dirname, "..", "..", "assets", "favicon-128@4x.png"),
+          contentImage: path.join(__dirname, "..", "..", "assets", "favicon-128@4x.png"),
+        },
+        expect.any(Function)
+      );
     });
 
     it("closes all resources when subscription emits complete", async () => {

@@ -1,3 +1,4 @@
+import dedent from "dedent";
 import { BaseCommand } from "../lib/base-command";
 
 export default class Login extends BaseCommand {
@@ -6,10 +7,11 @@ export default class Login extends BaseCommand {
   static override usage = "login";
 
   static override examples = [
-    `$ ggt login
-Your browser has been opened. Please log in to your account.
-👋 Hello, Jane Doe (jane@example.com)
-`,
+    dedent`
+      $ ggt login
+      Your browser has been opened. Please log in to your account.
+      Hello, Jane Doe (jane@example.com)
+    `,
   ];
 
   async run(): Promise<void> {

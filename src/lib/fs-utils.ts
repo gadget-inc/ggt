@@ -1,8 +1,10 @@
+import Debug from "debug";
 import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import path from "path";
-import { logger } from "./logger";
+
+const debug = Debug("ggt:fs-utils");
 
 export class Ignorer {
   readonly filepath = path.join(this._rootDir, ".ignore");
@@ -25,11 +27,10 @@ export class Ignorer {
 
     try {
       this._ignorer.add(fs.readFileSync(this.filepath, "utf-8"));
+      debug("reloaded ignore rules from %s", this.filepath);
     } catch (error) {
       ignoreEnoent(error);
     }
-
-    logger.trace({ path: this.filepath }, "🔄 reloaded ignore rules");
   }
 }
 
@@ -82,7 +83,7 @@ export class WalkedTooManyFilesError extends Error {
 
 export function ignoreEnoent(error: any): void {
   if (error.code === "ENOENT") {
-    logger.trace({ path: error.path }, "ignoring ENOENT error");
+    debug("ignoring ENOENT error %s", error.path);
     return;
   }
   throw error;

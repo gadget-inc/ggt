@@ -1,3 +1,4 @@
+import Debug from "debug";
 import type { ClientOptions, ExecutionResult, Sink, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
@@ -6,7 +7,8 @@ import type { JsonObject } from "type-fest";
 import type { CloseEvent } from "ws";
 import WebSocket from "ws";
 import { Env } from "./env";
-import { logger } from "./logger";
+
+const debug = Debug("ggt:client");
 
 enum ConnectionStatus {
   CONNECTED,
@@ -34,46 +36,43 @@ export class Client {
           switch (this.status) {
             case ConnectionStatus.DISCONNECTED:
               this.status = ConnectionStatus.RECONNECTING;
-              logger.info("🛰  reconnecting...");
+              debug("reconnecting...");
               break;
             case ConnectionStatus.RECONNECTING:
-              logger.trace("🛰  retrying...");
+              debug("retrying...");
               break;
             default:
-              logger.trace("🛰  connecting...");
+              debug("connecting...");
               break;
           }
         },
         connected: () => {
           if (this.status === ConnectionStatus.RECONNECTING) {
-            logger.info("🛰  reconnected");
+            debug("reconnected");
           } else {
-            logger.trace("🛰  connected");
+            debug("connected");
           }
 
           // let the other on connected listeners see what status we're in
           setImmediate(() => (this.status = ConnectionStatus.CONNECTED));
         },
-        closed: (ev) => {
-          const e = ev as CloseEvent;
-
-          // CloseEvent's get logged as `{}`, so we reconstruct it into an object here
-          const event = { type: e.type, code: e.code, reason: e.reason, wasClean: e.wasClean };
+        closed: (e) => {
+          const event = e as CloseEvent;
           if (event.wasClean) {
-            logger.trace({ event }, "🛰  connection closed");
+            debug("connection closed");
             return;
           }
 
           if (this.status === ConnectionStatus.CONNECTED) {
             this.status = ConnectionStatus.DISCONNECTED;
-            logger.warn({ event }, "🛰  disconnected");
+            debug("disconnected");
           }
         },
         error: (error) => {
           if (this.status == ConnectionStatus.RECONNECTING) {
-            logger.trace({ error }, "🛰  failed to reconnect");
+            debug("failed to reconnect %o", { error });
           } else {
-            logger.error({ error }, "🛰  connection error");
+            debug("connection error %o", { error });
           }
         },
         ...options?.on,
@@ -96,14 +95,14 @@ export class Client {
         if (this.status == ConnectionStatus.RECONNECTING) {
           // subscribePayload.variables is supposed to be readonly (it's not) and payload.variables could been re-assigned (it won't)
           (subscribePayload as any).variables = (payload.variables as any)();
-          logger.trace({ ...subscribePayload }, "🛰  re-sending query");
+          debug("re-sending query %s", subscribePayload.query);
         }
       });
     } else {
       subscribePayload = payload as SubscribePayload;
     }
 
-    logger.trace({ ...subscribePayload }, "🛰  sending query");
+    debug("sending query %s", subscribePayload.query);
     const unsubscribe = this._client.subscribe(subscribePayload, sink);
 
     return () => {
@@ -137,7 +136,7 @@ export class Client {
 }
 
 export class ClientError extends Error {
-  constructor(readonly payload: Payload<any, any>, override readonly cause: any) {
+  constructor(readonly payload: Payload<any, any>, readonly cause: any) {
     function isCloseEvent(e: unknown): e is CloseEvent {
       return has(e, "wasClean");
     }

@@ -1,6 +1,7 @@
 import type { Config } from "@oclif/core";
 import { Command, Flags } from "@oclif/core";
 import { CLIError } from "@oclif/errors";
+import Debug from "debug";
 import fs from "fs-extra";
 import getPort from "get-port";
 import type { Got } from "got";
@@ -10,11 +11,9 @@ import { createServer } from "http";
 import { prompt } from "inquirer";
 import open from "open";
 import path from "path";
-import type { Level } from "pino";
 import { Client } from "./client";
 import { Env } from "./env";
 import { ignoreEnoent } from "./fs-utils";
-import { logger } from "./logger";
 import type { App, User } from "./types";
 
 export const ENDPOINT = Env.productionLike ? "https://app.gadget.dev" : "https://app.ggt.dev:3000";
@@ -32,15 +31,18 @@ export abstract class BaseCommand extends Command {
         return Promise.resolve(app);
       },
     }),
-    "log-level": Flags.string({
-      summary: "The log level.",
+    debug: Flags.boolean({
+      char: "D",
+      summary: "Whether to output debug information.",
       helpGroup: "global",
-      helpValue: "level",
-      options: ["trace", "debug", "info", "warn", "error"] as Level[],
-      env: "GGT_LOG_LEVEL",
-      default: "info",
+      default: false,
     }),
   };
+
+  /**
+   * Indicates whether the command is being run with the `-D/--debug` flag.
+   */
+  debugEnabled = false;
 
   /**
    * Determines whether the command requires the user to be logged in or not.
@@ -112,10 +114,14 @@ export abstract class BaseCommand extends Command {
   override async init(): Promise<void> {
     await super.init();
     const { flags, argv } = await this.parse({ flags: BaseCommand.globalFlags, strict: false });
-    logger.configure({ stdout: flags["log-level"] as Level });
 
     // remove global flags from argv
     this.argv = argv;
+
+    if (flags.debug) {
+      this.debugEnabled = true;
+      Debug.enable(`${this.config.bin}:*`);
+    }
 
     if (!this.requireUser && !this.requireApp) {
       return;
@@ -182,9 +188,9 @@ export abstract class BaseCommand extends Command {
             if (!user) throw new Error("missing current user");
 
             if (user.name) {
-              logger.info(`👋 Hello, ${user.name} (${user.email})`);
+              this.log(`Hello, ${user.name} (${user.email})`);
             } else {
-              logger.info(`👋 Hello, ${user.email}`);
+              this.log(`Hello, ${user.email}`);
             }
 
             redirectTo.searchParams.set("success", "true");
@@ -206,7 +212,7 @@ export abstract class BaseCommand extends Command {
       url.searchParams.set("returnTo", `${ENDPOINT}/auth/cli/callback?port=${port}`);
       await open(url.toString());
 
-      logger.info("Your browser has been opened. Please log in to your account.");
+      this.log("Your browser has been opened. Please log in to your account.");
 
       await receiveSession;
     } finally {

@@ -10,8 +10,8 @@ import Sync, {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+  SyncStatus,
 } from "../../src/commands/sync";
-import { logger } from "../../src/lib/logger";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
 import type { PublishFileSyncEventsMutationVariables } from "../../src/__generated__/graphql";
 import { config, testDirPath } from "../jest.setup";
@@ -106,7 +106,7 @@ describe("Sync", () => {
       void sync.init();
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      expect(logger.warn.mock.calls[0]?.[0]).toMatchInlineSnapshot(`"⚠️ Could not find .ggt/sync.json in a non empty directory"`);
+      expect(sync.warn.mock.calls[0]?.[0]).toMatchInlineSnapshot(`"Could not find .ggt/sync.json in a non empty directory"`);
     });
 
     it("asks how to proceed if both local and remote files changed", async () => {
@@ -123,18 +123,18 @@ describe("Sync", () => {
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await sleepUntil(() => prompt.mock.calls.length > 0);
-      expect(prompt.mock.calls[0]?.[0]).toMatchInlineSnapshot(`
-          Object {
-            "choices": Array [
-              "Cancel sync and do nothing",
-              "Merge local files with remote",
-              "Reset local files to remote",
-            ],
-            "message": "Both local and remote files have changed since the last sync. How would you like to proceed?",
-            "name": "action",
-            "type": "list",
-          }
-        `);
+      expect(prompt.mock.lastCall[0]).toMatchInlineSnapshot(`
+        Object {
+          "choices": Array [
+            "Cancel (Ctrl+C)",
+            "Merge local files with remote ones",
+            "Reset local files to remote ones",
+          ],
+          "message": "Remote files have also changed. How would you like to proceed?",
+          "name": "action",
+          "type": "list",
+        }
+      `);
     });
 
     it("asks how to proceed if only local files changed", async () => {
@@ -150,18 +150,18 @@ describe("Sync", () => {
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await sleepUntil(() => prompt.mock.calls.length > 0);
-      expect(prompt.mock.calls[0]?.[0]).toMatchInlineSnapshot(`
-          Object {
-            "choices": Array [
-              "Cancel sync and do nothing",
-              "Merge local files with remote",
-              "Reset local files to remote",
-            ],
-            "message": "Local files have changed since the last sync. How would you like to proceed?",
-            "name": "action",
-            "type": "list",
-          }
-        `);
+      expect(prompt.mock.lastCall[0]).toMatchInlineSnapshot(`
+        Object {
+          "choices": Array [
+            "Cancel (Ctrl+C)",
+            "Merge local files with remote ones",
+            "Reset local files to remote ones",
+          ],
+          "message": "How would you like to proceed?",
+          "name": "action",
+          "type": "list",
+        }
+      `);
     });
 
     it("does not ask how to proceed if only ignored files changed", async () => {
@@ -344,14 +344,14 @@ describe("Sync", () => {
     it.each(["SIGINT", "SIGTERM"])("stops on %s", (signal) => {
       const [, stop] = process.on.mock.calls.find(([name]) => name === signal) ?? [];
       expect(stop).toBeTruthy();
-      expect(sync.stopping).toBeFalse();
+      expect(sync.status).toBe(SyncStatus.RUNNING);
 
       // restore so this.publish?.flush() doesn't throw
       sync.publish.mockRestore();
       stop();
 
       expect(sync.stop).toHaveBeenCalled();
-      expect(sync.stopping).toBeTrue();
+      expect(sync.status).toBe(SyncStatus.STOPPING);
     });
 
     describe("writing", () => {
@@ -487,7 +487,7 @@ describe("Sync", () => {
 
         await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
 
-        expect(sync.stopping).toBeFalse();
+        expect(sync.status).toBe(SyncStatus.RUNNING);
       });
 
       it("does not write empty directories", async () => {
@@ -944,7 +944,7 @@ describe("Sync", () => {
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.complete();
 
-      await sleepUntil(() => logger.debug.mock.lastCall[0] == "⚙️  stopped");
+      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
       expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);
@@ -957,7 +957,7 @@ describe("Sync", () => {
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new Error());
 
-      await sleepUntil(() => logger.debug.mock.lastCall[0] == "⚙️  stopped");
+      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
       expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);
@@ -970,7 +970,7 @@ describe("Sync", () => {
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({ errors: [new GraphQLError("boom")] });
 
-      await sleepUntil(() => logger.debug.mock.lastCall[0] == "⚙️  stopped");
+      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
       expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);
@@ -983,7 +983,7 @@ describe("Sync", () => {
 
       emit.error(new Error());
 
-      await sleepUntil(() => logger.debug.mock.lastCall[0] == "⚙️  stopped");
+      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
       expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);

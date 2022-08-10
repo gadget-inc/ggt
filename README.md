@@ -1,6 +1,9 @@
 <div align="center">
   <h1>ggt</h1>
   The command-line interface for <a href="https://gadget.dev">Gadget</a>
+
+  <br>
+  <i>Warning: this is currently experimental. Expect bugs!</i>
 </div>
 
 # Commands

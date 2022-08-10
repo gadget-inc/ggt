@@ -13,6 +13,7 @@ import Sync, {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
   SyncStatus,
 } from "../../src/commands/sync";
+import { ClientError } from "../../src/lib/errors";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
 import type { PublishFileSyncEventsMutationVariables } from "../../src/__generated__/graphql";
 import { config, testDirPath } from "../jest.setup";
@@ -871,6 +872,8 @@ describe("Sync", () => {
   });
 
   describe("stop", () => {
+    let run: Promise<void>;
+
     beforeEach(async () => {
       const init = sync.init();
 
@@ -880,7 +883,7 @@ describe("Sync", () => {
 
       await init;
 
-      void sync.run();
+      run = sync.run();
 
       jest.spyOn(sync.queue, "onIdle");
     });
@@ -943,9 +946,9 @@ describe("Sync", () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBeTrue();
       expect(sync.watcher.on).toHaveBeenCalledTimes(2);
 
-      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new Error());
+      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
 
-      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
+      await expect(run).rejects.toThrow(ClientError);
       expect(notify).toHaveBeenCalledWith(
         {
           title: "Gadget",
@@ -960,26 +963,13 @@ describe("Sync", () => {
       );
     });
 
-    it("closes all resources when subscription emits complete", async () => {
-      expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBeTrue();
-      expect(sync.watcher.on).toHaveBeenCalledTimes(2);
-
-      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.complete();
-
-      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
-      expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
-      expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
-      expect(sync.watcher.close).toHaveBeenCalledTimes(1);
-      expect(sync.client.dispose).toHaveBeenCalledTimes(1);
-    });
-
     it("closes all resources when subscription emits error", async () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBeTrue();
       expect(sync.watcher.on).toHaveBeenCalledTimes(2);
 
-      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new Error());
+      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
 
-      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
+      await expect(run).rejects.toThrow(ClientError);
       expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);
@@ -992,8 +982,8 @@ describe("Sync", () => {
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({ errors: [new GraphQLError("boom")] });
 
-      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
-      expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
+      await expect(run).rejects.toThrow(ClientError);
+      expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(2);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);
       expect(sync.client.dispose).toHaveBeenCalledTimes(1);
@@ -1003,9 +993,9 @@ describe("Sync", () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBeTrue();
       expect(sync.watcher.on).toHaveBeenCalledTimes(2);
 
-      emit.error(new Error());
+      emit.error(new Error(expect.getState().currentTestName));
 
-      await sleepUntil(() => sync.status == SyncStatus.STOPPED);
+      await expect(run).rejects.toThrow(expect.getState().currentTestName);
       expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);

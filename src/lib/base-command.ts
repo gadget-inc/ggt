@@ -1,5 +1,6 @@
 import type { Config } from "@oclif/core";
 import { Command, Flags } from "@oclif/core";
+import { ExitError } from "@oclif/core/lib/errors";
 import { CLIError } from "@oclif/errors";
 import Debug from "debug";
 import fs from "fs-extra";
@@ -20,6 +21,7 @@ import open from "open";
 import path from "path";
 import { Client } from "./client";
 import { Env } from "./env";
+import { BaseError, UnexpectedError as UnknownError } from "./errors";
 import { ignoreEnoent } from "./fs-utils";
 import type { App, User } from "./types";
 
@@ -188,6 +190,7 @@ export abstract class BaseCommand extends Command {
   ): void {
     notify(
       {
+        title: "Gadget",
         contentImage: path.join(this.config.root, "assets", "favicon-128@4x.png"),
         icon: path.join(this.config.root, "assets", "favicon-128@4x.png"),
         sound: true,
@@ -292,5 +295,22 @@ export abstract class BaseCommand extends Command {
     if (!this.session) return [];
 
     return await this.http(`${ENDPOINT}/auth/api/apps`).json<App[]>();
+  }
+
+  /**
+   * Overrides the default `catch` behavior so we can control how errors are printed to the user. This is called automatically by oclif when
+   * an error is thrown during the `init` or `run` methods.
+   */
+  override catch(cause: Error & { exitCode?: number }): never {
+    const error = cause instanceof BaseError ? cause : new UnknownError(cause);
+    console.error(error.render(this.config));
+
+    // The original implementation of `catch` re-throws the error so that it's caught and printed by oclif's `handle` method. We still want
+    // to end up in oclif's `handle` method, but we don't want it to print the error again so we throw an ExitError instead. This will cause
+    // `handle` to not print the error, but still exit with the correct exit code.
+    //
+    //  catch: https://github.com/oclif/core/blob/12e31ff2288606e583e03bf774a3244f3136cd10/src/command.ts#L261
+    // handle: https://github.com/oclif/core/blob/12e31ff2288606e583e03bf774a3244f3136cd10/src/errors/handle.ts#L15
+    throw new ExitError(process.exitCode ?? cause.exitCode ?? 1);
   }
 }

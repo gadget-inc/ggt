@@ -3,6 +3,7 @@ import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import path from "path";
+import { WalkedTooManyFilesError } from "./errors";
 
 const debug = Debug("ggt:fs-utils");
 
@@ -37,20 +38,22 @@ export class Ignorer {
 export interface WalkDirOptions {
   ignorer?: Ignorer;
   maxFiles?: number;
-  fileCount?: number;
+  _fileCount?: number;
+  _rootDir?: string;
 }
 
 export async function* walkDir(dir: string, options: WalkDirOptions = {}): AsyncGenerator<string> {
   if (options.ignorer?.ignores(dir)) return;
-  if (options.fileCount == null) options.fileCount = 0;
+  if (options._rootDir == null) options._rootDir = dir;
+  if (options._fileCount == null) options._fileCount = 0;
 
   for await (const entry of await fs.opendir(dir)) {
     const filepath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       yield* walkDir(filepath, options);
     } else if (entry.isFile() && !options.ignorer?.ignores(filepath)) {
-      if (options.maxFiles != null && ++options.fileCount >= options.maxFiles) {
-        throw new WalkedTooManyFilesError(options.maxFiles);
+      if (options.maxFiles != null && ++options._fileCount >= options.maxFiles) {
+        throw new WalkedTooManyFilesError(options._rootDir, options.maxFiles);
       }
       yield filepath;
     }
@@ -59,25 +62,19 @@ export async function* walkDir(dir: string, options: WalkDirOptions = {}): Async
 
 export function* walkDirSync(dir: string, options: WalkDirOptions = {}): Generator<string> {
   if (options.ignorer?.ignores(dir)) return;
-  if (options.fileCount == null) options.fileCount = 0;
+  if (options._rootDir == null) options._rootDir = dir;
+  if (options._fileCount == null) options._fileCount = 0;
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const filepath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       yield* walkDirSync(filepath, options);
     } else if (entry.isFile() && !options.ignorer?.ignores(filepath)) {
-      if (options.maxFiles != null && ++options.fileCount >= options.maxFiles) {
-        throw new WalkedTooManyFilesError(options.maxFiles);
+      if (options.maxFiles != null && ++options._fileCount >= options.maxFiles) {
+        throw new WalkedTooManyFilesError(options._rootDir, options.maxFiles);
       }
       yield filepath;
     }
-  }
-}
-
-export class WalkedTooManyFilesError extends Error {
-  constructor(readonly maxFiles: number) {
-    super(`Walked too many files (${maxFiles}).`);
-    this.name = "WalkedTooManyFilesError";
   }
 }
 

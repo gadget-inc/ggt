@@ -1,12 +1,14 @@
 import Debug from "debug";
-import type { ClientOptions, ExecutionResult, Sink, SubscribePayload } from "graphql-ws";
+import type { GraphQLError } from "graphql";
+import type { ClientOptions, ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
-import { has, isFunction, noop } from "lodash";
-import type { JsonObject } from "type-fest";
-import type { CloseEvent } from "ws";
+import { isFunction, noop } from "lodash";
+import type { JsonObject, SetOptional } from "type-fest";
+import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
 import { Env } from "./env";
+import { ClientError } from "./errors";
 
 const debug = Debug("ggt:client");
 
@@ -83,7 +85,7 @@ export class Client {
 
   subscribe<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
     payload: Payload<Data, Variables>,
-    sink: Sink<ExecutionResult<Data, Extensions>>
+    sink: SetOptional<Sink<Data, Extensions>, "complete">
   ): () => void {
     let subscribePayload: SubscribePayload;
     let removeConnectedListener: () => void;
@@ -104,8 +106,9 @@ export class Client {
 
     debug("sending query %s", subscribePayload.query);
     const unsubscribe = this._client.subscribe(subscribePayload, {
-      ...sink,
-      error: (error) => sink.error(new ClientError(subscribePayload, error)),
+      next: (result: ExecutionResult<Data, Extensions>) => sink.next(result),
+      error: (error) => sink.error(new ClientError(subscribePayload, error as Error | GraphQLError[] | CloseEvent | ErrorEvent)),
+      complete: () => sink.complete?.() ?? noop,
     });
 
     return () => {
@@ -114,22 +117,44 @@ export class Client {
     };
   }
 
+  subscribeUnwrap<Data extends JsonObject, Variables extends JsonObject>(
+    payload: Payload<Data, Variables>,
+    sink: { next: (data: Data) => void; error: (error: ClientError) => void }
+  ): () => void {
+    const unsubscribe = this.subscribe(payload, {
+      ...sink,
+      next: (result) => {
+        if (result.errors) {
+          unsubscribe();
+          sink.error(new ClientError(payload, result.errors));
+          return;
+        }
+
+        if (!result.data) {
+          sink.error(new ClientError(payload, "We received a response without data"));
+          unsubscribe();
+          return;
+        }
+
+        sink.next(result.data);
+      },
+    });
+
+    return unsubscribe;
+  }
+
   query<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
     payload: Payload<Data, Variables>
   ): Promise<ExecutionResult<Data, Extensions>> {
     return new Promise((resolve, reject) => {
-      this.subscribe<Data, Variables, Extensions>(payload, {
-        next: resolve,
-        error: (error) => reject(new ClientError(payload, error)),
-        complete: noop,
-      });
+      this.subscribe<Data, Variables, Extensions>(payload, { next: resolve, error: reject });
     });
   }
 
-  async unwrapQuery<Data extends JsonObject, Variables extends JsonObject>(payload: Payload<Data, Variables>): Promise<Data> {
+  async queryUnwrap<Data extends JsonObject, Variables extends JsonObject>(payload: Payload<Data, Variables>): Promise<Data> {
     const result = await this.query(payload);
     if (result.errors) throw new ClientError(payload, result.errors);
-    if (!result.data) throw new ClientError(payload, new Error("No data"));
+    if (!result.data) throw new ClientError(payload, "We received a response without data");
     return result.data;
   }
 
@@ -138,23 +163,23 @@ export class Client {
   }
 }
 
-export class ClientError extends Error {
-  constructor(readonly payload: Payload<any, any>, readonly cause: any) {
-    function isCloseEvent(e: unknown): e is CloseEvent {
-      return has(e, "wasClean");
-    }
-
-    super(isCloseEvent(cause) ? `Unexpected close event: ${cause.code} ${cause.reason}` : "Unexpected GraphQL error");
-    this.name = "ClientError";
-  }
-}
-
-export type Query<Data extends JsonObject, Variables extends JsonObject = JsonObject> = string & {
+export type Query<
+  Data extends JsonObject,
+  Variables extends JsonObject = JsonObject,
+  Extensions extends JsonObject = JsonObject
+> = string & {
   __TData?: Data;
   __TVariables?: Variables;
+  __TExtensions?: Extensions;
 };
 
 export interface Payload<Data extends JsonObject, Variables extends JsonObject> {
   readonly query: Query<Data, Variables>;
   readonly variables?: Variables | (() => Variables) | null;
+}
+
+export interface Sink<Data extends JsonObject, Extensions extends JsonObject> {
+  next(value: ExecutionResult<Data, Extensions>): void;
+  error(error: ClientError): void;
+  complete(): void;
 }

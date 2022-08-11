@@ -1,4 +1,4 @@
-import dedent from "dedent";
+import dedent from "ts-dedent";
 import { BaseCommand } from "../lib/base-command";
 
 export default class Whoami extends BaseCommand {

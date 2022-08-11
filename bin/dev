@@ -15,9 +15,6 @@ require("ts-node").register({ project: path.join(__dirname, "..", "tsconfig.json
 
 const oclif = require("@oclif/core");
 
-// show stack traces
-oclif.settings.debug = true;
-
 process.on("unhandledRejection", oclif.Errors.handle);
 
 oclif.run().then(oclif.flush).catch(oclif.Errors.handle);

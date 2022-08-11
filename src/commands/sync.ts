@@ -1,9 +1,7 @@
 import { Flags } from "@oclif/core";
 import type { OptionFlag } from "@oclif/core/lib/interfaces";
-import { CLIError } from "@oclif/errors";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
-import dedent from "dedent";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { prompt } from "inquirer";
@@ -13,9 +11,10 @@ import normalizePath from "normalize-path";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
+import dedent from "ts-dedent";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
-import { ignoreEnoent, Ignorer, walkDir, WalkedTooManyFilesError } from "../lib/fs-utils";
+import { ignoreEnoent, Ignorer, walkDir } from "../lib/fs-utils";
 import { sleepUntil } from "../lib/sleep";
 import type {
   FileSyncChangedEventInput,
@@ -111,7 +110,7 @@ export default class Sync extends BaseCommand {
 
   publish!: DebouncedFunc<() => void>;
 
-  stop!: (error?: Error) => Promise<void>;
+  stop!: (error?: unknown) => Promise<void>;
 
   relative(to: string): string {
     return path.relative(this.dir, to);
@@ -176,7 +175,7 @@ export default class Sync extends BaseCommand {
       await d.close();
     }
 
-    const { remoteFilesVersion } = await this.client.unwrapQuery({ query: REMOTE_FILES_VERSION_QUERY });
+    const { remoteFilesVersion } = await this.client.queryUnwrap({ query: REMOTE_FILES_VERSION_QUERY });
     const hasRemoteChanges = BigInt(remoteFilesVersion) > BigInt(this.metadata.lastWritten.filesVersion);
 
     const getChangedFiles = async (): Promise<Map<string, Stats>> => {
@@ -216,7 +215,7 @@ export default class Sync extends BaseCommand {
         const files = await getChangedFiles();
 
         // we purposefully don't set the returned remoteFilesVersion here because we haven't processed the in-between versions yet
-        await this.client.unwrapQuery({
+        await this.client.queryUnwrap({
           query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
           variables: {
             input: {
@@ -252,9 +251,12 @@ export default class Sync extends BaseCommand {
   }
 
   async run(): Promise<void> {
-    this.stop = async (error?: Error) => {
+    let error: unknown;
+
+    this.stop = async (e?: unknown) => {
       if (this.status != SyncStatus.RUNNING) return;
 
+      error = e;
       this.debug("stopping");
       this.status = SyncStatus.STOPPING;
 
@@ -263,34 +265,6 @@ export default class Sync extends BaseCommand {
         this.watcher.removeAllListeners();
         this.publish.flush();
         await this.queue.onIdle();
-
-        if (!error) {
-          this.log("Done");
-          return;
-        }
-
-        process.exitCode = 1;
-        this.notify({
-          title: "Gadget",
-          subtitle: "Uh oh!",
-          message: "An error occurred while syncing files",
-        });
-
-        switch (true) {
-          case error.message == "Unexpected server response: 401":
-            this.logout();
-            this.error("Session expired", {
-              suggestions: ["Run `ggt login` to login again"],
-            });
-            break;
-          case error instanceof WalkedTooManyFilesError:
-            this.error("Too many files found while starting", {
-              suggestions: ["Consider adding more files to your .ignore file"],
-            });
-            break;
-          default:
-            this.error(error);
-        }
       } finally {
         await fs.outputJSON(this.absolute(".ggt", "sync.json"), this.metadata, { spaces: 2 });
         await Promise.allSettled([this.watcher.close(), this.client.dispose()]);
@@ -314,21 +288,19 @@ export default class Sync extends BaseCommand {
       });
     }
 
-    const unsubscribe = this.client.subscribe(
+    const unsubscribe = this.client.subscribeUnwrap(
       {
         query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
         variables: () => ({ localFilesVersion: this.metadata.lastWritten.filesVersion }),
       },
       {
-        complete: () => void this.stop(new CLIError("Unexpected disconnect")),
-        error: (error) => void this.stop(error as Error),
-        next: (response) => {
-          if (!response.data?.remoteFileSyncEvents.changed.length && !response.data?.remoteFileSyncEvents.deleted.length) {
-            if (response.errors) void this.stop(new AggregateError(response.errors));
+        error: (error) => void this.stop(error),
+        next: ({ remoteFileSyncEvents }) => {
+          if (!remoteFileSyncEvents.changed.length && !remoteFileSyncEvents.deleted.length) {
             return;
           }
 
-          const { remoteFilesVersion, changed, deleted } = response.data.remoteFileSyncEvents;
+          const { remoteFilesVersion, changed, deleted } = remoteFileSyncEvents;
           const remoteFiles = new Map([...deleted, ...changed].map((e) => [e.path, e]));
 
           void this.queue
@@ -400,7 +372,7 @@ export default class Sync extends BaseCommand {
             this.log("Sent");
             this.logPaths(Array.from(localFiles.keys()), { sep: "→" });
 
-            const data = await this.client.unwrapQuery({
+            const data = await this.client.queryUnwrap({
               query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
               variables: { input: { expectedRemoteFilesVersion: this.metadata.lastWritten.filesVersion, changed, deleted } },
             });
@@ -470,7 +442,15 @@ export default class Sync extends BaseCommand {
 
     this.log("Ready");
     this.status = SyncStatus.RUNNING;
-    await sleepUntil(() => this.status != SyncStatus.RUNNING, { timeout: Infinity });
+
+    await sleepUntil(() => this.status == SyncStatus.STOPPED, { timeout: Infinity });
+
+    if (error) {
+      this.notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
+      throw error;
+    } else {
+      this.log("Done");
+    }
   }
 }
 

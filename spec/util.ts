@@ -1,9 +1,9 @@
 import fs from "fs-extra";
-import type { ExecutionResult, Sink } from "graphql-ws";
+import { noop } from "lodash";
 import normalizePath from "normalize-path";
 import path from "path";
 import type { JsonObject } from "type-fest";
-import type { Payload, Query } from "../src/lib/client";
+import type { Payload, Query, Sink } from "../src/lib/client";
 import { Client } from "../src/lib/client";
 import { walkDir, walkDirSync } from "../src/lib/fs-utils";
 
@@ -30,31 +30,35 @@ export async function setupDir(dir: string, files: Record<string, string>): Prom
   }
 }
 
-export interface MockSubscription<Data, Variables extends JsonObject> {
-  sink: Sink<ExecutionResult<Data>>;
+export interface MockSubscription<Data, Variables extends JsonObject, Extensions extends JsonObject> {
+  sink: Sink<Data, Extensions>;
   payload: Payload<Data, Variables>;
   unsubscribe: () => void;
 }
 
 export interface MockClient extends Client {
-  _subscriptions: Map<string, MockSubscription<JsonObject, JsonObject>>;
-  _subscription<Data extends JsonObject, Variables extends JsonObject>(query: Query<Data, Variables>): MockSubscription<Data, Variables>;
+  _subscriptions: Map<string, MockSubscription<JsonObject, JsonObject, JsonObject>>;
+  _subscription<Data extends JsonObject, Variables extends JsonObject>(
+    query: Query<Data, Variables>
+  ): MockSubscription<Data, Variables, JsonObject>;
 }
 
 export function mockClient(): MockClient {
   const mock = {
     ...Client.prototype,
     _subscriptions: new Map(),
-    _subscription: <Data, Variables extends JsonObject>(query: Query<Data, Variables>) => {
+    _subscription: <Data, Variables extends JsonObject, Extensions extends JsonObject>(query: Query<Data, Variables, Extensions>) => {
       expect(mock._subscriptions.keys()).toContain(query);
       const sub = mock._subscriptions.get(query);
       expect(sub).toBeTruthy();
-      return sub as MockSubscription<Data, Variables>;
+      return sub as MockSubscription<Data, Variables, Extensions>;
     },
   };
 
   jest.spyOn(Client.prototype, "dispose");
   jest.spyOn(Client.prototype, "subscribe").mockImplementation((payload, sink) => {
+    if (!sink.complete) sink.complete = noop;
+
     const unsubscribe = jest.fn();
     jest.spyOn(sink, "next");
     jest.spyOn(sink, "error");

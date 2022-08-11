@@ -1,12 +1,12 @@
 import type { Config } from "@oclif/core";
 import cleanStack from "clean-stack";
 import { HTTPError } from "got/dist/source";
-import type { GraphQLError } from "graphql";
-import { has, isError } from "lodash";
+import { GraphQLError } from "graphql";
+import { has, isError, uniqBy } from "lodash";
 import newGithubIssueUrl from "new-github-issue-url";
 import { serializeError as baseSerializeError } from "serialize-error";
 import dedent from "ts-dedent";
-import type { Writable } from "type-fest";
+import type { SetOptional, Writable } from "type-fest";
 import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
 import type { Payload } from "./client";
@@ -176,7 +176,7 @@ export class ClientError extends BaseError {
   isBug = IsBug.MAYBE;
 
   constructor(readonly payload: Payload<any, any>, override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent) {
-    super("GGT_CLI_CLIENT_ERROR", "An error occurred while communicating with Gadget's GraphQL API");
+    super("GGT_CLI_CLIENT_ERROR", "An error occurred while communicating with Gadget");
 
     // ErrorEvent and CloseEvent aren't serializable, so we reconstruct them into an object. We discard the `target` property because it's large and not that useful
     if (isErrorEvent(cause)) {
@@ -197,32 +197,42 @@ export class ClientError extends BaseError {
 
   override body(_: Config): string {
     if (isGraphQLErrors(this.cause)) {
-      let output = "We received the following GraphQL errors.";
-      for (const error of this.cause) {
-        output += `\n * ${error.message}`;
+      if (this.cause.length > 1) {
+        let output = "Gadget responded with multiple errors:";
+        for (const error of uniqBy(this.cause, "message")) {
+          output += `\n * ${error.message}`;
+        }
+        return output;
+      } else {
+        return dedent`
+          Gadget responded with an unexpected error.
+
+          ${this.cause[0]?.message}
+        `;
       }
-      return output;
-    } else if (isCloseEvent(this.cause)) {
-      return dedent`
-          We received an unexpected CloseEvent from our WebSocket connection.
+    }
 
-          ${this.cause.code} ${this.cause.reason}
-      `;
-    } else if (isErrorEvent(this.cause)) {
-      return dedent`
-          We received the following ErrorEvent from our WebSocket connection.
+    if (isCloseEvent(this.cause)) {
+      return "The connection to Gadget closed unexpectedly.";
+    }
 
-          ${cleanStack(this.cause.error.stack as string)}
+    if (isErrorEvent(this.cause)) {
+      return dedent`
+          The connection to Gadget received an unexpected error.
+
+          ${this.cause.message}
       `;
-    } else if (isError(this.cause)) {
+    }
+
+    if (isError(this.cause)) {
       return dedent`
           An unexpected error occurred.
 
-          ${cleanStack(this.cause.stack as string)}
+          ${this.cause.message}
       `;
-    } else {
-      return this.cause;
     }
+
+    return this.cause;
   }
 
   protected override issueOptions(config: Config): newGithubIssueUrl.Options {
@@ -237,7 +247,7 @@ export class ClientError extends BaseError {
       \`\`\`
     `;
 
-    // mutations can have large payloads, so we don't include them by default
+    // mutations can have large/sensitive payloads, so we don't include them by default
     if (!this.payload.query.trimStart().startsWith("mutation")) {
       options.body += dedent`
 
@@ -269,14 +279,14 @@ export class WalkedTooManyFilesError extends BaseError {
   }
 }
 
-function isCloseEvent(e: any): e is CloseEvent {
-  return has(e, "wasClean");
+function isCloseEvent(e: any): e is SetOptional<CloseEvent, "target"> {
+  return has(e, "type") && has(e, "code") && has(e, "reason") && has(e, "wasClean");
 }
 
-function isErrorEvent(e: any): e is ErrorEvent {
-  return e.type === "error";
+function isErrorEvent(e: any): e is SetOptional<ErrorEvent, "target"> {
+  return has(e, "type") && has(e, "message") && has(e, "error");
 }
 
 function isGraphQLErrors(e: any): e is readonly GraphQLError[] {
-  return Array.isArray(e);
+  return Array.isArray(e) && e.every((e) => e instanceof GraphQLError);
 }

@@ -31,7 +31,7 @@ $ ggt COMMAND
 running command...
 $ ggt --version
 @gadgetinc/ggt/0.0.0 darwin-arm64 node-v18.0.0
-$ ggt --help [COMMAND]
+$ ggt help [COMMAND]
 USAGE
   $ ggt COMMAND
 ...
@@ -110,19 +110,13 @@ Display help for ggt.
 
 ```
 USAGE
-  $ ggt help [COMMAND] [-n]
+  $ ggt help [COMMAND]
 
 ARGUMENTS
-  COMMAND  Command to show help for.
-
-FLAGS
-  -n, --nested-commands  Include all nested commands in the output.
-
-DESCRIPTION
-  Display help for ggt.
+  COMMAND  The command to show help for.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.12/src/commands/help.ts)_
+_See code: [src/commands/help.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0/src/commands/help.ts)_
 
 ### `ggt login`
 

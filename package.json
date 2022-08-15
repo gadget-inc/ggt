@@ -34,7 +34,6 @@
   "dependencies": {
     "@oclif/core": "^1.13.3",
     "@oclif/errors": "^1.3.5",
-    "@oclif/plugin-help": "^5.1.12",
     "@oclif/plugin-plugins": "^2.1.0",
     "chokidar": "^3.5.3",
     "clean-stack": "^3.0.1",
@@ -100,9 +99,7 @@
     "bin": "ggt",
     "dirname": "ggt",
     "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-help"
-    ],
+    "plugins": [],
     "helpClass": "./dist/lib/help",
     "topicSeparator": " ",
     "topics": {}

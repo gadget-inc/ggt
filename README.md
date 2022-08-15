@@ -172,3 +172,13 @@ EXAMPLES
 _See code: [src/commands/whoami.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0/src/commands/whoami.ts)_
 
 <!-- commandsstop -->
+
+## Global Flags
+
+### App
+
+The `--app` flag, shorthand `-A`, specifies the Gadget application the command applies to.
+
+### Debug
+
+The `--debug` flag, shorthand `-D`, enables verbose output for debugging purposes.

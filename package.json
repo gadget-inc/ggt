@@ -20,6 +20,7 @@
   ],
   "scripts": {
     "build": "shx rm -rf dist && tsc -b && oclif readme && prettier --write README.md",
+    "postinstall": "patch-package",
     "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:cspell",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
     "lint:eslint": "eslint --quiet .",
@@ -83,6 +84,7 @@
     "jest-extended": "^3.0.1",
     "nock": "^13.2.9",
     "oclif": "^3.1.2",
+    "patch-package": "^6.4.7",
     "prettier": "^2.7.1",
     "prettier-plugin-packagejson": "^2.2.18",
     "shx": "^0.3.4",
@@ -98,10 +100,10 @@
     "bin": "ggt",
     "dirname": "ggt",
     "commands": "./dist/commands",
-    "repositoryPrefix": "gadget-inc/ggt",
     "plugins": [
       "@oclif/plugin-help"
     ],
+    "helpClass": "./dist/lib/help",
     "topicSeparator": " ",
     "topics": {}
   }

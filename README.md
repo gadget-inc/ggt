@@ -54,11 +54,6 @@ USAGE
 ARGUMENTS
   DIRECTORY  [default: .] The directory to sync files to. If the directory doesn't exist, it will be created.
 
-FILE FLAGS
-  --file-poll-interval=ms        [default: 100] Interval in milliseconds between polling a file's size.
-  --file-push-delay=ms           [default: 100] Delay in milliseconds before pushing files to your app.
-  --file-stability-threshold=ms  [default: 500] Time in milliseconds a file's size must remain the same.
-
 DESCRIPTION
   Sync provides the ability to sync your Gadget application's source code to and from your local
   filesystem. While `ggt sync` is running, local file changes are immediately reflected within

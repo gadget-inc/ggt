@@ -73,6 +73,7 @@ export default class Sync extends BaseCommand {
       helpGroup: "file",
       helpValue: "ms",
       default: 100,
+      hidden: true,
     }) as OptionFlag<number>,
     "file-stability-threshold": Flags.integer({
       name: "file-stability-threshold",
@@ -80,6 +81,7 @@ export default class Sync extends BaseCommand {
       helpGroup: "file",
       helpValue: "ms",
       default: 500,
+      hidden: true,
     }) as OptionFlag<number>,
     "file-poll-interval": Flags.integer({
       name: "file-poll-interval",
@@ -87,6 +89,7 @@ export default class Sync extends BaseCommand {
       helpGroup: "file",
       helpValue: "ms",
       default: 100,
+      hidden: true,
     }) as OptionFlag<number>,
   };
 

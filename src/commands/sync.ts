@@ -309,10 +309,15 @@ export default class Sync extends BaseCommand {
         if (this.status != SyncStatus.RUNNING) return;
 
         this.log(" Stopping... (press Ctrl+C again to force)");
-        process.once("SIGINT", () => {
-          this.log(` Exiting immediately. Note that files may not have finished syncing.`);
-          process.exit(1);
-        });
+
+        // When ggt is run via npx, and the user presses Ctrl+C, npx sends SIGINT twice in quick succession. In order to prevent the second
+        // SIGINT from triggering the force exit listener, we wait a bit before registering it. This is a bit of a hack, but it works.
+        setTimeout(() => {
+          process.once("SIGINT", () => {
+            this.log(" Exiting immediately. Note that files may not have finished syncing.");
+            process.exit(1);
+          });
+        }, 100).unref();
 
         void this.stop();
       });

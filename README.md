@@ -2,8 +2,21 @@
   <h1>ggt</h1>
   The command-line interface for <a href="https://gadget.dev">Gadget</a>
 
-  <br>
-  <br>
+<br>
+<br>
+
+<a href="https://github.com/gadget-inc/ggt/actions/workflows/ci.yml?query=branch%3Amain">
+  <img alt="ci workflow status" src="https://img.shields.io/github/workflow/status/gadget-inc/ggt/ci/main?label=ci">
+</a>
+<a href="https://www.npmjs.com/package/@gadgetinc/ggt">
+  <img alt="npm version" src="https://img.shields.io/npm/v/@gadgetinc/ggt">
+</a>
+<a href="https://discord.gg/nAfNKMdwKh">
+  <img alt="discord chat" src="https://img.shields.io/discord/836317518595096598">
+</a>
+
+<br>
+<br>
 
 <i>Status: alpha -- please report any issues to the [issue tracker](https://github.com/gadget-inc/ggt/issues?q=is%3Aissue+is%3Aopen) here so we can fix them!</i>
 

@@ -28,10 +28,16 @@ import type { App, User } from "./types";
 export const ENDPOINT = Env.productionLike ? "https://app.gadget.dev" : "https://app.ggt.dev:3000";
 
 export abstract class BaseCommand extends Command {
+  /**
+   * Determines how high the command is listed in the README. The lower the number, the higher the command is listed. Equal numbers are
+   * sorted alphabetically.
+   */
+  static priority = Infinity;
+
   static override globalFlags = {
     app: Flags.string({
       char: "A",
-      summary: "The Gadget app this command applies to.",
+      summary: "The Gadget application this command applies to.",
       helpGroup: "global",
       helpValue: "name",
       parse: (value) => {

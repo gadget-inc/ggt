@@ -1,8 +1,9 @@
-oclif
 commandsstop
 gadgetinc
 linkcode
 notificationcenter
 notifysend
+oclif
 packagejson
 typecheck
+usagestop

@@ -28,9 +28,36 @@ import type {
 } from "../__generated__/graphql";
 
 export default class Sync extends BaseCommand {
-  static override summary = "Sync your Gadget app's source files to your local file system.";
+  static override priority = 1;
+
+  static override summary = "Sync your Gadget application's source code to and from your local filesystem.";
 
   static override usage = "sync --app <name> [DIRECTORY]";
+
+  static override description = dedent`
+    Sync provides the ability to sync your Gadget application's source code to and from your local
+    filesystem. While \`ggt sync\` is running, local file changes are immediately reflected within
+    Gadget, while files that are changed remotely are immediately saved to your local filesystem.
+
+    Use cases for this include:
+      * Developing locally with your own editor like VSCode (https://code.visualstudio.com/)
+      * Storing your source code in a Git repository like GitHub (https://github.com/)
+
+    Sync includes the concept of a \`.ignore\` file. This file can contain a list of files and
+    directories that won't be sent to Gadget when syncing.
+
+    The following files and directories are always ignored:
+      * .gadget
+      * .ggt
+      * .git
+      * node_modules
+
+    Note:
+      * Sync does not support node_modules, so you will have to run \`npm install\` yourself.
+      * Since file changes are immediately reflected in Gadget, avoid the following while \`ggt sync\` is running:
+          * Deleting all your files
+          * Moving all your files to a different directory
+  `;
 
   static override args = [
     {
@@ -46,6 +73,7 @@ export default class Sync extends BaseCommand {
       helpGroup: "file",
       helpValue: "ms",
       default: 100,
+      hidden: true,
     }) as OptionFlag<number>,
     "file-stability-threshold": Flags.integer({
       name: "file-stability-threshold",
@@ -53,6 +81,7 @@ export default class Sync extends BaseCommand {
       helpGroup: "file",
       helpValue: "ms",
       default: 500,
+      hidden: true,
     }) as OptionFlag<number>,
     "file-poll-interval": Flags.integer({
       name: "file-poll-interval",
@@ -60,6 +89,7 @@ export default class Sync extends BaseCommand {
       helpGroup: "file",
       helpValue: "ms",
       default: 100,
+      hidden: true,
     }) as OptionFlag<number>,
   };
 

@@ -1,6 +1,6 @@
 {
   "name": "@gadgetinc/ggt",
-  "version": "0.0.0",
+  "version": "0.0.0-alpha.0",
   "description": "The command-line interface for Gadget",
   "homepage": "https://github.com/gadget-inc/ggt",
   "bugs": "https://github.com/gadget-inc/ggt/issues",
@@ -34,7 +34,6 @@
   "dependencies": {
     "@oclif/core": "^1.13.3",
     "@oclif/errors": "^1.3.5",
-    "@oclif/plugin-plugins": "^2.1.0",
     "chokidar": "^3.5.3",
     "clean-stack": "^3.0.1",
     "debug": "^4.3.4",
@@ -52,12 +51,14 @@
     "open": "^8.4.0",
     "p-map": "^4.0.0",
     "p-queue": "^6.6.2",
+    "patch-package": "^6.4.7",
     "serialize-error": "^8.1.0",
     "ts-dedent": "^2.2.0",
     "ws": "^8.8.1"
   },
   "devDependencies": {
     "@gadgetinc/prettier-config": "*",
+    "@oclif/plugin-plugins": "^2.1.0",
     "@oclif/test": "^2.1.0",
     "@swc/core": "^1.2.223",
     "@swc/helpers": "^0.4.3",
@@ -83,7 +84,6 @@
     "jest-extended": "^3.0.1",
     "nock": "^13.2.9",
     "oclif": "^3.1.2",
-    "patch-package": "^6.4.7",
     "prettier": "^2.7.1",
     "prettier-plugin-packagejson": "^2.2.18",
     "shx": "^0.3.4",

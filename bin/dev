@@ -3,7 +3,7 @@
 const path = require("path");
 
 process.env.NODE_ENV = "development";
-process.env.GGT_ENV = "development";
+process.env.GGT_ENV ??= "development";
 
 // store files in the project's tmp directory
 // https://github.com/oclif/core/blob/main/src/config/config.ts#L171

@@ -2,6 +2,7 @@ import { Flags } from "@oclif/core";
 import type { OptionFlag } from "@oclif/core/lib/interfaces";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
+import execa from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { prompt } from "inquirer";
@@ -13,8 +14,10 @@ import PQueue from "p-queue";
 import path from "path";
 import dedent from "ts-dedent";
 import { TextDecoder, TextEncoder } from "util";
+import which from "which";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
+import { YarnNotFoundError } from "../lib/errors";
 import { ignoreEnoent, Ignorer, walkDir } from "../lib/fs-utils";
 import { sleepUntil } from "../lib/sleep";
 import type {
@@ -54,7 +57,7 @@ export default class Sync extends BaseCommand {
       * node_modules
 
     Note:
-      * Sync does not support node_modules, so you will have to run \`npm install\` yourself.
+      * Gadget applications only support installing dependencies with Yarn 1 (https://classic.yarnpkg.com/lang/en/).
       * Since file changes are immediately reflected in Gadget, avoid the following while \`ggt sync\` is running:
           * Deleting all your files
           * Moving all your files to a different directory
@@ -195,6 +198,11 @@ export default class Sync extends BaseCommand {
     });
 
     this.debug("starting");
+
+    if (!which.sync("yarn", { nothrow: true })) {
+      throw new YarnNotFoundError();
+    }
+
     await fs.ensureDir(this.dir);
 
     try {
@@ -357,6 +365,7 @@ export default class Sync extends BaseCommand {
                   if ("content" in file) {
                     await fs.ensureDir(path.dirname(filepath), { mode: 0o755 });
                     if (!file.path.endsWith("/")) await fs.writeFile(filepath, this.encoder.encode(file.content), { mode: file.mode });
+                    if (filepath == this.absolute("yarn.lock")) await execa("yarn", ["install"], { cwd: this.dir });
                   } else {
                     await fs.remove(filepath);
                   }

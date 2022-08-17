@@ -12,6 +12,7 @@ import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
 import dedent from "ts-dedent";
+import { TextDecoder, TextEncoder } from "util";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
 import { ignoreEnoent, Ignorer, walkDir } from "../lib/fs-utils";
@@ -122,6 +123,10 @@ export default class Sync extends BaseCommand {
   dir!: string;
 
   recentWrites = new Set();
+
+  encoder = new TextEncoder();
+
+  decoder = new TextDecoder();
 
   filePushDelay!: number;
 
@@ -351,7 +356,7 @@ export default class Sync extends BaseCommand {
 
                   if ("content" in file) {
                     await fs.ensureDir(path.dirname(filepath), { mode: 0o755 });
-                    if (!file.path.endsWith("/")) await fs.writeFile(filepath, file.content, { mode: file.mode });
+                    if (!file.path.endsWith("/")) await fs.writeFile(filepath, this.encoder.encode(file.content), { mode: file.mode });
                   } else {
                     await fs.remove(filepath);
                   }
@@ -389,7 +394,7 @@ export default class Sync extends BaseCommand {
                   changed.push({
                     path: this.normalize(filepath),
                     mode: file.mode,
-                    content: await fs.readFile(filepath, "utf-8"),
+                    content: this.decoder.decode(await fs.readFile(filepath)),
                   });
                 } catch (error) {
                   // A file could have been changed and then deleted before we process the change event, so the readFile above will raise

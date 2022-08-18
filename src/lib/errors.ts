@@ -262,6 +262,26 @@ export class ClientError extends BaseError {
   }
 }
 
+export class YarnNotFoundError extends BaseError {
+  isBug = IsBug.NO;
+
+  constructor() {
+    super("GGT_CLI_YARN_NOT_FOUND", "Yarn not found");
+  }
+
+  protected body(_: Config): string {
+    return dedent`
+      Yarn is required to sync your application.
+
+      Please install Yarn by running:
+
+        $ npm install --global yarn
+
+      For more information, see: https://classic.yarnpkg.com/en/docs/install
+    `;
+  }
+}
+
 export class WalkedTooManyFilesError extends BaseError {
   isBug = IsBug.NO;
 

@@ -1,6 +1,8 @@
 commandsstop
+execa
 gadgetinc
 linkcode
+nothrow
 notificationcenter
 notifysend
 oclif

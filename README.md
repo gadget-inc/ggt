@@ -71,6 +71,9 @@ USAGE
 ARGUMENTS
   DIRECTORY  [default: .] The directory to sync files to. If the directory doesn't exist, it will be created.
 
+FLAGS
+  --force  Sync even if we can't determine the state of your local files relative to your remote ones.
+
 DESCRIPTION
   Sync provides the ability to sync your Gadget application's source code to and from your local
   filesystem. While `ggt sync` is running, local file changes are immediately reflected within
@@ -90,7 +93,7 @@ DESCRIPTION
     * node_modules
 
   Note:
-    * Sync does not support node_modules, so you will have to run `npm install` yourself.
+    * Gadget applications only support installing dependencies with Yarn 1 (https://classic.yarnpkg.com/lang/en/).
     * Since file changes are immediately reflected in Gadget, avoid the following while `ggt sync` is running:
         * Deleting all your files
         * Moving all your files to a different directory
@@ -115,7 +118,7 @@ EXAMPLES
     $ ggt sync --app https://my-app.gadget.app/edit
 ```
 
-_See code: [src/commands/sync.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.1/src/commands/sync.ts)_
+_See code: [src/commands/sync.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.2/src/commands/sync.ts)_
 
 ### `ggt help [COMMAND]`
 
@@ -129,7 +132,7 @@ ARGUMENTS
   COMMAND  The command to show help for.
 ```
 
-_See code: [src/commands/help.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.1/src/commands/help.ts)_
+_See code: [src/commands/help.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.2/src/commands/help.ts)_
 
 ### `ggt login`
 
@@ -145,7 +148,7 @@ EXAMPLES
   Hello, Jane Doe (jane@example.com)
 ```
 
-_See code: [src/commands/login.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.1/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.2/src/commands/login.ts)_
 
 ### `ggt logout`
 
@@ -160,7 +163,7 @@ EXAMPLES
   Goodbye
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.1/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.2/src/commands/logout.ts)_
 
 ### `ggt whoami`
 
@@ -175,7 +178,7 @@ EXAMPLES
   You are logged in as Jane Doe (jane@example.com)
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.1/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.2/src/commands/whoami.ts)_
 
 <!-- commandsstop -->
 

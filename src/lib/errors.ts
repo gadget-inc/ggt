@@ -40,6 +40,7 @@ export abstract class BaseError extends Error {
   constructor(code: string, message: string) {
     super(message);
     this.code = code;
+    Error.captureStackTrace(this, this.constructor);
   }
 
   /**

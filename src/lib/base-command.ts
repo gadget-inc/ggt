@@ -60,6 +60,11 @@ export abstract class BaseCommand extends Command {
   debugEnabled = false;
 
   /**
+   * The original arguments passed to the command. Includes global flags.
+   */
+  originalArgv: string[];
+
+  /**
    * Determines whether the command requires the user to be logged in or not.
    * If true and the user is not logged in, the user will be prompted to login before the command is run.
    */
@@ -93,6 +98,8 @@ export abstract class BaseCommand extends Command {
 
   constructor(argv: string[], config: Config) {
     super(argv, config);
+
+    this.originalArgv = argv;
 
     this.http = got.extend({
       hooks: {
@@ -130,7 +137,7 @@ export abstract class BaseCommand extends Command {
     await super.init();
     const { flags, argv } = await this.parse({ flags: BaseCommand.globalFlags, strict: false });
 
-    // remove global flags from argv
+    // remove global flags from argv so that when the implementation calls parse, it doesn't get confused by them
     this.argv = argv;
 
     if (flags.debug) {

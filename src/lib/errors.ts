@@ -2,7 +2,7 @@ import type { Config } from "@oclif/core";
 import cleanStack from "clean-stack";
 import { HTTPError } from "got/dist/source";
 import { GraphQLError } from "graphql";
-import { has, isError, uniqBy } from "lodash";
+import { isArray, isBoolean, isError, isNil, isNumber, isString, uniqBy } from "lodash";
 import newGithubIssueUrl from "new-github-issue-url";
 import { serializeError as baseSerializeError } from "serialize-error";
 import dedent from "ts-dedent";
@@ -310,13 +310,13 @@ export class InvalidSyncFileError extends BaseError {
 }
 
 function isCloseEvent(e: any): e is SetOptional<CloseEvent, "target"> {
-  return has(e, "type") && has(e, "code") && has(e, "reason") && has(e, "wasClean");
+  return !isNil(e) && isString(e.type) && isNumber(e.code) && isString(e.reason) && isBoolean(e.wasClean);
 }
 
 function isErrorEvent(e: any): e is SetOptional<ErrorEvent, "target"> {
-  return has(e, "type") && has(e, "message") && has(e, "error");
+  return !isNil(e) && isString(e.type) && isString(e.message) && isError(e.error);
 }
 
 function isGraphQLErrors(e: any): e is readonly GraphQLError[] {
-  return Array.isArray(e) && e.every((e) => e instanceof GraphQLError);
+  return isArray(e) && e.every((e) => !isNil(e) && isString(e.message) && isArray(e.locations) && isArray(e.path));
 }

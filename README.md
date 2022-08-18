@@ -118,7 +118,7 @@ EXAMPLES
     $ ggt sync --app https://my-app.gadget.app/edit
 ```
 
-_See code: [src/commands/sync.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.3/src/commands/sync.ts)_
+_See code: [src/commands/sync.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.4/src/commands/sync.ts)_
 
 ### `ggt help [COMMAND]`
 
@@ -132,7 +132,7 @@ ARGUMENTS
   COMMAND  The command to show help for.
 ```
 
-_See code: [src/commands/help.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.3/src/commands/help.ts)_
+_See code: [src/commands/help.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.4/src/commands/help.ts)_
 
 ### `ggt login`
 
@@ -148,7 +148,7 @@ EXAMPLES
   Hello, Jane Doe (jane@example.com)
 ```
 
-_See code: [src/commands/login.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.3/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.4/src/commands/login.ts)_
 
 ### `ggt logout`
 
@@ -163,7 +163,7 @@ EXAMPLES
   Goodbye
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.3/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.4/src/commands/logout.ts)_
 
 ### `ggt whoami`
 
@@ -178,7 +178,7 @@ EXAMPLES
   You are logged in as Jane Doe (jane@example.com)
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.3/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/gadget-inc/ggt/blob/v0.0.0-alpha.4/src/commands/whoami.ts)_
 
 <!-- commandsstop -->
 

@@ -6,7 +6,7 @@ import fs from "fs-extra";
 import path from "path";
 
 // tests in CI take longer to run than in local development
-jest.setTimeout(process.env["CI"] ? 5000 : 1000);
+jest.setTimeout(process.env["CI"] ? 10_000 : 1000);
 
 const debug = Debug("ggt:test");
 

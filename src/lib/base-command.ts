@@ -60,9 +60,13 @@ export abstract class BaseCommand extends Command {
   debugEnabled = false;
 
   /**
-   * The original arguments passed to the command. Includes global flags.
+   * The selected application.
+   *
+   * Will be `undefined` if the user is not logged in or if the user has not selected an app.
+   *
+   * @see {@linkcode requireApp requireApp}
    */
-  originalArgv: string[];
+  app!: string;
 
   /**
    * Determines whether the command requires the user to be logged in or not.
@@ -98,8 +102,6 @@ export abstract class BaseCommand extends Command {
 
   constructor(argv: string[], config: Config) {
     super(argv, config);
-
-    this.originalArgv = argv;
 
     this.http = got.extend({
       hooks: {
@@ -176,6 +178,8 @@ export abstract class BaseCommand extends Command {
         choices: await this.getApps().then((apps) => apps.map((app) => app.slug)),
       }));
     }
+
+    this.app = app;
 
     this.client = new Client(app, {
       ws: {

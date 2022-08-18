@@ -17,8 +17,8 @@ import { TextDecoder, TextEncoder } from "util";
 import which from "which";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
-import { YarnNotFoundError } from "../lib/errors";
-import { ignoreEnoent, Ignorer, walkDir } from "../lib/fs-utils";
+import { InvalidSyncFileError, YarnNotFoundError } from "../lib/errors";
+import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../lib/fs-utils";
 import { sleepUntil } from "../lib/sleep";
 import type {
   FileSyncChangedEventInput,
@@ -72,6 +72,10 @@ export default class Sync extends BaseCommand {
   ];
 
   static override flags = {
+    force: Flags.boolean({
+      summary: "Sync even if we can't determine the state of your local files relative to your remote ones.",
+      default: false,
+    }),
     "file-push-delay": Flags.integer({
       summary: "Delay in milliseconds before pushing files to your app.",
       helpGroup: "file",
@@ -205,17 +209,14 @@ export default class Sync extends BaseCommand {
 
     await fs.ensureDir(this.dir);
 
-    try {
-      this.metadata = await fs.readJson(this.absolute(".ggt", "sync.json"));
-    } catch (error) {
-      // use defaults if the metadata file doesn't exist
-      ignoreEnoent(error);
-
-      const d = await fs.opendir(this.dir);
-      if ((await d.read()) != null) {
-        this.warn("Could not find .ggt/sync.json in a non empty directory");
+    if (!(await isEmptyDir(this.dir))) {
+      try {
+        this.metadata = await fs.readJson(this.absolute(".ggt", "sync.json"));
+      } catch (error) {
+        if (!flags.force) {
+          throw new InvalidSyncFileError(error, this.dir, this.app);
+        }
       }
-      await d.close();
     }
 
     const { remoteFilesVersion } = await this.client.queryUnwrap({ query: REMOTE_FILES_VERSION_QUERY });
@@ -223,7 +224,7 @@ export default class Sync extends BaseCommand {
 
     const getChangedFiles = async (): Promise<Map<string, Stats>> => {
       const files = new Map();
-      for await (const filepath of walkDir(this.dir, { ignorer: this.ignorer, maxFiles: 100 })) {
+      for await (const filepath of walkDir(this.dir, { ignorer: this.ignorer })) {
         const stats = await fs.stat(filepath);
         if (stats.mtime.getTime() > this.metadata.lastWritten.mtime) {
           files.set(this.absolute(filepath), stats);

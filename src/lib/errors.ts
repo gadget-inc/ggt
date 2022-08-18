@@ -282,20 +282,29 @@ export class YarnNotFoundError extends BaseError {
   }
 }
 
-export class WalkedTooManyFilesError extends BaseError {
-  isBug = IsBug.NO;
+export class InvalidSyncFileError extends BaseError {
+  isBug = IsBug.MAYBE;
 
-  constructor(readonly dir: string, readonly maxFiles: number) {
-    super("GGT_CLI_TOO_MANY_FILES", "Found too many files while scanning directory");
+  constructor(override readonly cause: unknown, readonly dir: string, readonly app: string) {
+    super("GGT_CLI_INVALID_SYNC_FILE", "The .ggt/sync.json file was invalid or not found");
   }
 
-  override body(_: Config): string {
+  protected body(config: Config): string {
     return dedent`
-        The following directory has over ${this.maxFiles} non-ignored files inside of it.
+      We failed to read the Gadget metadata file in this directory:
+
         ${this.dir}
 
-        Consider adding more entries to your \`.ignore\` file.
-      `;
+      If you're running \`ggt sync\` for the first time, we recommend using an empty directory such as \`~/gadget/${this.app}\`.
+
+      Otherwise, if you're sure you want to sync the contents of \`${
+        this.dir
+      }\` to Gadget, you can run the command again with the \`--force\` flag:
+
+        $ ${config.bin} ${process.argv.slice(2).join(" ")} --force
+
+      You will be prompted to either merge your local files with your remote ones or reset your local files to your remote ones.
+    `;
   }
 }
 

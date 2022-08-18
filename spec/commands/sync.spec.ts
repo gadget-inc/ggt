@@ -15,7 +15,7 @@ import Sync, {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
   SyncStatus,
 } from "../../src/commands/sync";
-import { ClientError, YarnNotFoundError } from "../../src/lib/errors";
+import { ClientError, InvalidSyncFileError, YarnNotFoundError } from "../../src/lib/errors";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
 import type { PublishFileSyncEventsMutationVariables } from "../../src/__generated__/graphql";
 import { config, testDirPath } from "../jest.setup";
@@ -111,7 +111,7 @@ describe("Sync", () => {
       expect(sync.metadata).toEqual(metadata);
     });
 
-    it("uses default metadata if .ggt/sync.json does not exist", async () => {
+    it("uses default metadata if .ggt/sync.json does not exist and `dir` is empty", async () => {
       const defaultMetadata = { lastWritten: { filesVersion: "0", mtime: 0 } };
 
       void sync.init();
@@ -120,15 +120,37 @@ describe("Sync", () => {
       expect(sync.metadata).toEqual(defaultMetadata);
     });
 
-    it("logs a warning if .ggt/sync.json does not exist and the directory is not empty", async () => {
+    it("throws InvalidSyncFileError if .ggt/sync.json does not exist and `dir` is not empty", async () => {
       await setupDir(dir, {
         "foo.js": "foo",
       });
 
-      void sync.init();
+      await expect(sync.init()).rejects.toThrow(InvalidSyncFileError);
+    });
+
+    it("throws InvalidSyncFileError if .ggt/sync.json is invalid and `dir` is not empty", async () => {
+      await setupDir(dir, {
+        // has trailing comma
+        ".ggt/sync.json": '{"lastWritten":{"filesVersion":"77","mtime":1658153625236,}}',
+      });
+
+      await expect(sync.init()).rejects.toThrow(InvalidSyncFileError);
+    });
+
+    it("does not throw InvalidSyncFileError if .ggt/sync.json is invalid, `dir` is not empty, and `--force` is passed", async () => {
+      await setupDir(dir, {
+        // has trailing comma
+        ".ggt/sync.json": '{"lastWritten":{"filesVersion":"77","mtime":1658153625236,}}',
+      });
+
+      sync.argv.push("--force");
+      const init = sync.init();
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      expect(sync.warn.mock.calls[0]?.[0]).toMatchInlineSnapshot(`"Could not find .ggt/sync.json in a non empty directory"`);
+      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
+      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+
+      await expect(init).resolves.toBeUndefined();
     });
 
     it("asks how to proceed if both local and remote files changed", async () => {

@@ -1,5 +1,5 @@
 import type { Config } from "@oclif/core";
-import { Command, Flags } from "@oclif/core";
+import { Command, Flags, settings } from "@oclif/core";
 import { ExitError } from "@oclif/core/lib/errors";
 import { CLIError } from "@oclif/errors";
 import Debug from "debug";
@@ -53,11 +53,6 @@ export abstract class BaseCommand extends Command {
       default: false,
     }),
   };
-
-  /**
-   * Indicates whether the command is being run with the `-D/--debug` flag.
-   */
-  debugEnabled = false;
 
   /**
    * The selected application.
@@ -117,6 +112,13 @@ export abstract class BaseCommand extends Command {
     });
   }
 
+  /**
+   * Indicates whether the command is being run with the `-D/--debug` flag.
+   */
+  get debugEnabled(): boolean {
+    return !!settings.debug;
+  }
+
   get session(): string | undefined {
     try {
       return (this._session ??= fs.readFileSync(path.join(this.config.configDir, "session.txt"), "utf-8"));
@@ -143,7 +145,7 @@ export abstract class BaseCommand extends Command {
     this.argv = argv;
 
     if (flags.debug) {
-      this.debugEnabled = true;
+      settings.debug = true;
       Debug.enable(`${this.config.bin}:*`);
     }
 

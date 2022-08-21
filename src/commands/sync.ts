@@ -344,12 +344,7 @@ export default class Sync extends BaseCommand {
       },
       {
         error: (error) => void this.stop(error),
-        next: ({ remoteFileSyncEvents }) => {
-          if (!remoteFileSyncEvents.changed.length && !remoteFileSyncEvents.deleted.length) {
-            return;
-          }
-
-          const { remoteFilesVersion, changed, deleted } = remoteFileSyncEvents;
+        next: ({ remoteFileSyncEvents: { remoteFilesVersion, changed, deleted } }) => {
           const remoteFiles = new Map([...deleted, ...changed].map((e) => [e.path, e]));
 
           void this.queue

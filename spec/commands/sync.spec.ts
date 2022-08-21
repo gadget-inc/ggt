@@ -442,6 +442,24 @@ describe("Sync", () => {
         await expectDir(dir, {});
       });
 
+      it("updates `metadata.lastWritten.filesVersion` even if nothing changed", async () => {
+        expect(sync.metadata.lastWritten.filesVersion).toBe("0");
+
+        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+          data: {
+            remoteFileSyncEvents: {
+              remoteFilesVersion: "1",
+              changed: [],
+              deleted: [],
+            },
+          },
+        });
+
+        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
+
+        expect(sync.metadata.lastWritten.filesVersion).toBe("1");
+      });
+
       it("adds changed and deleted files to recentWrites", async () => {
         client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {

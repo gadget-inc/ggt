@@ -21,15 +21,12 @@
   "scripts": {
     "build": "rimraf dist && tsc -b && oclif readme && prettier --write README.md",
     "postinstall": "patch-package",
-    "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:cspell",
+    "lint": "concurrently --group 'npm:lint:*'",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
     "lint:eslint": "eslint --quiet .",
-    "lint:eslint:fix": "eslint --quiet --fix .",
-    "lint:fix": "npm run lint:prettier:fix && npm run lint:eslint:fix",
     "lint:prettier": "prettier --check .",
-    "lint:prettier:fix": "prettier --check --write .",
-    "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "lint:typescript": "tsc --noEmit",
+    "test": "jest"
   },
   "dependencies": {
     "@oclif/core": "^1.13.3",
@@ -77,6 +74,7 @@
     "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.32.0",
     "@typescript-eslint/parser": "^5.32.0",
+    "concurrently": "^7.3.0",
     "cspell": "^6.6.0",
     "eslint": "^8.21.0",
     "eslint-config-prettier": "^8.5.0",

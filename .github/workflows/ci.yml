@@ -15,7 +15,6 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
-      - run: npm run typecheck
 
   test:
     strategy:

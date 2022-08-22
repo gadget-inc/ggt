@@ -19,14 +19,16 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "rimraf dist && tsc -b && oclif readme && prettier --write README.md",
+    "build": "rimraf dist && tsc --build",
     "postinstall": "patch-package",
     "lint": "concurrently --group 'npm:lint:*'",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
     "lint:eslint": "eslint --quiet .",
     "lint:prettier": "prettier --check .",
     "lint:typescript": "tsc --noEmit",
-    "test": "jest"
+    "readme": "oclif readme && prettier --write README.md",
+    "test": "jest",
+    "version": "npm run readme && git add README.md"
   },
   "dependencies": {
     "@oclif/core": "^1.13.3",

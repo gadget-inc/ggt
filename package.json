@@ -59,6 +59,7 @@
   },
   "devDependencies": {
     "@gadgetinc/prettier-config": "*",
+    "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.1.0",
     "@oclif/test": "^2.1.0",
     "@swc/core": "^1.2.223",
@@ -102,7 +103,9 @@
     "bin": "ggt",
     "dirname": "ggt",
     "commands": "./dist/commands",
-    "plugins": [],
+    "plugins": [
+      "@oclif/plugin-not-found"
+    ],
     "helpClass": "./dist/lib/help",
     "topicSeparator": " ",
     "topics": {}

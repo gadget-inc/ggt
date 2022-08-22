@@ -41,6 +41,7 @@
       },
       "devDependencies": {
         "@gadgetinc/prettier-config": "*",
+        "@oclif/plugin-not-found": "^2.3.1",
         "@oclif/plugin-plugins": "^2.1.0",
         "@oclif/test": "^2.1.0",
         "@swc/core": "^1.2.223",
@@ -2015,8 +2016,9 @@
     },
     "node_modules/@oclif/plugin-not-found": {
       "version": "2.3.1",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.1.tgz",
+      "integrity": "sha512-AeNBw+zSkRpePmpXO8xlL072VF2/R2yK3qsVs/JF26Yw1w77TWuRTdFR+hFotJtFCJ4QYqhNtKSjdryCO9AXsA==",
       "dev": true,
-      "license": "MIT",
       "dependencies": {
         "@oclif/color": "^1.0.0",
         "@oclif/core": "^1.2.1",
@@ -13457,6 +13459,8 @@
     },
     "@oclif/plugin-not-found": {
       "version": "2.3.1",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.1.tgz",
+      "integrity": "sha512-AeNBw+zSkRpePmpXO8xlL072VF2/R2yK3qsVs/JF26Yw1w77TWuRTdFR+hFotJtFCJ4QYqhNtKSjdryCO9AXsA==",
       "dev": true,
       "requires": {
         "@oclif/color": "^1.0.0",

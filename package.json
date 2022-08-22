@@ -19,7 +19,7 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "shx rm -rf dist && tsc -b && oclif readme && prettier --write README.md",
+    "build": "rimraf dist && tsc -b && oclif readme && prettier --write README.md",
     "postinstall": "patch-package",
     "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:cspell",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
@@ -89,7 +89,7 @@
     "oclif": "^3.1.2",
     "prettier": "^2.7.1",
     "prettier-plugin-packagejson": "^2.2.18",
-    "shx": "^0.3.4",
+    "rimraf": "^3.0.2",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "type-fest": "^2.18.0",

@@ -22,13 +22,6 @@ jobs:
       - run: npm ci
       - run: npm run build
       - uses: JS-DevTools/npm-publish@v1
-        id: publish
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
-      - if: steps.publish.outputs.type != 'none'
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git tag v"${{ steps.publish.outputs.version }}"
-          git push origin v"${{ steps.publish.outputs.version }}"

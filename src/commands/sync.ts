@@ -349,6 +349,12 @@ export default class Sync extends BaseCommand {
 
           void this.queue
             .add(async () => {
+              if (!remoteFiles.size) {
+                // we still need to update lastWritten.filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
+                this.metadata.lastWritten.filesVersion = remoteFilesVersion;
+                return;
+              }
+
               this.log("Received");
               this.logPaths(Array.from(remoteFiles.keys()), { sep: "←" });
 

@@ -272,7 +272,7 @@ export default class Sync extends BaseCommand {
                 return {
                   path: this.normalize(filepath),
                   mode: stats.mode,
-                  content: await fs.readFile(filepath, "utf-8"),
+                  content: this.decoder.decode(await fs.readFile(filepath)),
                 };
               }),
               deleted: [],

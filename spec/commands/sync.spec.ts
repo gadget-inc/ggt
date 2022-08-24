@@ -15,10 +15,11 @@ import Sync, {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
   SyncStatus,
 } from "../../src/commands/sync";
+import { config } from "../../src/lib/config";
 import { ClientError, InvalidSyncFileError, YarnNotFoundError } from "../../src/lib/errors";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
 import type { PublishFileSyncEventsMutationVariables } from "../../src/__generated__/graphql";
-import { config, testDirPath } from "../jest.setup";
+import { testDirPath } from "../jest.setup";
 import type { MockClient } from "../util";
 import { expectDir, expectDirSync, mockClient, setupDir } from "../util";
 

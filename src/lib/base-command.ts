@@ -20,6 +20,7 @@ import type WindowsToaster from "node-notifier/notifiers/toaster";
 import open from "open";
 import path from "path";
 import { Client } from "./client";
+import { setConfig } from "./config";
 import { Env } from "./env";
 import { BaseError, UnexpectedError as UnknownError } from "./errors";
 import { ignoreEnoent } from "./fs-utils";
@@ -148,6 +149,8 @@ export abstract class BaseCommand extends Command {
       settings.debug = true;
       Debug.enable(`${this.config.bin}:*`);
     }
+
+    setConfig(this.config);
 
     if (!this.requireUser && !this.requireApp) {
       return;

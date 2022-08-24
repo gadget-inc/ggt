@@ -8,8 +8,8 @@ import nock from "nock";
 import open from "open";
 import path from "path";
 import { BaseCommand, ENDPOINT } from "../../src/lib/base-command";
+import { config } from "../../src/lib/config";
 import { sleepUntil } from "../../src/lib/sleep";
-import { config } from "../jest.setup";
 
 class Base extends BaseCommand {
   run = jest.fn();

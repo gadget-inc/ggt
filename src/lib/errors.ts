@@ -1,7 +1,7 @@
 import type { Config } from "@oclif/core";
 import cleanStack from "clean-stack";
 import { HTTPError } from "got/dist/source";
-import { GraphQLError } from "graphql";
+import type { GraphQLError } from "graphql";
 import { isArray, isBoolean, isError, isNil, isNumber, isString, uniqBy } from "lodash";
 import newGithubIssueUrl from "new-github-issue-url";
 import { serializeError as baseSerializeError } from "serialize-error";

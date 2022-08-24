@@ -3,7 +3,6 @@ import { Command, Flags, settings } from "@oclif/core";
 import { ExitError } from "@oclif/core/lib/errors";
 import { CLIError } from "@oclif/errors";
 import Debug from "debug";
-import fs from "fs-extra";
 import getPort from "get-port";
 import type { Got } from "got";
 import got, { HTTPError } from "got";
@@ -23,7 +22,7 @@ import { Client } from "./client";
 import { setConfig } from "./config";
 import { Env } from "./env";
 import { BaseError, UnexpectedError as UnknownError } from "./errors";
-import { ignoreEnoent } from "./fs-utils";
+import { getSession, setSession } from "./session";
 import type { App, User } from "./types";
 
 export const ENDPOINT = Env.productionLike ? "https://app.gadget.dev" : "https://app.ggt.dev:3000";
@@ -94,8 +93,6 @@ export abstract class BaseCommand extends Command {
    */
   client!: Client;
 
-  private _session?: string;
-
   constructor(argv: string[], config: Config) {
     super(argv, config);
 
@@ -104,8 +101,9 @@ export abstract class BaseCommand extends Command {
         beforeRequest: [
           (options) => {
             options.headers["user-agent"] = this.config.userAgent;
-            if (options.url.origin === ENDPOINT && this.session) {
-              options.headers = { ...options.headers, cookie: `session=${encodeURIComponent(this.session)};` };
+            if (options.url.origin === ENDPOINT) {
+              const session = getSession();
+              if (session) options.headers["cookie"] = `session=${encodeURIComponent(session)};`;
             }
           },
         ],
@@ -118,24 +116,6 @@ export abstract class BaseCommand extends Command {
    */
   get debugEnabled(): boolean {
     return !!settings.debug;
-  }
-
-  get session(): string | undefined {
-    try {
-      return (this._session ??= fs.readFileSync(path.join(this.config.configDir, "session.txt"), "utf-8"));
-    } catch (error) {
-      ignoreEnoent(error);
-      return undefined;
-    }
-  }
-
-  set session(value: string | undefined) {
-    this._session = value;
-    if (value) {
-      fs.outputFileSync(path.join(this.config.configDir, "session.txt"), value);
-    } else {
-      fs.removeSync(path.join(this.config.configDir, "session.txt"));
-    }
   }
 
   override async init(): Promise<void> {
@@ -190,7 +170,7 @@ export abstract class BaseCommand extends Command {
       ws: {
         headers: {
           "user-agent": this.config.userAgent,
-          cookie: `session=${encodeURIComponent(this.session as string)};`,
+          cookie: `session=${encodeURIComponent(getSession() as string)};`,
         },
       },
     });
@@ -245,7 +225,7 @@ export abstract class BaseCommand extends Command {
             const session = incomingUrl.searchParams.get("session");
             if (!session) throw new Error("missing session");
 
-            this.session = session;
+            setSession(session);
 
             const user = await this.getCurrentUser();
             if (!user) throw new Error("missing current user");
@@ -259,7 +239,7 @@ export abstract class BaseCommand extends Command {
             redirectTo.searchParams.set("success", "true");
             resolve();
           } catch (error) {
-            this.session = undefined;
+            setSession(undefined);
             redirectTo.searchParams.set("success", "false");
             reject(error);
           } finally {
@@ -287,9 +267,9 @@ export abstract class BaseCommand extends Command {
    * @returns Whether the user was logged in or not.
    */
   logout(): boolean {
-    if (!this.session) return false;
+    if (!getSession()) return false;
 
-    this.session = undefined;
+    setSession(undefined);
     return true;
   }
 
@@ -297,7 +277,7 @@ export abstract class BaseCommand extends Command {
    * @returns The current user, or undefined if the user is not logged in.
    */
   async getCurrentUser(): Promise<User | undefined> {
-    if (!this.session) return undefined;
+    if (!getSession()) return undefined;
 
     try {
       return await this.http(`${ENDPOINT}/auth/api/current-user`).json<User>();
@@ -314,7 +294,7 @@ export abstract class BaseCommand extends Command {
    * @returns A list of Gadget apps that the user has access to.
    */
   async getApps(): Promise<App[]> {
-    if (!this.session) return [];
+    if (!getSession()) return [];
 
     return await this.http(`${ENDPOINT}/auth/api/apps`).json<App[]>();
   }

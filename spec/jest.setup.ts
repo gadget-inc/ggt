@@ -5,6 +5,7 @@ import Debug from "debug";
 import fs from "fs-extra";
 import path from "path";
 import { setConfig } from "../src/lib/config";
+import { setSession } from "../src/lib/session";
 
 // tests in CI take longer to run than in local development
 jest.setTimeout(process.env["CI"] ? 10_000 : 1000);
@@ -29,6 +30,7 @@ beforeEach(async () => {
 
   const { Config, Command } = await import("@oclif/core");
   setConfig((await Config.load(path.join(__dirname, ".."))) as Config);
+  setSession(undefined);
 
   jest.spyOn(Command.prototype, "log").mockImplementation();
   jest.spyOn(Command.prototype, "warn").mockImplementation();

@@ -1,4 +1,5 @@
 import dedent from "ts-dedent";
+import { api } from "../lib/api";
 import { BaseCommand } from "../lib/base-command";
 
 export default class Whoami extends BaseCommand {
@@ -14,7 +15,7 @@ export default class Whoami extends BaseCommand {
   ];
 
   async run(): Promise<void> {
-    const user = await this.getCurrentUser();
+    const user = await api.getCurrentUser();
     if (!user) {
       this.log("You are not logged in");
       return;

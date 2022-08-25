@@ -1,50 +1,64 @@
 import fs from "fs-extra";
 import path from "path";
 import { config } from "../../src/lib/config";
-import { getSession, setSession } from "../../src/lib/session";
+import { session } from "../../src/lib/session";
 
-describe("getSession", () => {
-  it("loads from the filesystem", () => {
-    setSession(undefined);
+describe("Session", () => {
+  describe("get", () => {
+    it("loads session.txt from the filesystem", () => {
+      session.set(undefined);
 
-    fs.outputFileSync(path.join(config.configDir, "session.txt"), expect.getState().currentTestName);
+      fs.outputFileSync(path.join(config.configDir, "session.txt"), expect.getState().currentTestName);
 
-    expect(getSession()).toBe(expect.getState().currentTestName);
+      expect(session.get()).toBe(expect.getState().currentTestName);
+    });
+
+    it("caches the session in memory", () => {
+      fs.outputFileSync(path.join(config.configDir, "session.txt"), expect.getState().currentTestName);
+      jest.spyOn(fs, "readFileSync");
+
+      for (let i = 0; i < 10; i++) {
+        expect(session.get()).toBe(expect.getState().currentTestName);
+      }
+
+      expect(fs.readFileSync).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not throw ENOENT if the file does not exist", () => {
+      expect(fs.existsSync(path.join(config.configDir, "session.txt"))).toBe(false);
+
+      expect(session.get()).toBeUndefined();
+    });
   });
 
-  it("caches the session in memory", () => {
-    fs.outputFileSync(path.join(config.configDir, "session.txt"), expect.getState().currentTestName);
-    jest.spyOn(fs, "readFileSync");
+  describe("set", () => {
+    it("saves session.txt to the filesystem", () => {
+      expect(fs.existsSync(path.join(config.configDir, "session.txt"))).toBe(false);
 
-    for (let i = 0; i < 10; i++) {
-      expect(getSession()).toBe(expect.getState().currentTestName);
-    }
+      session.set(expect.getState().currentTestName);
 
-    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
-  });
+      expect(fs.readFileSync(path.join(config.configDir, "session.txt"), "utf-8")).toEqual(expect.getState().currentTestName);
+    });
 
-  it("does not throw ENOENT if the file does not exist", () => {
-    expect(fs.existsSync(path.join(config.configDir, "session.txt"))).toBe(false);
+    it("removes session.txt from the filesystem", () => {
+      fs.outputFileSync(path.join(config.configDir, "session.txt"), expect.getState().currentTestName);
+      expect(fs.existsSync(path.join(config.configDir, "session.txt"))).toBe(true);
 
-    expect(getSession()).toBeUndefined();
-  });
-});
+      session.set(undefined);
 
-describe("setSession", () => {
-  it("saves session.txt to the filesystem", () => {
-    expect(fs.existsSync(path.join(config.configDir, "session.txt"))).toBe(false);
+      expect(fs.existsSync(path.join(config.configDir, "session.txt"))).toBe(false);
+    });
 
-    setSession(expect.getState().currentTestName);
+    it("returns true if the session existed", () => {
+      fs.outputFileSync(path.join(config.configDir, "session.txt"), expect.getState().currentTestName);
 
-    expect(fs.readFileSync(path.join(config.configDir, "session.txt"), "utf-8")).toEqual(expect.getState().currentTestName);
-  });
+      expect(session.set(undefined)).toBeTrue();
+    });
 
-  it("removes session.txt from the filesystem", () => {
-    fs.outputFileSync(path.join(config.configDir, "session.txt"), expect.getState().currentTestName);
-    expect(fs.existsSync(path.join(config.configDir, "session.txt"))).toBe(true);
+    it("returns false if the session did not exist", () => {
+      expect(fs.existsSync(path.join(config.configDir, "session.txt"))).toBe(false);
 
-    setSession(undefined);
-
-    expect(fs.existsSync(path.join(config.configDir, "session.txt"))).toBe(false);
+      expect(session.set(undefined)).toBeFalse();
+    });
   });
 });

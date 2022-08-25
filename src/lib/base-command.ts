@@ -4,8 +4,6 @@ import { ExitError } from "@oclif/core/lib/errors";
 import { CLIError } from "@oclif/errors";
 import Debug from "debug";
 import getPort from "get-port";
-import type { Got } from "got";
-import got, { HTTPError } from "got";
 import type { Server } from "http";
 import { createServer } from "http";
 import { prompt } from "inquirer";
@@ -18,14 +16,11 @@ import type NotifySend from "node-notifier/notifiers/notifysend";
 import type WindowsToaster from "node-notifier/notifiers/toaster";
 import open from "open";
 import path from "path";
+import { api, GADGET_ENDPOINT } from "./api";
 import { Client } from "./client";
 import { setConfig } from "./config";
-import { Env } from "./env";
 import { BaseError, UnexpectedError as UnknownError } from "./errors";
-import { getSession, setSession } from "./session";
-import type { App, User } from "./types";
-
-export const ENDPOINT = Env.productionLike ? "https://app.gadget.dev" : "https://app.ggt.dev:3000";
+import { session } from "./session";
 
 export abstract class BaseCommand extends Command {
   /**
@@ -78,13 +73,6 @@ export abstract class BaseCommand extends Command {
   readonly requireApp: boolean = false;
 
   /**
-   * The HTTP client to use for all HTTP requests.
-   *
-   * If a request is made to Gadget, the session token will be added to the request's headers.
-   */
-  readonly http: Got;
-
-  /**
    * The GraphQL client to use for all Gadget API requests.
    *
    * Will be `undefined` if the user is not logged in or if the user has not selected an app.
@@ -95,20 +83,6 @@ export abstract class BaseCommand extends Command {
 
   constructor(argv: string[], config: Config) {
     super(argv, config);
-
-    this.http = got.extend({
-      hooks: {
-        beforeRequest: [
-          (options) => {
-            options.headers["user-agent"] = this.config.userAgent;
-            if (options.url.origin === ENDPOINT) {
-              const session = getSession();
-              if (session) options.headers["cookie"] = `session=${encodeURIComponent(session)};`;
-            }
-          },
-        ],
-      },
-    });
   }
 
   /**
@@ -136,7 +110,7 @@ export abstract class BaseCommand extends Command {
       return;
     }
 
-    if (!(await this.getCurrentUser())) {
+    if (!(await api.getCurrentUser())) {
       const { login } = await prompt<{ login: boolean }>({
         type: "confirm",
         name: "login",
@@ -160,7 +134,7 @@ export abstract class BaseCommand extends Command {
         type: "list",
         name: "app",
         message: "Please select the app to use with this command.",
-        choices: await this.getApps().then((apps) => apps.map((app) => app.slug)),
+        choices: await api.getApps().then((apps) => apps.map((app) => app.slug)),
       }));
     }
 
@@ -170,7 +144,7 @@ export abstract class BaseCommand extends Command {
       ws: {
         headers: {
           "user-agent": this.config.userAgent,
-          cookie: `session=${encodeURIComponent(getSession() as string)};`,
+          cookie: `session=${encodeURIComponent(session.get() as string)};`,
         },
       },
     });
@@ -216,18 +190,18 @@ export abstract class BaseCommand extends Command {
       const receiveSession = new Promise<void>((resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         server = createServer(async (req, res) => {
-          const redirectTo = new URL(`${ENDPOINT}/auth/cli`);
+          const redirectTo = new URL(`${GADGET_ENDPOINT}/auth/cli`);
 
           try {
             if (!req.url) throw new Error("missing url");
             const incomingUrl = new URL(req.url, `http://localhost:${port}`);
 
-            const session = incomingUrl.searchParams.get("session");
-            if (!session) throw new Error("missing session");
+            const value = incomingUrl.searchParams.get("session");
+            if (!value) throw new Error("missing session");
 
-            setSession(session);
+            session.set(value);
 
-            const user = await this.getCurrentUser();
+            const user = await api.getCurrentUser();
             if (!user) throw new Error("missing current user");
 
             if (user.name) {
@@ -239,7 +213,7 @@ export abstract class BaseCommand extends Command {
             redirectTo.searchParams.set("success", "true");
             resolve();
           } catch (error) {
-            setSession(undefined);
+            session.set(undefined);
             redirectTo.searchParams.set("success", "false");
             reject(error);
           } finally {
@@ -251,8 +225,8 @@ export abstract class BaseCommand extends Command {
         server.listen(port);
       });
 
-      const url = new URL(`${ENDPOINT}/auth/login`);
-      url.searchParams.set("returnTo", `${ENDPOINT}/auth/cli/callback?port=${port}`);
+      const url = new URL(`${GADGET_ENDPOINT}/auth/login`);
+      url.searchParams.set("returnTo", `${GADGET_ENDPOINT}/auth/cli/callback?port=${port}`);
       await open(url.toString());
 
       this.log("Your browser has been opened. Please log in to your account.");
@@ -261,42 +235,6 @@ export abstract class BaseCommand extends Command {
     } finally {
       server?.close();
     }
-  }
-
-  /**
-   * @returns Whether the user was logged in or not.
-   */
-  logout(): boolean {
-    if (!getSession()) return false;
-
-    setSession(undefined);
-    return true;
-  }
-
-  /**
-   * @returns The current user, or undefined if the user is not logged in.
-   */
-  async getCurrentUser(): Promise<User | undefined> {
-    if (!getSession()) return undefined;
-
-    try {
-      return await this.http(`${ENDPOINT}/auth/api/current-user`).json<User>();
-    } catch (error) {
-      if (error instanceof HTTPError && error.response.statusCode === 401) {
-        this.logout();
-        return undefined;
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * @returns A list of Gadget apps that the user has access to.
-   */
-  async getApps(): Promise<App[]> {
-    if (!getSession()) return [];
-
-    return await this.http(`${ENDPOINT}/auth/api/apps`).json<App[]>();
   }
 
   /**

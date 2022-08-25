@@ -15,6 +15,7 @@ import Sync, {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
   SyncStatus,
 } from "../../src/commands/sync";
+import { api } from "../../src/lib/api";
 import { config } from "../../src/lib/config";
 import { ClientError, InvalidSyncFileError, YarnNotFoundError } from "../../src/lib/errors";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
@@ -48,7 +49,7 @@ describe("Sync", () => {
     client = mockClient();
     sync = new Sync(["--app", "test", "--file-push-delay", "10", dir], config);
 
-    jest.spyOn(sync, "getCurrentUser").mockResolvedValue({ name: "Jane Doe", email: "jane@example.come" });
+    jest.spyOn(api, "getCurrentUser").mockResolvedValue({ name: "Jane Doe", email: "jane@example.come" });
 
     // TODO: we don't need to mock the watcher anymore since we're using the real filesystem
     jest.spyOn(FSWatcher.prototype, "add").mockReturnThis();

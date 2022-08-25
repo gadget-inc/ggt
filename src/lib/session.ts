@@ -3,22 +3,33 @@ import path from "path";
 import { config } from "./config";
 import { ignoreEnoent } from "./fs-utils";
 
-let session: string | undefined = undefined;
+class Session {
+  private _session: string | undefined;
 
-export function getSession(): string | undefined {
-  if (session) return session;
+  get(): string | undefined {
+    if (this._session) return this._session;
 
-  try {
-    session = fs.readFileSync(path.join(config.configDir, "session.txt"), "utf-8");
-    return session;
-  } catch (error) {
-    ignoreEnoent(error);
-    return undefined;
+    try {
+      this._session = fs.readFileSync(path.join(config.configDir, "session.txt"), "utf-8");
+      return this._session;
+    } catch (error) {
+      ignoreEnoent(error);
+      return undefined;
+    }
+  }
+
+  /**
+   * @returns Whether the session existed or not.
+   */
+  set(value: string | undefined): boolean {
+    const hadSession = !!this.get();
+
+    this._session = value;
+    if (this._session) fs.outputFileSync(path.join(config.configDir, "session.txt"), this._session);
+    else fs.removeSync(path.join(config.configDir, "session.txt"));
+
+    return hadSession;
   }
 }
 
-export function setSession(value: string | undefined): void {
-  session = value;
-  if (session) fs.outputFileSync(path.join(config.configDir, "session.txt"), session);
-  else fs.removeSync(path.join(config.configDir, "session.txt"));
-}
+export const session = new Session();

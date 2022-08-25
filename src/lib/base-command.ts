@@ -1,7 +1,6 @@
 import type { Config } from "@oclif/core";
 import { Command, Flags, settings } from "@oclif/core";
 import { ExitError } from "@oclif/core/lib/errors";
-import { CLIError } from "@oclif/errors";
 import Debug from "debug";
 import getPort from "get-port";
 import type { Server } from "http";
@@ -17,7 +16,6 @@ import type WindowsToaster from "node-notifier/notifiers/toaster";
 import open from "open";
 import path from "path";
 import { api, GADGET_ENDPOINT } from "./api";
-import { Client } from "./client";
 import { setConfig } from "./config";
 import { BaseError, UnexpectedError as UnknownError } from "./errors";
 import { session } from "./session";
@@ -30,17 +28,6 @@ export abstract class BaseCommand extends Command {
   static priority = Infinity;
 
   static override globalFlags = {
-    app: Flags.string({
-      char: "A",
-      summary: "The Gadget application this command applies to.",
-      helpGroup: "global",
-      helpValue: "name",
-      parse: (value) => {
-        const app = /^(https:\/\/)?(?<app>[\w-]+)(\..*)?/.exec(value)?.groups?.["app"];
-        if (!app) throw new CLIError("Flag '-A, --app=<name>' is invalid");
-        return Promise.resolve(app);
-      },
-    }),
     debug: Flags.boolean({
       char: "D",
       summary: "Whether to output debug information.",
@@ -50,36 +37,10 @@ export abstract class BaseCommand extends Command {
   };
 
   /**
-   * The selected application.
-   *
-   * Will be `undefined` if the user is not logged in or if the user has not selected an app.
-   *
-   * @see {@linkcode requireApp requireApp}
-   */
-  app!: string;
-
-  /**
    * Determines whether the command requires the user to be logged in or not.
    * If true and the user is not logged in, the user will be prompted to login before the command is run.
    */
   readonly requireUser: boolean = false;
-
-  /**
-   * Determines whether the command requires a Gadget app to be selected or not.
-   * If true and an app hasn't been selected, the user will be prompted to select an app before the command is run.
-   *
-   * Implies {@linkcode requireUser requireUser = true}.
-   */
-  readonly requireApp: boolean = false;
-
-  /**
-   * The GraphQL client to use for all Gadget API requests.
-   *
-   * Will be `undefined` if the user is not logged in or if the user has not selected an app.
-   *
-   * @see {@linkcode requireApp requireApp}
-   */
-  client!: Client;
 
   constructor(argv: string[], config: Config) {
     super(argv, config);
@@ -106,11 +67,7 @@ export abstract class BaseCommand extends Command {
 
     setConfig(this.config);
 
-    if (!this.requireUser && !this.requireApp) {
-      return;
-    }
-
-    if (!(await api.getCurrentUser())) {
+    if (this.requireUser && !(await api.getCurrentUser())) {
       const { login } = await prompt<{ login: boolean }>({
         type: "confirm",
         name: "login",
@@ -123,31 +80,6 @@ export abstract class BaseCommand extends Command {
 
       await this.login();
     }
-
-    if (!this.requireApp) {
-      return;
-    }
-
-    let app = flags.app;
-    if (!app) {
-      ({ app } = await prompt<{ app: string }>({
-        type: "list",
-        name: "app",
-        message: "Please select the app to use with this command.",
-        choices: await api.getApps().then((apps) => apps.map((app) => app.slug)),
-      }));
-    }
-
-    this.app = app;
-
-    this.client = new Client(app, {
-      ws: {
-        headers: {
-          "user-agent": this.config.userAgent,
-          cookie: `session=${encodeURIComponent(session.get() as string)};`,
-        },
-      },
-    });
   }
 
   /**

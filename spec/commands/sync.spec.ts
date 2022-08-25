@@ -50,6 +50,7 @@ describe("Sync", () => {
     sync = new Sync(["--app", "test", "--file-push-delay", "10", dir], config);
 
     jest.spyOn(api, "getCurrentUser").mockResolvedValue({ name: "Jane Doe", email: "jane@example.come" });
+    jest.spyOn(api, "getApps").mockResolvedValue([{ id: "1", name: "test", slug: "test" }]);
 
     // TODO: we don't need to mock the watcher anymore since we're using the real filesystem
     jest.spyOn(FSWatcher.prototype, "add").mockReturnThis();

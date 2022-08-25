@@ -48,13 +48,16 @@ export abstract class BaseError extends Error {
    * look like can be found here: {@link https://clig.dev/#errors}
    */
   render(config: Config): string {
-    return dedent`
-      ${this.header(config)}
+    const header = this.header(config);
+    const body = this.body(config);
+    const footer = this.footer(config);
 
-      ${this.body(config)}
+    let output = "";
+    if (header) output += header + "\n\n";
+    if (body) output += body + "\n\n";
+    if (footer) output += footer + "\n\n";
 
-      ${this.footer(config)}
-    `;
+    return output;
   }
 
   protected header(_: Config): string {

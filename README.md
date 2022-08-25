@@ -72,7 +72,9 @@ ARGUMENTS
   DIRECTORY  [default: .] The directory to sync files to. If the directory doesn't exist, it will be created.
 
 FLAGS
-  --force  Sync even if we can't determine the state of your local files relative to your remote ones.
+  -a, --app=<value>  The Gadget application to sync files to.
+  --force            Whether to sync even if we can't determine the state of your local files relative to your remote
+                     ones.
 
 DESCRIPTION
   Sync provides the ability to sync your Gadget application's source code to and from your local
@@ -111,7 +113,7 @@ EXAMPLES
 
   # These are equivalent
 
-    $ ggt sync -A my-app
+    $ ggt sync -a my-app
     $ ggt sync --app my-app
     $ ggt sync --app my-app.gadget.app
     $ ggt sync --app https://my-app.gadget.app
@@ -183,10 +185,6 @@ _See code: [src/commands/whoami.ts](https://github.com/gadget-inc/ggt/blob/v0.0.
 <!-- commandsstop -->
 
 ## Global Flags
-
-### App
-
-The `--app` flag, shorthand `-A`, specifies the Gadget application the command applies to.
 
 ### Debug
 

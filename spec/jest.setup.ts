@@ -14,8 +14,6 @@ export function testDirPath(): string {
   return path.join(__dirname, "..", "tmp", "tests", expect.getState().currentTestName.replace(/[ /,?=]/g, "-"));
 }
 
-export let config: Config;
-
 beforeEach(async () => {
   debug("starting test %o", { test: expect.getState().currentTestName, path: expect.getState().testPath });
 
@@ -29,7 +27,11 @@ beforeEach(async () => {
   process.env["GGT_DATA_DIR"] = path.join(testDir, "data");
 
   const { Config, Command } = await import("@oclif/core");
-  config = (await Config.load(path.join(__dirname, ".."))) as Config;
+  const { setConfig } = await import("../src/lib/config");
+  setConfig((await Config.load(path.join(__dirname, ".."))) as Config);
+
+  const { session } = await import("../src/lib/session");
+  session.set(undefined);
 
   jest.spyOn(Command.prototype, "log").mockImplementation();
   jest.spyOn(Command.prototype, "warn").mockImplementation();

@@ -1,5 +1,6 @@
 import { Flags } from "@oclif/core";
 import type { OptionFlag } from "@oclif/core/lib/interfaces";
+import { CLIError } from "@oclif/errors";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
 import execa from "execa";
@@ -15,10 +16,13 @@ import path from "path";
 import dedent from "ts-dedent";
 import { TextDecoder, TextEncoder } from "util";
 import which from "which";
+import { api } from "../lib/api";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
+import { Client } from "../lib/client";
 import { InvalidSyncFileError, YarnNotFoundError } from "../lib/errors";
 import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../lib/fs-utils";
+import { session } from "../lib/session";
 import { sleepUntil } from "../lib/sleep";
 import type {
   FileSyncChangedEventInput,
@@ -72,8 +76,17 @@ export default class Sync extends BaseCommand {
   ];
 
   static override flags = {
+    app: Flags.string({
+      char: "a",
+      summary: "The Gadget application to sync files to.",
+      parse: (value) => {
+        const app = /^(https:\/\/)?(?<app>[\w-]+)(\..*)?/.exec(value)?.groups?.["app"];
+        if (!app) throw new CLIError("Flag '-a, --app=<name>' is invalid");
+        return Promise.resolve(app);
+      },
+    }),
     force: Flags.boolean({
-      summary: "Sync even if we can't determine the state of your local files relative to your remote ones.",
+      summary: "Whether to sync even if we can't determine the state of your local files relative to your remote ones.",
       default: false,
     }),
     "file-push-delay": Flags.integer({
@@ -115,15 +128,13 @@ export default class Sync extends BaseCommand {
     `,
     dedent`
       # These are equivalent
-      $ ggt sync -A my-app
+      $ ggt sync -a my-app
       $ ggt sync --app my-app
       $ ggt sync --app my-app.gadget.app
       $ ggt sync --app https://my-app.gadget.app
       $ ggt sync --app https://my-app.gadget.app/edit
     `,
   ];
-
-  override readonly requireApp = true;
 
   status = SyncStatus.STARTING;
 
@@ -138,6 +149,8 @@ export default class Sync extends BaseCommand {
   filePushDelay!: number;
 
   queue = new PQueue({ concurrency: 1 });
+
+  client!: Client;
 
   ignorer!: Ignorer;
 
@@ -182,6 +195,25 @@ export default class Sync extends BaseCommand {
     await super.init();
     const { args, flags } = await this.parse(Sync);
 
+    let app = flags.app;
+    if (!app) {
+      ({ app } = await prompt<{ app: string }>({
+        type: "list",
+        name: "app",
+        message: "Please select the app to sync to.",
+        choices: await api.getApps().then((apps) => apps.map((app) => app.slug)),
+      }));
+    }
+
+    this.client = new Client(app, {
+      ws: {
+        headers: {
+          "user-agent": this.config.userAgent,
+          cookie: `session=${encodeURIComponent(session.get() as string)};`,
+        },
+      },
+    });
+
     this.dir = path.resolve(args["directory"] as string);
 
     this.filePushDelay = flags["file-push-delay"];
@@ -214,7 +246,7 @@ export default class Sync extends BaseCommand {
         this.metadata = await fs.readJson(this.absolute(".ggt", "sync.json"));
       } catch (error) {
         if (!flags.force) {
-          throw new InvalidSyncFileError(error, this.dir, this.app);
+          throw new InvalidSyncFileError(error, this.dir, app);
         }
       }
     }

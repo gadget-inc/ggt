@@ -1,6 +1,5 @@
 import { Flags } from "@oclif/core";
 import type { OptionFlag } from "@oclif/core/lib/interfaces";
-import { CLIError } from "@oclif/errors";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
 import execa from "execa";
@@ -21,6 +20,7 @@ import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
 import { Client } from "../lib/client";
 import { InvalidSyncFileError, YarnNotFoundError } from "../lib/errors";
+import { app } from "../lib/flags";
 import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../lib/fs-utils";
 import { session } from "../lib/session";
 import { sleepUntil } from "../lib/sleep";
@@ -76,14 +76,8 @@ export default class Sync extends BaseCommand {
   ];
 
   static override flags = {
-    app: Flags.string({
-      char: "a",
+    app: app({
       summary: "The Gadget application to sync files to.",
-      parse: (value) => {
-        const app = /^(https:\/\/)?(?<app>[\w-]+)(\..*)?/.exec(value)?.groups?.["app"];
-        if (!app) throw new CLIError("Flag '-a, --app=<name>' is invalid");
-        return Promise.resolve(app);
-      },
     }),
     force: Flags.boolean({
       summary: "Whether to sync even if we can't determine the state of your local files relative to your remote ones.",

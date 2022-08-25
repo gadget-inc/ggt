@@ -7,6 +7,15 @@ import type { Payload, Query, Sink } from "../src/lib/client";
 import { Client } from "../src/lib/client";
 import { walkDir, walkDirSync } from "../src/lib/fs-utils";
 
+export async function getError(fnThatThrows: () => unknown): Promise<any> {
+  try {
+    await fnThatThrows();
+    expect.fail("Expected error to be thrown");
+  } catch (error) {
+    return error;
+  }
+}
+
 export async function expectDir(dir: string, expected: Record<string, string>): Promise<void> {
   const actual: Record<string, string> = {};
   for await (const filepath of walkDir(dir)) {

@@ -3,10 +3,12 @@ name: cd
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
     tags:
       - v*
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:

@@ -21,9 +21,9 @@
   "scripts": {
     "build": "rimraf dist && tsc --build",
     "postinstall": "patch-package",
-    "lint": "concurrently --group 'npm:lint:*'",
+    "lint": "concurrently --prefix none --group 'npm:lint:*'",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
-    "lint:eslint": "eslint --quiet .",
+    "lint:eslint": "eslint --max-warnings 0 .",
     "lint:prettier": "prettier --check .",
     "lint:typescript": "tsc --noEmit",
     "readme": "oclif readme && prettier --write README.md",

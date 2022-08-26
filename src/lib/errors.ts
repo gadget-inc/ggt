@@ -10,6 +10,7 @@ import dedent from "ts-dedent";
 import type { SetOptional, Writable } from "type-fest";
 import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
+import type Sync from "../commands/sync";
 import type { Payload } from "./client";
 
 /**
@@ -303,23 +304,25 @@ export class FlagError extends BaseError {
 export class InvalidSyncFileError extends BaseError {
   isBug = IsBug.MAYBE;
 
-  constructor(override readonly cause: unknown, readonly dir: string, readonly app: string) {
+  constructor(override readonly cause: unknown, readonly sync: Sync, readonly app: string | undefined) {
     super("GGT_CLI_INVALID_SYNC_FILE", "The .ggt/sync.json file was invalid or not found");
   }
 
-  protected body(config: Config): string {
+  protected body(_: Config): string {
     return dedent`
       We failed to read the Gadget metadata file in this directory:
 
-        ${this.dir}
+        ${this.sync.dir}
 
-      If you're running \`ggt sync\` for the first time, we recommend using an empty directory such as \`~/gadget/${this.app}\`.
+      If you're running \`ggt sync\` for the first time, we recommend using an empty directory such as:
 
-      Otherwise, if you're sure you want to sync the contents of \`${
-        this.dir
-      }\` to Gadget, you can run the command again with the \`--force\` flag:
+        ~/gadget/${this.app || "<name of app>"}
 
-        $ ${config.bin} ${process.argv.slice(2).join(" ")} --force
+      Otherwise, if you're sure you want to sync the contents of "${
+        this.sync.dir
+      }" to Gadget, run \`ggt sync\` again with the \`--force\` flag:
+
+        $ ggt sync ${this.sync.argv.join(" ")} --force
 
       You will be prompted to either merge your local files with your remote ones or reset your local files to your remote ones.
     `;

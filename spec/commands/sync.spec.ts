@@ -17,12 +17,12 @@ import Sync, {
 } from "../../src/commands/sync";
 import { api } from "../../src/lib/api";
 import { config } from "../../src/lib/config";
-import { ClientError, InvalidSyncFileError, YarnNotFoundError } from "../../src/lib/errors";
+import { ClientError, FlagError, InvalidSyncFileError, YarnNotFoundError } from "../../src/lib/errors";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
 import type { PublishFileSyncEventsMutationVariables } from "../../src/__generated__/graphql";
 import { testDirPath } from "../jest.setup";
 import type { MockClient } from "../util";
-import { expectDir, expectDirSync, mockClient, setupDir } from "../util";
+import { expectDir, expectDirSync, getError, mockClient, setupDir } from "../util";
 
 const stats = { mode: 420, mtime: new Date("2000-01-01T01:00:00Z") };
 
@@ -103,7 +103,7 @@ describe("Sync", () => {
     });
 
     it("loads metadata from .ggt/sync.json", async () => {
-      const metadata = { lastWritten: { filesVersion: "77", mtime: 1658153625236 } };
+      const metadata = { app: "test", lastWritten: { filesVersion: "77", mtime: 1658153625236 } };
       await setupDir(dir, {
         ".ggt/sync.json": JSON.stringify(metadata),
       });
@@ -115,12 +115,10 @@ describe("Sync", () => {
     });
 
     it("uses default metadata if .ggt/sync.json does not exist and `dir` is empty", async () => {
-      const defaultMetadata = { lastWritten: { filesVersion: "0", mtime: 0 } };
-
       void sync.init();
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      expect(sync.metadata).toEqual(defaultMetadata);
+      expect(sync.metadata).toEqual({ app: "test", lastWritten: { filesVersion: "0", mtime: 0 } });
     });
 
     it("throws InvalidSyncFileError if .ggt/sync.json does not exist and `dir` is not empty", async () => {
@@ -134,7 +132,7 @@ describe("Sync", () => {
     it("throws InvalidSyncFileError if .ggt/sync.json is invalid and `dir` is not empty", async () => {
       await setupDir(dir, {
         // has trailing comma
-        ".ggt/sync.json": '{"lastWritten":{"filesVersion":"77","mtime":1658153625236,}}',
+        ".ggt/sync.json": '{"app":"test","lastWritten":{"filesVersion":"77","mtime":1658153625236,}}',
       });
 
       await expect(sync.init()).rejects.toThrow(InvalidSyncFileError);
@@ -144,6 +142,32 @@ describe("Sync", () => {
       await setupDir(dir, {
         // has trailing comma
         ".ggt/sync.json": '{"lastWritten":{"filesVersion":"77","mtime":1658153625236,}}',
+      });
+
+      sync.argv.push("--force");
+      const init = sync.init();
+
+      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
+      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+
+      await expect(init).resolves.toBeUndefined();
+    });
+
+    it("throws FlagError if the `--app` flag is passed a different app name than the one in .ggt/sync.json", async () => {
+      await setupDir(dir, {
+        ".ggt/sync.json": JSON.stringify({ app: "not-test", lastWritten: { filesVersion: "77", mtime: 1658153625236 } }),
+      });
+
+      const error = await getError(() => sync.init());
+
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.description).toStartWith("You were about to sync the following app to the following directory:");
+    });
+
+    it("does not throw FlagError if the `--app` flag is passed a different app name than the one in .ggt/sync.json and `--force` is passed", async () => {
+      await setupDir(dir, {
+        ".ggt/sync.json": JSON.stringify({ app: "not-test", lastWritten: { filesVersion: "77", mtime: 1658153625236 } }),
       });
 
       sync.argv.push("--force");
@@ -1028,12 +1052,10 @@ describe("Sync", () => {
     });
 
     it("saves metadata to .ggt/sync.json", async () => {
-      const defaultMetadata = { lastWritten: { filesVersion: "0", mtime: 0 } };
-
       await sync.stop();
 
       await expectDir(dir, {
-        ".ggt/sync.json": JSON.stringify(defaultMetadata, null, 2) + "\n",
+        ".ggt/sync.json": JSON.stringify(sync.metadata, null, 2) + "\n",
       });
     });
 

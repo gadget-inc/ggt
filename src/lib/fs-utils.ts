@@ -65,9 +65,17 @@ export function* walkDirSync(dir: string, options: WalkDirOptions = {}): Generat
   }
 }
 
-export async function isEmptyDir(dir: string): Promise<boolean> {
-  const files = await fs.readdir(dir);
-  return files.length === 0;
+export async function isEmptyDir(dir: string, opts = { ignoreEnoent: true }): Promise<boolean> {
+  try {
+    const files = await fs.readdir(dir);
+    return files.length === 0;
+  } catch (error) {
+    if (opts.ignoreEnoent) {
+      ignoreEnoent(error);
+      return true;
+    }
+    throw error;
+  }
 }
 
 export function ignoreEnoent(error: any): void {

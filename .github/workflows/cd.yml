@@ -5,8 +5,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "package.json"
+    tags:
+      - v*
 
 jobs:
   ci:

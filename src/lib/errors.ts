@@ -305,7 +305,7 @@ export class InvalidSyncFileError extends BaseError {
   isBug = IsBug.MAYBE;
 
   constructor(override readonly cause: unknown, readonly sync: Sync, readonly app: string | undefined) {
-    super("GGT_CLI_INVALID_SYNC_FILE", "The .ggt/sync.json file was invalid or not found");
+    super("GGT_CLI_INVALID_SYNC_FILE", "The .gadget/sync.json file was invalid or not found");
   }
 
   protected body(_: Config): string {

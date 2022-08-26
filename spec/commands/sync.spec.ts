@@ -102,10 +102,10 @@ describe("Sync", () => {
       expect(fs.existsSync(dir)).toBeTrue();
     });
 
-    it("loads metadata from .ggt/sync.json", async () => {
-      const metadata = { app: "test", lastWritten: { filesVersion: "77", mtime: 1658153625236 } };
+    it("loads metadata from .gadget/sync.json", async () => {
+      const metadata = { app: "test", filesVersion: "77", mtime: 1658153625236 };
       await setupDir(dir, {
-        ".ggt/sync.json": JSON.stringify(metadata),
+        ".gadget/sync.json": JSON.stringify(metadata),
       });
 
       void sync.init();
@@ -114,14 +114,14 @@ describe("Sync", () => {
       expect(sync.metadata).toEqual(metadata);
     });
 
-    it("uses default metadata if .ggt/sync.json does not exist and `dir` is empty", async () => {
+    it("uses default metadata if .gadget/sync.json does not exist and `dir` is empty", async () => {
       void sync.init();
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      expect(sync.metadata).toEqual({ app: "test", lastWritten: { filesVersion: "0", mtime: 0 } });
+      expect(sync.metadata).toEqual({ app: "test", filesVersion: "0", mtime: 0 });
     });
 
-    it("throws InvalidSyncFileError if .ggt/sync.json does not exist and `dir` is not empty", async () => {
+    it("throws InvalidSyncFileError if .gadget/sync.json does not exist and `dir` is not empty", async () => {
       await setupDir(dir, {
         "foo.js": "foo",
       });
@@ -129,19 +129,19 @@ describe("Sync", () => {
       await expect(sync.init()).rejects.toThrow(InvalidSyncFileError);
     });
 
-    it("throws InvalidSyncFileError if .ggt/sync.json is invalid and `dir` is not empty", async () => {
+    it("throws InvalidSyncFileError if .gadget/sync.json is invalid and `dir` is not empty", async () => {
       await setupDir(dir, {
         // has trailing comma
-        ".ggt/sync.json": '{"app":"test","lastWritten":{"filesVersion":"77","mtime":1658153625236,}}',
+        ".gadget/sync.json": '{"app":"test","filesVersion":"77","mtime":1658153625236,}',
       });
 
       await expect(sync.init()).rejects.toThrow(InvalidSyncFileError);
     });
 
-    it("does not throw InvalidSyncFileError if .ggt/sync.json is invalid, `dir` is not empty, and `--force` is passed", async () => {
+    it("does not throw InvalidSyncFileError if .gadget/sync.json is invalid, `dir` is not empty, and `--force` is passed", async () => {
       await setupDir(dir, {
         // has trailing comma
-        ".ggt/sync.json": '{"lastWritten":{"filesVersion":"77","mtime":1658153625236,}}',
+        ".gadget/sync.json": '{"app":"test","filesVersion":"77","mtime":1658153625236,}',
       });
 
       sync.argv.push("--force");
@@ -154,9 +154,9 @@ describe("Sync", () => {
       await expect(init).resolves.toBeUndefined();
     });
 
-    it("throws FlagError if the `--app` flag is passed a different app name than the one in .ggt/sync.json", async () => {
+    it("throws FlagError if the `--app` flag is passed a different app name than the one in .gadget/sync.json", async () => {
       await setupDir(dir, {
-        ".ggt/sync.json": JSON.stringify({ app: "not-test", lastWritten: { filesVersion: "77", mtime: 1658153625236 } }),
+        ".gadget/sync.json": JSON.stringify({ app: "not-test", filesVersion: "77", mtime: 1658153625236 }),
       });
 
       const error = await getError(() => sync.init());
@@ -165,9 +165,9 @@ describe("Sync", () => {
       expect(error.description).toStartWith("You were about to sync the following app to the following directory:");
     });
 
-    it("does not throw FlagError if the `--app` flag is passed a different app name than the one in .ggt/sync.json and `--force` is passed", async () => {
+    it("does not throw FlagError if the `--app` flag is passed a different app name than the one in .gadget/sync.json and `--force` is passed", async () => {
       await setupDir(dir, {
-        ".ggt/sync.json": JSON.stringify({ app: "not-test", lastWritten: { filesVersion: "77", mtime: 1658153625236 } }),
+        ".gadget/sync.json": JSON.stringify({ app: "not-test", filesVersion: "77", mtime: 1658153625236 }),
       });
 
       sync.argv.push("--force");
@@ -182,7 +182,7 @@ describe("Sync", () => {
 
     it("asks how to proceed if both local and remote files changed", async () => {
       await setupDir(dir, {
-        ".ggt/sync.json": JSON.stringify({ lastWritten: { filesVersion: "1", mtime: Date.now() - 1000 } }),
+        ".gadget/sync.json": JSON.stringify({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
         "foo.js": "foo",
         "bar.js": "bar",
       });
@@ -210,7 +210,7 @@ describe("Sync", () => {
 
     it("asks how to proceed if only local files changed", async () => {
       await setupDir(dir, {
-        ".ggt/sync.json": JSON.stringify({ lastWritten: { filesVersion: "1", mtime: Date.now() - 1000 } }),
+        ".gadget/sync.json": JSON.stringify({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
         "foo.js": "foo",
       });
 
@@ -242,9 +242,7 @@ describe("Sync", () => {
       });
 
       const stat = await fs.stat(path.join(dir, "foo.js"));
-      await fs.outputJson(path.join(dir, ".ggt/sync.json"), {
-        lastWritten: { filesVersion: "1", mtime: stat.mtime.getTime() },
-      });
+      await fs.outputJson(path.join(dir, ".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
 
       // wait a bit so the mtime is different
       await sleep(10);
@@ -268,9 +266,7 @@ describe("Sync", () => {
       });
 
       const stat = await fs.stat(path.join(dir, "foo.js"));
-      await fs.outputJSON(path.join(dir, ".ggt/sync.json"), {
-        lastWritten: { filesVersion: "1", mtime: stat.mtime.getTime() },
-      });
+      await fs.outputJSON(path.join(dir, ".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
 
       const init = sync.init();
 
@@ -288,9 +284,7 @@ describe("Sync", () => {
       });
 
       const stat = await fs.stat(path.join(dir, "foo.js"));
-      await fs.outputJson(path.join(dir, ".ggt/sync.json"), {
-        lastWritten: { filesVersion: "1", mtime: stat.mtime.getTime() },
-      });
+      await fs.outputJson(path.join(dir, ".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
 
       const init = sync.init();
 
@@ -311,9 +305,7 @@ describe("Sync", () => {
       });
 
       const stat = await fs.stat(path.join(dir, "bar.js"));
-      await fs.outputJSON(path.join(dir, ".ggt/sync.json"), {
-        lastWritten: { filesVersion: "1", mtime: stat.mtime.getTime() },
-      });
+      await fs.outputJSON(path.join(dir, ".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
 
       // wait a bit so the mtime is different
       await sleep(10);
@@ -335,7 +327,7 @@ describe("Sync", () => {
       // foo.js didn't change, so it should not be included
       expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
         input: {
-          expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+          expectedRemoteFilesVersion: sync.metadata.filesVersion,
           changed: expect.toIncludeAllMembers([
             { path: "bar.js", content: "bar2", mode: expect.toBeNumber() },
             { path: "baz.js", content: "baz", mode: expect.toBeNumber() },
@@ -345,7 +337,7 @@ describe("Sync", () => {
       });
     });
 
-    it("deletes local file changes and sets `metadata.lastWritten.filesVersion` to 0 when told to reset", async () => {
+    it("deletes local file changes and sets `metadata.filesVersion` to 0 when told to reset", async () => {
       prompt.mockResolvedValue({ action: Action.RESET });
 
       await setupDir(dir, {
@@ -354,9 +346,7 @@ describe("Sync", () => {
       });
 
       const stat = await fs.stat(path.join(dir, "bar.js"));
-      await fs.outputJSON(path.join(dir, ".ggt/sync.json"), {
-        lastWritten: { filesVersion: "1", mtime: stat.mtime.getTime() },
-      });
+      await fs.outputJSON(path.join(dir, ".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
 
       // wait a bit so the mtime is different
       await sleep(10);
@@ -378,10 +368,10 @@ describe("Sync", () => {
       // foo.js didn't change, so it should still exist
       await expectDir(dir, {
         "foo.js": "foo",
-        ".ggt/sync.json": JSON.stringify({ lastWritten: { filesVersion: "1", mtime: stat.mtime.getTime() } }) + "\n",
+        ".gadget/sync.json": JSON.stringify({ app: "test", filesVersion: "1", mtime: stat.mtime.getTime() }) + "\n",
       });
 
-      expect(sync.metadata.lastWritten.filesVersion).toBe("0");
+      expect(sync.metadata.filesVersion).toBe("0");
     });
   });
 
@@ -440,7 +430,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion === "1");
+        await sleepUntil(() => sync.metadata.filesVersion === "1");
 
         await expectDir(dir, {
           "file.js": "foo",
@@ -464,13 +454,13 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
+        await sleepUntil(() => sync.metadata.filesVersion == "1");
 
         await expectDir(dir, {});
       });
 
-      it("updates `metadata.lastWritten.filesVersion` even if nothing changed", async () => {
-        expect(sync.metadata.lastWritten.filesVersion).toBe("0");
+      it("updates `metadata.filesVersion` even if nothing changed", async () => {
+        expect(sync.metadata.filesVersion).toBe("0");
 
         client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
@@ -482,9 +472,9 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
+        await sleepUntil(() => sync.metadata.filesVersion == "1");
 
-        expect(sync.metadata.lastWritten.filesVersion).toBe("1");
+        expect(sync.metadata.filesVersion).toBe("1");
       });
 
       it("adds changed and deleted files to recentWrites", async () => {
@@ -498,7 +488,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
+        await sleepUntil(() => sync.metadata.filesVersion == "1");
 
         expect(sync.recentWrites.has(path.join(dir, "foo.js"))).toBeTrue();
         expect(sync.recentWrites.has(path.join(dir, "bar.js"))).toBeTrue();
@@ -553,7 +543,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
 
         // wait for the second batch to complete
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "2");
+        await sleepUntil(() => sync.metadata.filesVersion == "2");
 
         // the second batch should be complete
         await expectDir(dir, {
@@ -574,7 +564,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
+        await sleepUntil(() => sync.metadata.filesVersion == "1");
 
         expect(sync.status).toBe(SyncStatus.RUNNING);
       });
@@ -590,7 +580,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
+        await sleepUntil(() => sync.metadata.filesVersion == "1");
 
         await expectDir(dir, {});
       });
@@ -606,7 +596,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
+        await sleepUntil(() => sync.metadata.filesVersion == "1");
 
         expect(execa.mock.lastCall).toEqual(["yarn", ["install"], { cwd: dir }]);
       });
@@ -622,7 +612,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
+        await sleepUntil(() => sync.metadata.filesVersion == "1");
 
         expect(execa).not.toHaveBeenCalled();
       });
@@ -650,7 +640,7 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "1");
+          await sleepUntil(() => sync.metadata.filesVersion == "1");
 
           emit.all("change", path.join(dir, "file1.js"), stats);
           emit.all("change", path.join(dir, "file2.js"), stats);
@@ -665,7 +655,7 @@ describe("Sync", () => {
           expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>(
             {
               input: {
-                expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+                expectedRemoteFilesVersion: sync.metadata.filesVersion,
                 changed: expect.toIncludeAllMembers([
                   { path: "file1.js", content: "one", mode: 420 },
                   { path: "file2.js", content: "two", mode: 420 },
@@ -694,7 +684,7 @@ describe("Sync", () => {
 
         expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
           input: {
-            expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([
               { path: "file.js", content: "foo", mode: 420 },
               { path: "some/deeply/nested/file.js", content: "bar", mode: 420 },
@@ -713,7 +703,7 @@ describe("Sync", () => {
 
         expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
           input: {
-            expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: [],
             deleted: expect.toIncludeAllMembers([{ path: "file.js" }, { path: "some/deeply/nested" }]),
           },
@@ -738,7 +728,7 @@ describe("Sync", () => {
 
         expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
           input: {
-            expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([
               { path: "foo.js", content: "foo", mode: 420 },
               { path: "bar.js", content: "bar", mode: 420 },
@@ -770,7 +760,7 @@ describe("Sync", () => {
 
         expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
           input: {
-            expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([{ path: "another.js", content: "test", mode: 420 }]),
             deleted: [],
           },
@@ -814,7 +804,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
         expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
           input: {
-            expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([{ path: "foo.js", content: "foo", mode: 420 }]),
             deleted: [],
           },
@@ -831,7 +821,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
         expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
           input: {
-            expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([{ path: "foo.js", content: "foo", mode: 420 }]),
             deleted: [],
           },
@@ -851,7 +841,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
         expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
           input: {
-            expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([
               { path: "bar.js", content: "bar", mode: 420 },
               { path: "baz.js", content: "baz", mode: 420 },
@@ -864,7 +854,7 @@ describe("Sync", () => {
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
         // wait for the second batch to complete
-        await sleepUntil(() => sync.metadata.lastWritten.filesVersion == "2");
+        await sleepUntil(() => sync.metadata.filesVersion == "2");
       });
 
       it("does not publish events caused by symlinked files", () => {
@@ -896,7 +886,7 @@ describe("Sync", () => {
         // only one event should be published
         expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
           input: {
-            expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([{ path: "file.js", content: "foo", mode: 420 }]),
             deleted: [],
           },
@@ -937,7 +927,7 @@ describe("Sync", () => {
           expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>(
             {
               input: {
-                expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+                expectedRemoteFilesVersion: sync.metadata.filesVersion,
                 changed: expect.toIncludeAllMembers([{ path: "watch/me/file.js", content: "bar", mode: 420 }]),
                 deleted: [],
               },
@@ -975,7 +965,7 @@ describe("Sync", () => {
           expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>(
             {
               input: {
-                expectedRemoteFilesVersion: sync.metadata.lastWritten.filesVersion,
+                expectedRemoteFilesVersion: sync.metadata.filesVersion,
                 changed: expect.toIncludeAllMembers([
                   { path: ".ignore", content: "# watch it all", mode: 420 },
                   { path: "some/deeply/nested/file.js", content: "not bar", mode: 420 },
@@ -1045,17 +1035,17 @@ describe("Sync", () => {
       expect(sync.queue.size).toBe(0);
 
       await expectDir(dir, {
-        ".ggt/sync.json": expect.toBeString(),
+        ".gadget/sync.json": expect.toBeString(),
         "foo.js": "foo",
         "bar.js": "bar",
       });
     });
 
-    it("saves metadata to .ggt/sync.json", async () => {
+    it("saves metadata to .gadget/sync.json", async () => {
       await sync.stop();
 
       await expectDir(dir, {
-        ".ggt/sync.json": JSON.stringify(sync.metadata, null, 2) + "\n",
+        ".gadget/sync.json": JSON.stringify(sync.metadata, null, 2) + "\n",
       });
     });
 

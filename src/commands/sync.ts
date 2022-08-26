@@ -56,7 +56,6 @@ export default class Sync extends BaseCommand {
 
     The following files and directories are always ignored:
       * .gadget
-      * .ggt
       * .git
       * node_modules
 
@@ -152,10 +151,8 @@ export default class Sync extends BaseCommand {
 
   metadata = {
     app: "",
-    lastWritten: {
-      filesVersion: "0",
-      mtime: 0,
-    },
+    filesVersion: "0",
+    mtime: 0,
   };
 
   publish!: DebouncedFunc<() => void>;
@@ -208,7 +205,7 @@ export default class Sync extends BaseCommand {
       this.metadata.app = await getApp();
     } else {
       try {
-        this.metadata = await fs.readJson(this.absolute(".ggt", "sync.json"));
+        this.metadata = await fs.readJson(this.absolute(".gadget", "sync.json"));
         if (!this.metadata.app) {
           this.metadata.app = await getApp();
         }
@@ -251,7 +248,7 @@ export default class Sync extends BaseCommand {
     this.filePushDelay = flags["file-push-delay"];
 
     // local files that should never be published
-    const ignored = ["node_modules/", ".gadget/", ".ggt/", ".git/"];
+    const ignored = ["node_modules/", ".gadget/", ".git/"];
 
     this.ignorer = new Ignorer(this.dir, ignored);
 
@@ -274,13 +271,13 @@ export default class Sync extends BaseCommand {
     await fs.ensureDir(this.dir);
 
     const { remoteFilesVersion } = await this.client.queryUnwrap({ query: REMOTE_FILES_VERSION_QUERY });
-    const hasRemoteChanges = BigInt(remoteFilesVersion) > BigInt(this.metadata.lastWritten.filesVersion);
+    const hasRemoteChanges = BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion);
 
     const getChangedFiles = async (): Promise<Map<string, Stats>> => {
       const files = new Map();
       for await (const filepath of walkDir(this.dir, { ignorer: this.ignorer })) {
         const stats = await fs.stat(filepath);
-        if (stats.mtime.getTime() > this.metadata.lastWritten.mtime) {
+        if (stats.mtime.getTime() > this.metadata.mtime) {
           files.set(this.absolute(filepath), stats);
         }
       }
@@ -319,8 +316,8 @@ export default class Sync extends BaseCommand {
             input: {
               expectedRemoteFilesVersion: remoteFilesVersion,
               changed: await pMap(files, async ([filepath, stats]) => {
-                if (stats.mtime.getTime() > this.metadata.lastWritten.mtime) {
-                  this.metadata.lastWritten.mtime = stats.mtime.getTime();
+                if (stats.mtime.getTime() > this.metadata.mtime) {
+                  this.metadata.mtime = stats.mtime.getTime();
                 }
 
                 return {
@@ -337,7 +334,7 @@ export default class Sync extends BaseCommand {
       }
       case Action.RESET: {
         await pMap(changedFiles, ([filepath]) => fs.remove(filepath));
-        this.metadata.lastWritten.filesVersion = "0";
+        this.metadata.filesVersion = "0";
         break;
       }
       case Action.CANCEL: {
@@ -364,7 +361,7 @@ export default class Sync extends BaseCommand {
         this.publish.flush();
         await this.queue.onIdle();
       } finally {
-        await fs.outputJSON(this.absolute(".ggt", "sync.json"), this.metadata, { spaces: 2 });
+        await fs.outputJSON(this.absolute(".gadget", "sync.json"), this.metadata, { spaces: 2 });
         await Promise.allSettled([this.watcher.close(), this.client.dispose()]);
 
         this.debug("stopped");
@@ -393,7 +390,7 @@ export default class Sync extends BaseCommand {
     const unsubscribe = this.client.subscribeUnwrap(
       {
         query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-        variables: () => ({ localFilesVersion: this.metadata.lastWritten.filesVersion }),
+        variables: () => ({ localFilesVersion: this.metadata.filesVersion }),
       },
       {
         error: (error) => void this.stop(error),
@@ -403,8 +400,8 @@ export default class Sync extends BaseCommand {
           void this.queue
             .add(async () => {
               if (!remoteFiles.size) {
-                // we still need to update lastWritten.filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
-                this.metadata.lastWritten.filesVersion = remoteFilesVersion;
+                // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
+                this.metadata.filesVersion = remoteFilesVersion;
                 return;
               }
 
@@ -432,7 +429,7 @@ export default class Sync extends BaseCommand {
                 { stopOnError: false }
               );
 
-              this.metadata.lastWritten.filesVersion = remoteFilesVersion;
+              this.metadata.filesVersion = remoteFilesVersion;
             })
             .catch(this.stop);
         },
@@ -478,14 +475,14 @@ export default class Sync extends BaseCommand {
 
             const data = await this.client.queryUnwrap({
               query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-              variables: { input: { expectedRemoteFilesVersion: this.metadata.lastWritten.filesVersion, changed, deleted } },
+              variables: { input: { expectedRemoteFilesVersion: this.metadata.filesVersion, changed, deleted } },
             });
 
             const { remoteFilesVersion } = data.publishFileSyncEvents;
             this.debug("remote files version after publishing %s", remoteFilesVersion);
 
-            if (BigInt(remoteFilesVersion) > BigInt(this.metadata.lastWritten.filesVersion)) {
-              this.metadata.lastWritten.filesVersion = remoteFilesVersion;
+            if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
+              this.metadata.filesVersion = remoteFilesVersion;
             }
           }
         })
@@ -515,11 +512,10 @@ export default class Sync extends BaseCommand {
           return;
         }
 
-        // we only update the lastWritten.mtime if the file is not ignored, because if we restart and the lastWritten.mtime is set to an
-        // ignored file, then it *could* be greater than the mtime of all non ignored files and we'll think that local files have
-        // changed when only an ignored one has
-        if (stats && stats.mtime.getTime() > this.metadata.lastWritten.mtime) {
-          this.metadata.lastWritten.mtime = stats.mtime.getTime();
+        // we only update the mtime if the file is not ignored, because if we restart and the mtime is set to an ignored file, then it could
+        // be greater than the mtime of all non ignored files and we'll think that local files have changed when only an ignored one has
+        if (stats && stats.mtime.getTime() > this.metadata.mtime) {
+          this.metadata.mtime = stats.mtime.getTime();
         }
 
         if (this.recentWrites.delete(filepath)) {

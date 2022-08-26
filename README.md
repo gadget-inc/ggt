@@ -54,19 +54,19 @@ USAGE
 
   <!-- commands -->
 
-- [`ggt sync --app <name> [DIRECTORY]`](#ggt-sync---app-name-directory)
+- [`ggt sync [--app=<value>] [DIRECTORY]`](#ggt-sync---appvalue-directory)
 - [`ggt help [COMMAND]`](#ggt-help-command)
 - [`ggt login`](#ggt-login)
 - [`ggt logout`](#ggt-logout)
 - [`ggt whoami`](#ggt-whoami)
 
-### `ggt sync --app <name> [DIRECTORY]`
+### `ggt sync [--app=<value>] [DIRECTORY]`
 
 Sync your Gadget application's source code to and from your local filesystem.
 
 ```
 USAGE
-  $ ggt sync --app <name> [DIRECTORY]
+  $ ggt sync [--app=<value>] [DIRECTORY]
 
 ARGUMENTS
   DIRECTORY  [default: .] The directory to sync files to. If the directory doesn't exist, it will be created.

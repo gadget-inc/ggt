@@ -19,7 +19,7 @@ import { api } from "../lib/api";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
 import { Client } from "../lib/client";
-import { InvalidSyncFileError, YarnNotFoundError } from "../lib/errors";
+import { FlagError, InvalidSyncFileError, YarnNotFoundError } from "../lib/errors";
 import { app } from "../lib/flags";
 import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../lib/fs-utils";
 import { session } from "../lib/session";
@@ -40,7 +40,7 @@ export default class Sync extends BaseCommand {
 
   static override summary = "Sync your Gadget application's source code to and from your local filesystem.";
 
-  static override usage = "sync --app <name> [DIRECTORY]";
+  static override usage = "sync [--app=<value>] [DIRECTORY]";
 
   static override description = dedent`
     Sync provides the ability to sync your Gadget application's source code to and from your local
@@ -151,6 +151,7 @@ export default class Sync extends BaseCommand {
   watcher!: FSWatcher;
 
   metadata = {
+    app: "",
     lastWritten: {
       filesVersion: "0",
       mtime: 0,
@@ -189,17 +190,56 @@ export default class Sync extends BaseCommand {
     await super.init();
     const { args, flags } = await this.parse(Sync);
 
-    let app = flags.app;
-    if (!app) {
-      ({ app } = await prompt<{ app: string }>({
+    this.dir = path.resolve(args["directory"] as string);
+
+    const getApp = async (): Promise<string> => {
+      if (flags.app) return flags.app;
+      if (this.metadata.app) return this.metadata.app;
+      const selected = await prompt<{ app: string }>({
         type: "list",
         name: "app",
         message: "Please select the app to sync to.",
         choices: await api.getApps().then((apps) => apps.map((app) => app.slug)),
-      }));
+      });
+      return selected.app;
+    };
+
+    if (await isEmptyDir(this.dir)) {
+      this.metadata.app = await getApp();
+    } else {
+      try {
+        this.metadata = await fs.readJson(this.absolute(".ggt", "sync.json"));
+        if (!this.metadata.app) {
+          this.metadata.app = await getApp();
+        }
+      } catch (error) {
+        if (!flags.force) {
+          throw new InvalidSyncFileError(error, this, flags.app);
+        }
+        this.metadata.app = await getApp();
+      }
     }
 
-    this.client = new Client(app, {
+    if (flags.app && flags.app !== this.metadata.app && !flags.force) {
+      throw new FlagError(
+        { name: "app", char: "a" },
+        dedent`
+            You were about to sync the following app to the following directory:
+
+              ${flags.app} → ${this.dir}
+
+            However, that directory has already been synced with this app:
+
+              ${this.metadata.app}
+
+            If you're sure that you want to sync "${flags.app}" to "${this.dir}", run \`ggt sync\` again with the \`--force\` flag:
+
+              $ ggt sync ${this.argv.join(" ")} --force
+          `
+      );
+    }
+
+    this.client = new Client(this.metadata.app, {
       ws: {
         headers: {
           "user-agent": this.config.userAgent,
@@ -207,8 +247,6 @@ export default class Sync extends BaseCommand {
         },
       },
     });
-
-    this.dir = path.resolve(args["directory"] as string);
 
     this.filePushDelay = flags["file-push-delay"];
 
@@ -234,16 +272,6 @@ export default class Sync extends BaseCommand {
     }
 
     await fs.ensureDir(this.dir);
-
-    if (!(await isEmptyDir(this.dir))) {
-      try {
-        this.metadata = await fs.readJson(this.absolute(".ggt", "sync.json"));
-      } catch (error) {
-        if (!flags.force) {
-          throw new InvalidSyncFileError(error, this.dir, app);
-        }
-      }
-    }
 
     const { remoteFilesVersion } = await this.client.queryUnwrap({ query: REMOTE_FILES_VERSION_QUERY });
     const hasRemoteChanges = BigInt(remoteFilesVersion) > BigInt(this.metadata.lastWritten.filesVersion);

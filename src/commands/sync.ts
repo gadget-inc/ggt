@@ -416,8 +416,15 @@ export default class Sync extends BaseCommand {
 
                   if ("content" in file) {
                     await fs.ensureDir(path.dirname(filepath), { mode: 0o755 });
-                    if (!file.path.endsWith("/")) await fs.writeFile(filepath, this.encoder.encode(file.content), { mode: file.mode });
-                    if (filepath == this.absolute("yarn.lock")) await execa("yarn", ["install"], { cwd: this.dir });
+                    if (!file.path.endsWith("/")) {
+                      await fs.writeFile(filepath, this.encoder.encode(file.content), { mode: file.mode });
+                    }
+                    if (filepath == this.absolute("yarn.lock")) {
+                      await execa("yarn", ["install"], { cwd: this.dir }).catch((err) => {
+                        this.debug("yarn install failed");
+                        this.debug(err.message);
+                      });
+                    }
                   } else {
                     await fs.remove(filepath);
                   }

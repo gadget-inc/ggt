@@ -90,7 +90,6 @@ DESCRIPTION
 
   The following files and directories are always ignored:
     * .gadget
-    * .ggt
     * .git
     * node_modules
 

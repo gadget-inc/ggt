@@ -1,1 +1,3 @@
-module.exports = "@gadgetinc/prettier-config";
+module.exports = {
+  printWidth: 140,
+};

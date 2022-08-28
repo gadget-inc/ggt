@@ -61,7 +61,6 @@
     "ws": "^8.8.1"
   },
   "devDependencies": {
-    "@gadgetinc/prettier-config": "*",
     "@oclif/plugin-plugins": "^2.1.0",
     "@oclif/test": "^2.1.1",
     "@swc/core": "^1.2.244",
@@ -97,7 +96,7 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "type-fest": "^2.19.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.8.2"
   },
   "engines": {
     "node": ">=16.0.0"

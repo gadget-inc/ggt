@@ -43,7 +43,6 @@
         "ggt": "bin/run"
       },
       "devDependencies": {
-        "@gadgetinc/prettier-config": "*",
         "@oclif/plugin-plugins": "^2.1.0",
         "@oclif/test": "^2.1.1",
         "@swc/core": "^1.2.244",
@@ -79,7 +78,7 @@
         "ts-node": "^10.9.1",
         "tslib": "^2.4.0",
         "type-fest": "^2.19.0",
-        "typescript": "^4.7.4"
+        "typescript": "^4.8.2"
       },
       "engines": {
         "node": ">=16.0.0"
@@ -1071,17 +1070,6 @@
       },
       "bin": {
         "js-yaml": "bin/js-yaml.js"
-      }
-    },
-    "node_modules/@gadgetinc/prettier-config": {
-      "version": "0.3.0",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "prettier-plugin-organize-imports": "^1.0.4"
-      },
-      "peerDependencies": {
-        "prettier": "^2.0.5"
       }
     },
     "node_modules/@gar/promisify": {
@@ -11191,15 +11179,6 @@
         "url": "https://github.com/prettier/prettier?sponsor=1"
       }
     },
-    "node_modules/prettier-plugin-organize-imports": {
-      "version": "1.1.1",
-      "dev": true,
-      "license": "MIT",
-      "peerDependencies": {
-        "prettier": ">=1.10",
-        "typescript": ">=2.8.2"
-      }
-    },
     "node_modules/prettier-plugin-packagejson": {
       "version": "2.2.18",
       "dev": true,
@@ -12914,9 +12893,10 @@
       }
     },
     "node_modules/typescript": {
-      "version": "4.7.4",
+      "version": "4.8.2",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-4.8.2.tgz",
+      "integrity": "sha512-C0I1UsrrDHo2fYI5oaCGbSejwX4ch+9Y5jTQELvovfmFkK3HHSZJB8MSJcWLmCUBzQBchCrZ9rMRV6GuNrvGtw==",
       "dev": true,
-      "license": "Apache-2.0",
       "bin": {
         "tsc": "bin/tsc",
         "tsserver": "bin/tsserver"
@@ -14551,13 +14531,6 @@
             "argparse": "^2.0.1"
           }
         }
-      }
-    },
-    "@gadgetinc/prettier-config": {
-      "version": "0.3.0",
-      "dev": true,
-      "requires": {
-        "prettier-plugin-organize-imports": "^1.0.4"
       }
     },
     "@gar/promisify": {
@@ -21772,11 +21745,6 @@
       "version": "2.7.1",
       "dev": true
     },
-    "prettier-plugin-organize-imports": {
-      "version": "1.1.1",
-      "dev": true,
-      "requires": {}
-    },
     "prettier-plugin-packagejson": {
       "version": "2.2.18",
       "dev": true,
@@ -22879,7 +22847,9 @@
       }
     },
     "typescript": {
-      "version": "4.7.4",
+      "version": "4.8.2",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-4.8.2.tgz",
+      "integrity": "sha512-C0I1UsrrDHo2fYI5oaCGbSejwX4ch+9Y5jTQELvovfmFkK3HHSZJB8MSJcWLmCUBzQBchCrZ9rMRV6GuNrvGtw==",
       "dev": true
     },
     "unbox-primitive": {

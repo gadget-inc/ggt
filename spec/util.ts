@@ -16,7 +16,7 @@ export async function getError(fnThatThrows: () => unknown): Promise<any> {
   }
 }
 
-export async function expectDir(dir: string, expected: Record<string, string>): Promise<void> {
+export async function expectDir(dir: string, expected: Record<string, string | jest.Result>): Promise<void> {
   const actual: Record<string, string> = {};
   for await (const filepath of walkDir(dir)) {
     actual[normalizePath(path.relative(dir, filepath))] = await fs.readFile(filepath, "utf-8");

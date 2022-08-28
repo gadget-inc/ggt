@@ -1,5 +1,4 @@
 import { Flags } from "@oclif/core";
-import type { OptionFlag } from "@oclif/core/lib/interfaces";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
 import execa from "execa";
@@ -88,7 +87,7 @@ export default class Sync extends BaseCommand {
       helpValue: "ms",
       default: 100,
       hidden: true,
-    }) as OptionFlag<number>,
+    }),
     "file-stability-threshold": Flags.integer({
       name: "file-stability-threshold",
       summary: "Time in milliseconds a file's size must remain the same.",
@@ -96,7 +95,7 @@ export default class Sync extends BaseCommand {
       helpValue: "ms",
       default: 500,
       hidden: true,
-    }) as OptionFlag<number>,
+    }),
     "file-poll-interval": Flags.integer({
       name: "file-poll-interval",
       description: "Interval in milliseconds between polling a file's size.",
@@ -104,7 +103,7 @@ export default class Sync extends BaseCommand {
       helpValue: "ms",
       default: 100,
       hidden: true,
-    }) as OptionFlag<number>,
+    }),
   };
 
   static override examples = [

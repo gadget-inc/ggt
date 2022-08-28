@@ -19,7 +19,6 @@ import { api } from "../../src/lib/api";
 import { config } from "../../src/lib/config";
 import { ClientError, FlagError, InvalidSyncFileError, YarnNotFoundError } from "../../src/lib/errors";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
-import type { PublishFileSyncEventsMutationVariables } from "../../src/__generated__/graphql";
 import { testDirPath } from "../jest.setup";
 import type { MockClient } from "../util";
 import { expectDir, expectDirSync, getError, mockClient, setupDir } from "../util";
@@ -195,8 +194,8 @@ describe("Sync", () => {
 
       await sleepUntil(() => prompt.mock.calls.length > 0);
       expect(prompt.mock.lastCall[0]).toMatchInlineSnapshot(`
-        Object {
-          "choices": Array [
+        {
+          "choices": [
             "Cancel (Ctrl+C)",
             "Merge local files with remote ones",
             "Reset local files to remote ones",
@@ -222,8 +221,8 @@ describe("Sync", () => {
 
       await sleepUntil(() => prompt.mock.calls.length > 0);
       expect(prompt.mock.lastCall[0]).toMatchInlineSnapshot(`
-        Object {
-          "choices": Array [
+        {
+          "choices": [
             "Cancel (Ctrl+C)",
             "Merge local files with remote ones",
             "Reset local files to remote ones",
@@ -325,7 +324,7 @@ describe("Sync", () => {
       await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
       // foo.js didn't change, so it should not be included
-      expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
+      expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
         input: {
           expectedRemoteFilesVersion: sync.metadata.filesVersion,
           changed: expect.toIncludeAllMembers([
@@ -652,19 +651,17 @@ describe("Sync", () => {
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
-          expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>(
-            {
-              input: {
-                expectedRemoteFilesVersion: sync.metadata.filesVersion,
-                changed: expect.toIncludeAllMembers([
-                  { path: "file1.js", content: "one", mode: 420 },
-                  { path: "file2.js", content: "two", mode: 420 },
-                  { path: "file3.js", content: "three", mode: 420 },
-                ]),
-                deleted: [],
-              },
-            }
-          );
+          expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+            input: {
+              expectedRemoteFilesVersion: sync.metadata.filesVersion,
+              changed: expect.toIncludeAllMembers([
+                { path: "file1.js", content: "one", mode: 420 },
+                { path: "file2.js", content: "two", mode: 420 },
+                { path: "file3.js", content: "three", mode: 420 },
+              ]),
+              deleted: [],
+            },
+          });
         });
       });
     });
@@ -682,7 +679,7 @@ describe("Sync", () => {
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
           input: {
             expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([
@@ -701,7 +698,7 @@ describe("Sync", () => {
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
           input: {
             expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: [],
@@ -726,7 +723,7 @@ describe("Sync", () => {
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
           input: {
             expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([
@@ -758,7 +755,7 @@ describe("Sync", () => {
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
           input: {
             expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([{ path: "another.js", content: "test", mode: 420 }]),
@@ -802,7 +799,7 @@ describe("Sync", () => {
         // the first batch should be in progress
         expect(sync.queue.size).toBe(0);
         expect(sync.queue.pending).toBe(1);
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
           input: {
             expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([{ path: "foo.js", content: "foo", mode: 420 }]),
@@ -819,7 +816,7 @@ describe("Sync", () => {
 
         // the first batch should still be in progress
         expect(sync.queue.pending).toBe(1);
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
           input: {
             expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([{ path: "foo.js", content: "foo", mode: 420 }]),
@@ -839,7 +836,7 @@ describe("Sync", () => {
         // the second batch should be in progress
         expect(sync.queue.size).toBe(0);
         expect(sync.queue.pending).toBe(1);
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
           input: {
             expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([
@@ -884,7 +881,7 @@ describe("Sync", () => {
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
         // only one event should be published
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>({
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
           input: {
             expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: expect.toIncludeAllMembers([{ path: "file.js", content: "foo", mode: 420 }]),
@@ -924,15 +921,13 @@ describe("Sync", () => {
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-          expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>(
-            {
-              input: {
-                expectedRemoteFilesVersion: sync.metadata.filesVersion,
-                changed: expect.toIncludeAllMembers([{ path: "watch/me/file.js", content: "bar", mode: 420 }]),
-                deleted: [],
-              },
-            }
-          );
+          expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+            input: {
+              expectedRemoteFilesVersion: sync.metadata.filesVersion,
+              changed: expect.toIncludeAllMembers([{ path: "watch/me/file.js", content: "bar", mode: 420 }]),
+              deleted: [],
+            },
+          });
         });
 
         it("reloads the ignore file when it changes", async () => {
@@ -962,19 +957,17 @@ describe("Sync", () => {
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-          expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual<PublishFileSyncEventsMutationVariables>(
-            {
-              input: {
-                expectedRemoteFilesVersion: sync.metadata.filesVersion,
-                changed: expect.toIncludeAllMembers([
-                  { path: ".ignore", content: "# watch it all", mode: 420 },
-                  { path: "some/deeply/nested/file.js", content: "not bar", mode: 420 },
-                  { path: "watch/me/file.js", content: "bar", mode: 420 },
-                ]),
-                deleted: [],
-              },
-            }
-          );
+          expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+            input: {
+              expectedRemoteFilesVersion: sync.metadata.filesVersion,
+              changed: expect.toIncludeAllMembers([
+                { path: ".ignore", content: "# watch it all", mode: 420 },
+                { path: "some/deeply/nested/file.js", content: "not bar", mode: 420 },
+                { path: "watch/me/file.js", content: "bar", mode: 420 },
+              ]),
+              deleted: [],
+            },
+          });
         });
       });
     });

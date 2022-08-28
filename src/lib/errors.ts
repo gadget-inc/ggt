@@ -1,5 +1,4 @@
 import type { Config } from "@oclif/core";
-import type { OptionFlag } from "@oclif/core/lib/interfaces";
 import cleanStack from "clean-stack";
 import { HTTPError } from "got/dist/source";
 import type { GraphQLError } from "graphql";
@@ -288,10 +287,10 @@ export class YarnNotFoundError extends BaseError {
   }
 }
 
-export class FlagError extends BaseError {
+export class FlagError<T extends { name: string; char?: string }> extends BaseError {
   isBug = IsBug.NO;
 
-  constructor(readonly flag: Partial<OptionFlag<unknown>>, readonly description: string) {
+  constructor(readonly flag: T, readonly description: string) {
     const name = flag.char ? `-${flag.char}, --${flag.name}` : `--${flag.name}`;
     super("GGT_CLI_FLAG_ERROR", `Invalid value provided for the ${name} flag`);
   }

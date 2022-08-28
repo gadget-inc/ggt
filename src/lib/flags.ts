@@ -5,15 +5,15 @@ import dedent from "ts-dedent";
 import { api } from "./api";
 import { FlagError } from "./errors";
 
-export const app = Flags.build({
+export const app = Flags.custom({
   char: "a",
   name: "app",
   summary: "The Gadget application this command applies to.",
-  async parse(value) {
+  parse: async (value: string) => {
     const name = /^(https:\/\/)?(?<name>[\w-]+)(\..*)?/.exec(value)?.groups?.["name"];
     if (!name)
       throw new FlagError(
-        this,
+        app,
         dedent`
           The -a, --app flag must be the application's name, slug, or URL
 
@@ -27,12 +27,15 @@ export const app = Flags.build({
       );
 
     const availableApps = await api.getApps();
-    const app = availableApps.find((app) => app.name == name || app.slug == name);
-    if (!app) {
-      throw new FlagError(
-        this,
-        availableApps.length > 0
-          ? dedent`
+    const foundApp = availableApps.find((a) => a.name == name || a.slug == name);
+    if (foundApp) {
+      return foundApp.slug;
+    }
+
+    throw new FlagError(
+      app,
+      availableApps.length > 0
+        ? dedent`
               Unknown application:
 
                 ${value}
@@ -44,7 +47,7 @@ export const app = Flags.build({
                   .map((app) => `* ${app.slug}`)
                   .join("\n")}
             `
-          : dedent`
+        : dedent`
               Unknown application:
 
                 ${value}
@@ -53,9 +56,6 @@ export const app = Flags.build({
 
               Visit https://gadget.new to create one!
             `
-      );
-    }
-
-    return app.slug;
+    );
   },
 });

@@ -128,6 +128,8 @@ export default class Sync extends BaseCommand {
     `,
   ];
 
+  override requireUser = true;
+
   status = SyncStatus.STARTING;
 
   dir!: string;

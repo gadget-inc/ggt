@@ -15,8 +15,7 @@ import Sync, {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
   SyncStatus,
 } from "../../src/commands/sync";
-import { api } from "../../src/lib/api";
-import { config } from "../../src/lib/config";
+import { context } from "../../src/lib/context";
 import { ClientError, FlagError, InvalidSyncFileError, YarnNotFoundError } from "../../src/lib/errors";
 import { sleep, sleepUntil } from "../../src/lib/sleep";
 import { testDirPath } from "../jest.setup";
@@ -46,10 +45,13 @@ describe("Sync", () => {
   beforeEach(() => {
     dir = path.join(testDirPath(), "app");
     client = mockClient();
-    sync = new Sync(["--app", "test", "--file-push-delay", "10", dir], config);
+    sync = new Sync(["--app", "test", "--file-push-delay", "10", dir], context.config);
 
-    jest.spyOn(api, "getCurrentUser").mockResolvedValue({ name: "Jane Doe", email: "jane@example.come" });
-    jest.spyOn(api, "getApps").mockResolvedValue([{ id: "1", name: "test", slug: "test" }]);
+    jest.spyOn(context, "getUser").mockResolvedValue({ name: "Jane Doe", email: "jane@example.come" });
+    jest.spyOn(context, "getAvailableApps").mockResolvedValue([
+      { id: "1", name: "test", slug: "test" },
+      { id: "2", name: "not-test", slug: "not-test" },
+    ]);
 
     // TODO: we don't need to mock the watcher anymore since we're using the real filesystem
     jest.spyOn(FSWatcher.prototype, "add").mockReturnThis();

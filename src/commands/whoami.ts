@@ -1,6 +1,6 @@
 import dedent from "ts-dedent";
-import { api } from "../lib/api";
 import { BaseCommand } from "../lib/base-command";
+import { context } from "../lib/context";
 
 export default class Whoami extends BaseCommand {
   static override summary = "Show the name and email address of the currently logged in user.";
@@ -15,7 +15,7 @@ export default class Whoami extends BaseCommand {
   ];
 
   async run(): Promise<void> {
-    const user = await api.getCurrentUser();
+    const user = await context.getUser();
     if (!user) {
       this.log("You are not logged in");
       return;

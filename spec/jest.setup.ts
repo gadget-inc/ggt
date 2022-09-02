@@ -11,7 +11,7 @@ jest.setTimeout(process.env["CI"] ? 10_000 : 1000);
 const debug = Debug("ggt:test");
 
 export function testDirPath(): string {
-  return path.join(__dirname, "..", "tmp", "tests", expect.getState().currentTestName.replace(/[ /,?=]/g, "-"));
+  return path.join(__dirname, "..", "tmp", "tests", expect.getState().currentTestName!.replace(/[ /,?=]/g, "-"));
 }
 
 beforeEach(async () => {
@@ -27,11 +27,9 @@ beforeEach(async () => {
   process.env["GGT_DATA_DIR"] = path.join(testDir, "data");
 
   const { Config, Command } = await import("@oclif/core");
-  const { setConfig } = await import("../src/lib/config");
-  setConfig((await Config.load(path.join(__dirname, ".."))) as Config);
-
-  const { session } = await import("../src/lib/session");
-  session.set(undefined);
+  const { context } = await import("../src/lib/context");
+  context.clear();
+  context.config = (await Config.load(path.join(__dirname, ".."))) as Config;
 
   jest.spyOn(Command.prototype, "log").mockImplementation();
   jest.spyOn(Command.prototype, "warn").mockImplementation();

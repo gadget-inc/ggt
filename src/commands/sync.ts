@@ -14,14 +14,13 @@ import path from "path";
 import dedent from "ts-dedent";
 import { TextDecoder, TextEncoder } from "util";
 import which from "which";
-import { api } from "../lib/api";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
 import { Client } from "../lib/client";
+import { context } from "../lib/context";
 import { FlagError, InvalidSyncFileError, YarnNotFoundError } from "../lib/errors";
 import { app } from "../lib/flags";
 import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../lib/fs-utils";
-import { session } from "../lib/session";
 import { sleepUntil } from "../lib/sleep";
 import type {
   FileSyncChangedEventInput,
@@ -197,7 +196,7 @@ export default class Sync extends BaseCommand {
         type: "list",
         name: "app",
         message: "Please select the app to sync to.",
-        choices: await api.getApps().then((apps) => apps.map((app) => app.slug)),
+        choices: await context.getAvailableApps().then((apps) => apps.map((app) => app.slug)),
       });
       return selected.app;
     };
@@ -237,14 +236,9 @@ export default class Sync extends BaseCommand {
       );
     }
 
-    this.client = new Client(this.metadata.app, {
-      ws: {
-        headers: {
-          "user-agent": this.config.userAgent,
-          cookie: `session=${encodeURIComponent(session.get() as string)};`,
-        },
-      },
-    });
+    await context.setApp(this.metadata.app);
+
+    this.client = new Client();
 
     this.filePushDelay = flags["file-push-delay"];
 

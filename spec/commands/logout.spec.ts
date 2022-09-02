@@ -1,17 +1,19 @@
 import Logout from "../../src/commands/logout";
-import { session } from "../../src/lib/session";
+import { context } from "../../src/lib/context";
 
 describe("Logout", () => {
-  it("calls session.set(undefined)", async () => {
-    jest.spyOn(session, "set").mockImplementation();
+  it("sets context.session = undefined", async () => {
+    context.session = "test";
+    const spy = jest.spyOn(context, "session", "set");
 
     await Logout.run();
 
-    expect(session.set).toHaveBeenLastCalledWith(undefined);
+    expect(spy).toHaveBeenLastCalledWith(undefined);
+    expect(context.session).toBeUndefined();
   });
 
   it("prints a message if the user is logged in", async () => {
-    jest.spyOn(session, "set").mockReturnValue(true);
+    context.session = "test";
 
     await Logout.run();
 
@@ -19,7 +21,7 @@ describe("Logout", () => {
   });
 
   it("prints a different message if the user is logged out", async () => {
-    jest.spyOn(session, "set").mockReturnValue(false);
+    context.session = undefined;
 
     await Logout.run();
 

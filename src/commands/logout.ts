@@ -1,6 +1,6 @@
 import dedent from "ts-dedent";
 import { BaseCommand } from "../lib/base-command";
-import { session } from "../lib/session";
+import { context } from "../lib/context";
 
 export default class Logout extends BaseCommand {
   static override summary = "Log out of your account.";
@@ -16,7 +16,8 @@ export default class Logout extends BaseCommand {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async run(): Promise<void> {
-    if (session.set(undefined)) {
+    if (context.session) {
+      context.session = undefined;
       this.log("Goodbye");
     } else {
       this.log("You are not logged in");

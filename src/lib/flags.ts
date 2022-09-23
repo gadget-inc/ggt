@@ -2,7 +2,7 @@ import { Flags } from "@oclif/core";
 import levenshtein from "fast-levenshtein";
 import { sortBy } from "lodash";
 import dedent from "ts-dedent";
-import { api } from "./api";
+import { context } from "./context";
 import { FlagError } from "./errors";
 
 export const app = Flags.custom({
@@ -26,7 +26,7 @@ export const app = Flags.custom({
         `
       );
 
-    const availableApps = await api.getApps();
+    const availableApps = await context.getAvailableApps();
     const foundApp = availableApps.find((a) => a.name == name || a.slug == name);
     if (foundApp) {
       return foundApp.slug;

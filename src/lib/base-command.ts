@@ -15,10 +15,8 @@ import type NotifySend from "node-notifier/notifiers/notifysend";
 import type WindowsToaster from "node-notifier/notifiers/toaster";
 import open from "open";
 import path from "path";
-import { api, GADGET_ENDPOINT } from "./api";
-import { setConfig } from "./config";
+import { context, GADGET_ENDPOINT } from "./context";
 import { BaseError, UnexpectedError as UnknownError } from "./errors";
-import { session } from "./session";
 
 export abstract class BaseCommand extends Command {
   /**
@@ -65,9 +63,9 @@ export abstract class BaseCommand extends Command {
       Debug.enable(`${this.config.bin}:*`);
     }
 
-    setConfig(this.config);
+    context.config = this.config;
 
-    if (this.requireUser && !(await api.getCurrentUser())) {
+    if (this.requireUser && !(await context.getUser())) {
       const { login } = await prompt<{ login: boolean }>({
         type: "confirm",
         name: "login",
@@ -131,9 +129,9 @@ export abstract class BaseCommand extends Command {
             const value = incomingUrl.searchParams.get("session");
             if (!value) throw new Error("missing session");
 
-            session.set(value);
+            context.session = value;
 
-            const user = await api.getCurrentUser();
+            const user = await context.getUser();
             if (!user) throw new Error("missing current user");
 
             if (user.name) {
@@ -145,7 +143,7 @@ export abstract class BaseCommand extends Command {
             redirectTo.searchParams.set("success", "true");
             resolve();
           } catch (error) {
-            session.set(undefined);
+            context.session = undefined;
             redirectTo.searchParams.set("success", "false");
             reject(error);
           } finally {

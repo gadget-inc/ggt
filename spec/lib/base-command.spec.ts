@@ -4,10 +4,8 @@ import http from "http";
 import { prompt } from "inquirer";
 import { noop } from "lodash";
 import open from "open";
-import { api, GADGET_ENDPOINT } from "../../src/lib/api";
 import { BaseCommand } from "../../src/lib/base-command";
-import { config } from "../../src/lib/config";
-import { session } from "../../src/lib/session";
+import { context, GADGET_ENDPOINT } from "../../src/lib/context";
 import { sleepUntil } from "../../src/lib/sleep";
 
 class Base extends BaseCommand {
@@ -18,7 +16,7 @@ describe("BaseCommand", () => {
   let base: Base;
 
   beforeEach(() => {
-    base = new Base([], config);
+    base = new Base([], context.config);
   });
 
   describe("init", () => {
@@ -39,7 +37,7 @@ describe("BaseCommand", () => {
       }
 
       beforeEach(() => {
-        base = new DoesRequireUser([], config);
+        base = new DoesRequireUser([], context.config);
       });
 
       it("prompts the user to log in", async () => {
@@ -74,7 +72,7 @@ describe("BaseCommand", () => {
           run = jest.fn();
         }
 
-        await new DoesNotRequireUser([], config).init();
+        await new DoesNotRequireUser([], context.config).init();
 
         expect(prompt).not.toHaveBeenCalled();
       });
@@ -96,8 +94,8 @@ describe("BaseCommand", () => {
     });
 
     it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
-      session.set(undefined);
-      jest.spyOn(api, "getCurrentUser").mockResolvedValue({ email: "test@example.com", name: "Jane Doe" });
+      context.session = undefined;
+      jest.spyOn(context, "getUser").mockResolvedValue({ email: "test@example.com", name: "Jane Doe" });
 
       void base.login();
 
@@ -111,8 +109,8 @@ describe("BaseCommand", () => {
       expect(base.log).toHaveBeenCalledWith("Your browser has been opened. Please log in to your account.");
 
       // we should be at `await receiveSession`
-      expect(session.get()).toBeUndefined();
-      expect(api.getCurrentUser).not.toHaveBeenCalled();
+      expect(context.session).toBeUndefined();
+      expect(context.getUser).not.toHaveBeenCalled();
 
       const req = new http.IncomingMessage(null as any);
       req.url = `?session=test`;
@@ -124,8 +122,8 @@ describe("BaseCommand", () => {
       requestListener!(req, res);
 
       await sleepUntil(() => server.close.mock.calls.length > 0);
-      expect(session.get()).toBe("test");
-      expect(api.getCurrentUser).toHaveBeenCalled();
+      expect(context.session).toBe("test");
+      expect(context.getUser).toHaveBeenCalled();
       expect(base.log.mock.lastCall[0]).toMatchInlineSnapshot(`"Hello, Jane Doe (test@example.com)"`);
       expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `${GADGET_ENDPOINT}/auth/cli?success=true` });
       expect(res.end).toHaveBeenCalled();
@@ -133,8 +131,8 @@ describe("BaseCommand", () => {
     });
 
     it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
-      session.set(undefined);
-      jest.spyOn(api, "getCurrentUser").mockRejectedValue(new Error("boom"));
+      context.session = undefined;
+      jest.spyOn(context, "getUser").mockRejectedValue(new Error("boom"));
 
       void base.login().catch(noop);
 
@@ -148,8 +146,8 @@ describe("BaseCommand", () => {
       expect(base.log).toHaveBeenCalledWith("Your browser has been opened. Please log in to your account.");
 
       // we should be at `await receiveSession`
-      expect(session.get()).toBeUndefined();
-      expect(api.getCurrentUser).not.toHaveBeenCalled();
+      expect(context.session).toBeUndefined();
+      expect(context.getUser).not.toHaveBeenCalled();
 
       const req = new http.IncomingMessage(null as any);
       req.url = `?session=test`;
@@ -161,8 +159,8 @@ describe("BaseCommand", () => {
       requestListener!(req, res);
 
       await sleepUntil(() => server.close.mock.calls.length > 0);
-      expect(session.get()).toBeUndefined();
-      expect(api.getCurrentUser).toHaveBeenCalled();
+      expect(context.session).toBeUndefined();
+      expect(context.getUser).toHaveBeenCalled();
       expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `${GADGET_ENDPOINT}/auth/cli?success=false` });
       expect(res.end).toHaveBeenCalled();
       expect(server.close).toHaveBeenCalled();

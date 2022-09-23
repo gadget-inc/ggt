@@ -1,12 +1,14 @@
+import assert from "assert";
 import Debug from "debug";
 import type { GraphQLError } from "graphql";
-import type { ClientOptions, ExecutionResult, SubscribePayload } from "graphql-ws";
+import type { ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
 import { isFunction, noop } from "lodash";
 import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
+import { context } from "./context";
 import { Env } from "./env";
 import { ClientError } from "./errors";
 
@@ -24,13 +26,23 @@ export class Client {
 
   private _client: ReturnType<typeof createClient>;
 
-  constructor(app: string, options?: Partial<ClientOptions> & { ws?: Partial<WebSocket.ClientOptions> }) {
+  constructor() {
+    assert(context.app, "context.app must be set before instantiating the Client");
+
     this._client = createClient({
-      url: `wss://${app}.${Env.productionLike ? "gadget.app" : "ggt.pub:3000"}/edit/api/graphql-ws`,
+      url: `wss://${context.app.slug}.${Env.productionLike ? "gadget.app" : "ggt.pub:3000"}/edit/api/graphql-ws`,
       shouldRetry: () => true,
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
-          super(address, protocols, { ...wsOptions, ...options?.ws });
+          assert(context.session, "context.session must be set before instantiating the Client");
+          super(address, protocols, {
+            ...wsOptions,
+            headers: {
+              ...wsOptions?.headers,
+              "user-agent": context.config.userAgent,
+              cookie: `session=${encodeURIComponent(context.session)};`,
+            },
+          });
         }
       },
       on: {
@@ -77,9 +89,7 @@ export class Client {
             debug("connection error %o", { error });
           }
         },
-        ...options?.on,
       },
-      ...options,
     });
   }
 

@@ -16,19 +16,21 @@
     "/bin",
     "/dist",
     "/npm-shrinkwrap.json",
-    "/oclif.manifest.json"
+    "/oclif.manifest.json",
+    "/package.json",
+    "/README.md"
   ],
   "scripts": {
     "build": "rimraf dist && tsc --build",
+    "postbuild": "oclif manifest && oclif readme && prettier --write README.md",
     "postinstall": "patch-package",
     "lint": "concurrently --prefix none --group 'npm:lint:*'",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
     "lint:eslint": "eslint --max-warnings 0 .",
     "lint:prettier": "prettier --check .",
     "lint:typescript": "tsc --project tsconfig.json --project spec/tsconfig.json --noEmit",
-    "readme": "npm run build && oclif readme && prettier --write README.md",
     "test": "jest",
-    "version": "npm run readme && git add README.md"
+    "version": "npm run build && git add README.md"
   },
   "dependencies": {
     "@oclif/core": "^1.16.0",

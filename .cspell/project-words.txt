@@ -8,5 +8,6 @@ notificationcenter
 notifysend
 oclif
 packagejson
+postbuild
 typecheck
 usagestop

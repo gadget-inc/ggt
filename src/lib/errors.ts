@@ -1,4 +1,3 @@
-import type { Config } from "@oclif/core";
 import cleanStack from "clean-stack";
 import { HTTPError } from "got/dist/source";
 import type { GraphQLError } from "graphql";
@@ -11,6 +10,7 @@ import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
 import type Sync from "../commands/sync";
 import type { Payload } from "./client";
+import { context } from "./context";
 
 /**
  * Base class for all errors.
@@ -48,10 +48,10 @@ export abstract class BaseError extends Error {
    * Turns this error into a user-friendly message that explains what went wrong and how to fix it. A good write up of what an error should
    * look like can be found here: {@link https://clig.dev/#errors}
    */
-  render(config: Config): string {
-    const header = this.header(config);
-    const body = this.body(config);
-    const footer = this.footer(config);
+  render(): string {
+    const header = this.header();
+    const body = this.body();
+    const footer = this.footer();
 
     let output = "";
     if (header) output += header + "\n\n";
@@ -61,11 +61,11 @@ export abstract class BaseError extends Error {
     return output;
   }
 
-  protected header(_: Config): string {
+  protected header(): string {
     return `${this.code}: ${this.message}`;
   }
 
-  protected footer(config: Config): string {
+  protected footer(): string {
     switch (this.isBug) {
       case IsBug.NO:
         return "";
@@ -73,7 +73,7 @@ export abstract class BaseError extends Error {
         return dedent`
           If you think this is a bug, please submit an issue using the link below.
 
-          ${newGithubIssueUrl(this.issueOptions(config))}
+          ${newGithubIssueUrl(this.issueOptions())}
         `;
       case IsBug.YES:
         return dedent`
@@ -84,12 +84,12 @@ export abstract class BaseError extends Error {
 
           If nobody has, you can submit one using the link below.
           ---
-          ${newGithubIssueUrl(this.issueOptions(config))}
+          ${newGithubIssueUrl(this.issueOptions())}
         `;
     }
   }
 
-  protected issueOptions(config: Config): newGithubIssueUrl.Options {
+  protected issueOptions(): newGithubIssueUrl.Options {
     const options = {
       repoUrl: "https://github.com/gadget-inc/ggt",
       title: `[BUG ${this.code}]: `,
@@ -100,15 +100,15 @@ export abstract class BaseError extends Error {
 
         ### Command
         \`\`\`sh-session
-        ${config.bin} ${process.argv.slice(2).join(" ")}
+        ${context.config.bin} ${process.argv.slice(2).join(" ")}
         \`\`\`
 
         ### Environment
         \`\`\`
-        version: ${config.version}
-        platform: ${config.platform}
-        arch: ${config.arch}
-        shell: ${config.shell}
+        version: ${context.config.version}
+        platform: ${context.config.platform}
+        arch: ${context.config.arch}
+        shell: ${context.config.shell}
         timestamp: ${new Date().toISOString()}
         \`\`\`
 
@@ -132,7 +132,7 @@ export abstract class BaseError extends Error {
     return options;
   }
 
-  protected abstract body(_: Config): string;
+  protected abstract body(): string;
 }
 
 /**
@@ -172,7 +172,7 @@ export class UnexpectedError extends BaseError {
     super("GGT_CLI_UNEXPECTED_ERROR", "An unexpected error occurred");
   }
 
-  protected body(_: Config): string {
+  protected body(): string {
     return cleanStack(this.cause.stack ?? this.stack);
   }
 }
@@ -200,7 +200,7 @@ export class ClientError extends BaseError {
     }
   }
 
-  override body(_: Config): string {
+  override body(): string {
     if (isGraphQLErrors(this.cause)) {
       if (this.cause.length > 1) {
         let output = "Gadget responded with multiple errors:";
@@ -240,8 +240,8 @@ export class ClientError extends BaseError {
     return this.cause;
   }
 
-  protected override issueOptions(config: Config): newGithubIssueUrl.Options {
-    const options = super.issueOptions(config) as Writable<newGithubIssueUrl.Options>;
+  protected override issueOptions(): newGithubIssueUrl.Options {
+    const options = super.issueOptions() as Writable<newGithubIssueUrl.Options>;
     options.body += dedent`
 
       ### GraphQL
@@ -274,7 +274,7 @@ export class YarnNotFoundError extends BaseError {
     super("GGT_CLI_YARN_NOT_FOUND", "Yarn not found");
   }
 
-  protected body(_: Config): string {
+  protected body(): string {
     return dedent`
       Yarn is required to sync your application.
 
@@ -295,7 +295,7 @@ export class FlagError<T extends { name: string; char?: string }> extends BaseEr
     super("GGT_CLI_FLAG_ERROR", `Invalid value provided for the ${name} flag`);
   }
 
-  protected body(_: Config): string {
+  protected body(): string {
     return this.description;
   }
 }
@@ -307,7 +307,7 @@ export class InvalidSyncFileError extends BaseError {
     super("GGT_CLI_INVALID_SYNC_FILE", "The .gadget/sync.json file was invalid or not found");
   }
 
-  protected body(_: Config): string {
+  protected body(): string {
     return dedent`
       We failed to read the Gadget metadata file in this directory:
 

@@ -173,7 +173,7 @@ export abstract class BaseCommand extends Command {
    */
   override catch(cause: Error & { exitCode?: number }): never {
     const error = cause instanceof BaseError ? cause : new UnknownError(cause);
-    console.error(error.render(this.config));
+    console.error(error.render());
 
     // The original implementation of `catch` re-throws the error so that it's caught and printed by oclif's `handle` method. We still want
     // to end up in oclif's `handle` method, but we don't want it to print the error again so we throw an ExitError instead. This will cause

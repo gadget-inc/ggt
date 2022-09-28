@@ -47,7 +47,7 @@ describe("Sync", () => {
     client = mockClient();
     sync = new Sync(["--app", "test", "--file-push-delay", "10", dir], context.config);
 
-    jest.spyOn(context, "getUser").mockResolvedValue({ name: "Jane Doe", email: "jane@example.come" });
+    jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, name: "Jane Doe", email: "jane@example.come" });
     jest.spyOn(context, "getAvailableApps").mockResolvedValue([
       { id: "1", name: "test", slug: "test" },
       { id: "2", name: "not-test", slug: "not-test" },

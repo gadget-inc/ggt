@@ -39,7 +39,7 @@ export async function setupDir(dir: string, files: Record<string, string>): Prom
   }
 }
 
-export interface MockSubscription<Data, Variables extends JsonObject, Extensions extends JsonObject> {
+export interface MockSubscription<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject> {
   sink: Sink<Data, Extensions>;
   payload: Payload<Data, Variables>;
   unsubscribe: () => void;
@@ -56,7 +56,9 @@ export function mockClient(): MockClient {
   const mock = {
     ...Client.prototype,
     _subscriptions: new Map(),
-    _subscription: <Data, Variables extends JsonObject, Extensions extends JsonObject>(query: Query<Data, Variables, Extensions>) => {
+    _subscription: <Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject>(
+      query: Query<Data, Variables, Extensions>
+    ) => {
       expect(mock._subscriptions.keys()).toContain(query);
       const sub = mock._subscriptions.get(query);
       expect(sub).toBeTruthy();

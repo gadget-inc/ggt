@@ -4,10 +4,7 @@ import fs from "fs-extra";
 import got, { HTTPError } from "got";
 import { isString } from "lodash";
 import path from "path";
-import { Env } from "./env";
 import { ignoreEnoent } from "./fs-utils";
-
-export const GADGET_ENDPOINT = Env.productionLike ? "https://app.gadget.dev" : "https://app.ggt.dev:3000";
 
 class Context {
   /**
@@ -17,6 +14,8 @@ class Context {
    * anywhere. To do this, we created this global variable that references the Config. It is set by the init function in the BaseCommand.
    */
   config!: Config;
+
+  env = new Env();
 
   app?: App;
 
@@ -109,9 +108,33 @@ class Context {
   }
 }
 
-export const context = new Context();
+/**
+ * Captures the name and nature of the environment
+ */
+class Env {
+  get value(): string {
+    return process.env["GGT_ENV"] || "production";
+  }
+
+  get productionLike(): boolean {
+    return this.value.startsWith("production");
+  }
+
+  get developmentLike(): boolean {
+    return this.value.startsWith("development");
+  }
+
+  get testLike(): boolean {
+    return this.value.startsWith("test");
+  }
+
+  get developmentOrTestLike(): boolean {
+    return this.developmentLike || this.testLike;
+  }
+}
 
 export interface User {
+  id: string | number;
   email: string;
   name?: string;
 }
@@ -121,3 +144,7 @@ export interface App {
   name: string;
   slug: string;
 }
+
+export const context = new Context();
+
+export const GADGET_ENDPOINT = context.env.productionLike ? "https://app.gadget.dev" : "https://app.ggt.dev:3000";

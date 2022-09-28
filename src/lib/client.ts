@@ -9,7 +9,6 @@ import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
 import { context } from "./context";
-import { Env } from "./env";
 import { ClientError } from "./errors";
 
 const debug = Debug("ggt:client");
@@ -28,9 +27,10 @@ export class Client {
 
   constructor() {
     assert(context.app, "context.app must be set before instantiating the Client");
+    const domain = context.env.productionLike ? "gadget.app" : "ggt.pub:3000";
 
     this._client = createClient({
-      url: `wss://${context.app.slug}.${Env.productionLike ? "gadget.app" : "ggt.pub:3000"}/edit/api/graphql-ws`,
+      url: `wss://${context.app.slug}.${domain}/edit/api/graphql-ws`,
       shouldRetry: () => true,
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {

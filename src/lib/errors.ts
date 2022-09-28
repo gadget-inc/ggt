@@ -1,7 +1,7 @@
 import cleanStack from "clean-stack";
 import { HTTPError } from "got/dist/source";
 import type { GraphQLError } from "graphql";
-import { isArray, isBoolean, isError, isNil, isNumber, isString, uniqBy } from "lodash";
+import { isArray, isBoolean, isError, isNil, isNumber, isString, noop, uniqBy } from "lodash";
 import newGithubIssueUrl from "new-github-issue-url";
 import { serializeError as baseSerializeError } from "serialize-error";
 import dedent from "ts-dedent";
@@ -11,6 +11,12 @@ import type { CloseEvent, ErrorEvent } from "ws";
 import type Sync from "../commands/sync";
 import type { Payload } from "./client";
 import { context } from "./context";
+import * as Sentry from "@sentry/node";
+import os from "os";
+
+if (context.env.productionLike) {
+  Sentry.init({ dsn: "https://0c26e0d8afd94e77a88ee1c3aa9e7065@o250689.ingest.sentry.io/6703266" });
+}
 
 /**
  * Base class for all errors.
@@ -42,6 +48,44 @@ export abstract class BaseError extends Error {
     super(message);
     this.code = code;
     Error.captureStackTrace(this, this.constructor);
+  }
+
+  async capture(): Promise<void> {
+    if (!context.env.productionLike || this.isBug == IsBug.NO) return;
+
+    const user = await context.getUser().catch(noop);
+
+    Sentry.captureException(this, {
+      user: user ? { id: String(user.id), email: user.email, username: user.name } : undefined,
+      tags: {
+        applicationId: context.app?.id,
+        arch: context.config.arch,
+        isBug: this.isBug,
+        code: this.code,
+        environment: context.env.value,
+        platform: context.config.platform,
+        shell: context.config.shell,
+        version: context.config.version,
+      },
+      contexts: {
+        cause: this.cause ? serializeError(this.cause) : undefined,
+        app: {
+          command: `${context.config.bin} ${process.argv.slice(2).join(" ")}`,
+          argv: process.argv,
+        },
+        device: {
+          name: os.hostname(),
+          family: os.type(),
+          arch: os.arch(),
+        },
+        runtime: {
+          name: process.release.name,
+          version: process.version,
+        },
+      },
+    });
+
+    await Sentry.flush();
   }
 
   /**
@@ -155,9 +199,9 @@ export function serializeError(error: Error | string | unknown): Record<string, 
 }
 
 export enum IsBug {
-  NO,
-  MAYBE,
-  YES,
+  YES = "yes",
+  NO = "no",
+  MAYBE = "maybe",
 }
 
 /**

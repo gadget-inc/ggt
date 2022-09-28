@@ -2,6 +2,7 @@ appvalue
 commandsstop
 execa
 gadgetinc
+getsentry
 linkcode
 nothrow
 notificationcenter
@@ -9,5 +10,6 @@ notifysend
 oclif
 packagejson
 postbuild
+sourcemaps
 typecheck
 usagestop

@@ -1,7 +1,6 @@
 name: cd
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - v*
@@ -28,3 +27,11 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
+      - uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: gadget
+          SENTRY_PROJECT: ggt
+        with:
+          version: ${{ github.ref }}
+          sourcemaps: ./dist

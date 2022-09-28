@@ -25,7 +25,7 @@
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
     "lint:eslint": "eslint --max-warnings 0 .",
     "lint:prettier": "prettier --check .",
-    "lint:typescript": "tsc --noEmit",
+    "lint:typescript": "tsc --project tsconfig.json --project spec/tsconfig.json --noEmit",
     "readme": "npm run build && oclif readme && prettier --write README.md",
     "test": "jest",
     "version": "npm run readme && git add README.md"

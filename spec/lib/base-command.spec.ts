@@ -95,7 +95,7 @@ describe("BaseCommand", () => {
 
     it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
       context.session = undefined;
-      jest.spyOn(context, "getUser").mockResolvedValue({ email: "test@example.com", name: "Jane Doe" });
+      jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
 
       void base.login();
 

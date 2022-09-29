@@ -17,7 +17,7 @@ describe("Logout", () => {
 
     await Logout.run();
 
-    expect(Logout.prototype.log.mock.lastCall[0]).toMatchInlineSnapshot(`"Goodbye"`);
+    expect(Logout.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"Goodbye"`);
   });
 
   it("prints a different message if the user is logged out", async () => {
@@ -25,6 +25,6 @@ describe("Logout", () => {
 
     await Logout.run();
 
-    expect(Logout.prototype.log.mock.lastCall[0]).toMatchInlineSnapshot(`"You are not logged in"`);
+    expect(Logout.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"You are not logged in"`);
   });
 });

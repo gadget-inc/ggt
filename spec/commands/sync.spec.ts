@@ -195,7 +195,7 @@ describe("Sync", () => {
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await sleepUntil(() => prompt.mock.calls.length > 0);
-      expect(prompt.mock.lastCall[0]).toMatchInlineSnapshot(`
+      expect(prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         {
           "choices": [
             "Cancel (Ctrl+C)",
@@ -222,7 +222,7 @@ describe("Sync", () => {
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await sleepUntil(() => prompt.mock.calls.length > 0);
-      expect(prompt.mock.lastCall[0]).toMatchInlineSnapshot(`
+      expect(prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         {
           "choices": [
             "Cancel (Ctrl+C)",

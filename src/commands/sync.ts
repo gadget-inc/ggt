@@ -242,13 +242,11 @@ export default class Sync extends BaseCommand {
 
     this.filePushDelay = flags["file-push-delay"];
 
-    // local files that should never be published
-    const ignored = ["node_modules/", ".gadget/", ".git/"];
-
-    this.ignorer = new Ignorer(this.dir, ignored);
+    // local files/folders that should never be published
+    this.ignorer = new Ignorer(this.dir, ["node_modules", ".gadget", ".git"]);
 
     this.watcher = new FSWatcher({
-      ignored,
+      ignored: (filepath) => this.ignorer.ignores(filepath),
       // don't emit an event for every watched file on boot
       ignoreInitial: true,
       // make sure stats are always present on add/change events

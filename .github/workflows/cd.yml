@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v3
         with:
           node-version: 16
@@ -27,11 +29,14 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
-      - uses: getsentry/action-release@v1
+          tag: ${{ contains(github.ref_name, 'alpha') && 'alpha' || 'latest' }}
+        id: publish
+      - if: ${{ steps.publish.outputs.type != 'none' && ! contains(github.ref_name, 'alpha') }}
+        uses: getsentry/action-release@v1
+        with:
+          version: ${{ github.ref }}
+          sourcemaps: ./dist
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: gadget
           SENTRY_PROJECT: ggt
-        with:
-          version: ${{ github.ref }}
-          sourcemaps: ./dist

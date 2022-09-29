@@ -60,7 +60,7 @@ const config = {
   settings: {
     "import/extensions": [".js", ".jsx", ".ts", ".tsx"],
   },
-  ignorePatterns: ["node_modules", "dist", "tmp", "__generated__"],
+  ignorePatterns: ["node_modules", "lib", "tmp", "__generated__"],
 };
 
 module.exports = config;

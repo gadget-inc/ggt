@@ -1,5 +1,5 @@
 import cleanStack from "clean-stack";
-import { HTTPError } from "got/dist/source";
+import { HTTPError } from "got";
 import type { GraphQLError } from "graphql";
 import { isArray, isBoolean, isError, isNil, isNumber, isString, noop, uniqBy } from "lodash";
 import newGithubIssueUrl from "new-github-issue-url";

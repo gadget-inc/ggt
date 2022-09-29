@@ -1,4 +1,5 @@
 __generated__
-dist
+lib
 tmp
 npm-shrinkwrap.json
+oclif.manifest.json

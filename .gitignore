@@ -1,6 +1,6 @@
 .log
 .nyc_output
-dist
+lib
 node_modules
 oclif.manifest.json
 tmp

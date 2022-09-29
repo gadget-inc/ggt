@@ -7,21 +7,21 @@
   "repository": "gadget-inc/ggt",
   "license": "MIT",
   "author": "Gadget Authors",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
   "bin": {
     "ggt": "./bin/run"
   },
   "files": [
     "/assets",
     "/bin",
-    "/dist",
+    "/lib",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json",
     "/package.json",
     "/README.md"
   ],
   "scripts": {
-    "build": "rimraf dist && tsc --build",
+    "build": "rimraf lib && tsc --build",
     "postbuild": "oclif manifest && oclif readme && prettier --write README.md",
     "postinstall": "patch-package",
     "lint": "concurrently --prefix none --group 'npm:lint:*'",
@@ -107,8 +107,8 @@
   "oclif": {
     "bin": "ggt",
     "dirname": "gadget",
-    "commands": "./dist/commands",
-    "helpClass": "./dist/lib/help",
+    "commands": "./lib/commands",
+    "helpClass": "./lib/lib/help",
     "topicSeparator": " ",
     "topics": {},
     "plugins": [

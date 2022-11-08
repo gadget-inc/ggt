@@ -6,6 +6,7 @@ import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { prompt } from "inquirer";
 import type { DebouncedFunc } from "lodash";
+import { isString } from "lodash";
 import { debounce } from "lodash";
 import normalizePath from "normalize-path";
 import pMap from "p-map";
@@ -187,7 +188,12 @@ export default class Sync extends BaseCommand {
     await super.init();
     const { args, flags } = await this.parse(Sync);
 
-    this.dir = path.resolve(args["directory"] as string);
+    assert(isString(args["directory"]));
+
+    this.dir =
+      this.config.windows && args["directory"].startsWith("~/")
+        ? path.join(this.config.home, args["directory"].slice(2))
+        : path.resolve(args["directory"]);
 
     const getApp = async (): Promise<string> => {
       if (flags.app) return flags.app;

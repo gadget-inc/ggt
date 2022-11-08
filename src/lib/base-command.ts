@@ -42,6 +42,11 @@ export abstract class BaseCommand extends Command {
 
   constructor(argv: string[], config: Config) {
     super(argv, config);
+
+    // TODO: Remove this once the `@oclif/core` warnIfFlagDeprecated function checks global flags as well.
+    // warnIfFlagDeprecated throws a null pointer because it assumes all parsed flags are in the flags object (which is not the case for global flags).
+    // https://github.com/oclif/core/blob/11c5752cec838d08bb27cd55f0f1aa2390df3c5e/src/command.ts#L259
+    this.ctor.flags = { ...this.ctor.flags, ...BaseCommand.globalFlags };
   }
 
   /**

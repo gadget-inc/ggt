@@ -1,6 +1,6 @@
 /**
  * ======================================================
- * THIS IS A GENERATED FILE! You shouldn't edit it manually. Regenerate it using `yarn generate-graphql`.
+ * THIS IS A GENERATED FILE! You shouldn't edit it manually. Regenerate it using `npm run generate-graphql`.
  * ======================================================
  */
 
@@ -16,17 +16,14 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
-  /** A date string, such as 2007-12-03, compliant with the `full-date` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
   Date: any;
-  /** A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
   DateTime: any;
   JSON: { [key: string]: any };
 };
 
-export type CreateConnectionResult = {
-  __typename?: 'CreateConnectionResult';
-  connection?: Maybe<Scalars['JSON']>;
-  error?: Maybe<Scalars['String']>;
+export type DeleteAppStatusResult = {
+  __typename?: 'DeleteAppStatusResult';
+  isNotCreator?: Maybe<Scalars['Boolean']>;
   success: Scalars['Boolean'];
 };
 
@@ -48,12 +45,14 @@ export type EnvironmentSubscriptionResult = {
 export type FileSyncChangedEvent = {
   __typename?: 'FileSyncChangedEvent';
   content: Scalars['String'];
+  encoding: FileSyncEncoding;
   mode: Scalars['Float'];
   path: Scalars['String'];
 };
 
 export type FileSyncChangedEventInput = {
   content: Scalars['String'];
+  encoding?: InputMaybe<FileSyncEncoding>;
   mode: Scalars['Float'];
   path: Scalars['String'];
 };
@@ -66,6 +65,11 @@ export type FileSyncDeletedEvent = {
 export type FileSyncDeletedEventInput = {
   path: Scalars['String'];
 };
+
+export enum FileSyncEncoding {
+  Base64 = 'base64',
+  Utf8 = 'utf8'
+}
 
 export type GadgetRole = {
   __typename?: 'GadgetRole';
@@ -81,25 +85,21 @@ export type LogSearchResult = {
   status: Scalars['String'];
 };
 
+export type MigrateEnvironmentsResult = {
+  __typename?: 'MigrateEnvironmentsResult';
+  success: Scalars['Boolean'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
-  createSendGridConnection?: Maybe<CreateConnectionResult>;
-  createTwilioConnection?: Maybe<CreateConnectionResult>;
+  deleteApp?: Maybe<DeleteAppStatusResult>;
+  migrateEnvironments?: Maybe<MigrateEnvironmentsResult>;
   patchEnvironmentTree?: Maybe<EnvironmentPatchResult>;
   publish?: Maybe<EnvironmentPublishResult>;
   publishFileSyncEvents: PublishFileSyncEventsResult;
+  refreshScopes?: Maybe<RefreshScopesResult>;
   registerWebhooks?: Maybe<RegisterWebhooksResult>;
-  unregisterWebhooks?: Maybe<RegisterWebhooksResult>;
-};
-
-
-export type MutationCreateSendGridConnectionArgs = {
-  secrets: Scalars['JSON'];
-};
-
-
-export type MutationCreateTwilioConnectionArgs = {
-  secrets: Scalars['JSON'];
+  unregisterWebhooks?: Maybe<UnregisterWebhooksResult>;
 };
 
 
@@ -114,14 +114,23 @@ export type MutationPublishFileSyncEventsArgs = {
 };
 
 
+export type MutationRefreshScopesArgs = {
+  appConfigKey: Scalars['String'];
+  connectionKey: Scalars['String'];
+  shopId: Scalars['String'];
+};
+
+
 export type MutationRegisterWebhooksArgs = {
+  connectionKey: Scalars['String'];
   keepExtraTopics?: InputMaybe<Scalars['Boolean']>;
   modelKeys?: InputMaybe<Array<Scalars['String']>>;
-  shopIds?: InputMaybe<Array<Scalars['String']>>;
+  shopIds: Array<Scalars['String']>;
 };
 
 
 export type MutationUnregisterWebhooksArgs = {
+  connectionKey: Scalars['String'];
   modelKeys?: InputMaybe<Array<Scalars['String']>>;
   shopIds?: InputMaybe<Array<Scalars['String']>>;
 };
@@ -163,6 +172,11 @@ export type QueryLogsSearchArgs = {
   step?: InputMaybe<Scalars['Int']>;
 };
 
+export type RefreshScopesResult = {
+  __typename?: 'RefreshScopesResult';
+  success: Scalars['Boolean'];
+};
+
 export type RegisterWebhooksResult = {
   __typename?: 'RegisterWebhooksResult';
   success: Scalars['Boolean'];
@@ -199,6 +213,7 @@ export type SubscriptionLogsSearchArgs = {
 
 
 export type SubscriptionRemoteFileSyncEventsArgs = {
+  encoding?: InputMaybe<FileSyncEncoding>;
   localFilesVersion: Scalars['String'];
 };
 
@@ -215,6 +230,11 @@ export type TypesManifest = {
   environmentVersion: Scalars['Int'];
 };
 
+export type UnregisterWebhooksResult = {
+  __typename?: 'UnregisterWebhooksResult';
+  success: Scalars['Boolean'];
+};
+
 export type User = {
   __typename?: 'User';
   email: Scalars['String'];
@@ -226,7 +246,7 @@ export type RemoteFileSyncEventsSubscriptionVariables = Exact<{
 }>;
 
 
-export type RemoteFileSyncEventsSubscription = { __typename?: 'Subscription', remoteFileSyncEvents: { __typename?: 'RemoteFileSyncEvents', remoteFilesVersion: string, changed: Array<{ __typename?: 'FileSyncChangedEvent', path: string, mode: number, content: string }>, deleted: Array<{ __typename?: 'FileSyncDeletedEvent', path: string }> } };
+export type RemoteFileSyncEventsSubscription = { __typename?: 'Subscription', remoteFileSyncEvents: { __typename?: 'RemoteFileSyncEvents', remoteFilesVersion: string, changed: Array<{ __typename?: 'FileSyncChangedEvent', path: string, mode: number, content: string, encoding: FileSyncEncoding }>, deleted: Array<{ __typename?: 'FileSyncDeletedEvent', path: string }> } };
 
 export type RemoteFilesVersionQueryVariables = Exact<{ [key: string]: never; }>;
 

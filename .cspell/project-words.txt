@@ -1,4 +1,5 @@
 appvalue
+codegen
 commandsstop
 execa
 gadgetinc

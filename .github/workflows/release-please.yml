@@ -1,0 +1,49 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure git user
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git --no-pager show --name-only
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Run release-please
+        uses: google-github-actions/release-please-action@v3
+        id: release-please
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_GH_TOKEN }}
+          release-type: node
+          package-name: "@gadgetinc/ggt"
+          bump-minor-pre-major: true # Breaking changes cause minor version bumps (e.g. 0.1.0 -> 0.2.0)
+          bump-patch-for-minor-pre-major: true # Feature changes cause patch version bumps (e.g. 0.1.0 -> 0.1.1)
+          extra-files: |
+            README.md
+
+      - name: Echo release outputs
+        if: ${{ steps.release-please.outputs }}
+        run: echo '${{ toJson(steps.release-please.outputs) }}'

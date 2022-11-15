@@ -4,6 +4,7 @@ execa
 gadgetinc
 getsentry
 linkcode
+noreply
 nothrow
 notificationcenter
 notifysend

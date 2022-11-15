@@ -1,0 +1,16 @@
+on:
+  push:
+    branches:
+      - main
+
+name: release-please
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        with:
+          release-type: node
+          package-name: "@gadgetinc/ggt"
+          bump-minor-pre-major: true # Breaking changes cause minor version bumps (e.g. 0.1.0 -> 0.2.0)
+          bump-patch-for-minor-pre-major: true # Feature changes cause patch version bumps (e.g. 0.1.0 -> 0.1.1)

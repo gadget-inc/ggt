@@ -381,5 +381,5 @@ function isErrorEvent(e: any): e is SetOptional<ErrorEvent, "target"> {
 }
 
 function isGraphQLErrors(e: any): e is readonly GraphQLError[] {
-  return isArray(e) && e.every((e) => !isNil(e) && isString(e.message) && isArray(e.locations) && isArray(e.path));
+  return isArray(e) && e.every((e) => !isNil(e) && isString(e.message) && isArray(e.locations ?? []) && isArray(e.path ?? []));
 }

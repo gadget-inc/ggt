@@ -28,7 +28,7 @@
     "lint:eslint": "eslint --max-warnings 0 .",
     "lint:prettier": "prettier --check .",
     "lint:typescript": "tsc --project tsconfig.json --project spec/tsconfig.json --noEmit",
-    "prepublishOnly": "npm run build",
+    "publish": "npm run build && changeset publish",
     "test": "jest",
     "version": "patch-package && changeset version && npm run build && oclif readme && prettier --write README.md"
   },

@@ -21,15 +21,14 @@
     "/README.md"
   ],
   "scripts": {
-    "build": "rimraf lib && tsc --build",
-    "postbuild": "patch-package && oclif manifest && oclif readme && prettier --write README.md",
+    "build": "rimraf lib && tsc --build && oclif manifest",
     "lint": "concurrently --prefix none --group 'npm:lint:*'",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
     "lint:eslint": "eslint --max-warnings 0 .",
     "lint:prettier": "prettier --check .",
     "lint:typescript": "tsc --project tsconfig.json --project spec/tsconfig.json --noEmit",
-    "test": "jest",
-    "version": "npm run build && git add README.md"
+    "prepublishOnly": "npm run build",
+    "test": "jest"
   },
   "dependencies": {
     "@oclif/core": "^1.20.4",

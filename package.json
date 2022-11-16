@@ -39,7 +39,7 @@
     "@oclif/plugin-warn-if-update-available": "^2.0.13",
     "@sentry/node": "^7.18.0",
     "chokidar": "^3.5.3",
-    "clean-stack": "^3.0.1",
+    "clean-stack": "^5.0.1",
     "debug": "^4.3.4",
     "execa": "^5.1.1",
     "fast-levenshtein": "^3.0.0",

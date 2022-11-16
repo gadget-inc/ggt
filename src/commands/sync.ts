@@ -13,7 +13,6 @@ import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
 import dedent from "ts-dedent";
-import { TextDecoder, TextEncoder } from "util";
 import which from "which";
 import { BaseCommand } from "../lib/base-command";
 import type { Query } from "../lib/client";
@@ -33,6 +32,7 @@ import type {
   RemoteFileSyncEventsSubscription,
   RemoteFileSyncEventsSubscriptionVariables,
 } from "../__generated__/graphql";
+import { FileSyncEncoding } from "../__generated__/graphql";
 
 export default class Sync extends BaseCommand {
   static override priority = 1;
@@ -135,10 +135,6 @@ export default class Sync extends BaseCommand {
   dir!: string;
 
   recentWrites = new Set();
-
-  encoder = new TextEncoder();
-
-  decoder = new TextDecoder();
 
   filePushDelay!: number;
 
@@ -322,7 +318,8 @@ export default class Sync extends BaseCommand {
                 return {
                   path: this.normalize(filepath),
                   mode: stats.mode,
-                  content: this.decoder.decode(await fs.readFile(filepath)),
+                  content: await fs.readFile(filepath, "base64"),
+                  encoding: FileSyncEncoding.Base64,
                 };
               }),
               deleted: [],
@@ -416,7 +413,7 @@ export default class Sync extends BaseCommand {
                   if ("content" in file) {
                     await fs.ensureDir(path.dirname(filepath), { mode: 0o755 });
                     if (!file.path.endsWith("/")) {
-                      await fs.writeFile(filepath, this.encoder.encode(file.content), { mode: file.mode });
+                      await fs.writeFile(filepath, Buffer.from(file.content, file.encoding ?? FileSyncEncoding.Utf8), { mode: file.mode });
                     }
                     if (filepath == this.absolute("yarn.lock")) {
                       await execa("yarn", ["install"], { cwd: this.dir }).catch((err) => {
@@ -461,7 +458,8 @@ export default class Sync extends BaseCommand {
                   changed.push({
                     path: this.normalize(filepath),
                     mode: file.mode,
-                    content: this.decoder.decode(await fs.readFile(filepath)),
+                    content: await fs.readFile(filepath, "base64"),
+                    encoding: FileSyncEncoding.Base64,
                   });
                 } catch (error) {
                   // A file could have been changed and then deleted before we process the change event, so the readFile above will raise
@@ -578,12 +576,13 @@ export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION: Query<
   RemoteFileSyncEventsSubscriptionVariables
 > = /* GraphQL */ `
   subscription RemoteFileSyncEvents($localFilesVersion: String!) {
-    remoteFileSyncEvents(localFilesVersion: $localFilesVersion) {
+    remoteFileSyncEvents(localFilesVersion: $localFilesVersion, encoding: base64) {
       remoteFilesVersion
       changed {
         path
         mode
         content
+        encoding
       }
       deleted {
         path

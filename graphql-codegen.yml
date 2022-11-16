@@ -1,0 +1,39 @@
+overwrite: true
+generates:
+  src/__generated__/graphql.ts:
+    schema:
+      - https://empty.ggt.pub:3000/edit/api/graphql:
+          headers:
+            X-Trusted-Dev-Client: yes
+    documents:
+      - "src/**/*.ts"
+      - "!src/__generated__/**"
+    plugins:
+      - add:
+          content: |+
+            /**
+             * ======================================================
+             * THIS IS A GENERATED FILE! You shouldn't edit it manually. Regenerate it using `npm run generate-graphql`.
+             * ======================================================
+             */
+      - "typescript"
+      - "typescript-operations"
+    config:
+      useIndexSignature: true
+      scalars:
+        ID: "bigint"
+        JSON: "{ [key: string]: any }"
+  src/__generated__/schema.graphql:
+    schema:
+      - https://empty.ggt.pub:3000/edit/api/graphql:
+          headers:
+            X-Trusted-Dev-Client: yes
+    plugins:
+      - add:
+          content: |+
+            """
+            ======================================================
+            THIS IS A GENERATED FILE! You shouldn't edit it manually. Regenerate it using `npm run generate-graphql`.
+            ======================================================
+            """
+      - "schema-ast"

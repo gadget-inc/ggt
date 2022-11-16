@@ -1,14 +1,8 @@
 """
 ======================================================
-THIS IS A GENERATED FILE! You shouldn't edit it manually. Regenerate it using `yarn generate-graphql`.
+THIS IS A GENERATED FILE! You shouldn't edit it manually. Regenerate it using `npm run generate-graphql`.
 ======================================================
 """
-
-type CreateConnectionResult {
-  connection: JSON
-  error: String
-  success: Boolean!
-}
 
 """
 A date string, such as 2007-12-03, compliant with the `full-date` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
@@ -19,6 +13,11 @@ scalar Date
 A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
 """
 scalar DateTime
+
+type DeleteAppStatusResult {
+  isNotCreator: Boolean
+  success: Boolean!
+}
 
 type EnvironmentPatchResult {
   success: Boolean!
@@ -34,12 +33,14 @@ type EnvironmentSubscriptionResult {
 
 type FileSyncChangedEvent {
   content: String!
+  encoding: FileSyncEncoding!
   mode: Float!
   path: String!
 }
 
 input FileSyncChangedEventInput {
   content: String!
+  encoding: FileSyncEncoding
   mode: Float!
   path: String!
 }
@@ -50,6 +51,11 @@ type FileSyncDeletedEvent {
 
 input FileSyncDeletedEventInput {
   path: String!
+}
+
+enum FileSyncEncoding {
+  base64
+  utf8
 }
 
 type GadgetRole {
@@ -66,14 +72,19 @@ type LogSearchResult {
   status: String!
 }
 
+type MigrateEnvironmentsResult {
+  success: Boolean!
+}
+
 type Mutation {
-  createSendGridConnection(secrets: JSON!): CreateConnectionResult
-  createTwilioConnection(secrets: JSON!): CreateConnectionResult
+  deleteApp: DeleteAppStatusResult
+  migrateEnvironments: MigrateEnvironmentsResult
   patchEnvironmentTree(clientID: String!, patches: [JSON!]!): EnvironmentPatchResult
   publish: EnvironmentPublishResult
   publishFileSyncEvents(input: PublishFileSyncEventsInput!): PublishFileSyncEventsResult!
-  registerWebhooks(keepExtraTopics: Boolean, modelKeys: [String!], shopIds: [String!]): RegisterWebhooksResult
-  unregisterWebhooks(modelKeys: [String!], shopIds: [String!]): RegisterWebhooksResult
+  refreshScopes(appConfigKey: String!, connectionKey: String!, shopId: String!): RefreshScopesResult
+  registerWebhooks(connectionKey: String!, keepExtraTopics: Boolean, modelKeys: [String!], shopIds: [String!]!): RegisterWebhooksResult
+  unregisterWebhooks(connectionKey: String!, modelKeys: [String!], shopIds: [String!]): UnregisterWebhooksResult
 }
 
 input PublishFileSyncEventsInput {
@@ -96,6 +107,10 @@ type Query {
   typesManifest: TypesManifest!
 }
 
+type RefreshScopesResult {
+  success: Boolean!
+}
+
 type RegisterWebhooksResult {
   success: Boolean!
 }
@@ -110,7 +125,7 @@ type Subscription {
   editorActive: Boolean
   environmentTreePathPatches(clientID: String!, path: String!): EnvironmentSubscriptionResult
   logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
-  remoteFileSyncEvents(localFilesVersion: String!): RemoteFileSyncEvents!
+  remoteFileSyncEvents(encoding: FileSyncEncoding, localFilesVersion: String!): RemoteFileSyncEvents!
   typesManifestStream: TypesManifest!
 }
 
@@ -123,6 +138,10 @@ type TypesManifest {
   dependenciesHash: String!
   entries: [TypeManifestEntry!]!
   environmentVersion: Int!
+}
+
+type UnregisterWebhooksResult {
+  success: Boolean!
 }
 
 type User {

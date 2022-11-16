@@ -76,7 +76,7 @@
     "@types/debug": "^4.1.7",
     "@types/fast-levenshtein": "^0.0.2",
     "@types/fs-extra": "^9.0.13",
-    "@types/inquirer": "^8.2.5",
+    "@types/inquirer": "^9.0.3",
     "@types/jest": "^29.2.2",
     "@types/lodash": "^4.14.188",
     "@types/node": "^18.11.9",

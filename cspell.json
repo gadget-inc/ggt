@@ -3,5 +3,5 @@
   "version": "0.2",
   "dictionaryDefinitions": [{ "name": "project-words", "path": ".cspell/project-words.txt", "addWords": true }],
   "dictionaries": ["project-words"],
-  "ignorePaths": ["node_modules", "__generated__", "lib", "tmp", "npm-shrinkwrap.json"]
+  "ignorePaths": ["node_modules", "__generated__", "__snapshots__", "lib", "tmp", "npm-shrinkwrap.json"]
 }

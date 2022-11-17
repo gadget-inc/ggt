@@ -97,16 +97,20 @@ export abstract class BaseError extends Error {
    * look like can be found here: {@link https://clig.dev/#errors}
    */
   render(): string {
-    const header = this.header();
-    const body = this.body();
+    const rendered = dedent`
+      ${this.header()}
+
+      ${this.body()}
+    `;
+
     const footer = this.footer();
+    if (!footer) return rendered;
 
-    let output = "";
-    if (header) output += header + "\n\n";
-    if (body) output += body + "\n\n";
-    if (footer) output += footer + "\n\n";
+    return dedent`
+      ${rendered}
 
-    return output;
+      ${footer}
+    `;
   }
 
   protected header(): string {
@@ -194,16 +198,19 @@ export class ClientError extends BaseError {
   override body(): string {
     if (isGraphQLErrors(this.cause)) {
       if (this.cause.length > 1) {
-        let output = "Gadget responded with multiple errors:";
-        for (const error of uniqBy(this.cause, "message")) {
-          output += `\n * ${error.message}`;
+        const errors = uniqBy(this.cause, "message");
+
+        let output = "Gadget responded with multiple errors:\n";
+        for (let i = 0; i < errors.length; i++) {
+          output += `\n  ${i + 1}. ${errors[i]?.message}`;
         }
+
         return output;
       } else {
         return dedent`
-          Gadget responded with an unexpected error.
+          Gadget responded with the following error:
 
-          ${this.cause[0]?.message}
+            ${this.cause[0]?.message}
         `;
       }
     }
@@ -212,20 +219,8 @@ export class ClientError extends BaseError {
       return "The connection to Gadget closed unexpectedly.";
     }
 
-    if (isErrorEvent(this.cause)) {
-      return dedent`
-          The connection to Gadget received an unexpected error.
-
-          ${this.cause.message}
-      `;
-    }
-
-    if (isError(this.cause)) {
-      return dedent`
-          An unexpected error occurred.
-
-          ${this.cause.message}
-      `;
+    if (isErrorEvent(this.cause) || isError(this.cause)) {
+      return this.cause.message;
     }
 
     return this.cause;
@@ -241,9 +236,7 @@ export class YarnNotFoundError extends BaseError {
 
   protected body(): string {
     return dedent`
-      Yarn is required to sync your application.
-
-      Please install Yarn by running:
+      Yarn must be installed to sync your application. You can install it by running:
 
         $ npm install --global yarn
 
@@ -252,7 +245,7 @@ export class YarnNotFoundError extends BaseError {
   }
 }
 
-export class FlagError<T extends { name: string; char?: string }> extends BaseError {
+export class FlagError<T extends { name: string; char?: string } = { name: string; char?: string }> extends BaseError {
   isBug = IsBug.NO;
 
   constructor(readonly flag: T, readonly description: string) {
@@ -291,12 +284,33 @@ export class InvalidSyncFileError extends BaseError {
   }
 }
 
+export class InvalidSyncAppFlagError extends FlagError {
+  constructor(sync: Sync, app: string) {
+    super(
+      { name: "app", char: "a" },
+      dedent`
+        You were about to sync the following app to the following directory:
+
+          ${app} → ${sync.dir}
+
+        However, that directory has already been synced with this app:
+
+          ${sync.metadata.app}
+
+        If you're sure that you want to sync "${app}" to "${sync.dir}", run \`ggt sync\` again with the \`--force\` flag:
+
+          $ ggt sync ${sync.argv.join(" ")} --force
+      `
+    );
+  }
+}
+
 function isCloseEvent(e: any): e is SetOptional<CloseEvent, "target"> {
   return !isNil(e) && isString(e.type) && isNumber(e.code) && isString(e.reason) && isBoolean(e.wasClean);
 }
 
 function isErrorEvent(e: any): e is SetOptional<ErrorEvent, "target"> {
-  return !isNil(e) && isString(e.type) && isString(e.message) && isError(e.error);
+  return !isNil(e) && isString(e.type) && isString(e.message) && !isNil(e.error);
 }
 
 function isGraphQLErrors(e: any): e is readonly GraphQLError[] {

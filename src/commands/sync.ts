@@ -18,7 +18,7 @@ import { BaseCommand } from "../utils/base-command";
 import type { Query } from "../utils/client";
 import { Client } from "../utils/client";
 import { context } from "../utils/context";
-import { FlagError, InvalidSyncFileError, YarnNotFoundError } from "../utils/errors";
+import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../utils/errors";
 import { app } from "../utils/flags";
 import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../utils/fs-utils";
 import { sleepUntil } from "../utils/sleep";
@@ -220,22 +220,7 @@ export default class Sync extends BaseCommand {
     }
 
     if (flags.app && flags.app !== this.metadata.app && !flags.force) {
-      throw new FlagError(
-        { name: "app", char: "a" },
-        dedent`
-            You were about to sync the following app to the following directory:
-
-              ${flags.app} → ${this.dir}
-
-            However, that directory has already been synced with this app:
-
-              ${this.metadata.app}
-
-            If you're sure that you want to sync "${flags.app}" to "${this.dir}", run \`ggt sync\` again with the \`--force\` flag:
-
-              $ ggt sync ${this.argv.join(" ")} --force
-          `
-      );
+      throw new InvalidSyncAppFlagError(this, flags.app);
     }
 
     await context.setApp(this.metadata.app);

@@ -30,7 +30,7 @@
     "lint:typescript": "tsc --project tsconfig.json --project spec/tsconfig.json --noEmit",
     "publish": "npm run build && changeset publish",
     "test": "jest",
-    "version": "patch-package && changeset version && npm run build && oclif readme && prettier --write README.md"
+    "version": "patch-package && changeset version && npm install --package-lock-only && npm run build && oclif readme && prettier --write README.md"
   },
   "dependencies": {
     "@oclif/core": "^1.20.4",

@@ -15,9 +15,9 @@ import Sync, {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
   SyncStatus,
 } from "../../src/commands/sync";
-import { context } from "../../src/lib/context";
-import { ClientError, FlagError, InvalidSyncFileError, YarnNotFoundError } from "../../src/lib/errors";
-import { sleep, sleepUntil } from "../../src/lib/sleep";
+import { context } from "../../src/utils/context";
+import { ClientError, FlagError, InvalidSyncFileError, YarnNotFoundError } from "../../src/utils/errors";
+import { sleep, sleepUntil } from "../../src/utils/sleep";
 import { FileSyncEncoding } from "../../src/__generated__/graphql";
 import { testDirPath } from "../jest.setup";
 import type { MockClient } from "../util";

@@ -27,7 +27,7 @@ beforeEach(async () => {
   process.env["GGT_DATA_DIR"] = path.join(testDir, "data");
 
   const { Config, Command } = await import("@oclif/core");
-  const { context } = await import("../src/lib/context");
+  const { context } = await import("../src/utils/context");
   context.clear();
   context.config = (await Config.load(path.join(__dirname, ".."))) as Config;
 

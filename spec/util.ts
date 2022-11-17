@@ -3,9 +3,9 @@ import { noop } from "lodash";
 import normalizePath from "normalize-path";
 import path from "path";
 import type { JsonObject } from "type-fest";
-import type { Payload, Query, Sink } from "../src/lib/client";
-import { Client } from "../src/lib/client";
-import { walkDir, walkDirSync } from "../src/lib/fs-utils";
+import type { Payload, Query, Sink } from "../src/utils/client";
+import { Client } from "../src/utils/client";
+import { walkDir, walkDirSync } from "../src/utils/fs-utils";
 
 export async function getError(fnThatThrows: () => unknown): Promise<any> {
   try {

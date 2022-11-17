@@ -1,5 +1,5 @@
 import Login from "../../src/commands/login";
-import { BaseCommand } from "../../src/lib/base-command";
+import { BaseCommand } from "../../src/utils/base-command";
 
 describe("Login", () => {
   it("delegates to BaseCommand.login", async () => {

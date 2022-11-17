@@ -14,14 +14,14 @@ import PQueue from "p-queue";
 import path from "path";
 import dedent from "ts-dedent";
 import which from "which";
-import { BaseCommand } from "../lib/base-command";
-import type { Query } from "../lib/client";
-import { Client } from "../lib/client";
-import { context } from "../lib/context";
-import { FlagError, InvalidSyncFileError, YarnNotFoundError } from "../lib/errors";
-import { app } from "../lib/flags";
-import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../lib/fs-utils";
-import { sleepUntil } from "../lib/sleep";
+import { BaseCommand } from "../utils/base-command";
+import type { Query } from "../utils/client";
+import { Client } from "../utils/client";
+import { context } from "../utils/context";
+import { FlagError, InvalidSyncFileError, YarnNotFoundError } from "../utils/errors";
+import { app } from "../utils/flags";
+import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../utils/fs-utils";
+import { sleepUntil } from "../utils/sleep";
 import type {
   FileSyncChangedEventInput,
   FileSyncDeletedEventInput,

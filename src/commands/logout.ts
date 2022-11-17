@@ -1,6 +1,6 @@
 import dedent from "ts-dedent";
-import { BaseCommand } from "../lib/base-command";
-import { context } from "../lib/context";
+import { BaseCommand } from "../utils/base-command";
+import { context } from "../utils/context";
 
 export default class Logout extends BaseCommand {
   static override summary = "Log out of your account.";

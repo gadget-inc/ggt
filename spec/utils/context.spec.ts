@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import { context, GADGET_ENDPOINT } from "../../src/lib/context";
+import { context, GADGET_ENDPOINT } from "../../src/utils/context";
 import nock from "nock";
 
 describe("Context", () => {

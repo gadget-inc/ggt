@@ -1,5 +1,5 @@
 import Whoami from "../../src/commands/whoami";
-import { context } from "../../src/lib/context";
+import { context } from "../../src/utils/context";
 
 describe("Whoami", () => {
   it("logs the current user", async () => {

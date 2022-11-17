@@ -1,6 +1,6 @@
 import dedent from "ts-dedent";
-import { BaseCommand } from "../lib/base-command";
-import { context } from "../lib/context";
+import { BaseCommand } from "../utils/base-command";
+import { context } from "../utils/context";
 
 export default class Whoami extends BaseCommand {
   static override summary = "Show the name and email address of the currently logged in user.";

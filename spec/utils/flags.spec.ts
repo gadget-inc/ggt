@@ -1,6 +1,6 @@
-import { context } from "../../src/lib/context";
-import { FlagError } from "../../src/lib/errors";
-import { app } from "../../src/lib/flags";
+import { context } from "../../src/utils/context";
+import { FlagError } from "../../src/utils/errors";
+import { app } from "../../src/utils/flags";
 import { getError } from "../util";
 
 describe("flags", () => {

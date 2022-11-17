@@ -1,5 +1,5 @@
 import Logout from "../../src/commands/logout";
-import { context } from "../../src/lib/context";
+import { context } from "../../src/utils/context";
 
 describe("Logout", () => {
   it("sets context.session = undefined", async () => {

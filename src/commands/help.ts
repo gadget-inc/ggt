@@ -1,5 +1,5 @@
 import { Command } from "@oclif/core";
-import Help from "../lib/help";
+import Help from "../utils/help";
 
 /**
  * Copied from @oclif/plugin-help. Uses our own {@link Help} template class instead of the one from @oclif/core.

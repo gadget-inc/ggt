@@ -4,9 +4,9 @@ import http from "http";
 import { prompt } from "inquirer";
 import { noop } from "lodash";
 import open from "open";
-import { BaseCommand } from "../../src/lib/base-command";
-import { context, GADGET_ENDPOINT } from "../../src/lib/context";
-import { sleepUntil } from "../../src/lib/sleep";
+import { BaseCommand } from "../../src/utils/base-command";
+import { context, GADGET_ENDPOINT } from "../../src/utils/context";
+import { sleepUntil } from "../../src/utils/sleep";
 
 class Base extends BaseCommand {
   run = jest.fn();

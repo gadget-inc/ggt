@@ -51,7 +51,6 @@
     "ignore": "^5.2.0",
     "inquirer": "^8.2.5",
     "lodash": "^4.17.21",
-    "new-github-issue-url": "^0.2.1",
     "node-notifier": "^10.0.1",
     "normalize-path": "^3.0.0",
     "open": "^8.4.0",

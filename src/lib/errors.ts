@@ -2,10 +2,9 @@ import cleanStack from "clean-stack";
 import { HTTPError } from "got";
 import type { GraphQLError } from "graphql";
 import { isArray, isBoolean, isError, isNil, isNumber, isString, noop, uniqBy } from "lodash";
-import newGithubIssueUrl from "new-github-issue-url";
 import { serializeError as baseSerializeError } from "serialize-error";
 import dedent from "ts-dedent";
-import type { SetOptional, Writable } from "type-fest";
+import type { SetOptional } from "type-fest";
 import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
 import type Sync from "../commands/sync";
@@ -30,6 +29,11 @@ export abstract class BaseError extends Error {
   code: string;
 
   /**
+   * The Sentry event ID for this error.
+   */
+  sentryEventId?: string;
+
+  /**
    * The underlying *thing* that caused this error.
    */
   override cause?: any;
@@ -51,11 +55,11 @@ export abstract class BaseError extends Error {
   }
 
   async capture(): Promise<void> {
-    if (!context.env.productionLike || this.isBug == IsBug.NO) return;
+    if (this.isBug == IsBug.NO) return;
 
     const user = await context.getUser().catch(noop);
 
-    Sentry.captureException(this, {
+    this.sentryEventId = Sentry.captureException(this, {
       user: user ? { id: String(user.id), email: user.email, username: user.name } : undefined,
       tags: {
         applicationId: context.app?.id,
@@ -85,7 +89,7 @@ export abstract class BaseError extends Error {
       },
     });
 
-    await Sentry.flush();
+    await Sentry.flush(2000);
   }
 
   /**
@@ -110,70 +114,13 @@ export abstract class BaseError extends Error {
   }
 
   protected footer(): string {
-    switch (this.isBug) {
-      case IsBug.NO:
-        return "";
-      case IsBug.MAYBE:
-        return dedent`
-          If you think this is a bug, please submit an issue using the link below.
+    if (this.isBug == IsBug.NO) return "";
 
-          ${newGithubIssueUrl(this.issueOptions())}
-        `;
-      case IsBug.YES:
-        return dedent`
-          This is a bug :(
+    return dedent`
+      ${this.isBug == IsBug.YES ? "This is a bug" : "If you think this is a bug"}, please submit an issue using the link below.
 
-          Visit the link below to see if someone has already reported this issue.
-          https://github.com/gadget-inc/ggt/issues?q=is%3Aissue+is%3Aopen+label%3Abug+${this.code}
-
-          If nobody has, you can submit one using the link below.
-          ---
-          ${newGithubIssueUrl(this.issueOptions())}
-        `;
-    }
-  }
-
-  protected issueOptions(): newGithubIssueUrl.Options {
-    const options = {
-      repoUrl: "https://github.com/gadget-inc/ggt",
-      title: `[BUG ${this.code}]: `,
-      labels: ["bug"],
-      body: dedent`
-        ### Description
-        [Please describe what you were doing when this error occurred]
-
-        ### Command
-        \`\`\`sh-session
-        ${context.config.bin} ${process.argv.slice(2).join(" ")}
-        \`\`\`
-
-        ### Environment
-        \`\`\`
-        version: ${context.config.version}
-        platform: ${context.config.platform}
-        arch: ${context.config.arch}
-        shell: ${context.config.shell}
-        timestamp: ${new Date().toISOString()}
-        \`\`\`
-
-        ### Stack Trace
-        \`\`\`
-        ${cleanStack(this.stack)}
-        \`\`\`
-      `,
-    };
-
-    if (this.cause) {
-      options.body += dedent`
-
-        ### Cause
-        \`\`\`json
-        ${JSON.stringify(isError(this.cause) ? serializeError(this.cause) : this.cause, null, 2)}
-        \`\`\`
-      `;
-    }
-
-    return options;
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml${this.sentryEventId ? `&error-id=${this.sentryEventId}` : ""}
+    `;
   }
 
   protected abstract body(): string;
@@ -282,32 +229,6 @@ export class ClientError extends BaseError {
     }
 
     return this.cause;
-  }
-
-  protected override issueOptions(): newGithubIssueUrl.Options {
-    const options = super.issueOptions() as Writable<newGithubIssueUrl.Options>;
-    options.body += dedent`
-
-      ### GraphQL
-
-      #### Query
-      \`\`\`graphql
-      ${this.payload.query}
-      \`\`\`
-    `;
-
-    // mutations can have large/sensitive payloads, so we don't include them by default
-    if (!this.payload.query.trimStart().startsWith("mutation")) {
-      options.body += dedent`
-
-        #### Variables
-        \`\`\`json
-        ${JSON.stringify(this.payload.variables, null, 2)}
-        \`\`\`
-        `;
-    }
-
-    return options;
   }
 }
 

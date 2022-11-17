@@ -27,7 +27,6 @@
         "ignore": "^5.2.0",
         "inquirer": "^8.2.5",
         "lodash": "^4.17.21",
-        "new-github-issue-url": "^0.2.1",
         "node-notifier": "^10.0.1",
         "normalize-path": "^3.0.0",
         "open": "^8.4.0",
@@ -12455,14 +12454,6 @@
       "license": "MIT",
       "engines": {
         "node": ">= 0.6"
-      }
-    },
-    "node_modules/new-github-issue-url": {
-      "version": "0.2.1",
-      "resolved": "https://registry.npmjs.org/new-github-issue-url/-/new-github-issue-url-0.2.1.tgz",
-      "integrity": "sha512-md4cGoxuT4T4d/HDOXbrUHkTKrp/vp+m3aOA7XXVYwNsUNMK49g3SQicTSeV5GIz/5QVGAeYRAOlyp9OvlgsYA==",
-      "engines": {
-        "node": ">=10"
       }
     },
     "node_modules/nice-try": {
@@ -26453,11 +26444,6 @@
     "negotiator": {
       "version": "0.6.3",
       "dev": true
-    },
-    "new-github-issue-url": {
-      "version": "0.2.1",
-      "resolved": "https://registry.npmjs.org/new-github-issue-url/-/new-github-issue-url-0.2.1.tgz",
-      "integrity": "sha512-md4cGoxuT4T4d/HDOXbrUHkTKrp/vp+m3aOA7XXVYwNsUNMK49g3SQicTSeV5GIz/5QVGAeYRAOlyp9OvlgsYA=="
     },
     "nice-try": {
       "version": "1.0.5"

@@ -361,9 +361,7 @@ export class InvalidSyncFileError extends BaseError {
 
         ~/gadget/${this.app || "<name of app>"}
 
-      Otherwise, if you're sure you want to sync the contents of "${
-        this.sync.dir
-      }" to Gadget, run \`ggt sync\` again with the \`--force\` flag:
+      Otherwise, if you're sure you want to sync the contents of that directory to Gadget, run \`ggt sync\` again with the \`--force\` flag:
 
         $ ggt sync ${this.sync.argv.join(" ")} --force
 

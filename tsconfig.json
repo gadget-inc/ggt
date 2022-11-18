@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    /* Type Checking */
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "strict": true,
+
+    /* Modules */
+    "baseUrl": "./",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "rootDir": "src",
+    "types": ["node"],
+
+    /* Emit */
+    "declaration": true,
+    "importHelpers": true,
+    "inlineSources": true,
+    "noEmit": false,
+    "outDir": "lib",
+    "sourceMap": true,
+    "stripInternal": true,
+
+    /* JavaScript Support */
+    "allowJs": true,
+
+    /* Interop Constraints */
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+
+    /* Language and Environment */
+    "lib": ["es2021"],
+    "target": "es2021",
+    "useDefineForClassFields": true,
+
+    /* Completeness */
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "lib"]
+}

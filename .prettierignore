@@ -1,0 +1,5 @@
+__generated__
+lib
+tmp
+npm-shrinkwrap.json
+oclif.manifest.json

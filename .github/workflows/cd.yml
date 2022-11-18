@@ -1,0 +1,51 @@
+name: cd
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+  cd:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create release PR or publish to NPM
+        uses: changesets/action@v1
+        id: changesets
+        with:
+          version: npm run version
+          publish: npm run publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_GH_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - if: steps.changesets.outputs.published == 'true'
+        name: Create Sentry release
+        uses: getsentry/action-release@v1
+        with:
+          version: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
+          sourcemaps: ./lib
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: gadget
+          SENTRY_PROJECT: ggt

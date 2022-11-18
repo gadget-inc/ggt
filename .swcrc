@@ -1,0 +1,17 @@
+{
+  "env": {
+    "targets": {
+      "node": 16
+    }
+  },
+  "jsc": {
+    "parser": {
+      "syntax": "typescript"
+    },
+    "target": "es2021"
+  },
+  "module": {
+    "type": "commonjs",
+    "lazy": true
+  }
+}

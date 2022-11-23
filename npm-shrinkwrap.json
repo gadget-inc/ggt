@@ -5222,9 +5222,9 @@
       }
     },
     "node_modules/@swc/helpers": {
-      "version": "0.4.13",
-      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.4.13.tgz",
-      "integrity": "sha512-WOoZMSqpmUgL72xOeaWcU9IG7C6t5Wh1e8NGpSyBvmN5BSCXleK4/PLS6Oko1i/Lvn/yGYOv62bxlfsDvmRurg==",
+      "version": "0.4.14",
+      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.4.14.tgz",
+      "integrity": "sha512-4C7nX/dvpzB7za4Ql9K81xK3HPxCpHMgwTZVyf+9JQ6VUbn9jjZVN7/Nkdz/Ugzs2CSjqnL/UPXroiVBVHUWUw==",
       "dev": true,
       "dependencies": {
         "tslib": "^2.4.0"
@@ -21289,9 +21289,9 @@
       "optional": true
     },
     "@swc/helpers": {
-      "version": "0.4.13",
-      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.4.13.tgz",
-      "integrity": "sha512-WOoZMSqpmUgL72xOeaWcU9IG7C6t5Wh1e8NGpSyBvmN5BSCXleK4/PLS6Oko1i/Lvn/yGYOv62bxlfsDvmRurg==",
+      "version": "0.4.14",
+      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.4.14.tgz",
+      "integrity": "sha512-4C7nX/dvpzB7za4Ql9K81xK3HPxCpHMgwTZVyf+9JQ6VUbn9jjZVN7/Nkdz/Ugzs2CSjqnL/UPXroiVBVHUWUw==",
       "dev": true,
       "requires": {
         "tslib": "^2.4.0"

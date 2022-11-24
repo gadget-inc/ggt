@@ -673,6 +673,74 @@ describe("Sync", () => {
             },
           });
         });
+
+        it("does not write changes to ignored files", async () => {
+          client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+            data: {
+              remoteFileSyncEvents: {
+                remoteFilesVersion: "1",
+                changed: [{ path: "file2.js", content: toBase64("two++"), mode: 420, encoding: FileSyncEncoding.Base64 }],
+                deleted: [],
+              },
+            },
+          });
+
+          await sleepUntil(() => sync.metadata.filesVersion == "1");
+
+          // no changes
+          await expectDir(dir, {
+            ".ignore": "file2.js",
+            "file1.js": "one",
+            "file2.js": "two",
+            "file3.js": "three",
+          });
+
+          client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+            data: {
+              remoteFileSyncEvents: {
+                remoteFilesVersion: "2",
+                changed: [],
+                deleted: [{ path: "file2.js" }],
+              },
+            },
+          });
+
+          await sleepUntil(() => sync.metadata.filesVersion == "2");
+
+          // no changes
+          await expectDir(dir, {
+            ".ignore": "file2.js",
+            "file1.js": "one",
+            "file2.js": "two",
+            "file3.js": "three",
+          });
+        });
+
+        it("does write changes to .gadget files even though they are always ignored", async () => {
+          client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+            data: {
+              remoteFileSyncEvents: {
+                remoteFilesVersion: "1",
+                changed: [
+                  { path: ".gadget/client/index.ts", content: toBase64("// client"), mode: 420, encoding: FileSyncEncoding.Base64 },
+                  { path: ".gadget/server/index.ts", content: toBase64("// server"), mode: 420, encoding: FileSyncEncoding.Base64 },
+                ],
+                deleted: [],
+              },
+            },
+          });
+
+          await sleepUntil(() => sync.metadata.filesVersion == "1");
+
+          await expectDir(dir, {
+            ".ignore": "file2.js",
+            "file1.js": "one",
+            "file2.js": "two",
+            "file3.js": "three",
+            ".gadget/client/index.ts": "// client",
+            ".gadget/server/index.ts": "// server",
+          });
+        });
       });
     });
 

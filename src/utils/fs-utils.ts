@@ -16,7 +16,7 @@ export class Ignorer {
   }
 
   ignores(filepath: string): boolean {
-    const relative = path.relative(this._rootDir, filepath);
+    const relative = path.isAbsolute(filepath) ? path.relative(this._rootDir, filepath) : filepath;
     if (relative == "") return false;
     return this._ignorer.ignores(relative);
   }

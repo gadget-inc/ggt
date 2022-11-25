@@ -29,8 +29,9 @@
     "lint:prettier": "prettier --check .",
     "lint:typescript": "tsc --project tsconfig.json --project spec/tsconfig.json --noEmit",
     "publish": "npm run build && changeset publish",
+    "readme": "patch-package && oclif readme && prettier --write README.md",
     "test": "jest",
-    "version": "patch-package && changeset version && npm install --package-lock-only && npm run build && oclif readme && prettier --write README.md"
+    "version": "changeset version && npm install --package-lock-only && npm run build && npm run readme"
   },
   "dependencies": {
     "@oclif/core": "^1.20.4",

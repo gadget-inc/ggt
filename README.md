@@ -86,7 +86,7 @@ DESCRIPTION
     * Storing your source code in a Git repository like GitHub (https://github.com/)
 
   Sync includes the concept of a `.ignore` file. This file can contain a list of files and
-  directories that won't be sent to Gadget when syncing.
+  directories that won't be received or sent to Gadget when syncing.
 
   The following files and directories are always ignored:
     * .gadget

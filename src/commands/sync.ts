@@ -272,7 +272,7 @@ export default class Sync extends BaseCommand {
       this.log();
     }
 
-    this.debug("init %o", { metadata: this.metadata, remoteFilesVersion, hasRemoteChanges, hasLocalChanges });
+    this.debug("init %O", { metadata: this.metadata, remoteFilesVersion, hasRemoteChanges, hasLocalChanges });
 
     let action: Action | undefined;
     if (hasLocalChanges) {

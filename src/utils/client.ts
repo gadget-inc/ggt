@@ -105,16 +105,16 @@ export class Client {
       subscribePayload = { ...payload, variables: payload.variables() };
       removeConnectedListener = this._client.on("connected", () => {
         if (this.status == ConnectionStatus.RECONNECTING) {
-          // subscribePayload.variables is supposed to be readonly (it's not) and payload.variables could been re-assigned (it won't)
+          // subscribePayload.variables is supposed to be readonly (it's not) and payload.variables may have been re-assigned (it won't)
           (subscribePayload as any).variables = (payload.variables as any)();
-          debug("re-sending query %s", subscribePayload.query);
+          debug("re-sending%s", subscribePayload.query.split(" ", 2)[0], subscribePayload.query);
         }
       });
     } else {
       subscribePayload = payload as SubscribePayload;
     }
 
-    debug("sending query %s", subscribePayload.query);
+    debug("sending%s", subscribePayload.query.split(/\s+/, 2)[0], subscribePayload.query);
     const unsubscribe = this._client.subscribe(subscribePayload, {
       next: (result: ExecutionResult<Data, Extensions>) => sink.next(result),
       error: (error) => sink.error(new ClientError(subscribePayload, error as Error | GraphQLError[] | CloseEvent | ErrorEvent)),

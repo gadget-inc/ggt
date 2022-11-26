@@ -135,7 +135,7 @@ export abstract class BaseError extends Error {
  * Wraps `serialize-error` with some handy stuff, like special support for Got HTTP errors
  */
 export function serializeError(error: Error | string | unknown): Record<string, any> {
-  let serialized = baseSerializeError(error);
+  let serialized = baseSerializeError(isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };
   }

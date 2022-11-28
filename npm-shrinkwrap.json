@@ -4544,8 +4544,9 @@
       }
     },
     "node_modules/@oclif/color": {
-      "version": "1.0.1",
-      "license": "MIT",
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/@oclif/color/-/color-1.0.2.tgz",
+      "integrity": "sha512-HqTFeMjfLOZajxqffSkyDWFUB3YqsSLRcsvnvITGRzhO0Ip4Qwp0VHVwh+qe0TjJYEltmOgzoxsR1LZPQIHNBQ==",
       "dependencies": {
         "ansi-styles": "^4.2.1",
         "chalk": "^4.1.0",
@@ -4668,11 +4669,11 @@
       }
     },
     "node_modules/@oclif/plugin-not-found": {
-      "version": "2.3.8",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.8.tgz",
-      "integrity": "sha512-PfUVr67dHORFSeQthUwrPMJB/mRRNT4ENNdbafCOlL0HqC+WTuFy5nih+qnHBEli15RaOuMNoW3kR5MyBH82hA==",
+      "version": "2.3.9",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.9.tgz",
+      "integrity": "sha512-FJXIa5KmNbCgO8kDVJ23C/SkRRuwMYaRTNs5jejwrwKAm5fPp+TnR1+4pBp64ik7FA806nioqMGlotiyEWfMJA==",
       "dependencies": {
-        "@oclif/color": "^1.0.1",
+        "@oclif/color": "^1.0.2",
         "@oclif/core": "^1.20.3",
         "fast-levenshtein": "^3.0.0",
         "lodash": "^4.17.21"
@@ -20831,7 +20832,9 @@
       }
     },
     "@oclif/color": {
-      "version": "1.0.1",
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/@oclif/color/-/color-1.0.2.tgz",
+      "integrity": "sha512-HqTFeMjfLOZajxqffSkyDWFUB3YqsSLRcsvnvITGRzhO0Ip4Qwp0VHVwh+qe0TjJYEltmOgzoxsR1LZPQIHNBQ==",
       "requires": {
         "ansi-styles": "^4.2.1",
         "chalk": "^4.1.0",
@@ -20934,11 +20937,11 @@
       }
     },
     "@oclif/plugin-not-found": {
-      "version": "2.3.8",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.8.tgz",
-      "integrity": "sha512-PfUVr67dHORFSeQthUwrPMJB/mRRNT4ENNdbafCOlL0HqC+WTuFy5nih+qnHBEli15RaOuMNoW3kR5MyBH82hA==",
+      "version": "2.3.9",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.9.tgz",
+      "integrity": "sha512-FJXIa5KmNbCgO8kDVJ23C/SkRRuwMYaRTNs5jejwrwKAm5fPp+TnR1+4pBp64ik7FA806nioqMGlotiyEWfMJA==",
       "requires": {
-        "@oclif/color": "^1.0.1",
+        "@oclif/color": "^1.0.2",
         "@oclif/core": "^1.20.3",
         "fast-levenshtein": "^3.0.0",
         "lodash": "^4.17.21"

@@ -44,7 +44,7 @@
     "debug": "^4.3.4",
     "execa": "^5.1.1",
     "fast-levenshtein": "^3.0.0",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.1.0",
     "get-port": "^5.1.1",
     "got": "^11.8.5",
     "graphql": "^16.6.0",

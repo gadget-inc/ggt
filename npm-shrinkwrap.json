@@ -19,7 +19,7 @@
         "debug": "^4.3.4",
         "execa": "^5.1.1",
         "fast-levenshtein": "^3.0.0",
-        "fs-extra": "^10.1.0",
+        "fs-extra": "^11.1.0",
         "get-port": "^5.1.1",
         "got": "^11.8.5",
         "graphql": "^16.6.0",
@@ -7566,6 +7566,20 @@
         "node": ">=10"
       }
     },
+    "node_modules/cspell-lib/node_modules/fs-extra": {
+      "version": "10.1.0",
+      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-10.1.0.tgz",
+      "integrity": "sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==",
+      "dev": true,
+      "dependencies": {
+        "graceful-fs": "^4.2.0",
+        "jsonfile": "^6.0.1",
+        "universalify": "^2.0.0"
+      },
+      "engines": {
+        "node": ">=12"
+      }
+    },
     "node_modules/cspell-lib/node_modules/parse-json": {
       "version": "5.2.0",
       "resolved": "https://registry.npmjs.org/parse-json/-/parse-json-5.2.0.tgz",
@@ -7599,6 +7613,20 @@
         "node": ">=14"
       }
     },
+    "node_modules/cspell-trie-lib/node_modules/fs-extra": {
+      "version": "10.1.0",
+      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-10.1.0.tgz",
+      "integrity": "sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==",
+      "dev": true,
+      "dependencies": {
+        "graceful-fs": "^4.2.0",
+        "jsonfile": "^6.0.1",
+        "universalify": "^2.0.0"
+      },
+      "engines": {
+        "node": ">=12"
+      }
+    },
     "node_modules/cspell/node_modules/brace-expansion": {
       "version": "2.0.1",
       "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-2.0.1.tgz",
@@ -7606,6 +7634,20 @@
       "dev": true,
       "dependencies": {
         "balanced-match": "^1.0.0"
+      }
+    },
+    "node_modules/cspell/node_modules/fs-extra": {
+      "version": "10.1.0",
+      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-10.1.0.tgz",
+      "integrity": "sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==",
+      "dev": true,
+      "dependencies": {
+        "graceful-fs": "^4.2.0",
+        "jsonfile": "^6.0.1",
+        "universalify": "^2.0.0"
+      },
+      "engines": {
+        "node": ">=12"
       }
     },
     "node_modules/cspell/node_modules/get-stdin": {
@@ -9042,15 +9084,16 @@
       "license": "MIT"
     },
     "node_modules/fs-extra": {
-      "version": "10.1.0",
-      "license": "MIT",
+      "version": "11.1.0",
+      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-11.1.0.tgz",
+      "integrity": "sha512-0rcTq621PD5jM/e0a3EJoGC/1TC5ZBCERW82LQuwfGnCa1V8w7dpYH1yNu+SLb6E5dkeCBzKEyLGlFrnr+dUyw==",
       "dependencies": {
         "graceful-fs": "^4.2.0",
         "jsonfile": "^6.0.1",
         "universalify": "^2.0.0"
       },
       "engines": {
-        "node": ">=12"
+        "node": ">=14.14"
       }
     },
     "node_modules/fs-minipass": {
@@ -22951,6 +22994,17 @@
             "balanced-match": "^1.0.0"
           }
         },
+        "fs-extra": {
+          "version": "10.1.0",
+          "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-10.1.0.tgz",
+          "integrity": "sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==",
+          "dev": true,
+          "requires": {
+            "graceful-fs": "^4.2.0",
+            "jsonfile": "^6.0.1",
+            "universalify": "^2.0.0"
+          }
+        },
         "get-stdin": {
           "version": "8.0.0",
           "resolved": "https://registry.npmjs.org/get-stdin/-/get-stdin-8.0.0.tgz",
@@ -23076,6 +23130,17 @@
             "yaml": "^1.10.0"
           }
         },
+        "fs-extra": {
+          "version": "10.1.0",
+          "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-10.1.0.tgz",
+          "integrity": "sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==",
+          "dev": true,
+          "requires": {
+            "graceful-fs": "^4.2.0",
+            "jsonfile": "^6.0.1",
+            "universalify": "^2.0.0"
+          }
+        },
         "parse-json": {
           "version": "5.2.0",
           "resolved": "https://registry.npmjs.org/parse-json/-/parse-json-5.2.0.tgz",
@@ -23100,6 +23165,19 @@
         "@cspell/cspell-types": "6.14.3",
         "fs-extra": "^10.1.0",
         "gensequence": "^4.0.2"
+      },
+      "dependencies": {
+        "fs-extra": {
+          "version": "10.1.0",
+          "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-10.1.0.tgz",
+          "integrity": "sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==",
+          "dev": true,
+          "requires": {
+            "graceful-fs": "^4.2.0",
+            "jsonfile": "^6.0.1",
+            "universalify": "^2.0.0"
+          }
+        }
       }
     },
     "csv": {
@@ -24080,7 +24158,9 @@
       "dev": true
     },
     "fs-extra": {
-      "version": "10.1.0",
+      "version": "11.1.0",
+      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-11.1.0.tgz",
+      "integrity": "sha512-0rcTq621PD5jM/e0a3EJoGC/1TC5ZBCERW82LQuwfGnCa1V8w7dpYH1yNu+SLb6E5dkeCBzKEyLGlFrnr+dUyw==",
       "requires": {
         "graceful-fs": "^4.2.0",
         "jsonfile": "^6.0.1",

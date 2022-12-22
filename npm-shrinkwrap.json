@@ -2761,23 +2761,6 @@
         "upper-case-first": "^2.0.2"
       }
     },
-    "node_modules/@graphql-codegen/plugin-helpers": {
-      "version": "2.7.2",
-      "resolved": "https://registry.npmjs.org/@graphql-codegen/plugin-helpers/-/plugin-helpers-2.7.2.tgz",
-      "integrity": "sha512-kln2AZ12uii6U59OQXdjLk5nOlh1pHis1R98cDZGFnfaiAbX9V3fxcZ1MMJkB7qFUymTALzyjZoXXdyVmPMfRg==",
-      "dev": true,
-      "dependencies": {
-        "@graphql-tools/utils": "^8.8.0",
-        "change-case-all": "1.0.14",
-        "common-tags": "1.8.2",
-        "import-from": "4.0.0",
-        "lodash": "~4.17.0",
-        "tslib": "~2.4.0"
-      },
-      "peerDependencies": {
-        "graphql": "^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0"
-      }
-    },
     "node_modules/@graphql-codegen/schema-ast": {
       "version": "2.6.0",
       "resolved": "https://registry.npmjs.org/@graphql-codegen/schema-ast/-/schema-ast-2.6.0.tgz",
@@ -5159,12 +5142,12 @@
       "dev": true
     },
     "node_modules/@sentry/core": {
-      "version": "7.28.0",
-      "resolved": "https://registry.npmjs.org/@sentry/core/-/core-7.28.0.tgz",
-      "integrity": "sha512-9wY6mRzoyZ8TEW7X1jpciD0DSqqYPaggiJyykxaVbjwmJc7GjJpY94XHmSeKNUV4w7ddMhdsznhBmGNN6CFMfQ==",
+      "version": "7.28.1",
+      "resolved": "https://registry.npmjs.org/@sentry/core/-/core-7.28.1.tgz",
+      "integrity": "sha512-7wvnuvn/mrAfcugWoCG/3pqDIrUgH5t+HisMJMGw0h9Tc33KqrmqMDCQVvjlrr2pWrw/vuUCFdm8CbUHJ832oQ==",
       "dependencies": {
-        "@sentry/types": "7.28.0",
-        "@sentry/utils": "7.28.0",
+        "@sentry/types": "7.28.1",
+        "@sentry/utils": "7.28.1",
         "tslib": "^1.9.3"
       },
       "engines": {
@@ -5177,13 +5160,13 @@
       "integrity": "sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg=="
     },
     "node_modules/@sentry/node": {
-      "version": "7.28.0",
-      "resolved": "https://registry.npmjs.org/@sentry/node/-/node-7.28.0.tgz",
-      "integrity": "sha512-vrhZf84hgXzwasLs5vB6Rh8Sd7hmBcajw02YM32bMn4EgXY0sDTxoSWcH9fkgTMpvutmH39o2tVvCah148rx9g==",
+      "version": "7.28.1",
+      "resolved": "https://registry.npmjs.org/@sentry/node/-/node-7.28.1.tgz",
+      "integrity": "sha512-n7AbpJqZJjWPpKNGc55mP7AdQ+XSomS9MZJuZ+Xt2AU52aVwGPI4z9aHUJFSDGaMHHiu/toyPnoUES+XZf6/hw==",
       "dependencies": {
-        "@sentry/core": "7.28.0",
-        "@sentry/types": "7.28.0",
-        "@sentry/utils": "7.28.0",
+        "@sentry/core": "7.28.1",
+        "@sentry/types": "7.28.1",
+        "@sentry/utils": "7.28.1",
         "cookie": "^0.4.1",
         "https-proxy-agent": "^5.0.0",
         "lru_map": "^0.3.3",
@@ -5199,19 +5182,19 @@
       "integrity": "sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg=="
     },
     "node_modules/@sentry/types": {
-      "version": "7.28.0",
-      "resolved": "https://registry.npmjs.org/@sentry/types/-/types-7.28.0.tgz",
-      "integrity": "sha512-F6tZldpvC3Lt8FPgJ6wRTcE7P9txIpHSBjyYz9wqFlVJx4IhBmrn6vZU1LvANUaK1jZZF2PW5tFRrVEnydfpqg==",
+      "version": "7.28.1",
+      "resolved": "https://registry.npmjs.org/@sentry/types/-/types-7.28.1.tgz",
+      "integrity": "sha512-DvSplMVrVEmOzR2M161V5+B8Up3vR71xMqJOpWTzE9TqtFJRGPtqT/5OBsNJJw1+/j2ssMcnKwbEo9Q2EGeS6g==",
       "engines": {
         "node": ">=8"
       }
     },
     "node_modules/@sentry/utils": {
-      "version": "7.28.0",
-      "resolved": "https://registry.npmjs.org/@sentry/utils/-/utils-7.28.0.tgz",
-      "integrity": "sha512-ag1RotlFSJnwUi/MYWY5iQ8aLcwrCBlD/qlGB43PvB3XGDl3e7E/pUy2bdblP7Q2uCKLVUBcudyaSgtvNqu9wA==",
+      "version": "7.28.1",
+      "resolved": "https://registry.npmjs.org/@sentry/utils/-/utils-7.28.1.tgz",
+      "integrity": "sha512-75/jzLUO9HH09iC9TslNimGbxOP3jgn89P+q7uR+rp2fJfRExHVeKJZQdK0Ij4/SmE7TJ3Uh2r154N0INZEx1g==",
       "dependencies": {
-        "@sentry/types": "7.28.0",
+        "@sentry/types": "7.28.1",
         "tslib": "^1.9.3"
       },
       "engines": {
@@ -7039,24 +7022,6 @@
         "sentence-case": "^3.0.4",
         "snake-case": "^3.0.4",
         "tslib": "^2.0.3"
-      }
-    },
-    "node_modules/change-case-all": {
-      "version": "1.0.14",
-      "resolved": "https://registry.npmjs.org/change-case-all/-/change-case-all-1.0.14.tgz",
-      "integrity": "sha512-CWVm2uT7dmSHdO/z1CXT/n47mWonyypzBbuCy5tN7uMg22BsfkhwT6oHmFCAk+gL1LOOxhdbB9SZz3J1KTY3gA==",
-      "dev": true,
-      "dependencies": {
-        "change-case": "^4.1.2",
-        "is-lower-case": "^2.0.2",
-        "is-upper-case": "^2.0.2",
-        "lower-case": "^2.0.2",
-        "lower-case-first": "^2.0.2",
-        "sponge-case": "^1.0.1",
-        "swap-case": "^2.0.2",
-        "title-case": "^3.0.3",
-        "upper-case": "^2.0.2",
-        "upper-case-first": "^2.0.2"
       }
     },
     "node_modules/char-regex": {
@@ -19614,20 +19579,6 @@
         }
       }
     },
-    "@graphql-codegen/plugin-helpers": {
-      "version": "2.7.2",
-      "resolved": "https://registry.npmjs.org/@graphql-codegen/plugin-helpers/-/plugin-helpers-2.7.2.tgz",
-      "integrity": "sha512-kln2AZ12uii6U59OQXdjLk5nOlh1pHis1R98cDZGFnfaiAbX9V3fxcZ1MMJkB7qFUymTALzyjZoXXdyVmPMfRg==",
-      "dev": true,
-      "requires": {
-        "@graphql-tools/utils": "^8.8.0",
-        "change-case-all": "1.0.14",
-        "common-tags": "1.8.2",
-        "import-from": "4.0.0",
-        "lodash": "~4.17.0",
-        "tslib": "~2.4.0"
-      }
-    },
     "@graphql-codegen/schema-ast": {
       "version": "2.6.0",
       "resolved": "https://registry.npmjs.org/@graphql-codegen/schema-ast/-/schema-ast-2.6.0.tgz",
@@ -21627,12 +21578,12 @@
       "dev": true
     },
     "@sentry/core": {
-      "version": "7.28.0",
-      "resolved": "https://registry.npmjs.org/@sentry/core/-/core-7.28.0.tgz",
-      "integrity": "sha512-9wY6mRzoyZ8TEW7X1jpciD0DSqqYPaggiJyykxaVbjwmJc7GjJpY94XHmSeKNUV4w7ddMhdsznhBmGNN6CFMfQ==",
+      "version": "7.28.1",
+      "resolved": "https://registry.npmjs.org/@sentry/core/-/core-7.28.1.tgz",
+      "integrity": "sha512-7wvnuvn/mrAfcugWoCG/3pqDIrUgH5t+HisMJMGw0h9Tc33KqrmqMDCQVvjlrr2pWrw/vuUCFdm8CbUHJ832oQ==",
       "requires": {
-        "@sentry/types": "7.28.0",
-        "@sentry/utils": "7.28.0",
+        "@sentry/types": "7.28.1",
+        "@sentry/utils": "7.28.1",
         "tslib": "^1.9.3"
       },
       "dependencies": {
@@ -21644,13 +21595,13 @@
       }
     },
     "@sentry/node": {
-      "version": "7.28.0",
-      "resolved": "https://registry.npmjs.org/@sentry/node/-/node-7.28.0.tgz",
-      "integrity": "sha512-vrhZf84hgXzwasLs5vB6Rh8Sd7hmBcajw02YM32bMn4EgXY0sDTxoSWcH9fkgTMpvutmH39o2tVvCah148rx9g==",
+      "version": "7.28.1",
+      "resolved": "https://registry.npmjs.org/@sentry/node/-/node-7.28.1.tgz",
+      "integrity": "sha512-n7AbpJqZJjWPpKNGc55mP7AdQ+XSomS9MZJuZ+Xt2AU52aVwGPI4z9aHUJFSDGaMHHiu/toyPnoUES+XZf6/hw==",
       "requires": {
-        "@sentry/core": "7.28.0",
-        "@sentry/types": "7.28.0",
-        "@sentry/utils": "7.28.0",
+        "@sentry/core": "7.28.1",
+        "@sentry/types": "7.28.1",
+        "@sentry/utils": "7.28.1",
         "cookie": "^0.4.1",
         "https-proxy-agent": "^5.0.0",
         "lru_map": "^0.3.3",
@@ -21665,16 +21616,16 @@
       }
     },
     "@sentry/types": {
-      "version": "7.28.0",
-      "resolved": "https://registry.npmjs.org/@sentry/types/-/types-7.28.0.tgz",
-      "integrity": "sha512-F6tZldpvC3Lt8FPgJ6wRTcE7P9txIpHSBjyYz9wqFlVJx4IhBmrn6vZU1LvANUaK1jZZF2PW5tFRrVEnydfpqg=="
+      "version": "7.28.1",
+      "resolved": "https://registry.npmjs.org/@sentry/types/-/types-7.28.1.tgz",
+      "integrity": "sha512-DvSplMVrVEmOzR2M161V5+B8Up3vR71xMqJOpWTzE9TqtFJRGPtqT/5OBsNJJw1+/j2ssMcnKwbEo9Q2EGeS6g=="
     },
     "@sentry/utils": {
-      "version": "7.28.0",
-      "resolved": "https://registry.npmjs.org/@sentry/utils/-/utils-7.28.0.tgz",
-      "integrity": "sha512-ag1RotlFSJnwUi/MYWY5iQ8aLcwrCBlD/qlGB43PvB3XGDl3e7E/pUy2bdblP7Q2uCKLVUBcudyaSgtvNqu9wA==",
+      "version": "7.28.1",
+      "resolved": "https://registry.npmjs.org/@sentry/utils/-/utils-7.28.1.tgz",
+      "integrity": "sha512-75/jzLUO9HH09iC9TslNimGbxOP3jgn89P+q7uR+rp2fJfRExHVeKJZQdK0Ij4/SmE7TJ3Uh2r154N0INZEx1g==",
       "requires": {
-        "@sentry/types": "7.28.0",
+        "@sentry/types": "7.28.1",
         "tslib": "^1.9.3"
       },
       "dependencies": {
@@ -22960,24 +22911,6 @@
         "sentence-case": "^3.0.4",
         "snake-case": "^3.0.4",
         "tslib": "^2.0.3"
-      }
-    },
-    "change-case-all": {
-      "version": "1.0.14",
-      "resolved": "https://registry.npmjs.org/change-case-all/-/change-case-all-1.0.14.tgz",
-      "integrity": "sha512-CWVm2uT7dmSHdO/z1CXT/n47mWonyypzBbuCy5tN7uMg22BsfkhwT6oHmFCAk+gL1LOOxhdbB9SZz3J1KTY3gA==",
-      "dev": true,
-      "requires": {
-        "change-case": "^4.1.2",
-        "is-lower-case": "^2.0.2",
-        "is-upper-case": "^2.0.2",
-        "lower-case": "^2.0.2",
-        "lower-case-first": "^2.0.2",
-        "sponge-case": "^1.0.1",
-        "swap-case": "^2.0.2",
-        "title-case": "^3.0.3",
-        "upper-case": "^2.0.2",
-        "upper-case-first": "^2.0.2"
       }
     },
     "char-regex": {

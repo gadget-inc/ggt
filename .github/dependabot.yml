@@ -1,7 +1,7 @@
 version: 2
 updates:
   - directory: /
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 15
     package-ecosystem: npm
     rebase-strategy: auto
     schedule:

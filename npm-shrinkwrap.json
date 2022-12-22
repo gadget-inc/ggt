@@ -2553,16 +2553,51 @@
       "license": "MIT"
     },
     "node_modules/@graphql-codegen/add": {
-      "version": "3.2.1",
-      "resolved": "https://registry.npmjs.org/@graphql-codegen/add/-/add-3.2.1.tgz",
-      "integrity": "sha512-w82H/evh8SSGoD3K6K/Oh3kqSdbuU+TgHqMYmmHFxtH692v2xhN/cu1s/TotBQ7r4mO7OQutze7dde2tZEXGEQ==",
+      "version": "3.2.3",
+      "resolved": "https://registry.npmjs.org/@graphql-codegen/add/-/add-3.2.3.tgz",
+      "integrity": "sha512-sQOnWpMko4JLeykwyjFTxnhqjd/3NOG2OyMuvK76Wnnwh8DRrNf2VEs2kmSvLl7MndMlOj7Kh5U154dVcvhmKQ==",
       "dev": true,
       "dependencies": {
-        "@graphql-codegen/plugin-helpers": "^2.6.2",
+        "@graphql-codegen/plugin-helpers": "^3.1.1",
         "tslib": "~2.4.0"
       },
       "peerDependencies": {
         "graphql": "^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0"
+      }
+    },
+    "node_modules/@graphql-codegen/add/node_modules/@graphql-codegen/plugin-helpers": {
+      "version": "3.1.1",
+      "resolved": "https://registry.npmjs.org/@graphql-codegen/plugin-helpers/-/plugin-helpers-3.1.1.tgz",
+      "integrity": "sha512-+V1WK4DUhejVSbkZrAsyv9gA4oQABVrtEUkT7vWq7gSf7Ln6OEM59lDUDsjp5wpLPTBIDJANbAe3qEd+iCB3Ow==",
+      "dev": true,
+      "dependencies": {
+        "@graphql-tools/utils": "^8.8.0",
+        "change-case-all": "1.0.15",
+        "common-tags": "1.8.2",
+        "import-from": "4.0.0",
+        "lodash": "~4.17.0",
+        "tslib": "~2.4.0"
+      },
+      "peerDependencies": {
+        "graphql": "^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0"
+      }
+    },
+    "node_modules/@graphql-codegen/add/node_modules/change-case-all": {
+      "version": "1.0.15",
+      "resolved": "https://registry.npmjs.org/change-case-all/-/change-case-all-1.0.15.tgz",
+      "integrity": "sha512-3+GIFhk3sNuvFAJKU46o26OdzudQlPNBCu1ZQi3cMeMHhty1bhDxu2WrEilVNYaGvqUtR1VSigFcJOiS13dRhQ==",
+      "dev": true,
+      "dependencies": {
+        "change-case": "^4.1.2",
+        "is-lower-case": "^2.0.2",
+        "is-upper-case": "^2.0.2",
+        "lower-case": "^2.0.2",
+        "lower-case-first": "^2.0.2",
+        "sponge-case": "^1.0.1",
+        "swap-case": "^2.0.2",
+        "title-case": "^3.0.3",
+        "upper-case": "^2.0.2",
+        "upper-case-first": "^2.0.2"
       }
     },
     "node_modules/@graphql-codegen/cli": {
@@ -19252,13 +19287,47 @@
       "dev": true
     },
     "@graphql-codegen/add": {
-      "version": "3.2.1",
-      "resolved": "https://registry.npmjs.org/@graphql-codegen/add/-/add-3.2.1.tgz",
-      "integrity": "sha512-w82H/evh8SSGoD3K6K/Oh3kqSdbuU+TgHqMYmmHFxtH692v2xhN/cu1s/TotBQ7r4mO7OQutze7dde2tZEXGEQ==",
+      "version": "3.2.3",
+      "resolved": "https://registry.npmjs.org/@graphql-codegen/add/-/add-3.2.3.tgz",
+      "integrity": "sha512-sQOnWpMko4JLeykwyjFTxnhqjd/3NOG2OyMuvK76Wnnwh8DRrNf2VEs2kmSvLl7MndMlOj7Kh5U154dVcvhmKQ==",
       "dev": true,
       "requires": {
-        "@graphql-codegen/plugin-helpers": "^2.6.2",
+        "@graphql-codegen/plugin-helpers": "^3.1.1",
         "tslib": "~2.4.0"
+      },
+      "dependencies": {
+        "@graphql-codegen/plugin-helpers": {
+          "version": "3.1.1",
+          "resolved": "https://registry.npmjs.org/@graphql-codegen/plugin-helpers/-/plugin-helpers-3.1.1.tgz",
+          "integrity": "sha512-+V1WK4DUhejVSbkZrAsyv9gA4oQABVrtEUkT7vWq7gSf7Ln6OEM59lDUDsjp5wpLPTBIDJANbAe3qEd+iCB3Ow==",
+          "dev": true,
+          "requires": {
+            "@graphql-tools/utils": "^8.8.0",
+            "change-case-all": "1.0.15",
+            "common-tags": "1.8.2",
+            "import-from": "4.0.0",
+            "lodash": "~4.17.0",
+            "tslib": "~2.4.0"
+          }
+        },
+        "change-case-all": {
+          "version": "1.0.15",
+          "resolved": "https://registry.npmjs.org/change-case-all/-/change-case-all-1.0.15.tgz",
+          "integrity": "sha512-3+GIFhk3sNuvFAJKU46o26OdzudQlPNBCu1ZQi3cMeMHhty1bhDxu2WrEilVNYaGvqUtR1VSigFcJOiS13dRhQ==",
+          "dev": true,
+          "requires": {
+            "change-case": "^4.1.2",
+            "is-lower-case": "^2.0.2",
+            "is-upper-case": "^2.0.2",
+            "lower-case": "^2.0.2",
+            "lower-case-first": "^2.0.2",
+            "sponge-case": "^1.0.1",
+            "swap-case": "^2.0.2",
+            "title-case": "^3.0.3",
+            "upper-case": "^2.0.2",
+            "upper-case-first": "^2.0.2"
+          }
+        }
       }
     },
     "@graphql-codegen/cli": {

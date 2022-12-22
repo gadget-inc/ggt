@@ -7,7 +7,7 @@ The connection to Gadget closed unexpectedly.
 
 If you think this is a bug, please submit an issue using the link below.
 
-https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml"
+https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
 exports[`ClientError renders a GraphQL error correctly 1`] = `
@@ -19,7 +19,7 @@ Gadget responded with the following error:
 
 If you think this is a bug, please submit an issue using the link below.
 
-https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml"
+https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
 exports[`ClientError renders a string correctly 1`] = `
@@ -29,7 +29,7 @@ We received a response without data
 
 If you think this is a bug, please submit an issue using the link below.
 
-https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml"
+https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
 exports[`ClientError renders an ErrorEvent correctly 1`] = `
@@ -39,7 +39,7 @@ connect ECONNREFUSED 10.254.254.254:3000
 
 If you think this is a bug, please submit an issue using the link below.
 
-https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml"
+https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
 exports[`ClientError renders multiple GraphQL errors correctly 1`] = `
@@ -52,7 +52,7 @@ Gadget responded with multiple errors:
 
 If you think this is a bug, please submit an issue using the link below.
 
-https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml"
+https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
 exports[`FlagError renders correctly 1`] = `
@@ -72,7 +72,7 @@ However, that directory has already been synced with this app:
 
   test
 
-If you're sure that you want to sync \"not-test\" to \"~/gadget/test\", run \`ggt sync\` again with the \`--force\` flag:
+If you're sure that you want to sync "not-test" to "~/gadget/test", run \`ggt sync\` again with the \`--force\` flag:
 
   $ ggt sync --app test ~/gadget/test --force"
 `;
@@ -96,7 +96,7 @@ You will be prompted to either merge your local files with your remote ones or r
 
 If you think this is a bug, please submit an issue using the link below.
 
-https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml"
+https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
 exports[`UnexpectedError renders correctly 1`] = `
@@ -107,7 +107,7 @@ Error: Whoops!
 
 This is a bug, please submit an issue using the link below.
 
-https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml"
+https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
 exports[`YarnNotFoundError renders correctly 1`] = `

@@ -178,8 +178,8 @@ export abstract class BaseCommand extends Command {
    */
   override async catch(cause: Error & { exitCode?: number }): Promise<never> {
     const error = cause instanceof BaseError ? cause : new UnknownError(cause);
-    await error.capture();
     console.error(error.render());
+    await error.capture();
 
     // The original implementation of `catch` re-throws the error so that it's caught and printed by oclif's `handle` method. We still want
     // to end up in oclif's `handle` method, but we don't want it to print the error again so we throw an ExitError instead. This will cause

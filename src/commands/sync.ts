@@ -385,8 +385,11 @@ export default class Sync extends BaseCommand {
           void this.queue
             .add(async () => {
               if (!remoteFiles.size) {
-                // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
-                this.metadata.filesVersion = remoteFilesVersion;
+                if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
+                  // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
+                  this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
+                  this.metadata.filesVersion = remoteFilesVersion;
+                }
                 return;
               }
 
@@ -421,6 +424,7 @@ export default class Sync extends BaseCommand {
                 { stopOnError: false }
               );
 
+              this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
               this.metadata.filesVersion = remoteFilesVersion;
             })
             .catch(this.stop);
@@ -475,6 +479,7 @@ export default class Sync extends BaseCommand {
             this.debug("remote files version after publishing %s", remoteFilesVersion);
 
             if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
+              this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
               this.metadata.filesVersion = remoteFilesVersion;
             }
           }

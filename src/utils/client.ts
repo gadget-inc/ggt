@@ -107,14 +107,14 @@ export class Client {
         if (this.status == ConnectionStatus.RECONNECTING) {
           // subscribePayload.variables is supposed to be readonly (it's not) and payload.variables may have been re-assigned (it won't)
           (subscribePayload as any).variables = (payload.variables as any)();
-          debug("re-sending%s", subscribePayload.query.split(" ", 2)[0], subscribePayload.query);
+          debug("re-sending %s%s%O", subscribePayload.query.split(/\s+/g, 1)[0], subscribePayload.query, subscribePayload.variables);
         }
       });
     } else {
       subscribePayload = payload as SubscribePayload;
     }
 
-    debug("sending%s", subscribePayload.query.split(/\s+/, 2)[0], subscribePayload.query);
+    debug("sending %s%s%O", subscribePayload.query.split(/\s+/g, 1)[0], subscribePayload.query, subscribePayload.variables);
     const unsubscribe = this._client.subscribe(subscribePayload, {
       next: (result: ExecutionResult<Data, Extensions>) => sink.next(result),
       error: (error) => sink.error(new ClientError(subscribePayload, error as Error | GraphQLError[] | CloseEvent | ErrorEvent)),

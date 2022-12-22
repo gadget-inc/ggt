@@ -6,7 +6,7 @@
 <br>
 
 <a href="https://github.com/gadget-inc/ggt/actions/workflows/ci.yml?query=branch%3Amain">
-  <img alt="ci workflow status" src="https://img.shields.io/github/workflow/status/gadget-inc/ggt/ci/main?label=ci">
+  <img alt="ci workflow status" src="https://img.shields.io/github/actions/workflow/status/gadget-inc/ggt/ci.yml?branch=main&label=ci">
 </a>
 <a href="https://www.npmjs.com/package/@gadgetinc/ggt">
   <img alt="npm version" src="https://img.shields.io/npm/v/@gadgetinc/ggt">

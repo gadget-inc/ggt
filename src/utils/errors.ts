@@ -12,6 +12,7 @@ import type { Payload } from "./client";
 import { context } from "./context";
 import * as Sentry from "@sentry/node";
 import os from "os";
+import { randomUUID } from "crypto";
 
 if (context.env.productionLike) {
   Sentry.init({ dsn: "https://0c26e0d8afd94e77a88ee1c3aa9e7065@o250689.ingest.sentry.io/6703266" });
@@ -31,7 +32,7 @@ export abstract class BaseError extends Error {
   /**
    * The Sentry event ID for this error.
    */
-  sentryEventId?: string;
+  sentryEventId = context.env.testLike ? "00000000-0000-0000-0000-000000000000" : randomUUID();
 
   /**
    * The underlying *thing* that caused this error.
@@ -59,32 +60,35 @@ export abstract class BaseError extends Error {
 
     const user = await context.getUser().catch(noop);
 
-    this.sentryEventId = Sentry.captureException(this, {
-      user: user ? { id: String(user.id), email: user.email, username: user.name } : undefined,
-      tags: {
-        applicationId: context.app?.id,
-        arch: context.config.arch,
-        isBug: this.isBug,
-        code: this.code,
-        environment: context.env.value,
-        platform: context.config.platform,
-        shell: context.config.shell,
-        version: context.config.version,
-      },
-      contexts: {
-        cause: this.cause ? serializeError(this.cause) : undefined,
-        app: {
-          command: `${context.config.bin} ${process.argv.slice(2).join(" ")}`,
-          argv: process.argv,
+    Sentry.getCurrentHub().captureException(this, {
+      event_id: this.sentryEventId,
+      captureContext: {
+        user: user ? { id: String(user.id), email: user.email, username: user.name } : undefined,
+        tags: {
+          applicationId: context.app?.id,
+          arch: context.config.arch,
+          isBug: this.isBug,
+          code: this.code,
+          environment: context.env.value,
+          platform: context.config.platform,
+          shell: context.config.shell,
+          version: context.config.version,
         },
-        device: {
-          name: os.hostname(),
-          family: os.type(),
-          arch: os.arch(),
-        },
-        runtime: {
-          name: process.release.name,
-          version: process.version,
+        contexts: {
+          cause: this.cause ? serializeError(this.cause) : undefined,
+          app: {
+            command: `${context.config.bin} ${process.argv.slice(2).join(" ")}`,
+            argv: process.argv,
+          },
+          device: {
+            name: os.hostname(),
+            family: os.type(),
+            arch: os.arch(),
+          },
+          runtime: {
+            name: process.release.name,
+            version: process.version,
+          },
         },
       },
     });
@@ -123,7 +127,7 @@ export abstract class BaseError extends Error {
     return dedent`
       ${this.isBug == IsBug.YES ? "This is a bug" : "If you think this is a bug"}, please submit an issue using the link below.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml${this.sentryEventId ? `&error-id=${this.sentryEventId}` : ""}
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.sentryEventId}
     `;
   }
 

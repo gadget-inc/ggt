@@ -47,7 +47,7 @@
         "@graphql-codegen/typescript": "^2.8.5",
         "@graphql-codegen/typescript-operations": "^2.5.10",
         "@oclif/plugin-plugins": "^2.1.9",
-        "@oclif/test": "^2.2.16",
+        "@oclif/test": "^2.2.17",
         "@swc/core": "^1.3.24",
         "@swc/helpers": "^0.4.14",
         "@swc/jest": "^0.2.24",
@@ -4985,13 +4985,13 @@
       }
     },
     "node_modules/@oclif/test": {
-      "version": "2.2.16",
-      "resolved": "https://registry.npmjs.org/@oclif/test/-/test-2.2.16.tgz",
-      "integrity": "sha512-N7w7NHn+klyHXAOWcA8Vgmy/eFfU9Niwp2P/rkvmNg9NfWDHB+RAgjqnVMYDYYdXIDu3/DXdS90NXrIIhvPcHA==",
+      "version": "2.2.17",
+      "resolved": "https://registry.npmjs.org/@oclif/test/-/test-2.2.17.tgz",
+      "integrity": "sha512-biReDlW5a6YkiJoMPa4tQYWQ8sXkBBMD94P7/NgqAL06wE62x4cyK8V55hcbV10QPe82IUl0w3Zx09zYsoLUyQ==",
       "dev": true,
       "dependencies": {
         "@oclif/core": "^1.22.0",
-        "fancy-test": "^2.0.9"
+        "fancy-test": "^2.0.10"
       },
       "engines": {
         "node": ">=12.0.0"
@@ -20997,13 +20997,13 @@
       "integrity": "sha512-KX8gMYA9ujBPOd1HFsV9e0iEx7Uoj8AG/3YsW4TtWQTg4lJvr82qNm7o/cFQfYRIt+jw7Ew/4oL4A22zOT+IRA=="
     },
     "@oclif/test": {
-      "version": "2.2.16",
-      "resolved": "https://registry.npmjs.org/@oclif/test/-/test-2.2.16.tgz",
-      "integrity": "sha512-N7w7NHn+klyHXAOWcA8Vgmy/eFfU9Niwp2P/rkvmNg9NfWDHB+RAgjqnVMYDYYdXIDu3/DXdS90NXrIIhvPcHA==",
+      "version": "2.2.17",
+      "resolved": "https://registry.npmjs.org/@oclif/test/-/test-2.2.17.tgz",
+      "integrity": "sha512-biReDlW5a6YkiJoMPa4tQYWQ8sXkBBMD94P7/NgqAL06wE62x4cyK8V55hcbV10QPe82IUl0w3Zx09zYsoLUyQ==",
       "dev": true,
       "requires": {
         "@oclif/core": "^1.22.0",
-        "fancy-test": "^2.0.9"
+        "fancy-test": "^2.0.10"
       }
     },
     "@octokit/auth-token": {

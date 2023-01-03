@@ -79,7 +79,7 @@
         "jest": "^29.3.1",
         "jest-extended": "^3.2.0",
         "nock": "^13.2.9",
-        "oclif": "^3.4.2",
+        "oclif": "^3.4.3",
         "patch-package": "^6.5.0",
         "prettier": "^2.8.1",
         "prettier-plugin-packagejson": "^2.3.0",
@@ -13329,9 +13329,9 @@
       }
     },
     "node_modules/oclif": {
-      "version": "3.4.2",
-      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.4.2.tgz",
-      "integrity": "sha512-YF7zqHCEWiRvfuXkqyPuQsC4PiEJuXLQWIMXOtdJgOnIKqBh9Sp3e4xFsSal9QheVsCwO5kM3Nhe+G430hk/mA==",
+      "version": "3.4.3",
+      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.4.3.tgz",
+      "integrity": "sha512-Kg8ezSJvDluazG6eyN+TeoryaFn3i9utKVty2hy6I0FUy6QcPnbl8+MCha4Jwc+x5+pA46Tu0n2cnjUcWqp56w==",
       "dev": true,
       "dependencies": {
         "@oclif/core": "^1.20.4",
@@ -27004,9 +27004,9 @@
       }
     },
     "oclif": {
-      "version": "3.4.2",
-      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.4.2.tgz",
-      "integrity": "sha512-YF7zqHCEWiRvfuXkqyPuQsC4PiEJuXLQWIMXOtdJgOnIKqBh9Sp3e4xFsSal9QheVsCwO5kM3Nhe+G430hk/mA==",
+      "version": "3.4.3",
+      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.4.3.tgz",
+      "integrity": "sha512-Kg8ezSJvDluazG6eyN+TeoryaFn3i9utKVty2hy6I0FUy6QcPnbl8+MCha4Jwc+x5+pA46Tu0n2cnjUcWqp56w==",
       "dev": true,
       "requires": {
         "@oclif/core": "^1.20.4",

@@ -14,8 +14,10 @@
         "@oclif/plugin-not-found": "^2.3.11",
         "@oclif/plugin-warn-if-update-available": "^2.0.17",
         "@sentry/node": "^7.28.1",
+        "chalk": "^4.1.2",
         "chokidar": "^3.5.3",
         "clean-stack": "^3.0.1",
+        "date-fns": "^2.29.3",
         "debug": "^4.3.4",
         "execa": "^5.1.1",
         "fast-levenshtein": "^3.0.0",
@@ -30,8 +32,10 @@
         "node-notifier": "^10.0.1",
         "normalize-path": "^3.0.0",
         "open": "^8.4.0",
+        "ora": "^5.4.1",
         "p-map": "^4.0.0",
         "p-queue": "^6.6.2",
+        "pluralize": "^8.0.0",
         "serialize-error": "^8.1.0",
         "ts-dedent": "^2.2.0",
         "which": "^3.0.0",
@@ -60,6 +64,7 @@
         "@types/node": "^18.11.17",
         "@types/node-notifier": "^8.0.2",
         "@types/normalize-path": "^3.0.0",
+        "@types/pluralize": "^0.0.29",
         "@types/which": "^2.0.1",
         "@types/ws": "^8.5.3",
         "@typescript-eslint/eslint-plugin": "^5.47.0",
@@ -5772,6 +5777,12 @@
       "integrity": "sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==",
       "dev": true
     },
+    "node_modules/@types/pluralize": {
+      "version": "0.0.29",
+      "resolved": "https://registry.npmjs.org/@types/pluralize/-/pluralize-0.0.29.tgz",
+      "integrity": "sha512-BYOID+l2Aco2nBik+iYS4SZX0Lf20KPILP5RGmM1IgzdwNdTs0eebiFriOPcej1sX9mLnSoiNte5zcFxssgpGA==",
+      "dev": true
+    },
     "node_modules/@types/prettier": {
       "version": "2.7.2",
       "resolved": "https://registry.npmjs.org/@types/prettier/-/prettier-2.7.2.tgz",
@@ -7847,9 +7858,9 @@
       "dev": true
     },
     "node_modules/date-fns": {
-      "version": "2.29.1",
-      "dev": true,
-      "license": "MIT",
+      "version": "2.29.3",
+      "resolved": "https://registry.npmjs.org/date-fns/-/date-fns-2.29.3.tgz",
+      "integrity": "sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA==",
       "engines": {
         "node": ">=0.11"
       },
@@ -14101,6 +14112,14 @@
       },
       "engines": {
         "node": ">=8"
+      }
+    },
+    "node_modules/pluralize": {
+      "version": "8.0.0",
+      "resolved": "https://registry.npmjs.org/pluralize/-/pluralize-8.0.0.tgz",
+      "integrity": "sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==",
+      "engines": {
+        "node": ">=4"
       }
     },
     "node_modules/preferred-pm": {
@@ -21608,6 +21627,12 @@
       "integrity": "sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==",
       "dev": true
     },
+    "@types/pluralize": {
+      "version": "0.0.29",
+      "resolved": "https://registry.npmjs.org/@types/pluralize/-/pluralize-0.0.29.tgz",
+      "integrity": "sha512-BYOID+l2Aco2nBik+iYS4SZX0Lf20KPILP5RGmM1IgzdwNdTs0eebiFriOPcej1sX9mLnSoiNte5zcFxssgpGA==",
+      "dev": true
+    },
     "@types/prettier": {
       "version": "2.7.2",
       "resolved": "https://registry.npmjs.org/@types/prettier/-/prettier-2.7.2.tgz",
@@ -23082,8 +23107,9 @@
       "dev": true
     },
     "date-fns": {
-      "version": "2.29.1",
-      "dev": true
+      "version": "2.29.3",
+      "resolved": "https://registry.npmjs.org/date-fns/-/date-fns-2.29.3.tgz",
+      "integrity": "sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA=="
     },
     "dateformat": {
       "version": "4.6.3",
@@ -27527,6 +27553,11 @@
           }
         }
       }
+    },
+    "pluralize": {
+      "version": "8.0.0",
+      "resolved": "https://registry.npmjs.org/pluralize/-/pluralize-8.0.0.tgz",
+      "integrity": "sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA=="
     },
     "preferred-pm": {
       "version": "3.0.3",

@@ -1,17 +1,21 @@
 import { Flags } from "@oclif/core";
+import chalk from "chalk";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
+import format from "date-fns/format";
 import execa from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { prompt } from "inquirer";
 import type { DebouncedFunc } from "lodash";
+import { sortBy } from "lodash";
 import { isString } from "lodash";
 import { debounce } from "lodash";
 import normalizePath from "normalize-path";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
+import pluralize from "pluralize";
 import dedent from "ts-dedent";
 import which from "which";
 import { BaseCommand } from "../utils/base-command";
@@ -168,16 +172,27 @@ export default class Sync extends BaseCommand {
     return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath);
   }
 
-  logPaths(filepaths: string[], { limit = 10, sep = "-" } = {}): void {
+  logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
+    const lines = sortBy(
+      [
+        ...changed.map((filepath) => chalk`{green ${prefix}} ${this.normalize(filepath)} {gray (changed)}`),
+        ...deleted.map((filepath) => chalk`{red ${prefix}} ${this.normalize(filepath)} {gray (deleted)}`),
+      ],
+      (line) => line.slice(line.indexOf(" ") + 1)
+    );
+
     let logged = 0;
-    for (const filepath of filepaths) {
-      this.log(`${sep} ${this.normalize(filepath)}`);
+    for (const line of lines) {
+      this.log(line);
       if (++logged == limit && !this.debugEnabled) break;
     }
 
-    if (filepaths.length > logged) {
-      this.log(`… ${filepaths.length - logged} more`);
+    if (lines.length > logged) {
+      this.log(chalk`{gray … ${lines.length - logged} more}`);
     }
+
+    this.log(chalk`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`);
+    this.log();
   }
 
   override async init(): Promise<void> {
@@ -267,8 +282,8 @@ export default class Sync extends BaseCommand {
     const changedFiles = await getChangedFiles();
     const hasLocalChanges = changedFiles.size > 0;
     if (hasLocalChanges) {
-      this.log("Local files have changed since the last sync");
-      this.logPaths(Array.from(changedFiles.keys()), { limit: changedFiles.size });
+      this.log("Local files have changed since you last synced");
+      this.logPaths("-", Array.from(changedFiles.keys()), [], { limit: changedFiles.size });
       this.log();
     }
 
@@ -354,7 +369,7 @@ export default class Sync extends BaseCommand {
       process.on(signal, () => {
         if (this.status != SyncStatus.RUNNING) return;
 
-        this.log(" Stopping... (press Ctrl+C again to force)");
+        this.log(chalk` Stopping... {gray (press Ctrl+C again to force)}`);
         void this.stop();
 
         // When ggt is run via npx, and the user presses Ctrl+C, npx sends SIGINT twice in quick succession. In order to prevent the second
@@ -393,8 +408,12 @@ export default class Sync extends BaseCommand {
                 return;
               }
 
-              this.log("Received");
-              this.logPaths(Array.from(remoteFiles.keys()), { sep: "←" });
+              this.log(chalk`Received {gray ${format(new Date(), "pp")}}`);
+              this.logPaths(
+                "←",
+                changed.map((x) => x.path).filter((x) => remoteFiles.has(x)),
+                deleted.map((x) => x.path).filter((x) => remoteFiles.has(x))
+              );
 
               await pMap(
                 remoteFiles,
@@ -467,13 +486,17 @@ export default class Sync extends BaseCommand {
           );
 
           if (changed.length > 0 || deleted.length > 0) {
-            this.log("Sent");
-            this.logPaths(Array.from(localFiles.keys()), { sep: "→" });
-
             const data = await this.client.queryUnwrap({
               query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
               variables: { input: { expectedRemoteFilesVersion: this.metadata.filesVersion, changed, deleted } },
             });
+
+            this.log(chalk`Sent {gray ${format(new Date(), "pp")}}`);
+            this.logPaths(
+              "→",
+              changed.map((x) => x.path),
+              deleted.map((x) => x.path)
+            );
 
             const { remoteFilesVersion } = data.publishFileSyncEvents;
             this.debug("remote files version after publishing %s", remoteFilesVersion);
@@ -537,8 +560,26 @@ export default class Sync extends BaseCommand {
         this.publish();
       });
 
-    this.log("Ready");
     this.status = SyncStatus.RUNNING;
+
+    this.log();
+    this.log(
+      dedent(chalk`
+      {bold ggt v${this.config.version}}
+
+      App         ${context.app?.name}
+      Editor      https://${context.app?.slug}.gadget.app/edit
+      Playground  https://${context.app?.slug}.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/${context.app?.slug}
+
+      {underline Endpoints}
+        - https://${context.app?.slug}.gadget.app
+        - https://${context.app?.slug}--development.gadget.app
+
+      Watching for file changes... {gray Press Ctrl+C to stop}
+    `)
+    );
+    this.log();
 
     await sleepUntil(() => this.status == SyncStatus.STOPPED, { timeout: Infinity });
 
@@ -546,7 +587,7 @@ export default class Sync extends BaseCommand {
       this.notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
       throw error;
     } else {
-      this.log("Done");
+      this.log("Goodbye!");
     }
   }
 }

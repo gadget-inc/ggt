@@ -769,9 +769,9 @@ describe("Sync", () => {
         });
       });
 
-      it("publishes deleted events on unlink/unlinkDir events", async () => {
+      it("publishes deleted events on unlink events", async () => {
         emit.all("unlink", path.join(dir, "file.js"), stats);
-        emit.all("unlinkDir", path.join(dir, "some/deeply/nested"), stats);
+        emit.all("unlink", path.join(dir, "some/deeply/nested/file.js"), stats);
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
@@ -780,7 +780,7 @@ describe("Sync", () => {
           input: {
             expectedRemoteFilesVersion: sync.metadata.filesVersion,
             changed: [],
-            deleted: expect.toIncludeAllMembers([{ path: "file.js" }, { path: "some/deeply/nested" }]),
+            deleted: expect.toIncludeAllMembers([{ path: "file.js" }, { path: "some/deeply/nested/file.js" }]),
           },
         });
       });
@@ -818,6 +818,14 @@ describe("Sync", () => {
         jest.spyOn(sync, "publish");
 
         emit.all("addDir", path.join(dir, "some/deeply/nested/"), stats);
+
+        expect(sync.publish).not.toHaveBeenCalled();
+      });
+
+      it("does not publish unlinkDir events", () => {
+        jest.spyOn(sync, "publish");
+
+        emit.all("unlinkDir", path.join(dir, "some/deeply/nested/"), stats);
 
         expect(sync.publish).not.toHaveBeenCalled();
       });

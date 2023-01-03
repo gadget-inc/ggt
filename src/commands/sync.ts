@@ -493,8 +493,8 @@ export default class Sync extends BaseCommand {
       .on("all", (event, filepath, stats) => {
         const relativePath = this.relative(filepath);
 
-        if (event === "addDir") {
-          this.debug("skipping event caused by added directory %s", relativePath);
+        if (event === "addDir" || event === "unlinkDir") {
+          this.debug("skipping event caused by directory %s", relativePath);
           return;
         }
 
@@ -530,7 +530,6 @@ export default class Sync extends BaseCommand {
             localFilesBuffer.set(filepath, { mode: stats.mode, mtime: stats.mtime.getTime() });
             break;
           case "unlink":
-          case "unlinkDir":
             localFilesBuffer.set(filepath, false);
             break;
         }

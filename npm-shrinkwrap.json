@@ -66,7 +66,7 @@
         "@types/normalize-path": "^3.0.0",
         "@types/pluralize": "^0.0.29",
         "@types/which": "^2.0.1",
-        "@types/ws": "^8.5.3",
+        "@types/ws": "^8.5.4",
         "@typescript-eslint/eslint-plugin": "^5.48.0",
         "@typescript-eslint/parser": "^5.47.0",
         "concurrently": "^7.6.0",
@@ -5662,9 +5662,10 @@
       "dev": true
     },
     "node_modules/@types/ws": {
-      "version": "8.5.3",
+      "version": "8.5.4",
+      "resolved": "https://registry.npmjs.org/@types/ws/-/ws-8.5.4.tgz",
+      "integrity": "sha512-zdQDHKUgcX/zBc4GrwsE/7dVdAD8JR4EuiAXiiUhhfyIJXXb2+PrGshFyeXWQPMmmZ2XxgaqclgpIC7eTXc1mg==",
       "dev": true,
-      "license": "MIT",
       "dependencies": {
         "@types/node": "*"
       }
@@ -21526,7 +21527,9 @@
       "dev": true
     },
     "@types/ws": {
-      "version": "8.5.3",
+      "version": "8.5.4",
+      "resolved": "https://registry.npmjs.org/@types/ws/-/ws-8.5.4.tgz",
+      "integrity": "sha512-zdQDHKUgcX/zBc4GrwsE/7dVdAD8JR4EuiAXiiUhhfyIJXXb2+PrGshFyeXWQPMmmZ2XxgaqclgpIC7eTXc1mg==",
       "dev": true,
       "requires": {
         "@types/node": "*"

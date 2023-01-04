@@ -70,7 +70,7 @@
     "@changesets/cli": "^2.26.0",
     "@graphql-codegen/add": "^3.2.3",
     "@graphql-codegen/cli": "^2.16.1",
-    "@graphql-codegen/typescript": "^2.8.5",
+    "@graphql-codegen/typescript": "^2.8.7",
     "@graphql-codegen/typescript-operations": "^2.5.10",
     "@oclif/plugin-plugins": "^2.1.9",
     "@oclif/test": "^2.2.16",

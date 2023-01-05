@@ -143,6 +143,7 @@ export interface App {
   id: string | number;
   name: string;
   slug: string;
+  hasSplitEnvironments: boolean;
 }
 
 export const context = new Context();

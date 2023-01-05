@@ -562,19 +562,27 @@ export default class Sync extends BaseCommand {
 
     this.status = SyncStatus.RUNNING;
 
+    // app should be defined at this point
+    assert(context.app);
+
     this.log();
     this.log(
       dedent(chalk`
       {bold ggt v${this.config.version}}
 
-      App         ${context.app?.name}
-      Editor      https://${context.app?.slug}.gadget.app/edit
-      Playground  https://${context.app?.slug}.gadget.app/api/graphql/playground
-      Docs        https://docs.gadget.dev/api/${context.app?.slug}
+      App         ${context.app.name}
+      Editor      https://${context.app.slug}.gadget.app/edit
+      Playground  https://${context.app.slug}.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/${context.app.slug}
 
-      {underline Endpoints}
-        - https://${context.app?.slug}.gadget.app
-        - https://${context.app?.slug}--development.gadget.app
+      {underline Endpoints} ${
+        context.app.hasSplitEnvironments
+          ? `
+        - https://${context.app.slug}.gadget.app
+        - https://${context.app.slug}--development.gadget.app`
+          : `
+        - https://${context.app.slug}.gadget.app`
+      }
 
       Watching for file changes... {gray Press Ctrl+C to stop}
     `)

@@ -1,6 +1,8 @@
 /**
  * ======================================================
- * THIS IS A GENERATED FILE! You shouldn't edit it manually. Regenerate it using `npm run generate-graphql`.
+ * THIS IS A GENERATED FILE! DO NOT EDIT IT MANUALLY!
+ *
+ * You can regenerate it by running `npm run generate-graphql`.
  * ======================================================
  */
 
@@ -16,9 +18,25 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
+  /** A date string, such as 2007-12-03, compliant with the `full-date` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
   Date: any;
+  /** A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
   DateTime: any;
   JSON: { [key: string]: any };
+};
+
+export type ChangeAppDomainResult = {
+  __typename?: 'ChangeAppDomainResult';
+  onlyValidate?: Maybe<Scalars['Boolean']>;
+  reason?: Maybe<Scalars['String']>;
+  success: Scalars['Boolean'];
+};
+
+export type ContributorResult = {
+  __typename?: 'ContributorResult';
+  email: Scalars['String'];
+  isOwner: Scalars['Boolean'];
+  isPending: Scalars['Boolean'];
 };
 
 export type DeleteAppStatusResult = {
@@ -40,6 +58,11 @@ export type EnvironmentPublishResult = {
 export type EnvironmentSubscriptionResult = {
   __typename?: 'EnvironmentSubscriptionResult';
   patches: Array<Scalars['JSON']>;
+};
+
+export type EnvironmentTreeClientId = {
+  clientType: Scalars['String'];
+  id: Scalars['String'];
 };
 
 export type FileSyncChangedEvent = {
@@ -92,6 +115,7 @@ export type MigrateEnvironmentsResult = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  changeAppDomain?: Maybe<ChangeAppDomainResult>;
   deleteApp?: Maybe<DeleteAppStatusResult>;
   migrateEnvironments?: Maybe<MigrateEnvironmentsResult>;
   patchEnvironmentTree?: Maybe<EnvironmentPatchResult>;
@@ -99,12 +123,25 @@ export type Mutation = {
   publishFileSyncEvents: PublishFileSyncEventsResult;
   refreshScopes?: Maybe<RefreshScopesResult>;
   registerWebhooks?: Maybe<RegisterWebhooksResult>;
+  removeContributor?: Maybe<RemoveContributorResult>;
+  sendAppInvitation?: Maybe<SendAppInvitationResult>;
   unregisterWebhooks?: Maybe<UnregisterWebhooksResult>;
 };
 
 
+export type MutationChangeAppDomainArgs = {
+  newSubdomain: Scalars['String'];
+  onlyValidate?: InputMaybe<Scalars['Boolean']>;
+};
+
+
+export type MutationMigrateEnvironmentsArgs = {
+  existingToProduction: Scalars['Boolean'];
+};
+
+
 export type MutationPatchEnvironmentTreeArgs = {
-  clientID: Scalars['String'];
+  clientID: EnvironmentTreeClientId;
   patches: Array<Scalars['JSON']>;
 };
 
@@ -129,6 +166,18 @@ export type MutationRegisterWebhooksArgs = {
 };
 
 
+export type MutationRemoveContributorArgs = {
+  email: Scalars['String'];
+  isInvitation: Scalars['Boolean'];
+};
+
+
+export type MutationSendAppInvitationArgs = {
+  email: Scalars['String'];
+  resend?: InputMaybe<Scalars['Boolean']>;
+};
+
+
 export type MutationUnregisterWebhooksArgs = {
   connectionKey: Scalars['String'];
   modelKeys?: InputMaybe<Array<Scalars['String']>>;
@@ -150,6 +199,7 @@ export type Query = {
   __typename?: 'Query';
   currentUser: User;
   environmentTreePath?: Maybe<Scalars['JSON']>;
+  listContributors: Array<ContributorResult>;
   logsSearch: LogSearchResult;
   remoteFilesVersion: Scalars['String'];
   roles: Array<GadgetRole>;
@@ -189,6 +239,18 @@ export type RemoteFileSyncEvents = {
   remoteFilesVersion: Scalars['String'];
 };
 
+export type RemoveContributorResult = {
+  __typename?: 'RemoveContributorResult';
+  reason?: Maybe<Scalars['String']>;
+  success: Scalars['Boolean'];
+};
+
+export type SendAppInvitationResult = {
+  __typename?: 'SendAppInvitationResult';
+  reason?: Maybe<Scalars['String']>;
+  success: Scalars['Boolean'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   editorActive?: Maybe<Scalars['Boolean']>;
@@ -200,7 +262,7 @@ export type Subscription = {
 
 
 export type SubscriptionEnvironmentTreePathPatchesArgs = {
-  clientID: Scalars['String'];
+  clientID: EnvironmentTreeClientId;
   path: Scalars['String'];
 };
 

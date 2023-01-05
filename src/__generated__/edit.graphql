@@ -1,8 +1,28 @@
 """
 ======================================================
-THIS IS A GENERATED FILE! You shouldn't edit it manually. Regenerate it using `npm run generate-graphql`.
+THIS IS A GENERATED FILE! DO NOT EDIT IT MANUALLY!
+
+You can find the original file in the gadget repository
 ======================================================
 """
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+type ChangeAppDomainResult {
+  onlyValidate: Boolean
+  reason: String
+  success: Boolean!
+}
+
+type ContributorResult {
+  email: String!
+  isOwner: Boolean!
+  isPending: Boolean!
+}
 
 """
 A date string, such as 2007-12-03, compliant with the `full-date` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
@@ -29,6 +49,11 @@ type EnvironmentPublishResult {
 
 type EnvironmentSubscriptionResult {
   patches: [JSON!]!
+}
+
+input EnvironmentTreeClientId {
+  clientType: String!
+  id: String!
 }
 
 type FileSyncChangedEvent {
@@ -77,13 +102,16 @@ type MigrateEnvironmentsResult {
 }
 
 type Mutation {
+  changeAppDomain(newSubdomain: String!, onlyValidate: Boolean): ChangeAppDomainResult
   deleteApp: DeleteAppStatusResult
-  migrateEnvironments: MigrateEnvironmentsResult
-  patchEnvironmentTree(clientID: String!, patches: [JSON!]!): EnvironmentPatchResult
+  migrateEnvironments(existingToProduction: Boolean!): MigrateEnvironmentsResult
+  patchEnvironmentTree(clientID: EnvironmentTreeClientId!, patches: [JSON!]!): EnvironmentPatchResult
   publish: EnvironmentPublishResult
   publishFileSyncEvents(input: PublishFileSyncEventsInput!): PublishFileSyncEventsResult!
   refreshScopes(appConfigKey: String!, connectionKey: String!, shopId: String!): RefreshScopesResult
   registerWebhooks(connectionKey: String!, keepExtraTopics: Boolean, modelKeys: [String!], shopIds: [String!]!): RegisterWebhooksResult
+  removeContributor(email: String!, isInvitation: Boolean!): RemoveContributorResult
+  sendAppInvitation(email: String!, resend: Boolean): SendAppInvitationResult
   unregisterWebhooks(connectionKey: String!, modelKeys: [String!], shopIds: [String!]): UnregisterWebhooksResult
 }
 
@@ -100,6 +128,7 @@ type PublishFileSyncEventsResult {
 type Query {
   currentUser: User!
   environmentTreePath(path: String!): JSON
+  listContributors: [ContributorResult!]!
   logsSearch(direction: String, end: DateTime, limit: Int, query: String!, start: DateTime, step: Int): LogSearchResult!
   remoteFilesVersion: String!
   roles: [GadgetRole!]!
@@ -121,9 +150,19 @@ type RemoteFileSyncEvents {
   remoteFilesVersion: String!
 }
 
+type RemoveContributorResult {
+  reason: String
+  success: Boolean!
+}
+
+type SendAppInvitationResult {
+  reason: String
+  success: Boolean!
+}
+
 type Subscription {
   editorActive: Boolean
-  environmentTreePathPatches(clientID: String!, path: String!): EnvironmentSubscriptionResult
+  environmentTreePathPatches(clientID: EnvironmentTreeClientId!, path: String!): EnvironmentSubscriptionResult
   logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
   remoteFileSyncEvents(encoding: FileSyncEncoding, localFilesVersion: String!): RemoteFileSyncEvents!
   typesManifestStream: TypesManifest!

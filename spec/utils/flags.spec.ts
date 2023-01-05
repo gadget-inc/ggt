@@ -6,14 +6,16 @@ import { getError } from "../util";
 describe("flags", () => {
   describe("-a, --app", () => {
     beforeEach(() => {
-      jest.spyOn(context, "getAvailableApps").mockResolvedValue([{ id: "1", name: "MyApp", slug: "my-app" }]);
+      jest.spyOn(context, "getAvailableApps").mockResolvedValue([{ id: "1", name: "MyApp", slug: "my-app", hasSplitEnvironments: true }]);
     });
 
     it.each([
       "MyApp",
       "my-app",
       "my-app.gadget.app",
+      "my-app--development.gadget.app",
       "https://my-app.gadget.app",
+      "https://my-app--development.gadget.app",
       "https://my-app.gadget.app/edit",
       "https://my-app.gadget.app/edit/files/routes/GET.js",
     ])("accepts %s", async (value) => {

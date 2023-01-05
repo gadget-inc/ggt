@@ -10,10 +10,10 @@ export const app = Flags.custom({
   name: "app",
   summary: "The Gadget application this command applies to.",
   parse: async (value: string) => {
-    const name = /^(https:\/\/)?(?<name>[\w-]+)(\..*)?/.exec(value)?.groups?.["name"];
-    if (!name)
+    const parsed = /^(https:\/\/)?(?<name>[\w-]+)/.exec(value)?.groups?.["name"];
+    if (!parsed)
       throw new FlagError(
-        app,
+        { char: "a", name: "app" },
         dedent`
           The -a, --app flag must be the application's name, slug, or URL
 
@@ -26,6 +26,8 @@ export const app = Flags.custom({
         `
       );
 
+    const name = parsed.endsWith("--development") ? parsed.slice(0, -"--development".length) : parsed;
+
     const availableApps = await context.getAvailableApps();
     const foundApp = availableApps.find((a) => a.name == name || a.slug == name);
     if (foundApp) {
@@ -33,7 +35,7 @@ export const app = Flags.custom({
     }
 
     throw new FlagError(
-      app,
+      { char: "a", name: "app" },
       availableApps.length > 0
         ? dedent`
               Unknown application:

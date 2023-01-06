@@ -106,7 +106,12 @@ describe("BaseCommand", () => {
       expect(open).toHaveBeenCalledWith(
         `${GADGET_ENDPOINT}/auth/login?returnTo=${encodeURIComponent(`${GADGET_ENDPOINT}/auth/cli/callback?port=${port}`)}`
       );
-      expect(base.log).toHaveBeenCalledWith("Your browser has been opened. Please log in to your account.");
+      expect(base.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`
+        "We've opened Gadget's login page using your default browser.
+
+        Please log in and then return to this terminal.
+        "
+      `);
 
       // we should be at `await receiveSession`
       expect(context.session).toBeUndefined();
@@ -143,7 +148,12 @@ describe("BaseCommand", () => {
       expect(open).toHaveBeenCalledWith(
         `${GADGET_ENDPOINT}/auth/login?returnTo=${encodeURIComponent(`${GADGET_ENDPOINT}/auth/cli/callback?port=${port}`)}`
       );
-      expect(base.log).toHaveBeenCalledWith("Your browser has been opened. Please log in to your account.");
+      expect(base.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`
+        "We've opened Gadget's login page using your default browser.
+
+        Please log in and then return to this terminal.
+        "
+      `);
 
       // we should be at `await receiveSession`
       expect(context.session).toBeUndefined();

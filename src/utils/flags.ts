@@ -9,6 +9,7 @@ export const app = Flags.custom({
   char: "a",
   name: "app",
   summary: "The Gadget application this command applies to.",
+  helpValue: "<name>",
   parse: async (value: string) => {
     const parsed = /^(https:\/\/)?(?<name>[\w-]+)/.exec(value)?.groups?.["name"];
     if (!parsed)

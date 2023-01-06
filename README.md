@@ -54,69 +54,78 @@ USAGE
 
   <!-- commands -->
 
-- [`ggt sync [--app=<value>] [DIRECTORY]`](#ggt-sync---appvalue-directory)
+- [`ggt sync [DIRECTORY] [--app <name>]`](#ggt-sync-directory---app-name)
 - [`ggt help [COMMAND]`](#ggt-help-command)
 - [`ggt login`](#ggt-login)
 - [`ggt logout`](#ggt-logout)
 - [`ggt whoami`](#ggt-whoami)
 
-### `ggt sync [--app=<value>] [DIRECTORY]`
+### `ggt sync [DIRECTORY] [--app <name>]`
 
 Sync your Gadget application's source code to and from your local filesystem.
 
 ```
 USAGE
-  $ ggt sync [--app=<value>] [DIRECTORY]
+  $ ggt sync [DIRECTORY] [--app <name>]
 
 ARGUMENTS
   DIRECTORY  [default: .] The directory to sync files to. If the directory doesn't exist, it will be created.
 
 FLAGS
-  -a, --app=<value>  The Gadget application to sync files to.
-  --force            Whether to sync even if we can't determine the state of your local files relative to your remote
-                     ones.
+  -a, --app=<name>  The Gadget application to sync files to.
+  --force           Whether to sync even if we can't determine the state of your local files relative to your remote
+                    ones.
 
 DESCRIPTION
   Sync provides the ability to sync your Gadget application's source code to and from your local
-  filesystem. While `ggt sync` is running, local file changes are immediately reflected within
+  filesystem. While ggt sync is running, local file changes are immediately reflected within
   Gadget, while files that are changed remotely are immediately saved to your local filesystem.
 
   Use cases for this include:
-    * Developing locally with your own editor like VSCode (https://code.visualstudio.com/)
-    * Storing your source code in a Git repository like GitHub (https://github.com/)
+    - Developing locally with your own editor like VSCode (https://code.visualstudio.com/)
+    - Storing your source code in a Git repository like GitHub (https://github.com/)
 
-  Sync includes the concept of a `.ignore` file. This file can contain a list of files and
-  directories that won't be received or sent to Gadget when syncing.
+  Sync includes the concept of a .ignore file. This file may contain a list of files and
+  directories that won't be received or sent to Gadget when syncing. The format of this file is
+  identical to the one used by Git (https://git-scm.com/docs/gitignore).
 
   The following files and directories are always ignored:
-    * .gadget
-    * .git
-    * node_modules
+    - .gadget
+    - .git
+    - node_modules
 
   Note:
-    * Gadget applications only support installing dependencies with Yarn 1 (https://classic.yarnpkg.com/lang/en/).
-    * Since file changes are immediately reflected in Gadget, avoid the following while `ggt sync` is running:
-        * Deleting all your files
-        * Moving all your files to a different directory
+    - If you have separate development and production environments, ggt sync will only sync with your development environment
+    - Gadget applications only support installing dependencies with Yarn 1 (https://classic.yarnpkg.com/lang/en/)
+    - Since file changes are immediately reflected in Gadget, avoid the following while ggt sync is running:
+        - Deleting all your files
+        - Moving all your files to a different directory
 
 EXAMPLES
   $ ggt sync --app my-app ~/gadget/my-app
-  Ready
-  Received
-  ← routes/GET.js
-  ← user/signUp/signIn.js
-  Sent
-  → routes/GET.js
+
+  App         my-app
+  Editor      https://my-app.gadget.app/edit
+  Playground  https://my-app.gadget.app/api/graphql/playground
+  Docs        https://docs.gadget.dev/api/my-app
+
+  Endpoints
+    - https://my-app.gadget.app
+    - https://my-app--development.gadget.app
+
+  Watching for file changes... Press Ctrl+C to stop
+
+  Received 12:00:00 PM
+  ← routes/GET.js (changed)
+  ← user/signUp/signIn.js (changed)
+  2 files in total. 2 changed, 0 deleted.
+
+  Sent 12:00:03 PM
+  → routes/GET.ts (changed)
+  1 file in total. 1 changed, 0 deleted.
+
   ^C Stopping... (press Ctrl+C again to force)
-  Done
-
-  # These are equivalent
-
-    $ ggt sync -a my-app
-    $ ggt sync --app my-app
-    $ ggt sync --app my-app.gadget.app
-    $ ggt sync --app https://my-app.gadget.app
-    $ ggt sync --app https://my-app.gadget.app/edit
+  Goodbye!
 ```
 
 _See code: [src/commands/sync.ts](https://github.com/gadget-inc/ggt/blob/v0.1.9/src/commands/sync.ts)_

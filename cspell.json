@@ -3,5 +3,15 @@
   "version": "0.2",
   "dictionaryDefinitions": [{ "name": "project-words", "path": ".cspell/project-words.txt", "addWords": true }],
   "dictionaries": ["project-words"],
-  "ignorePaths": ["__generated__", "__snapshots__", "flake.lock", "flake.nix", "lib", "node_modules", "npm-shrinkwrap.json", "tmp"]
+  "ignorePaths": [
+    "__generated__",
+    "__snapshots__",
+    "flake.lock",
+    "flake.nix",
+    "lib",
+    "node_modules",
+    "npm-shrinkwrap.json",
+    "oclif.manifest.json",
+    "tmp"
+  ]
 }

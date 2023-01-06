@@ -43,31 +43,33 @@ export default class Sync extends BaseCommand {
 
   static override summary = "Sync your Gadget application's source code to and from your local filesystem.";
 
-  static override usage = "sync [--app=<value>] [DIRECTORY]";
+  static override usage = "sync [DIRECTORY] [--app <name>]";
 
-  static override description = dedent`
+  static override description = dedent(chalk`
     Sync provides the ability to sync your Gadget application's source code to and from your local
-    filesystem. While \`ggt sync\` is running, local file changes are immediately reflected within
+    filesystem. While {gray ggt sync} is running, local file changes are immediately reflected within
     Gadget, while files that are changed remotely are immediately saved to your local filesystem.
 
     Use cases for this include:
-      * Developing locally with your own editor like VSCode (https://code.visualstudio.com/)
-      * Storing your source code in a Git repository like GitHub (https://github.com/)
+      - Developing locally with your own editor like VSCode {gray (https://code.visualstudio.com/)}
+      - Storing your source code in a Git repository like GitHub {gray (https://github.com/)}
 
-    Sync includes the concept of a \`.ignore\` file. This file can contain a list of files and
-    directories that won't be received or sent to Gadget when syncing.
+    Sync includes the concept of a {gray .ignore} file. This file may contain a list of files and
+    directories that won't be received or sent to Gadget when syncing. The format of this file is
+    identical to the one used by Git {gray (https://git-scm.com/docs/gitignore)}.
 
     The following files and directories are always ignored:
-      * .gadget
-      * .git
-      * node_modules
+      - .gadget
+      - .git
+      - node_modules
 
     Note:
-      * Gadget applications only support installing dependencies with Yarn 1 (https://classic.yarnpkg.com/lang/en/).
-      * Since file changes are immediately reflected in Gadget, avoid the following while \`ggt sync\` is running:
-          * Deleting all your files
-          * Moving all your files to a different directory
-  `;
+      - If you have separate development and production environments, {gray ggt sync} will only sync with your development environment
+      - Gadget applications only support installing dependencies with Yarn 1 {gray (https://classic.yarnpkg.com/lang/en/)}
+      - Since file changes are immediately reflected in Gadget, avoid the following while {gray ggt sync} is running:
+          - Deleting all your files
+          - Moving all your files to a different directory
+  `);
 
   static override args = [
     {
@@ -111,25 +113,32 @@ export default class Sync extends BaseCommand {
   };
 
   static override examples = [
-    dedent`
-      $ ggt sync --app my-app ~/gadget/my-app
-      Ready
-      Received
-      ← routes/GET.js
-      ← user/signUp/signIn.js
-      Sent
-      → routes/GET.js
-      ^C Stopping... (press Ctrl+C again to force)
-      Done
-    `,
-    dedent`
-      # These are equivalent
-      $ ggt sync -a my-app
-      $ ggt sync --app my-app
-      $ ggt sync --app my-app.gadget.app
-      $ ggt sync --app https://my-app.gadget.app
-      $ ggt sync --app https://my-app.gadget.app/edit
-    `,
+    dedent(chalk`
+      {gray $ ggt sync --app my-app ~/gadget/my-app}
+
+      App         my-app
+      Editor      https://my-app.gadget.app/edit
+      Playground  https://my-app.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/my-app
+
+      {underline Endpoints}
+        - https://my-app.gadget.app
+        - https://my-app--development.gadget.app
+
+      Watching for file changes... {gray Press Ctrl+C to stop}
+
+      Received {gray 12:00:00 PM}
+      {green ←} routes/GET.js {gray (changed)}
+      {green ←} user/signUp/signIn.js {gray (changed)}
+      {gray 2 files in total. 2 changed, 0 deleted.}
+
+      Sent {gray 12:00:03 PM}
+      {green →} routes/GET.ts {gray (changed)}
+      {gray 1 file in total. 1 changed, 0 deleted.}
+
+      ^C Stopping... {gray (press Ctrl+C again to force)}
+      Goodbye!
+    `),
   ];
 
   override requireUser = true;

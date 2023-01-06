@@ -4,6 +4,10 @@ import type { Config } from "@oclif/core";
 import Debug from "debug";
 import fs from "fs-extra";
 import path from "path";
+import chalk from "chalk";
+
+// disable chalk so that we get predictable output in tests
+chalk.level = 0;
 
 // tests in CI take longer to run than in local development
 jest.setTimeout(process.env["CI"] ? 10_000 : 1000);

@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import dedent from "ts-dedent";
 import { BaseCommand } from "../utils/base-command";
 import { context } from "../utils/context";
@@ -8,10 +9,10 @@ export default class Logout extends BaseCommand {
   static override usage = "logout";
 
   static override examples = [
-    dedent`
-      $ ggt logout
+    dedent(chalk`
+      {gray $ ggt logout}
       Goodbye
-    `,
+    `),
   ];
 
   // eslint-disable-next-line @typescript-eslint/require-await

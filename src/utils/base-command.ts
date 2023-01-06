@@ -1,6 +1,7 @@
 import type { Config } from "@oclif/core";
 import { Command, Flags, settings } from "@oclif/core";
 import { ExitError } from "@oclif/core/lib/errors";
+import chalk from "chalk";
 import Debug from "debug";
 import getPort from "get-port";
 import type { Server } from "http";
@@ -15,6 +16,7 @@ import type NotifySend from "node-notifier/notifiers/notifysend";
 import type WindowsToaster from "node-notifier/notifiers/toaster";
 import open from "open";
 import path from "path";
+import dedent from "ts-dedent";
 import { context, GADGET_ENDPOINT } from "./context";
 import { BaseError, UnexpectedError as UnknownError } from "./errors";
 
@@ -140,7 +142,7 @@ export abstract class BaseCommand extends Command {
             if (!user) throw new Error("missing current user");
 
             if (user.name) {
-              this.log(`Hello, ${user.name} (${user.email})`);
+              this.log(chalk`Hello, ${user.name} {gray (${user.email})}`);
             } else {
               this.log(`Hello, ${user.email}`);
             }
@@ -164,7 +166,11 @@ export abstract class BaseCommand extends Command {
       url.searchParams.set("returnTo", `${GADGET_ENDPOINT}/auth/cli/callback?port=${port}`);
       await open(url.toString());
 
-      this.log("Your browser has been opened. Please log in to your account.");
+      this.log(dedent`
+        We've opened Gadget's login page using your default browser.
+
+        Please log in and then return to this terminal.\n
+      `);
 
       await receiveSession;
     } finally {

@@ -154,7 +154,10 @@ USAGE
 
 EXAMPLES
   $ ggt login
-  Your browser has been opened. Please log in to your account.
+  We've opened Gadget's login page using your default browser.
+
+  Please log in and then return to this terminal.
+
   Hello, Jane Doe (jane@example.com)
 ```
 

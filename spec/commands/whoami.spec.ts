@@ -8,7 +8,7 @@ describe("Whoami", () => {
     await Whoami.run();
 
     expect(context.getUser).toHaveBeenCalled();
-    expect(Whoami.prototype.log).toHaveBeenLastCalledWith("You are logged in as Jane Doe (test@example.com)");
+    expect(Whoami.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"You are logged in as Jane Doe (test@example.com)"`);
   });
 
   it("logs only the email if the current user's name is missing", async () => {

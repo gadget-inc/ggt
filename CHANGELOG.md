@@ -1,5 +1,23 @@
 # @gadgetinc/ggt
 
+## 0.1.10
+
+### Patch Changes
+
+- ed20dad: Add color to non sync commands
+- 77c79a9: Bump @oclif/plugin-plugins from 2.1.9 to 2.1.12
+- 32f4fbe: Bump @oclif/plugin-not-found from 2.3.11 to 2.3.13
+- 8d9e6d4: Bump @oclif/core from 1.22.0 to 1.23.1
+- 43918ce: Improve sync output
+
+  - Show the name and relevant links of the synced app
+  - Inform the user that it's watching for file changes and how to stop it
+  - Show whether a file was changed or deleted when sending/receiving it
+
+- 319e16d: Bump @sentry/node from 7.28.1 to 7.29.0
+- 3f350d8: Bump @oclif/plugin-warn-if-update-available from 2.0.17 to 2.0.18
+- f71d6e3: Ignore `unlinkDir` events
+
 ## 0.1.9
 
 ### Patch Changes

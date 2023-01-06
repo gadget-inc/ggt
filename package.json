@@ -1,6 +1,6 @@
 {
   "name": "@gadgetinc/ggt",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "The command-line interface for Gadget",
   "homepage": "https://github.com/gadget-inc/ggt",
   "bugs": "https://github.com/gadget-inc/ggt/issues",

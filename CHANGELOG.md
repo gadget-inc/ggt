@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 0.1.11
+
+### Patch Changes
+
+- 0ed34ff: Bump json5 from 2.2.1 to 2.2.3
+
 ## 0.1.10
 
 ### Patch Changes

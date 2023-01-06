@@ -57,7 +57,6 @@
     "node-notifier": "^10.0.1",
     "normalize-path": "^3.0.0",
     "open": "^8.4.0",
-    "ora": "^5.4.1",
     "p-map": "^4.0.0",
     "p-queue": "^6.6.2",
     "pluralize": "^8.0.0",

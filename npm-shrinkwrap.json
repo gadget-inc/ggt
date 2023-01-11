@@ -56,7 +56,7 @@
         "@swc/jest": "^0.2.24",
         "@types/debug": "^4.1.7",
         "@types/fast-levenshtein": "^0.0.2",
-        "@types/fs-extra": "^9.0.13",
+        "@types/fs-extra": "^11.0.1",
         "@types/inquirer": "^8.2.5",
         "@types/jest": "^29.2.5",
         "@types/lodash": "^4.14.191",
@@ -5412,10 +5412,12 @@
       "dev": true
     },
     "node_modules/@types/fs-extra": {
-      "version": "9.0.13",
+      "version": "11.0.1",
+      "resolved": "https://registry.npmjs.org/@types/fs-extra/-/fs-extra-11.0.1.tgz",
+      "integrity": "sha512-MxObHvNl4A69ofaTRU8DFqvgzzv8s9yRtaPPm5gud9HDNvpB3GPQFvNuTWAI59B9huVGV5jXYJwbCsmBsOGYWA==",
       "dev": true,
-      "license": "MIT",
       "dependencies": {
+        "@types/jsonfile": "*",
         "@types/node": "*"
       }
     },
@@ -5515,6 +5517,15 @@
       "version": "0.0.29",
       "dev": true,
       "license": "MIT"
+    },
+    "node_modules/@types/jsonfile": {
+      "version": "6.1.1",
+      "resolved": "https://registry.npmjs.org/@types/jsonfile/-/jsonfile-6.1.1.tgz",
+      "integrity": "sha512-GSgiRCVeapDN+3pqA35IkQwasaCh/0YFH5dEF6S88iDvEn901DjOeH3/QPY+XYP1DFzDZPvIvfeEgk+7br5png==",
+      "dev": true,
+      "dependencies": {
+        "@types/node": "*"
+      }
     },
     "node_modules/@types/jsonwebtoken": {
       "version": "8.5.9",
@@ -21038,9 +21049,12 @@
       "dev": true
     },
     "@types/fs-extra": {
-      "version": "9.0.13",
+      "version": "11.0.1",
+      "resolved": "https://registry.npmjs.org/@types/fs-extra/-/fs-extra-11.0.1.tgz",
+      "integrity": "sha512-MxObHvNl4A69ofaTRU8DFqvgzzv8s9yRtaPPm5gud9HDNvpB3GPQFvNuTWAI59B9huVGV5jXYJwbCsmBsOGYWA==",
       "dev": true,
       "requires": {
+        "@types/jsonfile": "*",
         "@types/node": "*"
       }
     },
@@ -21132,6 +21146,15 @@
     "@types/json5": {
       "version": "0.0.29",
       "dev": true
+    },
+    "@types/jsonfile": {
+      "version": "6.1.1",
+      "resolved": "https://registry.npmjs.org/@types/jsonfile/-/jsonfile-6.1.1.tgz",
+      "integrity": "sha512-GSgiRCVeapDN+3pqA35IkQwasaCh/0YFH5dEF6S88iDvEn901DjOeH3/QPY+XYP1DFzDZPvIvfeEgk+7br5png==",
+      "dev": true,
+      "requires": {
+        "@types/node": "*"
+      }
     },
     "@types/jsonwebtoken": {
       "version": "8.5.9",

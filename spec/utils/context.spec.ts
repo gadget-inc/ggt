@@ -9,13 +9,13 @@ describe("Context", () => {
       it("loads session.txt from the filesystem", () => {
         context.session = undefined;
 
-        fs.outputFileSync(path.join(context.config.configDir, "session.txt"), expect.getState().currentTestName);
+        fs.outputFileSync(path.join(context.config.configDir, "session.txt"), expect.getState().currentTestName!);
 
         expect(context.session).toBe(expect.getState().currentTestName);
       });
 
       it("caches the session in memory", () => {
-        fs.outputFileSync(path.join(context.config.configDir, "session.txt"), expect.getState().currentTestName);
+        fs.outputFileSync(path.join(context.config.configDir, "session.txt"), expect.getState().currentTestName!);
         jest.spyOn(fs, "readFileSync");
 
         for (let i = 0; i < 10; i++) {
@@ -42,7 +42,7 @@ describe("Context", () => {
       });
 
       it("removes session.txt from the filesystem", () => {
-        fs.outputFileSync(path.join(context.config.configDir, "session.txt"), expect.getState().currentTestName);
+        fs.outputFileSync(path.join(context.config.configDir, "session.txt"), expect.getState().currentTestName!);
         expect(fs.existsSync(path.join(context.config.configDir, "session.txt"))).toBe(true);
 
         context.session = undefined;

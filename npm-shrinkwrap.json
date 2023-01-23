@@ -49,7 +49,7 @@
         "@graphql-codegen/cli": "^2.16.4",
         "@graphql-codegen/typescript": "^2.8.5",
         "@graphql-codegen/typescript-operations": "^2.5.12",
-        "@oclif/plugin-plugins": "^2.2.2",
+        "@oclif/plugin-plugins": "^2.2.3",
         "@oclif/test": "^2.3.0",
         "@swc/core": "^1.3.27",
         "@swc/helpers": "^0.4.14",
@@ -4656,13 +4656,13 @@
       }
     },
     "node_modules/@oclif/plugin-plugins": {
-      "version": "2.2.2",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-2.2.2.tgz",
-      "integrity": "sha512-5b+LmscDsQHIn32oWnXxLcozRHHpgMXEroPVCm3Q682Yu9sE9l81Txycyj1fqOIvXnhKMLO+S7h/YaLCZLadrA==",
+      "version": "2.2.3",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-2.2.3.tgz",
+      "integrity": "sha512-SUi6CaMP1EMkuh9ofwK11Xtl5ElyTluwzJSds7ucjrScqSr02AWZqMID1AMRa+fDbezdaovCQVfJi2VxF8KkXA==",
       "dev": true,
       "dependencies": {
         "@oclif/color": "^1.0.2",
-        "@oclif/core": "^2.0.2-beta.6",
+        "@oclif/core": "^2.0.3",
         "chalk": "^4.1.2",
         "debug": "^4.3.4",
         "fs-extra": "^9.0",
@@ -20866,13 +20866,13 @@
       }
     },
     "@oclif/plugin-plugins": {
-      "version": "2.2.2",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-2.2.2.tgz",
-      "integrity": "sha512-5b+LmscDsQHIn32oWnXxLcozRHHpgMXEroPVCm3Q682Yu9sE9l81Txycyj1fqOIvXnhKMLO+S7h/YaLCZLadrA==",
+      "version": "2.2.3",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-2.2.3.tgz",
+      "integrity": "sha512-SUi6CaMP1EMkuh9ofwK11Xtl5ElyTluwzJSds7ucjrScqSr02AWZqMID1AMRa+fDbezdaovCQVfJi2VxF8KkXA==",
       "dev": true,
       "requires": {
         "@oclif/color": "^1.0.2",
-        "@oclif/core": "^2.0.2-beta.6",
+        "@oclif/core": "^2.0.3",
         "chalk": "^4.1.2",
         "debug": "^4.3.4",
         "fs-extra": "^9.0",

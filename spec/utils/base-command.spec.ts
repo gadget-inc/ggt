@@ -8,7 +8,7 @@ import { BaseCommand } from "../../src/utils/base-command";
 import { context, GADGET_ENDPOINT } from "../../src/utils/context";
 import { sleepUntil } from "../../src/utils/sleep";
 
-class Base extends BaseCommand {
+class Base extends BaseCommand<typeof Base> {
   run = jest.fn();
 }
 
@@ -31,7 +31,7 @@ describe("BaseCommand", () => {
     });
 
     describe("with requireUser = true", () => {
-      class DoesRequireUser extends BaseCommand {
+      class DoesRequireUser extends BaseCommand<typeof DoesRequireUser> {
         override requireUser = true;
         run = jest.fn();
       }
@@ -67,7 +67,7 @@ describe("BaseCommand", () => {
 
     describe("with requireUser = false", () => {
       it("does not prompt the user to log in", async () => {
-        class DoesNotRequireUser extends BaseCommand {
+        class DoesNotRequireUser extends BaseCommand<typeof DoesNotRequireUser> {
           override requireUser = false;
           run = jest.fn();
         }

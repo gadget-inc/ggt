@@ -3,7 +3,7 @@ import dedent from "ts-dedent";
 import { BaseCommand } from "../utils/base-command";
 import { context } from "../utils/context";
 
-export default class Whoami extends BaseCommand {
+export default class Whoami extends BaseCommand<typeof Whoami> {
   static override summary = "Show the name and email address of the currently logged in user.";
 
   static override usage = "whoami";

@@ -74,7 +74,7 @@ However, that directory has already been synced with this app:
 
 If you're sure that you want to sync "not-test" to "~/gadget/test", run \`ggt sync\` again with the \`--force\` flag:
 
-  $ ggt sync --app test ~/gadget/test --force"
+  $ ggt sync --app not-test ~/gadget/test --force"
 `;
 
 exports[`InvalidSyncFileError renders correctly 1`] = `

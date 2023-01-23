@@ -93,13 +93,14 @@ describe("InvalidSyncFileError", () => {
 
 describe("InvalidSyncAppFlagError", () => {
   it("renders correctly", () => {
-    const app = "test";
+    const app = "not-test";
     const dir = "~/gadget/test";
     const sync = new Sync(["--app", app, dir], context.config);
     sync.dir = dir;
-    sync.metadata = { app } as any;
+    sync.metadata = { app: "test" } as any;
+    sync.flags = { app } as any;
 
-    const error = new InvalidSyncAppFlagError(sync, "not-test");
+    const error = new InvalidSyncAppFlagError(sync);
     expect(error.render()).toMatchSnapshot();
   });
 });

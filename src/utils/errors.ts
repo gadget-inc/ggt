@@ -289,19 +289,19 @@ export class InvalidSyncFileError extends BaseError {
 }
 
 export class InvalidSyncAppFlagError extends FlagError {
-  constructor(sync: Sync, app: string) {
+  constructor(sync: Sync) {
     super(
       { name: "app", char: "a" },
       dedent`
         You were about to sync the following app to the following directory:
 
-          ${app} → ${sync.dir}
+          ${sync.flags.app} → ${sync.dir}
 
         However, that directory has already been synced with this app:
 
           ${sync.metadata.app}
 
-        If you're sure that you want to sync "${app}" to "${sync.dir}", run \`ggt sync\` again with the \`--force\` flag:
+        If you're sure that you want to sync "${sync.flags.app}" to "${sync.dir}", run \`ggt sync\` again with the \`--force\` flag:
 
           $ ggt sync ${sync.argv.join(" ")} --force
       `

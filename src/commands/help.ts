@@ -1,4 +1,4 @@
-import { Command } from "@oclif/core";
+import { Args, Command } from "@oclif/core";
 import Help from "../utils/help";
 
 /**
@@ -11,11 +11,16 @@ export default class HelpCommand extends Command {
 
   static override summary = "Display help for ggt.";
 
-  static override args = [{ name: "command", required: false, description: "The command to show help for." }];
+  static override args = {
+    command: Args.string({
+      required: false,
+      description: "The command to show help for.",
+    }),
+  };
 
   async run(): Promise<void> {
     const { argv } = await this.parse();
     const help = new Help(this.config, { all: true });
-    await help.showHelp(argv);
+    await help.showHelp(argv as string[]);
   }
 }

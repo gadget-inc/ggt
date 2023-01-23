@@ -1,5 +1,5 @@
+import type { Command } from "@oclif/core";
 import { CommandHelp as OclifCommandHelp, Help as OclifHelp } from "@oclif/core";
-import type { Example } from "@oclif/core/lib/interfaces";
 import { isString } from "lodash";
 
 export default class Help extends OclifHelp {
@@ -23,7 +23,7 @@ class CommandHelp extends OclifCommandHelp {
   /**
    * Same as above, but for examples.
    */
-  protected override examples(examples: string | string[] | Example[] | undefined): string | undefined {
+  protected override examples(examples: string | string[] | Command.Example[] | undefined): string | undefined {
     if (isString(examples)) {
       return examples;
     }

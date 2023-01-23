@@ -1,6 +1,5 @@
 process.env["GGT_ENV"] = "test";
 
-import type { Config } from "@oclif/core";
 import Debug from "debug";
 import fs from "fs-extra";
 import path from "path";
@@ -33,7 +32,7 @@ beforeEach(async () => {
   const { Config, Command } = await import("@oclif/core");
   const { context } = await import("../src/utils/context");
   context.clear();
-  context.config = (await Config.load(path.join(__dirname, ".."))) as Config;
+  context.config = await Config.load(path.join(__dirname, ".."));
 
   jest.spyOn(Command.prototype, "log").mockImplementation();
   jest.spyOn(Command.prototype, "warn").mockImplementation();

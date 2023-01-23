@@ -19,17 +19,17 @@ describe("flags", () => {
       "https://my-app.gadget.app/edit",
       "https://my-app.gadget.app/edit/files/routes/GET.js",
     ])("accepts %s", async (value) => {
-      await expect(app().parse(value, {}, {})).resolves.toEqual("my-app");
+      await expect(app().parse(value, {} as any, {} as any)).resolves.toEqual("my-app");
     });
 
     it.each(["~"])("rejects %s", async (value) => {
-      const error = await getError(() => app().parse(value, {}, {}));
+      const error = await getError(() => app().parse(value, {} as any, {} as any));
       expect(error).toBeInstanceOf(FlagError);
       expect(error.description).toStartWith("The -a, --app flag must be the application's name, slug, or URL");
     });
 
     it("does not accept an app that doesn't exist or the user doesn't have access to", async () => {
-      const error = await getError(() => app().parse("unknown-app", {}, {}));
+      const error = await getError(() => app().parse("unknown-app", {} as any, {} as any));
       expect(error).toBeInstanceOf(FlagError);
       expect(error.description).toMatchInlineSnapshot(`
         "Unknown application:
@@ -44,7 +44,7 @@ describe("flags", () => {
 
     it("informs the user if they don't have any apps", async () => {
       jest.spyOn(context, "getAvailableApps").mockResolvedValue([]);
-      const error = await getError(() => app().parse("unknown-app", {}, {}));
+      const error = await getError(() => app().parse("unknown-app", {} as any, {} as any));
       expect(error).toBeInstanceOf(FlagError);
       expect(error.description).toMatchInlineSnapshot(`
         "Unknown application:

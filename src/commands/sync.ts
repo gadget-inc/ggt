@@ -1,4 +1,4 @@
-import { Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import chalk from "chalk";
 import assert from "assert";
 import { FSWatcher } from "chokidar";
@@ -38,7 +38,7 @@ import type {
 } from "../__generated__/graphql";
 import { FileSyncEncoding } from "../__generated__/graphql";
 
-export default class Sync extends BaseCommand {
+export default class Sync extends BaseCommand<typeof Sync> {
   static override priority = 1;
 
   static override summary = "Sync your Gadget application's source code to and from your local filesystem.";
@@ -71,13 +71,12 @@ export default class Sync extends BaseCommand {
           - Moving all your files to a different directory
   `);
 
-  static override args = [
-    {
-      name: "directory",
+  static override args = {
+    directory: Args.string({
       description: "The directory to sync files to. If the directory doesn't exist, it will be created.",
       default: ".",
-    },
-  ];
+    }),
+  };
 
   static override flags = {
     app: app({
@@ -149,8 +148,6 @@ export default class Sync extends BaseCommand {
 
   recentWrites = new Set();
 
-  filePushDelay!: number;
-
   queue = new PQueue({ concurrency: 1 });
 
   client!: Client;
@@ -206,17 +203,16 @@ export default class Sync extends BaseCommand {
 
   override async init(): Promise<void> {
     await super.init();
-    const { args, flags } = await this.parse(Sync);
 
-    assert(isString(args["directory"]));
+    assert(isString(this.args["directory"]));
 
     this.dir =
-      this.config.windows && args["directory"].startsWith("~/")
-        ? path.join(this.config.home, args["directory"].slice(2))
-        : path.resolve(args["directory"]);
+      this.config.windows && this.args["directory"].startsWith("~/")
+        ? path.join(this.config.home, this.args["directory"].slice(2))
+        : path.resolve(this.args["directory"]);
 
     const getApp = async (): Promise<string> => {
-      if (flags.app) return flags.app;
+      if (this.flags.app) return this.flags.app;
       if (this.metadata.app) return this.metadata.app;
       const selected = await prompt<{ app: string }>({
         type: "list",
@@ -236,22 +232,20 @@ export default class Sync extends BaseCommand {
           this.metadata.app = await getApp();
         }
       } catch (error) {
-        if (!flags.force) {
-          throw new InvalidSyncFileError(error, this, flags.app);
+        if (!this.flags.force) {
+          throw new InvalidSyncFileError(error, this, this.flags.app);
         }
         this.metadata.app = await getApp();
       }
     }
 
-    if (flags.app && flags.app !== this.metadata.app && !flags.force) {
-      throw new InvalidSyncAppFlagError(this, flags.app);
+    if (this.flags.app && this.flags.app !== this.metadata.app && !this.flags.force) {
+      throw new InvalidSyncAppFlagError(this);
     }
 
     await context.setApp(this.metadata.app);
 
     this.client = new Client();
-
-    this.filePushDelay = flags["file-push-delay"];
 
     // local files/folders that should never be published
     this.ignorer = new Ignorer(this.dir, ["node_modules", ".gadget", ".git"]);
@@ -263,7 +257,7 @@ export default class Sync extends BaseCommand {
       // make sure stats are always present on add/change events
       alwaysStat: true,
       // wait for the entire file to be written before emitting add/change events
-      awaitWriteFinish: { pollInterval: flags["file-poll-interval"], stabilityThreshold: flags["file-stability-threshold"] },
+      awaitWriteFinish: { pollInterval: this.flags["file-poll-interval"], stabilityThreshold: this.flags["file-stability-threshold"] },
     });
 
     this.debug("starting");
@@ -517,7 +511,7 @@ export default class Sync extends BaseCommand {
           }
         })
         .catch(this.stop);
-    }, this.filePushDelay);
+    }, this.flags["file-push-delay"]);
 
     this.watcher
       .add(`${this.dir}/**/*`)

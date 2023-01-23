@@ -2,7 +2,7 @@ import dedent from "ts-dedent";
 import { BaseCommand } from "../utils/base-command";
 import chalk from "chalk";
 
-export default class Login extends BaseCommand {
+export default class Login extends BaseCommand<typeof Login> {
   static override summary = "Log in to your account.";
 
   static override usage = "login";

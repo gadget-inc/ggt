@@ -1,4 +1,4 @@
-import type { Config } from "@oclif/core";
+import type { Config, Interfaces } from "@oclif/core";
 import { Command, Flags, settings } from "@oclif/core";
 import { ExitError } from "@oclif/core/lib/errors";
 import chalk from "chalk";
@@ -20,14 +20,17 @@ import dedent from "ts-dedent";
 import { context, GADGET_ENDPOINT } from "./context";
 import { BaseError, UnexpectedError as UnknownError } from "./errors";
 
-export abstract class BaseCommand extends Command {
+export type Flags<T extends typeof Command> = Interfaces.InferredFlags<(typeof BaseCommand)["baseFlags"] & T["flags"]>;
+export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
+
+export abstract class BaseCommand<T extends typeof Command> extends Command {
   /**
    * Determines how high the command is listed in the README. The lower the number, the higher the command is listed. Equal numbers are
    * sorted alphabetically.
    */
   static priority = Infinity;
 
-  static override globalFlags = {
+  static override baseFlags = {
     debug: Flags.boolean({
       char: "D",
       summary: "Whether to output debug information.",
@@ -42,13 +45,23 @@ export abstract class BaseCommand extends Command {
    */
   readonly requireUser: boolean = false;
 
+  /**
+   * The parsed flags for the command.
+   */
+  flags!: Flags<T>;
+
+  /**
+   * The parsed arguments for the command.
+   */
+  args!: Args<T>;
+
   constructor(argv: string[], config: Config) {
     super(argv, config);
 
-    // TODO: Remove this once the `@oclif/core` warnIfFlagDeprecated function checks global flags as well.
+    // TODO: Remove this once the `@oclif/core` warnIfFlagDeprecated function checks base flags as well.
     // warnIfFlagDeprecated throws a null pointer because it assumes all parsed flags are in the flags object (which is not the case for global flags).
     // https://github.com/oclif/core/blob/11c5752cec838d08bb27cd55f0f1aa2390df3c5e/src/command.ts#L259
-    this.ctor.flags = { ...this.ctor.flags, ...BaseCommand.globalFlags };
+    this.ctor.flags = { ...this.ctor.flags, ...BaseCommand.baseFlags };
   }
 
   /**
@@ -60,17 +73,23 @@ export abstract class BaseCommand extends Command {
 
   override async init(): Promise<void> {
     await super.init();
-    const { flags, argv } = await this.parse({ flags: BaseCommand.globalFlags, strict: false });
 
-    // remove global flags from argv so that when the implementation calls parse, it doesn't get confused by them
-    this.argv = argv;
+    context.config = this.config;
+
+    const { flags, args } = await this.parse({
+      flags: this.ctor.flags,
+      baseFlags: (super.ctor as typeof BaseCommand).baseFlags,
+      args: this.ctor.args,
+      strict: this.ctor.strict,
+    });
+
+    this.flags = flags as Flags<T>;
+    this.args = args as Args<T>;
 
     if (flags.debug) {
       settings.debug = true;
       Debug.enable(`${this.config.bin}:*`);
     }
-
-    context.config = this.config;
 
     if (this.requireUser && !(await context.getUser())) {
       const { login } = await prompt<{ login: boolean }>({

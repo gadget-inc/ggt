@@ -89,7 +89,7 @@
     "@types/which": "^2.0.1",
     "@types/ws": "^8.5.4",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
-    "@typescript-eslint/parser": "^5.48.2",
+    "@typescript-eslint/parser": "^5.50.0",
     "concurrently": "^7.6.0",
     "cspell": "^6.19.2",
     "eslint": "^8.32.0",

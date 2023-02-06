@@ -85,7 +85,7 @@
         "rimraf": "^4.1.1",
         "ts-node": "^10.9.1",
         "tslib": "^2.4.1",
-        "type-fest": "^3.5.2",
+        "type-fest": "^3.5.4",
         "typescript": "^4.9.4"
       },
       "engines": {
@@ -16359,9 +16359,9 @@
       }
     },
     "node_modules/type-fest": {
-      "version": "3.5.2",
-      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-3.5.2.tgz",
-      "integrity": "sha512-Ph7S4EhXzWy0sbljEuZo0tTNoLl+K2tPauGrQpcwUWrOVneLePTuhVzcuzVJJ6RU5DsNwQZka+8YtkXXU4z9cA==",
+      "version": "3.5.4",
+      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-3.5.4.tgz",
+      "integrity": "sha512-/Je22Er4LPoln256pcLzj73MUmPrTWg8u4WB1RlxaDl0idJOfD1r259VtKOinp4xLJqJ9zYVMuWOun6Ssp7boA==",
       "dev": true,
       "engines": {
         "node": ">=14.16"
@@ -29464,9 +29464,9 @@
       "dev": true
     },
     "type-fest": {
-      "version": "3.5.2",
-      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-3.5.2.tgz",
-      "integrity": "sha512-Ph7S4EhXzWy0sbljEuZo0tTNoLl+K2tPauGrQpcwUWrOVneLePTuhVzcuzVJJ6RU5DsNwQZka+8YtkXXU4z9cA==",
+      "version": "3.5.4",
+      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-3.5.4.tgz",
+      "integrity": "sha512-/Je22Er4LPoln256pcLzj73MUmPrTWg8u4WB1RlxaDl0idJOfD1r259VtKOinp4xLJqJ9zYVMuWOun6Ssp7boA==",
       "dev": true
     },
     "typed-array-length": {

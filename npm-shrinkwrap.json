@@ -31,7 +31,7 @@
         "lodash": "^4.17.21",
         "node-notifier": "^10.0.1",
         "normalize-path": "^3.0.0",
-        "open": "^8.4.0",
+        "open": "^8.4.1",
         "p-map": "^4.0.0",
         "p-queue": "^6.6.2",
         "pluralize": "^8.0.0",
@@ -13562,8 +13562,9 @@
       }
     },
     "node_modules/open": {
-      "version": "8.4.0",
-      "license": "MIT",
+      "version": "8.4.1",
+      "resolved": "https://registry.npmjs.org/open/-/open-8.4.1.tgz",
+      "integrity": "sha512-/4b7qZNhv6Uhd7jjnREh1NjnPxlTq+XNWPG88Ydkj5AILcA5m3ajvcg57pB24EQjKv0dK62XnDqk9c/hkIG5Kg==",
       "dependencies": {
         "define-lazy-prop": "^2.0.0",
         "is-docker": "^2.1.1",
@@ -27425,7 +27426,9 @@
       }
     },
     "open": {
-      "version": "8.4.0",
+      "version": "8.4.1",
+      "resolved": "https://registry.npmjs.org/open/-/open-8.4.1.tgz",
+      "integrity": "sha512-/4b7qZNhv6Uhd7jjnREh1NjnPxlTq+XNWPG88Ydkj5AILcA5m3ajvcg57pB24EQjKv0dK62XnDqk9c/hkIG5Kg==",
       "requires": {
         "define-lazy-prop": "^2.0.0",
         "is-docker": "^2.1.1",

@@ -17,7 +17,7 @@ import type WindowsToaster from "node-notifier/notifiers/toaster";
 import open from "open";
 import path from "path";
 import dedent from "ts-dedent";
-import { context, GADGET_ENDPOINT } from "./context";
+import { context } from "./context";
 import { BaseError, UnexpectedError as UnknownError } from "./errors";
 
 export type Flags<T extends typeof Command> = Interfaces.InferredFlags<(typeof BaseCommand)["baseFlags"] & T["flags"]>;
@@ -146,7 +146,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       const receiveSession = new Promise<void>((resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         server = createServer(async (req, res) => {
-          const redirectTo = new URL(`${GADGET_ENDPOINT}/auth/cli`);
+          const redirectTo = new URL(`https://${context.domains.services}/auth/cli`);
 
           try {
             if (!req.url) throw new Error("missing url");
@@ -181,8 +181,8 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
         server.listen(port);
       });
 
-      const url = new URL(`${GADGET_ENDPOINT}/auth/login`);
-      url.searchParams.set("returnTo", `${GADGET_ENDPOINT}/auth/cli/callback?port=${port}`);
+      const url = new URL(`https://${context.domains.services}/auth/login`);
+      url.searchParams.set("returnTo", `https://${context.domains.services}/auth/cli/callback?port=${port}`);
       await open(url.toString());
 
       this.log(dedent`

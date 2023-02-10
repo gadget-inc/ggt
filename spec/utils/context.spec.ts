@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import { context, GADGET_ENDPOINT } from "../../src/utils/context";
+import { context } from "../../src/utils/context";
 import nock from "nock";
 
 describe("Context", () => {
@@ -55,7 +55,7 @@ describe("Context", () => {
   describe("getUser", () => {
     it("returns the user if the session is set", async () => {
       const user = { email: "test@example.com", name: "Jane Doe" };
-      nock(GADGET_ENDPOINT).get("/auth/api/current-user").reply(200, user);
+      nock(`https://${context.domains.services}`).get("/auth/api/current-user").reply(200, user);
       context.session = "test";
 
       await expect(context.getUser()).resolves.toEqual(user);
@@ -69,7 +69,7 @@ describe("Context", () => {
 
     it("returns undefined if the session is invalid or expired", async () => {
       context.session = "test";
-      nock(GADGET_ENDPOINT).get("/auth/api/current-user").reply(401);
+      nock(`https://${context.domains.services}`).get("/auth/api/current-user").reply(401);
 
       await expect(context.getUser()).resolves.toBeUndefined();
       expect(nock.isDone()).toBe(true);
@@ -78,7 +78,7 @@ describe("Context", () => {
 
     it("caches the user", async () => {
       const user = { email: "test@example.com", name: "Jane Doe" };
-      nock(GADGET_ENDPOINT).get("/auth/api/current-user").reply(200, user);
+      nock(`https://${context.domains.services}`).get("/auth/api/current-user").reply(200, user);
       context.session = "test";
 
       await expect(context.getUser()).resolves.toEqual(user);
@@ -93,7 +93,7 @@ describe("Context", () => {
   describe("getAvailableApps", () => {
     it("returns the available apps if the session is set", async () => {
       const apps = [{ id: 1, name: "Test App" }];
-      nock(GADGET_ENDPOINT).get("/auth/api/apps").reply(200, apps);
+      nock(`https://${context.domains.services}`).get("/auth/api/apps").reply(200, apps);
 
       context.session = "test";
 
@@ -108,7 +108,7 @@ describe("Context", () => {
 
     it("caches the available apps", async () => {
       const apps = [{ id: 1, name: "Test App" }];
-      nock(GADGET_ENDPOINT).get("/auth/api/apps").reply(200, apps);
+      nock(`https://${context.domains.services}`).get("/auth/api/apps").reply(200, apps);
       context.session = "test";
 
       await expect(context.getAvailableApps()).resolves.toEqual(apps);

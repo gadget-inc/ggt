@@ -19,6 +19,11 @@ class Context {
 
   app?: App;
 
+  domains: {
+    app: string;
+    services: string;
+  };
+
   private _session?: string;
 
   private _user?: User;
@@ -30,13 +35,20 @@ class Context {
       beforeRequest: [
         (options) => {
           options.headers["user-agent"] = this.config.userAgent;
-          if (options.url.origin === GADGET_ENDPOINT && this.session) {
+          if (options.url.host === this.domains.services && this.session) {
             options.headers["cookie"] = `session=${encodeURIComponent(this.session)};`;
           }
         },
       ],
     },
   });
+
+  constructor() {
+    this.domains = {
+      app: process.env["GGT_GADGET_APP_DOMAIN"] || this.env.productionLike ? "gadget.app" : "ggt.pub",
+      services: process.env["GGT_GADGET_SERVICES_DOMAIN"] || this.env.productionLike ? "app.gadget.dev" : "app.ggt.dev",
+    };
+  }
 
   get session(): string | undefined {
     if (this._session) return this._session;
@@ -68,7 +80,7 @@ class Context {
     if (this._user) return this._user;
 
     try {
-      this._user = await this._request(`${GADGET_ENDPOINT}/auth/api/current-user`).json<User>();
+      this._user = await this._request(`https://${this.domains.services}/auth/api/current-user`).json<User>();
       return this._user;
     } catch (error) {
       if (error instanceof HTTPError && error.response.statusCode === 401) {
@@ -86,7 +98,7 @@ class Context {
     if (!this.session) return [];
     if (this._availableApps.length > 0) return this._availableApps;
 
-    this._availableApps = await this._request(`${GADGET_ENDPOINT}/auth/api/apps`).json<App[]>();
+    this._availableApps = await this._request(`https://${this.domains.services}/auth/api/apps`).json<App[]>();
     return this._availableApps;
   }
 
@@ -147,5 +159,3 @@ export interface App {
 }
 
 export const context = new Context();
-
-export const GADGET_ENDPOINT = context.env.productionLike ? "https://app.gadget.dev" : "https://app.ggt.dev:3000";

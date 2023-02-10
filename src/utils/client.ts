@@ -27,10 +27,9 @@ export class Client {
 
   constructor() {
     assert(context.app, "context.app must be set before instantiating the Client");
-    const domain = context.env.productionLike ? "gadget.app" : "ggt.pub:3000";
 
     this._client = createClient({
-      url: `wss://${context.app.slug}.${domain}/edit/api/graphql-ws`,
+      url: `wss://${context.app.slug}.${context.domains.app}/edit/api/graphql-ws`,
       shouldRetry: () => true,
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {

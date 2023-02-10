@@ -1,5 +1,32 @@
 # @gadgetinc/ggt
 
+## 0.1.12
+
+### Patch Changes
+
+- 2acf5cb: Bump @oclif/plugin-plugins from 2.1.12 to 2.2.2
+- 98fb08f: Bump @oclif/core from 1.23.1 to 1.24.0
+- 6502d06: Bump @oclif/core from 2.0.3 to 2.0.8
+- 85f88f4: Bump @sentry/node from 7.36.0 to 7.37.0
+- 0542418: Bump graphql-ws from 5.11.2 to 5.11.3
+- 140f74a: Bump oclif from 3.4.6 to 3.6.3
+- 1c5bb49: Bump @sentry/node from 7.29.0 to 7.30.0
+- 55776ae: Bump @sentry/node from 7.31.1 to 7.36.0
+- acdd074: Bump @sentry/node from 7.31.0 to 7.31.1
+- 24c8bf3: Bump @oclif/plugin-not-found from 2.3.15 to 2.3.18
+- 8df22f8: Bump @oclif/core from 2.0.8 to 2.0.11
+- 793654f: Bump @oclif/plugin-plugins from 2.2.2 to 2.3.0
+- 69aee46: Bump oclif from 3.4.3 to 3.4.6
+- 486bd6b: Bump @oclif/core from 1.24.0 to 1.24.2
+- 9cff790: Bump open from 8.4.0 to 8.4.1
+- 9dbb4e4: Bump @oclif/plugin-warn-if-update-available from 2.0.18 to 2.0.19
+- 0f07562: Bump @sentry/node from 7.30.0 to 7.31.0
+- 6577b13: Bump @oclif/plugin-not-found from 2.3.13 to 2.3.14
+- d3cc0c8: Bump @oclif/core from 1.24.2 to 2.0.3
+- e504de2: Bump @oclif/plugin-warn-if-update-available from 2.0.19 to 2.0.26
+- 58843b8: Bump ws from 8.11.0 to 8.12.0
+- da60cc2: Bump @oclif/plugin-not-found from 2.3.14 to 2.3.15
+
 ## 0.1.11
 
 ### Patch Changes

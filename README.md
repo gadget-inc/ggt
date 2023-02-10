@@ -31,7 +31,7 @@
 Run the following to sync a `my-app.gadget.app` application to the `~/gadget/my-app` on your local machine:
 
 ```sh
-npx @gadgetinc/ggt sync --app my-app ~/gadget/my-app
+npx @gadgetinc/ggt@latest sync --app my-app ~/gadget/my-app
 ```
 
 With this running in the background, your local `~/gadget/my-app` folder will become two-way synced with your application's filesystem in Gadget's cloud. Changes you make locally will be immediately reflected by your application's API and actions if you re-run them.

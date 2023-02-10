@@ -5,7 +5,7 @@ import { prompt } from "inquirer";
 import { noop } from "lodash";
 import open from "open";
 import { BaseCommand } from "../../src/utils/base-command";
-import { context, GADGET_ENDPOINT } from "../../src/utils/context";
+import { context } from "../../src/utils/context";
 import { sleepUntil } from "../../src/utils/sleep";
 
 class Base extends BaseCommand<typeof Base> {
@@ -104,7 +104,9 @@ describe("BaseCommand", () => {
       expect(requestListener!).toBeDefined();
       expect(server.listen).toHaveBeenCalledWith(port);
       expect(open).toHaveBeenCalledWith(
-        `${GADGET_ENDPOINT}/auth/login?returnTo=${encodeURIComponent(`${GADGET_ENDPOINT}/auth/cli/callback?port=${port}`)}`
+        `https://${context.domains.services}/auth/login?returnTo=${encodeURIComponent(
+          `https://${context.domains.services}/auth/cli/callback?port=${port}`
+        )}`
       );
       expect(base.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         "We've opened Gadget's login page using your default browser.
@@ -130,7 +132,7 @@ describe("BaseCommand", () => {
       expect(context.session).toBe("test");
       expect(context.getUser).toHaveBeenCalled();
       expect(base.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"Hello, Jane Doe (test@example.com)"`);
-      expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `${GADGET_ENDPOINT}/auth/cli?success=true` });
+      expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${context.domains.services}/auth/cli?success=true` });
       expect(res.end).toHaveBeenCalled();
       expect(server.close).toHaveBeenCalled();
     });
@@ -146,7 +148,9 @@ describe("BaseCommand", () => {
       expect(requestListener!).toBeDefined();
       expect(server.listen).toHaveBeenCalledWith(port);
       expect(open).toHaveBeenCalledWith(
-        `${GADGET_ENDPOINT}/auth/login?returnTo=${encodeURIComponent(`${GADGET_ENDPOINT}/auth/cli/callback?port=${port}`)}`
+        `https://${context.domains.services}/auth/login?returnTo=${encodeURIComponent(
+          `https://${context.domains.services}/auth/cli/callback?port=${port}`
+        )}`
       );
       expect(base.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         "We've opened Gadget's login page using your default browser.
@@ -171,7 +175,7 @@ describe("BaseCommand", () => {
       await sleepUntil(() => server.close.mock.calls.length > 0);
       expect(context.session).toBeUndefined();
       expect(context.getUser).toHaveBeenCalled();
-      expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `${GADGET_ENDPOINT}/auth/cli?success=false` });
+      expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${context.domains.services}/auth/cli?success=false` });
       expect(res.end).toHaveBeenCalled();
       expect(server.close).toHaveBeenCalled();
     });

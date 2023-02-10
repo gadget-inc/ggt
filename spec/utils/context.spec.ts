@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import { context } from "../../src/utils/context";
+import { Context, context } from "../../src/utils/context";
 import nock from "nock";
 
 describe("Context", () => {
@@ -117,6 +117,47 @@ describe("Context", () => {
         expect(nock.isDone()).toBeTrue();
         await expect(context.getAvailableApps()).resolves.toEqual(apps);
       }
+    });
+  });
+
+  describe("domains", () => {
+    afterEach(() => {
+      delete process.env["GGT_GADGET_APP_DOMAIN"];
+      delete process.env["GGT_GADGET_SERVICES_DOMAIN"];
+    });
+
+    describe("app", () => {
+      it("uses GGT_GADGET_APP_DOMAIN if set", () => {
+        const domain = "test.example.com";
+        process.env["GGT_GADGET_APP_DOMAIN"] = domain;
+        expect(new Context().domains.app).toBe(domain);
+      });
+
+      it("defaults to gadget.app when GGT_ENV is production", () => {
+        process.env["GGT_ENV"] = "production";
+        expect(new Context().domains.app).toBe("gadget.app");
+      });
+
+      it("defaults to ggt.pub otherwise", () => {
+        expect(new Context().domains.app).toBe("ggt.pub");
+      });
+    });
+
+    describe("services", () => {
+      it("uses GGT_GADGET_SERVICES_DOMAIN if set", () => {
+        const domain = "test.example.com";
+        process.env["GGT_GADGET_SERVICES_DOMAIN"] = domain;
+        expect(new Context().domains.services).toBe(domain);
+      });
+
+      it("defaults to app.gadget.dev when GGT_ENV is production", () => {
+        process.env["GGT_ENV"] = "production";
+        expect(new Context().domains.services).toBe("app.gadget.dev");
+      });
+
+      it("defaults to app.ggt.dev otherwise", () => {
+        expect(new Context().domains.services).toBe("app.ggt.dev");
+      });
     });
   });
 });

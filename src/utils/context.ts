@@ -6,7 +6,7 @@ import { isString } from "lodash";
 import path from "path";
 import { ignoreEnoent } from "./fs-utils";
 
-class Context {
+export class Context {
   /**
    * A reference to oclif's {@linkcode Config}.
    *
@@ -45,8 +45,8 @@ class Context {
 
   constructor() {
     this.domains = {
-      app: process.env["GGT_GADGET_APP_DOMAIN"] || this.env.productionLike ? "gadget.app" : "ggt.pub",
-      services: process.env["GGT_GADGET_SERVICES_DOMAIN"] || this.env.productionLike ? "app.gadget.dev" : "app.ggt.dev",
+      app: process.env["GGT_GADGET_APP_DOMAIN"] || (this.env.productionLike ? "gadget.app" : "ggt.pub"),
+      services: process.env["GGT_GADGET_SERVICES_DOMAIN"] || (this.env.productionLike ? "app.gadget.dev" : "app.ggt.dev"),
     };
   }
 

@@ -18,6 +18,8 @@ export function testDirPath(): string {
 }
 
 beforeEach(async () => {
+  process.env["GGT_ENV"] = "test";
+
   debug("starting test %o", { test: expect.getState().currentTestName, path: expect.getState().testPath });
 
   const testDir = testDirPath();

@@ -9,7 +9,7 @@
       "version": "0.1.11",
       "license": "MIT",
       "dependencies": {
-        "@oclif/core": "^2.0.8",
+        "@oclif/core": "^2.0.11",
         "@oclif/errors": "^1.3.6",
         "@oclif/plugin-not-found": "^2.3.18",
         "@oclif/plugin-warn-if-update-available": "^2.0.26",
@@ -4636,9 +4636,9 @@
       }
     },
     "node_modules/@oclif/core": {
-      "version": "2.0.8",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.0.8.tgz",
-      "integrity": "sha512-jt06vEZfpazkR0C8vYuVMKmsxjky52y1B1oFGPnCa6/17qH+PByd5knQP6/QbRoE5OT9RAf4zzpxx2wcihVslw==",
+      "version": "2.0.11",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.0.11.tgz",
+      "integrity": "sha512-BMKkcgKhrn0RfZVaXObpadO80C3hCM9jHaRHwQEb0G/ASo34YAjKXt8hX027Mc4XBmsYeIutJrEMx9GZr0v1Hw==",
       "dependencies": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -4664,7 +4664,7 @@
         "strip-ansi": "^6.0.1",
         "supports-color": "^8.1.1",
         "supports-hyperlinks": "^2.2.0",
-        "tslib": "^2.4.1",
+        "tslib": "^2.5.0",
         "widest-line": "^3.1.0",
         "wordwrap": "^1.0.0",
         "wrap-ansi": "^7.0.0"
@@ -20925,9 +20925,9 @@
       }
     },
     "@oclif/core": {
-      "version": "2.0.8",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.0.8.tgz",
-      "integrity": "sha512-jt06vEZfpazkR0C8vYuVMKmsxjky52y1B1oFGPnCa6/17qH+PByd5knQP6/QbRoE5OT9RAf4zzpxx2wcihVslw==",
+      "version": "2.0.11",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.0.11.tgz",
+      "integrity": "sha512-BMKkcgKhrn0RfZVaXObpadO80C3hCM9jHaRHwQEb0G/ASo34YAjKXt8hX027Mc4XBmsYeIutJrEMx9GZr0v1Hw==",
       "requires": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -20953,7 +20953,7 @@
         "strip-ansi": "^6.0.1",
         "supports-color": "^8.1.1",
         "supports-hyperlinks": "^2.2.0",
-        "tslib": "^2.4.1",
+        "tslib": "^2.5.0",
         "widest-line": "^3.1.0",
         "wordwrap": "^1.0.0",
         "wrap-ansi": "^7.0.0"

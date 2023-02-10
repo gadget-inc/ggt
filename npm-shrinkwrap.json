@@ -9744,8 +9744,9 @@
       "dev": true
     },
     "node_modules/http-cache-semantics": {
-      "version": "4.1.0",
-      "license": "BSD-2-Clause"
+      "version": "4.1.1",
+      "resolved": "https://registry.npmjs.org/http-cache-semantics/-/http-cache-semantics-4.1.1.tgz",
+      "integrity": "sha512-er295DKPVsV82j5kw1Gjt+ADA/XYHsajl82cGNQG2eyoPkvgUhX+nDIyelzhIWbbsXP39EHcI6l5tYs2FYqYXQ=="
     },
     "node_modules/http-call": {
       "version": "5.3.0",
@@ -16188,9 +16189,9 @@
       }
     },
     "node_modules/ua-parser-js": {
-      "version": "0.7.32",
-      "resolved": "https://registry.npmjs.org/ua-parser-js/-/ua-parser-js-0.7.32.tgz",
-      "integrity": "sha512-f9BESNVhzlhEFf2CHMSj40NWOjYPl1YKYbrvIr/hFTDEmLq7SRbWvm7FcdcpCYT95zrOhC7gZSxjdnnTpBcwVw==",
+      "version": "0.7.33",
+      "resolved": "https://registry.npmjs.org/ua-parser-js/-/ua-parser-js-0.7.33.tgz",
+      "integrity": "sha512-s8ax/CeZdK9R/56Sui0WM6y9OFREJarMRHqLB2EwkovemBxNQ+Bqu8GAsUnVcXKgphb++ghr/B2BZx4mahujPw==",
       "dev": true,
       "funding": [
         {
@@ -24513,7 +24514,9 @@
       "dev": true
     },
     "http-cache-semantics": {
-      "version": "4.1.0"
+      "version": "4.1.1",
+      "resolved": "https://registry.npmjs.org/http-cache-semantics/-/http-cache-semantics-4.1.1.tgz",
+      "integrity": "sha512-er295DKPVsV82j5kw1Gjt+ADA/XYHsajl82cGNQG2eyoPkvgUhX+nDIyelzhIWbbsXP39EHcI6l5tYs2FYqYXQ=="
     },
     "http-call": {
       "version": "5.3.0",
@@ -29121,9 +29124,9 @@
       "dev": true
     },
     "ua-parser-js": {
-      "version": "0.7.32",
-      "resolved": "https://registry.npmjs.org/ua-parser-js/-/ua-parser-js-0.7.32.tgz",
-      "integrity": "sha512-f9BESNVhzlhEFf2CHMSj40NWOjYPl1YKYbrvIr/hFTDEmLq7SRbWvm7FcdcpCYT95zrOhC7gZSxjdnnTpBcwVw==",
+      "version": "0.7.33",
+      "resolved": "https://registry.npmjs.org/ua-parser-js/-/ua-parser-js-0.7.33.tgz",
+      "integrity": "sha512-s8ax/CeZdK9R/56Sui0WM6y9OFREJarMRHqLB2EwkovemBxNQ+Bqu8GAsUnVcXKgphb++ghr/B2BZx4mahujPw==",
       "dev": true
     },
     "unbox-primitive": {

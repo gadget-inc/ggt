@@ -49,7 +49,7 @@
         "@graphql-codegen/cli": "^3.0.0",
         "@graphql-codegen/typescript": "^3.0.0",
         "@graphql-codegen/typescript-operations": "^3.0.0",
-        "@oclif/plugin-plugins": "^2.3.0",
+        "@oclif/plugin-plugins": "^2.3.2",
         "@oclif/test": "^2.3.5",
         "@swc/core": "^1.3.35",
         "@swc/helpers": "^0.4.14",
@@ -4519,9 +4519,9 @@
       }
     },
     "node_modules/@oclif/color": {
-      "version": "1.0.3",
-      "resolved": "https://registry.npmjs.org/@oclif/color/-/color-1.0.3.tgz",
-      "integrity": "sha512-E+KKAE5CKhXRBZEoZLe5yNR0VHmba1m1fxz8HlpcWjHF5Pdhhf6W/0XMmed6vwQCmyzL/YLwdspCRfu0A1cgGA==",
+      "version": "1.0.4",
+      "resolved": "https://registry.npmjs.org/@oclif/color/-/color-1.0.4.tgz",
+      "integrity": "sha512-HEcVnSzpQkjskqWJyVN3tGgR0H0F8GrBmDjgQ1N0ZwwktYa4y9kfV07P/5vt5BjPXNyslXHc4KAO8Bt7gmErCA==",
       "dependencies": {
         "ansi-styles": "^4.2.1",
         "chalk": "^4.1.0",
@@ -4534,9 +4534,9 @@
       }
     },
     "node_modules/@oclif/core": {
-      "version": "2.0.11",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.0.11.tgz",
-      "integrity": "sha512-BMKkcgKhrn0RfZVaXObpadO80C3hCM9jHaRHwQEb0G/ASo34YAjKXt8hX027Mc4XBmsYeIutJrEMx9GZr0v1Hw==",
+      "version": "2.1.4",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.1.4.tgz",
+      "integrity": "sha512-8rPS/gsjLgWp//nraRs5/yf7EkueFHBLRTMUli3yTu88XrQ2czbXIP2HsF2rxmtCqUUfXUTllHfr8OzqBs0Dcw==",
       "dependencies": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -4544,7 +4544,7 @@
         "cardinal": "^2.1.1",
         "chalk": "^4.1.2",
         "clean-stack": "^3.0.1",
-        "cli-progress": "^3.10.0",
+        "cli-progress": "^3.11.2",
         "debug": "^4.3.4",
         "ejs": "^3.1.6",
         "fs-extra": "^9.1.0",
@@ -4713,13 +4713,13 @@
       }
     },
     "node_modules/@oclif/plugin-plugins": {
-      "version": "2.3.0",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-2.3.0.tgz",
-      "integrity": "sha512-VmlLLYE4LCXX2RGNv4ht8AqG9OADvLIE4Kxhm18h5RZ9cMee7U6nrHQeW455lh/idnWC2XT7bHgJBv2kgYxSiQ==",
+      "version": "2.3.2",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-2.3.2.tgz",
+      "integrity": "sha512-jq/ik7A7bCO/oQp0/Znnpu8/JBXifAQ2OF2KmswbNYt7EpsLqz2DaI/CvkrXRSb+Edzx4Xx3usEgSyocVN/u2A==",
       "dev": true,
       "dependencies": {
-        "@oclif/color": "^1.0.3",
-        "@oclif/core": "^2.0.3",
+        "@oclif/color": "^1.0.4",
+        "@oclif/core": "^2.1.1",
         "chalk": "^4.1.2",
         "debug": "^4.3.4",
         "fs-extra": "^9.0",
@@ -20728,9 +20728,9 @@
       }
     },
     "@oclif/color": {
-      "version": "1.0.3",
-      "resolved": "https://registry.npmjs.org/@oclif/color/-/color-1.0.3.tgz",
-      "integrity": "sha512-E+KKAE5CKhXRBZEoZLe5yNR0VHmba1m1fxz8HlpcWjHF5Pdhhf6W/0XMmed6vwQCmyzL/YLwdspCRfu0A1cgGA==",
+      "version": "1.0.4",
+      "resolved": "https://registry.npmjs.org/@oclif/color/-/color-1.0.4.tgz",
+      "integrity": "sha512-HEcVnSzpQkjskqWJyVN3tGgR0H0F8GrBmDjgQ1N0ZwwktYa4y9kfV07P/5vt5BjPXNyslXHc4KAO8Bt7gmErCA==",
       "requires": {
         "ansi-styles": "^4.2.1",
         "chalk": "^4.1.0",
@@ -20740,9 +20740,9 @@
       }
     },
     "@oclif/core": {
-      "version": "2.0.11",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.0.11.tgz",
-      "integrity": "sha512-BMKkcgKhrn0RfZVaXObpadO80C3hCM9jHaRHwQEb0G/ASo34YAjKXt8hX027Mc4XBmsYeIutJrEMx9GZr0v1Hw==",
+      "version": "2.1.4",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.1.4.tgz",
+      "integrity": "sha512-8rPS/gsjLgWp//nraRs5/yf7EkueFHBLRTMUli3yTu88XrQ2czbXIP2HsF2rxmtCqUUfXUTllHfr8OzqBs0Dcw==",
       "requires": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -20750,7 +20750,7 @@
         "cardinal": "^2.1.1",
         "chalk": "^4.1.2",
         "clean-stack": "^3.0.1",
-        "cli-progress": "^3.10.0",
+        "cli-progress": "^3.11.2",
         "debug": "^4.3.4",
         "ejs": "^3.1.6",
         "fs-extra": "^9.1.0",
@@ -20895,13 +20895,13 @@
       }
     },
     "@oclif/plugin-plugins": {
-      "version": "2.3.0",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-2.3.0.tgz",
-      "integrity": "sha512-VmlLLYE4LCXX2RGNv4ht8AqG9OADvLIE4Kxhm18h5RZ9cMee7U6nrHQeW455lh/idnWC2XT7bHgJBv2kgYxSiQ==",
+      "version": "2.3.2",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-2.3.2.tgz",
+      "integrity": "sha512-jq/ik7A7bCO/oQp0/Znnpu8/JBXifAQ2OF2KmswbNYt7EpsLqz2DaI/CvkrXRSb+Edzx4Xx3usEgSyocVN/u2A==",
       "dev": true,
       "requires": {
-        "@oclif/color": "^1.0.3",
-        "@oclif/core": "^2.0.3",
+        "@oclif/color": "^1.0.4",
+        "@oclif/core": "^2.1.1",
         "chalk": "^4.1.2",
         "debug": "^4.3.4",
         "fs-extra": "^9.0",

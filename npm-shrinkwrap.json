@@ -12,7 +12,7 @@
         "@oclif/core": "^2.0.11",
         "@oclif/errors": "^1.3.6",
         "@oclif/plugin-not-found": "^2.3.18",
-        "@oclif/plugin-warn-if-update-available": "^2.0.26",
+        "@oclif/plugin-warn-if-update-available": "^2.0.27",
         "@sentry/node": "^7.37.0",
         "chalk": "^4.1.2",
         "chokidar": "^3.5.3",
@@ -4534,9 +4534,9 @@
       }
     },
     "node_modules/@oclif/core": {
-      "version": "2.0.11",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.0.11.tgz",
-      "integrity": "sha512-BMKkcgKhrn0RfZVaXObpadO80C3hCM9jHaRHwQEb0G/ASo34YAjKXt8hX027Mc4XBmsYeIutJrEMx9GZr0v1Hw==",
+      "version": "2.1.4",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.1.4.tgz",
+      "integrity": "sha512-8rPS/gsjLgWp//nraRs5/yf7EkueFHBLRTMUli3yTu88XrQ2czbXIP2HsF2rxmtCqUUfXUTllHfr8OzqBs0Dcw==",
       "dependencies": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -4544,7 +4544,7 @@
         "cardinal": "^2.1.1",
         "chalk": "^4.1.2",
         "clean-stack": "^3.0.1",
-        "cli-progress": "^3.10.0",
+        "cli-progress": "^3.11.2",
         "debug": "^4.3.4",
         "ejs": "^3.1.6",
         "fs-extra": "^9.1.0",
@@ -4749,11 +4749,11 @@
       }
     },
     "node_modules/@oclif/plugin-warn-if-update-available": {
-      "version": "2.0.26",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.26.tgz",
-      "integrity": "sha512-eMwDOzxPdN1X0y5G0W/GJXFRUvevT6gOrbbRLPoboTUwcFRqhFOJ7jCqGUTomeDfMRgAb3O+3bcD64lIb/y+FA==",
+      "version": "2.0.27",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.27.tgz",
+      "integrity": "sha512-be6dnM3bhf7r6Jy1rzPjOt5qV5MZtqda4p1krbH9a5Ww6jAsYh6CIeKbIP2zPUFthoejG9wt7UFQt3J110DdMQ==",
       "dependencies": {
-        "@oclif/core": "^2.0.8",
+        "@oclif/core": "^2.1.2",
         "chalk": "^4.1.0",
         "debug": "^4.1.0",
         "fs-extra": "^9.0.1",
@@ -20740,9 +20740,9 @@
       }
     },
     "@oclif/core": {
-      "version": "2.0.11",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.0.11.tgz",
-      "integrity": "sha512-BMKkcgKhrn0RfZVaXObpadO80C3hCM9jHaRHwQEb0G/ASo34YAjKXt8hX027Mc4XBmsYeIutJrEMx9GZr0v1Hw==",
+      "version": "2.1.4",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.1.4.tgz",
+      "integrity": "sha512-8rPS/gsjLgWp//nraRs5/yf7EkueFHBLRTMUli3yTu88XrQ2czbXIP2HsF2rxmtCqUUfXUTllHfr8OzqBs0Dcw==",
       "requires": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -20750,7 +20750,7 @@
         "cardinal": "^2.1.1",
         "chalk": "^4.1.2",
         "clean-stack": "^3.0.1",
-        "cli-progress": "^3.10.0",
+        "cli-progress": "^3.11.2",
         "debug": "^4.3.4",
         "ejs": "^3.1.6",
         "fs-extra": "^9.1.0",
@@ -20926,11 +20926,11 @@
       }
     },
     "@oclif/plugin-warn-if-update-available": {
-      "version": "2.0.26",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.26.tgz",
-      "integrity": "sha512-eMwDOzxPdN1X0y5G0W/GJXFRUvevT6gOrbbRLPoboTUwcFRqhFOJ7jCqGUTomeDfMRgAb3O+3bcD64lIb/y+FA==",
+      "version": "2.0.27",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.27.tgz",
+      "integrity": "sha512-be6dnM3bhf7r6Jy1rzPjOt5qV5MZtqda4p1krbH9a5Ww6jAsYh6CIeKbIP2zPUFthoejG9wt7UFQt3J110DdMQ==",
       "requires": {
-        "@oclif/core": "^2.0.8",
+        "@oclif/core": "^2.1.2",
         "chalk": "^4.1.0",
         "debug": "^4.1.0",
         "fs-extra": "^9.0.1",

@@ -3,3 +3,4 @@ lib
 tmp
 npm-shrinkwrap.json
 oclif.manifest.json
+.direnv

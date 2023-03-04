@@ -64,7 +64,7 @@
         "@types/node-notifier": "^8.0.2",
         "@types/normalize-path": "^3.0.0",
         "@types/pluralize": "^0.0.29",
-        "@types/which": "^2.0.1",
+        "@types/which": "^2.0.2",
         "@types/ws": "^8.5.4",
         "@typescript-eslint/eslint-plugin": "^5.54.0",
         "@typescript-eslint/parser": "^5.51.0",
@@ -5676,9 +5676,9 @@
       }
     },
     "node_modules/@types/which": {
-      "version": "2.0.1",
-      "resolved": "https://registry.npmjs.org/@types/which/-/which-2.0.1.tgz",
-      "integrity": "sha512-Jjakcv8Roqtio6w1gr0D7y6twbhx6gGgFGF5BLwajPpnOIOxFkakFhCq+LmyyeAz7BX6ULrjBOxdKaCDy+4+dQ==",
+      "version": "2.0.2",
+      "resolved": "https://registry.npmjs.org/@types/which/-/which-2.0.2.tgz",
+      "integrity": "sha512-113D3mDkZDjo+EeUEHCFy0qniNc1ZpecGiAU7WSo7YDoSzolZIQKpYFHrPpjkB2nuyahcKfrmLXeQlh7gqJYdw==",
       "dev": true
     },
     "node_modules/@types/ws": {
@@ -21853,9 +21853,9 @@
       }
     },
     "@types/which": {
-      "version": "2.0.1",
-      "resolved": "https://registry.npmjs.org/@types/which/-/which-2.0.1.tgz",
-      "integrity": "sha512-Jjakcv8Roqtio6w1gr0D7y6twbhx6gGgFGF5BLwajPpnOIOxFkakFhCq+LmyyeAz7BX6ULrjBOxdKaCDy+4+dQ==",
+      "version": "2.0.2",
+      "resolved": "https://registry.npmjs.org/@types/which/-/which-2.0.2.tgz",
+      "integrity": "sha512-113D3mDkZDjo+EeUEHCFy0qniNc1ZpecGiAU7WSo7YDoSzolZIQKpYFHrPpjkB2nuyahcKfrmLXeQlh7gqJYdw==",
       "dev": true
     },
     "@types/ws": {

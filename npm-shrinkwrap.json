@@ -38,7 +38,7 @@
         "serialize-error": "^8.1.0",
         "ts-dedent": "^2.2.0",
         "which": "^3.0.0",
-        "ws": "^8.12.0"
+        "ws": "^8.12.1"
       },
       "bin": {
         "ggt": "bin/run"
@@ -16748,9 +16748,9 @@
       }
     },
     "node_modules/ws": {
-      "version": "8.12.0",
-      "resolved": "https://registry.npmjs.org/ws/-/ws-8.12.0.tgz",
-      "integrity": "sha512-kU62emKIdKVeEIOIKVegvqpXMSTAMLJozpHZaJNDYqBjzlSYXQGviYwN1osDLJ9av68qHd4a2oSjd7yD4pacig==",
+      "version": "8.12.1",
+      "resolved": "https://registry.npmjs.org/ws/-/ws-8.12.1.tgz",
+      "integrity": "sha512-1qo+M9Ba+xNhPB+YTWUlK6M17brTut5EXbcBaMRN5pH5dFrXz7lzz1ChFSUq3bOUl8yEvSenhHmYUNJxFzdJew==",
       "engines": {
         "node": ">=10.0.0"
       },
@@ -29580,9 +29580,9 @@
       }
     },
     "ws": {
-      "version": "8.12.0",
-      "resolved": "https://registry.npmjs.org/ws/-/ws-8.12.0.tgz",
-      "integrity": "sha512-kU62emKIdKVeEIOIKVegvqpXMSTAMLJozpHZaJNDYqBjzlSYXQGviYwN1osDLJ9av68qHd4a2oSjd7yD4pacig==",
+      "version": "8.12.1",
+      "resolved": "https://registry.npmjs.org/ws/-/ws-8.12.1.tgz",
+      "integrity": "sha512-1qo+M9Ba+xNhPB+YTWUlK6M17brTut5EXbcBaMRN5pH5dFrXz7lzz1ChFSUq3bOUl8yEvSenhHmYUNJxFzdJew==",
       "requires": {}
     },
     "xdg-basedir": {

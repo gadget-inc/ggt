@@ -25,7 +25,6 @@ import { context } from "../utils/context";
 import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../utils/errors";
 import { app } from "../utils/flags";
 import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../utils/fs-utils";
-import { sleepUntil } from "../utils/sleep";
 import type {
   FileSyncChangedEventInput,
   FileSyncDeletedEventInput,
@@ -165,6 +164,9 @@ export default class Sync extends BaseCommand<typeof Sync> {
   publish!: DebouncedFunc<() => void>;
 
   stop!: (error?: unknown) => Promise<void>;
+
+  finished!: Promise<void>;
+  markFinished!: () => void;
 
   relative(to: string): string {
     return path.relative(this.dir, to);
@@ -346,6 +348,9 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
   async run(): Promise<void> {
     let error: unknown;
+    this.finished = new Promise((resolve) => {
+      this.markFinished = resolve;
+    });
 
     this.stop = async (e?: unknown) => {
       if (this.status != SyncStatus.RUNNING) return;
@@ -365,6 +370,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
         this.debug("stopped");
         this.status = SyncStatus.STOPPED;
+        this.markFinished();
       }
     };
 
@@ -592,7 +598,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
     );
     this.log();
 
-    await sleepUntil(() => this.status == SyncStatus.STOPPED, { timeout: Infinity });
+    await this.finished;
 
     if (error) {
       this.notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });

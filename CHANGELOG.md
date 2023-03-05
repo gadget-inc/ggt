@@ -1,5 +1,13 @@
 # @gadgetinc/ggt
 
+## 0.1.13
+
+### Patch Changes
+
+- 61a5443: Upgrade oclif and @oclif/core to latest versions
+- 43f14d5: Avoid high-cpu usage from overly-aggressive internal polling
+- 8c80490: Bump ws from 8.12.0 to 8.12.1
+
 ## 0.1.12
 
 ### Patch Changes

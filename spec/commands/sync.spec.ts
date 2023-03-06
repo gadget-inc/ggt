@@ -50,8 +50,8 @@ describe("Sync", () => {
 
     jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, name: "Jane Doe", email: "jane@example.come" });
     jest.spyOn(context, "getAvailableApps").mockResolvedValue([
-      { id: "1", name: "test", slug: "test", hasSplitEnvironments: true },
-      { id: "2", name: "not-test", slug: "not-test", hasSplitEnvironments: false },
+      { id: "1", slug: "test", primaryDomain: "test.gadget.app", hasSplitEnvironments: true },
+      { id: "2", slug: "not-test", primaryDomain: "not-test.gadget.app", hasSplitEnvironments: false },
     ]);
 
     // TODO: we don't need to mock the watcher anymore since we're using the real filesystem

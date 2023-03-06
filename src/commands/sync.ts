@@ -579,7 +579,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
       dedent(chalk`
       {bold ggt v${this.config.version}}
 
-      App         ${context.app.name}
+      App         ${context.app.slug}
       Editor      https://${context.app.slug}.gadget.app/edit
       Playground  https://${context.app.slug}.gadget.app/api/graphql/playground
       Docs        https://docs.gadget.dev/api/${context.app.slug}
@@ -587,10 +587,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
       {underline Endpoints} ${
         context.app.hasSplitEnvironments
           ? `
-        - https://${context.app.slug}.gadget.app
+        - https://${context.app.primaryDomain}
         - https://${context.app.slug}--development.gadget.app`
           : `
-        - https://${context.app.slug}.gadget.app`
+        - https://${context.app.primaryDomain}`
       }
 
       Watching for file changes... {gray Press Ctrl+C to stop}

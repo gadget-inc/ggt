@@ -6,11 +6,12 @@ import { getError } from "../util";
 describe("flags", () => {
   describe("-a, --app", () => {
     beforeEach(() => {
-      jest.spyOn(context, "getAvailableApps").mockResolvedValue([{ id: "1", name: "MyApp", slug: "my-app", hasSplitEnvironments: true }]);
+      jest
+        .spyOn(context, "getAvailableApps")
+        .mockResolvedValue([{ id: "1", slug: "my-app", primaryDomain: "my-app.gadget.app", hasSplitEnvironments: true }]);
     });
 
     it.each([
-      "MyApp",
       "my-app",
       "my-app.gadget.app",
       "my-app--development.gadget.app",
@@ -25,7 +26,7 @@ describe("flags", () => {
     it.each(["~"])("rejects %s", async (value) => {
       const error = await getError(() => app().parse(value, {} as any, {} as any));
       expect(error).toBeInstanceOf(FlagError);
-      expect(error.description).toStartWith("The -a, --app flag must be the application's name, slug, or URL");
+      expect(error.description).toStartWith("The -a, --app flag must be the application's slug or URL");
     });
 
     it("does not accept an app that doesn't exist or the user doesn't have access to", async () => {

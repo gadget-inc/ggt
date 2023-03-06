@@ -102,13 +102,13 @@ export class Context {
     return this._availableApps;
   }
 
-  async setApp(value: App | string | undefined): Promise<void> {
-    if (isString(value)) {
-      const app = await this.getAvailableApps().then((apps) => apps.find((app) => app.name == value || app.slug == value));
-      assert(app, `attempted to set app to "${value}" but no app with that name or slug was found`);
+  async setApp(appOrSlug?: App | string): Promise<void> {
+    if (isString(appOrSlug)) {
+      const app = await this.getAvailableApps().then((apps) => apps.find((app) => app.slug == appOrSlug));
+      assert(app, `attempted to set app to "${appOrSlug}" but no app with that name or slug was found`);
       this.app = app;
     } else {
-      this.app = value;
+      this.app = appOrSlug;
     }
   }
 
@@ -153,8 +153,8 @@ export interface User {
 
 export interface App {
   id: string | number;
-  name: string;
   slug: string;
+  primaryDomain: string;
   hasSplitEnvironments: boolean;
 }
 

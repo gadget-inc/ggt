@@ -16,7 +16,7 @@ export const app = Flags.custom({
       throw new FlagError(
         { char: "a", name: "app" },
         dedent`
-          The -a, --app flag must be the application's name, slug, or URL
+          The -a, --app flag must be the application's slug or URL
 
           Examples:
 
@@ -27,10 +27,10 @@ export const app = Flags.custom({
         `
       );
 
-    const name = parsed.endsWith("--development") ? parsed.slice(0, -"--development".length) : parsed;
+    const slug = parsed.endsWith("--development") ? parsed.slice(0, -"--development".length) : parsed;
 
     const availableApps = await context.getAvailableApps();
-    const foundApp = availableApps.find((a) => a.name == name || a.slug == name);
+    const foundApp = availableApps.find((a) => a.slug == slug);
     if (foundApp) {
       return foundApp.slug;
     }
@@ -45,7 +45,7 @@ export const app = Flags.custom({
 
               Did you mean one of these?
 
-                ${sortBy(availableApps, (app) => levenshtein.get(app.slug, name))
+                ${sortBy(availableApps, (app) => levenshtein.get(app.slug, slug))
                   .slice(0, 10)
                   .map((app) => `* ${app.slug}`)
                   .join("\n")}

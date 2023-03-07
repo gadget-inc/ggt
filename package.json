@@ -50,7 +50,7 @@
     "get-port": "^5.1.1",
     "got": "^11.8.5",
     "graphql": "^16.6.0",
-    "graphql-ws": "^5.11.3",
+    "graphql-ws": "^5.12.0",
     "ignore": "^5.2.4",
     "inquirer": "^8.2.5",
     "lodash": "^4.17.21",

@@ -56,7 +56,7 @@
     "lodash": "^4.17.21",
     "node-notifier": "^10.0.1",
     "normalize-path": "^3.0.0",
-    "open": "^8.4.1",
+    "open": "^8.4.2",
     "p-map": "^4.0.0",
     "p-queue": "^6.6.2",
     "pluralize": "^8.0.0",

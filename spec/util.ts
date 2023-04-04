@@ -19,7 +19,9 @@ export async function getError(fnThatThrows: () => unknown): Promise<any> {
 export async function expectDir(dir: string, expected: Record<string, any>): Promise<void> {
   const actual: Record<string, string> = {};
   for await (const filepath of walkDir(dir)) {
-    actual[normalizePath(path.relative(dir, filepath))] = await fs.readFile(filepath, "utf-8");
+    const isDirectory = (await fs.lstat(filepath)).isDirectory();
+    const relativePath = path.relative(dir, filepath);
+    actual[normalizePath(`${relativePath}${isDirectory ? "/" : ""}`, false)] = isDirectory ? "" : await fs.readFile(filepath, "utf-8");
   }
   expect(actual).toEqual(expected);
 }
@@ -27,7 +29,9 @@ export async function expectDir(dir: string, expected: Record<string, any>): Pro
 export function expectDirSync(dir: string, expected: Record<string, string>): void {
   const actual: Record<string, string> = {};
   for (const filepath of walkDirSync(dir)) {
-    actual[normalizePath(path.relative(dir, filepath))] = fs.readFileSync(filepath, "utf-8");
+    const isDirectory = fs.lstatSync(filepath).isDirectory();
+    const relativePath = path.relative(dir, filepath);
+    actual[normalizePath(`${relativePath}${isDirectory ? "/" : ""}`, false)] = isDirectory ? "" : fs.readFileSync(filepath, "utf-8");
   }
   expect(actual).toEqual(expected);
 }
@@ -35,7 +39,11 @@ export function expectDirSync(dir: string, expected: Record<string, string>): vo
 export async function setupDir(dir: string, files: Record<string, string>): Promise<void> {
   await fs.emptyDir(dir);
   for (const [filepath, content] of Object.entries(files)) {
-    await fs.outputFile(path.join(dir, filepath), content);
+    if (filepath.endsWith("/")) {
+      await fs.ensureDir(path.join(dir, filepath));
+    } else {
+      await fs.outputFile(path.join(dir, filepath), content);
+    }
   }
 }
 

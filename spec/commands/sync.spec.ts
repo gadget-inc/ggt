@@ -440,6 +440,24 @@ describe("Sync", () => {
         });
       });
 
+      it("writes empty directories", async () => {
+        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+          data: {
+            remoteFileSyncEvents: {
+              remoteFilesVersion: "1",
+              changed: [{ path: "dir/", content: toBase64(""), mode: 493, encoding: FileSyncEncoding.Base64 }],
+              deleted: [],
+            },
+          },
+        });
+
+        await sleepUntil(() => sync.metadata.filesVersion == "1");
+
+        await expectDir(dir, {
+          "dir/": "",
+        });
+      });
+
       it("deletes deleted files", async () => {
         await setupDir(dir, {
           "file.js": "foo",
@@ -458,7 +476,9 @@ describe("Sync", () => {
 
         await sleepUntil(() => sync.metadata.filesVersion == "1");
 
-        await expectDir(dir, {});
+        await expectDir(dir, {
+          "some/deeply/nested/": "",
+        });
       });
 
       it("updates `metadata.filesVersion` even if nothing changed", async () => {
@@ -571,22 +591,6 @@ describe("Sync", () => {
         expect(sync.status).toBe(SyncStatus.RUNNING);
       });
 
-      it("does not write empty directories", async () => {
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
-          data: {
-            remoteFileSyncEvents: {
-              remoteFilesVersion: "1",
-              changed: [{ path: "dir/", content: toBase64(""), mode: 493, encoding: FileSyncEncoding.Base64 }],
-              deleted: [],
-            },
-          },
-        });
-
-        await sleepUntil(() => sync.metadata.filesVersion == "1");
-
-        await expectDir(dir, {});
-      });
-
       it("runs `yarn install` when yarn.lock changes", async () => {
         client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
@@ -624,6 +628,28 @@ describe("Sync", () => {
         await sleepUntil(() => sync.metadata.filesVersion == "1");
 
         expect(execa).not.toHaveBeenCalled();
+      });
+
+      it("writes deletes before changes", async () => {
+        await setupDir(dir, {
+          "foo/": "",
+        });
+
+        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+          data: {
+            remoteFileSyncEvents: {
+              remoteFilesVersion: "1",
+              changed: [{ path: "foo/baz.js", content: toBase64("// baz.js"), mode: 0o644, encoding: FileSyncEncoding.Base64 }],
+              deleted: [{ path: "foo/" }],
+            },
+          },
+        });
+
+        await sleepUntil(() => sync.metadata.filesVersion == "1");
+
+        await expectDir(dir, {
+          "foo/baz.js": "// baz.js",
+        });
       });
 
       describe("with an ignore file", () => {
@@ -814,20 +840,36 @@ describe("Sync", () => {
         });
       });
 
-      it("does not publish addDir events", () => {
-        jest.spyOn(sync, "publish");
-
+      it("publishes add events on addDir events", async () => {
         emit.all("addDir", path.join(dir, "some/deeply/nested/"), stats);
 
-        expect(sync.publish).not.toHaveBeenCalled();
+        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+          input: {
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
+            changed: expect.toIncludeAllMembers([
+              { path: "some/deeply/nested/", content: "", mode: 420, encoding: FileSyncEncoding.Base64 },
+            ]),
+            deleted: [],
+          },
+        });
       });
 
-      it("does not publish unlinkDir events", () => {
-        jest.spyOn(sync, "publish");
-
+      it("publishes delete events on unlinkDir events", async () => {
         emit.all("unlinkDir", path.join(dir, "some/deeply/nested/"), stats);
 
-        expect(sync.publish).not.toHaveBeenCalled();
+        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+          input: {
+            expectedRemoteFilesVersion: sync.metadata.filesVersion,
+            changed: [],
+            deleted: expect.toIncludeAllMembers([{ path: "some/deeply/nested/" }]),
+          },
+        });
       });
 
       it("does not publish changed events from files that were deleted after the change event but before publish", async () => {

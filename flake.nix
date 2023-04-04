@@ -26,6 +26,8 @@
               };
 
               nodejs = pkgs.nodejs-16_x;
+
+              mkcert = pkgs.mkcert;
             };
 
           devShell = pkgs.mkShell {

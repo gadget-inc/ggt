@@ -21,7 +21,8 @@
     "/README.md"
   ],
   "scripts": {
-    "build": "rimraf lib && tsc --build && oclif manifest",
+    "build": "npm run clean && tsc --build && oclif manifest",
+    "clean": "rimraf lib tmp oclif.manifest.json",
     "generate-graphql": "graphql-codegen --config graphql-codegen.yml",
     "lint": "concurrently --prefix none --group 'npm:lint:*'",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",

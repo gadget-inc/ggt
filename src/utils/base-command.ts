@@ -201,7 +201,12 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
    * Overrides the default `catch` behavior so we can control how errors are printed to the user. This is called automatically by oclif when
    * an error is thrown during the `init` or `run` methods.
    */
-  override async catch(cause: Error & { exitCode?: number }): Promise<never> {
+  override async catch(cause: Error & { oclif?: { exit: number } }): Promise<never> {
+    if (cause.oclif?.exit === 0) {
+      // we called `this.exit(0)` so we're not actually exiting with an error
+      throw cause;
+    }
+
     const error = cause instanceof BaseError ? cause : new UnknownError(cause);
     console.error(error.render());
     await error.capture();
@@ -212,6 +217,6 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
     //
     //  catch: https://github.com/oclif/core/blob/12e31ff2288606e583e03bf774a3244f3136cd10/src/command.ts#L261
     // handle: https://github.com/oclif/core/blob/12e31ff2288606e583e03bf774a3244f3136cd10/src/errors/handle.ts#L15
-    throw new ExitError(process.exitCode ?? cause.exitCode ?? 1);
+    throw new ExitError(process.exitCode ?? cause.oclif?.exit ?? 1);
   }
 }

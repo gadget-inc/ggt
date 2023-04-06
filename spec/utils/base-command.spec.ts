@@ -7,6 +7,9 @@ import open from "open";
 import { BaseCommand } from "../../src/utils/base-command";
 import { context } from "../../src/utils/context";
 import { sleepUntil } from "../../src/utils/sleep";
+import { ExitError } from "@oclif/errors";
+import { BaseError } from "../../src/utils/errors";
+import { getError } from "../util";
 
 class Base extends BaseCommand<typeof Base> {
   run = jest.fn();
@@ -178,6 +181,17 @@ describe("BaseCommand", () => {
       expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${context.domains.services}/auth/cli?success=false` });
       expect(res.end).toHaveBeenCalled();
       expect(server.close).toHaveBeenCalled();
+    });
+  });
+
+  describe("catch", () => {
+    it("immediately rethrows ExitError with a 0 exit code", async () => {
+      const spy = jest.spyOn(BaseError.prototype, "capture");
+      const error = await getError(() => base.catch(new ExitError(0)));
+
+      expect(spy).not.toHaveBeenCalled();
+      expect(error).toBeInstanceOf(ExitError);
+      expect(error.oclif.exit).toBe(0);
     });
   });
 });

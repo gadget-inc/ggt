@@ -45,7 +45,7 @@
       },
       "devDependencies": {
         "@changesets/cli": "^2.26.0",
-        "@graphql-codegen/add": "^4.0.0",
+        "@graphql-codegen/add": "^4.0.1",
         "@graphql-codegen/cli": "^3.0.0",
         "@graphql-codegen/typescript": "^3.0.3",
         "@graphql-codegen/typescript-operations": "^3.0.0",
@@ -2648,23 +2648,17 @@
       "license": "MIT"
     },
     "node_modules/@graphql-codegen/add": {
-      "version": "4.0.0",
-      "resolved": "https://registry.npmjs.org/@graphql-codegen/add/-/add-4.0.0.tgz",
-      "integrity": "sha512-AxuDFdDi4Hx1fVVSkSo9O0i/kGEidjXw3gqSfx6H+dSeC/gcjpsVZyCyvXERVXpTNXYobVIJtTV3UaSzGNZMSw==",
+      "version": "4.0.1",
+      "resolved": "https://registry.npmjs.org/@graphql-codegen/add/-/add-4.0.1.tgz",
+      "integrity": "sha512-A7k+9eRfrKyyNfhWEN/0eKz09R5cp4XXxUuNLQAVm/aohmVI2xdMV4lM02rTlM6Pyou3cU/v0iZnhgo6IRpqeg==",
       "dev": true,
       "dependencies": {
-        "@graphql-codegen/plugin-helpers": "^4.0.0",
-        "tslib": "~2.4.0"
+        "@graphql-codegen/plugin-helpers": "^4.1.0",
+        "tslib": "~2.5.0"
       },
       "peerDependencies": {
         "graphql": "^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0"
       }
-    },
-    "node_modules/@graphql-codegen/add/node_modules/tslib": {
-      "version": "2.4.1",
-      "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.4.1.tgz",
-      "integrity": "sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==",
-      "dev": true
     },
     "node_modules/@graphql-codegen/cli": {
       "version": "3.0.0",
@@ -19389,21 +19383,13 @@
       "dev": true
     },
     "@graphql-codegen/add": {
-      "version": "4.0.0",
-      "resolved": "https://registry.npmjs.org/@graphql-codegen/add/-/add-4.0.0.tgz",
-      "integrity": "sha512-AxuDFdDi4Hx1fVVSkSo9O0i/kGEidjXw3gqSfx6H+dSeC/gcjpsVZyCyvXERVXpTNXYobVIJtTV3UaSzGNZMSw==",
+      "version": "4.0.1",
+      "resolved": "https://registry.npmjs.org/@graphql-codegen/add/-/add-4.0.1.tgz",
+      "integrity": "sha512-A7k+9eRfrKyyNfhWEN/0eKz09R5cp4XXxUuNLQAVm/aohmVI2xdMV4lM02rTlM6Pyou3cU/v0iZnhgo6IRpqeg==",
       "dev": true,
       "requires": {
-        "@graphql-codegen/plugin-helpers": "^4.0.0",
-        "tslib": "~2.4.0"
-      },
-      "dependencies": {
-        "tslib": {
-          "version": "2.4.1",
-          "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.4.1.tgz",
-          "integrity": "sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==",
-          "dev": true
-        }
+        "@graphql-codegen/plugin-helpers": "^4.1.0",
+        "tslib": "~2.5.0"
       }
     },
     "@graphql-codegen/cli": {

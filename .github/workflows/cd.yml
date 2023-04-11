@@ -43,7 +43,8 @@ jobs:
         name: Create Sentry release
         uses: getsentry/action-release@v1
         with:
-          version: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
+          environment: production
+          version: ${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
           sourcemaps: ./lib
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

@@ -10,13 +10,9 @@ import type { CloseEvent, ErrorEvent } from "ws";
 import type Sync from "../commands/sync";
 import type { Payload } from "./client";
 import { context } from "./context";
-import * as Sentry from "@sentry/node";
 import os from "os";
+import * as Sentry from "@sentry/node";
 import { randomUUID } from "crypto";
-
-if (context.env.productionLike) {
-  Sentry.init({ dsn: "https://0c26e0d8afd94e77a88ee1c3aa9e7065@o250689.ingest.sentry.io/6703266" });
-}
 
 /**
  * Base class for all errors.

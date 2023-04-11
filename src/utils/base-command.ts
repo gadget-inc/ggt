@@ -3,6 +3,7 @@ import { Command, Flags, settings } from "@oclif/core";
 import { ExitError } from "@oclif/core/lib/errors";
 import chalk from "chalk";
 import Debug from "debug";
+import * as Sentry from "@sentry/node";
 import getPort from "get-port";
 import type { Server } from "http";
 import { createServer } from "http";
@@ -72,9 +73,16 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
   }
 
   override async init(): Promise<void> {
-    await super.init();
-
     context.config = this.config;
+
+    if (context.env.productionLike) {
+      Sentry.init({
+        dsn: "https://0c26e0d8afd94e77a88ee1c3aa9e7065@o250689.ingest.sentry.io/6703266",
+        release: context.config.version,
+      });
+    }
+
+    await super.init();
 
     const { flags, args } = await this.parse({
       flags: this.ctor.flags,

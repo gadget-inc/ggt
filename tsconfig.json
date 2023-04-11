@@ -23,8 +23,10 @@
     "importHelpers": true,
     "inlineSources": true,
     "noEmit": false,
+    "noEmitHelpers": true,
     "outDir": "lib",
     "sourceMap": true,
+    "sourceRoot": "/",
     "stripInternal": true,
 
     /* JavaScript Support */

@@ -84,6 +84,22 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
 
     await super.init();
 
+    if (this.requireUser && !(await context.getUser())) {
+      // we purposely log the user in before parsing flags in case one of the flags requires the user to be logged in
+      // e.g. the `--app` flag verifies that the user has access to the app they are trying to use
+      const { login } = await prompt<{ login: boolean }>({
+        type: "confirm",
+        name: "login",
+        message: "You must be logged in to use this command. Would you like to log in?",
+      });
+
+      if (!login) {
+        return this.exit(0);
+      }
+
+      await this.login();
+    }
+
     const { flags, args } = await this.parse({
       flags: this.ctor.flags,
       baseFlags: (super.ctor as typeof BaseCommand).baseFlags,
@@ -97,20 +113,6 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
     if (flags.debug) {
       settings.debug = true;
       Debug.enable(`${this.config.bin}:*`);
-    }
-
-    if (this.requireUser && !(await context.getUser())) {
-      const { login } = await prompt<{ login: boolean }>({
-        type: "confirm",
-        name: "login",
-        message: "You must be logged in to use this command. Would you like to log in?",
-      });
-
-      if (!login) {
-        return this.exit(0);
-      }
-
-      await this.login();
     }
   }
 

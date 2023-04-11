@@ -11,7 +11,7 @@
       "dependencies": {
         "@oclif/core": "^2.8.1",
         "@oclif/errors": "^1.3.6",
-        "@oclif/plugin-not-found": "^2.3.21",
+        "@oclif/plugin-not-found": "^2.3.23",
         "@oclif/plugin-warn-if-update-available": "^2.0.33",
         "@sentry/node": "^7.47.0",
         "chalk": "^4.1.2",
@@ -4700,12 +4700,12 @@
       }
     },
     "node_modules/@oclif/plugin-not-found": {
-      "version": "2.3.21",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.21.tgz",
-      "integrity": "sha512-6N0gTWQhl5nuE5bXipv5+8vH5cHyGgEd3MKJHQYxFnHIFwwb9jJnFl0BZ0fo7Jrjd9HZYCLT7rjnouS7p1Dl1w==",
+      "version": "2.3.23",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.23.tgz",
+      "integrity": "sha512-UZM8aolxXvqwH8WcmJxRNASDWgMoSQm/pgCdkc1AGCRevYc8+LBSO+U6nLWq+Dx8H/dn9RyIv5oiUIOGkKDlZA==",
       "dependencies": {
         "@oclif/color": "^1.0.4",
-        "@oclif/core": "^2.3.0",
+        "@oclif/core": "^2.8.0",
         "fast-levenshtein": "^3.0.0",
         "lodash": "^4.17.21"
       },
@@ -20863,12 +20863,12 @@
       }
     },
     "@oclif/plugin-not-found": {
-      "version": "2.3.21",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.21.tgz",
-      "integrity": "sha512-6N0gTWQhl5nuE5bXipv5+8vH5cHyGgEd3MKJHQYxFnHIFwwb9jJnFl0BZ0fo7Jrjd9HZYCLT7rjnouS7p1Dl1w==",
+      "version": "2.3.23",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.23.tgz",
+      "integrity": "sha512-UZM8aolxXvqwH8WcmJxRNASDWgMoSQm/pgCdkc1AGCRevYc8+LBSO+U6nLWq+Dx8H/dn9RyIv5oiUIOGkKDlZA==",
       "requires": {
         "@oclif/color": "^1.0.4",
-        "@oclif/core": "^2.3.0",
+        "@oclif/core": "^2.8.0",
         "fast-levenshtein": "^3.0.0",
         "lodash": "^4.17.21"
       }

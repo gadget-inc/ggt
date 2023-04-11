@@ -51,7 +51,7 @@
         "@graphql-codegen/typescript-operations": "^3.0.3",
         "@oclif/plugin-plugins": "^2.3.2",
         "@oclif/test": "^2.3.15",
-        "@swc/core": "^1.3.35",
+        "@swc/core": "^1.3.49",
         "@swc/helpers": "^0.5.0",
         "@swc/jest": "^0.2.24",
         "@types/debug": "^4.1.7",
@@ -5153,9 +5153,9 @@
       }
     },
     "node_modules/@swc/core": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core/-/core-1.3.35.tgz",
-      "integrity": "sha512-KmiBin0XSVzJhzX19zTiCqmLslZ40Cl7zqskJcTDeIrRhfgKdiAsxzYUanJgMJIRjYtl9Kcg1V/Ip2o2wL8v3w==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core/-/core-1.3.49.tgz",
+      "integrity": "sha512-br44ZHOfE9YyRGcORSLkHFQHTvhwRcaithBJ1Q5y5iMGpLbH0Wai3GN49L60RvmGwxNJfWzT+E7+rNNR7ewKgA==",
       "devOptional": true,
       "hasInstallScript": true,
       "engines": {
@@ -5166,22 +5166,30 @@
         "url": "https://opencollective.com/swc"
       },
       "optionalDependencies": {
-        "@swc/core-darwin-arm64": "1.3.35",
-        "@swc/core-darwin-x64": "1.3.35",
-        "@swc/core-linux-arm-gnueabihf": "1.3.35",
-        "@swc/core-linux-arm64-gnu": "1.3.35",
-        "@swc/core-linux-arm64-musl": "1.3.35",
-        "@swc/core-linux-x64-gnu": "1.3.35",
-        "@swc/core-linux-x64-musl": "1.3.35",
-        "@swc/core-win32-arm64-msvc": "1.3.35",
-        "@swc/core-win32-ia32-msvc": "1.3.35",
-        "@swc/core-win32-x64-msvc": "1.3.35"
+        "@swc/core-darwin-arm64": "1.3.49",
+        "@swc/core-darwin-x64": "1.3.49",
+        "@swc/core-linux-arm-gnueabihf": "1.3.49",
+        "@swc/core-linux-arm64-gnu": "1.3.49",
+        "@swc/core-linux-arm64-musl": "1.3.49",
+        "@swc/core-linux-x64-gnu": "1.3.49",
+        "@swc/core-linux-x64-musl": "1.3.49",
+        "@swc/core-win32-arm64-msvc": "1.3.49",
+        "@swc/core-win32-ia32-msvc": "1.3.49",
+        "@swc/core-win32-x64-msvc": "1.3.49"
+      },
+      "peerDependencies": {
+        "@swc/helpers": "^0.5.0"
+      },
+      "peerDependenciesMeta": {
+        "@swc/helpers": {
+          "optional": true
+        }
       }
     },
     "node_modules/@swc/core-darwin-arm64": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-darwin-arm64/-/core-darwin-arm64-1.3.35.tgz",
-      "integrity": "sha512-zQUFkHx4gZpu0uo2IspvPnKsz8bsdXd5bC33xwjtoAI1cpLerDyqo4v2zIahEp+FdKZjyVsLHtfJiQiA1Qka3A==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-darwin-arm64/-/core-darwin-arm64-1.3.49.tgz",
+      "integrity": "sha512-g7aIfXh6uPHmhLXdjXQq5t3HAyS/EdvujasW1DIS5k8UqOBaSoCcSGtLIjzcLv3KujqNfYcm118E+12H0nY6fQ==",
       "cpu": [
         "arm64"
       ],
@@ -5194,9 +5202,9 @@
       }
     },
     "node_modules/@swc/core-darwin-x64": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-darwin-x64/-/core-darwin-x64-1.3.35.tgz",
-      "integrity": "sha512-oOSkSGWtALovaw22lNevKD434OQTPf8X+dVPvPMrJXJpJ34dWDlFWpLntoc+arvKLNZ7LQmTuk8rR1hkrAY7cw==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-darwin-x64/-/core-darwin-x64-1.3.49.tgz",
+      "integrity": "sha512-eSIxVX0YDw40Bre5sAx2BV3DzdIGzmQvCf2yiBvLqiiL6GC0mmuDeWbUCAzdUX6fJ6FUVEBMUVqNOc9oJ2/d5w==",
       "cpu": [
         "x64"
       ],
@@ -5209,9 +5217,9 @@
       }
     },
     "node_modules/@swc/core-linux-arm-gnueabihf": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm-gnueabihf/-/core-linux-arm-gnueabihf-1.3.35.tgz",
-      "integrity": "sha512-Yie8k00O6O8BCATS/xeKStquV4OYSskUGRDXBQVDw1FrE23PHaSeHCgg4q6iNZjJzXCOJbaTCKnYoIDn9DMf7A==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm-gnueabihf/-/core-linux-arm-gnueabihf-1.3.49.tgz",
+      "integrity": "sha512-8mj3IcRVr/OJY0mVITz6Z5osNAMJK5GiKDaZ+3QejPLbl6aiu4sH4GmTHDRN14RnaVXOpecsGcUoQmNoNa3u3w==",
       "cpu": [
         "arm"
       ],
@@ -5224,9 +5232,9 @@
       }
     },
     "node_modules/@swc/core-linux-arm64-gnu": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm64-gnu/-/core-linux-arm64-gnu-1.3.35.tgz",
-      "integrity": "sha512-Zlv3WHa/4x2p51HSvjUWXHfSe1Gl2prqImUZJc8NZOlj75BFzVuR0auhQ+LbwvIQ3gaA1LODX9lyS9wXL3yjxA==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm64-gnu/-/core-linux-arm64-gnu-1.3.49.tgz",
+      "integrity": "sha512-Rmg9xw6tmpOpf6GKKjpHQGmjfHzqSths5ebI2ahrHlhekzZF2HYmPkVw4bHda8Bja6mbaw8FVBgBHjPU8mMeDA==",
       "cpu": [
         "arm64"
       ],
@@ -5239,9 +5247,9 @@
       }
     },
     "node_modules/@swc/core-linux-arm64-musl": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm64-musl/-/core-linux-arm64-musl-1.3.35.tgz",
-      "integrity": "sha512-u6tCYsrSyZ8U+4jLMA/O82veBfLy2aUpn51WxQaeH7wqZGy9TGSJXoO8vWxARQ6b72vjsnKDJHP4MD8hFwcctg==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm64-musl/-/core-linux-arm64-musl-1.3.49.tgz",
+      "integrity": "sha512-nlKPYMogAI3Aak6Mlkag8/2AlHAZ/DpH7RjhfMazsaGhD/sQOmYdyY9Al69ejpa419YJuREeeeLoojFlSsd30g==",
       "cpu": [
         "arm64"
       ],
@@ -5254,9 +5262,9 @@
       }
     },
     "node_modules/@swc/core-linux-x64-gnu": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-x64-gnu/-/core-linux-x64-gnu-1.3.35.tgz",
-      "integrity": "sha512-Dtxf2IbeH7XlNhP1Qt2/MvUPkpEbn7hhGfpSRs4ot8D3Vf5QEX4S/QtC1OsFWuciiYgHAT1Ybjt4xZic9DSkmA==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-x64-gnu/-/core-linux-x64-gnu-1.3.49.tgz",
+      "integrity": "sha512-QOyeJQ6NVi73SJcizbwvIZTiGA/N+BxX9liRrvibumaQmRh8fWjJiLNsv3ODSHeuonak7E8Bf7a7NnSTyu48Mw==",
       "cpu": [
         "x64"
       ],
@@ -5269,9 +5277,9 @@
       }
     },
     "node_modules/@swc/core-linux-x64-musl": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-x64-musl/-/core-linux-x64-musl-1.3.35.tgz",
-      "integrity": "sha512-4XavNJ60GprjpTiESCu5daJUnmErixPAqDitJSMu4TV32LNIE8G00S9pDLXinDTW1rgcGtQdq1NLkNRmwwovtg==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-x64-musl/-/core-linux-x64-musl-1.3.49.tgz",
+      "integrity": "sha512-WlDMz+SOpYC9O/ZBUw1oiyWI7HyUCMlf/HS8Fy/kRI3eGoGCUxVTCJ1mP57GdQr4Wg32Y/ZpO2KSNQFWnT8mAw==",
       "cpu": [
         "x64"
       ],
@@ -5284,9 +5292,9 @@
       }
     },
     "node_modules/@swc/core-win32-arm64-msvc": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-win32-arm64-msvc/-/core-win32-arm64-msvc-1.3.35.tgz",
-      "integrity": "sha512-dNGfKCUSX2M4qVyaS80Lyos0FkXyHRCvrdQ2Y4Hrg3FVokiuw3yY6fLohpUfQ5ws3n2A39dh7jGDeh34+l0sGA==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-win32-arm64-msvc/-/core-win32-arm64-msvc-1.3.49.tgz",
+      "integrity": "sha512-41LZOeI94Za3twib8KOIjnHYAZ+nkBFmboaREsFR1760S7jiMVywqWX8nFZvn/CXj15Fjjgdgyuig+zMREwXwQ==",
       "cpu": [
         "arm64"
       ],
@@ -5299,9 +5307,9 @@
       }
     },
     "node_modules/@swc/core-win32-ia32-msvc": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-win32-ia32-msvc/-/core-win32-ia32-msvc-1.3.35.tgz",
-      "integrity": "sha512-ChuPSrDR+JBf7S7dEKPicnG8A3bM0uWPsW2vG+V2wH4iNfNxKVemESHosmYVeEZXqMpomNMvLyeHep1rjRsc0Q==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-win32-ia32-msvc/-/core-win32-ia32-msvc-1.3.49.tgz",
+      "integrity": "sha512-IdqLPoMKssyAoOCZdNXmnAd6/uyx+Hb9KSfZUHepZaNfwMy6J5XXrOsbYs3v53FH8MtekUUdV+mMX4me9bcv9w==",
       "cpu": [
         "ia32"
       ],
@@ -5314,9 +5322,9 @@
       }
     },
     "node_modules/@swc/core-win32-x64-msvc": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-win32-x64-msvc/-/core-win32-x64-msvc-1.3.35.tgz",
-      "integrity": "sha512-/RvphT4WfuGfIK84Ha0dovdPrKB1bW/mc+dtdmhv2E3EGkNc5FoueNwYmXWRimxnU7X0X7IkcRhyKB4G5DeAmg==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-win32-x64-msvc/-/core-win32-x64-msvc-1.3.49.tgz",
+      "integrity": "sha512-7Fqjo5pS3uIohhSbYSaR0+e/bJdxmQb4oG97FIh5qvlCCGQaQ9UiaEeYy4uK0Ad+Menum1IXCAEiG7RHcl6Eyw==",
       "cpu": [
         "x64"
       ],
@@ -5332,7 +5340,7 @@
       "version": "0.5.0",
       "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.0.tgz",
       "integrity": "sha512-SjY/p4MmECVVEWspzSRpQEM3sjR17sP8PbGxELWrT+YZMBfiUyt1MRUNjMV23zohwlG2HYtCQOsCwsTHguXkyg==",
-      "dev": true,
+      "devOptional": true,
       "dependencies": {
         "tslib": "^2.4.0"
       }
@@ -21401,88 +21409,88 @@
       }
     },
     "@swc/core": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core/-/core-1.3.35.tgz",
-      "integrity": "sha512-KmiBin0XSVzJhzX19zTiCqmLslZ40Cl7zqskJcTDeIrRhfgKdiAsxzYUanJgMJIRjYtl9Kcg1V/Ip2o2wL8v3w==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core/-/core-1.3.49.tgz",
+      "integrity": "sha512-br44ZHOfE9YyRGcORSLkHFQHTvhwRcaithBJ1Q5y5iMGpLbH0Wai3GN49L60RvmGwxNJfWzT+E7+rNNR7ewKgA==",
       "devOptional": true,
       "requires": {
-        "@swc/core-darwin-arm64": "1.3.35",
-        "@swc/core-darwin-x64": "1.3.35",
-        "@swc/core-linux-arm-gnueabihf": "1.3.35",
-        "@swc/core-linux-arm64-gnu": "1.3.35",
-        "@swc/core-linux-arm64-musl": "1.3.35",
-        "@swc/core-linux-x64-gnu": "1.3.35",
-        "@swc/core-linux-x64-musl": "1.3.35",
-        "@swc/core-win32-arm64-msvc": "1.3.35",
-        "@swc/core-win32-ia32-msvc": "1.3.35",
-        "@swc/core-win32-x64-msvc": "1.3.35"
+        "@swc/core-darwin-arm64": "1.3.49",
+        "@swc/core-darwin-x64": "1.3.49",
+        "@swc/core-linux-arm-gnueabihf": "1.3.49",
+        "@swc/core-linux-arm64-gnu": "1.3.49",
+        "@swc/core-linux-arm64-musl": "1.3.49",
+        "@swc/core-linux-x64-gnu": "1.3.49",
+        "@swc/core-linux-x64-musl": "1.3.49",
+        "@swc/core-win32-arm64-msvc": "1.3.49",
+        "@swc/core-win32-ia32-msvc": "1.3.49",
+        "@swc/core-win32-x64-msvc": "1.3.49"
       }
     },
     "@swc/core-darwin-arm64": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-darwin-arm64/-/core-darwin-arm64-1.3.35.tgz",
-      "integrity": "sha512-zQUFkHx4gZpu0uo2IspvPnKsz8bsdXd5bC33xwjtoAI1cpLerDyqo4v2zIahEp+FdKZjyVsLHtfJiQiA1Qka3A==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-darwin-arm64/-/core-darwin-arm64-1.3.49.tgz",
+      "integrity": "sha512-g7aIfXh6uPHmhLXdjXQq5t3HAyS/EdvujasW1DIS5k8UqOBaSoCcSGtLIjzcLv3KujqNfYcm118E+12H0nY6fQ==",
       "optional": true
     },
     "@swc/core-darwin-x64": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-darwin-x64/-/core-darwin-x64-1.3.35.tgz",
-      "integrity": "sha512-oOSkSGWtALovaw22lNevKD434OQTPf8X+dVPvPMrJXJpJ34dWDlFWpLntoc+arvKLNZ7LQmTuk8rR1hkrAY7cw==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-darwin-x64/-/core-darwin-x64-1.3.49.tgz",
+      "integrity": "sha512-eSIxVX0YDw40Bre5sAx2BV3DzdIGzmQvCf2yiBvLqiiL6GC0mmuDeWbUCAzdUX6fJ6FUVEBMUVqNOc9oJ2/d5w==",
       "optional": true
     },
     "@swc/core-linux-arm-gnueabihf": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm-gnueabihf/-/core-linux-arm-gnueabihf-1.3.35.tgz",
-      "integrity": "sha512-Yie8k00O6O8BCATS/xeKStquV4OYSskUGRDXBQVDw1FrE23PHaSeHCgg4q6iNZjJzXCOJbaTCKnYoIDn9DMf7A==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm-gnueabihf/-/core-linux-arm-gnueabihf-1.3.49.tgz",
+      "integrity": "sha512-8mj3IcRVr/OJY0mVITz6Z5osNAMJK5GiKDaZ+3QejPLbl6aiu4sH4GmTHDRN14RnaVXOpecsGcUoQmNoNa3u3w==",
       "optional": true
     },
     "@swc/core-linux-arm64-gnu": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm64-gnu/-/core-linux-arm64-gnu-1.3.35.tgz",
-      "integrity": "sha512-Zlv3WHa/4x2p51HSvjUWXHfSe1Gl2prqImUZJc8NZOlj75BFzVuR0auhQ+LbwvIQ3gaA1LODX9lyS9wXL3yjxA==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm64-gnu/-/core-linux-arm64-gnu-1.3.49.tgz",
+      "integrity": "sha512-Rmg9xw6tmpOpf6GKKjpHQGmjfHzqSths5ebI2ahrHlhekzZF2HYmPkVw4bHda8Bja6mbaw8FVBgBHjPU8mMeDA==",
       "optional": true
     },
     "@swc/core-linux-arm64-musl": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm64-musl/-/core-linux-arm64-musl-1.3.35.tgz",
-      "integrity": "sha512-u6tCYsrSyZ8U+4jLMA/O82veBfLy2aUpn51WxQaeH7wqZGy9TGSJXoO8vWxARQ6b72vjsnKDJHP4MD8hFwcctg==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-arm64-musl/-/core-linux-arm64-musl-1.3.49.tgz",
+      "integrity": "sha512-nlKPYMogAI3Aak6Mlkag8/2AlHAZ/DpH7RjhfMazsaGhD/sQOmYdyY9Al69ejpa419YJuREeeeLoojFlSsd30g==",
       "optional": true
     },
     "@swc/core-linux-x64-gnu": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-x64-gnu/-/core-linux-x64-gnu-1.3.35.tgz",
-      "integrity": "sha512-Dtxf2IbeH7XlNhP1Qt2/MvUPkpEbn7hhGfpSRs4ot8D3Vf5QEX4S/QtC1OsFWuciiYgHAT1Ybjt4xZic9DSkmA==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-x64-gnu/-/core-linux-x64-gnu-1.3.49.tgz",
+      "integrity": "sha512-QOyeJQ6NVi73SJcizbwvIZTiGA/N+BxX9liRrvibumaQmRh8fWjJiLNsv3ODSHeuonak7E8Bf7a7NnSTyu48Mw==",
       "optional": true
     },
     "@swc/core-linux-x64-musl": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-linux-x64-musl/-/core-linux-x64-musl-1.3.35.tgz",
-      "integrity": "sha512-4XavNJ60GprjpTiESCu5daJUnmErixPAqDitJSMu4TV32LNIE8G00S9pDLXinDTW1rgcGtQdq1NLkNRmwwovtg==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-linux-x64-musl/-/core-linux-x64-musl-1.3.49.tgz",
+      "integrity": "sha512-WlDMz+SOpYC9O/ZBUw1oiyWI7HyUCMlf/HS8Fy/kRI3eGoGCUxVTCJ1mP57GdQr4Wg32Y/ZpO2KSNQFWnT8mAw==",
       "optional": true
     },
     "@swc/core-win32-arm64-msvc": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-win32-arm64-msvc/-/core-win32-arm64-msvc-1.3.35.tgz",
-      "integrity": "sha512-dNGfKCUSX2M4qVyaS80Lyos0FkXyHRCvrdQ2Y4Hrg3FVokiuw3yY6fLohpUfQ5ws3n2A39dh7jGDeh34+l0sGA==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-win32-arm64-msvc/-/core-win32-arm64-msvc-1.3.49.tgz",
+      "integrity": "sha512-41LZOeI94Za3twib8KOIjnHYAZ+nkBFmboaREsFR1760S7jiMVywqWX8nFZvn/CXj15Fjjgdgyuig+zMREwXwQ==",
       "optional": true
     },
     "@swc/core-win32-ia32-msvc": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-win32-ia32-msvc/-/core-win32-ia32-msvc-1.3.35.tgz",
-      "integrity": "sha512-ChuPSrDR+JBf7S7dEKPicnG8A3bM0uWPsW2vG+V2wH4iNfNxKVemESHosmYVeEZXqMpomNMvLyeHep1rjRsc0Q==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-win32-ia32-msvc/-/core-win32-ia32-msvc-1.3.49.tgz",
+      "integrity": "sha512-IdqLPoMKssyAoOCZdNXmnAd6/uyx+Hb9KSfZUHepZaNfwMy6J5XXrOsbYs3v53FH8MtekUUdV+mMX4me9bcv9w==",
       "optional": true
     },
     "@swc/core-win32-x64-msvc": {
-      "version": "1.3.35",
-      "resolved": "https://registry.npmjs.org/@swc/core-win32-x64-msvc/-/core-win32-x64-msvc-1.3.35.tgz",
-      "integrity": "sha512-/RvphT4WfuGfIK84Ha0dovdPrKB1bW/mc+dtdmhv2E3EGkNc5FoueNwYmXWRimxnU7X0X7IkcRhyKB4G5DeAmg==",
+      "version": "1.3.49",
+      "resolved": "https://registry.npmjs.org/@swc/core-win32-x64-msvc/-/core-win32-x64-msvc-1.3.49.tgz",
+      "integrity": "sha512-7Fqjo5pS3uIohhSbYSaR0+e/bJdxmQb4oG97FIh5qvlCCGQaQ9UiaEeYy4uK0Ad+Menum1IXCAEiG7RHcl6Eyw==",
       "optional": true
     },
     "@swc/helpers": {
       "version": "0.5.0",
       "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.0.tgz",
       "integrity": "sha512-SjY/p4MmECVVEWspzSRpQEM3sjR17sP8PbGxELWrT+YZMBfiUyt1MRUNjMV23zohwlG2HYtCQOsCwsTHguXkyg==",
-      "dev": true,
+      "devOptional": true,
       "requires": {
         "tslib": "^2.4.0"
       }

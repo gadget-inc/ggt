@@ -80,7 +80,7 @@
         "nock": "^13.3.0",
         "oclif": "^3.7.0",
         "patch-package": "^6.5.1",
-        "prettier": "^2.8.4",
+        "prettier": "^2.8.7",
         "prettier-plugin-packagejson": "^2.4.3",
         "rimraf": "^4.1.2",
         "ts-node": "^10.9.1",
@@ -14179,9 +14179,9 @@
       }
     },
     "node_modules/prettier": {
-      "version": "2.8.4",
-      "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.4.tgz",
-      "integrity": "sha512-vIS4Rlc2FNh0BySk3Wkd6xmwxB0FpOndW5fisM5H8hsZSxU2VWVB5CWIkIjWvrHjIhxk2g3bfMKM87zNTrZddw==",
+      "version": "2.8.7",
+      "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.7.tgz",
+      "integrity": "sha512-yPngTo3aXUUmyuTjeTUT75txrf+aMh9FiD7q9ZE/i6r0bPb22g4FsE6Y338PQX1bmfy08i9QQCB7/rcUAVntfw==",
       "dev": true,
       "bin": {
         "prettier": "bin-prettier.js"
@@ -27706,9 +27706,9 @@
       "dev": true
     },
     "prettier": {
-      "version": "2.8.4",
-      "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.4.tgz",
-      "integrity": "sha512-vIS4Rlc2FNh0BySk3Wkd6xmwxB0FpOndW5fisM5H8hsZSxU2VWVB5CWIkIjWvrHjIhxk2g3bfMKM87zNTrZddw==",
+      "version": "2.8.7",
+      "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.7.tgz",
+      "integrity": "sha512-yPngTo3aXUUmyuTjeTUT75txrf+aMh9FiD7q9ZE/i6r0bPb22g4FsE6Y338PQX1bmfy08i9QQCB7/rcUAVntfw==",
       "dev": true
     },
     "prettier-plugin-packagejson": {

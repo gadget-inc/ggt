@@ -252,9 +252,19 @@ export class YarnNotFoundError extends BaseError {
 export class FlagError<T extends { name: string; char?: string } = { name: string; char?: string }> extends BaseError {
   isBug = IsBug.NO;
 
+  #message: string;
+
   constructor(readonly flag: T, readonly description: string) {
     const name = flag.char ? `-${flag.char}, --${flag.name}` : `--${flag.name}`;
-    super("GGT_CLI_FLAG_ERROR", `Invalid value provided for the ${name} flag`);
+    super("GGT_CLI_FLAG_ERROR", "");
+
+    // oclif overwrites the message property, so we have to use different one...
+    // https://github.com/oclif/core/blob/413592abca47ebedb2c006634a326bab325c26bd/src/parser/parse.ts#L317
+    this.#message = `Invalid value provided for the ${name} flag`;
+  }
+
+  protected override header(): string {
+    return `${this.code}: ${this.#message}`;
   }
 
   protected body(): string {

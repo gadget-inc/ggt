@@ -87,7 +87,7 @@
     "@types/node-notifier": "^8.0.2",
     "@types/normalize-path": "^3.0.0",
     "@types/pluralize": "^0.0.29",
-    "@types/which": "^2.0.2",
+    "@types/which": "^3.0.0",
     "@types/ws": "^8.5.4",
     "@typescript-eslint/eslint-plugin": "^5.58.0",
     "@typescript-eslint/parser": "^5.58.0",

@@ -1,5 +1,21 @@
 # @gadgetinc/ggt
 
+## 0.1.14
+
+### Patch Changes
+
+- 136d6c8: Add a command for listing apps the user has access to
+- ea7b71c: Bump @oclif/plugin-plugins from 2.3.2 to 2.4.4
+- 7327c95: Fix `ggt sync` auto login feature
+- 309d2fc: Bump @oclif/core from 2.8.0 to 2.8.1
+- bb3f734: Bump @oclif/plugin-warn-if-update-available from 2.0.29 to 2.0.33
+- a8a1102: Ignore `this.exit(0)` errors
+- af964e2: Bump fs-extra from 11.1.0 to 11.1.1
+- e249f63: Bump graphql-ws from 5.11.3 to 5.12.1
+- 28531a0: Bump @oclif/plugin-not-found from 2.3.21 to 2.3.23
+- b7ec027: Bump @sentry/node from 7.40.0 to 7.47.0
+- 82821e7: Bump oclif from 3.7.0 to 3.7.3
+
 ## 0.1.13
 
 ### Patch Changes

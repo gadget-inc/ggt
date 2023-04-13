@@ -27,6 +27,7 @@
     "lint": "concurrently --prefix none --group 'npm:lint:*'",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
     "lint:eslint": "eslint --max-warnings 0 .",
+    "lint:fix": "prettier --write . && eslint --fix .",
     "lint:prettier": "prettier --check .",
     "lint:typescript": "tsc --project tsconfig.json --project spec/tsconfig.json --noEmit",
     "publish": "npm run build && changeset publish",

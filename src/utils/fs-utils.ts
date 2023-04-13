@@ -42,6 +42,13 @@ export interface WalkDirOptions {
 export async function* walkDir(dir: string, options: WalkDirOptions = {}): AsyncGenerator<string> {
   if (options.ignorer?.ignores(dir)) return;
 
+  const isEmpty = await isEmptyDir(dir);
+
+  if (isEmpty) {
+    yield `${dir}/`;
+    return;
+  }
+
   for await (const entry of await fs.opendir(dir)) {
     const filepath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -55,6 +62,13 @@ export async function* walkDir(dir: string, options: WalkDirOptions = {}): Async
 export function* walkDirSync(dir: string, options: WalkDirOptions = {}): Generator<string> {
   if (options.ignorer?.ignores(dir)) return;
 
+  const isEmpty = isEmptyDirSync(dir);
+
+  if (isEmpty) {
+    yield `${dir}/`;
+    return;
+  }
+
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const filepath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -62,6 +76,19 @@ export function* walkDirSync(dir: string, options: WalkDirOptions = {}): Generat
     } else if (entry.isFile() && !options.ignorer?.ignores(filepath)) {
       yield filepath;
     }
+  }
+}
+
+export function isEmptyDirSync(dir: string, opts = { ignoreEnoent: true }): boolean {
+  try {
+    const files = fs.readdirSync(dir);
+    return files.length === 0;
+  } catch (error) {
+    if (opts.ignoreEnoent) {
+      ignoreEnoent(error);
+      return true;
+    }
+    throw error;
   }
 }
 

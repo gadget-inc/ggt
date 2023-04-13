@@ -26,7 +26,9 @@ import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from
 import { app } from "../utils/flags";
 import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../utils/fs-utils";
 import type {
+  FileSyncChangedEvent,
   FileSyncChangedEventInput,
+  FileSyncDeletedEvent,
   FileSyncDeletedEventInput,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
@@ -176,8 +178,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
     return path.resolve(this.dir, ...pathSegments);
   }
 
-  normalize(filepath: string): string {
-    return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath);
+  normalize(filepath: string, isDirectory = false): string {
+    return normalizePath(`${path.isAbsolute(filepath) ? this.relative(filepath) : filepath}${isDirectory ? "/" : ""}`, false);
   }
 
   logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
@@ -424,33 +426,47 @@ export default class Sync extends BaseCommand<typeof Sync> {
                 deleted.map((x) => x.path).filter((x) => remoteFiles.has(x))
               );
 
-              await pMap(
-                remoteFiles,
-                async ([relativePath, file]) => {
-                  const filepath = this.absolute(relativePath);
-                  this.recentWrites.add(filepath);
-
-                  if ("content" in file) {
-                    await fs.ensureDir(path.dirname(filepath), { mode: 0o755 });
-                    if (!file.path.endsWith("/")) {
-                      await fs.writeFile(filepath, Buffer.from(file.content, file.encoding ?? FileSyncEncoding.Utf8), { mode: file.mode });
+              const handleFiles = async (files: (FileSyncChangedEvent | FileSyncDeletedEvent)[]) =>
+                await pMap(
+                  files,
+                  async (file) => {
+                    if (!remoteFiles.has(file.path)) {
+                      return;
                     }
-                    if (filepath == this.absolute("yarn.lock")) {
-                      await execa("yarn", ["install"], { cwd: this.dir }).catch((err) => {
-                        this.debug("yarn install failed");
-                        this.debug(err.message);
-                      });
-                    }
-                  } else {
-                    await fs.remove(filepath);
-                  }
 
-                  if (filepath == this.ignorer.filepath) {
-                    this.ignorer.reload();
-                  }
-                },
-                { stopOnError: false }
-              );
+                    const filepath = this.absolute(file.path);
+                    this.recentWrites.add(filepath);
+
+                    if ("content" in file) {
+                      if (!file.path.endsWith("/")) {
+                        this.recentWrites.add(path.dirname(filepath));
+                        await fs.ensureDir(path.dirname(filepath), { mode: 0o755 });
+                        await fs.writeFile(filepath, Buffer.from(file.content, file.encoding ?? FileSyncEncoding.Utf8), {
+                          mode: file.mode,
+                        });
+                      } else {
+                        await fs.ensureDir(filepath, { mode: 0o755 });
+                      }
+                      if (filepath == this.absolute("yarn.lock")) {
+                        await execa("yarn", ["install"], { cwd: this.dir }).catch((err) => {
+                          this.debug("yarn install failed");
+                          this.debug(err.message);
+                        });
+                      }
+                    } else {
+                      await fs.remove(filepath);
+                    }
+
+                    if (filepath == this.ignorer.filepath) {
+                      this.ignorer.reload();
+                    }
+                  },
+                  { stopOnError: false }
+                );
+
+              // we need to processed deleted files first as we may delete an empty directory once a file has been put into it. if processed out of order the new file is deleted as well
+              await handleFiles(deleted);
+              await handleFiles(changed);
 
               this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
               this.metadata.filesVersion = remoteFilesVersion;
@@ -460,7 +476,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
       }
     );
 
-    const localFilesBuffer = new Map<string, { mode: number; mtime: number } | false>();
+    const localFilesBuffer = new Map<
+      string,
+      { mode: number; mtime: number; isDirectory: boolean } | { isDeleted: true; isDirectory: boolean }
+    >();
 
     this.publish = debounce(() => {
       const localFiles = new Map(localFilesBuffer.entries());
@@ -474,12 +493,14 @@ export default class Sync extends BaseCommand<typeof Sync> {
           await pMap(
             localFiles,
             async ([filepath, file]) => {
-              if (file) {
+              if ("isDeleted" in file) {
+                deleted.push({ path: this.normalize(filepath, file.isDirectory) });
+              } else {
                 try {
                   changed.push({
-                    path: this.normalize(filepath),
+                    path: this.normalize(filepath, file.isDirectory),
                     mode: file.mode,
-                    content: await fs.readFile(filepath, "base64"),
+                    content: file.isDirectory ? "" : await fs.readFile(filepath, "base64"),
                     encoding: FileSyncEncoding.Base64,
                   });
                 } catch (error) {
@@ -487,8 +508,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
                   // an ENOENT. This is normal operation, so just ignore this event.
                   ignoreEnoent(error);
                 }
-              } else {
-                deleted.push({ path: this.normalize(filepath) });
               }
             },
             { stopOnError: false }
@@ -525,11 +544,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
       .on("all", (event, filepath, stats) => {
         const relativePath = this.relative(filepath);
 
-        if (event === "addDir" || event === "unlinkDir") {
-          this.debug("skipping event caused by directory %s", relativePath);
-          return;
-        }
-
         if (stats?.isSymbolicLink?.()) {
           this.debug("skipping event caused by symlink %s", relativePath);
           return;
@@ -553,16 +567,21 @@ export default class Sync extends BaseCommand<typeof Sync> {
           return;
         }
 
-        this.debug("file changed %s", relativePath);
+        this.debug("file changed %s", relativePath, event);
 
         switch (event) {
           case "add":
           case "change":
             assert(stats, "missing stats on add/change event");
-            localFilesBuffer.set(filepath, { mode: stats.mode, mtime: stats.mtime.getTime() });
+            localFilesBuffer.set(filepath, { mode: stats.mode, mtime: stats.mtime.getTime(), isDirectory: false });
             break;
+          case "addDir":
+            assert(stats, "missing stats on addDir event");
+            localFilesBuffer.set(filepath, { mode: stats.mode, mtime: stats.mtime.getTime(), isDirectory: true });
+            break;
+          case "unlinkDir":
           case "unlink":
-            localFilesBuffer.set(filepath, false);
+            localFilesBuffer.set(filepath, { isDeleted: true, isDirectory: event === "unlinkDir" });
             break;
         }
 

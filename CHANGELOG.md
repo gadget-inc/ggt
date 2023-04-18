@@ -1,5 +1,18 @@
 # @gadgetinc/ggt
 
+## 0.1.15
+
+### Patch Changes
+
+- 2709c05: Bump oclif from 3.7.3 to 3.8.0
+- 7472fca: Bump oclif from 3.8.0 to 3.8.1
+- 72bf09d: Bump @sentry/node from 7.47.0 to 7.48.0
+- 85115cd: Bump @oclif/plugin-plugins from 2.4.4 to 2.4.6
+- f497c08: Bump @oclif/core from 2.8.1 to 2.8.2
+- 08367c7: Bump @oclif/plugin-warn-if-update-available from 2.0.33 to 2.0.35
+- 61bbd23: Allow empty folders to be synced to gadget and vice versa
+- 21bc98b: Bump ws from 8.12.1 to 8.13.0
+
 ## 0.1.14
 
 ### Patch Changes

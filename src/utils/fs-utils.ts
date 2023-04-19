@@ -36,15 +36,12 @@ export class Ignorer {
 
 export interface WalkDirOptions {
   ignorer?: Ignorer;
-  maxFiles?: number;
 }
 
 export async function* walkDir(dir: string, options: WalkDirOptions = {}): AsyncGenerator<string> {
   if (options.ignorer?.ignores(dir)) return;
 
-  const isEmpty = await isEmptyDir(dir);
-
-  if (isEmpty) {
+  if (await isEmptyDir(dir)) {
     yield `${dir}/`;
     return;
   }
@@ -62,9 +59,7 @@ export async function* walkDir(dir: string, options: WalkDirOptions = {}): Async
 export function* walkDirSync(dir: string, options: WalkDirOptions = {}): Generator<string> {
   if (options.ignorer?.ignores(dir)) return;
 
-  const isEmpty = isEmptyDirSync(dir);
-
-  if (isEmpty) {
+  if (isEmptyDirSync(dir)) {
     yield `${dir}/`;
     return;
   }

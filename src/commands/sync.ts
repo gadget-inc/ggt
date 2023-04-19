@@ -179,7 +179,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
   }
 
   normalize(filepath: string, isDirectory = false): string {
-    return normalizePath(`${path.isAbsolute(filepath) ? this.relative(filepath) : filepath}${isDirectory ? "/" : ""}`, false);
+    return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath) + (isDirectory ? "/" : "");
   }
 
   logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
@@ -326,10 +326,12 @@ export default class Sync extends BaseCommand<typeof Sync> {
                   this.metadata.mtime = stats.mtime.getTime();
                 }
 
+                const isDirectory = stats.isDirectory();
+
                 return {
-                  path: this.normalize(filepath),
+                  path: this.normalize(filepath, isDirectory),
                   mode: stats.mode,
-                  content: await fs.readFile(filepath, "base64"),
+                  content: isDirectory ? "" : await fs.readFile(filepath, "base64"),
                   encoding: FileSyncEncoding.Base64,
                 };
               }),

@@ -1,5 +1,12 @@
 # @gadgetinc/ggt
 
+## 0.1.16
+
+### Patch Changes
+
+- c9f6eca: Don't use `fs.readFile` on directories
+- 77445c2: Don't include root directory in `getChangedFiles`
+
 ## 0.1.15
 
 ### Patch Changes

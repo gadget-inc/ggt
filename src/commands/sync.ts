@@ -179,7 +179,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
   }
 
   normalize(filepath: string, isDirectory = false): string {
-    return normalizePath(`${path.isAbsolute(filepath) ? this.relative(filepath) : filepath}${isDirectory ? "/" : ""}`, false);
+    return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath) + (isDirectory ? "/" : "");
   }
 
   logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {

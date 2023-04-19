@@ -283,6 +283,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
           files.set(this.absolute(filepath), stats);
         }
       }
+
+      // don't include the root directory
+      files.delete(this.dir);
+
       return files;
     };
 

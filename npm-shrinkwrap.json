@@ -60,7 +60,7 @@
         "@types/inquirer": "^8.2.5",
         "@types/jest": "^29.5.1",
         "@types/lodash": "^4.14.194",
-        "@types/node": "^18.15.11",
+        "@types/node": "^18.15.12",
         "@types/node-notifier": "^8.0.2",
         "@types/normalize-path": "^3.0.0",
         "@types/pluralize": "^0.0.29",
@@ -5634,9 +5634,9 @@
       "dev": true
     },
     "node_modules/@types/node": {
-      "version": "18.15.11",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.15.11.tgz",
-      "integrity": "sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q=="
+      "version": "18.15.12",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.15.12.tgz",
+      "integrity": "sha512-Wha1UwsB3CYdqUm2PPzh/1gujGCNtWVUYF0mB00fJFoR4gTyWTDPjSm+zBF787Ahw8vSGgBja90MkgFwvB86Dg=="
     },
     "node_modules/@types/node-notifier": {
       "version": "8.0.2",
@@ -21811,9 +21811,9 @@
       "dev": true
     },
     "@types/node": {
-      "version": "18.15.11",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.15.11.tgz",
-      "integrity": "sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q=="
+      "version": "18.15.12",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.15.12.tgz",
+      "integrity": "sha512-Wha1UwsB3CYdqUm2PPzh/1gujGCNtWVUYF0mB00fJFoR4gTyWTDPjSm+zBF787Ahw8vSGgBja90MkgFwvB86Dg=="
     },
     "@types/node-notifier": {
       "version": "8.0.2",

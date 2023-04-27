@@ -12,7 +12,7 @@
         "@oclif/core": "^2.8.2",
         "@oclif/errors": "^1.3.6",
         "@oclif/plugin-not-found": "^2.3.23",
-        "@oclif/plugin-warn-if-update-available": "^2.0.35",
+        "@oclif/plugin-warn-if-update-available": "^2.0.36",
         "@sentry/node": "^7.50.0",
         "chalk": "^4.1.2",
         "chokidar": "^3.5.3",
@@ -4791,9 +4791,9 @@
       }
     },
     "node_modules/@oclif/plugin-warn-if-update-available": {
-      "version": "2.0.35",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.35.tgz",
-      "integrity": "sha512-KnFWNTJuEPERkz3SDkAlYtAiGM3xKEPfTjgmu17iPT6B0jHgd9Q/zQUJYw48x5EXSKGcjcbFdMdrKxeDCFpRZw==",
+      "version": "2.0.36",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.36.tgz",
+      "integrity": "sha512-mHWoEWFICw1Amqn8C7oURxOsR6sT2Hx+xNi30Jbsui5MrCIYYo369dhjl27VfaWlcLjVqpjMVzVFMn5zXjgzBw==",
       "dependencies": {
         "@oclif/core": "^2.8.2",
         "chalk": "^4.1.0",
@@ -4801,7 +4801,7 @@
         "fs-extra": "^9.0.1",
         "http-call": "^5.2.2",
         "lodash": "^4.17.21",
-        "semver": "^7.4.0"
+        "semver": "^7.5.0"
       },
       "engines": {
         "node": ">=12.0.0"
@@ -21129,9 +21129,9 @@
       }
     },
     "@oclif/plugin-warn-if-update-available": {
-      "version": "2.0.35",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.35.tgz",
-      "integrity": "sha512-KnFWNTJuEPERkz3SDkAlYtAiGM3xKEPfTjgmu17iPT6B0jHgd9Q/zQUJYw48x5EXSKGcjcbFdMdrKxeDCFpRZw==",
+      "version": "2.0.36",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.36.tgz",
+      "integrity": "sha512-mHWoEWFICw1Amqn8C7oURxOsR6sT2Hx+xNi30Jbsui5MrCIYYo369dhjl27VfaWlcLjVqpjMVzVFMn5zXjgzBw==",
       "requires": {
         "@oclif/core": "^2.8.2",
         "chalk": "^4.1.0",
@@ -21139,7 +21139,7 @@
         "fs-extra": "^9.0.1",
         "http-call": "^5.2.2",
         "lodash": "^4.17.21",
-        "semver": "^7.4.0"
+        "semver": "^7.5.0"
       },
       "dependencies": {
         "fs-extra": {

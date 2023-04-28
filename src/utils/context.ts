@@ -10,8 +10,9 @@ export class Context {
   /**
    * A reference to oclif's {@linkcode Config}.
    *
-   * By default, oclif's {@linkcode Config} is only available as an instance property on a Command, but we want to be able to access it from
-   * anywhere. To do this, we created this global variable that references the Config. It is set by the init function in the BaseCommand.
+   * By default, oclif's {@linkcode Config} is only available as an instance property on a Command, but we want to be
+   * able to access it from anywhere. To do this, we created this global variable that references the Config. It is set
+   * by the init function in the BaseCommand.
    */
   config!: Config;
 

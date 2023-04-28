@@ -512,8 +512,8 @@ describe("Sync", () => {
 
         await sleepUntil(() => sync.metadata.filesVersion == "1");
 
-        expect(sync.recentWrites.has(path.join(dir, "foo.js"))).toBeTrue();
-        expect(sync.recentWrites.has(path.join(dir, "bar.js"))).toBeTrue();
+        expect(sync.recentRemoteChanges.has(path.join(dir, "foo.js"))).toBeTrue();
+        expect(sync.recentRemoteChanges.has(path.join(dir, "bar.js"))).toBeTrue();
       });
 
       it("does not write multiple batches of events at the same time", async () => {
@@ -898,8 +898,8 @@ describe("Sync", () => {
         jest.spyOn(sync, "publish");
 
         // add files to recentWrites
-        sync.recentWrites.add(path.join(dir, "foo.js"));
-        sync.recentWrites.add(path.join(dir, "bar.js"));
+        sync.recentRemoteChanges.add(path.join(dir, "foo.js"));
+        sync.recentRemoteChanges.add(path.join(dir, "bar.js"));
 
         // emit events affecting the files in recentWrites
         emit.all("add", path.join(dir, "foo.js"), stats);
@@ -909,8 +909,8 @@ describe("Sync", () => {
         expect(sync.publish).not.toHaveBeenCalled();
 
         // the files in recentWrites should be removed so that sub events affecting them can be published
-        expect(sync.recentWrites.has(path.join(dir, "foo.js"))).toBeFalse();
-        expect(sync.recentWrites.has(path.join(dir, "bar.js"))).toBeFalse();
+        expect(sync.recentRemoteChanges.has(path.join(dir, "foo.js"))).toBeFalse();
+        expect(sync.recentRemoteChanges.has(path.join(dir, "bar.js"))).toBeFalse();
       });
 
       it("does not publish multiple batches of events at the same time", async () => {

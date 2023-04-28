@@ -25,13 +25,21 @@ import { BaseError, UnexpectedError } from "./errors";
 export type Flags<T extends typeof Command> = Interfaces.InferredFlags<(typeof BaseCommand)["baseFlags"] & T["flags"]>;
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
 
+/**
+ * BaseCommand is the base class for all commands in the Gadget CLI.
+ */
 export abstract class BaseCommand<T extends typeof Command> extends Command {
   /**
-   * Determines how high the command is listed in the README. The lower the number, the higher the command is listed. Equal numbers are
-   * sorted alphabetically.
+   * Determines how high the command is listed in the README. The lower the number, the higher the command is listed.
+   * Equal numbers are sorted alphabetically.
    */
   static priority = Infinity;
 
+  /**
+   * Flags that are available to all commands.
+   *
+   * Short form should be capitalized.
+   */
   static override baseFlags = {
     debug: Flags.boolean({
       char: "D",
@@ -43,7 +51,9 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
 
   /**
    * Determines whether the command requires the user to be logged in or not.
-   * If true and the user is not logged in, the user will be prompted to login before the command is run.
+   *
+   * If true and the user is not logged in, the user will be prompted to login before the underlying command is
+   * initialized and run.
    */
   readonly requireUser: boolean = false;
 
@@ -209,8 +219,8 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
   }
 
   /**
-   * Overrides the default `catch` behavior so we can control how errors are printed to the user. This is called automatically by oclif when
-   * an error is thrown during the `init` or `run` methods.
+   * Overrides the default `catch` behavior so we can control how errors are printed to the user. This is called
+   * automatically by oclif when an error is thrown during the `init` or `run` methods.
    */
   override async catch(cause: Error): Promise<never> {
     if (cause instanceof CLIError || cause instanceof CLIError2) {
@@ -222,9 +232,10 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
     console.error(error.render());
     await error.capture();
 
-    // The original implementation of `catch` re-throws the error so that it's caught and printed by oclif's `handle` method. We still want
-    // to end up in oclif's `handle` method, but we don't want it to print the error again so we throw an ExitError instead. This will cause
-    // `handle` to not print the error, but still exit with the correct exit code.
+    // The original implementation of `catch` re-throws the error so that it's caught and printed by oclif's `handle`
+    // method. We still want to end up in oclif's `handle` method, but we don't want it to print the error again so we
+    // throw an ExitError instead. This will cause `handle` to not print the error, but still exit with the correct exit
+    // code.
     //
     //  catch: https://github.com/oclif/core/blob/12e31ff2288606e583e03bf774a3244f3136cd10/src/command.ts#L261
     // handle: https://github.com/oclif/core/blob/12e31ff2288606e583e03bf774a3244f3136cd10/src/errors/handle.ts#L15

@@ -19,6 +19,12 @@ enum ConnectionStatus {
   RECONNECTING,
 }
 
+/**
+ * Client is a GraphQL client connected to a Gadget application's /edit/api/graphql-ws endpoint.
+ *
+ * NOTE: In order to use the Client, the user must be logged in and an app must have been selected (`context.app` and
+ * `context.session` must be set).
+ */
 export class Client {
   // assume the client is going to connect
   status = ConnectionStatus.CONNECTED;

@@ -9,7 +9,6 @@ import fs from "fs-extra";
 import { prompt } from "inquirer";
 import type { DebouncedFunc } from "lodash";
 import { sortBy } from "lodash";
-import { isString } from "lodash";
 import { debounce } from "lodash";
 import normalizePath from "normalize-path";
 import pMap from "p-map";
@@ -207,8 +206,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
   override async init(): Promise<void> {
     await super.init();
-
-    assert(isString(this.args["directory"]));
 
     this.dir =
       this.config.windows && this.args["directory"].startsWith("~/")

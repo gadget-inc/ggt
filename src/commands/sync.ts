@@ -37,6 +37,7 @@ import type {
   RemoteFileSyncEventsSubscriptionVariables,
 } from "../__generated__/graphql";
 import { FileSyncEncoding } from "../__generated__/graphql";
+import { PromiseSignal } from "../utils/promise";
 
 export default class Sync extends BaseCommand<typeof Sync> {
   static override priority = 1;
@@ -165,9 +166,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
   publish!: DebouncedFunc<() => void>;
 
   stop!: (error?: unknown) => Promise<void>;
-
-  finished!: Promise<void>;
-  markFinished!: () => void;
 
   relative(to: string): string {
     return path.relative(this.dir, to);
@@ -353,9 +351,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
   async run(): Promise<void> {
     let error: unknown;
-    this.finished = new Promise((resolve) => {
-      this.markFinished = resolve;
-    });
+    const stopped = new PromiseSignal();
 
     this.stop = async (e?: unknown) => {
       if (this.status != SyncStatus.RUNNING) return;
@@ -375,7 +371,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
         this.debug("stopped");
         this.status = SyncStatus.STOPPED;
-        this.markFinished();
+        stopped.resolve();
       }
     };
 
@@ -620,7 +616,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
     );
     this.log();
 
-    await this.finished;
+    await stopped;
 
     if (error) {
       this.notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });

@@ -1,6 +1,7 @@
 appvalue
 codegen
 commandsstop
+ENOENT
 execa
 gadgetinc
 getsentry

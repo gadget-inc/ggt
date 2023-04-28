@@ -1,6 +1,7 @@
 __generated__
 lib
-tmp
+tmp/*
+!tmp/apps
 npm-shrinkwrap.json
 oclif.manifest.json
 .direnv

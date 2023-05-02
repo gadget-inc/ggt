@@ -8,6 +8,7 @@ import { BaseCommand } from "../../src/utils/base-command";
 import { context } from "../../src/utils/context";
 import { sleepUntil } from "../../src/utils/sleep";
 import { ExitError } from "@oclif/errors";
+import * as cliErrors from "@oclif/core/lib/parser/errors";
 import { BaseError } from "../../src/utils/errors";
 import { getError } from "../util";
 
@@ -185,13 +186,14 @@ describe("BaseCommand", () => {
   });
 
   describe("catch", () => {
-    it("immediately rethrows ExitError with a 0 exit code", async () => {
+    it.each([ExitError, ...Object.values(cliErrors)])("immediately rethrows CLIErrors", async (ctor) => {
+      // value that all CLIError constructors will accept
+      const arg = { flag: { helpLabel: "" }, flags: [], args: [], options: [], parse: {}, failed: [] } as any;
       const spy = jest.spyOn(BaseError.prototype, "capture");
-      const error = await getError(() => base.catch(new ExitError(0)));
+      const error = await getError(() => base.catch(new ctor(arg, arg)));
 
       expect(spy).not.toHaveBeenCalled();
-      expect(error).toBeInstanceOf(ExitError);
-      expect(error.oclif.exit).toBe(0);
+      expect(error).toBeInstanceOf(ctor);
     });
   });
 });

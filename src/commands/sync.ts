@@ -9,7 +9,6 @@ import fs from "fs-extra";
 import { prompt } from "inquirer";
 import type { DebouncedFunc } from "lodash";
 import { sortBy } from "lodash";
-import { isString } from "lodash";
 import { debounce } from "lodash";
 import normalizePath from "normalize-path";
 import pMap from "p-map";
@@ -24,7 +23,7 @@ import { Client } from "../utils/client";
 import { context } from "../utils/context";
 import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../utils/errors";
 import { app } from "../utils/flags";
-import { ignoreEnoent, Ignorer, isEmptyDir, walkDir } from "../utils/fs-utils";
+import { ignoreEnoent, FSIgnorer, isEmptyDir, walkDir } from "../utils/fs-utils";
 import type {
   FileSyncChangedEvent,
   FileSyncChangedEventInput,
@@ -38,6 +37,7 @@ import type {
   RemoteFileSyncEventsSubscriptionVariables,
 } from "../__generated__/graphql";
 import { FileSyncEncoding } from "../__generated__/graphql";
+import { PromiseSignal } from "../utils/promise";
 
 export default class Sync extends BaseCommand<typeof Sync> {
   static override priority = 1;
@@ -143,45 +143,110 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
   override requireUser = true;
 
+  /**
+   * The current status of the sync process.
+   */
   status = SyncStatus.STARTING;
 
+  /**
+   * The absolute path to the directory to sync files to.
+   */
   dir!: string;
 
-  recentWrites = new Set();
+  /**
+   * A list of filepaths that have changed because of a remote file-sync event. This is used to avoid sending files that
+   * we recently received from a remote file-sync event.
+   */
+  recentRemoteChanges = new Set();
 
+  /**
+   * A FIFO async callback queue that ensures we process file-sync events in the order they occurred.
+   */
   queue = new PQueue({ concurrency: 1 });
 
+  /**
+   * A GraphQL client connected to the app's /edit/api/graphql-ws endpoint
+   */
   client!: Client;
 
-  ignorer!: Ignorer;
+  /**
+   * Loads the .ignore file and provides methods for checking if a file should be ignored.
+   */
+  ignorer!: FSIgnorer;
 
+  /**
+   * Watches the local filesystem for changes.
+   */
   watcher!: FSWatcher;
 
+  /**
+   * Holds information about the state of the local filesystem. It's persisted to `.gadget/sync.json`.
+   */
   metadata = {
+    /**
+     * The app this filesystem is synced to.
+     */
     app: "",
+
+    /**
+     * The last filesVersion that was successfully written to the filesystem. This is used to determine if the remote
+     * filesystem is ahead of the local one.
+     */
     filesVersion: "0",
+
+    /**
+     * The largest mtime that was seen on the local filesystem before `ggt sync` stopped. This is used to determine if
+     * the local filesystem has changed since the last sync.
+     *
+     * Note: This does not include the mtime of files that are ignored.
+     */
     mtime: 0,
   };
 
+  /**
+   * A debounced function that enqueue's local file changes to be sent to Gadget.
+   */
   publish!: DebouncedFunc<() => void>;
 
+  /**
+   * Gracefully stops the sync.
+   */
   stop!: (error?: unknown) => Promise<void>;
 
-  finished!: Promise<void>;
-  markFinished!: () => void;
-
+  /**
+   * Turns an absolute filepath into a relative one from {@linkcode dir}.
+   */
   relative(to: string): string {
     return path.relative(this.dir, to);
   }
 
+  /**
+   * Combines path segments into an absolute filepath that starts at {@linkcode dir}.
+   */
   absolute(...pathSegments: string[]): string {
     return path.resolve(this.dir, ...pathSegments);
   }
 
+  /**
+   * Similar to {@linkcode relative} in that it turns a filepath into a relative one from {@linkcode dir}. However, it
+   * also changes any slashes to be posix/unix-like forward slashes, condenses repeat slashes into a single slash.
+   *
+   * This is used when sending file-sync events to Gadget to ensure that the paths are consistent across platforms.
+   *
+   * @see https://www.npmjs.com/package/normalize-path
+   */
   normalize(filepath: string, isDirectory = false): string {
     return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath) + (isDirectory ? "/" : "");
   }
 
+  /**
+   * Pretty-prints changed and deleted filepaths to the console.
+   *
+   * @param prefix The prefix to print before each line.
+   * @param changed The filepaths that have changed.
+   * @param deleted The filepaths that have been deleted.
+   * @param options.limit The maximum number of lines to print. Defaults to 10. If debug is enabled, this is ignored.
+   */
   logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
     const lines = sortBy(
       [
@@ -205,10 +270,16 @@ export default class Sync extends BaseCommand<typeof Sync> {
     this.log();
   }
 
+  /**
+   * Initializes the sync process.
+   * - Ensures the directory exists.
+   * - Ensures the directory is empty or contains a `.gadget/sync.json` file.
+   * - Ensures an app is selected and that it matches the app the directory was previously synced to.
+   * - Ensures yarn v1 is installed.
+   * - Prompts the user how to resolve conflicts if the local filesystem has changed since the last sync.
+   */
   override async init(): Promise<void> {
     await super.init();
-
-    assert(isString(this.args["directory"]));
 
     this.dir =
       this.config.windows && this.args["directory"].startsWith("~/")
@@ -252,7 +323,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
     this.client = new Client();
 
     // local files/folders that should never be published
-    this.ignorer = new Ignorer(this.dir, ["node_modules", ".gadget", ".git"]);
+    this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git"]);
 
     this.watcher = new FSWatcher({
       ignored: (filepath) => this.ignorer.ignores(filepath),
@@ -284,7 +355,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
         }
       }
 
-      // don't include the root directory
+      // never include the root directory
       files.delete(this.dir);
 
       return files;
@@ -315,7 +386,9 @@ export default class Sync extends BaseCommand<typeof Sync> {
         // get all the changed files again in case more changed
         const files = await getChangedFiles();
 
-        // we purposefully don't set the returned remoteFilesVersion here because we haven't processed the in-between versions yet
+        // We purposefully don't set the returned remoteFilesVersion here because we haven't received the remote changes
+        // yet. This will cause us to receive the local files that we just published + the remote files that were
+        // changed since the last sync.
         await this.client.queryUnwrap({
           query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
           variables: {
@@ -342,6 +415,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
         break;
       }
       case Action.RESET: {
+        // delete all the local files that have changed since the last sync and set the files version to 0 so we receive
+        // all the remote files again, including any files that we just deleted that still exist
         await pMap(changedFiles, ([filepath]) => fs.remove(filepath));
         this.metadata.filesVersion = "0";
         break;
@@ -354,11 +429,12 @@ export default class Sync extends BaseCommand<typeof Sync> {
     this.debug("started");
   }
 
+  /**
+   * Runs the sync process until it is stopped or an error occurs.
+   */
   async run(): Promise<void> {
     let error: unknown;
-    this.finished = new Promise((resolve) => {
-      this.markFinished = resolve;
-    });
+    const stopped = new PromiseSignal();
 
     this.stop = async (e?: unknown) => {
       if (this.status != SyncStatus.RUNNING) return;
@@ -378,7 +454,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
         this.debug("stopped");
         this.status = SyncStatus.STOPPED;
-        this.markFinished();
+        stopped.resolve();
       }
     };
 
@@ -441,11 +517,11 @@ export default class Sync extends BaseCommand<typeof Sync> {
                     }
 
                     const filepath = this.absolute(file.path);
-                    this.recentWrites.add(filepath);
+                    this.recentRemoteChanges.add(filepath);
 
                     if ("content" in file) {
                       if (!file.path.endsWith("/")) {
-                        this.recentWrites.add(path.dirname(filepath));
+                        this.recentRemoteChanges.add(path.dirname(filepath));
                         await fs.ensureDir(path.dirname(filepath), { mode: 0o755 });
                         await fs.writeFile(filepath, Buffer.from(file.content, file.encoding ?? FileSyncEncoding.Utf8), {
                           mode: file.mode,
@@ -510,8 +586,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
                     encoding: FileSyncEncoding.Base64,
                   });
                 } catch (error) {
-                  // A file could have been changed and then deleted before we process the change event, so the readFile above will raise
-                  // an ENOENT. This is normal operation, so just ignore this event.
+                  // A file could have been changed and then deleted before we process the change event, so the readFile
+                  // above will raise an ENOENT. This is normal operation, so just ignore this event.
                   ignoreEnoent(error);
                 }
               }
@@ -562,13 +638,14 @@ export default class Sync extends BaseCommand<typeof Sync> {
           return;
         }
 
-        // we only update the mtime if the file is not ignored, because if we restart and the mtime is set to an ignored file, then it could
-        // be greater than the mtime of all non ignored files and we'll think that local files have changed when only an ignored one has
+        // we only update the mtime if the file is not ignored, because if we restart and the mtime is set to an ignored
+        // file, then it could be greater than the mtime of all non ignored files and we'll think that local files have
+        // changed when only an ignored one has
         if (stats && stats.mtime.getTime() > this.metadata.mtime) {
           this.metadata.mtime = stats.mtime.getTime();
         }
 
-        if (this.recentWrites.delete(filepath)) {
+        if (this.recentRemoteChanges.delete(filepath)) {
           this.debug("skipping event caused by recent write %s", relativePath);
           return;
         }
@@ -623,7 +700,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
     );
     this.log();
 
-    await this.finished;
+    await stopped;
 
     if (error) {
       this.notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });

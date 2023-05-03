@@ -6,7 +6,7 @@ import path from "path";
 
 const debug = Debug("ggt:fs-utils");
 
-export class Ignorer {
+export class FSIgnorer {
   readonly filepath = path.join(this._rootDir, ".ignore");
 
   private _ignorer!: Ignore;
@@ -35,7 +35,7 @@ export class Ignorer {
 }
 
 export interface WalkDirOptions {
-  ignorer?: Ignorer;
+  ignorer?: FSIgnorer;
 }
 
 export async function* walkDir(dir: string, options: WalkDirOptions = {}): AsyncGenerator<string> {

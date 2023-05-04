@@ -72,6 +72,10 @@ describe("Sync", () => {
     });
   });
 
+  it("requires a user to be logged in", () => {
+    expect(sync.requireUser).toBeTrue();
+  });
+
   describe("init", () => {
     it("throws YarnNotFoundError if yarn is not found", async () => {
       which.sync.mockReturnValue(null);

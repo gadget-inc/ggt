@@ -186,6 +186,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
             } else {
               this.log(`Hello, ${user.email}`);
             }
+            this.log();
 
             redirectTo.searchParams.set("success", "true");
             resolve();

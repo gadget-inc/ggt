@@ -135,7 +135,7 @@ describe("BaseCommand", () => {
       await sleepUntil(() => server.close.mock.calls.length > 0);
       expect(context.session).toBe("test");
       expect(context.getUser).toHaveBeenCalled();
-      expect(base.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"Hello, Jane Doe (test@example.com)"`);
+      expect(base.log.mock.calls.at(-2)?.[0]).toMatchInlineSnapshot(`"Hello, Jane Doe (test@example.com)"`);
       expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${context.domains.services}/auth/cli?success=true` });
       expect(res.end).toHaveBeenCalled();
       expect(server.close).toHaveBeenCalled();

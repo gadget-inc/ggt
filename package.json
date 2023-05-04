@@ -109,7 +109,7 @@
     "rimraf": "^5.0.0",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
-    "type-fest": "^3.9.0",
+    "type-fest": "^3.10.0",
     "typescript": "^5.0.4"
   },
   "engines": {

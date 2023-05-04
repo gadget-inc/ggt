@@ -2,29 +2,19 @@ import List from "../../src/commands/list";
 import { context } from "../../src/utils/context";
 
 describe("list", () => {
-  it("asks the user to log in if they aren't logged in", async () => {
-    jest.spyOn(context, "getUser").mockResolvedValue(undefined);
-
-    await List.run();
-
-    expect(context.getUser).toHaveBeenCalled();
-    expect(List.prototype.log.mock.calls).toMatchInlineSnapshot(`
-      [
-        [
-          "No apps found",
-        ],
-      ]
-    `);
+  it("requires a user to be logged in", () => {
+    const list = new List([], context.config);
+    expect(list.requireUser).toBeTrue();
   });
 
-  it("lists the apps if the user is logged in", async () => {
+  it("lists apps", async () => {
     jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
     jest.spyOn(context, "getAvailableApps").mockResolvedValue([
       { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true },
       { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true },
     ]);
 
-    await List.run();
+    await List.run([]);
 
     expect(context.getUser).toHaveBeenCalled();
     expect(List.prototype.log.mock.calls).toMatchInlineSnapshot(`
@@ -49,15 +39,13 @@ describe("list", () => {
     jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
     jest.spyOn(context, "getAvailableApps").mockResolvedValue([]);
 
-    await List.run();
+    await List.run([]);
 
     expect(context.getUser).toHaveBeenCalled();
-    expect(List.prototype.log.mock.calls).toMatchInlineSnapshot(`
-      [
-        [
-          "No apps found",
-        ],
-      ]
+    expect(List.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`
+      "It doesn't look like you have any applications.
+
+      Visit https://gadget.new to create one!"
     `);
   });
 });

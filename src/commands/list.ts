@@ -22,16 +22,18 @@ export default class List extends BaseCommand<typeof List> {
     ...ux.table.flags(),
   };
 
+  override requireUser = true;
+
   async run(): Promise<void> {
     const { flags } = await this.parse(List);
-    const user = await context.getUser();
-    if (!user) {
-      this.error("You are not logged in -- no apps available", { exit: 1 });
-    }
-    const apps = await context.getAvailableApps();
 
-    if (apps.length === 0 && !flags.csv) {
-      this.log("No apps found");
+    const apps = await context.getAvailableApps();
+    if (!apps.length) {
+      this.log(dedent`
+          It doesn't look like you have any applications.
+
+          Visit https://gadget.new to create one!
+      `);
       return;
     }
 

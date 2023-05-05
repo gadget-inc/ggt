@@ -308,7 +308,7 @@ export class InvalidSyncAppFlagError extends FlagError {
 
         However, that directory has already been synced with this app:
 
-          ${sync.metadata.app}
+          ${sync.state.app}
 
         If you're sure that you want to sync "${sync.flags.app}" to "${sync.dir}", run \`ggt sync\` again with the \`--force\` flag:
 

@@ -98,7 +98,7 @@ describe("InvalidSyncAppFlagError", () => {
     const dir = "~/gadget/test";
     const sync = new Sync(["--app", app, dir], context.config);
     sync.dir = dir;
-    sync.metadata = { app: "test" } as any;
+    sync.state = { app: "test" } as any;
     sync.flags = { app } as any;
 
     const error = new InvalidSyncAppFlagError(sync);

@@ -176,28 +176,9 @@ export default class Sync extends BaseCommand<typeof Sync> {
   watcher!: FSWatcher;
 
   /**
-   * Holds information about the state of the local filesystem. It's persisted to `.gadget/sync.json`.
+   * The state of the local filesystem.
    */
-  metadata = {
-    /**
-     * The app this filesystem is synced to.
-     */
-    app: "",
-
-    /**
-     * The last filesVersion that was successfully written to the filesystem. This is used to determine if the remote
-     * filesystem is ahead of the local one.
-     */
-    filesVersion: "0",
-
-    /**
-     * The largest mtime that was seen on the local filesystem before `ggt sync` stopped. This is used to determine if
-     * the local filesystem has changed since the last sync.
-     *
-     * Note: This does not include the mtime of files that are ignored.
-     */
-    mtime: 0,
-  };
+  state!: SyncState;
 
   /**
    * A debounced function that enqueue's local file changes to be sent to Gadget.
@@ -289,7 +270,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     const getApp = async (): Promise<string> => {
       if (this.flags.app) return this.flags.app;
-      if (this.metadata.app) return this.metadata.app;
+      if (this.state?.app) return this.state.app;
       const selected = await inquirer.prompt<{ app: string }>({
         type: "list",
         name: "app",
@@ -300,26 +281,25 @@ export default class Sync extends BaseCommand<typeof Sync> {
     };
 
     if (await isEmptyDir(this.dir)) {
-      this.metadata.app = await getApp();
+      const app = await getApp();
+      this.state = SyncState.create(this.dir, { app });
     } else {
       try {
-        this.metadata = await fs.readJson(this.absolute(".gadget", "sync.json"));
-        if (!this.metadata.app) {
-          this.metadata.app = await getApp();
-        }
+        this.state = SyncState.load(this.dir);
       } catch (error) {
         if (!this.flags.force) {
           throw new InvalidSyncFileError(error, this, this.flags.app);
         }
-        this.metadata.app = await getApp();
+        const app = await getApp();
+        this.state = SyncState.create(this.dir, { app });
       }
     }
 
-    if (this.flags.app && this.flags.app !== this.metadata.app && !this.flags.force) {
+    if (this.flags.app && this.flags.app !== this.state.app && !this.flags.force) {
       throw new InvalidSyncAppFlagError(this);
     }
 
-    await context.setApp(this.metadata.app);
+    await context.setApp(this.state.app);
 
     this.client = new Client();
 
@@ -345,13 +325,13 @@ export default class Sync extends BaseCommand<typeof Sync> {
     await fs.ensureDir(this.dir);
 
     const { remoteFilesVersion } = await this.client.queryUnwrap({ query: REMOTE_FILES_VERSION_QUERY });
-    const hasRemoteChanges = BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion);
+    const hasRemoteChanges = BigInt(remoteFilesVersion) > BigInt(this.state.filesVersion);
 
     const getChangedFiles = async (): Promise<Map<string, Stats>> => {
       const files = new Map();
       for await (const absolutePath of walkDir(this.dir, { ignorer: this.ignorer })) {
         const stats = await fs.stat(absolutePath);
-        if (stats.mtime.getTime() > this.metadata.mtime) {
+        if (stats.mtime.getTime() > this.state.mtime) {
           files.set(this.normalize(absolutePath, stats.isDirectory()), stats);
         }
       }
@@ -370,7 +350,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
       this.log();
     }
 
-    this.debug("init %O", { metadata: this.metadata, remoteFilesVersion, hasRemoteChanges, hasLocalChanges });
+    this.debug("init %O", { metadata: this.state, remoteFilesVersion, hasRemoteChanges, hasLocalChanges });
 
     let action: Action | undefined;
     if (hasLocalChanges) {
@@ -396,8 +376,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
             input: {
               expectedRemoteFilesVersion: remoteFilesVersion,
               changed: await pMap(files, async ([normalizedPath, stats]) => {
-                if (stats.mtime.getTime() > this.metadata.mtime) {
-                  this.metadata.mtime = stats.mtime.getTime();
+                if (stats.mtime.getTime() > this.state.mtime) {
+                  this.state.mtime = stats.mtime.getTime();
                 }
 
                 return {
@@ -417,7 +397,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
         // delete all the local files that have changed since the last sync and set the files version to 0 so we receive
         // all the remote files again, including any files that we just deleted that still exist
         await pMap(changedFiles.keys(), (normalizedPath) => fs.remove(this.absolute(normalizedPath)));
-        this.metadata.filesVersion = "0";
+        this.state.filesVersion = 0n;
         break;
       }
       case Action.CANCEL: {
@@ -448,7 +428,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
         this.publish.flush();
         await this.queue.onIdle();
       } finally {
-        await fs.outputJSON(this.absolute(".gadget", "sync.json"), this.metadata, { spaces: 2 });
         await Promise.allSettled([this.watcher.close(), this.client.dispose()]);
 
         this.debug("stopped");
@@ -478,7 +457,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
     const unsubscribe = this.client.subscribeUnwrap(
       {
         query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-        variables: () => ({ localFilesVersion: this.metadata.filesVersion }),
+        variables: () => ({ localFilesVersion: String(this.state.filesVersion) }),
       },
       {
         error: (error) => void this.stop(error),
@@ -492,10 +471,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
           this._enqueue(async () => {
             if (!changed.length && !deleted.length) {
-              if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
+              if (BigInt(remoteFilesVersion) > this.state.filesVersion) {
                 // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
-                this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
-                this.metadata.filesVersion = remoteFilesVersion;
+                this.debug("updated local files version from %s to %s", this.state.filesVersion, remoteFilesVersion);
+                this.state.filesVersion = remoteFilesVersion;
               }
               return;
             }
@@ -540,8 +519,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
               }
             });
 
-            this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
-            this.metadata.filesVersion = remoteFilesVersion;
+            this.debug("updated local files version from %s to %s", this.state.filesVersion, remoteFilesVersion);
+            this.state.filesVersion = remoteFilesVersion;
 
             // always remove the root directory from recentRemoteChanges
             this.recentRemoteChanges.delete("./");
@@ -593,7 +572,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
         const data = await this.client.queryUnwrap({
           query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-          variables: { input: { expectedRemoteFilesVersion: this.metadata.filesVersion, changed, deleted } },
+          variables: { input: { expectedRemoteFilesVersion: String(this.state.filesVersion), changed, deleted } },
         });
 
         this.log(chalkTemplate`Sent {gray ${format(new Date(), "pp")}}`);
@@ -606,9 +585,9 @@ export default class Sync extends BaseCommand<typeof Sync> {
         const { remoteFilesVersion } = data.publishFileSyncEvents;
         this.debug("remote files version after publishing %s", remoteFilesVersion);
 
-        if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
-          this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
-          this.metadata.filesVersion = remoteFilesVersion;
+        if (BigInt(remoteFilesVersion) > this.state.filesVersion) {
+          this.debug("updated local files version from %s to %s", this.state.filesVersion, remoteFilesVersion);
+          this.state.filesVersion = remoteFilesVersion;
         }
       });
     }, this.flags["file-push-delay"]);
@@ -634,8 +613,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
         // we only update the mtime if the file is not ignored, because if we restart and the mtime is set to an ignored
         // file, then it could be greater than the mtime of all non ignored files and we'll think that local files have
         // changed when only an ignored one has
-        if (stats && stats.mtime.getTime() > this.metadata.mtime) {
-          this.metadata.mtime = stats.mtime.getTime();
+        if (stats && stats.mtime.getTime() > this.state.mtime) {
+          this.state.mtime = stats.mtime.getTime();
         }
 
         if (this.recentRemoteChanges.delete(normalizedPath)) {
@@ -710,6 +689,97 @@ export default class Sync extends BaseCommand<typeof Sync> {
    */
   private _enqueue(fn: () => Promise<unknown>): void {
     void this.queue.add(fn).catch(this.stop);
+  }
+}
+
+/**
+ * Holds information about the state of the local filesystem. It's persisted to `.gadget/sync.json`.
+ */
+export class SyncState {
+  private _inner: {
+    app: string;
+    filesVersion: string;
+    mtime: number;
+  };
+
+  private constructor(private _rootDir: string, inner: { app: string; filesVersion: string; mtime: number }) {
+    this._inner = inner;
+  }
+
+  /**
+   * The app this filesystem is synced to.
+   */
+  get app(): string {
+    return this._inner.app;
+  }
+
+  /**
+   * The last filesVersion that was successfully written to the filesystem. This is used to determine if the remote
+   * filesystem is ahead of the local one.
+   */
+  get filesVersion(): bigint {
+    return BigInt(this._inner.filesVersion);
+  }
+
+  set filesVersion(value: bigint | string) {
+    this._inner.filesVersion = String(value);
+    this._save();
+  }
+
+  /**
+   * The largest mtime that was seen on the local filesystem before `ggt sync` stopped. This is used to determine if
+   * the local filesystem has changed since the last sync.
+   *
+   * Note: This does not include the mtime of files that are ignored.
+   */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  get mtime(): number {
+    return this._inner.mtime;
+  }
+
+  set mtime(value: number) {
+    this._inner.mtime = value;
+    this._save();
+  }
+
+  /**
+   * Creates a new SyncFile instance and saves it to the filesystem.
+   *
+   * @param rootDir The root directory of the app.
+   * @param app The app slug.
+   * @returns A new SyncFile instance.
+   */
+  static create(rootDir: string, opts: { app: string; filesVersion?: string; mtime?: number }): SyncState {
+    const state = new SyncState(rootDir, { filesVersion: "0", mtime: 0, ...opts });
+    state._save();
+    return state;
+  }
+
+  /**
+   * Loads a SyncFile instance from the filesystem.
+   *
+   * @param rootDir The root directory of the app.
+   * @returns The SyncFile instance.
+   */
+  static load(rootDir: string): SyncState {
+    const state = fs.readJsonSync(path.join(rootDir, ".gadget/sync.json"));
+
+    assert(_.isString(state.app), "missing or invalid app");
+    assert(_.isString(state.filesVersion), "missing or invalid filesVersion");
+    assert(_.isNumber(state.mtime), "missing or invalid mtime");
+
+    return new SyncState(rootDir, {
+      app: state.app,
+      filesVersion: state.filesVersion,
+      mtime: state.mtime,
+    });
+  }
+
+  /**
+   * Saves the current state of the filesystem to `.gadget/sync.json`.
+   */
+  private _save() {
+    fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
   }
 }
 

@@ -1,5 +1,27 @@
 # @gadgetinc/ggt
 
+## 0.1.17
+
+### Patch Changes
+
+- c561a95: Bump @oclif/core from 2.8.2 to 2.8.5
+- 60c99a5: Bump oclif from 3.8.1 to 3.8.2
+- 47fc19b: Bump date-fns from 2.29.3 to 2.30.0
+- 2ef1040: Bump @sentry/node from 7.48.0 to 7.49.0
+- 18784ba: Bump which from 3.0.0 to 3.0.1
+- 7614f50: Bump @oclif/plugin-warn-if-update-available from 2.0.35 to 2.0.36
+- f5e1a3f: Improve the list command by
+
+  - Prompting the user to log in if they aren't already (similar to `ggt sync`)
+  - Linking them to `https://gadget.new` if they don't have any applications
+
+- 02cbbae: Bump @oclif/plugin-plugins from 2.4.6 to 2.4.7
+- e904319: Bump oclif from 3.8.2 to 3.9.0
+- 0fcde51: Bump @sentry/node from 7.49.0 to 7.50.0
+- cb585bd: Bump @oclif/plugin-plugins from 2.4.7 to 3.0.1
+- d0c27ce: Rethrow all CLIErrors
+- 53edf87: Bump @sentry/node from 7.50.0 to 7.51.0
+
 ## 0.1.16
 
 ### Patch Changes

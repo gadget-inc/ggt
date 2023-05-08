@@ -155,7 +155,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
    * A list of filepaths that have changed because of a remote file-sync event. This is used to avoid sending files that
    * we recently received from a remote file-sync event.
    */
-  recentRemoteChanges = new Set();
+  recentRemoteChanges = new Set<string>();
 
   /**
    * A FIFO async callback queue that ensures we process file-sync events in the order they occurred.
@@ -521,6 +521,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
                 return;
               }
 
+              // we need to add the parent directory to recentRemoteChanges so that we don't try to publish it
+              this.recentRemoteChanges.add(path.dirname(file.path) + "/");
               await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
               await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
@@ -538,6 +540,16 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
             this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
             this.metadata.filesVersion = remoteFilesVersion;
+
+            // always remove the root directory from recentRemoteChanges
+            this.recentRemoteChanges.delete("./");
+
+            // remove any files in recentRemoteChanges that are ignored (e.g. .gadget/ files)
+            for (const filepath of this.recentRemoteChanges) {
+              if (this.ignorer.ignores(filepath)) {
+                this.recentRemoteChanges.delete(filepath);
+              }
+            }
           });
         },
       }

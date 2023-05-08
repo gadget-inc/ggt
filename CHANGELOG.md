@@ -1,5 +1,12 @@
 # @gadgetinc/ggt
 
+## 0.1.18
+
+### Patch Changes
+
+- 0fc7c7c: Bump @sentry/node from 7.51.0 to 7.51.2
+- 0d6268e: Don't send parent directories back to Gadget
+
 ## 0.1.17
 
 ### Patch Changes

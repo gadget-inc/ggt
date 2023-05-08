@@ -481,15 +481,16 @@ export default class Sync extends BaseCommand<typeof Sync> {
       },
       {
         error: (error) => void this.stop(error),
-        next: ({ remoteFileSyncEvents: { remoteFilesVersion, changed, deleted } }) => {
-          const remoteFiles = new Map(
-            [...deleted, ...changed]
-              .filter((event) => event.path.startsWith(".gadget/") || !this.ignorer.ignores(event.path))
-              .map((e) => [e.path, e])
-          );
+        next: ({ remoteFileSyncEvents }) => {
+          const remoteFilesVersion = remoteFileSyncEvents.remoteFilesVersion;
+
+          // we always ignore .gadget/ files so that we don't publish them (they're managed by gadget), but we still want to receive them
+          const filter = (event: { path: string }) => event.path.startsWith(".gadget/") || !this.ignorer.ignores(event.path);
+          const changed = remoteFileSyncEvents.changed.filter(filter);
+          const deleted = remoteFileSyncEvents.deleted.filter(filter);
 
           this._enqueue(async () => {
-            if (!remoteFiles.size) {
+            if (!changed.length && !deleted.length) {
               if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
                 // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
                 this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
@@ -501,8 +502,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
             this.log(chalk`Received {gray ${format(new Date(), "pp")}}`);
             this.logPaths(
               "←",
-              changed.map((x) => x.path).filter((x) => remoteFiles.has(x)),
-              deleted.map((x) => x.path).filter((x) => remoteFiles.has(x))
+              changed.map((x) => x.path),
+              deleted.map((x) => x.path)
             );
 
             // we need to processed deleted files first as we may delete an empty directory after a file has been put

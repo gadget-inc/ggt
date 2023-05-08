@@ -227,13 +227,14 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
   /**
    * Similar to {@linkcode relative} in that it turns a filepath into a relative one from {@linkcode dir}. However, it
-   * also changes any slashes to be posix/unix-like forward slashes, condenses repeat slashes into a single slash.
+   * also changes any slashes to be posix/unix-like forward slashes, condenses repeated slashes into a single slash, and
+   * adds a trailing slash if the filepath is a directory.
    *
    * This is used when sending file-sync events to Gadget to ensure that the paths are consistent across platforms.
    *
    * @see https://www.npmjs.com/package/normalize-path
    */
-  normalize(filepath: string, isDirectory = false): string {
+  normalize(filepath: string, isDirectory: boolean): string {
     return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath) + (isDirectory ? "/" : "");
   }
 
@@ -241,15 +242,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
    * Pretty-prints changed and deleted filepaths to the console.
    *
    * @param prefix The prefix to print before each line.
-   * @param changed The filepaths that have changed.
-   * @param deleted The filepaths that have been deleted.
+   * @param changed The normalized paths that have changed.
+   * @param deleted The normalized paths that have been deleted.
    * @param options.limit The maximum number of lines to print. Defaults to 10. If debug is enabled, this is ignored.
    */
   logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
     const lines = sortBy(
       [
-        ...changed.map((filepath) => chalk`{green ${prefix}} ${this.normalize(filepath)} {gray (changed)}`),
-        ...deleted.map((filepath) => chalk`{red ${prefix}} ${this.normalize(filepath)} {gray (deleted)}`),
+        ...changed.map((normalizedPath) => chalk`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
+        ...deleted.map((normalizedPath) => chalk`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
       ],
       (line) => line.slice(line.indexOf(" ") + 1)
     );
@@ -346,15 +347,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     const getChangedFiles = async (): Promise<Map<string, Stats>> => {
       const files = new Map();
-      for await (const filepath of walkDir(this.dir, { ignorer: this.ignorer })) {
-        const stats = await fs.stat(filepath);
+      for await (const absolutePath of walkDir(this.dir, { ignorer: this.ignorer })) {
+        const stats = await fs.stat(absolutePath);
         if (stats.mtime.getTime() > this.metadata.mtime) {
-          files.set(this.absolute(filepath), stats);
+          files.set(this.normalize(absolutePath, stats.isDirectory()), stats);
         }
       }
 
       // never include the root directory
-      files.delete(this.dir);
+      files.delete("/");
 
       return files;
     };
@@ -392,17 +393,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
           variables: {
             input: {
               expectedRemoteFilesVersion: remoteFilesVersion,
-              changed: await pMap(files, async ([filepath, stats]) => {
+              changed: await pMap(files, async ([normalizedPath, stats]) => {
                 if (stats.mtime.getTime() > this.metadata.mtime) {
                   this.metadata.mtime = stats.mtime.getTime();
                 }
 
-                const isDirectory = stats.isDirectory();
-
                 return {
-                  path: this.normalize(filepath, isDirectory),
+                  path: normalizedPath,
                   mode: stats.mode,
-                  content: isDirectory ? "" : await fs.readFile(filepath, "base64"),
+                  content: stats.isDirectory() ? "" : await fs.readFile(this.absolute(normalizedPath), "base64"),
                   encoding: FileSyncEncoding.Base64,
                 };
               }),
@@ -415,7 +414,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
       case Action.RESET: {
         // delete all the local files that have changed since the last sync and set the files version to 0 so we receive
         // all the remote files again, including any files that we just deleted that still exist
-        await pMap(changedFiles, ([filepath]) => fs.remove(filepath));
+        await pMap(changedFiles.keys(), (normalizedPath) => fs.remove(this.absolute(normalizedPath)));
         this.metadata.filesVersion = "0";
         break;
       }
@@ -516,23 +515,23 @@ export default class Sync extends BaseCommand<typeof Sync> {
             await pMap(changed, async (file) => {
               this.recentRemoteChanges.add(file.path);
 
-              const filepath = this.absolute(file.path);
+              const absolutePath = this.absolute(file.path);
               if (file.path.endsWith("/")) {
-                await fs.ensureDir(filepath, { mode: 0o755 });
+                await fs.ensureDir(absolutePath, { mode: 0o755 });
                 return;
               }
 
-              await fs.ensureDir(path.dirname(filepath), { mode: 0o755 });
-              await fs.writeFile(filepath, Buffer.from(file.content, file.encoding), { mode: file.mode });
+              await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
+              await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
-              if (filepath == this.absolute("yarn.lock")) {
+              if (absolutePath == this.absolute("yarn.lock")) {
                 await execa("yarn", ["install"], { cwd: this.dir }).catch((err) => {
                   this.debug("yarn install failed");
                   this.debug(err.message);
                 });
               }
 
-              if (filepath == this.ignorer.filepath) {
+              if (absolutePath == this.ignorer.filepath) {
                 this.ignorer.reload();
               }
             });
@@ -603,17 +602,17 @@ export default class Sync extends BaseCommand<typeof Sync> {
     this.watcher
       .add(`${this.dir}/**/*`)
       .on("error", (error) => void this.stop(error))
-      .on("all", (event, filepath, stats) => {
-        const normalizedPath = this.normalize(filepath, event == "addDir" || event == "unlinkDir");
+      .on("all", (event, absolutePath, stats) => {
+        const normalizedPath = this.normalize(absolutePath, event == "addDir" || event == "unlinkDir");
 
         if (stats?.isSymbolicLink?.()) {
           this.debug("skipping event caused by symlink %s", normalizedPath);
           return;
         }
 
-        if (filepath == this.ignorer.filepath) {
+        if (absolutePath == this.ignorer.filepath) {
           this.ignorer.reload();
-        } else if (this.ignorer.ignores(filepath)) {
+        } else if (this.ignorer.ignores(absolutePath)) {
           this.debug("skipping event caused by ignored file %s", normalizedPath);
           return;
         }

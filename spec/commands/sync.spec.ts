@@ -516,8 +516,8 @@ describe("Sync", () => {
 
         await sleepUntil(() => sync.metadata.filesVersion == "1");
 
-        expect(sync.recentRemoteChanges.has(path.join(dir, "foo.js"))).toBeTrue();
-        expect(sync.recentRemoteChanges.has(path.join(dir, "bar.js"))).toBeTrue();
+        expect(sync.recentRemoteChanges.has("foo.js")).toBeTrue();
+        expect(sync.recentRemoteChanges.has("bar.js")).toBeTrue();
       });
 
       it("does not write multiple batches of events at the same time", async () => {
@@ -902,8 +902,8 @@ describe("Sync", () => {
         jest.spyOn(sync, "publish");
 
         // add files to recentWrites
-        sync.recentRemoteChanges.add(path.join(dir, "foo.js"));
-        sync.recentRemoteChanges.add(path.join(dir, "bar.js"));
+        sync.recentRemoteChanges.add("foo.js");
+        sync.recentRemoteChanges.add("bar.js");
 
         // emit events affecting the files in recentWrites
         emit.all("add", path.join(dir, "foo.js"), stats);

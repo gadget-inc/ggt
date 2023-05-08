@@ -516,7 +516,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
                   }
 
                   const filepath = this.absolute(file.path);
-                  this.recentRemoteChanges.add(filepath);
+                  this.recentRemoteChanges.add(file.path);
 
                   if (!("content" in file)) {
                     await fs.remove(filepath);
@@ -626,17 +626,17 @@ export default class Sync extends BaseCommand<typeof Sync> {
       .add(`${this.dir}/**/*`)
       .on("error", (error) => void this.stop(error))
       .on("all", (event, filepath, stats) => {
-        const relativePath = this.relative(filepath);
+        const normalizedPath = this.normalize(filepath, event == "addDir" || event == "unlinkDir");
 
         if (stats?.isSymbolicLink?.()) {
-          this.debug("skipping event caused by symlink %s", relativePath);
+          this.debug("skipping event caused by symlink %s", normalizedPath);
           return;
         }
 
         if (filepath == this.ignorer.filepath) {
           this.ignorer.reload();
         } else if (this.ignorer.ignores(filepath)) {
-          this.debug("skipping event caused by ignored file %s", relativePath);
+          this.debug("skipping event caused by ignored file %s", normalizedPath);
           return;
         }
 
@@ -647,12 +647,12 @@ export default class Sync extends BaseCommand<typeof Sync> {
           this.metadata.mtime = stats.mtime.getTime();
         }
 
-        if (this.recentRemoteChanges.delete(filepath)) {
-          this.debug("skipping event caused by recent write %s", relativePath);
+        if (this.recentRemoteChanges.delete(normalizedPath)) {
+          this.debug("skipping event caused by recent write %s", normalizedPath);
           return;
         }
 
-        this.debug("file changed %s", relativePath, event);
+        this.debug("file changed %s", normalizedPath, event);
 
         switch (event) {
           case "add":

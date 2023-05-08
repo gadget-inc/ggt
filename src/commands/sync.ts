@@ -25,9 +25,7 @@ import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from
 import { app } from "../utils/flags";
 import { ignoreEnoent, FSIgnorer, isEmptyDir, walkDir } from "../utils/fs-utils";
 import type {
-  FileSyncChangedEvent,
   FileSyncChangedEventInput,
-  FileSyncDeletedEvent,
   FileSyncDeletedEventInput,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
@@ -229,13 +227,14 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
   /**
    * Similar to {@linkcode relative} in that it turns a filepath into a relative one from {@linkcode dir}. However, it
-   * also changes any slashes to be posix/unix-like forward slashes, condenses repeat slashes into a single slash.
+   * also changes any slashes to be posix/unix-like forward slashes, condenses repeated slashes into a single slash, and
+   * adds a trailing slash if the filepath is a directory.
    *
    * This is used when sending file-sync events to Gadget to ensure that the paths are consistent across platforms.
    *
    * @see https://www.npmjs.com/package/normalize-path
    */
-  normalize(filepath: string, isDirectory = false): string {
+  normalize(filepath: string, isDirectory: boolean): string {
     return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath) + (isDirectory ? "/" : "");
   }
 
@@ -243,15 +242,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
    * Pretty-prints changed and deleted filepaths to the console.
    *
    * @param prefix The prefix to print before each line.
-   * @param changed The filepaths that have changed.
-   * @param deleted The filepaths that have been deleted.
+   * @param changed The normalized paths that have changed.
+   * @param deleted The normalized paths that have been deleted.
    * @param options.limit The maximum number of lines to print. Defaults to 10. If debug is enabled, this is ignored.
    */
   logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
     const lines = sortBy(
       [
-        ...changed.map((filepath) => chalk`{green ${prefix}} ${this.normalize(filepath)} {gray (changed)}`),
-        ...deleted.map((filepath) => chalk`{red ${prefix}} ${this.normalize(filepath)} {gray (deleted)}`),
+        ...changed.map((normalizedPath) => chalk`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
+        ...deleted.map((normalizedPath) => chalk`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
       ],
       (line) => line.slice(line.indexOf(" ") + 1)
     );
@@ -348,15 +347,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     const getChangedFiles = async (): Promise<Map<string, Stats>> => {
       const files = new Map();
-      for await (const filepath of walkDir(this.dir, { ignorer: this.ignorer })) {
-        const stats = await fs.stat(filepath);
+      for await (const absolutePath of walkDir(this.dir, { ignorer: this.ignorer })) {
+        const stats = await fs.stat(absolutePath);
         if (stats.mtime.getTime() > this.metadata.mtime) {
-          files.set(this.absolute(filepath), stats);
+          files.set(this.normalize(absolutePath, stats.isDirectory()), stats);
         }
       }
 
       // never include the root directory
-      files.delete(this.dir);
+      files.delete("/");
 
       return files;
     };
@@ -394,17 +393,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
           variables: {
             input: {
               expectedRemoteFilesVersion: remoteFilesVersion,
-              changed: await pMap(files, async ([filepath, stats]) => {
+              changed: await pMap(files, async ([normalizedPath, stats]) => {
                 if (stats.mtime.getTime() > this.metadata.mtime) {
                   this.metadata.mtime = stats.mtime.getTime();
                 }
 
-                const isDirectory = stats.isDirectory();
-
                 return {
-                  path: this.normalize(filepath, isDirectory),
+                  path: normalizedPath,
                   mode: stats.mode,
-                  content: isDirectory ? "" : await fs.readFile(filepath, "base64"),
+                  content: stats.isDirectory() ? "" : await fs.readFile(this.absolute(normalizedPath), "base64"),
                   encoding: FileSyncEncoding.Base64,
                 };
               }),
@@ -417,7 +414,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
       case Action.RESET: {
         // delete all the local files that have changed since the last sync and set the files version to 0 so we receive
         // all the remote files again, including any files that we just deleted that still exist
-        await pMap(changedFiles, ([filepath]) => fs.remove(filepath));
+        await pMap(changedFiles.keys(), (normalizedPath) => fs.remove(this.absolute(normalizedPath)));
         this.metadata.filesVersion = "0";
         break;
       }
@@ -483,158 +480,140 @@ export default class Sync extends BaseCommand<typeof Sync> {
       },
       {
         error: (error) => void this.stop(error),
-        next: ({ remoteFileSyncEvents: { remoteFilesVersion, changed, deleted } }) => {
-          const remoteFiles = new Map(
-            [...deleted, ...changed]
-              .filter((event) => event.path.startsWith(".gadget/") || !this.ignorer.ignores(event.path))
-              .map((e) => [e.path, e])
-          );
+        next: ({ remoteFileSyncEvents }) => {
+          const remoteFilesVersion = remoteFileSyncEvents.remoteFilesVersion;
 
-          void this.queue
-            .add(async () => {
-              if (!remoteFiles.size) {
-                if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
-                  // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
-                  this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
-                  this.metadata.filesVersion = remoteFilesVersion;
-                }
+          // we always ignore .gadget/ files so that we don't publish them (they're managed by gadget), but we still want to receive them
+          const filter = (event: { path: string }) => event.path.startsWith(".gadget/") || !this.ignorer.ignores(event.path);
+          const changed = remoteFileSyncEvents.changed.filter(filter);
+          const deleted = remoteFileSyncEvents.deleted.filter(filter);
+
+          this._enqueue(async () => {
+            if (!changed.length && !deleted.length) {
+              if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
+                // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
+                this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
+                this.metadata.filesVersion = remoteFilesVersion;
+              }
+              return;
+            }
+
+            this.log(chalk`Received {gray ${format(new Date(), "pp")}}`);
+            this.logPaths(
+              "←",
+              changed.map((x) => x.path),
+              deleted.map((x) => x.path)
+            );
+
+            // we need to processed deleted files first as we may delete an empty directory after a file has been put
+            // into it. if processed out of order the new file is deleted as well
+            await pMap(deleted, async (file) => {
+              this.recentRemoteChanges.add(file.path);
+              await fs.remove(this.absolute(file.path));
+            });
+
+            await pMap(changed, async (file) => {
+              this.recentRemoteChanges.add(file.path);
+
+              const absolutePath = this.absolute(file.path);
+              if (file.path.endsWith("/")) {
+                await fs.ensureDir(absolutePath, { mode: 0o755 });
                 return;
               }
 
-              this.log(chalk`Received {gray ${format(new Date(), "pp")}}`);
-              this.logPaths(
-                "←",
-                changed.map((x) => x.path).filter((x) => remoteFiles.has(x)),
-                deleted.map((x) => x.path).filter((x) => remoteFiles.has(x))
-              );
+              await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
+              await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
-              const handleFiles = async (files: (FileSyncChangedEvent | FileSyncDeletedEvent)[]) =>
-                await pMap(
-                  files,
-                  async (file) => {
-                    if (!remoteFiles.has(file.path)) {
-                      return;
-                    }
+              if (absolutePath == this.absolute("yarn.lock")) {
+                await execa("yarn", ["install"], { cwd: this.dir }).catch((err) => {
+                  this.debug("yarn install failed");
+                  this.debug(err.message);
+                });
+              }
 
-                    const filepath = this.absolute(file.path);
-                    this.recentRemoteChanges.add(filepath);
+              if (absolutePath == this.ignorer.filepath) {
+                this.ignorer.reload();
+              }
+            });
 
-                    if ("content" in file) {
-                      if (!file.path.endsWith("/")) {
-                        this.recentRemoteChanges.add(path.dirname(filepath));
-                        await fs.ensureDir(path.dirname(filepath), { mode: 0o755 });
-                        await fs.writeFile(filepath, Buffer.from(file.content, file.encoding ?? FileSyncEncoding.Utf8), {
-                          mode: file.mode,
-                        });
-                      } else {
-                        await fs.ensureDir(filepath, { mode: 0o755 });
-                      }
-                      if (filepath == this.absolute("yarn.lock")) {
-                        await execa("yarn", ["install"], { cwd: this.dir }).catch((err) => {
-                          this.debug("yarn install failed");
-                          this.debug(err.message);
-                        });
-                      }
-                    } else {
-                      await fs.remove(filepath);
-                    }
-
-                    if (filepath == this.ignorer.filepath) {
-                      this.ignorer.reload();
-                    }
-                  },
-                  { stopOnError: false }
-                );
-
-              // we need to processed deleted files first as we may delete an empty directory once a file has been put into it. if processed out of order the new file is deleted as well
-              await handleFiles(deleted);
-              await handleFiles(changed);
-
-              this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
-              this.metadata.filesVersion = remoteFilesVersion;
-            })
-            .catch(this.stop);
+            this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
+            this.metadata.filesVersion = remoteFilesVersion;
+          });
         },
       }
     );
 
-    const localFilesBuffer = new Map<
-      string,
-      { mode: number; mtime: number; isDirectory: boolean } | { isDeleted: true; isDirectory: boolean }
-    >();
+    const localFilesBuffer = new Map<string, { mode: number; isDirectory: boolean } | { isDeleted: true; isDirectory: boolean }>();
 
     this.publish = debounce(() => {
       const localFiles = new Map(localFilesBuffer.entries());
       localFilesBuffer.clear();
 
-      void this.queue
-        .add(async () => {
-          const changed: FileSyncChangedEventInput[] = [];
-          const deleted: FileSyncDeletedEventInput[] = [];
+      this._enqueue(async () => {
+        const changed: FileSyncChangedEventInput[] = [];
+        const deleted: FileSyncDeletedEventInput[] = [];
 
-          await pMap(
-            localFiles,
-            async ([filepath, file]) => {
-              if ("isDeleted" in file) {
-                deleted.push({ path: this.normalize(filepath, file.isDirectory) });
-              } else {
-                try {
-                  changed.push({
-                    path: this.normalize(filepath, file.isDirectory),
-                    mode: file.mode,
-                    content: file.isDirectory ? "" : await fs.readFile(filepath, "base64"),
-                    encoding: FileSyncEncoding.Base64,
-                  });
-                } catch (error) {
-                  // A file could have been changed and then deleted before we process the change event, so the readFile
-                  // above will raise an ENOENT. This is normal operation, so just ignore this event.
-                  ignoreEnoent(error);
-                }
-              }
-            },
-            { stopOnError: false }
-          );
-
-          if (changed.length > 0 || deleted.length > 0) {
-            const data = await this.client.queryUnwrap({
-              query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-              variables: { input: { expectedRemoteFilesVersion: this.metadata.filesVersion, changed, deleted } },
-            });
-
-            this.log(chalk`Sent {gray ${format(new Date(), "pp")}}`);
-            this.logPaths(
-              "→",
-              changed.map((x) => x.path),
-              deleted.map((x) => x.path)
-            );
-
-            const { remoteFilesVersion } = data.publishFileSyncEvents;
-            this.debug("remote files version after publishing %s", remoteFilesVersion);
-
-            if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
-              this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
-              this.metadata.filesVersion = remoteFilesVersion;
-            }
+        await pMap(localFiles, async ([normalizedPath, file]) => {
+          if ("isDeleted" in file) {
+            deleted.push({ path: normalizedPath });
+            return;
           }
-        })
-        .catch(this.stop);
+
+          try {
+            changed.push({
+              path: normalizedPath,
+              mode: file.mode,
+              content: file.isDirectory ? "" : await fs.readFile(this.absolute(normalizedPath), "base64"),
+              encoding: FileSyncEncoding.Base64,
+            });
+          } catch (error) {
+            // A file could have been changed and then deleted before we process the change event, so the readFile
+            // above will raise an ENOENT. This is normal operation, so just ignore this event.
+            ignoreEnoent(error);
+          }
+        });
+
+        if (!changed.length && !deleted.length) {
+          return;
+        }
+
+        const data = await this.client.queryUnwrap({
+          query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+          variables: { input: { expectedRemoteFilesVersion: this.metadata.filesVersion, changed, deleted } },
+        });
+
+        this.log(chalk`Sent {gray ${format(new Date(), "pp")}}`);
+        this.logPaths(
+          "→",
+          changed.map((x) => x.path),
+          deleted.map((x) => x.path)
+        );
+
+        const { remoteFilesVersion } = data.publishFileSyncEvents;
+        this.debug("remote files version after publishing %s", remoteFilesVersion);
+
+        if (BigInt(remoteFilesVersion) > BigInt(this.metadata.filesVersion)) {
+          this.debug("updated local files version from %s to %s", this.metadata.filesVersion, remoteFilesVersion);
+          this.metadata.filesVersion = remoteFilesVersion;
+        }
+      });
     }, this.flags["file-push-delay"]);
 
     this.watcher
       .add(`${this.dir}/**/*`)
       .on("error", (error) => void this.stop(error))
-      .on("all", (event, filepath, stats) => {
-        const relativePath = this.relative(filepath);
+      .on("all", (event, absolutePath, stats) => {
+        const normalizedPath = this.normalize(absolutePath, event == "addDir" || event == "unlinkDir");
 
         if (stats?.isSymbolicLink?.()) {
-          this.debug("skipping event caused by symlink %s", relativePath);
+          this.debug("skipping event caused by symlink %s", normalizedPath);
           return;
         }
 
-        if (filepath == this.ignorer.filepath) {
+        if (absolutePath == this.ignorer.filepath) {
           this.ignorer.reload();
-        } else if (this.ignorer.ignores(filepath)) {
-          this.debug("skipping event caused by ignored file %s", relativePath);
+        } else if (this.ignorer.ignores(absolutePath)) {
+          this.debug("skipping event caused by ignored file %s", normalizedPath);
           return;
         }
 
@@ -645,26 +624,26 @@ export default class Sync extends BaseCommand<typeof Sync> {
           this.metadata.mtime = stats.mtime.getTime();
         }
 
-        if (this.recentRemoteChanges.delete(filepath)) {
-          this.debug("skipping event caused by recent write %s", relativePath);
+        if (this.recentRemoteChanges.delete(normalizedPath)) {
+          this.debug("skipping event caused by recent write %s", normalizedPath);
           return;
         }
 
-        this.debug("file changed %s", relativePath, event);
+        this.debug("file changed %s", normalizedPath, event);
 
         switch (event) {
           case "add":
           case "change":
             assert(stats, "missing stats on add/change event");
-            localFilesBuffer.set(filepath, { mode: stats.mode, mtime: stats.mtime.getTime(), isDirectory: false });
+            localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: false });
             break;
           case "addDir":
             assert(stats, "missing stats on addDir event");
-            localFilesBuffer.set(filepath, { mode: stats.mode, mtime: stats.mtime.getTime(), isDirectory: true });
+            localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: true });
             break;
           case "unlinkDir":
           case "unlink":
-            localFilesBuffer.set(filepath, { isDeleted: true, isDirectory: event === "unlinkDir" });
+            localFilesBuffer.set(normalizedPath, { isDeleted: true, isDirectory: event === "unlinkDir" });
             break;
         }
 
@@ -708,6 +687,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
     } else {
       this.log("Goodbye!");
     }
+  }
+
+  /**
+   * Enqueues a function that handles file-sync events onto the {@linkcode queue}.
+   *
+   * @param fn The function to enqueue.
+   */
+  private _enqueue(fn: () => Promise<unknown>): void {
+    void this.queue.add(fn).catch(this.stop);
   }
 }
 

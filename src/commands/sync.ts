@@ -553,17 +553,17 @@ export default class Sync extends BaseCommand<typeof Sync> {
         const changed: FileSyncChangedEventInput[] = [];
         const deleted: FileSyncDeletedEventInput[] = [];
 
-        await pMap(localFiles, async ([filepath, file]) => {
+        await pMap(localFiles, async ([normalizedPath, file]) => {
           if ("isDeleted" in file) {
-            deleted.push({ path: this.normalize(filepath, file.isDirectory) });
+            deleted.push({ path: normalizedPath });
             return;
           }
 
           try {
             changed.push({
-              path: this.normalize(filepath, file.isDirectory),
+              path: normalizedPath,
               mode: file.mode,
-              content: file.isDirectory ? "" : await fs.readFile(filepath, "base64"),
+              content: file.isDirectory ? "" : await fs.readFile(this.absolute(normalizedPath), "base64"),
               encoding: FileSyncEncoding.Base64,
             });
           } catch (error) {
@@ -635,15 +635,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
           case "add":
           case "change":
             assert(stats, "missing stats on add/change event");
-            localFilesBuffer.set(filepath, { mode: stats.mode, isDirectory: false });
+            localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: false });
             break;
           case "addDir":
             assert(stats, "missing stats on addDir event");
-            localFilesBuffer.set(filepath, { mode: stats.mode, isDirectory: true });
+            localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: true });
             break;
           case "unlinkDir":
           case "unlink":
-            localFilesBuffer.set(filepath, { isDeleted: true, isDirectory: event === "unlinkDir" });
+            localFilesBuffer.set(normalizedPath, { isDeleted: true, isDirectory: event === "unlinkDir" });
             break;
         }
 

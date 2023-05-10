@@ -1257,6 +1257,9 @@ function toBase64(str: string): string {
 }
 
 function stateFile(sync: Sync): string {
+  // make sure the state is flushed
+  sync.state.flush();
+
   // @ts-expect-error _inner is private
   return prettyJson(sync.state._inner) + "\n";
 }

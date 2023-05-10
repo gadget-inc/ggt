@@ -428,6 +428,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
         this.publish.flush();
         await this.queue.onIdle();
       } finally {
+        this.state.flush();
         await Promise.allSettled([this.watcher.close(), this.client.dispose()]);
 
         this.debug("stopped");
@@ -702,6 +703,13 @@ export class SyncState {
     mtime: number;
   };
 
+  /**
+   * Saves the current state of the filesystem to `.gadget/sync.json`.
+   */
+  #save = _.debounce(() => {
+    fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
+  }, 100);
+
   private constructor(private _rootDir: string, inner: { app: string; filesVersion: string; mtime: number }) {
     this._inner = inner;
   }
@@ -723,7 +731,7 @@ export class SyncState {
 
   set filesVersion(value: bigint | string) {
     this._inner.filesVersion = String(value);
-    this._save();
+    this.#save();
   }
 
   /**
@@ -739,7 +747,7 @@ export class SyncState {
 
   set mtime(value: number) {
     this._inner.mtime = value;
-    this._save();
+    this.#save();
   }
 
   /**
@@ -751,7 +759,8 @@ export class SyncState {
    */
   static create(rootDir: string, opts: { app: string; filesVersion?: string; mtime?: number }): SyncState {
     const state = new SyncState(rootDir, { filesVersion: "0", mtime: 0, ...opts });
-    state._save();
+    state.#save();
+    state.flush();
     return state;
   }
 
@@ -776,10 +785,10 @@ export class SyncState {
   }
 
   /**
-   * Saves the current state of the filesystem to `.gadget/sync.json`.
+   * Flushes any pending writes to the filesystem.
    */
-  private _save() {
-    fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
+  flush(): void {
+    this.#save.flush();
   }
 }
 

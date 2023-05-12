@@ -1,11 +1,11 @@
 {
-  "name": "@gadgetinc/ggt",
+  "name": "ggt",
   "version": "0.1.18",
   "lockfileVersion": 2,
   "requires": true,
   "packages": {
     "": {
-      "name": "@gadgetinc/ggt",
+      "name": "ggt",
       "version": "0.1.18",
       "license": "MIT",
       "dependencies": {

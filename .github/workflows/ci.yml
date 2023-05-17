@@ -45,7 +45,7 @@ jobs:
         run: npm run test
 
   dependabot:
-    if: startsWith(github.ref_name, 'dependabot/npm_and_yarn/')
+    if: github.actor == 'dependabot[bot]' || (github.actor == 'github-actions[bot]' && startsWith(github.ref_name, 'dependabot/npm_and_yarn/'))
     runs-on: ubuntu-latest
     permissions:
       contents: write

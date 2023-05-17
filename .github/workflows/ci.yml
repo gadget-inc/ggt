@@ -2,9 +2,7 @@ name: ci
 
 on:
   workflow_call:
-  push:
-    branches-ignore:
-      - main # Already handled by cd.yml
+  pull_request:
 
 jobs:
   lint:
@@ -45,3 +43,63 @@ jobs:
 
       - name: Run tests
         run: npm run test
+
+  dependabot:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Get dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: ${{ secrets.CHANGESETS_GH_TOKEN }}
+
+      - if: steps.metadata.outputs.dependency-type == 'direct:production'
+        name: Add changeset if necessary
+        id: changeset
+        run: |
+          added_files=$(git diff --diff-filter=A --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          for filename in $added_files; do
+              if [[ $filename =~ ^\.changeset\/.+\.md$ ]]; then
+                  echo "Changeset found: $filename"
+                  exit 0
+              fi
+          done
+
+          echo "Creating changeset..."
+          name=$(shuf -n3 /usr/share/dict/american-english | tr '[:upper:]' '[:lower:]' | paste -sd '-')
+          message=$(git log -1 --pretty=%s)
+
+          cat >.changeset/"$name".md <<-EOF
+          ---
+          "ggt": patch
+          ---
+
+          $message
+          EOF
+
+          echo "changeset_added=true" >> $GITHUB_OUTPUT
+
+      - if: steps.changeset.outputs.changeset_added == 'true'
+        name: Push changeset
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Added changeset
+        env:
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_GH_TOKEN }}
+
+      - if: steps.changeset.outputs.changeset_added != 'true'
+        name: Merge dependabot PR
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_GH_TOKEN }}

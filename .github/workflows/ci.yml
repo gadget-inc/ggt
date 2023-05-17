@@ -2,9 +2,7 @@ name: ci
 
 on:
   workflow_call:
-  push:
-    branches-ignore:
-      - main # Already handled by cd.yml
+  pull_request:
 
 jobs:
   lint:
@@ -45,3 +43,56 @@ jobs:
 
       - name: Run tests
         run: npm run test
+
+  dependabot:
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'dependabot/npm_and_yarn/') && (github.actor == 'dependabot[bot]' || github.actor == 'scott-rc')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.CHANGESETS_GH_TOKEN }}
+          fetch-depth: 0
+
+      - name: Get dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+
+      - if: steps.metadata.outputs.dependency-type == 'direct:production'
+        name: Add changeset if missing
+        id: changeset
+        run: |
+          added_files=$(git diff --diff-filter=A --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          for filename in $added_files; do
+              if [[ $filename =~ ^\.changeset\/.+\.md$ ]]; then
+                  echo "Changeset found: $filename"
+                  exit 0
+              fi
+          done
+
+          echo "Creating changeset"
+          cat > .changeset/${{ github.event.pull_request.head.sha }}.md <<-EOF
+          ---
+          "ggt": patch
+          ---
+
+          ${{ github.event.pull_request.title }}
+          EOF
+
+          echo "changeset_added=true" >> $GITHUB_OUTPUT
+
+      - if: steps.changeset.outputs.changeset_added == 'true'
+        name: Push changeset
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Added changeset
+
+      - if: steps.changeset.outputs.changeset_added != 'true'
+        name: Merge PR
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          GH_TOKEN: ${{ secrets.CHANGESETS_GH_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}

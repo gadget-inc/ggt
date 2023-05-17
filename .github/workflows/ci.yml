@@ -54,14 +54,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
+          token: ${{ secrets.CHANGESETS_GH_TOKEN }}
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Get dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v1
-        with:
-          github-token: ${{ secrets.CHANGESETS_GH_TOKEN }}
 
       - if: steps.metadata.outputs.dependency-type == 'direct:production'
         name: Add changeset if necessary
@@ -94,12 +92,9 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Added changeset
-        env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_GH_TOKEN }}
 
       - if: steps.changeset.outputs.changeset_added != 'true'
         name: Merge dependabot PR
         run: gh pr merge --auto --merge "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_GH_TOKEN }}

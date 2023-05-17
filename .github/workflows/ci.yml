@@ -74,7 +74,7 @@ jobs:
           done
 
           echo "Creating changeset..."
-          name=$(shuf -n3 /usr/share/dict/american-english | tr '[:upper:]' '[:lower:]' | paste -sd '-')
+          name=$(shuf -n3 /usr/share/dict/words | tr '[:upper:]' '[:lower:]' | paste -sd '-')
           message=$(git log -1 --pretty=%s)
 
           cat >.changeset/"$name".md <<-EOF

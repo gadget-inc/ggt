@@ -50,7 +50,7 @@
         "@graphql-codegen/typescript": "^3.0.3",
         "@graphql-codegen/typescript-operations": "^3.0.4",
         "@oclif/plugin-plugins": "^3.0.1",
-        "@oclif/test": "^2.3.19",
+        "@oclif/test": "^2.3.20",
         "@swc/core": "^1.3.59",
         "@swc/helpers": "^0.5.1",
         "@swc/jest": "^0.2.26",
@@ -4968,13 +4968,13 @@
       }
     },
     "node_modules/@oclif/test": {
-      "version": "2.3.19",
-      "resolved": "https://registry.npmjs.org/@oclif/test/-/test-2.3.19.tgz",
-      "integrity": "sha512-sdGVAr2ZnONJUpNaivC+LQqIgv/vqwUXp1SbzGWz9UtoUWCOduBS/Oile/pum0nFJvXfiSGf+V8ni9jZd2xALA==",
+      "version": "2.3.20",
+      "resolved": "https://registry.npmjs.org/@oclif/test/-/test-2.3.20.tgz",
+      "integrity": "sha512-Ig85O70K7Cm3HS6Zkn8xygQZgbVvbtQqNyu8meZoHcIBLikAEvrWUhRmv70yxL1WQxIkbW2SQol6X5JdGLYfyA==",
       "dev": true,
       "dependencies": {
         "@oclif/core": "^2.8.5",
-        "fancy-test": "^2.0.21"
+        "fancy-test": "^2.0.22"
       },
       "engines": {
         "node": ">=12.0.0"
@@ -25045,13 +25045,13 @@
       "dev": true
     },
     "@oclif/test": {
-      "version": "2.3.19",
-      "resolved": "https://registry.npmjs.org/@oclif/test/-/test-2.3.19.tgz",
-      "integrity": "sha512-sdGVAr2ZnONJUpNaivC+LQqIgv/vqwUXp1SbzGWz9UtoUWCOduBS/Oile/pum0nFJvXfiSGf+V8ni9jZd2xALA==",
+      "version": "2.3.20",
+      "resolved": "https://registry.npmjs.org/@oclif/test/-/test-2.3.20.tgz",
+      "integrity": "sha512-Ig85O70K7Cm3HS6Zkn8xygQZgbVvbtQqNyu8meZoHcIBLikAEvrWUhRmv70yxL1WQxIkbW2SQol6X5JdGLYfyA==",
       "dev": true,
       "requires": {
         "@oclif/core": "^2.8.5",
-        "fancy-test": "^2.0.21"
+        "fancy-test": "^2.0.22"
       }
     },
     "@octokit/auth-token": {

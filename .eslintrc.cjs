@@ -1,22 +1,20 @@
-/** @type {import('eslint').ESLint.ConfigData} */
+/** @type { import('eslint').ESLint.ConfigData } */
 const config = {
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: ["./tsconfig.eslint.json", "./spec/tsconfig.json"],
   },
-  plugins: ["@typescript-eslint", "import", "jest", "lodash"],
+  plugins: ["@typescript-eslint", "import", "lodash"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "prettier",
     "plugin:import/typescript",
-    "plugin:jest/recommended",
     "plugin:lodash/recommended",
   ],
   env: {
     node: true,
-    jest: true,
   },
   rules: {
     "@typescript-eslint/consistent-type-imports": ["warn", { prefer: "type-imports" }],
@@ -36,14 +34,7 @@ const config = {
     "@typescript-eslint/no-unsafe-member-access": ["off"],
     "@typescript-eslint/no-unused-vars": ["warn", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
     "@typescript-eslint/restrict-template-expressions": ["off"],
-    "jest/expect-expect": [
-      "warn",
-      {
-        assertFunctionNames: ["expect", "expectDir"],
-        additionalTestBlockFunctions: [],
-      },
-    ],
-    "lodash/import-scope": ["error", "member"],
+    "lodash/import-scope": ["error", "full"],
     "lodash/prefer-lodash-method": ["off"],
     "lodash/prefer-constant": ["off"],
   },

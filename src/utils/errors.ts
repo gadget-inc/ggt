@@ -1,15 +1,15 @@
 import cleanStack from "clean-stack";
 import { HTTPError } from "got";
 import type { GraphQLError } from "graphql";
-import { isArray, isBoolean, isError, isNil, isNumber, isString, noop, uniqBy } from "lodash";
+import _ from "lodash";
 import { serializeError as baseSerializeError } from "serialize-error";
-import dedent from "ts-dedent";
+import { dedent } from "ts-dedent";
 import type { SetOptional } from "type-fest";
 import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
-import type Sync from "../commands/sync";
-import type { Payload } from "./client";
-import { context } from "./context";
+import type Sync from "../commands/sync.js";
+import type { Payload } from "./client.js";
+import { context } from "./context.js";
 import os from "os";
 import * as Sentry from "@sentry/node";
 import { randomUUID } from "crypto";
@@ -33,7 +33,7 @@ export abstract class BaseError extends Error {
   /**
    * The underlying *thing* that caused this error.
    */
-  override cause?: any;
+  cause?: any;
 
   /**
    * Assume the stack trace exists.
@@ -54,7 +54,7 @@ export abstract class BaseError extends Error {
   async capture(): Promise<void> {
     if (this.isBug == IsBug.NO) return;
 
-    const user = await context.getUser().catch(noop);
+    const user = await context.getUser().catch(_.noop.bind(_));
 
     Sentry.getCurrentHub().captureException(this, {
       event_id: this.sentryEventId,
@@ -135,14 +135,17 @@ export abstract class BaseError extends Error {
  * Wraps `serialize-error` with some handy stuff, like special support for Got HTTP errors
  */
 export function serializeError(error: Error | string | unknown): Record<string, any> {
-  let serialized = baseSerializeError(isArray(error) ? new AggregateError(error) : error);
+  let serialized = baseSerializeError(_.isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };
   }
 
   if (error instanceof HTTPError && error.name === "RequestError") {
     delete serialized["timings"];
-    serialized["options"] = { method: error.options.method, url: error.options.url.toJSON() };
+    serialized["options"] = {
+      method: error.options.method,
+      url: error.options.url instanceof URL ? error.options.url.toJSON() : error.options.url,
+    };
     serialized["responseBody"] = inspect(error.response?.body);
   }
 
@@ -198,7 +201,7 @@ export class ClientError extends BaseError {
   override body(): string {
     if (isGraphQLErrors(this.cause)) {
       if (this.cause.length > 1) {
-        const errors = uniqBy(this.cause, "message");
+        const errors = _.uniqBy(this.cause, "message");
 
         let output = "Gadget responded with multiple errors:\n";
         for (let i = 0; i < errors.length; i++) {
@@ -219,7 +222,7 @@ export class ClientError extends BaseError {
       return "The connection to Gadget closed unexpectedly.";
     }
 
-    if (isErrorEvent(this.cause) || isError(this.cause)) {
+    if (isErrorEvent(this.cause) || _.isError(this.cause)) {
       return this.cause.message;
     }
 
@@ -316,13 +319,13 @@ export class InvalidSyncAppFlagError extends FlagError {
 }
 
 function isCloseEvent(e: any): e is SetOptional<CloseEvent, "target"> {
-  return !isNil(e) && isString(e.type) && isNumber(e.code) && isString(e.reason) && isBoolean(e.wasClean);
+  return !_.isNil(e) && _.isString(e.type) && _.isNumber(e.code) && _.isString(e.reason) && _.isBoolean(e.wasClean);
 }
 
 function isErrorEvent(e: any): e is SetOptional<ErrorEvent, "target"> {
-  return !isNil(e) && isString(e.type) && isString(e.message) && !isNil(e.error);
+  return !_.isNil(e) && _.isString(e.type) && _.isString(e.message) && !_.isNil(e.error);
 }
 
 function isGraphQLErrors(e: any): e is readonly GraphQLError[] {
-  return isArray(e) && e.every((e) => !isNil(e) && isString(e.message) && isArray(e.locations ?? []) && isArray(e.path ?? []));
+  return _.isArray(e) && e.every((e) => !_.isNil(e) && _.isString(e.message) && _.isArray(e.locations ?? []) && _.isArray(e.path ?? []));
 }

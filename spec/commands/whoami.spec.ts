@@ -1,9 +1,10 @@
-import Whoami from "../../src/commands/whoami";
-import { context } from "../../src/utils/context";
+import Whoami from "../../src/commands/whoami.js";
+import { context } from "../../src/utils/context.js";
+import { describe, it, expect, vi } from "vitest";
 
 describe("Whoami", () => {
   it("logs the current user", async () => {
-    jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
 
     await Whoami.run();
 
@@ -12,7 +13,7 @@ describe("Whoami", () => {
   });
 
   it("logs only the email if the current user's name is missing", async () => {
-    jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com" });
+    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com" });
 
     await Whoami.run();
 
@@ -21,7 +22,7 @@ describe("Whoami", () => {
   });
 
   it("logs nothing if the current user is undefined", async () => {
-    jest.spyOn(context, "getUser").mockResolvedValue(undefined);
+    vi.spyOn(context, "getUser").mockResolvedValue(undefined);
 
     await Whoami.run();
 

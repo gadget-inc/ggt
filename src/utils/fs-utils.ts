@@ -7,11 +7,12 @@ import path from "path";
 const debug = Debug("ggt:fs-utils");
 
 export class FSIgnorer {
-  readonly filepath = path.join(this._rootDir, ".ignore");
+  readonly filepath;
 
   private _ignorer!: Ignore;
 
   constructor(private readonly _rootDir: string, private readonly _alwaysIgnore: string[]) {
+    this.filepath = path.join(this._rootDir, ".ignore");
     this.reload();
   }
 
@@ -22,7 +23,7 @@ export class FSIgnorer {
   }
 
   reload(): void {
-    this._ignorer = ignore();
+    this._ignorer = ignore.default();
     this._ignorer.add(this._alwaysIgnore);
 
     try {

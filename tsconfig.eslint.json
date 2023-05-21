@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src", "*.js", ".eslintrc.js"]
+  "include": ["src", "bin", "*.js", ".eslintrc.cjs"]
 }

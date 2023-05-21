@@ -1,15 +1,16 @@
-import List from "../../src/commands/list";
-import { context } from "../../src/utils/context";
+import List from "../../src/commands/list.js";
+import { context } from "../../src/utils/context.js";
+import { describe, it, expect, vi } from "vitest";
 
 describe("list", () => {
   it("requires a user to be logged in", () => {
     const list = new List([], context.config);
-    expect(list.requireUser).toBeTrue();
+    expect(list.requireUser).toBe(true);
   });
 
   it("lists apps", async () => {
-    jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    jest.spyOn(context, "getAvailableApps").mockResolvedValue([
+    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    vi.spyOn(context, "getAvailableApps").mockResolvedValue([
       { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true },
       { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true },
     ]);
@@ -36,8 +37,8 @@ describe("list", () => {
   });
 
   it("lists no apps if the user doesn't have any", async () => {
-    jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    jest.spyOn(context, "getAvailableApps").mockResolvedValue([]);
+    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    vi.spyOn(context, "getAvailableApps").mockResolvedValue([]);
 
     await List.run([]);
 

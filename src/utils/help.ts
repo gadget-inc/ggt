@@ -1,6 +1,6 @@
 import type { Command } from "@oclif/core";
 import { CommandHelp as OclifCommandHelp, Help as OclifHelp } from "@oclif/core";
-import { isString } from "lodash";
+import _ from "lodash";
 
 export default class Help extends OclifHelp {
   override CommandHelpClass = CommandHelp;
@@ -24,10 +24,10 @@ class CommandHelp extends OclifCommandHelp {
    * Same as above, but for examples.
    */
   protected override examples(examples: string | string[] | Command.Example[] | undefined): string | undefined {
-    if (isString(examples)) {
+    if (_.isString(examples)) {
       return examples;
     }
-    if (Array.isArray(examples) && examples.every(isString)) {
+    if (Array.isArray(examples) && examples.every((e) => _.isString(e))) {
       return examples.join("\n\n");
     }
     return super.examples(examples);

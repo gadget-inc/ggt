@@ -1,7 +1,0 @@
-#!/usr/bin/env node
-
-const oclif = require("@oclif/core");
-
-process.on("unhandledRejection", oclif.Errors.handle);
-
-oclif.run().then(oclif.flush).catch(oclif.Errors.handle);

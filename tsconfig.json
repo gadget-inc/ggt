@@ -1,4 +1,9 @@
 {
+  "include": ["src"],
+  "exclude": ["node_modules", "lib"],
+  "ts-node": {
+    "swc": true
+  },
   "compilerOptions": {
     /* Type Checking */
     "noFallthroughCasesInSwitch": true,
@@ -12,18 +17,15 @@
 
     /* Modules */
     "baseUrl": "./",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "resolveJsonModule": true,
     "rootDir": "src",
     "types": ["node"],
 
     /* Emit */
-    "declaration": true,
-    "importHelpers": true,
     "inlineSources": true,
     "noEmit": false,
-    "noEmitHelpers": true,
     "outDir": "lib",
     "sourceMap": true,
     "sourceRoot": "/",
@@ -45,7 +47,5 @@
 
     /* Completeness */
     "skipLibCheck": true
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "lib"]
+  }
 }

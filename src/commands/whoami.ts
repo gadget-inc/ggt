@@ -1,7 +1,7 @@
-import chalk from "chalk";
-import dedent from "ts-dedent";
-import { BaseCommand } from "../utils/base-command";
-import { context } from "../utils/context";
+import chalkTemplate from "chalk-template";
+import { dedent } from "ts-dedent";
+import { BaseCommand } from "../utils/base-command.js";
+import { context } from "../utils/context.js";
 
 export default class Whoami extends BaseCommand<typeof Whoami> {
   static override summary = "Show the name and email address of the currently logged in user.";
@@ -9,7 +9,7 @@ export default class Whoami extends BaseCommand<typeof Whoami> {
   static override usage = "whoami";
 
   static override examples = [
-    dedent(chalk`
+    dedent(chalkTemplate`
       {gray $ ggt whoami}
       You are logged in as Jane Doe {gray (jane@example.com)}
     `),
@@ -23,7 +23,7 @@ export default class Whoami extends BaseCommand<typeof Whoami> {
     }
 
     if (user.name) {
-      this.log(chalk`You are logged in as ${user.name} {gray (${user.email})}`);
+      this.log(chalkTemplate`You are logged in as ${user.name} {gray (${user.email})}`);
     } else {
       this.log(`You are logged in as ${user.email}`);
     }

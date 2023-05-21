@@ -1,14 +1,15 @@
-import { context } from "../../src/utils/context";
-import { FlagError } from "../../src/utils/errors";
-import { app } from "../../src/utils/flags";
-import { getError } from "../util";
+import { context } from "../../src/utils/context.js";
+import { FlagError } from "../../src/utils/errors.js";
+import { app } from "../../src/utils/flags.js";
+import { getError } from "../util.js";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("flags", () => {
   describe("-a, --app", () => {
     beforeEach(() => {
-      jest
-        .spyOn(context, "getAvailableApps")
-        .mockResolvedValue([{ id: "1", slug: "my-app", primaryDomain: "my-app.gadget.app", hasSplitEnvironments: true }]);
+      vi.spyOn(context, "getAvailableApps").mockResolvedValue([
+        { id: "1", slug: "my-app", primaryDomain: "my-app.gadget.app", hasSplitEnvironments: true },
+      ]);
     });
 
     it.each([
@@ -26,7 +27,7 @@ describe("flags", () => {
     it.each(["~"])("rejects %s", async (value) => {
       const error = await getError(() => app().parse(value, {} as any, {} as any));
       expect(error).toBeInstanceOf(FlagError);
-      expect(error.description).toStartWith("The -a, --app flag must be the application's slug or URL");
+      expect(error.description).toMatch(/^The -a, --app flag must be the application's slug or URL/);
     });
 
     it("does not accept an app that doesn't exist or the user doesn't have access to", async () => {
@@ -44,7 +45,7 @@ describe("flags", () => {
     });
 
     it("informs the user if they don't have any apps", async () => {
-      jest.spyOn(context, "getAvailableApps").mockResolvedValue([]);
+      vi.spyOn(context, "getAvailableApps").mockResolvedValue([]);
       const error = await getError(() => app().parse("unknown-app", {} as any, {} as any));
       expect(error).toBeInstanceOf(FlagError);
       expect(error.description).toMatchInlineSnapshot(`

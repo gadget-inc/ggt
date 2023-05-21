@@ -1,9 +1,9 @@
-import chalk from "chalk";
 import { ux } from "@oclif/core";
-import dedent from "ts-dedent";
-import { BaseCommand } from "../utils/base-command";
-import type { App } from "../utils/context";
-import { context } from "../utils/context";
+import { dedent } from "ts-dedent";
+import { BaseCommand } from "../utils/base-command.js";
+import type { App } from "../utils/context.js";
+import { context } from "../utils/context.js";
+import chalkTemplate from "chalk-template";
 
 export default class List extends BaseCommand<typeof List> {
   static override summary = "List the apps available to the currently logged in user.";
@@ -11,7 +11,7 @@ export default class List extends BaseCommand<typeof List> {
   static override usage = "list";
 
   static override examples = [
-    dedent(chalk`
+    dedent(chalkTemplate`
       {gray $ ggt list}
       {gray $ ggt list --extended}
       {gray $ ggt list --sort=slug}

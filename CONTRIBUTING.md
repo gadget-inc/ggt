@@ -26,10 +26,10 @@ We use `npm` to manage dependencies and scripts. To install dependencies, run:
 npm install
 ```
 
-Once dependencies are installed, you can run `ggt` via `bin/dev`:
+Once dependencies are installed, you can run `ggt` via `bin/dev.js`:
 
 ```shell-session
-$ bin/dev --help
+$ bin/dev.js --help
 The command-line interface for Gadget
 
 VERSION
@@ -47,15 +47,15 @@ COMMANDS
   whoami  Show the name and email address of the currently logged in user.
 ```
 
-Using `bin/dev` runs `ggt` using the source code in the `src` directory. This means you can make changes to the source code and see them reflected immediately every time you run `bin/dev`.
+Using `bin/dev.js` runs `ggt` using the source code in the `src` directory. This means you can make changes to the source code and see them reflected immediately every time you run `bin/dev.js`.
 
-The other differences between `bin/dev` and `ggt` are:
+The other differences between `bin/dev.js` and `ggt` are:
 
-1. By default, `bin/dev` runs against the development version of Gadget used by Gadget staff. This is because `bin/dev` defaults the `GGT_ENV` environment variable to `"development"`. You can override `GGT_ENV` to use the production Gadget platform by using `GGT_ENV=production bin/dev`.
+1. By default, `bin/dev.js` runs against the development version of Gadget used by Gadget staff. This is because `bin/dev.js` defaults the `GGT_ENV` environment variable to `"development"`. You can override `GGT_ENV` to use the production Gadget platform by using `GGT_ENV=production bin/dev.js`.
 
-2. `bin/dev` looks for and stores files in a `tmp` directory at the root of the project. This directory is ignored by git, so you can use it to store temporary files without worrying about accidentally committing them.
+2. `bin/dev.js` looks for and stores files in a `tmp` directory at the root of the project. This directory is ignored by git, so you can use it to store temporary files without worrying about accidentally committing them.
 
-   Here's where `bin/dev` stores and looks for files compared to `ggt` on macOS:
+   Here's where `bin/dev.js` stores and looks for files compared to `ggt` on macOS:
 
    - `~/Library/Caches/ggt` -> `tmp/cache`
    - `~/.config/ggt` -> `tmp/config`
@@ -66,7 +66,7 @@ The other differences between `bin/dev` and `ggt` are:
 - If you want more verbose output from `ggt`, you can pass the `--debug` flag:
 
   ```shell-session
-  $ bin/dev whoami --debug
+  $ bin/dev.js whoami --debug
   ggt:fs-utils ignoring ENOENT error tmp/config/session.txt +0ms
   You are not logged in
   ```
@@ -77,32 +77,38 @@ The other differences between `bin/dev` and `ggt` are:
 
 ## Testing
 
-`ggt`'s tests live in the `spec` directory and are written using [Jest](https://jestjs.io/). You can run them via `npm run test`:
+`ggt`'s tests live in the `spec` directory and are written using [Vitest](https://vitest.dev/). You can run them via `npm run test`:
 
 ```shell-session
 $ npm run test
 
-> @gadgetinc/ggt@0.1.16 test
-> jest
+> ggt@0.1.18 test
+> cross-env NODE_OPTIONS="--no-warnings --loader ./node_modules/ts-node/esm.mjs" vitest
 
- PASS  spec/commands/login.spec.ts
- PASS  spec/commands/list.spec.ts
- PASS  spec/commands/logout.spec.ts
- PASS  spec/commands/whoami.spec.ts
- PASS  spec/utils/flags.spec.ts
- PASS  spec/utils/base-command.spec.ts
- PASS  spec/utils/errors.spec.ts
- PASS  spec/utils/context.spec.ts
- PASS  spec/commands/sync.spec.ts
 
-Test Suites: 9 passed, 9 total
-Tests:       1 todo, 116 passed, 117 total
-Snapshots:   23 passed, 23 total
-Time:        1.877 s
-Ran all test suites.
+ DEV  v0.31.1 /Users/scott/Code/gadget/ggt
+
+ ✓ spec/utils/context.spec.ts (18) 1278ms
+ ✓ spec/utils/flags.spec.ts (10) 1070ms
+ ✓ spec/utils/base-command.spec.ts (18) 1096ms
+ ✓ spec/utils/errors.spec.ts (10) 945ms
+ ✓ spec/commands/sync.spec.ts (52) 1967ms
+ ✓ spec/commands/logout.spec.ts (3) 953ms
+ ✓ spec/commands/list.spec.ts (3) 935ms
+ ✓ spec/commands/whoami.spec.ts (3) 964ms
+ ✓ spec/commands/login.spec.ts (1) 739ms
+
+ Test Files  9 passed (9)
+      Tests  117 passed | 1 todo (118)
+   Start at  10:12:27
+   Duration  4.61s (transform 492ms, setup 389ms, collect 3.07s, tests 9.95s, environment 1ms, prepare 578ms)
+
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit
 ```
 
-Tests also make use of the `tmp` directory. Every test gets its own directory in `tmp/tests/<name>` to store temporary files. This means you can run tests in parallel without worrying about them interfering with each other.
+Tests also make use of the `tmp` directory. Every test gets its own directory in `tmp/<spec-file>/<test-name>` to store temporary files. This means you can run tests in parallel without worrying about them interfering with each other.
 
 <!-- TODO -->
 

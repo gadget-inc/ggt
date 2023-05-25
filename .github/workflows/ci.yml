@@ -41,6 +41,7 @@ jobs:
       - name: Run build
         run: |
           npm run build
+          npm install --omit=dev # remove dev dependencies to mimic a user installing the package
           bin/run.js
 
   test:

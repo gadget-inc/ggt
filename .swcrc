@@ -4,10 +4,12 @@
     "parser": {
       "syntax": "typescript"
     },
-    "target": "es2021"
+    "target": "es2021",
+    "externalHelpers": true
   },
   "module": {
     "type": "es6",
     "lazy": true
-  }
+  },
+  "sourceMaps": true
 }

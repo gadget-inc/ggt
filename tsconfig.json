@@ -24,21 +24,15 @@
     "types": ["node"],
 
     /* Emit */
-    "inlineSources": true,
-    "noEmit": false,
-    "outDir": "lib",
-    "sourceMap": true,
-    "sourceRoot": "/",
-    "stripInternal": true,
+    "noEmit": true,
 
     /* JavaScript Support */
     "allowJs": true,
 
     /* Interop Constraints */
-    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
 
     /* Language and Environment */
     "lib": ["es2021"],

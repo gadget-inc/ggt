@@ -43,7 +43,7 @@
     "@oclif/plugin-warn-if-update-available": "^2.0.37",
     "@sentry/node": "^7.53.1",
     "chalk": "^5.2.0",
-    "chalk-template": "^1.0.0",
+    "chalk-template": "^1.1.0",
     "chokidar": "^3.5.3",
     "clean-stack": "^5.2.0",
     "date-fns": "^2.30.0",

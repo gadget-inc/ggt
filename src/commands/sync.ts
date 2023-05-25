@@ -1,41 +1,39 @@
 import { Args, Flags } from "@oclif/core";
-import chalk from "chalk";
 import assert from "assert";
+import chalkTemplate from "chalk-template";
 import { FSWatcher } from "chokidar";
-import format from "date-fns/format";
-import execa from "execa";
+import { format } from "date-fns";
+import { execa } from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
-import { prompt } from "inquirer";
-import type { DebouncedFunc } from "lodash";
-import { sortBy } from "lodash";
-import { debounce } from "lodash";
+import inquirer from "inquirer";
+import _ from "lodash";
 import normalizePath from "normalize-path";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
 import pluralize from "pluralize";
-import dedent from "ts-dedent";
+import { dedent } from "ts-dedent";
 import which from "which";
-import { BaseCommand } from "../utils/base-command";
-import type { Query } from "../utils/client";
-import { Client } from "../utils/client";
-import { context } from "../utils/context";
-import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../utils/errors";
-import { app } from "../utils/flags";
-import { ignoreEnoent, FSIgnorer, isEmptyDir, walkDir } from "../utils/fs-utils";
 import type {
   FileSyncChangedEventInput,
   FileSyncDeletedEventInput,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
-  RemoteFilesVersionQuery,
-  RemoteFilesVersionQueryVariables,
   RemoteFileSyncEventsSubscription,
   RemoteFileSyncEventsSubscriptionVariables,
-} from "../__generated__/graphql";
-import { FileSyncEncoding } from "../__generated__/graphql";
-import { PromiseSignal } from "../utils/promise";
+  RemoteFilesVersionQuery,
+  RemoteFilesVersionQueryVariables,
+} from "../__generated__/graphql.js";
+import { FileSyncEncoding } from "../__generated__/graphql.js";
+import { BaseCommand } from "../utils/base-command.js";
+import type { Query } from "../utils/client.js";
+import { Client } from "../utils/client.js";
+import { context } from "../utils/context.js";
+import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../utils/errors.js";
+import { app } from "../utils/flags.js";
+import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../utils/fs-utils.js";
+import { PromiseSignal } from "../utils/promise.js";
 
 export default class Sync extends BaseCommand<typeof Sync> {
   static override priority = 1;
@@ -44,7 +42,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
   static override usage = "sync [DIRECTORY] [--app <name>]";
 
-  static override description = dedent(chalk`
+  static override description = dedent(chalkTemplate`
     Sync provides the ability to sync your Gadget application's source code to and from your local
     filesystem. While {gray ggt sync} is running, local file changes are immediately reflected within
     Gadget, while files that are changed remotely are immediately saved to your local filesystem.
@@ -111,7 +109,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
   };
 
   static override examples = [
-    dedent(chalk`
+    dedent(chalkTemplate`
       {gray $ ggt sync --app my-app ~/gadget/my-app}
 
       App         my-app
@@ -204,7 +202,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
   /**
    * A debounced function that enqueue's local file changes to be sent to Gadget.
    */
-  publish!: DebouncedFunc<() => void>;
+  publish!: _.DebouncedFunc<() => void>;
 
   /**
    * Gracefully stops the sync.
@@ -247,10 +245,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
    * @param options.limit The maximum number of lines to print. Defaults to 10. If debug is enabled, this is ignored.
    */
   logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
-    const lines = sortBy(
+    const lines = _.sortBy(
       [
-        ...changed.map((normalizedPath) => chalk`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
-        ...deleted.map((normalizedPath) => chalk`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
+        ...changed.map((normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
+        ...deleted.map((normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
       ],
       (line) => line.slice(line.indexOf(" ") + 1)
     );
@@ -262,10 +260,12 @@ export default class Sync extends BaseCommand<typeof Sync> {
     }
 
     if (lines.length > logged) {
-      this.log(chalk`{gray … ${lines.length - logged} more}`);
+      this.log(chalkTemplate`{gray … ${lines.length - logged} more}`);
     }
 
-    this.log(chalk`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`);
+    this.log(
+      chalkTemplate`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`
+    );
     this.log();
   }
 
@@ -280,6 +280,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
   override async init(): Promise<void> {
     await super.init();
 
+    assert(_.isString(this.args["directory"]));
+
     this.dir =
       this.config.windows && this.args["directory"].startsWith("~/")
         ? path.join(this.config.home, this.args["directory"].slice(2))
@@ -288,7 +290,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
     const getApp = async (): Promise<string> => {
       if (this.flags.app) return this.flags.app;
       if (this.metadata.app) return this.metadata.app;
-      const selected = await prompt<{ app: string }>({
+      const selected = await inquirer.prompt<{ app: string }>({
         type: "list",
         name: "app",
         message: "Please select the app to sync to.",
@@ -372,7 +374,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     let action: Action | undefined;
     if (hasLocalChanges) {
-      ({ action } = await prompt({
+      ({ action } = await inquirer.prompt({
         type: "list",
         name: "action",
         choices: [Action.CANCEL, Action.MERGE, Action.RESET],
@@ -459,7 +461,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
       process.on(signal, () => {
         if (this.status != SyncStatus.RUNNING) return;
 
-        this.log(chalk` Stopping... {gray (press Ctrl+C again to force)}`);
+        this.log(chalkTemplate` Stopping... {gray (press Ctrl+C again to force)}`);
         void this.stop();
 
         // When ggt is run via npx, and the user presses Ctrl+C, npx sends SIGINT twice in quick succession. In order to prevent the second
@@ -498,7 +500,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
               return;
             }
 
-            this.log(chalk`Received {gray ${format(new Date(), "pp")}}`);
+            this.log(chalkTemplate`Received {gray ${format(new Date(), "pp")}}`);
             this.logPaths(
               "←",
               changed.map((x) => x.path),
@@ -557,7 +559,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     const localFilesBuffer = new Map<string, { mode: number; isDirectory: boolean } | { isDeleted: true; isDirectory: boolean }>();
 
-    this.publish = debounce(() => {
+    this.publish = _.debounce(() => {
       const localFiles = new Map(localFilesBuffer.entries());
       localFilesBuffer.clear();
 
@@ -594,7 +596,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
           variables: { input: { expectedRemoteFilesVersion: this.metadata.filesVersion, changed, deleted } },
         });
 
-        this.log(chalk`Sent {gray ${format(new Date(), "pp")}}`);
+        this.log(chalkTemplate`Sent {gray ${format(new Date(), "pp")}}`);
         this.logPaths(
           "→",
           changed.map((x) => x.path),
@@ -669,7 +671,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     this.log();
     this.log(
-      dedent(chalk`
+      dedent(chalkTemplate`
       {bold ggt v${this.config.version}}
 
       App         ${context.app.slug}

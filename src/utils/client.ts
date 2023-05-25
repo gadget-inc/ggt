@@ -4,12 +4,12 @@ import type { GraphQLError } from "graphql";
 import type { ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
-import { isFunction, noop } from "lodash";
+import _ from "lodash";
 import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
-import { context } from "./context";
-import { ClientError } from "./errors";
+import { context } from "./context.js";
+import { ClientError } from "./errors.js";
 
 const debug = Debug("ggt:client");
 
@@ -105,7 +105,7 @@ export class Client {
     let subscribePayload: SubscribePayload;
     let removeConnectedListener: () => void;
 
-    if (isFunction(payload.variables)) {
+    if (_.isFunction(payload.variables)) {
       // the caller wants us to re-evaluate the variables every time graphql-ws re-subscribes after reconnecting
       subscribePayload = { ...payload, variables: payload.variables() };
       removeConnectedListener = this._client.on("connected", () => {
@@ -123,7 +123,7 @@ export class Client {
     const unsubscribe = this._client.subscribe(subscribePayload, {
       next: (result: ExecutionResult<Data, Extensions>) => sink.next(result),
       error: (error) => sink.error(new ClientError(subscribePayload, error as Error | GraphQLError[] | CloseEvent | ErrorEvent)),
-      complete: () => sink.complete?.() ?? noop,
+      complete: () => sink.complete?.(),
     });
 
     return () => {

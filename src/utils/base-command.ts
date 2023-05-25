@@ -1,26 +1,26 @@
 import type { Config, Interfaces } from "@oclif/core";
 import { Command, Flags, settings } from "@oclif/core";
+import { CLIError as CLIError2 } from "@oclif/core/lib/errors/index.js";
 import { CLIError, ExitError } from "@oclif/errors";
-import { CLIError as CLIError2 } from "@oclif/core/lib/errors";
-import chalk from "chalk";
-import Debug from "debug";
 import * as Sentry from "@sentry/node";
+import chalkTemplate from "chalk-template";
+import Debug from "debug";
 import getPort from "get-port";
-import type { Server } from "http";
-import { createServer } from "http";
-import { prompt } from "inquirer";
+import inquirer from "inquirer";
 import type { Notification } from "node-notifier";
-import { notify } from "node-notifier";
-import type WindowsBalloon from "node-notifier/notifiers/balloon";
-import type Growl from "node-notifier/notifiers/growl";
-import type NotificationCenter from "node-notifier/notifiers/notificationcenter";
-import type NotifySend from "node-notifier/notifiers/notifysend";
-import type WindowsToaster from "node-notifier/notifiers/toaster";
+import notifier from "node-notifier";
+import type WindowsBalloon from "node-notifier/notifiers/balloon.js";
+import type Growl from "node-notifier/notifiers/growl.js";
+import type NotificationCenter from "node-notifier/notifiers/notificationcenter.js";
+import type NotifySend from "node-notifier/notifiers/notifysend.js";
+import type WindowsToaster from "node-notifier/notifiers/toaster.js";
+import type { Server } from "node:http";
+import http from "node:http";
+import path from "node:path";
 import open from "open";
-import path from "path";
-import dedent from "ts-dedent";
-import { context } from "./context";
-import { BaseError, UnexpectedError } from "./errors";
+import { dedent } from "ts-dedent";
+import { context } from "./context.js";
+import { BaseError, UnexpectedError } from "./errors.js";
 
 export type Flags<T extends typeof Command> = Interfaces.InferredFlags<(typeof BaseCommand)["baseFlags"] & T["flags"]>;
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
@@ -98,7 +98,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
     if (this.requireUser && !(await context.getUser())) {
       // we purposely log the user in before parsing flags in case one of the flags requires the user to be logged in
       // e.g. the `--app` flag verifies that the user has access to the app they are trying to use
-      const { login } = await prompt<{ login: boolean }>({
+      const { login } = await inquirer.prompt<{ login: boolean }>({
         type: "confirm",
         name: "login",
         message: "You must be logged in to use this command. Would you like to log in?",
@@ -141,7 +141,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       | WindowsBalloon.Notification
       | Growl.Notification
   ): void {
-    notify(
+    notifier.notify(
       {
         title: "Gadget",
         contentImage: path.join(this.config.root, "assets", "favicon-128@4x.png"),
@@ -166,7 +166,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       const port = await getPort();
       const receiveSession = new Promise<void>((resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        server = createServer(async (req, res) => {
+        server = http.createServer(async (req, res) => {
           const redirectTo = new URL(`https://${context.domains.services}/auth/cli`);
 
           try {
@@ -182,7 +182,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
             if (!user) throw new Error("missing current user");
 
             if (user.name) {
-              this.log(chalk`Hello, ${user.name} {gray (${user.email})}`);
+              this.log(chalkTemplate`Hello, ${user.name} {gray (${user.email})}`);
             } else {
               this.log(`Hello, ${user.email}`);
             }

@@ -1,9 +1,10 @@
-import Login from "../../src/commands/login";
-import { BaseCommand } from "../../src/utils/base-command";
+import Login from "../../src/commands/login.js";
+import { BaseCommand } from "../../src/utils/base-command.js";
+import { describe, it, expect, vi } from "vitest";
 
 describe("Login", () => {
   it("delegates to BaseCommand.login", async () => {
-    jest.spyOn(BaseCommand.prototype, "login").mockResolvedValue();
+    vi.spyOn(BaseCommand.prototype, "login").mockResolvedValue();
 
     await Login.run();
 

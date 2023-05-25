@@ -1,19 +1,20 @@
 import debug from "debug";
 import getPort from "get-port";
-import http from "http";
-import { prompt } from "inquirer";
-import { noop } from "lodash";
+import http from "node:http";
+import inquirer from "inquirer";
+import _ from "lodash";
 import open from "open";
-import { BaseCommand } from "../../src/utils/base-command";
-import { context } from "../../src/utils/context";
-import { sleepUntil } from "../../src/utils/sleep";
+import { BaseCommand } from "../../src/utils/base-command.js";
+import { context } from "../../src/utils/context.js";
+import { sleepUntil } from "../../src/utils/sleep.js";
 import { ExitError } from "@oclif/errors";
-import * as cliErrors from "@oclif/core/lib/parser/errors";
-import { BaseError } from "../../src/utils/errors";
-import { getError } from "../util";
+import * as cliErrors from "@oclif/core/lib/parser/errors.js";
+import { BaseError } from "../../src/utils/errors.js";
+import { getError } from "../util.js";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 class Base extends BaseCommand<typeof Base> {
-  run = jest.fn();
+  run = vi.fn() as any;
 }
 
 describe("BaseCommand", () => {
@@ -25,19 +26,19 @@ describe("BaseCommand", () => {
 
   describe("init", () => {
     it.each(["--debug", "-D"])("enables debug when passed %s", async (flag) => {
-      jest.spyOn(debug, "enable").mockImplementation();
+      vi.spyOn(debug, "enable").mockImplementation(_.noop);
 
       base.argv = [flag];
       await base.init();
 
       expect(debug.enable).toHaveBeenCalledWith(`ggt:*`);
-      expect(base.debugEnabled).toBeTrue();
+      expect(base.debugEnabled).toBe(true);
     });
 
     describe("with requireUser = true", () => {
       class DoesRequireUser extends BaseCommand<typeof DoesRequireUser> {
         override requireUser = true;
-        run = jest.fn();
+        run = vi.fn() as any;
       }
 
       beforeEach(() => {
@@ -45,25 +46,25 @@ describe("BaseCommand", () => {
       });
 
       it("prompts the user to log in", async () => {
-        prompt.mockResolvedValue({ login: true });
-        jest.spyOn(base, "login").mockResolvedValue();
-        jest.spyOn(base, "exit").mockImplementation();
+        inquirer.prompt.mockResolvedValue({ login: true });
+        vi.spyOn(base, "login").mockResolvedValue();
+        vi.spyOn(base, "exit").mockImplementation(_.noop);
 
         await base.init();
 
-        expect(prompt).toHaveBeenCalled();
+        expect(inquirer.prompt).toHaveBeenCalled();
         expect(base.login).toHaveBeenCalled();
         expect(base.exit).not.toHaveBeenCalled();
       });
 
       it("exits if the user declines to log in", async () => {
-        prompt.mockResolvedValue({ login: false });
-        jest.spyOn(base, "login").mockResolvedValue();
-        jest.spyOn(base, "exit").mockImplementation();
+        inquirer.prompt.mockResolvedValue({ login: false });
+        vi.spyOn(base, "login").mockResolvedValue();
+        vi.spyOn(base, "exit").mockImplementation(_.noop);
 
         await base.init();
 
-        expect(prompt).toHaveBeenCalled();
+        expect(inquirer.prompt).toHaveBeenCalled();
         expect(base.login).not.toHaveBeenCalled();
         expect(base.exit).toHaveBeenCalledWith(0);
       });
@@ -73,12 +74,12 @@ describe("BaseCommand", () => {
       it("does not prompt the user to log in", async () => {
         class DoesNotRequireUser extends BaseCommand<typeof DoesNotRequireUser> {
           override requireUser = false;
-          run = jest.fn();
+          run = vi.fn() as any;
         }
 
         await new DoesNotRequireUser([], context.config).init();
 
-        expect(prompt).not.toHaveBeenCalled();
+        expect(inquirer.prompt).not.toHaveBeenCalled();
       });
     });
   });
@@ -90,8 +91,8 @@ describe("BaseCommand", () => {
 
     beforeEach(async () => {
       port = await getPort();
-      server = { listen: jest.fn(), close: jest.fn() } as any;
-      jest.spyOn(http, "createServer").mockImplementation((opt, cb) => {
+      server = { listen: vi.fn(), close: vi.fn() } as any;
+      vi.spyOn(http, "createServer").mockImplementation((opt, cb) => {
         requestListener = cb ?? (opt as http.RequestListener);
         return server;
       });
@@ -99,7 +100,7 @@ describe("BaseCommand", () => {
 
     it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
       context.session = undefined;
-      jest.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+      vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
 
       void base.login();
 
@@ -127,8 +128,8 @@ describe("BaseCommand", () => {
       req.url = `?session=test`;
 
       const res = new http.ServerResponse(req);
-      jest.spyOn(res, "writeHead");
-      jest.spyOn(res, "end");
+      vi.spyOn(res, "writeHead");
+      vi.spyOn(res, "end");
 
       requestListener!(req, res);
 
@@ -143,9 +144,9 @@ describe("BaseCommand", () => {
 
     it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
       context.session = undefined;
-      jest.spyOn(context, "getUser").mockRejectedValue(new Error("boom"));
+      vi.spyOn(context, "getUser").mockRejectedValue(new Error("boom"));
 
-      void base.login().catch(noop);
+      void base.login().catch(_.noop);
 
       await sleepUntil(() => http.createServer.mock.calls.length > 0);
       expect(getPort).toHaveBeenCalled();
@@ -171,8 +172,8 @@ describe("BaseCommand", () => {
       req.url = `?session=test`;
 
       const res = new http.ServerResponse(req);
-      jest.spyOn(res, "writeHead");
-      jest.spyOn(res, "end");
+      vi.spyOn(res, "writeHead");
+      vi.spyOn(res, "end");
 
       requestListener!(req, res);
 
@@ -189,7 +190,9 @@ describe("BaseCommand", () => {
     it.each([ExitError, ...Object.values(cliErrors)])("immediately rethrows CLIErrors", async (ctor) => {
       // value that all CLIError constructors will accept
       const arg = { flag: { helpLabel: "" }, flags: [], args: [], options: [], parse: {}, failed: [] } as any;
-      const spy = jest.spyOn(BaseError.prototype, "capture");
+      const spy = vi.spyOn(BaseError.prototype, "capture");
+
+      // @ts-expect-error ctor is a constructor
       const error = await getError(() => base.catch(new ctor(arg, arg)));
 
       expect(spy).not.toHaveBeenCalled();

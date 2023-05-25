@@ -3,7 +3,7 @@
   "compilerOptions": {
     /* Modules */
     "rootDir": "..",
-    "types": ["node", "jest", "jest-extended"]
+    "types": ["node"]
   },
   "include": ["./**/*.ts"]
 }

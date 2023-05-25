@@ -1,7 +1,9 @@
+import type { MockInstance } from "vitest";
+
 declare global {
-  // assume every function has been jest.spyOn'd
+  // assume every function has been vi.spyOn'd
   // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  interface Function extends jest.MockInstance<any, any[]> {}
+  interface Function extends MockInstance<any[], any> {}
 }
 
 export {};

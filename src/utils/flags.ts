@@ -1,9 +1,9 @@
 import { Flags } from "@oclif/core";
 import levenshtein from "fast-levenshtein";
-import { sortBy } from "lodash";
-import dedent from "ts-dedent";
-import { context } from "./context";
-import { FlagError } from "./errors";
+import _ from "lodash";
+import { dedent } from "ts-dedent";
+import { context } from "./context.js";
+import { FlagError } from "./errors.js";
 
 export const app = Flags.custom({
   char: "a",
@@ -45,7 +45,7 @@ export const app = Flags.custom({
 
               Did you mean one of these?
 
-                ${sortBy(availableApps, (app) => levenshtein.get(app.slug, slug))
+                ${_.sortBy(availableApps, (app) => levenshtein.get(app.slug, slug))
                   .slice(0, 10)
                   .map((app) => `* ${app.slug}`)
                   .join("\n")}

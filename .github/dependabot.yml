@@ -7,15 +7,3 @@ updates:
     rebase-strategy: auto
     schedule:
       interval: daily
-    ignore:
-      # These use esm
-      - dependency-name: "@types/inquirer"
-      - dependency-name: "chalk"
-      - dependency-name: clean-stack
-      - dependency-name: execa
-      - dependency-name: get-port
-      - dependency-name: got
-      - dependency-name: inquirer
-      - dependency-name: p-map
-      - dependency-name: p-queue
-      - dependency-name: serialize-error

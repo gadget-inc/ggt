@@ -1,10 +1,10 @@
 import type { Config } from "@oclif/core";
 import assert from "assert";
 import fs from "fs-extra";
-import got, { HTTPError } from "got";
-import { isString } from "lodash";
+import { HTTPError, got } from "got";
+import _ from "lodash";
 import path from "path";
-import { ignoreEnoent } from "./fs-utils";
+import { ignoreEnoent } from "./fs-utils.js";
 
 export class Context {
   /**
@@ -36,7 +36,7 @@ export class Context {
       beforeRequest: [
         (options) => {
           options.headers["user-agent"] = this.config.userAgent;
-          if (options.url.host === this.domains.services && this.session) {
+          if (options.url instanceof URL && options.url.host === this.domains.services && this.session) {
             options.headers["cookie"] = `session=${encodeURIComponent(this.session)};`;
           }
         },
@@ -104,7 +104,7 @@ export class Context {
   }
 
   async setApp(appOrSlug?: App | string): Promise<void> {
-    if (isString(appOrSlug)) {
+    if (_.isString(appOrSlug)) {
       const app = await this.getAvailableApps().then((apps) => apps.find((app) => app.slug == appOrSlug));
       assert(app, `attempted to set app to "${appOrSlug}" but no app with that name or slug was found`);
       this.app = app;

@@ -1,7 +1,8 @@
 import path from "path";
 import fs from "fs-extra";
-import { Context, context } from "../../src/utils/context";
+import { Context, context } from "../../src/utils/context.js";
 import nock from "nock";
+import { describe, it, expect, vi, afterEach } from "vitest";
 
 describe("Context", () => {
   describe("session", () => {
@@ -16,7 +17,7 @@ describe("Context", () => {
 
       it("caches the session in memory", () => {
         fs.outputFileSync(path.join(context.config.configDir, "session.txt"), expect.getState().currentTestName!);
-        jest.spyOn(fs, "readFileSync");
+        vi.spyOn(fs, "readFileSync");
 
         for (let i = 0; i < 10; i++) {
           expect(context.session).toBe(expect.getState().currentTestName);
@@ -59,7 +60,7 @@ describe("Context", () => {
       context.session = "test";
 
       await expect(context.getUser()).resolves.toEqual(user);
-      expect(nock.isDone()).toBeTrue();
+      expect(nock.isDone()).toBe(true);
     });
 
     it("returns undefined if the session is not set", async () => {
@@ -84,7 +85,7 @@ describe("Context", () => {
       await expect(context.getUser()).resolves.toEqual(user);
 
       for (let i = 0; i < 10; i++) {
-        expect(nock.isDone()).toBeTrue();
+        expect(nock.isDone()).toBe(true);
         await expect(context.getUser()).resolves.toEqual(user);
       }
     });
@@ -98,7 +99,7 @@ describe("Context", () => {
       context.session = "test";
 
       await expect(context.getAvailableApps()).resolves.toEqual(apps);
-      expect(nock.isDone()).toBeTrue();
+      expect(nock.isDone()).toBe(true);
     });
 
     it("returns an empty array if the session is not set", async () => {
@@ -114,7 +115,7 @@ describe("Context", () => {
       await expect(context.getAvailableApps()).resolves.toEqual(apps);
 
       for (let i = 0; i < 10; i++) {
-        expect(nock.isDone()).toBeTrue();
+        expect(nock.isDone()).toBe(true);
         await expect(context.getAvailableApps()).resolves.toEqual(apps);
       }
     });

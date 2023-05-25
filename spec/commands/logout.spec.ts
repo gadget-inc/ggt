@@ -1,10 +1,11 @@
-import Logout from "../../src/commands/logout";
-import { context } from "../../src/utils/context";
+import Logout from "../../src/commands/logout.js";
+import { context } from "../../src/utils/context.js";
+import { describe, it, expect, vi } from "vitest";
 
 describe("Logout", () => {
   it("sets context.session = undefined", async () => {
     context.session = "test";
-    const spy = jest.spyOn(context, "session", "set");
+    const spy = vi.spyOn(context, "session", "set");
 
     await Logout.run();
 

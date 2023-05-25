@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`ClientError renders a CloseEvent correctly 1`] = `
+exports[`ClientError > renders a CloseEvent correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 The connection to Gadget closed unexpectedly.
@@ -10,7 +10,7 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`ClientError renders a GraphQL error correctly 1`] = `
+exports[`ClientError > renders a GraphQL error correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 Gadget responded with the following error:
@@ -22,7 +22,7 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`ClientError renders a string correctly 1`] = `
+exports[`ClientError > renders a string correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 We received a response without data
@@ -32,7 +32,7 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`ClientError renders an ErrorEvent correctly 1`] = `
+exports[`ClientError > renders an ErrorEvent correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 connect ECONNREFUSED 10.254.254.254:3000
@@ -42,7 +42,7 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`ClientError renders multiple GraphQL errors correctly 1`] = `
+exports[`ClientError > renders multiple GraphQL errors correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 Gadget responded with multiple errors:
@@ -55,13 +55,13 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`FlagError renders correctly 1`] = `
+exports[`FlagError > renders correctly 1`] = `
 "GGT_CLI_FLAG_ERROR: Invalid value provided for the -b, --bad flag
 
 You were about to do something dangerous, so we stopped you."
 `;
 
-exports[`InvalidSyncAppFlagError renders correctly 1`] = `
+exports[`InvalidSyncAppFlagError > renders correctly 1`] = `
 "GGT_CLI_FLAG_ERROR: Invalid value provided for the -a, --app flag
 
 You were about to sync the following app to the following directory:
@@ -72,12 +72,12 @@ However, that directory has already been synced with this app:
 
   test
 
-If you're sure that you want to sync "not-test" to "~/gadget/test", run \`ggt sync\` again with the \`--force\` flag:
+If you're sure that you want to sync \\"not-test\\" to \\"~/gadget/test\\", run \`ggt sync\` again with the \`--force\` flag:
 
   $ ggt sync --app not-test ~/gadget/test --force"
 `;
 
-exports[`InvalidSyncFileError renders correctly 1`] = `
+exports[`InvalidSyncFileError > renders correctly 1`] = `
 "GGT_CLI_INVALID_SYNC_FILE: The .gadget/sync.json file was invalid or not found
 
 We failed to read the Gadget metadata file in this directory:
@@ -99,7 +99,7 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`UnexpectedError renders correctly 1`] = `
+exports[`UnexpectedError > renders correctly 1`] = `
 "GGT_CLI_UNEXPECTED_ERROR: An unexpected error occurred
 
 Error: Whoops!
@@ -110,7 +110,7 @@ This is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`YarnNotFoundError renders correctly 1`] = `
+exports[`YarnNotFoundError > renders correctly 1`] = `
 "GGT_CLI_YARN_NOT_FOUND: Yarn not found
 
 Yarn must be installed to sync your application. You can install it by running:

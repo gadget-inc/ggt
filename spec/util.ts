@@ -1,11 +1,12 @@
 import fs from "fs-extra";
-import { noop } from "lodash";
+import _ from "lodash";
 import normalizePath from "normalize-path";
 import path from "path";
 import type { JsonObject } from "type-fest";
-import type { Payload, Query, Sink } from "../src/utils/client";
-import { Client } from "../src/utils/client";
-import { walkDir, walkDirSync } from "../src/utils/fs-utils";
+import type { Payload, Query, Sink } from "../src/utils/client.js";
+import { Client } from "../src/utils/client.js";
+import { walkDir, walkDirSync } from "../src/utils/fs-utils.js";
+import { expect, vi } from "vitest";
 
 export async function getError(fnThatThrows: () => unknown): Promise<any> {
   try {
@@ -67,21 +68,21 @@ export function mockClient(): MockClient {
     _subscription: <Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject>(
       query: Query<Data, Variables, Extensions>
     ) => {
-      expect(mock._subscriptions.keys()).toContain(query);
+      expect(Array.from(mock._subscriptions.keys())).toContain(query);
       const sub = mock._subscriptions.get(query);
       expect(sub).toBeTruthy();
       return sub as MockSubscription<Data, Variables, Extensions>;
     },
   };
 
-  jest.spyOn(Client.prototype, "dispose");
-  jest.spyOn(Client.prototype, "subscribe").mockImplementation((payload, sink) => {
-    if (!sink.complete) sink.complete = noop;
+  vi.spyOn(Client.prototype, "dispose");
+  vi.spyOn(Client.prototype, "subscribe").mockImplementation((payload, sink) => {
+    if (!sink.complete) sink.complete = _.noop;
 
-    const unsubscribe = jest.fn();
-    jest.spyOn(sink, "next");
-    jest.spyOn(sink, "error");
-    jest.spyOn(sink, "complete");
+    const unsubscribe = vi.fn();
+    vi.spyOn(sink, "next");
+    vi.spyOn(sink, "error");
+    vi.spyOn(sink, "complete");
     mock._subscriptions.set(payload.query, { payload, sink, unsubscribe });
     return unsubscribe;
   });

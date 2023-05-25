@@ -15,7 +15,7 @@
         "@oclif/plugin-warn-if-update-available": "^2.0.37",
         "@sentry/node": "^7.53.1",
         "chalk": "^5.2.0",
-        "chalk-template": "^1.0.0",
+        "chalk-template": "^1.1.0",
         "chokidar": "^3.5.3",
         "clean-stack": "^5.2.0",
         "date-fns": "^2.30.0",
@@ -6962,9 +6962,9 @@
       }
     },
     "node_modules/chalk-template": {
-      "version": "1.0.0",
-      "resolved": "https://registry.npmjs.org/chalk-template/-/chalk-template-1.0.0.tgz",
-      "integrity": "sha512-3B0Wy/RZf/778DODyOZo7AIWS5ibh+o9STMOQCWEBYN2H9AAeXs1F0QQ7kxzVGXnqBOvPrpeSUYIJqXodjRCqw==",
+      "version": "1.1.0",
+      "resolved": "https://registry.npmjs.org/chalk-template/-/chalk-template-1.1.0.tgz",
+      "integrity": "sha512-T2VJbcDuZQ0Tb2EWwSotMPJjgpy1/tGee1BTpUNsGZ/qgNjV2t7Mvu+d4600U564nbLesN1x2dPL+xii174Ekg==",
       "dependencies": {
         "chalk": "^5.2.0"
       },
@@ -25949,9 +25949,9 @@
       "integrity": "sha512-ree3Gqw/nazQAPuJJEy+avdl7QfZMcUvmHIKgEZkGL+xOBzRvup5Hxo6LHuMceSxOabuJLJm5Yp/92R9eMmMvA=="
     },
     "chalk-template": {
-      "version": "1.0.0",
-      "resolved": "https://registry.npmjs.org/chalk-template/-/chalk-template-1.0.0.tgz",
-      "integrity": "sha512-3B0Wy/RZf/778DODyOZo7AIWS5ibh+o9STMOQCWEBYN2H9AAeXs1F0QQ7kxzVGXnqBOvPrpeSUYIJqXodjRCqw==",
+      "version": "1.1.0",
+      "resolved": "https://registry.npmjs.org/chalk-template/-/chalk-template-1.1.0.tgz",
+      "integrity": "sha512-T2VJbcDuZQ0Tb2EWwSotMPJjgpy1/tGee1BTpUNsGZ/qgNjV2t7Mvu+d4600U564nbLesN1x2dPL+xii174Ekg==",
       "requires": {
         "chalk": "^5.2.0"
       }

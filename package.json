@@ -75,7 +75,7 @@
     "@graphql-codegen/typescript-operations": "^4.0.0",
     "@oclif/plugin-plugins": "^3.0.1",
     "@oclif/test": "^2.3.21",
-    "@swc/core": "^1.3.59",
+    "@swc/core": "^1.3.60",
     "@swc/helpers": "^0.5.1",
     "@swc/jest": "^0.2.26",
     "@types/debug": "^4.1.8",

@@ -1,6 +1,7 @@
 appvalue
 codegen
 commandsstop
+direnv
 ENOENT
 execa
 gadgetinc

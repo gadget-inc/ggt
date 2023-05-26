@@ -7,5 +7,5 @@ process.on("unhandledRejection", oclif.Errors.handle);
 
 oclif
   .run(process.argv.slice(2), import.meta.url)
-  .then(oclif.flush)
+  .then(() => oclif.flush())
   .catch(oclif.Errors.handle);

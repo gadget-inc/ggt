@@ -36,7 +36,7 @@ jobs:
           version: npm run version
           publish: npm run publish
         env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - if: steps.changesets.outputs.published == 'true'
@@ -47,7 +47,7 @@ jobs:
           npm install --package-lock-only
           npm run publish
         env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - if: steps.changesets.outputs.published == 'true'

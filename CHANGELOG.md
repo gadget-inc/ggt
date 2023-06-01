@@ -1,5 +1,32 @@
 # @gadgetinc/ggt
 
+## 0.2.0
+
+### Minor Changes
+
+- 49a3918: Migrate to ESM
+
+### Patch Changes
+
+- 369b7f1: Bump chalk-template from 1.0.0 to 1.1.0
+- d9f282a: Bump inquirer from 9.2.5 to 9.2.6
+- 95c46cb: Bump got from 12.6.0 to 13.0.0
+- bdfee22: Bump @sentry/node from 7.53.1 to 7.54.0
+- 83bdf98: Bump graphql-ws from 5.13.0 to 5.13.1
+- f9b8fdd: Bump @sentry/node from 7.51.2 to 7.52.1
+- 7187955: Bump @oclif/plugin-not-found from 2.3.23 to 2.3.24
+- dc1e708: Bump @sentry/node from 7.53.0 to 7.53.1
+- 8020ee7: Build with `swc` instead of `tsc`
+- d3fb0ba: Bump @sentry/node from 7.52.1 to 7.53.0
+- 54f08f9: Bump @oclif/plugin-warn-if-update-available from 2.0.36 to 2.0.37
+- 64c4d3e: Move local files to `.gadget/backup` instead of deleting them
+- 98f472b: Save `.gadget/sync.json` during `ggt sync` instead of only on stop
+- c90415d: We got access to the [`ggt`](https://www.npmjs.com/package/ggt) npm package! 🎉
+
+  This changes our package.json's name to `ggt` so we can start using it. We're still going to publish new versions to `@gadgetinc/ggt` while we update our docs and give folks time to move over.
+
+- 9cf42d2: Bump graphql-ws from 5.12.1 to 5.13.0
+
 ## 0.1.18
 
 ### Patch Changes

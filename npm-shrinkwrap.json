@@ -1,12 +1,12 @@
 {
   "name": "ggt",
-  "version": "0.1.18",
+  "version": "0.2.0",
   "lockfileVersion": 2,
   "requires": true,
   "packages": {
     "": {
       "name": "ggt",
-      "version": "0.1.18",
+      "version": "0.2.0",
       "license": "MIT",
       "dependencies": {
         "@oclif/core": "^2.8.5",

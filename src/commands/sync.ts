@@ -218,6 +218,20 @@ export default class Sync extends BaseCommand<typeof Sync> {
   }
 
   /**
+   * Instead of deleting files, we move them to .gadget/backup so that users can recover them if something goes wrong.
+   */
+  async softDelete(normalizedPath: string): Promise<void> {
+    try {
+      await fs.move(this.absolute(normalizedPath), this.absolute(".gadget/backup", normalizedPath), {
+        overwrite: true,
+      });
+    } catch (error) {
+      // replicate the behavior of `rm -rf` and ignore ENOENT
+      ignoreEnoent(error);
+    }
+  }
+
+  /**
    * Pretty-prints changed and deleted filepaths to the console.
    *
    * @param prefix The prefix to print before each line.
@@ -396,7 +410,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
       case Action.RESET: {
         // delete all the local files that have changed since the last sync and set the files version to 0 so we receive
         // all the remote files again, including any files that we just deleted that still exist
-        await pMap(changedFiles.keys(), (normalizedPath) => fs.remove(this.absolute(normalizedPath)));
+        await pMap(changedFiles.keys(), (normalizedPath) => this.softDelete(normalizedPath));
         this.state.filesVersion = 0n;
         break;
       }
@@ -488,10 +502,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
             );
 
             // we need to processed deleted files first as we may delete an empty directory after a file has been put
-            // into it. if processed out of order the new file is deleted as well
+            // into it. if processed out of order the new file will be deleted as well
             await pMap(deleted, async (file) => {
               this.recentRemoteChanges.add(file.path);
-              await fs.remove(this.absolute(file.path));
+              await this.softDelete(file.path);
             });
 
             await pMap(changed, async (file) => {

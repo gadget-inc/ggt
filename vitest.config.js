@@ -6,5 +6,8 @@ export default defineConfig({
     setupFiles: ["./spec/vitest.setup.ts"],
     testTimeout: process.env["CI"] ? 10_000 : 1000,
     watch: false,
+    chaiConfig: {
+      truncateThreshold: 10_000,
+    },
   },
 });

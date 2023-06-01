@@ -378,6 +378,8 @@ describe("Sync", () => {
       // foo.js didn't change, so it should still exist
       await expectDir(dir, {
         ".gadget/sync.json": stateFile(sync),
+        ".gadget/backup/bar.js": "bar2",
+        ".gadget/backup/baz.js": "baz",
         "foo.js": "foo",
       });
 
@@ -489,6 +491,8 @@ describe("Sync", () => {
 
         await expectDir(dir, {
           ".gadget/sync.json": stateFile(sync),
+          ".gadget/backup/file.js": "foo",
+          ".gadget/backup/some/deeply/nested/file.js": "bar",
           "some/deeply/nested/": "",
         });
       });
@@ -662,6 +666,7 @@ describe("Sync", () => {
         await sleepUntil(() => sync.state.filesVersion == 1n);
 
         await expectDir(dir, {
+          ".gadget/backup/foo/": "",
           ".gadget/sync.json": stateFile(sync),
           "foo/baz.js": "// baz.js",
         });

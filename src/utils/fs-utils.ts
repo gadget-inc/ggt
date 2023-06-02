@@ -19,6 +19,10 @@ export class FSIgnorer {
   ignores(filepath: string): boolean {
     const relative = path.isAbsolute(filepath) ? path.relative(this._rootDir, filepath) : filepath;
     if (relative == "") return false;
+    // anything above the root dir is ignored
+    if (relative == "..") {
+      return true;
+    }
     return this._ignorer.ignores(relative);
   }
 

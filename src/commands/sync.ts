@@ -1,7 +1,7 @@
 import { Args, Flags } from "@oclif/core";
 import assert from "assert";
 import chalkTemplate from "chalk-template";
-import { FSWatcher } from "chokidar";
+import { default as FSWatcher } from "watcher";
 import { format } from "date-fns";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
@@ -190,6 +190,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
    */
   stop!: (error?: unknown) => Promise<void>;
 
+  static fileStats(path: string) {
+    return fs.statSync(path);
+  }
+
   /**
    * Turns an absolute filepath into a relative one from {@linkcode dir}.
    */
@@ -320,16 +324,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
     // local files/folders that should never be published
     this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git"]);
 
-    this.watcher = new FSWatcher({
-      ignored: (filepath) => this.ignorer.ignores(filepath),
-      // don't emit an event for every watched file on boot
-      ignoreInitial: true,
-      // make sure stats are always present on add/change events
-      alwaysStat: true,
-      // wait for the entire file to be written before emitting add/change events
-      awaitWriteFinish: { pollInterval: this.flags["file-poll-interval"], stabilityThreshold: this.flags["file-stability-threshold"] },
-    });
-
     this.debug("starting");
 
     if (!which.sync("yarn", { nothrow: true })) {
@@ -428,6 +422,16 @@ export default class Sync extends BaseCommand<typeof Sync> {
   async run(): Promise<void> {
     let error: unknown;
     const stopped = new PromiseSignal();
+
+    this.watcher = new FSWatcher(`${this.dir}`, {
+      ignore: (filepath: string) => {
+        return this.ignorer.ignores(filepath);
+      },
+      // don't emit an event for every watched file on boot
+      ignoreInitial: true,
+      renameDetection: true,
+      recursive: true,
+    });
 
     this.stop = async (e?: unknown) => {
       if (this.status != SyncStatus.RUNNING) return;
@@ -551,7 +555,12 @@ export default class Sync extends BaseCommand<typeof Sync> {
       }
     );
 
-    const localFilesBuffer = new Map<string, { mode: number; isDirectory: boolean } | { isDeleted: true; isDirectory: boolean }>();
+    const localFilesBuffer = new Map<
+      string,
+      | { mode: number; isDirectory: boolean }
+      | { isDeleted: true; isDirectory: boolean }
+      | { mode: number; oldPath: string; newPath: string; isDirectory: boolean }
+    >();
 
     this.publish = _.debounce(() => {
       const localFiles = new Map(localFilesBuffer.entries());
@@ -567,12 +576,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
             return;
           }
 
+          const isRename = "oldPath" in file;
+
           try {
             changed.push({
               path: normalizedPath,
               mode: file.mode,
-              content: file.isDirectory ? "" : await fs.readFile(this.absolute(normalizedPath), "base64"),
+              content: file.isDirectory || isRename ? "" : await fs.readFile(this.absolute(normalizedPath), "base64"),
               encoding: FileSyncEncoding.Base64,
+              ...(isRename ? { oldPath: file.oldPath } : undefined),
             });
           } catch (error) {
             // A file could have been changed and then deleted before we process the change event, so the readFile
@@ -607,56 +619,71 @@ export default class Sync extends BaseCommand<typeof Sync> {
       });
     }, this.flags["file-push-delay"]);
 
-    this.watcher
-      .add(`${this.dir}/**/*`)
-      .on("error", (error) => void this.stop(error))
-      .on("all", (event, absolutePath, stats) => {
-        const normalizedPath = this.normalize(absolutePath, event == "addDir" || event == "unlinkDir");
-
-        if (stats?.isSymbolicLink?.()) {
-          this.debug("skipping event caused by symlink %s", normalizedPath);
-          return;
-        }
-
-        if (absolutePath == this.ignorer.filepath) {
-          this.ignorer.reload();
-        } else if (this.ignorer.ignores(absolutePath)) {
-          this.debug("skipping event caused by ignored file %s", normalizedPath);
-          return;
-        }
-
-        // we only update the mtime if the file is not ignored, because if we restart and the mtime is set to an ignored
-        // file, then it could be greater than the mtime of all non ignored files and we'll think that local files have
-        // changed when only an ignored one has
-        if (stats && stats.mtime.getTime() > this.state.mtime) {
-          this.state.mtime = stats.mtime.getTime();
-        }
-
-        if (this.recentRemoteChanges.delete(normalizedPath)) {
-          this.debug("skipping event caused by recent write %s", normalizedPath);
-          return;
-        }
-
-        this.debug("file changed %s", normalizedPath, event);
-
-        switch (event) {
-          case "add":
-          case "change":
-            assert(stats, "missing stats on add/change event");
-            localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: false });
-            break;
-          case "addDir":
-            assert(stats, "missing stats on addDir event");
-            localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: true });
-            break;
-          case "unlinkDir":
-          case "unlink":
-            localFilesBuffer.set(normalizedPath, { isDeleted: true, isDirectory: event === "unlinkDir" });
-            break;
-        }
-
-        this.publish();
+    this.on("error", (error) => void this.stop(error)).on("all", (event: string, absolutePath: string, renamedPath: string) => {
+      console.log("event", {
+        event,
+        absolutePath,
+        renamedPath,
       });
+      const filePath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
+      const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
+      const normalizedPath = this.normalize(filePath, isDirectory);
+      const stats = Sync.fileStats(filePath);
+
+      // this shouldn't ever be the case using watcher since it doesn't support symlinks but we'll keep it here just in case we ever switch to another lib that does support it
+      if (stats?.isSymbolicLink?.()) {
+        this.debug("skipping event caused by symlink %s", normalizedPath);
+        return;
+      }
+
+      if (filePath == this.ignorer.filepath) {
+        this.ignorer.reload();
+      } else if (this.ignorer.ignores(filePath)) {
+        this.debug("skipping event caused by ignored file %s", normalizedPath);
+        return;
+      }
+
+      // we only update the mtime if the file is not ignored, because if we restart and the mtime is set to an ignored
+      // file, then it could be greater than the mtime of all non ignored files and we'll think that local files have
+      // changed when only an ignored one has
+      if (stats && stats.mtime.getTime() > this.state.mtime) {
+        this.state.mtime = stats.mtime.getTime();
+      }
+
+      if (this.recentRemoteChanges.delete(normalizedPath)) {
+        this.debug("skipping event caused by recent write %s", normalizedPath);
+        return;
+      }
+
+      this.debug("file changed %s", normalizedPath, event);
+
+      switch (event) {
+        case "add":
+        case "change":
+          assert(stats, "missing stats on add/change event");
+          localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: false });
+          break;
+        case "addDir":
+          assert(stats, "missing stats on addDir event");
+          localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: true });
+          break;
+        case "unlinkDir":
+        case "unlink":
+          localFilesBuffer.set(normalizedPath, { isDeleted: true, isDirectory: event === "unlinkDir" });
+          break;
+        case "rename":
+        case "renameDir":
+          localFilesBuffer.set(normalizedPath, {
+            oldPath: this.normalize(absolutePath, isDirectory),
+            newPath: normalizedPath,
+            isDirectory: event === "renameDir",
+            mode: stats.mode,
+          });
+          break;
+      }
+
+      this.publish();
+    });
 
     this.status = SyncStatus.RUNNING;
 
@@ -695,6 +722,11 @@ export default class Sync extends BaseCommand<typeof Sync> {
     } else {
       this.log("Goodbye!");
     }
+  }
+
+  on(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    this.watcher.on(eventName, listener);
+    return this;
   }
 
   /**

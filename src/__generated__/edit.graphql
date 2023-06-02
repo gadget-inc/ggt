@@ -12,6 +12,11 @@ schema {
   subscription: Subscription
 }
 
+type APIUpgradeConvergePlanResult {
+  items: [JSON!]!
+  success: Boolean!
+}
+
 type ChangeAppDomainResult {
   onlyValidate: Boolean
   reason: String
@@ -36,6 +41,12 @@ scalar DateTime
 
 type DeleteAppStatusResult {
   isNotCreator: Boolean
+  isNotOwner: Boolean
+  success: Boolean!
+}
+
+type EnableFrontendResult {
+  reason: String
   success: Boolean!
 }
 
@@ -67,6 +78,7 @@ input FileSyncChangedEventInput {
   content: String!
   encoding: FileSyncEncoding
   mode: Float!
+  oldPath: String
   path: String!
 }
 
@@ -90,6 +102,11 @@ type GadgetRole {
   selectable: Boolean!
 }
 
+type IdentifySupportConversationResult {
+  identificationEmail: String!
+  identificationToken: String!
+}
+
 scalar JSON
 
 type LogSearchResult {
@@ -104,6 +121,7 @@ type MigrateEnvironmentsResult {
 type Mutation {
   changeAppDomain(newSubdomain: String!, onlyValidate: Boolean): ChangeAppDomainResult
   deleteApp: DeleteAppStatusResult
+  enableFrontend(hasShopifyConnection: Boolean!): EnableFrontendResult
   migrateEnvironments(existingToProduction: Boolean!): MigrateEnvironmentsResult
   patchEnvironmentTree(clientID: EnvironmentTreeClientId!, patches: [JSON!]!): EnvironmentPatchResult
   publish: EnvironmentPublishResult
@@ -111,8 +129,9 @@ type Mutation {
   refreshScopes(appConfigKey: String!, connectionKey: String!, shopId: String!): RefreshScopesResult
   registerWebhooks(connectionKey: String!, keepExtraTopics: Boolean, modelKeys: [String!], shopIds: [String!]!): RegisterWebhooksResult
   removeContributor(email: String!, isInvitation: Boolean!): RemoveContributorResult
-  sendAppInvitation(email: String!, resend: Boolean): SendAppInvitationResult
-  unregisterWebhooks(connectionKey: String!, modelKeys: [String!], shopIds: [String!]): UnregisterWebhooksResult
+  sendAppInvitation(email: String, emails: [String!], resend: Boolean): SendAppInvitationResult
+  unregisterWebhooks(apiKeys: [String!], connectionKey: String!, modelKeys: [String!]): UnregisterWebhooksResult
+  uploadFiles(files: [UploadFile!]!): UploadFilesResult!
 }
 
 input PublishFileSyncEventsInput {
@@ -126,14 +145,18 @@ type PublishFileSyncEventsResult {
 }
 
 type Query {
+  apiUpgradeConvergePlan(currentVersion: String!, targetVersion: String!): APIUpgradeConvergePlanResult
   currentUser: User!
-  environmentTreePath(path: String!): JSON
+  environmentTreeChildKeys(path: String!): [String!]!
+  environmentTreePath(hydrateChildrenGlobs: [String!], path: String!): JSON
+  identifySupportConversation: IdentifySupportConversationResult
   listContributors: [ContributorResult!]!
   logsSearch(direction: String, end: DateTime, limit: Int, query: String!, start: DateTime, step: Int): LogSearchResult!
   remoteFilesVersion: String!
   roles: [GadgetRole!]!
   runTestSupportFunction: JSON
-  typesManifest: TypesManifest!
+  team: TeamResult!
+  typesManifest(dependenciesHash: String!): TypesManifest!
 }
 
 type RefreshScopesResult {
@@ -168,18 +191,42 @@ type Subscription {
   typesManifestStream: TypesManifest!
 }
 
+type TeamMember {
+  contributesToApp: Boolean!
+  email: String!
+}
+
+type TeamResult {
+  availableSeats: Int
+  costPerSeat: String
+  teamMembers: [TeamMember!]!
+}
+
 type TypeManifestEntry {
   declaration: String!
   path: String!
 }
 
 type TypesManifest {
+  cdn: [String!]!
   dependenciesHash: String!
   entries: [TypeManifestEntry!]!
   environmentVersion: Int!
 }
 
 type UnregisterWebhooksResult {
+  success: Boolean!
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+input UploadFile {
+  file: Upload!
+  path: String!
+}
+
+type UploadFilesResult {
   success: Boolean!
 }
 

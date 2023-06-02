@@ -45,7 +45,6 @@
     "@swc/helpers": "^0.5.1",
     "chalk": "^5.2.0",
     "chalk-template": "^1.1.0",
-    "chokidar": "^3.5.3",
     "clean-stack": "^5.2.0",
     "date-fns": "^2.30.0",
     "debug": "^4.3.4",
@@ -67,6 +66,7 @@
     "pluralize": "^8.0.0",
     "serialize-error": "^11.0.0",
     "ts-dedent": "^2.2.0",
+    "watcher": "^2.2.2",
     "which": "^3.0.1",
     "ws": "^8.13.0"
   },

@@ -9,5 +9,6 @@ export default defineConfig({
     chaiConfig: {
       truncateThreshold: 10_000,
     },
+    exclude: [".direnv/**/*.spec.ts"],
   },
 });

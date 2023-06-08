@@ -5,3 +5,4 @@ lib
 node_modules
 oclif.manifest.json
 tmp
+*.orig

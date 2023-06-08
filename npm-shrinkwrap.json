@@ -17,7 +17,6 @@
         "@swc/helpers": "^0.5.1",
         "chalk": "^5.2.0",
         "chalk-template": "^1.1.0",
-        "chokidar": "^3.5.3",
         "clean-stack": "^5.2.0",
         "date-fns": "^2.30.0",
         "debug": "^4.3.4",
@@ -39,6 +38,7 @@
         "pluralize": "^8.0.0",
         "serialize-error": "^11.0.0",
         "ts-dedent": "^2.2.0",
+        "watcher": "^2.2.2",
         "which": "^3.0.1",
         "ws": "^8.13.0"
       },
@@ -6370,7 +6370,10 @@
     },
     "node_modules/anymatch": {
       "version": "3.1.2",
+      "dev": true,
       "license": "ISC",
+      "optional": true,
+      "peer": true,
       "dependencies": {
         "normalize-path": "^3.0.0",
         "picomatch": "^2.0.4"
@@ -6947,7 +6950,10 @@
     },
     "node_modules/binary-extensions": {
       "version": "2.2.0",
+      "dev": true,
       "license": "MIT",
+      "optional": true,
+      "peer": true,
       "engines": {
         "node": ">=8"
       }
@@ -7415,6 +7421,7 @@
     },
     "node_modules/chokidar": {
       "version": "3.5.3",
+      "dev": true,
       "funding": [
         {
           "type": "individual",
@@ -7422,6 +7429,8 @@
         }
       ],
       "license": "MIT",
+      "optional": true,
+      "peer": true,
       "dependencies": {
         "anymatch": "~3.1.2",
         "braces": "~3.0.2",
@@ -8643,6 +8652,11 @@
       "engines": {
         "node": ">=8"
       }
+    },
+    "node_modules/dettle": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/dettle/-/dettle-1.0.1.tgz",
+      "integrity": "sha512-/oD3At60ZfhgzpofJtyClNTrIACyMdRe+ih0YiHzAniN0IZnLdLpEzgR6RtGs3kowxUkTnvV/4t1FBxXMUdusQ=="
     },
     "node_modules/dezalgo": {
       "version": "1.0.4",
@@ -9961,6 +9975,7 @@
     },
     "node_modules/fsevents": {
       "version": "2.3.2",
+      "dev": true,
       "license": "MIT",
       "optional": true,
       "os": [
@@ -10953,7 +10968,10 @@
     },
     "node_modules/is-binary-path": {
       "version": "2.1.0",
+      "dev": true,
       "license": "MIT",
+      "optional": true,
+      "peer": true,
       "dependencies": {
         "binary-extensions": "^2.0.0"
       },
@@ -18268,7 +18286,10 @@
     },
     "node_modules/readdirp": {
       "version": "3.6.0",
+      "dev": true,
       "license": "MIT",
+      "optional": true,
+      "peer": true,
       "dependencies": {
         "picomatch": "^2.2.1"
       },
@@ -18555,6 +18576,14 @@
       "dev": true,
       "engines": {
         "node": ">=16 || 14 >=14.17"
+      }
+    },
+    "node_modules/ripstat": {
+      "version": "2.0.2",
+      "resolved": "https://registry.npmjs.org/ripstat/-/ripstat-2.0.2.tgz",
+      "integrity": "sha512-93g4yBvHzYwl9issdCObsHBojarat+rGT4QDFR0gFrOO4UrG90XUufMGkaSCn21awp08ahP/mQlqIiVFsTH8LQ==",
+      "dependencies": {
+        "stubborn-fs": "^1.2.4"
       }
     },
     "node_modules/rollup": {
@@ -19638,6 +19667,11 @@
         "url": "https://github.com/sponsors/Borewit"
       }
     },
+    "node_modules/stubborn-fs": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/stubborn-fs/-/stubborn-fs-1.2.4.tgz",
+      "integrity": "sha512-KRa4nIRJ8q6uApQbPwYZVhOof8979fw4xbajBWa5kPJFa4nyY3aFaMWVyIVCDnkNCCG/3HLipUZ4QaNlYsmX1w=="
+    },
     "node_modules/supports-color": {
       "version": "8.1.1",
       "license": "MIT",
@@ -19795,6 +19829,11 @@
         "globalyzer": "0.1.0",
         "globrex": "^0.1.2"
       }
+    },
+    "node_modules/tiny-readdir": {
+      "version": "2.2.0",
+      "resolved": "https://registry.npmjs.org/tiny-readdir/-/tiny-readdir-2.2.0.tgz",
+      "integrity": "sha512-bO4IgID5M2x5YQFBru/wREgT30YuA8aoOd/F8Rd6LKRIn1gOe9aREjT74J9EVukHqI/2RB+4SM1RgXM0gwxoWw=="
     },
     "node_modules/tinybench": {
       "version": "2.5.0",
@@ -20679,6 +20718,16 @@
       "resolved": "https://registry.npmjs.org/walk-up-path/-/walk-up-path-1.0.0.tgz",
       "integrity": "sha512-hwj/qMDUEjCU5h0xr90KGCf0tg0/LgJbmOWgrWKYlcJZM7XvquvUJZ0G/HMGr7F7OQMOUuPHWP9JpriinkAlkg==",
       "dev": true
+    },
+    "node_modules/watcher": {
+      "version": "2.2.2",
+      "resolved": "https://registry.npmjs.org/watcher/-/watcher-2.2.2.tgz",
+      "integrity": "sha512-q6H+WoyFUtcKbOiMh8HqtHqv8qMbJdAunALRyp3/Iwi/8vEBZ86AV71vTcbiX1JrtvbM2FeqQTFrXLIs9jT7EQ==",
+      "dependencies": {
+        "dettle": "^1.0.1",
+        "ripstat": "^2.0.0",
+        "tiny-readdir": "^2.2.0"
+      }
     },
     "node_modules/wcwidth": {
       "version": "1.0.1",
@@ -26306,6 +26355,9 @@
     },
     "anymatch": {
       "version": "3.1.2",
+      "dev": true,
+      "optional": true,
+      "peer": true,
       "requires": {
         "normalize-path": "^3.0.0",
         "picomatch": "^2.0.4"
@@ -26719,7 +26771,10 @@
       }
     },
     "binary-extensions": {
-      "version": "2.2.0"
+      "version": "2.2.0",
+      "dev": true,
+      "optional": true,
+      "peer": true
     },
     "binaryextensions": {
       "version": "4.18.0",
@@ -27062,6 +27117,9 @@
     },
     "chokidar": {
       "version": "3.5.3",
+      "dev": true,
+      "optional": true,
+      "peer": true,
       "requires": {
         "anymatch": "~3.1.2",
         "braces": "~3.0.2",
@@ -27938,6 +27996,11 @@
     "detect-indent": {
       "version": "6.1.0",
       "dev": true
+    },
+    "dettle": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/dettle/-/dettle-1.0.1.tgz",
+      "integrity": "sha512-/oD3At60ZfhgzpofJtyClNTrIACyMdRe+ih0YiHzAniN0IZnLdLpEzgR6RtGs3kowxUkTnvV/4t1FBxXMUdusQ=="
     },
     "dezalgo": {
       "version": "1.0.4",
@@ -28926,6 +28989,7 @@
     },
     "fsevents": {
       "version": "2.3.2",
+      "dev": true,
       "optional": true
     },
     "function-bind": {
@@ -29619,6 +29683,9 @@
     },
     "is-binary-path": {
       "version": "2.1.0",
+      "dev": true,
+      "optional": true,
+      "peer": true,
       "requires": {
         "binary-extensions": "^2.0.0"
       }
@@ -34664,6 +34731,9 @@
     },
     "readdirp": {
       "version": "3.6.0",
+      "dev": true,
+      "optional": true,
+      "peer": true,
       "requires": {
         "picomatch": "^2.2.1"
       }
@@ -34865,6 +34935,14 @@
           "integrity": "sha512-MzWSV5nYVT7mVyWCwn2o7JH13w2TBRmmSqSRCKzTw+lmft9X4z+3wjvs06Tzijo5z4W/kahUCDpRXTF+ZrmF/w==",
           "dev": true
         }
+      }
+    },
+    "ripstat": {
+      "version": "2.0.2",
+      "resolved": "https://registry.npmjs.org/ripstat/-/ripstat-2.0.2.tgz",
+      "integrity": "sha512-93g4yBvHzYwl9issdCObsHBojarat+rGT4QDFR0gFrOO4UrG90XUufMGkaSCn21awp08ahP/mQlqIiVFsTH8LQ==",
+      "requires": {
+        "stubborn-fs": "^1.2.4"
       }
     },
     "rollup": {
@@ -35657,6 +35735,11 @@
         "peek-readable": "^5.0.0"
       }
     },
+    "stubborn-fs": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/stubborn-fs/-/stubborn-fs-1.2.4.tgz",
+      "integrity": "sha512-KRa4nIRJ8q6uApQbPwYZVhOof8979fw4xbajBWa5kPJFa4nyY3aFaMWVyIVCDnkNCCG/3HLipUZ4QaNlYsmX1w=="
+    },
     "supports-color": {
       "version": "8.1.1",
       "requires": {
@@ -35767,6 +35850,11 @@
         "globalyzer": "0.1.0",
         "globrex": "^0.1.2"
       }
+    },
+    "tiny-readdir": {
+      "version": "2.2.0",
+      "resolved": "https://registry.npmjs.org/tiny-readdir/-/tiny-readdir-2.2.0.tgz",
+      "integrity": "sha512-bO4IgID5M2x5YQFBru/wREgT30YuA8aoOd/F8Rd6LKRIn1gOe9aREjT74J9EVukHqI/2RB+4SM1RgXM0gwxoWw=="
     },
     "tinybench": {
       "version": "2.5.0",
@@ -36359,6 +36447,16 @@
       "resolved": "https://registry.npmjs.org/walk-up-path/-/walk-up-path-1.0.0.tgz",
       "integrity": "sha512-hwj/qMDUEjCU5h0xr90KGCf0tg0/LgJbmOWgrWKYlcJZM7XvquvUJZ0G/HMGr7F7OQMOUuPHWP9JpriinkAlkg==",
       "dev": true
+    },
+    "watcher": {
+      "version": "2.2.2",
+      "resolved": "https://registry.npmjs.org/watcher/-/watcher-2.2.2.tgz",
+      "integrity": "sha512-q6H+WoyFUtcKbOiMh8HqtHqv8qMbJdAunALRyp3/Iwi/8vEBZ86AV71vTcbiX1JrtvbM2FeqQTFrXLIs9jT7EQ==",
+      "requires": {
+        "dettle": "^1.0.1",
+        "ripstat": "^2.0.0",
+        "tiny-readdir": "^2.2.0"
+      }
     },
     "wcwidth": {
       "version": "1.0.1",

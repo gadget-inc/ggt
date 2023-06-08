@@ -1,4 +1,4 @@
-import { FSWatcher } from "chokidar";
+import { default as FSWatcher } from "watcher";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
@@ -7,7 +7,6 @@ import inquirer from "inquirer";
 import _ from "lodash";
 import notifier from "node-notifier";
 import path from "path";
-import type { SetRequired } from "type-fest";
 import which from "which";
 import Sync, {
   Action,
@@ -36,20 +35,25 @@ describe("Sync", () => {
   let dir: string;
   let app: string;
   let sync: Sync;
+  let oldFileStats: (filepath: string) => Stats | undefined;
 
   const emit: {
     all: (
-      eventName: "add" | "addDir" | "change" | "unlink" | "unlinkDir",
+      eventName: "add" | "addDir" | "change" | "unlink" | "unlinkDir" | "rename" | "renameDir",
       path: string,
-      stats?: SetRequired<Partial<Stats>, "mode" | "mtime">
+      renamedPath?: string
     ) => void;
     error: (error: unknown) => void;
+    close: () => void;
   } = {
     all: undefined as any,
     error: undefined as any,
+    close: undefined as any,
   };
 
   beforeEach(() => {
+    oldFileStats = Sync.fileStats;
+    Sync.fileStats = vi.fn().mockImplementation(() => stats) as (filepath: string) => Stats;
     client = mockClient();
     dir = path.join(testDirPath(), "app");
     app = "test";
@@ -62,9 +66,8 @@ describe("Sync", () => {
     ]);
 
     // TODO: we don't need to mock the watcher anymore since we're using the real filesystem
-    vi.spyOn(FSWatcher.prototype, "add").mockReturnThis();
     vi.spyOn(FSWatcher.prototype, "close").mockImplementation(_.noop as any);
-    vi.spyOn(FSWatcher.prototype, "on").mockImplementation(function (this: FSWatcher, eventName, handler) {
+    vi.spyOn(Sync.prototype, "on").mockImplementation(function (this: Sync, eventName, handler) {
       switch (eventName) {
         case "all":
           emit.all = handler;
@@ -72,11 +75,13 @@ describe("Sync", () => {
         case "error":
           emit.error = handler;
           break;
-        default:
-          throw new Error(`Unhandled eventName: ${eventName}`);
       }
       return this;
     });
+  });
+
+  afterEach(() => {
+    Sync.fileStats = oldFileStats;
   });
 
   it("requires a user to be logged in", () => {
@@ -650,7 +655,7 @@ describe("Sync", () => {
 
       it("writes deletes before changes", async () => {
         await setupDir(dir, {
-          "foo/": "",
+          "foo/": {},
         });
 
         client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
@@ -697,9 +702,9 @@ describe("Sync", () => {
 
           await sleepUntil(() => sync.state.filesVersion == 1n);
 
-          emit.all("change", path.join(dir, "file1.js"), stats);
-          emit.all("change", path.join(dir, "file2.js"), stats);
-          emit.all("change", path.join(dir, "file3.js"), stats);
+          emit.all("change", path.join(dir, "file1.js"));
+          emit.all("change", path.join(dir, "file2.js"));
+          emit.all("change", path.join(dir, "file3.js"));
 
           await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
@@ -800,8 +805,8 @@ describe("Sync", () => {
           "some/deeply/nested/file.js": "bar",
         });
 
-        emit.all("add", path.join(dir, "file.js"), stats);
-        emit.all("change", path.join(dir, "some/deeply/nested/file.js"), stats);
+        emit.all("add", path.join(dir, "file.js"));
+        emit.all("change", path.join(dir, "some/deeply/nested/file.js"));
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
@@ -818,9 +823,40 @@ describe("Sync", () => {
         });
       });
 
+      it("publishes change event on rename events", async () => {
+        // we setup the directory as it would be after the rename because we read file contents of the new file path
+        await setupDir(dir, {
+          "bar/": {
+            "bar1.js": "foo1",
+            "bar2.js": "foo2",
+          },
+          "bar.js": "bar",
+          "baz.js": "baz",
+        });
+
+        emit.all("renameDir", path.join(dir, "foo/"), path.join(dir, "bar/"));
+        emit.all("rename", path.join(dir, "foo/foo1.js"), path.join(dir, "bar/bar1.js"));
+        emit.all("rename", path.join(dir, "foo/foo2.js"), path.join(dir, "bar/bar2.js"));
+
+        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+
+        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+          input: {
+            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            changed: expect.arrayContaining([
+              { path: "bar/", content: toBase64(""), mode: 420, encoding: FileSyncEncoding.Base64, oldPath: "foo/" },
+              { path: "bar/bar1.js", content: toBase64("foo1"), mode: 420, encoding: FileSyncEncoding.Base64, oldPath: "foo/foo1.js" },
+              { path: "bar/bar2.js", content: toBase64("foo2"), mode: 420, encoding: FileSyncEncoding.Base64, oldPath: "foo/foo2.js" },
+            ]),
+            deleted: [],
+          },
+        });
+      });
+
       it("publishes deleted events on unlink events", async () => {
-        emit.all("unlink", path.join(dir, "file.js"), stats);
-        emit.all("unlink", path.join(dir, "some/deeply/nested/file.js"), stats);
+        emit.all("unlink", path.join(dir, "file.js"));
+        emit.all("unlink", path.join(dir, "some/deeply/nested/file.js"));
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
@@ -841,11 +877,11 @@ describe("Sync", () => {
           "baz.js": "baz",
         });
 
-        emit.all("add", path.join(dir, "foo.js"), stats);
+        emit.all("add", path.join(dir, "foo.js"));
         await sleep();
-        emit.all("add", path.join(dir, "bar.js"), stats);
+        emit.all("add", path.join(dir, "bar.js"));
         await sleep();
-        emit.all("add", path.join(dir, "baz.js"), stats);
+        emit.all("add", path.join(dir, "baz.js"));
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
@@ -864,7 +900,7 @@ describe("Sync", () => {
       });
 
       it("publishes add events on addDir events", async () => {
-        emit.all("addDir", path.join(dir, "some/deeply/nested/"), stats);
+        emit.all("addDir", path.join(dir, "some/deeply/nested/"));
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
@@ -879,7 +915,7 @@ describe("Sync", () => {
       });
 
       it("publishes delete events on unlinkDir events", async () => {
-        emit.all("unlinkDir", path.join(dir, "some/deeply/nested/"), stats);
+        emit.all("unlinkDir", path.join(dir, "some/deeply/nested/"));
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
@@ -898,8 +934,8 @@ describe("Sync", () => {
           "another.js": "test",
         });
 
-        emit.all("change", path.join(dir, "delete_me.js"), stats);
-        emit.all("add", path.join(dir, "another.js"), stats);
+        emit.all("change", path.join(dir, "delete_me.js"));
+        emit.all("add", path.join(dir, "another.js"));
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
@@ -923,8 +959,8 @@ describe("Sync", () => {
         sync.recentRemoteChanges.add("bar.js");
 
         // emit events affecting the files in recentWrites
-        emit.all("add", path.join(dir, "foo.js"), stats);
-        emit.all("unlink", path.join(dir, "bar.js"), stats);
+        emit.all("add", path.join(dir, "foo.js"));
+        emit.all("unlink", path.join(dir, "bar.js"));
 
         // expect no events to have been published
         expect(sync.publish).not.toHaveBeenCalled();
@@ -942,7 +978,7 @@ describe("Sync", () => {
         });
 
         // emit the first batch of events
-        emit.all("add", path.join(dir, "foo.js"), stats);
+        emit.all("add", path.join(dir, "foo.js"));
 
         // wait for the first batch to be queued
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
@@ -959,8 +995,8 @@ describe("Sync", () => {
         });
 
         // emit another batch of events while the first batch is still in progress
-        emit.all("add", path.join(dir, "bar.js"), stats);
-        emit.all("add", path.join(dir, "baz.js"), stats);
+        emit.all("add", path.join(dir, "bar.js"));
+        emit.all("add", path.join(dir, "baz.js"));
 
         // wait for the second batch to be queued
         await sleepUntil(() => sync.queue.size == 1);
@@ -1005,27 +1041,19 @@ describe("Sync", () => {
         await sleepUntil(() => sync.state.filesVersion == 2n);
       });
 
-      it("does not publish events caused by symlinked files", () => {
-        vi.spyOn(sync, "publish");
-
-        emit.all("change", path.join(dir, "symlink.js"), { ...stats, isSymbolicLink: () => true });
-
-        expect(sync.publish).not.toHaveBeenCalled();
-      });
-
       it("does not publish multiple events affecting the same file", async () => {
         await setupDir(dir, {
           "file.js": "foo",
         });
 
         // emit a batch of events that affect the same file
-        emit.all("add", path.join(dir, "file.js"), stats);
-        emit.all("change", path.join(dir, "file.js"), stats);
+        emit.all("add", path.join(dir, "file.js"));
+        emit.all("change", path.join(dir, "file.js"));
         emit.all("unlink", path.join(dir, "file.js"));
 
         // add a small delay and then emit one more event that affects the same file
         await sleep();
-        emit.all("add", path.join(dir, "file.js"), stats);
+        emit.all("add", path.join(dir, "file.js"));
 
         // wait for the publish to be queued
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
@@ -1061,10 +1089,10 @@ describe("Sync", () => {
         });
 
         it("does not publish changes from ignored paths", async () => {
-          emit.all("add", path.join(dir, "file.js"), stats);
-          emit.all("unlink", path.join(dir, "some/deeply/file.js"), stats);
-          emit.all("change", path.join(dir, "some/deeply/nested/file.js"), stats);
-          emit.all("change", path.join(dir, "watch/me/file.js"), stats);
+          emit.all("add", path.join(dir, "file.js"));
+          emit.all("unlink", path.join(dir, "some/deeply/file.js"));
+          emit.all("change", path.join(dir, "some/deeply/nested/file.js"));
+          emit.all("change", path.join(dir, "watch/me/file.js"));
 
           await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
@@ -1086,9 +1114,9 @@ describe("Sync", () => {
         it("reloads the ignore file when it changes", async () => {
           vi.spyOn(sync, "publish");
 
-          emit.all("add", path.join(dir, "file.js"), stats);
-          emit.all("unlink", path.join(dir, "some/deeply/file.js"), stats);
-          emit.all("change", path.join(dir, "some/deeply/nested/file.js"), stats);
+          emit.all("add", path.join(dir, "file.js"));
+          emit.all("unlink", path.join(dir, "some/deeply/file.js"));
+          emit.all("change", path.join(dir, "some/deeply/nested/file.js"));
 
           expect(sync.publish).not.toHaveBeenCalled();
 
@@ -1100,9 +1128,9 @@ describe("Sync", () => {
             "watch/me/file.js": "bar",
           });
 
-          emit.all("change", path.join(dir, ".ignore"), stats);
-          emit.all("change", path.join(dir, "some/deeply/nested/file.js"), stats);
-          emit.all("change", path.join(dir, "watch/me/file.js"), stats);
+          emit.all("change", path.join(dir, ".ignore"));
+          emit.all("change", path.join(dir, "some/deeply/nested/file.js"));
+          emit.all("change", path.join(dir, "watch/me/file.js"));
 
           await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
@@ -1160,7 +1188,7 @@ describe("Sync", () => {
       });
 
       // send a local change event
-      emit.all("add", path.join(dir, "foo.js"), stats);
+      emit.all("add", path.join(dir, "foo.js"));
 
       const stop = sync.stop();
 
@@ -1197,7 +1225,7 @@ describe("Sync", () => {
 
     it("notifies the user when an error occurs", async () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
-      expect(sync.watcher.on).toHaveBeenCalledTimes(2);
+      expect(sync.on).toHaveBeenCalledTimes(2);
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
 
@@ -1218,7 +1246,7 @@ describe("Sync", () => {
 
     it("closes all resources when subscription emits error", async () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
-      expect(sync.watcher.on).toHaveBeenCalledTimes(2);
+      expect(sync.on).toHaveBeenCalledTimes(2);
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
 
@@ -1231,7 +1259,7 @@ describe("Sync", () => {
 
     it("closes all resources when subscription emits response with errors", async () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
-      expect(sync.watcher.on).toHaveBeenCalledTimes(2);
+      expect(sync.on).toHaveBeenCalledTimes(2);
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({ errors: [new GraphQLError("boom")] });
 
@@ -1244,7 +1272,7 @@ describe("Sync", () => {
 
     it("closes all resources when watcher emits error", async () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
-      expect(sync.watcher.on).toHaveBeenCalledTimes(2);
+      expect(sync.on).toHaveBeenCalledTimes(2);
 
       emit.error(new Error(expect.getState().currentTestName));
 

@@ -428,7 +428,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
     let error: unknown;
     const stopped = new PromiseSignal();
 
-    this.watcher = new FSWatcher(`${this.dir}`, {
+    this.watcher = new FSWatcher(this.dir, {
       ignore: (filepath: string) => {
         return this.ignorer.ignores(filepath);
       },

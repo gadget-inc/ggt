@@ -14447,15 +14447,6 @@
         "url": "https://github.com/sponsors/isaacs"
       }
     },
-    "node_modules/npm/node_modules/glob/node_modules/minipass": {
-      "version": "6.0.2",
-      "dev": true,
-      "inBundle": true,
-      "license": "ISC",
-      "engines": {
-        "node": ">=16 || 14 >=14.17"
-      }
-    },
     "node_modules/npm/node_modules/graceful-fs": {
       "version": "4.2.11",
       "dev": true,
@@ -31765,13 +31756,6 @@
             "minimatch": "^9.0.0",
             "minipass": "^5.0.0 || ^6.0.0",
             "path-scurry": "^1.7.0"
-          },
-          "dependencies": {
-            "minipass": {
-              "version": "6.0.2",
-              "bundled": true,
-              "dev": true
-            }
           }
         },
         "graceful-fs": {

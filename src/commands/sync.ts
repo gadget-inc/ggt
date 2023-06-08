@@ -90,22 +90,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
       default: 100,
       hidden: true,
     }),
-    "file-stability-threshold": Flags.integer({
-      name: "file-stability-threshold",
-      summary: "Time in milliseconds a file's size must remain the same.",
-      helpGroup: "file",
-      helpValue: "ms",
-      default: 500,
-      hidden: true,
-    }),
-    "file-poll-interval": Flags.integer({
-      name: "file-poll-interval",
-      description: "Interval in milliseconds between polling a file's size.",
-      helpGroup: "file",
-      helpValue: "ms",
-      default: 100,
-      hidden: true,
-    }),
   };
 
   static override examples = [

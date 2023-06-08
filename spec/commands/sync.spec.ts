@@ -35,7 +35,7 @@ describe("Sync", () => {
   let dir: string;
   let app: string;
   let sync: Sync;
-  let oldFileStats: (filepath: string) => Stats;
+  let oldFileStats: (filepath: string) => Stats | undefined;
 
   const emit: {
     all: (

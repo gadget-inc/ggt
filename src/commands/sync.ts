@@ -190,8 +190,13 @@ export default class Sync extends BaseCommand<typeof Sync> {
    */
   stop!: (error?: unknown) => Promise<void>;
 
-  static fileStats(path: string) {
-    return fs.statSync(path);
+  static fileStats(path: string): Stats | undefined {
+    try {
+      return fs.statSync(path);
+    } catch (error) {
+      ignoreEnoent(error);
+      return undefined;
+    }
   }
 
   /**
@@ -668,6 +673,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
           break;
         case "rename":
         case "renameDir":
+          assert(stats, "missing stats on rename/renameDir event");
           localFilesBuffer.set(normalizedPath, {
             oldPath: this.normalize(absolutePath, isDirectory),
             newPath: normalizedPath,

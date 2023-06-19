@@ -1,5 +1,18 @@
 # @gadgetinc/ggt
 
+## 0.2.1
+
+### Patch Changes
+
+- 7c49ce0: Bump inquirer from 9.2.6 to 9.2.7
+- 7af4337: Bump @sentry/node from 7.55.0 to 7.55.2
+- 25d39e1: Bump get-port from 6.1.2 to 7.0.0
+- 5ef3810: Bump @oclif/core from 2.8.6 to 2.8.7
+- 72f7c9b: Bump @oclif/core from 2.8.5 to 2.8.6
+- 7a46642: Bump @sentry/node from 7.54.0 to 7.55.0
+- be2a30b: Bump @oclif/plugin-not-found from 2.3.24 to 2.3.25
+- d7b8ce8: Support rename propagation when using file sync and switch to using `watcher` instead of `chokidar`
+
 ## 0.2.0
 
 ### Minor Changes

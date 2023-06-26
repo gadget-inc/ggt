@@ -26,7 +26,7 @@
         "get-port": "^7.0.0",
         "got": "^13.0.0",
         "graphql": "^16.7.1",
-        "graphql-ws": "^5.14.0",
+        "graphql-ws": "^5.13.1",
         "ignore": "^5.2.4",
         "inquirer": "^9.2.7",
         "lodash": "^4.17.21",
@@ -3280,18 +3280,6 @@
       },
       "peerDependencies": {
         "graphql": "^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0"
-      }
-    },
-    "node_modules/@graphql-tools/executor-graphql-ws/node_modules/graphql-ws": {
-      "version": "5.13.1",
-      "resolved": "https://registry.npmjs.org/graphql-ws/-/graphql-ws-5.13.1.tgz",
-      "integrity": "sha512-eiX7ES/ZQr0q7hSM5UBOEIFfaAUmAY9/CSDyAnsETuybByU7l/v46drRg9DQoTvVABEHp3QnrvwgTRMhqy7zxQ==",
-      "dev": true,
-      "engines": {
-        "node": ">=10"
-      },
-      "peerDependencies": {
-        "graphql": ">=0.11 <=16"
       }
     },
     "node_modules/@graphql-tools/executor-http": {
@@ -10450,9 +10438,9 @@
       }
     },
     "node_modules/graphql-ws": {
-      "version": "5.14.0",
-      "resolved": "https://registry.npmjs.org/graphql-ws/-/graphql-ws-5.14.0.tgz",
-      "integrity": "sha512-itrUTQZP/TgswR4GSSYuwWUzrE/w5GhbwM2GX3ic2U7aw33jgEsayfIlvaj7/GcIvZgNMzsPTrE5hqPuFUiE5g==",
+      "version": "5.13.1",
+      "resolved": "https://registry.npmjs.org/graphql-ws/-/graphql-ws-5.13.1.tgz",
+      "integrity": "sha512-eiX7ES/ZQr0q7hSM5UBOEIFfaAUmAY9/CSDyAnsETuybByU7l/v46drRg9DQoTvVABEHp3QnrvwgTRMhqy7zxQ==",
       "engines": {
         "node": ">=10"
       },
@@ -24065,15 +24053,6 @@
         "isomorphic-ws": "5.0.0",
         "tslib": "^2.4.0",
         "ws": "8.13.0"
-      },
-      "dependencies": {
-        "graphql-ws": {
-          "version": "5.13.1",
-          "resolved": "https://registry.npmjs.org/graphql-ws/-/graphql-ws-5.13.1.tgz",
-          "integrity": "sha512-eiX7ES/ZQr0q7hSM5UBOEIFfaAUmAY9/CSDyAnsETuybByU7l/v46drRg9DQoTvVABEHp3QnrvwgTRMhqy7zxQ==",
-          "dev": true,
-          "requires": {}
-        }
       }
     },
     "@graphql-tools/executor-http": {
@@ -29352,9 +29331,9 @@
       }
     },
     "graphql-ws": {
-      "version": "5.14.0",
-      "resolved": "https://registry.npmjs.org/graphql-ws/-/graphql-ws-5.14.0.tgz",
-      "integrity": "sha512-itrUTQZP/TgswR4GSSYuwWUzrE/w5GhbwM2GX3ic2U7aw33jgEsayfIlvaj7/GcIvZgNMzsPTrE5hqPuFUiE5g==",
+      "version": "5.13.1",
+      "resolved": "https://registry.npmjs.org/graphql-ws/-/graphql-ws-5.13.1.tgz",
+      "integrity": "sha512-eiX7ES/ZQr0q7hSM5UBOEIFfaAUmAY9/CSDyAnsETuybByU7l/v46drRg9DQoTvVABEHp3QnrvwgTRMhqy7zxQ==",
       "requires": {}
     },
     "grouped-queue": {

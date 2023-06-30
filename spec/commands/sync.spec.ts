@@ -1,13 +1,21 @@
-import { default as FSWatcher } from "watcher";
 import { execa } from "execa";
-import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import inquirer from "inquirer";
 import _ from "lodash";
 import notifier from "node-notifier";
+import os from "os";
 import path from "path";
+import { dedent } from "ts-dedent";
+import type { SpyInstance } from "vitest";
+import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
+import {
+  FileSyncEncoding,
+  type FileSyncChangedEventInput,
+  type MutationPublishFileSyncEventsArgs,
+  type FileSyncChangedEvent,
+} from "../../src/__generated__/graphql.js";
 import Sync, {
   Action,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
@@ -19,14 +27,10 @@ import Sync, {
 import { context } from "../../src/utils/context.js";
 import { ClientError, FlagError, InvalidSyncFileError, YarnNotFoundError } from "../../src/utils/errors.js";
 import { sleep, sleepUntil } from "../../src/utils/sleep.js";
-import { FileSyncEncoding } from "../../src/__generated__/graphql.js";
-import { testDirPath } from "../vitest.setup.js";
+import type { PartialExcept } from "../types.js";
 import type { MockClient } from "../util.js";
 import { expectDir, expectDirSync, getError, mockClient, setupDir } from "../util.js";
-import type { SpyInstance } from "vitest";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
-const stats = { mode: 420, mtime: new Date("2000-01-01T01:00:00Z") };
+import { testDirPath } from "../vitest.setup.js";
 
 it.todo("publishing does not send file changes if you delete more than N files at once");
 
@@ -35,53 +39,18 @@ describe("Sync", () => {
   let dir: string;
   let app: string;
   let sync: Sync;
-  let oldFileStats: (filepath: string) => Stats | undefined;
-
-  const emit: {
-    all: (
-      eventName: "add" | "addDir" | "change" | "unlink" | "unlinkDir" | "rename" | "renameDir",
-      path: string,
-      renamedPath?: string
-    ) => void;
-    error: (error: unknown) => void;
-    close: () => void;
-  } = {
-    all: undefined as any,
-    error: undefined as any,
-    close: undefined as any,
-  };
 
   beforeEach(() => {
-    oldFileStats = Sync.fileStats;
-    Sync.fileStats = vi.fn().mockImplementation(() => stats) as (filepath: string) => Stats;
     client = mockClient();
     dir = path.join(testDirPath(), "app");
     app = "test";
-    sync = new Sync(["--app", app, "--file-push-delay", "10", dir], context.config);
+    sync = new Sync([dir, "--app", app], context.config);
 
     vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, name: "Jane Doe", email: "jane@example.come" });
     vi.spyOn(context, "getAvailableApps").mockResolvedValue([
       { id: "1", slug: "test", primaryDomain: "test.gadget.app", hasSplitEnvironments: true },
       { id: "2", slug: "not-test", primaryDomain: "not-test.gadget.app", hasSplitEnvironments: false },
     ]);
-
-    // TODO: we don't need to mock the watcher anymore since we're using the real filesystem
-    vi.spyOn(FSWatcher.prototype, "close").mockImplementation(_.noop as any);
-    vi.spyOn(Sync.prototype, "on").mockImplementation(function (this: Sync, eventName, handler) {
-      switch (eventName) {
-        case "all":
-          emit.all = handler;
-          break;
-        case "error":
-          emit.error = handler;
-          break;
-      }
-      return this;
-    });
-  });
-
-  afterEach(() => {
-    Sync.fileStats = oldFileStats;
   });
 
   it("requires a user to be logged in", () => {
@@ -338,15 +307,13 @@ describe("Sync", () => {
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+      client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
       // foo.js didn't change, so it should not be included
-      expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+      expectPublishToEqual(client, {
         input: {
           expectedRemoteFilesVersion: String(sync.state.filesVersion),
-          changed: expect.arrayContaining([
-            { path: "bar.js", content: toBase64("bar2"), mode: expect.any(Number), encoding: FileSyncEncoding.Base64 },
-            { path: "baz.js", content: toBase64("baz"), mode: expect.any(Number), encoding: FileSyncEncoding.Base64 },
-          ]),
+          changed: [fileChangedEvent({ path: "bar.js", content: "bar2" }), fileChangedEvent({ path: "baz.js", content: "baz" })],
           deleted: [],
         },
       });
@@ -411,11 +378,26 @@ describe("Sync", () => {
 
       publish = vi.spyOn(sync, "publish");
       vi.spyOn(sync, "stop");
+
+      // give the watcher an event loop tick to finish setting up
+      await sleep(1);
     });
 
-    afterEach(async () => {
-      // restore so this.publish.flush() doesn't throw
+    afterEach(async (context) => {
+      // restore so sync.publish.flush() doesn't throw
       publish.mockRestore();
+
+      if (context.task.result?.state == "fail") {
+        // the test failed... make sure sync.stop() isn't going to be blocked by a pending publish
+        sync.publish.flush();
+        await sleep(1);
+        if (client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION)) {
+          client
+            ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: String(sync.state.filesVersion) } } });
+        }
+      }
+
       await sync.stop();
       await run;
     });
@@ -440,8 +422,8 @@ describe("Sync", () => {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
               changed: [
-                { path: "file.js", content: toBase64("foo"), mode: 420, encoding: FileSyncEncoding.Base64 },
-                { path: "some/deeply/nested/file.js", content: toBase64("bar"), mode: 420, encoding: FileSyncEncoding.Base64 },
+                fileChangedEvent({ path: "file.js", content: "foo" }),
+                fileChangedEvent({ path: "some/deeply/nested/file.js", content: "bar" }),
               ],
               deleted: [],
             },
@@ -462,7 +444,7 @@ describe("Sync", () => {
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
-              changed: [{ path: "dir/", content: toBase64(""), mode: 493, encoding: FileSyncEncoding.Base64 }],
+              changed: [dirChangedEvent({ path: "dir/", content: "" })],
               deleted: [],
             },
           },
@@ -525,7 +507,7 @@ describe("Sync", () => {
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
-              changed: [{ path: "foo.js", content: toBase64("foo"), mode: 420, encoding: FileSyncEncoding.Base64 }],
+              changed: [fileChangedEvent({ path: "foo.js", content: "foo" })],
               deleted: [{ path: "bar.js" }],
             },
           },
@@ -543,7 +525,7 @@ describe("Sync", () => {
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
-              changed: [{ path: "foo.js", content: toBase64("foo"), mode: 420, encoding: FileSyncEncoding.Base64 }],
+              changed: [fileChangedEvent({ path: "foo.js", content: "foo" })],
               deleted: [],
             },
           },
@@ -558,10 +540,7 @@ describe("Sync", () => {
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "2",
-              changed: [
-                { path: "bar.js", content: toBase64("bar"), mode: 420, encoding: FileSyncEncoding.Base64 },
-                { path: "baz.js", content: toBase64("baz"), mode: 420, encoding: FileSyncEncoding.Base64 },
-              ],
+              changed: [fileChangedEvent({ path: "bar.js", content: "bar" }), fileChangedEvent({ path: "baz.js", content: "baz" })],
               deleted: [],
             },
           },
@@ -574,7 +553,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
 
         // wait for the first batch to complete
-        await sleepUntil(() => sync.queue.size == 0);
+        await sleepUntil(() => sync.state.filesVersion == 1n);
 
         // the first batch should be complete
         expectDirSync(dir, {
@@ -620,12 +599,7 @@ describe("Sync", () => {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
               changed: [
-                {
-                  path: "yarn.lock",
-                  content: toBase64("# THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY."),
-                  mode: 493,
-                  encoding: FileSyncEncoding.Base64,
-                },
+                fileChangedEvent({ path: "yarn.lock", content: "# THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY." }),
               ],
               deleted: [],
             },
@@ -662,7 +636,7 @@ describe("Sync", () => {
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
-              changed: [{ path: "foo/baz.js", content: toBase64("// baz.js"), mode: 0o644, encoding: FileSyncEncoding.Base64 }],
+              changed: [fileChangedEvent({ path: "foo/baz.js", content: "// baz.js" })],
               deleted: [{ path: "foo/" }],
             },
           },
@@ -682,44 +656,65 @@ describe("Sync", () => {
           await setupDir(dir, {
             ".ignore": "file2.js",
             "file1.js": "one",
-            "file2.js": "two",
             "file3.js": "three",
           });
 
-          sync.ignorer.reload();
+          await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          client
+            ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+
+          expectPublishToEqual(client, {
+            input: {
+              expectedRemoteFilesVersion: String(sync.state.filesVersion),
+              changed: [
+                fileChangedEvent({ path: ".ignore", content: "file2.js" }),
+                fileChangedEvent({ path: "file1.js", content: "one" }),
+                fileChangedEvent({ path: "file3.js", content: "three" }),
+              ],
+              deleted: [],
+            },
+          });
+
+          // delete the subscription so that we can wait for the next publish
+          client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+
+          // make expect(sync.publish).not.toHaveBeenCalled() work
+          publish.mockClear();
         });
 
         it("reloads the ignore file when it changes", async () => {
           client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
             data: {
               remoteFileSyncEvents: {
-                remoteFilesVersion: "1",
-                changed: [{ path: ".ignore", content: toBase64(""), mode: 420, encoding: FileSyncEncoding.Base64 }],
+                remoteFilesVersion: "2",
+                changed: [fileChangedEvent({ path: ".ignore", content: "" })],
                 deleted: [],
               },
             },
           });
 
-          await sleepUntil(() => sync.state.filesVersion == 1n);
+          await sleepUntil(() => sync.state.filesVersion == 2n);
 
-          emit.all("change", path.join(dir, "file1.js"));
-          emit.all("change", path.join(dir, "file2.js"));
-          emit.all("change", path.join(dir, "file3.js"));
+          await expectDir(dir, {
+            ".gadget/sync.json": stateFile(sync),
+            ".ignore": "",
+            "file1.js": "one",
+            "file3.js": "three",
+          });
+
+          await fs.outputFile(path.join(dir, "file2.js"), "two2");
 
           await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
           client
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
-            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "3" } } });
 
-          expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+          expectPublishToEqual(client, {
             input: {
               expectedRemoteFilesVersion: String(sync.state.filesVersion),
-              changed: expect.arrayContaining([
-                { path: "file1.js", content: toBase64("one"), mode: 420, encoding: FileSyncEncoding.Base64 },
-                { path: "file2.js", content: toBase64("two"), mode: 420, encoding: FileSyncEncoding.Base64 },
-                { path: "file3.js", content: toBase64("three"), mode: 420, encoding: FileSyncEncoding.Base64 },
-              ]),
+              changed: [fileChangedEvent({ path: "file2.js", content: "two2" })],
               deleted: [],
             },
           });
@@ -730,7 +725,7 @@ describe("Sync", () => {
             data: {
               remoteFileSyncEvents: {
                 remoteFilesVersion: "1",
-                changed: [{ path: "file2.js", content: toBase64("two++"), mode: 420, encoding: FileSyncEncoding.Base64 }],
+                changed: [fileChangedEvent({ path: "file2.js", content: "two++" })],
                 deleted: [],
               },
             },
@@ -743,9 +738,11 @@ describe("Sync", () => {
             ".gadget/sync.json": stateFile(sync),
             ".ignore": "file2.js",
             "file1.js": "one",
-            "file2.js": "two",
             "file3.js": "three",
           });
+
+          // manually write the file to make sure it doesn't get deleted
+          await fs.outputFile(path.join(dir, "file2.js"), "two");
 
           client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
             data: {
@@ -775,8 +772,8 @@ describe("Sync", () => {
               remoteFileSyncEvents: {
                 remoteFilesVersion: "1",
                 changed: [
-                  { path: ".gadget/client/index.ts", content: toBase64("// client"), mode: 420, encoding: FileSyncEncoding.Base64 },
-                  { path: ".gadget/server/index.ts", content: toBase64("// server"), mode: 420, encoding: FileSyncEncoding.Base64 },
+                  fileChangedEvent({ path: ".gadget/client/index.ts", content: "// client" }),
+                  fileChangedEvent({ path: ".gadget/server/index.ts", content: "// server" }),
                 ],
                 deleted: [],
               },
@@ -789,7 +786,6 @@ describe("Sync", () => {
             ".gadget/sync.json": stateFile(sync),
             ".ignore": "file2.js",
             "file1.js": "one",
-            "file2.js": "two",
             "file3.js": "three",
             ".gadget/client/index.ts": "// client",
             ".gadget/server/index.ts": "// server",
@@ -805,239 +801,310 @@ describe("Sync", () => {
           "some/deeply/nested/file.js": "bar",
         });
 
-        emit.all("add", path.join(dir, "file.js"));
-        emit.all("change", path.join(dir, "some/deeply/nested/file.js"));
-
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
-            changed: expect.arrayContaining([
-              { path: "file.js", content: toBase64("foo"), mode: 420, encoding: FileSyncEncoding.Base64 },
-              { path: "some/deeply/nested/file.js", content: toBase64("bar"), mode: 420, encoding: FileSyncEncoding.Base64 },
-            ]),
+            changed: [
+              fileChangedEvent({ path: "file.js", content: "foo" }),
+              dirChangedEvent({ path: "some/" }),
+              dirChangedEvent({ path: "some/deeply/" }),
+              dirChangedEvent({ path: "some/deeply/nested/" }),
+              fileChangedEvent({ path: "some/deeply/nested/file.js", content: "bar" }),
+            ],
             deleted: [],
           },
         });
       });
 
-      it("publishes change event on rename events", async () => {
-        // we setup the directory as it would be after the rename because we read file contents of the new file path
+      it("publishes changed events on rename events", async () => {
+        // setup the initial directory structure
         await setupDir(dir, {
           "bar/": {
-            "bar1.js": "foo1",
-            "bar2.js": "foo2",
+            "bar1.js": "bar1",
+            "bar2.js": "bar2",
           },
-          "bar.js": "bar",
-          "baz.js": "baz",
         });
 
-        emit.all("renameDir", path.join(dir, "foo/"), path.join(dir, "bar/"));
-        emit.all("rename", path.join(dir, "foo/foo1.js"), path.join(dir, "bar/bar1.js"));
-        emit.all("rename", path.join(dir, "foo/foo2.js"), path.join(dir, "bar/bar2.js"));
-
+        // wait for the initial publish
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+
+        // let the first publish complete
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
-            changed: expect.arrayContaining([
-              { path: "bar/", content: toBase64(""), mode: 420, encoding: FileSyncEncoding.Base64, oldPath: "foo/" },
-              { path: "bar/bar1.js", content: toBase64("foo1"), mode: 420, encoding: FileSyncEncoding.Base64, oldPath: "foo/foo1.js" },
-              { path: "bar/bar2.js", content: toBase64("foo2"), mode: 420, encoding: FileSyncEncoding.Base64, oldPath: "foo/foo2.js" },
-            ]),
+            changed: [
+              dirChangedEvent({ path: "bar/" }),
+              fileChangedEvent({ path: "bar/bar1.js", content: "bar1" }),
+              fileChangedEvent({ path: "bar/bar2.js", content: "bar2" }),
+            ],
+            deleted: [],
+          },
+        });
+
+        // delete the subscription so that we can wait for the next publish
+        client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+
+        await fs.rename(path.join(dir, "bar/"), path.join(dir, "foo/"));
+
+        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+
+        expectPublishToEqual(client, {
+          input: {
+            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            changed: [
+              dirChangedEvent({ path: "foo/", oldPath: "bar/" }),
+              fileChangedEvent({ path: "foo/bar1.js", oldPath: "bar/bar1.js", content: "bar1" }),
+              fileChangedEvent({ path: "foo/bar2.js", oldPath: "bar/bar2.js", content: "bar2" }),
+            ],
             deleted: [],
           },
         });
       });
 
       it("publishes deleted events on unlink events", async () => {
-        emit.all("unlink", path.join(dir, "file.js"));
-        emit.all("unlink", path.join(dir, "some/deeply/nested/file.js"));
+        // setup the initial directory structure
+        await setupDir(dir, {
+          "file.js": "foo",
+          "some/": {
+            "deeply/": {
+              "nested/": {
+                "file.js": "bar",
+              },
+            },
+          },
+        });
 
+        // wait for the initial publish
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+
+        // let the first publish complete
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
+          input: {
+            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            changed: [
+              fileChangedEvent({ path: "file.js", content: "foo" }),
+              dirChangedEvent({ path: "some/" }),
+              dirChangedEvent({ path: "some/deeply/" }),
+              dirChangedEvent({ path: "some/deeply/nested/" }),
+              fileChangedEvent({ path: "some/deeply/nested/file.js", content: "bar" }),
+            ],
+            deleted: [],
+          },
+        });
+
+        // delete the subscription so that we can wait for the next publish
+        client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+
+        await fs.rm(path.join(dir, "file.js"));
+        await fs.rm(path.join(dir, "some/deeply/nested/file.js"));
+
+        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
             changed: [],
-            deleted: expect.arrayContaining([{ path: "file.js" }, { path: "some/deeply/nested/file.js" }]),
+            deleted: [{ path: "file.js" }, { path: "some/deeply/nested/file.js" }],
           },
         });
       });
 
       it("publishes events in batches after a debounced delay", async () => {
+        await fs.outputFile(path.join(dir, "foo.js"), "foo");
+        await sleep(10);
+        await fs.outputFile(path.join(dir, "bar.js"), "bar");
+        await sleep(10);
+        await fs.outputFile(path.join(dir, "baz.js"), "baz");
+
+        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+
+        expectPublishToEqual(client, {
+          input: {
+            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            changed: [
+              fileChangedEvent({ path: "foo.js", content: "foo" }),
+              fileChangedEvent({ path: "bar.js", content: "bar" }),
+              fileChangedEvent({ path: "baz.js", content: "baz" }),
+            ],
+            deleted: [],
+          },
+        });
+      });
+
+      it("publishes changed events on addDir events", async () => {
         await setupDir(dir, {
-          "foo.js": "foo",
-          "bar.js": "bar",
-          "baz.js": "baz",
+          "some/deeply/nested/": {},
         });
-
-        emit.all("add", path.join(dir, "foo.js"));
-        await sleep();
-        emit.all("add", path.join(dir, "bar.js"));
-        await sleep();
-        emit.all("add", path.join(dir, "baz.js"));
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
-            changed: expect.arrayContaining([
-              { path: "foo.js", content: toBase64("foo"), mode: 420, encoding: FileSyncEncoding.Base64 },
-              { path: "bar.js", content: toBase64("bar"), mode: 420, encoding: FileSyncEncoding.Base64 },
-              { path: "baz.js", content: toBase64("baz"), mode: 420, encoding: FileSyncEncoding.Base64 },
-            ]),
+            changed: [
+              dirChangedEvent({ path: "some/" }),
+              dirChangedEvent({ path: "some/deeply/" }),
+              dirChangedEvent({ path: "some/deeply/nested/" }),
+            ],
             deleted: [],
           },
         });
       });
 
-      it("publishes add events on addDir events", async () => {
-        emit.all("addDir", path.join(dir, "some/deeply/nested/"));
+      it("publishes deleted events on unlinkDir events", async () => {
+        await setupDir(dir, {
+          "some/deeply/nested/": {},
+        });
 
+        // wait for the initial publish
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+
+        // let the first publish complete
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
-            changed: expect.arrayContaining([{ path: "some/deeply/nested/", content: "", mode: 420, encoding: FileSyncEncoding.Base64 }]),
+            changed: [
+              dirChangedEvent({ path: "some/" }),
+              dirChangedEvent({ path: "some/deeply/" }),
+              dirChangedEvent({ path: "some/deeply/nested/" }),
+            ],
             deleted: [],
           },
         });
-      });
 
-      it("publishes delete events on unlinkDir events", async () => {
-        emit.all("unlinkDir", path.join(dir, "some/deeply/nested/"));
+        // delete the subscription so that we can wait for the next publish
+        client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+
+        await fs.remove(path.join(dir, "some/deeply/nested/"));
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
             changed: [],
-            deleted: expect.arrayContaining([{ path: "some/deeply/nested/" }]),
+            deleted: [{ path: "some/deeply/nested/" }],
           },
         });
       });
 
       it("does not publish changed events from files that were deleted after the change event but before publish", async () => {
         await setupDir(dir, {
-          "another.js": "test",
+          "another.js": "another",
+          "delete_me.js": "delete_me",
         });
 
-        emit.all("change", path.join(dir, "delete_me.js"));
-        emit.all("add", path.join(dir, "another.js"));
+        // wait until both files have been published
+        await sleepUntil(() => publish.mock.calls.length == 2);
+
+        // add the file we're about to delete to recentWrites so that it doesn't get published
+        sync.recentRemoteChanges.add("delete_me.js");
+
+        // delete the file
+        await fs.remove(path.join(dir, "delete_me.js"));
 
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
-            changed: expect.arrayContaining([
-              { path: "another.js", content: toBase64("test"), mode: 420, encoding: FileSyncEncoding.Base64 },
-            ]),
+            changed: [fileChangedEvent({ path: "another.js", content: "another" })],
             deleted: [],
           },
         });
       });
 
-      it("does not publish events from files contained in recentWrites", () => {
-        vi.spyOn(sync, "publish");
-
-        // add files to recentWrites
+      it("does not publish events from files contained in recentRemoteChanges", async () => {
+        // add files to recentRemoteChanges
         sync.recentRemoteChanges.add("foo.js");
         sync.recentRemoteChanges.add("bar.js");
 
-        // emit events affecting the files in recentWrites
-        emit.all("add", path.join(dir, "foo.js"));
-        emit.all("unlink", path.join(dir, "bar.js"));
+        // write the files to the filesystem
+        await fs.outputFile(path.join(dir, "foo.js"), "foo");
+        await fs.outputFile(path.join(dir, "bar.js"), "bar");
 
         // expect no events to have been published
         expect(sync.publish).not.toHaveBeenCalled();
 
-        // the files in recentWrites should be removed so that sub events affecting them can be published
+        // the files in recentWrites should be removed so that subsequent events affecting them can be published
         expect(sync.recentRemoteChanges.has(path.join(dir, "foo.js"))).toBe(false);
         expect(sync.recentRemoteChanges.has(path.join(dir, "bar.js"))).toBe(false);
       });
 
       it("does not publish multiple batches of events at the same time", async () => {
-        await setupDir(dir, {
-          "foo.js": "foo",
-          "bar.js": "bar",
-          "baz.js": "baz",
-        });
+        // write the first file
+        await fs.outputFile(path.join(dir, "foo.js"), "foo");
 
-        // emit the first batch of events
-        emit.all("add", path.join(dir, "foo.js"));
-
-        // wait for the first batch to be queued
+        // wait for the first file to be queued
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
-        // the first batch should be in progress
+        // the first publish should be in progress
         expect(sync.queue.size).toBe(0);
         expect(sync.queue.pending).toBe(1);
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
-            changed: expect.arrayContaining([{ path: "foo.js", content: toBase64("foo"), mode: 420, encoding: FileSyncEncoding.Base64 }]),
+            changed: [fileChangedEvent({ path: "foo.js", content: "foo" })],
             deleted: [],
           },
         });
 
-        // emit another batch of events while the first batch is still in progress
-        emit.all("add", path.join(dir, "bar.js"));
-        emit.all("add", path.join(dir, "baz.js"));
+        // write more files while the first publish is still in progress
+        await fs.outputFile(path.join(dir, "bar.js"), "bar");
+        await fs.outputFile(path.join(dir, "baz.js"), "baz");
 
-        // wait for the second batch to be queued
+        // wait for the second publish to be queued
         await sleepUntil(() => sync.queue.size == 1);
 
-        // the first batch should still be in progress
+        // the first publish should still be in progress
         expect(sync.queue.pending).toBe(1);
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
-            changed: expect.arrayContaining([{ path: "foo.js", content: toBase64("foo"), mode: 420, encoding: FileSyncEncoding.Base64 }]),
+            changed: [fileChangedEvent({ path: "foo.js", content: "foo" })],
             deleted: [],
           },
         });
 
-        // let the first batch complete
+        // let the first publish complete
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        // delete the subscription so that we can wait for the second batch to be queued
+        // delete the subscription so that we can wait for the second publish to be start
         client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
-        // wait for the second batch to be queued
+        // wait for the second publish to start
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
-        // the second batch should be in progress
+        // the second publish should be in progress
         expect(sync.queue.size).toBe(0);
         expect(sync.queue.pending).toBe(1);
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
-            changed: expect.arrayContaining([
-              { path: "bar.js", content: toBase64("bar"), mode: 420, encoding: FileSyncEncoding.Base64 },
-              { path: "baz.js", content: toBase64("baz"), mode: 420, encoding: FileSyncEncoding.Base64 },
-            ]),
+            changed: [fileChangedEvent({ path: "bar.js", content: "bar" }), fileChangedEvent({ path: "baz.js", content: "baz" })],
             deleted: [],
           },
         });
 
-        // let the second batch to complete
+        // let the second publish complete
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
-        // wait for the second batch to complete
+        // wait for the second publish to complete
         await sleepUntil(() => sync.state.filesVersion == 2n);
       });
 
@@ -1046,24 +1113,24 @@ describe("Sync", () => {
           "file.js": "foo",
         });
 
-        // emit a batch of events that affect the same file
-        emit.all("add", path.join(dir, "file.js"));
-        emit.all("change", path.join(dir, "file.js"));
-        emit.all("unlink", path.join(dir, "file.js"));
+        // change the same file multiple times
+        await fs.outputFile(path.join(dir, "file.js"), "foo");
+        await fs.outputFile(path.join(dir, "file.js"), "foo1");
+        await fs.outputFile(path.join(dir, "file.js"), "foo2");
 
         // add a small delay and then emit one more event that affects the same file
         await sleep();
-        emit.all("add", path.join(dir, "file.js"));
+        await fs.outputFile(path.join(dir, "file.js"), "foo3");
 
         // wait for the publish to be queued
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
         // only one event should be published
-        expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+        expectPublishToEqual(client, {
           input: {
             expectedRemoteFilesVersion: String(sync.state.filesVersion),
-            changed: expect.arrayContaining([{ path: "file.js", content: toBase64("foo"), mode: 420, encoding: FileSyncEncoding.Base64 }]),
+            changed: [fileChangedEvent({ path: "file.js", content: "foo3" })],
             deleted: [],
           },
         });
@@ -1071,81 +1138,105 @@ describe("Sync", () => {
 
       describe("with an ignore file", () => {
         beforeEach(async () => {
-          await setupDir(dir, {
-            ".ignore": `
-# Ignore these
-**/file.js
+          const ignoreContent = dedent`
+            # Ignore these
+            **/file.js
 
-# JS files in the "watch" folder are super important though!
-!watch/**/*.js
-`,
-            "file.js": "foo",
-            "some/deeply/file.js": "bar",
-            "some/deeply/nested/file.js": "bar",
-            "watch/me/file.js": "bar",
-          });
+            # JS files in the "watch" folder are super important though!
+            !watch/**/*.js
+          `;
 
-          sync.ignorer.reload();
-        });
-
-        it("does not publish changes from ignored paths", async () => {
-          emit.all("add", path.join(dir, "file.js"));
-          emit.all("unlink", path.join(dir, "some/deeply/file.js"));
-          emit.all("change", path.join(dir, "some/deeply/nested/file.js"));
-          emit.all("change", path.join(dir, "watch/me/file.js"));
+          await fs.outputFile(path.join(dir, ".ignore"), ignoreContent);
 
           await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-
           client
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-          expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+          expectPublishToEqual(client, {
             input: {
               expectedRemoteFilesVersion: String(sync.state.filesVersion),
-              changed: expect.arrayContaining([
-                { path: "watch/me/file.js", content: toBase64("bar"), mode: 420, encoding: FileSyncEncoding.Base64 },
-              ]),
+              changed: [fileChangedEvent({ path: ".ignore", content: ignoreContent })],
+              deleted: [],
+            },
+          });
+
+          // delete the subscription so that we can wait for the next publish
+          client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+
+          // make expect(sync.publish).not.toHaveBeenCalled() work
+          publish.mockClear();
+        });
+
+        it("does not publish changes from ignored paths", async () => {
+          await fs.outputFile(path.join(dir, "another/file.js"), "another");
+          await fs.remove(path.join(dir, "another/file.js"));
+          await fs.outputFile(path.join(dir, "some/deeply/nested/file.js"), "not bar");
+          await fs.outputFile(path.join(dir, "watch/me/file.js"), "bar2");
+
+          await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          client
+            ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+
+          expectPublishToEqual(client, {
+            input: {
+              expectedRemoteFilesVersion: String(sync.state.filesVersion),
+              changed: [
+                dirChangedEvent({ path: "another/" }),
+                dirChangedEvent({ path: "some/" }),
+                dirChangedEvent({ path: "some/deeply/" }),
+                dirChangedEvent({ path: "some/deeply/nested/" }),
+                dirChangedEvent({ path: "watch/" }),
+                dirChangedEvent({ path: "watch/me/" }),
+                fileChangedEvent({ path: "watch/me/file.js", content: "bar2" }),
+              ],
               deleted: [],
             },
           });
         });
 
         it("reloads the ignore file when it changes", async () => {
-          vi.spyOn(sync, "publish");
+          await fs.outputFile(path.join(dir, "file.js"), "foo");
 
-          emit.all("add", path.join(dir, "file.js"));
-          emit.all("unlink", path.join(dir, "some/deeply/file.js"));
-          emit.all("change", path.join(dir, "some/deeply/nested/file.js"));
+          // give the watcher a chance to see the file
+          await sleep(1000);
 
+          // no changes should have been published
           expect(sync.publish).not.toHaveBeenCalled();
 
-          await setupDir(dir, {
-            ".ignore": "# watch it all",
-            "file.js": "foo",
-            "some/deeply/file.js": "bar",
-            "some/deeply/nested/file.js": "not bar",
-            "watch/me/file.js": "bar",
-          });
-
-          emit.all("change", path.join(dir, ".ignore"));
-          emit.all("change", path.join(dir, "some/deeply/nested/file.js"));
-          emit.all("change", path.join(dir, "watch/me/file.js"));
+          // update the ignore file
+          await fs.writeFile(path.join(dir, ".ignore"), "# watch it all");
 
           await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-
           client
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
-            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
-          expect(client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables).toEqual({
+          // the ignore file should be reloaded and published
+          expectPublishToEqual(client, {
             input: {
               expectedRemoteFilesVersion: String(sync.state.filesVersion),
-              changed: expect.arrayContaining([
-                { path: ".ignore", content: toBase64("# watch it all"), mode: 420, encoding: FileSyncEncoding.Base64 },
-                { path: "some/deeply/nested/file.js", content: toBase64("not bar"), mode: 420, encoding: FileSyncEncoding.Base64 },
-                { path: "watch/me/file.js", content: toBase64("bar"), mode: 420, encoding: FileSyncEncoding.Base64 },
-              ]),
+              changed: [fileChangedEvent({ path: ".ignore", content: "# watch it all" })],
+              deleted: [],
+            },
+          });
+
+          // delete the subscription so that we can wait for the next publish
+          client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+
+          // update the previously ignored file
+          await fs.writeFile(path.join(dir, "file.js"), "foo2");
+
+          await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          client
+            ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "3" } } });
+
+          expectPublishToEqual(client, {
+            input: {
+              expectedRemoteFilesVersion: String(sync.state.filesVersion),
+              changed: [fileChangedEvent({ path: "file.js", content: "foo2" })],
               deleted: [],
             },
           });
@@ -1169,41 +1260,53 @@ describe("Sync", () => {
       run = sync.run();
 
       vi.spyOn(sync.queue, "onIdle");
+      vi.spyOn(sync.watcher, "close");
     });
 
     it("waits for the queue to be empty", async () => {
-      await setupDir(dir, {
-        "foo.js": "foo",
-      });
+      vi.spyOn(sync, "publish");
 
-      // send a remote change event
+      // make a local change
+      await fs.outputFile(path.join(dir, "foo.js"), "foo");
+
+      // wait for the change to be published
+      await sleepUntil(() => !!sync.publish.mock.lastCall);
+
+      // restore so sync.publish.flush() works
+      sync.publish.mockRestore();
+
+      // make sure publish was debounced and the queue is still empty
+      expect(sync.queue.pending + sync.queue.size).toBe(0);
+
+      // emit a remote change event
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
         data: {
           remoteFileSyncEvents: {
-            remoteFilesVersion: "2",
-            changed: [{ path: "bar.js", content: toBase64("bar"), mode: 420, encoding: FileSyncEncoding.Base64 }],
+            remoteFilesVersion: "1",
+            changed: [fileChangedEvent({ path: "bar.js", content: "bar" })],
             deleted: [],
           },
         },
       });
 
-      // send a local change event
-      emit.all("add", path.join(dir, "foo.js"));
-
+      // stop
       const stop = sync.stop();
 
-      // writing bar.js should be pending
+      // publishing foo.js should be pending (running) and writing bar.js should be queued
       expect(sync.queue.pending).toBe(1);
+      expect(sync.queue.size).toBe(1);
 
       await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+      client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
-      // writing bar.js should be done and publishing foo.js should be pending
+      // publishing foo.js should be done and writing bar.js should be pending (running)
       expect(sync.queue.pending).toBe(1);
       expect(sync.queue.size).toBe(0);
 
-      client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
-
+      // wait for stop to complete
       await stop;
+
+      // everything should be done
       expect(sync.queue.onIdle).toHaveBeenCalled();
       expect(sync.queue.pending).toBe(0);
       expect(sync.queue.size).toBe(0);
@@ -1225,7 +1328,6 @@ describe("Sync", () => {
 
     it("notifies the user when an error occurs", async () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
-      expect(sync.on).toHaveBeenCalledTimes(2);
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
 
@@ -1246,7 +1348,6 @@ describe("Sync", () => {
 
     it("closes all resources when subscription emits error", async () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
-      expect(sync.on).toHaveBeenCalledTimes(2);
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
 
@@ -1259,7 +1360,6 @@ describe("Sync", () => {
 
     it("closes all resources when subscription emits response with errors", async () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
-      expect(sync.on).toHaveBeenCalledTimes(2);
 
       client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({ errors: [new GraphQLError("boom")] });
 
@@ -1272,9 +1372,8 @@ describe("Sync", () => {
 
     it("closes all resources when watcher emits error", async () => {
       expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
-      expect(sync.on).toHaveBeenCalledTimes(2);
 
-      emit.error(new Error(expect.getState().currentTestName));
+      sync.watcher.error(new Error(expect.getState().currentTestName));
 
       await expect(run).rejects.toThrow(expect.getState().currentTestName);
       expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
@@ -1285,9 +1384,8 @@ describe("Sync", () => {
   });
 });
 
-function toBase64(str: string): string {
-  return Buffer.from(str).toString(FileSyncEncoding.Base64);
-}
+const defaultFileMode = os.platform() == "win32" ? 0o100666 : 0o100644;
+const defaultDirMode = os.platform() == "win32" ? 0o40666 : 0o40755;
 
 function stateFile(sync: Sync): string {
   // make sure the state is flushed
@@ -1299,4 +1397,36 @@ function stateFile(sync: Sync): string {
 
 function prettyJson(obj: any): string {
   return JSON.stringify(obj, null, 2);
+}
+
+function fileChangedEvent(
+  options: PartialExcept<FileSyncChangedEventInput, "path" | "content">
+): FileSyncChangedEventInput & FileSyncChangedEvent {
+  const event = _.defaults(options, {
+    mode: defaultFileMode,
+    encoding: FileSyncEncoding.Base64,
+  } as FileSyncChangedEventInput);
+
+  assert(event.encoding);
+  event.content = Buffer.from(event.content).toString(event.encoding);
+
+  return event as FileSyncChangedEventInput & FileSyncChangedEvent;
+}
+
+function dirChangedEvent(options: PartialExcept<FileSyncChangedEventInput, "path">): FileSyncChangedEventInput & FileSyncChangedEvent {
+  assert(options.path.endsWith("/"));
+  return fileChangedEvent({ content: "", mode: defaultDirMode, ...options });
+}
+
+function expectPublishToEqual(client: MockClient, expected: MutationPublishFileSyncEventsArgs): void {
+  const actual = client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables;
+  assert(actual && typeof actual == "object");
+
+  // sort the events by path so that toEqual() doesn't complain about the order
+  actual.input.changed = _.sortBy(actual.input.changed, "path");
+  actual.input.deleted = _.sortBy(actual.input.deleted, "path");
+  expected.input.changed = _.sortBy(expected.input.changed, "path");
+  expected.input.deleted = _.sortBy(expected.input.deleted, "path");
+
+  expect(actual).toEqual(expected);
 }

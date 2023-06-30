@@ -6,4 +6,6 @@ declare global {
   interface Function extends MockInstance<any[], any> {}
 }
 
+export type PartialExcept<T, K extends keyof T> = Partial<T> & Pick<T, K>;
+
 export {};

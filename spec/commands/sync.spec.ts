@@ -29,8 +29,10 @@ import { ClientError, FlagError, InvalidSyncFileError, YarnNotFoundError } from 
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
 import type { PartialExcept } from "../types.js";
 import type { MockClient } from "../util.js";
-import { expectDir, expectDirSync, getError, mockClient, setupDir } from "../util.js";
+import { getError, mockClient } from "../util.js";
 import { testDirPath } from "../vitest.setup.js";
+import { walkDir, walkDirSync } from "../../src/services/fs-utils.js";
+import normalizePath from "normalize-path";
 
 it.todo("publishing does not send file changes if you delete more than N files at once");
 
@@ -106,7 +108,7 @@ describe("Sync", () => {
     });
 
     it("throws InvalidSyncFileError if .gadget/sync.json does not exist and `dir` is not empty", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         "foo.js": "foo",
       });
 
@@ -114,7 +116,7 @@ describe("Sync", () => {
     });
 
     it("throws InvalidSyncFileError if .gadget/sync.json is invalid and `dir` is not empty", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         // has trailing comma
         ".gadget/sync.json": '{"app":"test","filesVersion":"77","mtime":1658153625236,}',
       });
@@ -123,7 +125,7 @@ describe("Sync", () => {
     });
 
     it("does not throw InvalidSyncFileError if .gadget/sync.json is invalid, `dir` is not empty, and `--force` is passed", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         // has trailing comma
         ".gadget/sync.json": '{"app":"test","filesVersion":"77","mtime":1658153625236,}',
       });
@@ -139,7 +141,7 @@ describe("Sync", () => {
     });
 
     it("throws FlagError if the `--app` flag is passed a different app name than the one in .gadget/sync.json", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         ".gadget/sync.json": prettyJson({ app: "not-test", filesVersion: "77", mtime: 1658153625236 }),
       });
 
@@ -150,7 +152,7 @@ describe("Sync", () => {
     });
 
     it("does not throw FlagError if the `--app` flag is passed a different app name than the one in .gadget/sync.json and `--force` is passed", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         ".gadget/sync.json": prettyJson({ app: "not-test", filesVersion: "77", mtime: 1658153625236 }),
       });
 
@@ -165,7 +167,7 @@ describe("Sync", () => {
     });
 
     it("asks how to proceed if both local and remote files changed", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         ".gadget/sync.json": prettyJson({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
         "foo.js": "foo",
         "bar.js": "bar",
@@ -193,7 +195,7 @@ describe("Sync", () => {
     });
 
     it("asks how to proceed if only local files changed", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         ".gadget/sync.json": prettyJson({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
         "foo.js": "foo",
       });
@@ -220,7 +222,7 @@ describe("Sync", () => {
     });
 
     it("does not ask how to proceed if only ignored files changed", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         ".ignore": "bar.js",
         "foo.js": "foo",
       });
@@ -245,7 +247,7 @@ describe("Sync", () => {
     });
 
     it("does not ask how to proceed if only remote files changed", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         "foo.js": "foo",
       });
 
@@ -263,7 +265,7 @@ describe("Sync", () => {
     });
 
     it("does not ask how to proceed if neither local nor remote files changed", async () => {
-      await setupDir(dir, {
+      await writeDir(dir, {
         "foo.js": "foo",
       });
 
@@ -283,7 +285,7 @@ describe("Sync", () => {
     it("publishes changed events when told to merge", async () => {
       inquirer.prompt.mockResolvedValue({ action: Action.MERGE });
 
-      await setupDir(dir, {
+      await writeDir(dir, {
         "foo.js": "foo",
         "bar.js": "bar",
       });
@@ -322,7 +324,7 @@ describe("Sync", () => {
     it("deletes local file changes and sets `state.filesVersion` to 0 when told to reset", async () => {
       inquirer.prompt.mockResolvedValue({ action: Action.RESET });
 
-      await setupDir(dir, {
+      await writeDir(dir, {
         "foo.js": "foo",
         "bar.js": "bar",
       });
@@ -459,7 +461,7 @@ describe("Sync", () => {
       });
 
       it("deletes deleted files", async () => {
-        await setupDir(dir, {
+        await writeDir(dir, {
           "file.js": "foo",
           "some/deeply/nested/file.js": "bar",
         });
@@ -628,7 +630,7 @@ describe("Sync", () => {
       });
 
       it("writes deletes before changes", async () => {
-        await setupDir(dir, {
+        await writeDir(dir, {
           "foo/": {},
         });
 
@@ -653,7 +655,7 @@ describe("Sync", () => {
 
       describe("with an ignore file", () => {
         beforeEach(async () => {
-          await setupDir(dir, {
+          await writeDir(dir, {
             ".ignore": "file2.js",
             "file1.js": "one",
             "file3.js": "three",
@@ -796,7 +798,7 @@ describe("Sync", () => {
 
     describe("publishing", () => {
       it("publishes changed events on add/change events", async () => {
-        await setupDir(dir, {
+        await writeDir(dir, {
           "file.js": "foo",
           "some/deeply/nested/file.js": "bar",
         });
@@ -821,7 +823,7 @@ describe("Sync", () => {
 
       it("publishes changed events on rename events", async () => {
         // setup the initial directory structure
-        await setupDir(dir, {
+        await writeDir(dir, {
           "bar/": {
             "bar1.js": "bar1",
             "bar2.js": "bar2",
@@ -869,7 +871,7 @@ describe("Sync", () => {
 
       it("publishes deleted events on unlink events", async () => {
         // setup the initial directory structure
-        await setupDir(dir, {
+        await writeDir(dir, {
           "file.js": "foo",
           "some/": {
             "deeply/": {
@@ -942,7 +944,7 @@ describe("Sync", () => {
       });
 
       it("publishes changed events on addDir events", async () => {
-        await setupDir(dir, {
+        await writeDir(dir, {
           "some/deeply/nested/": {},
         });
 
@@ -963,7 +965,7 @@ describe("Sync", () => {
       });
 
       it("publishes deleted events on unlinkDir events", async () => {
-        await setupDir(dir, {
+        await writeDir(dir, {
           "some/deeply/nested/": {},
         });
 
@@ -1003,7 +1005,7 @@ describe("Sync", () => {
       });
 
       it("does not publish changed events from files that were deleted after the change event but before publish", async () => {
-        await setupDir(dir, {
+        await writeDir(dir, {
           "another.js": "another",
           "delete_me.js": "delete_me",
         });
@@ -1109,7 +1111,7 @@ describe("Sync", () => {
       });
 
       it("does not publish multiple events affecting the same file", async () => {
-        await setupDir(dir, {
+        await writeDir(dir, {
           "file.js": "foo",
         });
 
@@ -1429,4 +1431,40 @@ function expectPublishToEqual(client: MockClient, expected: MutationPublishFileS
   expected.input.deleted = _.sortBy(expected.input.deleted, "path");
 
   expect(actual).toEqual(expected);
+}
+
+async function expectDir(dir: string, expected: Record<string, any>): Promise<void> {
+  const actual: Record<string, string> = {};
+  for await (const filepath of walkDir(dir)) {
+    const isDirectory = (await fs.lstat(filepath)).isDirectory();
+    const relativePath = path.relative(dir, filepath);
+    actual[normalizePath(`${relativePath}${isDirectory ? "/" : ""}`, false)] = isDirectory ? "" : await fs.readFile(filepath, "utf-8");
+  }
+  expect(actual).toEqual(expected);
+}
+
+function expectDirSync(dir: string, expected: Record<string, string>): void {
+  const actual: Record<string, string> = {};
+  for (const filepath of walkDirSync(dir)) {
+    const isDirectory = fs.lstatSync(filepath).isDirectory();
+    const relativePath = path.relative(dir, filepath);
+    actual[normalizePath(`${relativePath}${isDirectory ? "/" : ""}`, false)] = isDirectory ? "" : fs.readFileSync(filepath, "utf-8");
+  }
+  expect(actual).toEqual(expected);
+}
+
+interface FileTree {
+  [path: string]: FileTree | string;
+}
+
+export async function writeDir(dir: string, tree: FileTree): Promise<void> {
+  for (const [filepath, content] of Object.entries(tree)) {
+    if (_.isString(content)) {
+      await fs.outputFile(path.join(dir, filepath), content);
+    } else {
+      const subDir = path.join(dir, filepath);
+      await fs.ensureDir(subDir);
+      await writeDir(subDir, content);
+    }
+  }
 }

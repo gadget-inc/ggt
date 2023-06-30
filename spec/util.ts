@@ -3,9 +3,9 @@ import _ from "lodash";
 import normalizePath from "normalize-path";
 import path from "path";
 import type { JsonObject } from "type-fest";
-import type { Payload, Query, Sink } from "../src/utils/client.js";
-import { Client } from "../src/utils/client.js";
-import { walkDir, walkDirSync } from "../src/utils/fs-utils.js";
+import type { Payload, Query, Sink } from "../src/services/client.js";
+import { Client } from "../src/services/client.js";
+import { walkDir, walkDirSync } from "../src/services/fs-utils.js";
 import { expect, vi, assert } from "vitest";
 
 export async function getError(fnThatThrows: () => unknown): Promise<any> {

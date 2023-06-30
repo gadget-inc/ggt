@@ -26,14 +26,14 @@ import type {
   RemoteFilesVersionQueryVariables,
 } from "../__generated__/graphql.js";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
-import { BaseCommand } from "../utils/base-command.js";
-import type { Query } from "../utils/client.js";
-import { Client } from "../utils/client.js";
-import { context } from "../utils/context.js";
-import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../utils/errors.js";
-import { app } from "../utils/flags.js";
-import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../utils/fs-utils.js";
-import { PromiseSignal } from "../utils/promise.js";
+import { BaseCommand } from "../services/base-command.js";
+import type { Query } from "../services/client.js";
+import { Client } from "../services/client.js";
+import { context } from "../services/context.js";
+import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
+import { app } from "../services/flags.js";
+import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
+import { PromiseSignal } from "../services/promise.js";
 
 export default class Sync extends BaseCommand<typeof Sync> {
   static override priority = 1;

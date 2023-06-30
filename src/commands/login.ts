@@ -1,5 +1,5 @@
 import { dedent } from "ts-dedent";
-import { BaseCommand } from "../utils/base-command.js";
+import { BaseCommand } from "../services/base-command.js";
 import chalkTemplate from "chalk-template";
 
 export default class Login extends BaseCommand<typeof Login> {

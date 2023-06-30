@@ -24,9 +24,9 @@ import Sync, {
   SyncState,
   SyncStatus,
 } from "../../src/commands/sync.js";
-import { context } from "../../src/utils/context.js";
-import { ClientError, FlagError, InvalidSyncFileError, YarnNotFoundError } from "../../src/utils/errors.js";
-import { sleep, sleepUntil } from "../../src/utils/sleep.js";
+import { context } from "../../src/services/context.js";
+import { ClientError, FlagError, InvalidSyncFileError, YarnNotFoundError } from "../../src/services/errors.js";
+import { sleep, sleepUntil } from "../../src/services/sleep.js";
 import type { PartialExcept } from "../types.js";
 import type { MockClient } from "../util.js";
 import { expectDir, expectDirSync, getError, mockClient, setupDir } from "../util.js";

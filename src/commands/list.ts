@@ -1,8 +1,8 @@
 import { ux } from "@oclif/core";
 import { dedent } from "ts-dedent";
-import { BaseCommand } from "../utils/base-command.js";
-import type { App } from "../utils/context.js";
-import { context } from "../utils/context.js";
+import { BaseCommand } from "../services/base-command.js";
+import type { App } from "../services/context.js";
+import { context } from "../services/context.js";
 import chalkTemplate from "chalk-template";
 
 export default class List extends BaseCommand<typeof List> {

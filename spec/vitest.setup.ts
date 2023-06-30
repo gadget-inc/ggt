@@ -39,7 +39,7 @@ beforeEach(async () => {
     Debug.enable(process.env["DEBUG"]);
   }
 
-  const { context } = await import("../src/utils/context.js");
+  const { context } = await import("../src/services/context.js");
   context.clear();
   context.config = await Config.load(path.join(__dirname, ".."));
 

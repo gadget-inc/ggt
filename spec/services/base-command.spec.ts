@@ -4,12 +4,12 @@ import http from "node:http";
 import inquirer from "inquirer";
 import _ from "lodash";
 import open from "open";
-import { BaseCommand } from "../../src/utils/base-command.js";
-import { context } from "../../src/utils/context.js";
-import { sleepUntil } from "../../src/utils/sleep.js";
+import { BaseCommand } from "../../src/services/base-command.js";
+import { context } from "../../src/services/context.js";
+import { sleepUntil } from "../../src/services/sleep.js";
 import { ExitError } from "@oclif/errors";
 import * as cliErrors from "@oclif/core/lib/parser/errors.js";
-import { BaseError } from "../../src/utils/errors.js";
+import { BaseError } from "../../src/services/errors.js";
 import { getError } from "../util.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 

@@ -1,7 +1,7 @@
 import chalkTemplate from "chalk-template";
 import { dedent } from "ts-dedent";
-import { BaseCommand } from "../utils/base-command.js";
-import { context } from "../utils/context.js";
+import { BaseCommand } from "../services/base-command.js";
+import { context } from "../services/context.js";
 
 export default class Logout extends BaseCommand<typeof Logout> {
   static override summary = "Log out of your account.";

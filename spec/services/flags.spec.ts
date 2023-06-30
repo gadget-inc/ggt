@@ -1,6 +1,6 @@
-import { context } from "../../src/utils/context.js";
-import { FlagError } from "../../src/utils/errors.js";
-import { app } from "../../src/utils/flags.js";
+import { context } from "../../src/services/context.js";
+import { FlagError } from "../../src/services/errors.js";
+import { app } from "../../src/services/flags.js";
 import { getError } from "../util.js";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 

@@ -119,7 +119,7 @@
     "bin": "ggt",
     "dirname": "gadget",
     "commands": "./lib/commands",
-    "helpClass": "./lib/utils/help",
+    "helpClass": "./lib/services/help",
     "topicSeparator": " ",
     "topics": {},
     "plugins": [

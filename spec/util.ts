@@ -6,8 +6,7 @@ import type { JsonObject } from "type-fest";
 import type { Payload, Query, Sink } from "../src/utils/client.js";
 import { Client } from "../src/utils/client.js";
 import { walkDir, walkDirSync } from "../src/utils/fs-utils.js";
-import { expect, vi } from "vitest";
-import assert from "assert";
+import { expect, vi, assert } from "vitest";
 
 export async function getError(fnThatThrows: () => unknown): Promise<any> {
   try {
@@ -48,10 +47,10 @@ export async function setupDir(dir: string, files: Record<string, FileOrDir>): P
   await fs.emptyDir(dir);
   for (const [filepath, content] of Object.entries(files)) {
     if (filepath.endsWith("/")) {
-      if (_.isObject(content)) {
-        await fs.ensureDir(path.join(dir, filepath));
-        await setupDir(path.join(dir, filepath), content);
-      }
+      assert(_.isObject(content), "directory contents must be an object");
+      const subDir = path.join(dir, filepath);
+      await fs.ensureDir(subDir);
+      await setupDir(subDir, content);
     } else {
       assert(_.isString(content), "file contents must be a string");
       await fs.outputFile(path.join(dir, filepath), content);

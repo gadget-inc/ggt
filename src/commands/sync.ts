@@ -1,7 +1,7 @@
 import { Args, Flags } from "@oclif/core";
 import assert from "assert";
 import chalkTemplate from "chalk-template";
-import { default as FSWatcher } from "watcher";
+import FSWatcher from "watcher";
 import { format } from "date-fns";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
@@ -412,16 +412,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
     let error: unknown;
     const stopped = new PromiseSignal();
 
-    this.watcher = new FSWatcher(this.dir, {
-      ignore: (filepath: string) => {
-        return this.ignorer.ignores(filepath);
-      },
-      // don't emit an event for every watched file on boot
-      ignoreInitial: true,
-      renameDetection: true,
-      recursive: true,
-    });
-
     this.stop = async (e?: unknown) => {
       if (this.status != SyncStatus.RUNNING) return;
 
@@ -510,8 +500,11 @@ export default class Sync extends BaseCommand<typeof Sync> {
                 return;
               }
 
-              // we need to add the parent directory to recentRemoteChanges so that we don't try to publish it
-              this.recentRemoteChanges.add(path.dirname(file.path) + "/");
+              // we need to add all parent directories to recentRemoteChanges so that we don't re-publish them
+              for (const dir of path.dirname(file.path).split("/")) {
+                this.recentRemoteChanges.add(dir + "/");
+              }
+
               await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
               await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
@@ -539,6 +532,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
                 this.recentRemoteChanges.delete(filepath);
               }
             }
+
+            this.debug("recent remote changes %O", Array.from(this.recentRemoteChanges));
           });
         },
       }
@@ -608,7 +603,18 @@ export default class Sync extends BaseCommand<typeof Sync> {
       });
     }, this.flags["file-push-delay"]);
 
-    this.on("error", (error) => void this.stop(error)).on("all", (event: string, absolutePath: string, renamedPath: string) => {
+    this.watcher = new FSWatcher(this.dir, {
+      // paths that we never want to publish
+      ignore: /(\.gadget|\.git|node_modules)/,
+      // don't emit an event for every watched file on boot
+      ignoreInitial: true,
+      renameDetection: true,
+      recursive: true,
+    });
+
+    this.watcher.once("error", (error) => void this.stop(error));
+
+    this.watcher.on("all", (event: string, absolutePath: string, renamedPath: string) => {
       const filePath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
       const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
       const normalizedPath = this.normalize(filePath, isDirectory);
@@ -667,6 +673,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
           break;
       }
 
+      this.debug("publishing file change %s", normalizedPath);
       this.publish();
     });
 
@@ -707,11 +714,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
     } else {
       this.log("Goodbye!");
     }
-  }
-
-  on(eventName: string | symbol, listener: (...args: any[]) => void): this {
-    this.watcher.on(eventName, listener);
-    return this;
   }
 
   /**

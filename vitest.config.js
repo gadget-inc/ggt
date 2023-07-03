@@ -14,6 +14,7 @@ export default defineConfig({
     hideSkippedTests: true,
     testTimeout: timeout,
     hookTimeout: timeout,
+    threads: false,
     chaiConfig: {
       truncateThreshold: 10_000,
     },

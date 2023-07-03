@@ -645,7 +645,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
         return;
       }
 
-      this.debug("file changed %s", normalizedPath, event);
+      this.debug("%s %s", event, normalizedPath);
 
       switch (event) {
         case "add":

@@ -7,22 +7,25 @@ import { afterEach, assert, beforeEach, expect, vi } from "vitest";
 // disable chalk so that we get predictable output in tests
 process.env["FORCE_COLOR"] = "0";
 
-const debug = Debug("ggt:test");
+export const testDebug = Debug("ggt:test");
 
 export function testDirPath(): string {
   const name = expect.getState().currentTestName;
   assert(name, "Expected test name to be defined");
 
-  const [filepath, ...testName] = name.split(" > ");
-  assert(filepath, "Expected filename to be defined");
+  const [testFile, ...rest] = name.split(" > ");
+  const describes = rest.length > 1 ? rest.slice(0, -1) : [];
+  const testName = rest.at(-1);
 
-  return path.join(__dirname, "../tmp/", filepath, testName.join("  ").replace(/[^\s\w-]/g, ""));
+  assert(testFile && testName);
+
+  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), testName.replace(/[^\s\w-]/g, ""));
 }
 
 beforeEach(async () => {
   process.env["GGT_ENV"] = "test";
 
-  debug("starting test %o", { test: expect.getState().currentTestName, path: expect.getState().testPath });
+  testDebug("starting %O", { test: expect.getState().currentTestName, path: expect.getState().testPath });
 
   const testDir = testDirPath();
   await fs.remove(testDir);
@@ -52,7 +55,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  debug("ending test %o", { test: expect.getState().currentTestName, path: expect.getState().testPath });
+  testDebug("ending %O", { test: expect.getState().currentTestName, path: expect.getState().testPath });
 });
 
 vi.mock("execa", () => ({ execa: vi.fn().mockName("execa").mockResolvedValue({}) }));

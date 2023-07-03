@@ -7,7 +7,6 @@ import notifier from "node-notifier";
 import os from "os";
 import path from "path";
 import { dedent } from "ts-dedent";
-import type { SpyInstance } from "vitest";
 import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
 import {
@@ -377,7 +376,6 @@ describe("Sync", () => {
 
   describe("run", () => {
     let run: Promise<void>;
-    let publish: SpyInstance;
 
     beforeEach(async () => {
       vi.spyOn(process, "on").mockImplementation(_.noop as any);
@@ -392,8 +390,7 @@ describe("Sync", () => {
 
       run = sync.run();
 
-      publish = vi.spyOn(sync, "publish");
-      vi.spyOn(sync, "stop");
+      vi.spyOn(sync, "publish");
 
       // give the watcher some event loop ticks to finish setting up
       await sleep(10);
@@ -401,7 +398,7 @@ describe("Sync", () => {
 
     afterEach(async (context) => {
       // restore so sync.publish.flush() doesn't throw
-      publish.mockRestore();
+      sync.publish.mockRestore();
 
       if (context.task.result?.state == "fail") {
         // the test failed... make sure sync.stop() isn't going to be blocked by a pending publish
@@ -416,19 +413,6 @@ describe("Sync", () => {
 
       await sync.stop();
       await run;
-    });
-
-    it.each(["SIGINT", "SIGTERM"])("stops on %s", (signal) => {
-      const [, stop] = process.on.mock.calls.find(([name]) => name === signal) ?? [];
-      expect(stop).toBeTruthy();
-      expect(sync.status).toBe(SyncStatus.RUNNING);
-
-      // restore so this.publish?.flush() doesn't throw
-      sync.publish.mockRestore();
-      stop();
-
-      expect(sync.stop).toHaveBeenCalled();
-      expect(sync.status).toBe(SyncStatus.STOPPING);
     });
 
     describe("writing", () => {
@@ -738,7 +722,7 @@ describe("Sync", () => {
           client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
           // make expect(sync.publish).not.toHaveBeenCalled() work
-          publish.mockClear();
+          sync.publish.mockClear();
         });
 
         it("reloads the ignore file when it changes", async () => {
@@ -1093,7 +1077,7 @@ describe("Sync", () => {
         });
 
         // wait until both files have been published
-        await sleepUntil(() => publish.mock.calls.length == 2);
+        await sleepUntil(() => sync.publish.mock.calls.length == 2);
 
         // add the file we're about to delete to recentWrites so that it doesn't get published
         sync.recentRemoteChanges.add("delete_me.js");
@@ -1249,7 +1233,7 @@ describe("Sync", () => {
           client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
           // make expect(sync.publish).not.toHaveBeenCalled() work
-          publish.mockClear();
+          sync.publish.mockClear();
         });
 
         it("does not publish changes from ignored paths", async () => {
@@ -1348,6 +1332,19 @@ describe("Sync", () => {
 
       // give the watcher some event loop ticks to finish setting up
       await sleep(10);
+    });
+
+    it.each(["SIGINT", "SIGTERM"])("stops on %s", (signal) => {
+      vi.spyOn(sync, "stop");
+
+      const [, stop] = process.on.mock.calls.find(([name]) => name === signal) ?? [];
+      expect(stop).toBeTruthy();
+      expect(sync.status).toBe(SyncStatus.RUNNING);
+
+      stop();
+
+      expect(sync.stop).toHaveBeenCalled();
+      expect(sync.status).toBe(SyncStatus.STOPPING);
     });
 
     it("waits for the queue to be empty", async () => {

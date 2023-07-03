@@ -1,6 +1,6 @@
 import { Args } from "@oclif/core";
-import Help from "../utils/help.js";
-import { BaseCommand } from "../utils/base-command.js";
+import Help from "../services/help.js";
+import { BaseCommand } from "../services/base-command.js";
 
 /**
  * Copied from @oclif/plugin-help. Uses our own {@link Help} template class instead of the one from @oclif/core.

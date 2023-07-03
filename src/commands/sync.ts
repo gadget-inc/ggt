@@ -26,14 +26,14 @@ import type {
   RemoteFilesVersionQueryVariables,
 } from "../__generated__/graphql.js";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
-import { BaseCommand } from "../utils/base-command.js";
-import type { Query } from "../utils/client.js";
-import { Client } from "../utils/client.js";
-import { context } from "../utils/context.js";
-import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../utils/errors.js";
-import { app } from "../utils/flags.js";
-import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../utils/fs-utils.js";
-import { PromiseSignal } from "../utils/promise.js";
+import { BaseCommand } from "../services/base-command.js";
+import type { Query } from "../services/client.js";
+import { Client } from "../services/client.js";
+import { context } from "../services/context.js";
+import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
+import { app } from "../services/flags.js";
+import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
+import { PromiseSignal } from "../services/promise.js";
 
 export default class Sync extends BaseCommand<typeof Sync> {
   static override priority = 1;
@@ -173,15 +173,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
    * Gracefully stops the sync.
    */
   stop!: (error?: unknown) => Promise<void>;
-
-  static fileStats(path: string): Stats | undefined {
-    try {
-      return fs.statSync(path);
-    } catch (error) {
-      ignoreEnoent(error);
-      return undefined;
-    }
-  }
 
   /**
    * Turns an absolute filepath into a relative one from {@linkcode dir}.
@@ -615,22 +606,22 @@ export default class Sync extends BaseCommand<typeof Sync> {
     this.watcher.once("error", (error) => void this.stop(error));
 
     this.watcher.on("all", (event: string, absolutePath: string, renamedPath: string) => {
-      const filePath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
+      const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
       const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
-      const normalizedPath = this.normalize(filePath, isDirectory);
-      const stats = Sync.fileStats(filePath);
+      const normalizedPath = this.normalize(filepath, isDirectory);
 
-      // this shouldn't ever be the case using watcher since it doesn't support symlinks but we'll keep it here just in case we ever switch to another lib that does support it
-      if (stats?.isSymbolicLink?.()) {
-        this.debug("skipping event caused by symlink %s", normalizedPath);
+      if (filepath == this.ignorer.filepath) {
+        this.ignorer.reload();
+      } else if (this.ignorer.ignores(filepath)) {
+        this.debug("skipping event caused by ignored file %s", normalizedPath);
         return;
       }
 
-      if (filePath == this.ignorer.filepath) {
-        this.ignorer.reload();
-      } else if (this.ignorer.ignores(filePath)) {
-        this.debug("skipping event caused by ignored file %s", normalizedPath);
-        return;
+      let stats: Stats | undefined;
+      try {
+        stats = fs.statSync(filepath);
+      } catch (error) {
+        ignoreEnoent(error);
       }
 
       // we only update the mtime if the file is not ignored, because if we restart and the mtime is set to an ignored
@@ -645,7 +636,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
         return;
       }
 
-      this.debug("file changed %s", normalizedPath, event);
+      this.debug("%s %s", event, normalizedPath);
 
       switch (event) {
         case "add":

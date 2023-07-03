@@ -1,5 +1,5 @@
 import Login from "../../src/commands/login.js";
-import { BaseCommand } from "../../src/utils/base-command.js";
+import { BaseCommand } from "../../src/services/base-command.js";
 import { describe, it, expect, vi } from "vitest";
 
 describe("Login", () => {

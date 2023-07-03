@@ -82,30 +82,26 @@ The other differences between `bin/dev.js` and `ggt` are:
 ```shell-session
 $ npm run test
 
-> ggt@0.1.18 test
+> ggt@0.2.1 test
 > cross-env NODE_OPTIONS="--no-warnings --loader ./node_modules/ts-node/esm.mjs" vitest
 
 
- DEV  v0.31.1 /Users/scott/Code/gadget/ggt
+ RUN  v0.32.2 /Users/scott/Code/gadget/ggt
 
- ✓ spec/utils/context.spec.ts (18) 1278ms
- ✓ spec/utils/flags.spec.ts (10) 1070ms
- ✓ spec/utils/base-command.spec.ts (18) 1096ms
- ✓ spec/utils/errors.spec.ts (10) 945ms
- ✓ spec/commands/sync.spec.ts (52) 1967ms
- ✓ spec/commands/logout.spec.ts (3) 953ms
- ✓ spec/commands/list.spec.ts (3) 935ms
- ✓ spec/commands/whoami.spec.ts (3) 964ms
- ✓ spec/commands/login.spec.ts (1) 739ms
+ ✓ spec/services/context.spec.ts (18) 756ms
+ ✓ spec/commands/whoami.spec.ts (3) 524ms
+ ✓ spec/commands/logout.spec.ts (3) 554ms
+ ✓ spec/commands/list.spec.ts (3) 534ms
+ ✓ spec/commands/login.spec.ts (1) 523ms
+ ✓ spec/services/base-command.spec.ts (18) 537ms
+ ✓ spec/services/flags.spec.ts (10) 514ms
+ ✓ spec/services/errors.spec.ts (10)
+ ✓ spec/commands/sync.spec.ts (52) 36980ms
 
  Test Files  9 passed (9)
       Tests  117 passed | 1 todo (118)
-   Start at  10:12:27
-   Duration  4.61s (transform 492ms, setup 389ms, collect 3.07s, tests 9.95s, environment 1ms, prepare 578ms)
-
-
- PASS  Waiting for file changes...
-       press h to show help, press q to quit
+   Start at  17:54:44
+   Duration  38.30s (transform 573ms, setup 538ms, collect 4.00s, tests 41.20s, environment 1ms, prepare 754ms)
 ```
 
 Tests also make use of the `tmp` directory. Every test gets its own directory in `tmp/<spec-file>/<test-name>` to store temporary files. This means you can run tests in parallel without worrying about them interfering with each other.

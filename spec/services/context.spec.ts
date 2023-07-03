@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import { Context, context } from "../../src/utils/context.js";
+import { Context, context } from "../../src/services/context.js";
 import nock from "nock";
 import { describe, it, expect, vi, afterEach } from "vitest";
 

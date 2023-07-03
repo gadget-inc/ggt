@@ -1,5 +1,5 @@
 import Logout from "../../src/commands/logout.js";
-import { context } from "../../src/utils/context.js";
+import { context } from "../../src/services/context.js";
 import { describe, it, expect, vi } from "vitest";
 
 describe("Logout", () => {

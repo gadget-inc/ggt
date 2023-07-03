@@ -2,25 +2,11 @@ import Debug from "debug";
 import fs from "fs-extra";
 import path from "path";
 import _ from "lodash";
-import { afterEach, assert, beforeEach, expect, vi } from "vitest";
+import { afterEach, beforeEach, expect, vi } from "vitest";
+import { testDebug, testDirPath } from "./util.js";
 
 // disable chalk so that we get predictable output in tests
 process.env["FORCE_COLOR"] = "0";
-
-export const testDebug = Debug("ggt:test");
-
-export function testDirPath(): string {
-  const name = expect.getState().currentTestName;
-  assert(name, "Expected test name to be defined");
-
-  const [testFile, ...rest] = name.split(" > ");
-  const describes = rest.length > 1 ? rest.slice(0, -1) : [];
-  const testName = rest.at(-1);
-
-  assert(testFile && testName);
-
-  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), testName.replace(/[^\s\w-]/g, ""));
-}
 
 beforeEach(async () => {
   process.env["GGT_ENV"] = "test";

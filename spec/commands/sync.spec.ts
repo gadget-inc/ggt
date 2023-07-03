@@ -30,8 +30,7 @@ import { walkDirSync } from "../../src/services/fs-utils.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
 import type { PartialExcept } from "../types.js";
 import type { MockClient } from "../util.js";
-import { getError, mockClient } from "../util.js";
-import { testDebug, testDirPath } from "../vitest.setup.js";
+import { getError, mockClient, testDirPath } from "../util.js";
 
 it.todo("publishing does not send file changes if you delete more than N files at once");
 
@@ -599,8 +598,6 @@ describe("Sync", () => {
         // the first batch should still be in progress
         expect(sync.queue.pending).toBe(1);
 
-        testDebug("waiting for first batch to complete");
-
         // wait for the first batch to complete
         await sleepUntil(() => sync.state.filesVersion == 1n);
 
@@ -1046,7 +1043,6 @@ describe("Sync", () => {
       });
 
       it("publishes deleted events on unlinkDir events", async () => {
-        testDebug("writeDir");
         writeDir(dir, {
           some: {
             deeply: {
@@ -1054,7 +1050,6 @@ describe("Sync", () => {
             },
           },
         });
-        testDebug("writeDir done");
 
         // wait for the initial publish
         await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));

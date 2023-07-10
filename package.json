@@ -108,7 +108,7 @@
     "prettier-plugin-packagejson": "^2.4.4",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",
-    "type-fest": "^3.12.0",
+    "type-fest": "^3.13.0",
     "typescript": "^5.1.6",
     "vitest": "^0.33.0"
   },

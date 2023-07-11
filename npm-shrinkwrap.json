@@ -11,7 +11,7 @@
       "dependencies": {
         "@oclif/core": "^2.8.12",
         "@oclif/errors": "^1.3.6",
-        "@oclif/plugin-not-found": "^2.3.27",
+        "@oclif/plugin-not-found": "^2.3.28",
         "@oclif/plugin-warn-if-update-available": "^2.0.41",
         "@sentry/node": "^7.57.0",
         "@swc/helpers": "^0.5.1",
@@ -4807,9 +4807,9 @@
       }
     },
     "node_modules/@oclif/plugin-not-found": {
-      "version": "2.3.27",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.27.tgz",
-      "integrity": "sha512-L4AEoq73z3Zz+NhhxlA/xPK2LCuEPPS4X5d0Z6r/FCZIvy/cBRNjqbeNs5zhc985YHo1hpzwuVZt0G6WH0fBUQ==",
+      "version": "2.3.28",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.28.tgz",
+      "integrity": "sha512-Lzbevm7eOSYo30ddaZTUqUw9Bt1sDWy4df1JJF8K+mHv34Gk/Z8TmDozkEDbg6C02qzzcpXMtUHUzLUDPLI+WQ==",
       "dependencies": {
         "@oclif/color": "^1.0.7",
         "@oclif/core": "^2.8.7",
@@ -25003,9 +25003,9 @@
       }
     },
     "@oclif/plugin-not-found": {
-      "version": "2.3.27",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.27.tgz",
-      "integrity": "sha512-L4AEoq73z3Zz+NhhxlA/xPK2LCuEPPS4X5d0Z6r/FCZIvy/cBRNjqbeNs5zhc985YHo1hpzwuVZt0G6WH0fBUQ==",
+      "version": "2.3.28",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-not-found/-/plugin-not-found-2.3.28.tgz",
+      "integrity": "sha512-Lzbevm7eOSYo30ddaZTUqUw9Bt1sDWy4df1JJF8K+mHv34Gk/Z8TmDozkEDbg6C02qzzcpXMtUHUzLUDPLI+WQ==",
       "requires": {
         "@oclif/color": "^1.0.7",
         "@oclif/core": "^2.8.7",

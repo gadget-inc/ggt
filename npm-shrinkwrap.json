@@ -78,7 +78,7 @@
         "eslint-plugin-lodash": "^7.4.0",
         "nock": "^13.3.1",
         "oclif": "^3.9.1",
-        "patch-package": "^7.0.1",
+        "patch-package": "^7.0.2",
         "prettier": "^2.8.8",
         "prettier-plugin-packagejson": "^2.4.4",
         "rimraf": "^5.0.1",
@@ -17268,9 +17268,9 @@
       }
     },
     "node_modules/patch-package": {
-      "version": "7.0.1",
-      "resolved": "https://registry.npmjs.org/patch-package/-/patch-package-7.0.1.tgz",
-      "integrity": "sha512-f2GYU+6fz67znVfroq0gRuE08IWbGaRGMCFVwaz+qgG6k0K7rEKG8rXL7vDBtAMBjk8z/AhaiDuWs1aGjr15Hg==",
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/patch-package/-/patch-package-7.0.2.tgz",
+      "integrity": "sha512-PMYfL8LXxGIRmxXLqlEaBxzKPu7/SdP13ld6GSfAUJUZRmBDPp8chZs0dpzaAFn9TSPnFiMwkC6PJt6pBiAl8Q==",
       "dev": true,
       "dependencies": {
         "@yarnpkg/lockfile": "^1.1.0",
@@ -17283,7 +17283,7 @@
         "minimist": "^1.2.6",
         "open": "^7.4.2",
         "rimraf": "^2.6.3",
-        "semver": "^7.0.0",
+        "semver": "^7.5.3",
         "slash": "^2.0.0",
         "tmp": "^0.0.33",
         "yaml": "^2.2.2"
@@ -33815,9 +33815,9 @@
       }
     },
     "patch-package": {
-      "version": "7.0.1",
-      "resolved": "https://registry.npmjs.org/patch-package/-/patch-package-7.0.1.tgz",
-      "integrity": "sha512-f2GYU+6fz67znVfroq0gRuE08IWbGaRGMCFVwaz+qgG6k0K7rEKG8rXL7vDBtAMBjk8z/AhaiDuWs1aGjr15Hg==",
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/patch-package/-/patch-package-7.0.2.tgz",
+      "integrity": "sha512-PMYfL8LXxGIRmxXLqlEaBxzKPu7/SdP13ld6GSfAUJUZRmBDPp8chZs0dpzaAFn9TSPnFiMwkC6PJt6pBiAl8Q==",
       "dev": true,
       "requires": {
         "@yarnpkg/lockfile": "^1.1.0",
@@ -33830,7 +33830,7 @@
         "minimist": "^1.2.6",
         "open": "^7.4.2",
         "rimraf": "^2.6.3",
-        "semver": "^7.0.0",
+        "semver": "^7.5.3",
         "slash": "^2.0.0",
         "tmp": "^0.0.33",
         "yaml": "^2.2.2"

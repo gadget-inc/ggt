@@ -1268,7 +1268,7 @@ describe("Sync", () => {
           fs.outputFileSync(path.join(dir, "file.js"), "foo");
 
           // give the watcher a chance to see the file
-          await sleep(1000);
+          await sleep(sync.flags["file-watch-debounce"] + 100);
 
           // no changes should have been published
           expect(sync.publish).not.toHaveBeenCalled();

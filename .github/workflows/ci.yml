@@ -66,6 +66,7 @@ jobs:
         run: npm run test
 
   dependabot:
+    needs: [lint, build, test]
     if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'dependabot/npm_and_yarn/')
     runs-on: ubuntu-latest
     permissions:

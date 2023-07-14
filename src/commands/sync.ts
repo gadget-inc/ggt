@@ -90,6 +90,38 @@ export default class Sync extends BaseCommand<typeof Sync> {
       default: 100,
       hidden: true,
     }),
+    // The following flags are passed to FSWatcher (https://github.com/fabiospampinato/watcher)
+    "file-watch-debounce": Flags.integer({
+      summary: "Amount of milliseconds to debounce file changed events",
+      helpGroup: "file",
+      helpValue: "ms",
+      default: 300,
+      hidden: true,
+    }),
+    "file-watch-poll-interval": Flags.integer({
+      summary:
+        "Polling is used as a last resort measure when watching non-existent paths inside non-existent directories, this controls how often polling is performed, in milliseconds. You can set it to a lower value to make the app detect events much more quickly, but don't set it too low if you are watching many paths that require polling as polling is expensive.",
+      helpGroup: "file",
+      helpValue: "ms",
+      default: 3_000,
+      hidden: true,
+    }),
+    "file-watch-poll-timeout": Flags.integer({
+      summary:
+        "Sometimes polling will fail, for example if there are too many file descriptors currently open, usually eventually polling will succeed after a few tries though, this controls the amount of milliseconds the library should keep retrying for.",
+      helpGroup: "file",
+      helpValue: "ms",
+      default: 20_000,
+      hidden: true,
+    }),
+    "file-watch-rename-timeout": Flags.integer({
+      summary:
+        "Amount of milliseconds to wait for a potential rename/renameDir event to be detected. The higher this value is the more reliably renames will be detected, but don't set this too high, or the emission of some events could be delayed by that amount. The higher this value is the longer the library will take to emit add/addDir/unlink/unlinkDir events.",
+      helpGroup: "file",
+      helpValue: "ms",
+      default: 1_250,
+      hidden: true,
+    }),
   };
 
   static override examples = [
@@ -601,6 +633,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
       ignoreInitial: true,
       renameDetection: true,
       recursive: true,
+      debounce: this.flags["file-watch-debounce"],
+      pollingInterval: this.flags["file-watch-poll-interval"],
+      pollingTimeout: this.flags["file-watch-poll-timeout"],
+      renameTimeout: this.flags["file-watch-rename-timeout"],
     });
 
     this.watcher.once("error", (error) => void this.stop(error));

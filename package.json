@@ -89,7 +89,7 @@
     "@types/node": "^20.4.2",
     "@types/node-notifier": "^8.0.2",
     "@types/normalize-path": "^3.0.0",
-    "@types/pluralize": "^0.0.29",
+    "@types/pluralize": "^0.0.30",
     "@types/which": "^3.0.0",
     "@types/ws": "^8.5.5",
     "@typescript-eslint/eslint-plugin": "^5.61.0",

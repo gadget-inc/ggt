@@ -291,12 +291,12 @@ export default class Sync extends BaseCommand<typeof Sync> {
   override async init(): Promise<void> {
     await super.init();
 
-    assert(_.isString(this.args["directory"]));
+    assert(_.isString(this.args.directory));
 
     this.dir =
-      this.config.windows && this.args["directory"].startsWith("~/")
-        ? path.join(this.config.home, this.args["directory"].slice(2))
-        : path.resolve(this.args["directory"]);
+      this.config.windows && this.args.directory.startsWith("~/")
+        ? path.join(this.config.home, this.args.directory.slice(2))
+        : path.resolve(this.args.directory);
 
     const getApp = async (): Promise<string> => {
       if (this.flags.app) return this.flags.app;

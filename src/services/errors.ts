@@ -134,7 +134,7 @@ export abstract class BaseError extends Error {
  * Universal Error object to json blob serializer.
  * Wraps `serialize-error` with some handy stuff, like special support for Got HTTP errors
  */
-export function serializeError(error: Error | string | unknown): Record<string, any> {
+export function serializeError(error: unknown): Record<string, any> {
   let serialized = baseSerializeError(_.isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };
@@ -296,7 +296,7 @@ export class InvalidSyncFileError extends BaseError {
 
       If you're running \`ggt sync\` for the first time, we recommend using an empty directory such as:
 
-        ~/gadget/${this.app || "<name of app>"}
+        ~/gadget/${this.app ?? "<name of app>"}
 
       Otherwise, if you're sure you want to sync the contents of that directory to Gadget, run \`ggt sync\` again with the \`--force\` flag:
 

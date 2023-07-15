@@ -79,7 +79,7 @@
         "nock": "^13.3.2",
         "oclif": "^3.9.1",
         "patch-package": "^7.0.2",
-        "prettier": "^2.8.8",
+        "prettier": "^3.0.0",
         "prettier-plugin-packagejson": "^2.4.5",
         "rimraf": "^5.0.1",
         "ts-node": "^10.9.1",
@@ -1319,6 +1319,21 @@
         "graceful-fs": "^4.1.6"
       }
     },
+    "node_modules/@changesets/apply-release-plan/node_modules/prettier": {
+      "version": "2.8.8",
+      "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.8.tgz",
+      "integrity": "sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==",
+      "dev": true,
+      "bin": {
+        "prettier": "bin-prettier.js"
+      },
+      "engines": {
+        "node": ">=10.13.0"
+      },
+      "funding": {
+        "url": "https://github.com/prettier/prettier?sponsor=1"
+      }
+    },
     "node_modules/@changesets/apply-release-plan/node_modules/universalify": {
       "version": "0.1.2",
       "resolved": "https://registry.npmjs.org/universalify/-/universalify-0.1.2.tgz",
@@ -2027,6 +2042,21 @@
       "dev": true,
       "optionalDependencies": {
         "graceful-fs": "^4.1.6"
+      }
+    },
+    "node_modules/@changesets/write/node_modules/prettier": {
+      "version": "2.8.8",
+      "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.8.tgz",
+      "integrity": "sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==",
+      "dev": true,
+      "bin": {
+        "prettier": "bin-prettier.js"
+      },
+      "engines": {
+        "node": ">=10.13.0"
+      },
+      "funding": {
+        "url": "https://github.com/prettier/prettier?sponsor=1"
       }
     },
     "node_modules/@changesets/write/node_modules/universalify": {
@@ -17667,15 +17697,15 @@
       }
     },
     "node_modules/prettier": {
-      "version": "2.8.8",
-      "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.8.tgz",
-      "integrity": "sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==",
+      "version": "3.0.0",
+      "resolved": "https://registry.npmjs.org/prettier/-/prettier-3.0.0.tgz",
+      "integrity": "sha512-zBf5eHpwHOGPC47h0zrPyNn+eAEIdEzfywMoYn2XPi0P44Zp0tSq64rq0xAREh4auw2cJZHo9QUob+NqCQky4g==",
       "dev": true,
       "bin": {
-        "prettier": "bin-prettier.js"
+        "prettier": "bin/prettier.cjs"
       },
       "engines": {
-        "node": ">=10.13.0"
+        "node": ">=14"
       },
       "funding": {
         "url": "https://github.com/prettier/prettier?sponsor=1"
@@ -22306,6 +22336,12 @@
             "graceful-fs": "^4.1.6"
           }
         },
+        "prettier": {
+          "version": "2.8.8",
+          "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.8.tgz",
+          "integrity": "sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==",
+          "dev": true
+        },
         "universalify": {
           "version": "0.1.2",
           "resolved": "https://registry.npmjs.org/universalify/-/universalify-0.1.2.tgz",
@@ -22921,6 +22957,12 @@
           "requires": {
             "graceful-fs": "^4.1.6"
           }
+        },
+        "prettier": {
+          "version": "2.8.8",
+          "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.8.tgz",
+          "integrity": "sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==",
+          "dev": true
         },
         "universalify": {
           "version": "0.1.2",
@@ -34080,9 +34122,9 @@
       "dev": true
     },
     "prettier": {
-      "version": "2.8.8",
-      "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.8.8.tgz",
-      "integrity": "sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==",
+      "version": "3.0.0",
+      "resolved": "https://registry.npmjs.org/prettier/-/prettier-3.0.0.tgz",
+      "integrity": "sha512-zBf5eHpwHOGPC47h0zrPyNn+eAEIdEzfywMoYn2XPi0P44Zp0tSq64rq0xAREh4auw2cJZHo9QUob+NqCQky4g==",
       "dev": true
     },
     "prettier-plugin-packagejson": {

@@ -46,8 +46,8 @@ export class Context {
 
   constructor() {
     this.domains = {
-      app: process.env["GGT_GADGET_APP_DOMAIN"] || (this.env.productionLike ? "gadget.app" : "ggt.pub"),
-      services: process.env["GGT_GADGET_SERVICES_DOMAIN"] || (this.env.productionLike ? "app.gadget.dev" : "app.ggt.dev"),
+      app: process.env["GGT_GADGET_APP_DOMAIN"] ?? (this.env.productionLike ? "gadget.app" : "ggt.pub"),
+      services: process.env["GGT_GADGET_SERVICES_DOMAIN"] ?? (this.env.productionLike ? "app.gadget.dev" : "app.ggt.dev"),
     };
   }
 
@@ -126,7 +126,7 @@ export class Context {
  */
 class Env {
   get value(): string {
-    return process.env["GGT_ENV"] || "production";
+    return process.env["GGT_ENV"] ?? "production";
   }
 
   get productionLike(): boolean {

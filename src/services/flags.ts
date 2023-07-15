@@ -24,7 +24,7 @@ export const app = Flags.custom({
             --app my-app.gadget.app
             --app https://my-app.gadget.app
             --app https://my-app.gadget.app/edit
-        `
+        `,
       );
 
     const slug = parsed.endsWith("--development") ? parsed.slice(0, -"--development".length) : parsed;
@@ -58,7 +58,7 @@ export const app = Flags.custom({
               It doesn't look like you have any applications.
 
               Visit https://gadget.new to create one!
-            `
+            `,
     );
   },
 });

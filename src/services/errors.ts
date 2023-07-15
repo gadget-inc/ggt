@@ -178,7 +178,10 @@ export class UnexpectedError extends BaseError {
 export class ClientError extends BaseError {
   isBug = IsBug.MAYBE;
 
-  constructor(readonly payload: Payload<any, any>, override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent) {
+  constructor(
+    readonly payload: Payload<any, any>,
+    override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent,
+  ) {
     super("GGT_CLI_CLIENT_ERROR", "An error occurred while communicating with Gadget");
 
     // ErrorEvent and CloseEvent aren't serializable, so we reconstruct them into an object. We discard the `target` property because it's large and not that useful
@@ -253,7 +256,10 @@ export class FlagError<T extends { name: string; char?: string } = { name: strin
 
   #message: string;
 
-  constructor(readonly flag: T, readonly description: string) {
+  constructor(
+    readonly flag: T,
+    readonly description: string,
+  ) {
     const name = flag.char ? `-${flag.char}, --${flag.name}` : `--${flag.name}`;
     super("GGT_CLI_FLAG_ERROR", "");
 
@@ -274,7 +280,11 @@ export class FlagError<T extends { name: string; char?: string } = { name: strin
 export class InvalidSyncFileError extends BaseError {
   isBug = IsBug.MAYBE;
 
-  constructor(override readonly cause: unknown, readonly sync: Sync, readonly app: string | undefined) {
+  constructor(
+    override readonly cause: unknown,
+    readonly sync: Sync,
+    readonly app: string | undefined,
+  ) {
     super("GGT_CLI_INVALID_SYNC_FILE", "The .gadget/sync.json file was invalid or not found");
   }
 
@@ -313,7 +323,7 @@ export class InvalidSyncAppFlagError extends FlagError {
         If you're sure that you want to sync "${sync.flags.app}" to "${sync.dir}", run \`ggt sync\` again with the \`--force\` flag:
 
           $ ggt sync ${sync.argv.join(" ")} --force
-      `
+      `,
     );
   }
 }

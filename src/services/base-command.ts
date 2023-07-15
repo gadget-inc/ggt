@@ -139,7 +139,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       | NotifySend.Notification
       | WindowsToaster.Notification
       | WindowsBalloon.Notification
-      | Growl.Notification
+      | Growl.Notification,
   ): void {
     notifier.notify(
       {
@@ -152,7 +152,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       },
       (error) => {
         if (error) this.warn(error);
-      }
+      },
     );
   }
 

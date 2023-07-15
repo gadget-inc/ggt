@@ -110,8 +110,8 @@ describe("BaseCommand", () => {
       expect(server.listen).toHaveBeenCalledWith(port);
       expect(open).toHaveBeenCalledWith(
         `https://${context.domains.services}/auth/login?returnTo=${encodeURIComponent(
-          `https://${context.domains.services}/auth/cli/callback?port=${port}`
-        )}`
+          `https://${context.domains.services}/auth/cli/callback?port=${port}`,
+        )}`,
       );
       expect(base.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         "We've opened Gadget's login page using your default browser.
@@ -154,8 +154,8 @@ describe("BaseCommand", () => {
       expect(server.listen).toHaveBeenCalledWith(port);
       expect(open).toHaveBeenCalledWith(
         `https://${context.domains.services}/auth/login?returnTo=${encodeURIComponent(
-          `https://${context.domains.services}/auth/cli/callback?port=${port}`
-        )}`
+          `https://${context.domains.services}/auth/cli/callback?port=${port}`,
+        )}`,
       );
       expect(base.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         "We've opened Gadget's login page using your default browser.

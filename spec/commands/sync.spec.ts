@@ -1430,7 +1430,7 @@ describe("Sync", () => {
           icon: path.join(__dirname, "..", "..", "assets", "favicon-128@4x.png"),
           contentImage: path.join(__dirname, "..", "..", "assets", "favicon-128@4x.png"),
         },
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -1488,7 +1488,7 @@ function prettyJson(obj: any): string {
 }
 
 function fileChangedEvent(
-  options: PartialExcept<FileSyncChangedEventInput, "path" | "content">
+  options: PartialExcept<FileSyncChangedEventInput, "path" | "content">,
 ): FileSyncChangedEventInput & FileSyncChangedEvent {
   const event = _.defaults(options, {
     mode: defaultFileMode,

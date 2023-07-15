@@ -100,7 +100,7 @@ export class Client {
 
   subscribe<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
     payload: Payload<Data, Variables>,
-    sink: SetOptional<Sink<Data, Extensions>, "complete">
+    sink: SetOptional<Sink<Data, Extensions>, "complete">,
   ): () => void {
     let subscribePayload: SubscribePayload;
     let removeConnectedListener: () => void;
@@ -134,7 +134,7 @@ export class Client {
 
   subscribeUnwrap<Data extends JsonObject, Variables extends JsonObject>(
     payload: Payload<Data, Variables>,
-    sink: { next: (data: Data) => void; error: (error: ClientError) => void }
+    sink: { next: (data: Data) => void; error: (error: ClientError) => void },
   ): () => void {
     const unsubscribe = this.subscribe(payload, {
       ...sink,
@@ -159,7 +159,7 @@ export class Client {
   }
 
   query<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
-    payload: Payload<Data, Variables>
+    payload: Payload<Data, Variables>,
   ): Promise<ExecutionResult<Data, Extensions>> {
     return new Promise((resolve, reject) => {
       this.subscribe<Data, Variables, Extensions>(payload, { next: resolve, error: reject });
@@ -181,7 +181,7 @@ export class Client {
 export type Query<
   Data extends JsonObject,
   Variables extends JsonObject = JsonObject,
-  Extensions extends JsonObject = JsonObject
+  Extensions extends JsonObject = JsonObject,
 > = string & {
   __TData?: Data;
   __TVariables?: Variables;

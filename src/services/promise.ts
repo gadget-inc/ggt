@@ -62,7 +62,7 @@ export class PromiseSignal<T = void> implements Promise<T> {
       new Promise((resolve, reject) => {
         this.resolve = resolve;
         this.reject = reject;
-      })
+      }),
     );
 
     this[Symbol.toStringTag] = String(this._promise.pendingPromise);

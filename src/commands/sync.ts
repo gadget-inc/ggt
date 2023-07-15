@@ -261,7 +261,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
         ...changed.map((normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
         ...deleted.map((normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
       ],
-      (line) => line.slice(line.indexOf(" ") + 1)
+      (line) => line.slice(line.indexOf(" ") + 1),
     );
 
     let logged = 0;
@@ -275,7 +275,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
     }
 
     this.log(
-      chalkTemplate`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`
+      chalkTemplate`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`,
     );
     this.log();
   }
@@ -504,7 +504,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
             this.logPaths(
               "←",
               changed.map((x) => x.path),
-              deleted.map((x) => x.path)
+              deleted.map((x) => x.path),
             );
 
             // we need to processed deleted files first as we may delete an empty directory after a file has been put
@@ -559,7 +559,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
             this.debug("recent remote changes %O", Array.from(this.recentRemoteChanges));
           });
         },
-      }
+      },
     );
 
     const localFilesBuffer = new Map<
@@ -613,7 +613,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
         this.logPaths(
           "→",
           changed.map((x) => x.path),
-          deleted.map((x) => x.path)
+          deleted.map((x) => x.path),
         );
 
         const { remoteFilesVersion } = data.publishFileSyncEvents;
@@ -729,7 +729,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
       }
 
       Watching for file changes... {gray Press Ctrl+C to stop}
-    `)
+    `),
     );
     this.log();
 
@@ -770,7 +770,10 @@ export class SyncState {
     fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
   }, 100);
 
-  private constructor(private _rootDir: string, inner: { app: string; filesVersion: string; mtime: number }) {
+  private constructor(
+    private _rootDir: string,
+    inner: { app: string; filesVersion: string; mtime: number },
+  ) {
     this._inner = inner;
   }
 

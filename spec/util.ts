@@ -39,7 +39,7 @@ export interface MockSubscription<Data extends JsonObject, Variables extends Jso
 export interface MockClient extends Client {
   _subscriptions: Map<string, MockSubscription<JsonObject, JsonObject, JsonObject>>;
   _subscription<Data extends JsonObject, Variables extends JsonObject>(
-    query: Query<Data, Variables>
+    query: Query<Data, Variables>,
   ): MockSubscription<Data, Variables, JsonObject>;
 }
 
@@ -48,7 +48,7 @@ export function mockClient(): MockClient {
     ...Client.prototype,
     _subscriptions: new Map(),
     _subscription: <Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject>(
-      query: Query<Data, Variables, Extensions>
+      query: Query<Data, Variables, Extensions>,
     ) => {
       expect(Array.from(mock._subscriptions.keys())).toContain(query);
       const sub = mock._subscriptions.get(query);

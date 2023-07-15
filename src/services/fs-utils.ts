@@ -11,7 +11,10 @@ export class FSIgnorer {
 
   private _ignorer!: Ignore;
 
-  constructor(private readonly _rootDir: string, private readonly _alwaysIgnore: string[]) {
+  constructor(
+    private readonly _rootDir: string,
+    private readonly _alwaysIgnore: string[],
+  ) {
     this.filepath = path.join(this._rootDir, ".ignore");
     this.reload();
   }

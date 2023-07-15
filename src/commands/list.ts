@@ -54,7 +54,7 @@ export default class List extends BaseCommand<typeof List> {
       {
         printLine: this.log.bind(this),
         ...flags, // parsed flags
-      }
+      },
     );
   }
 }

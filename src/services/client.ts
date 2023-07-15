@@ -36,7 +36,7 @@ export class Client {
 
     this._client = createClient({
       url: `wss://${context.app.slug}.${context.domains.app}/edit/api/graphql-ws`,
-      shouldRetry: () => true,
+      shouldRetry: _.constant(true),
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
           assert(context.session, "context.session must be set before instantiating the Client");
@@ -103,7 +103,7 @@ export class Client {
     sink: SetOptional<Sink<Data, Extensions>, "complete">,
   ): () => void {
     let subscribePayload: SubscribePayload;
-    let removeConnectedListener: () => void;
+    let removeConnectedListener = _.noop.bind(_);
 
     if (_.isFunction(payload.variables)) {
       // the caller wants us to re-evaluate the variables every time graphql-ws re-subscribes after reconnecting
@@ -112,22 +112,28 @@ export class Client {
         if (this.status == ConnectionStatus.RECONNECTING) {
           // subscribePayload.variables is supposed to be readonly (it's not) and payload.variables may have been re-assigned (it won't)
           (subscribePayload as any).variables = (payload.variables as any)();
-          debug("re-sending %s%s%O", subscribePayload.query.split(/\s+/g, 1)[0], subscribePayload.query, subscribePayload.variables);
+          debug("re-sending %s%s%O", _.split(subscribePayload.query, /\s+/g, 1)[0], subscribePayload.query, subscribePayload.variables);
         }
       });
     } else {
       subscribePayload = payload as SubscribePayload;
     }
 
-    debug("sending %s%s%O", subscribePayload.query.split(/\s+/g, 1)[0], subscribePayload.query, subscribePayload.variables);
+    debug("sending %s%s%O", _.split(subscribePayload.query, /\s+/g, 1)[0], subscribePayload.query, subscribePayload.variables);
     const unsubscribe = this._client.subscribe(subscribePayload, {
-      next: (result: ExecutionResult<Data, Extensions>) => sink.next(result),
-      error: (error) => sink.error(new ClientError(subscribePayload, error as Error | GraphQLError[] | CloseEvent | ErrorEvent)),
-      complete: () => sink.complete?.(),
+      next: (result: ExecutionResult<Data, Extensions>) => {
+        sink.next(result);
+      },
+      error: (error) => {
+        sink.error(new ClientError(subscribePayload, error as Error | GraphQLError[] | CloseEvent | ErrorEvent));
+      },
+      complete: () => {
+        sink.complete?.();
+      },
     });
 
     return () => {
-      removeConnectedListener?.();
+      removeConnectedListener();
       unsubscribe();
     };
   }

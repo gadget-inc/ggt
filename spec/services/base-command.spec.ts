@@ -1,17 +1,17 @@
+import * as cliErrors from "@oclif/core/lib/parser/errors.js";
+import { ExitError } from "@oclif/errors";
 import debug from "debug";
 import getPort from "get-port";
-import http from "node:http";
 import inquirer from "inquirer";
 import _ from "lodash";
+import http from "node:http";
 import open from "open";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BaseCommand } from "../../src/services/base-command.js";
 import { context } from "../../src/services/context.js";
-import { sleepUntil } from "../../src/services/sleep.js";
-import { ExitError } from "@oclif/errors";
-import * as cliErrors from "@oclif/core/lib/parser/errors.js";
 import { BaseError } from "../../src/services/errors.js";
+import { sleepUntil } from "../../src/services/sleep.js";
 import { getError } from "../util.js";
-import { describe, it, expect, vi, beforeEach } from "vitest";
 
 class Base extends BaseCommand<typeof Base> {
   run = vi.fn() as any;
@@ -187,7 +187,7 @@ describe("BaseCommand", () => {
   });
 
   describe("catch", () => {
-    it.each([ExitError, ...Object.values(cliErrors)])("immediately rethrows CLIErrors", async (ctor) => {
+    it.each([ExitError, ..._.values(cliErrors)])("immediately rethrows CLIErrors", async (ctor) => {
       // value that all CLIError constructors will accept
       const arg = { flag: { helpLabel: "" }, flags: [], args: [], options: [], parse: {}, failed: [] } as any;
       const spy = vi.spyOn(BaseError.prototype, "capture");

@@ -1,4 +1,5 @@
 import { GraphQLError } from "graphql";
+import { describe, expect, it } from "vitest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import Sync from "../../src/commands/sync.js";
 import { context } from "../../src/services/context.js";
@@ -10,7 +11,6 @@ import {
   UnexpectedError,
   YarnNotFoundError,
 } from "../../src/services/errors.js";
-import { describe, it, expect } from "vitest";
 
 describe("UnexpectedError", () => {
   it("renders correctly", () => {

@@ -1,6 +1,6 @@
+import { describe, expect, it, vi } from "vitest";
 import Whoami from "../../src/commands/whoami.js";
 import { context } from "../../src/services/context.js";
-import { describe, it, expect, vi } from "vitest";
 
 describe("Whoami", () => {
   it("logs the current user", async () => {

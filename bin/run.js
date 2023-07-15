@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import process from "node:process";
 import oclif from "@oclif/core";
+import process from "node:process";
 
 process.on("unhandledRejection", oclif.Errors.handle);
 

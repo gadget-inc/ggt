@@ -1337,7 +1337,7 @@ describe("Sync", () => {
     it.each(["SIGINT", "SIGTERM"])("stops on %s", (signal) => {
       vi.spyOn(sync, "stop");
 
-      const [, stop] = process.on.mock.calls.find(([name]) => name === signal) ?? [];
+      const [, stop] = _.find(process.on.mock.calls, ([name]) => name === signal) ?? [];
       expect(stop).toBeTruthy();
       expect(sync.status).toBe(SyncStatus.RUNNING);
 
@@ -1502,7 +1502,7 @@ function fileChangedEvent(
 }
 
 function dirChangedEvent(options: PartialExcept<FileSyncChangedEventInput, "path">): FileSyncChangedEventInput & FileSyncChangedEvent {
-  assert(options.path.endsWith("/"));
+  assert(_.endsWith(options.path, "/"));
   return fileChangedEvent({ content: "", mode: defaultDirMode, ...options });
 }
 
@@ -1527,7 +1527,7 @@ function expectDir(sync: Sync, expected: FileTree): void {
   const actual: FileTree = {};
   for (const filepath of walkDirSync(sync.dir)) {
     const isDirectory = fs.lstatSync(filepath).isDirectory();
-    const pathSegments = sync.relative(filepath).split(path.sep);
+    const pathSegments = _.split(sync.relative(filepath), path.sep);
     _.set(actual, pathSegments, isDirectory ? {} : fs.readFileSync(filepath, "utf-8"));
   }
   expect(actual).toEqual(expected);

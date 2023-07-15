@@ -27,7 +27,7 @@ class CommandHelp extends OclifCommandHelp {
     if (_.isString(examples)) {
       return examples;
     }
-    if (Array.isArray(examples) && examples.every((e) => _.isString(e))) {
+    if (_.isArray(examples) && _.every(examples, _.isString)) {
       return examples.join("\n\n");
     }
     return super.examples(examples);

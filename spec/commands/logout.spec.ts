@@ -1,6 +1,6 @@
+import { describe, expect, it, vi } from "vitest";
 import Logout from "../../src/commands/logout.js";
 import { context } from "../../src/services/context.js";
-import { describe, it, expect, vi } from "vitest";
 
 describe("Logout", () => {
   it("sets context.session = undefined", async () => {

@@ -7,11 +7,11 @@
   "plugins": ["@typescript-eslint", "import", "lodash"],
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended-type-checked",
+    "plugin:@typescript-eslint/strict-type-checked",
     "plugin:@typescript-eslint/stylistic-type-checked",
-    "prettier",
     "plugin:import/typescript",
-    "plugin:lodash/recommended"
+    "plugin:lodash/recommended",
+    "prettier"
   ],
   "env": {
     "node": true
@@ -28,22 +28,21 @@
         "leadingUnderscore": "require"
       }
     ],
+    "@typescript-eslint/no-dynamic-delete": ["off"],
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unsafe-assignment": "off",
     "@typescript-eslint/no-unsafe-call": ["off"],
     "@typescript-eslint/no-unsafe-member-access": ["off"],
     "@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }],
     "@typescript-eslint/restrict-template-expressions": ["off"],
-    "lodash/import-scope": ["error", "full"],
-    "lodash/prefer-lodash-method": ["off"],
-    "lodash/prefer-constant": ["off"]
+    "@typescript-eslint/unbound-method": "off",
+    "lodash/import-scope": ["error", "full"]
   },
   "overrides": [
     {
       "files": "**/spec/**",
       "rules": {
         "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/unbound-method": "off",
         "@typescript-eslint/no-unsafe-argument": "off"
       }
     }

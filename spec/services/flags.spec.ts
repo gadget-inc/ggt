@@ -1,8 +1,8 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { context } from "../../src/services/context.js";
 import { FlagError } from "../../src/services/errors.js";
 import { app } from "../../src/services/flags.js";
 import { getError } from "../util.js";
-import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("flags", () => {
   describe("-a, --app", () => {

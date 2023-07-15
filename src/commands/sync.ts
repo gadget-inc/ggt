@@ -1,7 +1,6 @@
 import { Args, Flags } from "@oclif/core";
 import assert from "assert";
 import chalkTemplate from "chalk-template";
-import FSWatcher from "watcher";
 import { format } from "date-fns";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
@@ -14,6 +13,7 @@ import PQueue from "p-queue";
 import path from "path";
 import pluralize from "pluralize";
 import { dedent } from "ts-dedent";
+import FSWatcher from "watcher";
 import which from "which";
 import type {
   FileSyncChangedEventInput,
@@ -258,8 +258,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
   logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
     const lines = _.sortBy(
       [
-        ...changed.map((normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
-        ...deleted.map((normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
+        ..._.map(changed, (normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
+        ..._.map(deleted, (normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
       ],
       (line) => line.slice(line.indexOf(" ") + 1),
     );
@@ -294,19 +294,28 @@ export default class Sync extends BaseCommand<typeof Sync> {
     assert(_.isString(this.args.directory));
 
     this.dir =
-      this.config.windows && this.args.directory.startsWith("~/")
+      this.config.windows && _.startsWith(this.args.directory, "~/")
         ? path.join(this.config.home, this.args.directory.slice(2))
         : path.resolve(this.args.directory);
 
     const getApp = async (): Promise<string> => {
-      if (this.flags.app) return this.flags.app;
-      if (this.state?.app) return this.state.app;
+      if (this.flags.app) {
+        return this.flags.app;
+      }
+
+      // this.state can be undefined if the user is running `ggt sync` for the first time
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (this.state?.app) {
+        return this.state.app;
+      }
+
       const selected = await inquirer.prompt<{ app: string }>({
         type: "list",
         name: "app",
         message: "Please select the app to sync to.",
-        choices: await context.getAvailableApps().then((apps) => apps.map((app) => app.slug)),
+        choices: await context.getAvailableApps().then((apps) => _.map(apps, "slug")),
       });
+
       return selected.app;
     };
 
@@ -486,9 +495,9 @@ export default class Sync extends BaseCommand<typeof Sync> {
           const remoteFilesVersion = remoteFileSyncEvents.remoteFilesVersion;
 
           // we always ignore .gadget/ files so that we don't publish them (they're managed by gadget), but we still want to receive them
-          const filter = (event: { path: string }) => event.path.startsWith(".gadget/") || !this.ignorer.ignores(event.path);
-          const changed = remoteFileSyncEvents.changed.filter(filter);
-          const deleted = remoteFileSyncEvents.deleted.filter(filter);
+          const filter = (event: { path: string }) => _.startsWith(event.path, ".gadget/") || !this.ignorer.ignores(event.path);
+          const changed = _.filter(remoteFileSyncEvents.changed, filter);
+          const deleted = _.filter(remoteFileSyncEvents.deleted, filter);
 
           this._enqueue(async () => {
             if (!changed.length && !deleted.length) {
@@ -501,11 +510,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
             }
 
             this.log(chalkTemplate`Received {gray ${format(new Date(), "pp")}}`);
-            this.logPaths(
-              "←",
-              changed.map((x) => x.path),
-              deleted.map((x) => x.path),
-            );
+            this.logPaths("←", _.map(changed, "path"), _.map(deleted, "path"));
 
             // we need to processed deleted files first as we may delete an empty directory after a file has been put
             // into it. if processed out of order the new file will be deleted as well
@@ -518,13 +523,13 @@ export default class Sync extends BaseCommand<typeof Sync> {
               this.recentRemoteChanges.add(file.path);
 
               const absolutePath = this.absolute(file.path);
-              if (file.path.endsWith("/")) {
+              if (_.endsWith(file.path, "/")) {
                 await fs.ensureDir(absolutePath, { mode: 0o755 });
                 return;
               }
 
               // we need to add all parent directories to recentRemoteChanges so that we don't re-publish them
-              for (const dir of path.dirname(file.path).split("/")) {
+              for (const dir of _.split(path.dirname(file.path), "/")) {
                 this.recentRemoteChanges.add(dir + "/");
               }
 
@@ -583,15 +588,13 @@ export default class Sync extends BaseCommand<typeof Sync> {
             return;
           }
 
-          const isRename = "oldPath" in file;
-
           try {
             changed.push({
               path: normalizedPath,
+              oldPath: "oldPath" in file ? file.oldPath : undefined,
               mode: file.mode,
-              content: file.isDirectory ? "" : await fs.readFile(this.absolute(normalizedPath), "base64"),
+              content: file.isDirectory ? "" : await fs.readFile(this.absolute(normalizedPath), FileSyncEncoding.Base64),
               encoding: FileSyncEncoding.Base64,
-              ...(isRename ? { oldPath: file.oldPath } : undefined),
             });
           } catch (error) {
             // A file could have been changed and then deleted before we process the change event, so the readFile
@@ -610,11 +613,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
         });
 
         this.log(chalkTemplate`Sent {gray ${format(new Date(), "pp")}}`);
-        this.logPaths(
-          "→",
-          changed.map((x) => x.path),
-          deleted.map((x) => x.path),
-        );
+        this.logPaths("→", _.map(changed, "path"), _.map(deleted, "path"));
 
         const { remoteFilesVersion } = data.publishFileSyncEvents;
         this.debug("remote files version after publishing %s", remoteFilesVersion);
@@ -737,7 +736,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     if (error) {
       this.notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
-      throw error;
+      throw error as Error;
     } else {
       this.log("Goodbye!");
     }

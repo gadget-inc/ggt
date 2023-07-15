@@ -27,14 +27,15 @@ export const app = Flags.custom({
         `,
       );
 
-    const slug = parsed.endsWith("--development") ? parsed.slice(0, -"--development".length) : parsed;
+    const slug = _.endsWith(parsed, "--development") ? parsed.slice(0, -"--development".length) : parsed;
 
     const availableApps = await context.getAvailableApps();
-    const foundApp = availableApps.find((a) => a.slug == slug);
+    const foundApp = _.find(availableApps, (a) => a.slug == slug);
     if (foundApp) {
       return foundApp.slug;
     }
 
+    const sortedApps = _.sortBy(availableApps, (app) => levenshtein.get(app.slug, slug));
     throw new FlagError(
       { char: "a", name: "app" },
       availableApps.length > 0
@@ -45,10 +46,7 @@ export const app = Flags.custom({
 
               Did you mean one of these?
 
-                ${_.sortBy(availableApps, (app) => levenshtein.get(app.slug, slug))
-                  .slice(0, 10)
-                  .map((app) => `* ${app.slug}`)
-                  .join("\n")}
+                ${_.map(sortedApps.slice(0, 10), (app) => `* ${app.slug}`).join("\n")}
             `
         : dedent`
               Unknown application:

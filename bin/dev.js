@@ -1,9 +1,9 @@
 #!/usr/bin/env node --loader ts-node/esm --no-warnings
 
-import path from "node:path";
-import url from "node:url";
-import process from "node:process";
 import oclif from "@oclif/core";
+import path from "node:path";
+import process from "node:process";
+import url from "node:url";
 
 process.env["NODE_ENV"] = "development";
 process.env["GGT_ENV"] ??= "development";

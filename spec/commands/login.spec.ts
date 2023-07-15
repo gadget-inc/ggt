@@ -1,6 +1,6 @@
+import { describe, expect, it, vi } from "vitest";
 import Login from "../../src/commands/login.js";
 import { BaseCommand } from "../../src/services/base-command.js";
-import { describe, it, expect, vi } from "vitest";
 
 describe("Login", () => {
   it("delegates to BaseCommand.login", async () => {

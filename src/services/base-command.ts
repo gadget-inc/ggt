@@ -105,7 +105,8 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       });
 
       if (!login) {
-        return this.exit(0);
+        this.exit(0);
+        return;
       }
 
       await this.login();

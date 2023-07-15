@@ -1,8 +1,8 @@
-import path from "path";
 import fs from "fs-extra";
-import { Context, context } from "../../src/services/context.js";
 import nock from "nock";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import path from "path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { Context, context } from "../../src/services/context.js";
 
 describe("Context", () => {
   describe("session", () => {

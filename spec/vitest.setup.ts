@@ -1,7 +1,7 @@
 import Debug from "debug";
 import fs from "fs-extra";
-import path from "path";
 import _ from "lodash";
+import path from "path";
 import { afterEach, beforeEach, expect, vi } from "vitest";
 import { testDebug, testDirPath } from "./util.js";
 

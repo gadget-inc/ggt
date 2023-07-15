@@ -105,7 +105,7 @@ export class Context {
 
   async setApp(appOrSlug?: App | string): Promise<void> {
     if (_.isString(appOrSlug)) {
-      const app = await this.getAvailableApps().then((apps) => apps.find((app) => app.slug == appOrSlug));
+      const app = await this.getAvailableApps().then((apps) => _.find(apps, (app) => app.slug == appOrSlug));
       assert(app, `attempted to set app to "${appOrSlug}" but no app with that name or slug was found`);
       this.app = app;
     } else {
@@ -130,15 +130,15 @@ class Env {
   }
 
   get productionLike(): boolean {
-    return this.value.startsWith("production");
+    return _.startsWith(this.value, "production");
   }
 
   get developmentLike(): boolean {
-    return this.value.startsWith("development");
+    return _.startsWith(this.value, "development");
   }
 
   get testLike(): boolean {
-    return this.value.startsWith("test");
+    return _.startsWith(this.value, "test");
   }
 
   get developmentOrTestLike(): boolean {

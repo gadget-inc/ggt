@@ -1,6 +1,6 @@
+import chalkTemplate from "chalk-template";
 import { dedent } from "ts-dedent";
 import { BaseCommand } from "../services/base-command.js";
-import chalkTemplate from "chalk-template";
 
 export default class Login extends BaseCommand<typeof Login> {
   static override summary = "Log in to your account.";

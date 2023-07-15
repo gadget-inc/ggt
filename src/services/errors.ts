@@ -1,7 +1,10 @@
+import * as Sentry from "@sentry/node";
 import cleanStack from "clean-stack";
-import { HTTPError } from "got";
+import { randomUUID } from "crypto";
+import { RequestError } from "got";
 import type { GraphQLError } from "graphql";
 import _ from "lodash";
+import os from "os";
 import { serializeError as baseSerializeError } from "serialize-error";
 import { dedent } from "ts-dedent";
 import type { SetOptional } from "type-fest";
@@ -10,9 +13,6 @@ import type { CloseEvent, ErrorEvent } from "ws";
 import type Sync from "../commands/sync.js";
 import type { Payload } from "./client.js";
 import { context } from "./context.js";
-import os from "os";
-import * as Sentry from "@sentry/node";
-import { randomUUID } from "crypto";
 
 /**
  * Base class for all errors.
@@ -140,8 +140,8 @@ export function serializeError(error: unknown): Record<string, any> {
     serialized = { message: serialized };
   }
 
-  if (error instanceof HTTPError && error.name === "RequestError") {
-    delete serialized["timings"];
+  if (error instanceof RequestError) {
+    serialized["timings"] = undefined;
     serialized["options"] = {
       method: error.options.method,
       url: error.options.url instanceof URL ? error.options.url.toJSON() : error.options.url,
@@ -337,5 +337,5 @@ function isErrorEvent(e: any): e is SetOptional<ErrorEvent, "target"> {
 }
 
 function isGraphQLErrors(e: any): e is readonly GraphQLError[] {
-  return _.isArray(e) && e.every((e) => !_.isNil(e) && _.isString(e.message) && _.isArray(e.locations ?? []) && _.isArray(e.path ?? []));
+  return _.isArray(e) && _.every(e, (e) => !_.isNil(e) && _.isString(e.message) && _.isArray(e.locations ?? []) && _.isArray(e.path ?? []));
 }

@@ -1,6 +1,6 @@
+import { describe, expect, it, vi } from "vitest";
 import List from "../../src/commands/list.js";
 import { context } from "../../src/services/context.js";
-import { describe, it, expect, vi } from "vitest";
 
 describe("list", () => {
   it("requires a user to be logged in", () => {

@@ -1,10 +1,10 @@
+import Debug from "debug";
 import _ from "lodash";
+import path from "path";
 import type { JsonObject } from "type-fest";
 import { assert, expect, vi } from "vitest";
 import type { Payload, Query, Sink } from "../src/services/client.js";
 import { Client } from "../src/services/client.js";
-import Debug from "debug";
-import path from "path";
 
 export const testDebug = Debug("ggt:test");
 
@@ -12,13 +12,13 @@ export function testDirPath(): string {
   const name = expect.getState().currentTestName;
   assert(name, "Expected test name to be defined");
 
-  const [testFile, ...rest] = name.split(" > ");
+  const [testFile, ...rest] = _.split(name, " > ");
   const describes = rest.length > 1 ? rest.slice(0, -1) : [];
   const testName = rest.at(-1);
 
   assert(testFile && testName);
 
-  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), testName.replace(/[^\s\w-]/g, ""));
+  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), _.replace(testName, /[^\s\w-]/g, ""));
 }
 
 export async function getError(fnThatThrows: () => unknown): Promise<any> {

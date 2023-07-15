@@ -10,7 +10,7 @@ export async function sleepUntil(fn: () => boolean, { interval = 0, timeout = 5_
 
   const start = isFinite(timeout) && Date.now();
 
-  // eslint-disable-next-line no-constant-condition
+  // eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition
   while (true) {
     if (fn()) return;
     await sleep(interval);

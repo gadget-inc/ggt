@@ -1,9 +1,9 @@
 import { ux } from "@oclif/core";
+import chalkTemplate from "chalk-template";
 import { dedent } from "ts-dedent";
 import { BaseCommand } from "../services/base-command.js";
 import type { App } from "../services/context.js";
 import { context } from "../services/context.js";
-import chalkTemplate from "chalk-template";
 
 export default class List extends BaseCommand<typeof List> {
   static override summary = "List the apps available to the currently logged in user.";

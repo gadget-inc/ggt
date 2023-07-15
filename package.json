@@ -37,7 +37,7 @@
     "version": "changeset version && npm install --package-lock-only && npm run build && npm run readme"
   },
   "dependencies": {
-    "@oclif/core": "^2.9.2",
+    "@oclif/core": "^2.9.3",
     "@oclif/errors": "^1.3.6",
     "@oclif/plugin-not-found": "^2.3.28",
     "@oclif/plugin-warn-if-update-available": "^2.0.41",

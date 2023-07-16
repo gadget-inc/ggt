@@ -1,10 +1,14 @@
 import type { Config } from "@oclif/core";
+import { addBreadcrumb, setUser, type Breadcrumb as SentryBreadcrumb } from "@sentry/node";
 import assert from "assert";
+import Debug from "debug";
 import fs from "fs-extra";
 import { HTTPError, got } from "got";
 import _ from "lodash";
 import path from "path";
 import { ignoreEnoent } from "./fs-utils.js";
+
+const debug = Debug("ggt:context");
 
 export class Context {
   /**
@@ -16,14 +20,46 @@ export class Context {
    */
   config!: Config;
 
-  env = new Env();
-
-  app?: App;
-
-  domains: {
-    app: string;
-    services: string;
+  /**
+   * Captures the name and nature of the environment
+   */
+  env = {
+    get value(): string {
+      return process.env["GGT_ENV"] ?? "production";
+    },
+    get productionLike(): boolean {
+      return _.startsWith(this.value, "production");
+    },
+    get developmentLike(): boolean {
+      return _.startsWith(this.value, "development");
+    },
+    get testLike(): boolean {
+      return _.startsWith(this.value, "test");
+    },
+    get developmentOrTestLike(): boolean {
+      return this.developmentLike || this.testLike;
+    },
   };
+
+  /**
+   * Domains for various Gadget services.
+   */
+  domains = {
+    /**
+     * The domain for the Gadget applications. This is where the user applications are hosted.
+     */
+    app: process.env["GGT_GADGET_APP_DOMAIN"] ?? (this.env.productionLike ? "gadget.app" : "ggt.pub"),
+
+    /**
+     * The domain for the Gadget services. This is where the Gadget's API is hosted.
+     */
+    services: process.env["GGT_GADGET_SERVICES_DOMAIN"] ?? (this.env.productionLike ? "app.gadget.dev" : "app.ggt.dev"),
+  };
+
+  /**
+   * The current Gadget application the CLI is operating on.
+   */
+  app?: App;
 
   private _session?: string;
 
@@ -43,13 +79,6 @@ export class Context {
       ],
     },
   });
-
-  constructor() {
-    this.domains = {
-      app: process.env["GGT_GADGET_APP_DOMAIN"] ?? (this.env.productionLike ? "gadget.app" : "ggt.pub"),
-      services: process.env["GGT_GADGET_SERVICES_DOMAIN"] ?? (this.env.productionLike ? "app.gadget.dev" : "app.ggt.dev"),
-    };
-  }
 
   get session(): string | undefined {
     if (this._session) return this._session;
@@ -82,6 +111,7 @@ export class Context {
 
     try {
       this._user = await this._request(`https://${this.domains.services}/auth/api/current-user`).json<User>();
+      setUser(this._user);
       return this._user;
     } catch (error) {
       if (error instanceof HTTPError && error.response.statusCode === 401) {
@@ -118,32 +148,20 @@ export class Context {
     this._user = undefined;
     this.app = undefined;
     this._availableApps = [];
+    setUser(null);
+  }
+
+  addBreadcrumb(breadcrumb: Breadcrumb) {
+    addBreadcrumb(breadcrumb);
+    debug("breadcrumb %O", breadcrumb);
   }
 }
 
-/**
- * Captures the name and nature of the environment
- */
-class Env {
-  get value(): string {
-    return process.env["GGT_ENV"] ?? "production";
-  }
+export const context = new Context();
 
-  get productionLike(): boolean {
-    return _.startsWith(this.value, "production");
-  }
-
-  get developmentLike(): boolean {
-    return _.startsWith(this.value, "development");
-  }
-
-  get testLike(): boolean {
-    return _.startsWith(this.value, "test");
-  }
-
-  get developmentOrTestLike(): boolean {
-    return this.developmentLike || this.testLike;
-  }
+export interface Breadcrumb extends SentryBreadcrumb {
+  category: "command" | "client" | "sync";
+  message: Capitalize<string>;
 }
 
 export interface User {
@@ -158,5 +176,3 @@ export interface App {
   primaryDomain: string;
   hasSplitEnvironments: boolean;
 }
-
-export const context = new Context();

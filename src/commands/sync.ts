@@ -291,8 +291,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
   override async init(): Promise<void> {
     await super.init();
 
-    assert(_.isString(this.args.directory));
-
     this.dir =
       this.config.windows && _.startsWith(this.args.directory, "~/")
         ? path.join(this.config.home, this.args.directory.slice(2))
@@ -345,8 +343,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
     // local files/folders that should never be published
     this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git"]);
 
-    this.debug("starting");
-
     if (!which.sync("yarn", { nothrow: true })) {
       throw new YarnNotFoundError();
     }
@@ -371,7 +367,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
       return files;
     };
 
-    const changedFiles = await getChangedFiles();
+    let changedFiles = await getChangedFiles();
     const hasLocalChanges = changedFiles.size > 0;
     if (hasLocalChanges) {
       this.log("Local files have changed since you last synced");
@@ -379,7 +375,17 @@ export default class Sync extends BaseCommand<typeof Sync> {
       this.log();
     }
 
-    this.debug("init %O", { metadata: this.state, remoteFilesVersion, hasRemoteChanges, hasLocalChanges });
+    context.addBreadcrumb({
+      category: "sync",
+      message: "Initializing",
+      data: {
+        state: this.state,
+        remoteFilesVersion,
+        hasRemoteChanges,
+        hasLocalChanges,
+        changed: Array.from(changedFiles.keys()),
+      },
+    });
 
     let action: Action | undefined;
     if (hasLocalChanges) {
@@ -391,10 +397,20 @@ export default class Sync extends BaseCommand<typeof Sync> {
       }));
     }
 
+    // get all the changed files again in case more changed
+    changedFiles = await getChangedFiles();
+
     switch (action) {
       case Action.MERGE: {
-        // get all the changed files again in case more changed
-        const files = await getChangedFiles();
+        context.addBreadcrumb({
+          category: "sync",
+          message: "Merging local changes",
+          data: {
+            state: this.state,
+            remoteFilesVersion,
+            changed: Array.from(changedFiles.keys()),
+          },
+        });
 
         // We purposefully don't set the returned remoteFilesVersion here because we haven't received the remote changes
         // yet. This will cause us to receive the local files that we just published + the remote files that were
@@ -404,7 +420,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
           variables: {
             input: {
               expectedRemoteFilesVersion: remoteFilesVersion,
-              changed: await pMap(files, async ([normalizedPath, stats]) => {
+              changed: await pMap(changedFiles, async ([normalizedPath, stats]) => {
                 if (stats.mtime.getTime() > this.state.mtime) {
                   this.state.mtime = stats.mtime.getTime();
                 }
@@ -423,6 +439,16 @@ export default class Sync extends BaseCommand<typeof Sync> {
         break;
       }
       case Action.RESET: {
+        context.addBreadcrumb({
+          category: "sync",
+          message: "Resetting local changes",
+          data: {
+            state: this.state,
+            remoteFilesVersion,
+            changed: Array.from(changedFiles.keys()),
+          },
+        });
+
         // delete all the local files that have changed since the last sync and set the files version to 0 so we receive
         // all the remote files again, including any files that we just deleted that still exist
         await pMap(changedFiles.keys(), (normalizedPath) => this.softDelete(normalizedPath));
@@ -434,7 +460,13 @@ export default class Sync extends BaseCommand<typeof Sync> {
       }
     }
 
-    this.debug("started");
+    context.addBreadcrumb({
+      category: "sync",
+      message: "Initialized",
+      data: {
+        state: this.state,
+      },
+    });
   }
 
   /**
@@ -447,9 +479,18 @@ export default class Sync extends BaseCommand<typeof Sync> {
     this.stop = async (e?: unknown) => {
       if (this.status != SyncStatus.RUNNING) return;
 
-      error = e;
-      this.debug("stopping");
       this.status = SyncStatus.STOPPING;
+      error = e;
+
+      context.addBreadcrumb({
+        category: "sync",
+        message: "Stopping",
+        level: error ? "error" : undefined,
+        data: {
+          state: this.state,
+          error,
+        },
+      });
 
       try {
         unsubscribe();
@@ -460,9 +501,16 @@ export default class Sync extends BaseCommand<typeof Sync> {
         this.state.flush();
         await Promise.allSettled([this.watcher.close(), this.client.dispose()]);
 
-        this.debug("stopped");
         this.status = SyncStatus.STOPPED;
         stopped.resolve();
+
+        context.addBreadcrumb({
+          category: "sync",
+          message: "Stopped",
+          data: {
+            state: this.state,
+          },
+        });
       }
     };
 
@@ -492,6 +540,17 @@ export default class Sync extends BaseCommand<typeof Sync> {
       {
         error: (error) => void this.stop(error),
         next: ({ remoteFileSyncEvents }) => {
+          context.addBreadcrumb({
+            category: "sync",
+            message: "Received file sync events",
+            data: {
+              state: this.state,
+              remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
+              changed: _.map(remoteFileSyncEvents.changed, "path"),
+              deleted: _.map(remoteFileSyncEvents.deleted, "path"),
+            },
+          });
+
           const remoteFilesVersion = remoteFileSyncEvents.remoteFilesVersion;
 
           // we always ignore .gadget/ files so that we don't publish them (they're managed by gadget), but we still want to receive them
@@ -500,11 +559,29 @@ export default class Sync extends BaseCommand<typeof Sync> {
           const deleted = _.filter(remoteFileSyncEvents.deleted, filter);
 
           this._enqueue(async () => {
+            context.addBreadcrumb({
+              category: "sync",
+              message: "Processing received file sync events",
+              data: {
+                state: this.state,
+                remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
+                changed: _.map(remoteFileSyncEvents.changed, "path"),
+                deleted: _.map(remoteFileSyncEvents.deleted, "path"),
+              },
+            });
+
             if (!changed.length && !deleted.length) {
               if (BigInt(remoteFilesVersion) > this.state.filesVersion) {
                 // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
-                this.debug("updated local files version from %s to %s", this.state.filesVersion, remoteFilesVersion);
                 this.state.filesVersion = remoteFilesVersion;
+                context.addBreadcrumb({
+                  category: "sync",
+                  message: "Received empty file sync events",
+                  data: {
+                    state: this.state,
+                    remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
+                  },
+                });
               }
               return;
             }
@@ -537,9 +614,16 @@ export default class Sync extends BaseCommand<typeof Sync> {
               await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
               if (absolutePath == this.absolute("yarn.lock")) {
-                await execa("yarn", ["install"], { cwd: this.dir }).catch((err) => {
-                  this.debug("yarn install failed");
-                  this.debug(err.message);
+                await execa("yarn", ["install"], { cwd: this.dir }).catch((error) => {
+                  context.addBreadcrumb({
+                    category: "sync",
+                    message: "Yarn install failed",
+                    level: "error",
+                    data: {
+                      state: this.state,
+                      error,
+                    },
+                  });
                 });
               }
 
@@ -548,7 +632,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
               }
             });
 
-            this.debug("updated local files version from %s to %s", this.state.filesVersion, remoteFilesVersion);
             this.state.filesVersion = remoteFilesVersion;
 
             // always remove the root directory from recentRemoteChanges
@@ -561,7 +644,17 @@ export default class Sync extends BaseCommand<typeof Sync> {
               }
             }
 
-            this.debug("recent remote changes %O", Array.from(this.recentRemoteChanges));
+            context.addBreadcrumb({
+              category: "sync",
+              message: "Processed received file sync events",
+              data: {
+                state: this.state,
+                remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
+                changed: _.map(remoteFileSyncEvents.changed, "path"),
+                deleted: _.map(remoteFileSyncEvents.deleted, "path"),
+                recentRemoteChanges: Array.from(this.recentRemoteChanges.keys()),
+              },
+            });
           });
         },
       },
@@ -579,6 +672,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
       localFilesBuffer.clear();
 
       this._enqueue(async () => {
+        context.addBreadcrumb({
+          category: "sync",
+          message: "Publishing file sync events",
+          data: {
+            state: this.state,
+            localFiles: Array.from(localFiles.keys()),
+          },
+        });
+
         const changed: FileSyncChangedEventInput[] = [];
         const deleted: FileSyncDeletedEventInput[] = [];
 
@@ -607,21 +709,28 @@ export default class Sync extends BaseCommand<typeof Sync> {
           return;
         }
 
-        const data = await this.client.queryUnwrap({
+        const { publishFileSyncEvents } = await this.client.queryUnwrap({
           query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
           variables: { input: { expectedRemoteFilesVersion: String(this.state.filesVersion), changed, deleted } },
         });
 
+        context.addBreadcrumb({
+          category: "sync",
+          message: "Published file sync events",
+          data: {
+            state: this.state,
+            remoteFilesVersion: publishFileSyncEvents.remoteFilesVersion,
+            changed: _.map(changed, "path"),
+            deleted: _.map(deleted, "path"),
+          },
+        });
+
+        if (BigInt(publishFileSyncEvents.remoteFilesVersion) > this.state.filesVersion) {
+          this.state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
+        }
+
         this.log(chalkTemplate`Sent {gray ${format(new Date(), "pp")}}`);
         this.logPaths("→", _.map(changed, "path"), _.map(deleted, "path"));
-
-        const { remoteFilesVersion } = data.publishFileSyncEvents;
-        this.debug("remote files version after publishing %s", remoteFilesVersion);
-
-        if (BigInt(remoteFilesVersion) > this.state.filesVersion) {
-          this.debug("updated local files version from %s to %s", this.state.filesVersion, remoteFilesVersion);
-          this.state.filesVersion = remoteFilesVersion;
-        }
       });
     }, this.flags["file-push-delay"]);
 
@@ -699,7 +808,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
           break;
       }
 
-      this.debug("publishing file change %s", normalizedPath);
       this.publish();
     });
 
@@ -767,6 +875,11 @@ export class SyncState {
    */
   #save = _.debounce(() => {
     fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
+    context.addBreadcrumb({
+      category: "sync",
+      message: "Saved sync state",
+      data: { state: this._inner },
+    });
   }, 100);
 
   private constructor(
@@ -835,6 +948,12 @@ export class SyncState {
   static load(rootDir: string): SyncState {
     const state = fs.readJsonSync(path.join(rootDir, ".gadget/sync.json"));
 
+    context.addBreadcrumb({
+      category: "sync",
+      message: "Loaded sync state",
+      data: { state },
+    });
+
     assert(_.isString(state.app), "missing or invalid app");
     assert(_.isString(state.filesVersion), "missing or invalid filesVersion");
     assert(_.isNumber(state.mtime), "missing or invalid mtime");
@@ -851,6 +970,13 @@ export class SyncState {
    */
   flush(): void {
     this.#save.flush();
+  }
+
+  /**
+   * @returns The JSON representation of this instance.
+   */
+  toJSON() {
+    return this._inner;
   }
 }
 

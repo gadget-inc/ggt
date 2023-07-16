@@ -1,5 +1,6 @@
 import * as cliErrors from "@oclif/core/lib/parser/errors.js";
 import { ExitError } from "@oclif/errors";
+import * as Sentry from "@sentry/node";
 import debug from "debug";
 import getPort from "get-port";
 import inquirer from "inquirer";
@@ -34,6 +35,23 @@ describe("BaseCommand", () => {
       expect(debug.enable).toHaveBeenCalledWith(`ggt:*`);
       expect(base.debugEnabled).toBe(true);
     });
+
+    it.each(["0", "false", "False", "FALSE", "no", "No", "NO", "off", "Off", "OFF"])(
+      "disables Sentry when GGT_SENTRY_ENABLED is %s",
+      async (value) => {
+        vi.spyOn(Sentry, "init").mockImplementation(_.noop);
+        vi.spyOn(context.env, "productionLike", "get").mockReturnValueOnce(true);
+
+        process.env["GGT_SENTRY_ENABLED"] = value;
+        await base.init();
+
+        expect(Sentry.init).toHaveBeenCalledWith(
+          expect.objectContaining({
+            enabled: false,
+          }),
+        );
+      },
+    );
 
     describe("with requireUser = true", () => {
       class DoesRequireUser extends BaseCommand<typeof DoesRequireUser> {

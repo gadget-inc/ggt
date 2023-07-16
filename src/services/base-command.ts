@@ -2,11 +2,12 @@ import type { Config, Interfaces } from "@oclif/core";
 import { Command, Flags, settings } from "@oclif/core";
 import { CLIError as CLIError2 } from "@oclif/core/lib/errors/index.js";
 import { CLIError, ExitError } from "@oclif/errors";
-import * as Sentry from "@sentry/node";
+import { init as initSentry } from "@sentry/node";
 import chalkTemplate from "chalk-template";
 import Debug from "debug";
 import getPort from "get-port";
 import inquirer from "inquirer";
+import _ from "lodash";
 import type { Notification } from "node-notifier";
 import notifier from "node-notifier";
 import type WindowsBalloon from "node-notifier/notifiers/balloon.js";
@@ -86,12 +87,11 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
   override async init(): Promise<void> {
     context.config = this.config;
 
-    if (context.env.productionLike) {
-      Sentry.init({
-        dsn: "https://0c26e0d8afd94e77a88ee1c3aa9e7065@o250689.ingest.sentry.io/6703266",
-        release: context.config.version,
-      });
-    }
+    initSentry({
+      dsn: "https://0c26e0d8afd94e77a88ee1c3aa9e7065@o250689.ingest.sentry.io/6703266",
+      release: context.config.version,
+      enabled: context.env.productionLike && !_.includes(["0", "false", "no", "off"], _.toLower(_.trim(process.env["GGT_SENTRY_ENABLED"]))),
+    });
 
     await super.init();
 
@@ -126,6 +126,16 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       settings.debug = true;
       Debug.enable(`${this.config.bin}:*`);
     }
+
+    context.addBreadcrumb({
+      category: "command",
+      message: "Initialized",
+      data: {
+        command: this.id,
+        flags: this.flags,
+        args: this.args,
+      },
+    });
   }
 
   /**

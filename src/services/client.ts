@@ -1,5 +1,4 @@
 import assert from "assert";
-import Debug from "debug";
 import type { GraphQLError } from "graphql";
 import type { ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
@@ -10,8 +9,6 @@ import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
 import { context } from "./context.js";
 import { ClientError } from "./errors.js";
-
-const debug = Debug("ggt:client");
 
 enum ConnectionStatus {
   CONNECTED,
@@ -55,21 +52,21 @@ export class Client {
           switch (this.status) {
             case ConnectionStatus.DISCONNECTED:
               this.status = ConnectionStatus.RECONNECTING;
-              debug("reconnecting...");
+              context.addBreadcrumb({ category: "client", message: "Reconnecting" });
               break;
             case ConnectionStatus.RECONNECTING:
-              debug("retrying...");
+              context.addBreadcrumb({ category: "client", message: "Retrying" });
               break;
             default:
-              debug("connecting...");
+              context.addBreadcrumb({ category: "client", message: "Connecting" });
               break;
           }
         },
         connected: () => {
           if (this.status === ConnectionStatus.RECONNECTING) {
-            debug("reconnected");
+            context.addBreadcrumb({ category: "client", message: "Reconnected" });
           } else {
-            debug("connected");
+            context.addBreadcrumb({ category: "client", message: "Connected" });
           }
 
           // let the other on connected listeners see what status we're in
@@ -78,20 +75,20 @@ export class Client {
         closed: (e) => {
           const event = e as CloseEvent;
           if (event.wasClean) {
-            debug("connection closed");
+            context.addBreadcrumb({ category: "client", message: "Connection Closed" });
             return;
           }
 
           if (this.status === ConnectionStatus.CONNECTED) {
             this.status = ConnectionStatus.DISCONNECTED;
-            debug("disconnected");
+            context.addBreadcrumb({ category: "client", message: "Disconnected" });
           }
         },
         error: (error) => {
           if (this.status == ConnectionStatus.RECONNECTING) {
-            debug("failed to reconnect %o", { error });
+            context.addBreadcrumb({ category: "client", message: "Failed to reconnect", level: "error", data: { error } });
           } else {
-            debug("connection error %o", { error });
+            context.addBreadcrumb({ category: "client", message: "Connection error", level: "error", data: { error } });
           }
         },
       },
@@ -112,14 +109,29 @@ export class Client {
         if (this.status == ConnectionStatus.RECONNECTING) {
           // subscribePayload.variables is supposed to be readonly (it's not) and payload.variables may have been re-assigned (it won't)
           (subscribePayload as any).variables = (payload.variables as any)();
-          debug("re-sending %s%s%O", _.split(subscribePayload.query, /\s+/g, 1)[0], subscribePayload.query, subscribePayload.variables);
+          context.addBreadcrumb({
+            category: "client",
+            message: "Re-sending GraphQL query",
+            data: {
+              type: _.split(subscribePayload.query, /\s+/g, 1)[0],
+              query: subscribePayload.query,
+            },
+          });
         }
       });
     } else {
       subscribePayload = payload as SubscribePayload;
     }
 
-    debug("sending %s%s%O", _.split(subscribePayload.query, /\s+/g, 1)[0], subscribePayload.query, subscribePayload.variables);
+    context.addBreadcrumb({
+      category: "client",
+      message: "Sending GraphQL query",
+      data: {
+        type: _.split(subscribePayload.query, /\s+/g, 1)[0],
+        query: subscribePayload.query,
+      },
+    });
+
     const unsubscribe = this._client.subscribe(subscribePayload, {
       next: (result: ExecutionResult<Data, Extensions>) => {
         sink.next(result);

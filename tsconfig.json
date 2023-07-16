@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["bin", "spec", "src", "*.js", "*.cjs", ".*.cjs"],
-  "exclude": ["node_modules", "lib"],
+  "include": ["bin/dev.js", "spec", "src", "*.js", "*.cjs", ".*.cjs"],
+  "exclude": ["node_modules"],
   "ts-node": {
     "swc": true
   },
@@ -21,12 +21,10 @@
     "module": "Node16",
     "moduleResolution": "node16",
     "resolveJsonModule": true,
-    "rootDirs": ["src", "spec"], // for @oclif/core to find commands during development
     "types": ["node"],
 
     /* Emit */
     "noEmit": true,
-    "outDir": "lib", // for @oclif/core to find commands during development
 
     /* JavaScript Support */
     "allowJs": true,

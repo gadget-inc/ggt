@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import nock from "nock";
 import path from "path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Context, context } from "../../src/services/context.js";
 
 describe("Context", () => {
@@ -122,7 +122,7 @@ describe("Context", () => {
   });
 
   describe("domains", () => {
-    afterEach(() => {
+    beforeEach(() => {
       delete process.env["GGT_GADGET_APP_DOMAIN"];
       delete process.env["GGT_GADGET_SERVICES_DOMAIN"];
     });
@@ -134,13 +134,16 @@ describe("Context", () => {
         expect(new Context().domains.app).toBe(domain);
       });
 
-      it("defaults to gadget.app when GGT_ENV is production", () => {
-        process.env["GGT_ENV"] = "production";
-        expect(new Context().domains.app).toBe("gadget.app");
+      it.each(["development", "test"])("defaults to ggt.pub when GGT_ENV=%s", (env) => {
+        process.env["GGT_ENV"] = env;
+        expect(new Context().domains.app).toBe("ggt.pub");
       });
 
-      it("defaults to ggt.pub otherwise", () => {
-        expect(new Context().domains.app).toBe("ggt.pub");
+      it("defaults to gadget.app otherwise", () => {
+        for (const env of [undefined, "production", "blah"]) {
+          process.env["GGT_ENV"] = env;
+          expect(new Context().domains.app).toBe("gadget.app");
+        }
       });
     });
 
@@ -151,13 +154,16 @@ describe("Context", () => {
         expect(new Context().domains.services).toBe(domain);
       });
 
-      it("defaults to app.gadget.dev when GGT_ENV is production", () => {
-        process.env["GGT_ENV"] = "production";
-        expect(new Context().domains.services).toBe("app.gadget.dev");
+      it.each(["development", "test"])("defaults to app.ggt.dev when GGT_ENV=%s", (env) => {
+        process.env["GGT_ENV"] = env;
+        expect(new Context().domains.services).toBe("app.ggt.dev");
       });
 
-      it("defaults to app.ggt.dev otherwise", () => {
-        expect(new Context().domains.services).toBe("app.ggt.dev");
+      it("defaults to app.gadget.dev otherwise", () => {
+        for (const env of [undefined, "production", "blah"]) {
+          process.env["GGT_ENV"] = env;
+          expect(new Context().domains.services).toBe("app.gadget.dev");
+        }
       });
     });
   });

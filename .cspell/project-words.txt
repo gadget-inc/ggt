@@ -6,7 +6,10 @@ ENOENT
 execa
 gadgetinc
 getsentry
+HOMEDRIVE
+HOMEPATH
 linkcode
+LOCALAPPDATA
 nothrow
 notificationcenter
 notifysend

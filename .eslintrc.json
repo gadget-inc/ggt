@@ -34,6 +34,7 @@
     "@typescript-eslint/no-unsafe-call": ["off"],
     "@typescript-eslint/no-unsafe-member-access": ["off"],
     "@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/prefer-nullish-coalescing": ["error", { "ignorePrimitives": { "string": true } }],
     "@typescript-eslint/restrict-template-expressions": ["off"],
     "@typescript-eslint/unbound-method": "off",
     "lodash/import-scope": ["error", "full"]
@@ -50,5 +51,5 @@
   "settings": {
     "import/extensions": [".js", ".jsx", ".ts", ".tsx"]
   },
-  "ignorePatterns": ["node_modules", "lib", "tmp", "__generated__", ".direnv"]
+  "ignorePatterns": ["node_modules", "lib", "tmp", "__generated__", ".direnv", "bin/run.js"]
 }

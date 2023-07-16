@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/node";
+import arg from "arg";
 import cleanStack from "clean-stack";
 import { randomUUID } from "crypto";
 import { RequestError } from "got";
@@ -10,16 +11,13 @@ import { dedent } from "ts-dedent";
 import type { SetOptional } from "type-fest";
 import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
-import type Sync from "../commands/sync.js";
 import type { Payload } from "./client.js";
 import { context } from "./context.js";
 
 /**
  * Base class for all errors.
- *
- * Inspired by gadget's GadgetError and oclif's PrettyPrintableError.
  */
-export abstract class BaseError extends Error {
+export abstract class CLIError extends Error {
   /**
    * A GGT_CLI_SOMETHING human/machine readable unique identifier for this error.
    */
@@ -51,6 +49,15 @@ export abstract class BaseError extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 
+  /**
+   * Constructs a CLIError from a cause.
+   */
+  static from(cause: unknown): CLIError {
+    if (cause instanceof CLIError) return cause;
+    if (cause instanceof arg.ArgError) return new ArgError(cause.message);
+    return new UnexpectedError(cause);
+  }
+
   async capture(): Promise<void> {
     if (this.isBug == IsBug.NO) return;
 
@@ -73,7 +80,7 @@ export abstract class BaseError extends Error {
         contexts: {
           cause: this.cause ? serializeError(this.cause) : undefined,
           app: {
-            command: `${context.config.bin} ${process.argv.slice(2).join(" ")}`,
+            command: `ggt ${process.argv.slice(2).join(" ")}`,
             argv: process.argv,
           },
           device: {
@@ -93,24 +100,11 @@ export abstract class BaseError extends Error {
   }
 
   /**
-   * Turns this error into a user-friendly message that explains what went wrong and how to fix it. A good write up of what an error should
-   * look like can be found here: {@link https://clig.dev/#errors}
+   * Turns this error into a user-friendly message that explains what went wrong and how to fix it. A good write up of
+   * what an error should look like can be found here: {@link https://clig.dev/#errors}
    */
   render(): string {
-    const rendered = dedent`
-      ${this.header()}
-
-      ${this.body()}
-    `;
-
-    const footer = this.footer();
-    if (!footer) return rendered;
-
-    return dedent`
-      ${rendered}
-
-      ${footer}
-    `;
+    return _.compact([this.header(), this.body(), this.footer()]).join("\n\n");
   }
 
   protected header(): string {
@@ -163,19 +157,22 @@ export enum IsBug {
  *
  * Whenever possible, we should use a more specific error so that we can provide more useful information.
  */
-export class UnexpectedError extends BaseError {
+export class UnexpectedError extends CLIError {
   isBug = IsBug.YES;
 
-  constructor(override cause: Error) {
+  constructor(override cause: unknown) {
     super("GGT_CLI_UNEXPECTED_ERROR", "An unexpected error occurred");
   }
 
   protected body(): string {
-    return cleanStack(this.cause.stack ?? this.stack);
+    if (_.isError(this.cause)) {
+      return cleanStack(this.cause.stack ?? this.stack);
+    }
+    return this.stack;
   }
 }
 
-export class ClientError extends BaseError {
+export class ClientError extends CLIError {
   isBug = IsBug.MAYBE;
 
   constructor(
@@ -233,7 +230,7 @@ export class ClientError extends BaseError {
   }
 }
 
-export class YarnNotFoundError extends BaseError {
+export class YarnNotFoundError extends CLIError {
   isBug = IsBug.NO;
 
   constructor() {
@@ -251,38 +248,29 @@ export class YarnNotFoundError extends BaseError {
   }
 }
 
-export class FlagError<T extends { name: string; char?: string } = { name: string; char?: string }> extends BaseError {
+export class ArgError extends CLIError {
   isBug = IsBug.NO;
 
-  #message: string;
-
-  constructor(
-    readonly flag: T,
-    readonly description: string,
-  ) {
-    const name = flag.char ? `-${flag.char}, --${flag.name}` : `--${flag.name}`;
-    super("GGT_CLI_FLAG_ERROR", "");
-
-    // oclif overwrites the message property, so we have to use different one...
-    // https://github.com/oclif/core/blob/413592abca47ebedb2c006634a326bab325c26bd/src/parser/parse.ts#L317
-    this.#message = `Invalid value provided for the ${name} flag`;
+  constructor(message: string) {
+    super("GGT_CLI_ARG_ERROR", message);
   }
 
+  // eslint-disable-next-line lodash/prefer-constant
   protected override header(): string {
-    return `${this.code}: ${this.#message}`;
+    return "";
   }
 
-  protected body(): string {
-    return this.description;
+  protected override body(): string {
+    return this.message;
   }
 }
 
-export class InvalidSyncFileError extends BaseError {
+export class InvalidSyncFileError extends CLIError {
   isBug = IsBug.MAYBE;
 
   constructor(
     override readonly cause: unknown,
-    readonly sync: Sync,
+    readonly dir: string,
     readonly app: string | undefined,
   ) {
     super("GGT_CLI_INVALID_SYNC_FILE", "The .gadget/sync.json file was invalid or not found");
@@ -292,7 +280,7 @@ export class InvalidSyncFileError extends BaseError {
     return dedent`
       We failed to read the Gadget metadata file in this directory:
 
-        ${this.sync.dir}
+        ${this.dir}
 
       If you're running \`ggt sync\` for the first time, we recommend using an empty directory such as:
 
@@ -300,31 +288,10 @@ export class InvalidSyncFileError extends BaseError {
 
       Otherwise, if you're sure you want to sync the contents of that directory to Gadget, run \`ggt sync\` again with the \`--force\` flag:
 
-        $ ggt sync ${this.sync.argv.join(" ")} --force
+        $ ggt sync --app ${this.app} ${this.dir} --force
 
       You will be prompted to either merge your local files with your remote ones or reset your local files to your remote ones.
     `;
-  }
-}
-
-export class InvalidSyncAppFlagError extends FlagError {
-  constructor(sync: Sync) {
-    super(
-      { name: "app", char: "a" },
-      dedent`
-        You were about to sync the following app to the following directory:
-
-          ${sync.flags.app} → ${sync.dir}
-
-        However, that directory has already been synced with this app:
-
-          ${sync.state.app}
-
-        If you're sure that you want to sync "${sync.flags.app}" to "${sync.dir}", run \`ggt sync\` again with the \`--force\` flag:
-
-          $ ggt sync ${sync.argv.join(" ")} --force
-      `,
-    );
   }
 }
 

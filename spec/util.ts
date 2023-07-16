@@ -21,6 +21,10 @@ export function testDirPath(): string {
   return path.join(__dirname, "../tmp/", testFile, describes.join("/"), _.replace(testName, /[^\s\w-]/g, ""));
 }
 
+export const testStdout: string[] = [];
+
+export const expectStdout = () => expect(testStdout.join(""));
+
 export async function getError(fnThatThrows: () => unknown): Promise<any> {
   try {
     await fnThatThrows();

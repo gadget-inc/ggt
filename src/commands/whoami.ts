@@ -1,31 +1,27 @@
-import chalkTemplate from "chalk-template";
-import { dedent } from "ts-dedent";
-import { BaseCommand } from "../services/base-command.js";
 import { context } from "../services/context.js";
+import { println, sprint } from "../services/output.js";
 
-export default class Whoami extends BaseCommand<typeof Whoami> {
-  static override summary = "Show the name and email address of the currently logged in user.";
+export const usage = sprint`
+    Show the name and email address of the currently logged in user.
 
-  static override usage = "whoami";
+    {bold USAGE}
+      $ ggt whoami
 
-  static override examples = [
-    dedent(chalkTemplate`
+    {bold EXAMPLES}
       {gray $ ggt whoami}
-      You are logged in as Jane Doe {gray (jane@example.com)}
-    `),
-  ];
+      You are logged in as Jane Doe (jane@example.com)
+`;
 
-  async run(): Promise<void> {
-    const user = await context.getUser();
-    if (!user) {
-      this.log("You are not logged in");
-      return;
-    }
-
-    if (user.name) {
-      this.log(chalkTemplate`You are logged in as ${user.name} {gray (${user.email})}`);
-    } else {
-      this.log(`You are logged in as ${user.email}`);
-    }
+export const run = async () => {
+  const user = await context.getUser();
+  if (!user) {
+    println`You are not logged in`;
+    return;
   }
-}
+
+  if (user.name) {
+    println`You are logged in as ${user.name} {gray (${user.email})}`;
+  } else {
+    println`You are logged in as ${user.email}`;
+  }
+};

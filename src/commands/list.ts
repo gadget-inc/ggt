@@ -1,60 +1,41 @@
-import { ux } from "@oclif/core";
-import chalkTemplate from "chalk-template";
-import { dedent } from "ts-dedent";
-import { BaseCommand } from "../services/base-command.js";
-import type { App } from "../services/context.js";
+import _ from "lodash";
 import { context } from "../services/context.js";
+import { println, sprint } from "../services/output.js";
 
-export default class List extends BaseCommand<typeof List> {
-  static override summary = "List the apps available to the currently logged in user.";
+export const usage = sprint`
+    List the apps available to the currently logged in user.
 
-  static override usage = "list";
+    {bold USAGE}
+      $ ggt list
 
-  static override examples = [
-    dedent(chalkTemplate`
+    {bold EXAMPLE}
       {gray $ ggt list}
-      {gray $ ggt list --extended}
-      {gray $ ggt list --sort=slug}
-    `),
-  ];
+      Slug    Domain
+      ─────── ──────────────────
+      my-app  my-app.gadget.app
+      example example.gadget.app
+      test    test.gadget.app
+`;
 
-  static override flags = {
-    ...ux.table.flags(),
-  };
+export const run = async () => {
+  await context.requireUser();
 
-  override requireUser = true;
+  const apps = await context.getAvailableApps();
+  if (!apps.length) {
+    println`
+        It doesn't look like you have any applications.
 
-  async run(): Promise<void> {
-    const { flags } = await this.parse(List);
-
-    const apps = await context.getAvailableApps();
-    if (!apps.length) {
-      this.log(dedent`
-          It doesn't look like you have any applications.
-
-          Visit https://gadget.new to create one!
-      `);
-      return;
-    }
-
-    ux.table<App & Record<string, never>>(
-      apps as unknown as (App & Record<string, never>)[],
-      {
-        id: {
-          header: "ID",
-          extended: true,
-        },
-        slug: {
-          header: "Slug",
-        },
-        primaryDomain: {
-          header: "Domain",
-        },
-      },
-      {
-        printLine: this.log.bind(this),
-        ...flags, // parsed flags
-      },
-    );
+        Visit https://gadget.new to create one!
+    `;
+    return;
   }
-}
+
+  const longestSlug = _.maxBy(apps, "slug.length")?.slug.length ?? 0;
+  const longestDomain = _.maxBy(apps, "primaryDomain.length")?.primaryDomain.length ?? 0;
+
+  println`{bold Slug}${_.repeat(" ", longestSlug - 4)} {bold Domain}`;
+  println`${_.repeat("─", Math.max(longestSlug, 4))} ${_.repeat("─", Math.max(longestDomain, 6))}`;
+  for (const app of _.sortBy(apps, "slug")) {
+    println`${app.slug}${_.repeat(" ", longestSlug - app.slug.length)} ${app.primaryDomain}`;
+  }
+};

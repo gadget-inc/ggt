@@ -1,31 +1,38 @@
 import { describe, expect, it, vi } from "vitest";
-import Logout from "../../src/commands/logout.js";
+import { run } from "../../src/commands/logout.js";
 import { context } from "../../src/services/context.js";
+import { expectStdout } from "../util.js";
 
-describe("Logout", () => {
-  it("sets context.session = undefined", async () => {
+describe("logout", () => {
+  it("sets context.session = undefined", () => {
     context.session = "test";
     const spy = vi.spyOn(context, "session", "set");
 
-    await Logout.run();
+    run();
 
     expect(spy).toHaveBeenLastCalledWith(undefined);
     expect(context.session).toBeUndefined();
   });
 
-  it("prints a message if the user is logged in", async () => {
+  it("prints a message if the user is logged in", () => {
     context.session = "test";
 
-    await Logout.run();
+    run();
 
-    expect(Logout.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"Goodbye"`);
+    expectStdout().toMatchInlineSnapshot(`
+      "Goodbye
+      "
+    `);
   });
 
-  it("prints a different message if the user is logged out", async () => {
+  it("prints a different message if the user is logged out", () => {
     context.session = undefined;
 
-    await Logout.run();
+    run();
 
-    expect(Logout.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"You are not logged in"`);
+    expectStdout().toMatchInlineSnapshot(`
+      "You are not logged in
+      "
+    `);
   });
 });

@@ -55,28 +55,6 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`FlagError > renders correctly 1`] = `
-"GGT_CLI_FLAG_ERROR: Invalid value provided for the -b, --bad flag
-
-You were about to do something dangerous, so we stopped you."
-`;
-
-exports[`InvalidSyncAppFlagError > renders correctly 1`] = `
-"GGT_CLI_FLAG_ERROR: Invalid value provided for the -a, --app flag
-
-You were about to sync the following app to the following directory:
-
-  not-test → ~/gadget/test
-
-However, that directory has already been synced with this app:
-
-  test
-
-If you're sure that you want to sync \\"not-test\\" to \\"~/gadget/test\\", run \`ggt sync\` again with the \`--force\` flag:
-
-  $ ggt sync --app not-test ~/gadget/test --force"
-`;
-
 exports[`InvalidSyncFileError > renders correctly 1`] = `
 "GGT_CLI_INVALID_SYNC_FILE: The .gadget/sync.json file was invalid or not found
 

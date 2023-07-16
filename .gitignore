@@ -3,6 +3,5 @@
 .nyc_output
 lib
 node_modules
-oclif.manifest.json
 tmp
 *.orig

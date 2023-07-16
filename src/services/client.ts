@@ -41,7 +41,7 @@ export class Client {
             ...wsOptions,
             headers: {
               ...wsOptions?.headers,
-              "user-agent": context.config.userAgent,
+              "user-agent": context.config.versionFull,
               cookie: `session=${encodeURIComponent(context.session)};`,
             },
           });

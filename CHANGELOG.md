@@ -1,5 +1,40 @@
 # @gadgetinc/ggt
 
+## 0.2.2
+
+### Patch Changes
+
+- 4e5e350: Bump @oclif/core from 2.8.7 to 2.8.10
+- 0a88335: Bump @sentry/node from 7.56.0 to 7.57.0
+- b1aaacf: Bump @oclif/core from 2.8.10 to 2.8.11
+- 5fc1913: Bump graphql from 16.7.0 to 16.7.1
+- ad3913a: Bump @oclif/plugin-warn-if-update-available from 2.0.39 to 2.0.40
+- 250f2ac: Bump @oclif/core from 2.9.2 to 2.9.3
+- f5d333f: Bump @oclif/plugin-warn-if-update-available from 2.0.37 to 2.0.39
+- 7c86212: Bump @sentry/node from 7.55.2 to 7.56.0
+- 5d649c9: Bump chalk from 5.2.0 to 5.3.0
+- 377dc1a: Bump @oclif/plugin-not-found from 2.3.29 to 2.3.31
+- 05881a6: Bump @sentry/node from 7.58.1 to 7.59.2
+- b8d37b0: Bump @oclif/plugin-warn-if-update-available from 2.0.40 to 2.0.41
+- 20397d8: Bump @oclif/plugin-not-found from 2.3.28 to 2.3.29
+- 0fb7ea2: Bump @oclif/core from 2.9.1 to 2.9.2
+- 8c05c8c: Bump @oclif/plugin-not-found from 2.3.26 to 2.3.27
+- f27c816: Bump @oclif/plugin-warn-if-update-available from 2.0.41 to 2.0.42
+- ccc87f4: Bump @sentry/node from 7.57.0 to 7.58.1
+- f8b41b2: Bump graphql-ws from 5.13.1 to 5.14.0
+- 94b576a: Bump graphql from 16.6.0 to 16.7.0
+- fb4ca33: Bump @oclif/core from 2.9.3 to 2.9.4
+- 0481e16: Bump @oclif/core from 2.8.11 to 2.8.12
+- 7724abc: Bump inquirer from 9.2.7 to 9.2.8
+- 41fb29a: Bump @oclif/plugin-not-found from 2.3.25 to 2.3.26
+- 49adf11: Bump @oclif/core from 2.8.12 to 2.9.1
+- b110061: Bump @oclif/plugin-warn-if-update-available from 2.0.42 to 2.0.44
+- c482369: Bump @oclif/plugin-not-found from 2.3.27 to 2.3.28
+- ee23711: Improve sentry integration
+
+  - Added sentry breadcrumbs to help debug on-going bugs.
+  - Added ability to disable sentry via `GGT_SENTRY_ENABLED=false`
+
 ## 0.2.1
 
 ### Patch Changes

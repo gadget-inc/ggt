@@ -1,5 +1,13 @@
 # @gadgetinc/ggt
 
+## 0.2.3
+
+### Patch Changes
+
+- 66f4641: Bump @sentry/node from 7.59.3 to 7.60.0
+- f487b29: Bump @sentry/node from 7.59.2 to 7.59.3
+- 459f72b: Bump @oclif/plugin-not-found from 2.3.31 to 2.3.32
+
 ## 0.2.2
 
 ### Patch Changes

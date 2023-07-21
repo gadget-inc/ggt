@@ -113,7 +113,7 @@ export class Client {
             category: "client",
             message: "Re-sending GraphQL query",
             data: {
-              type: _.split(subscribePayload.query, /\s+/g, 1)[0],
+              type: _.split(subscribePayload.query, " ", 1)[0],
               query: subscribePayload.query,
             },
           });
@@ -127,7 +127,7 @@ export class Client {
       category: "client",
       message: "Sending GraphQL query",
       data: {
-        type: _.split(subscribePayload.query, /\s+/g, 1)[0],
+        type: _.split(subscribePayload.query, " ", 1)[0],
         query: subscribePayload.query,
       },
     });

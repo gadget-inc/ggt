@@ -152,8 +152,18 @@ export class Context {
   }
 
   addBreadcrumb(breadcrumb: Breadcrumb) {
-    addBreadcrumb(breadcrumb);
     debug("breadcrumb %O", breadcrumb);
+
+    // clone any objects in the data so that we get a snapshot of the object at the time the breadcrumb was added
+    if (breadcrumb.data) {
+      for (const [key, value] of Object.entries(breadcrumb.data)) {
+        if (_.isObjectLike(value)) {
+          breadcrumb.data[key] = _.cloneDeep(value);
+        }
+      }
+    }
+
+    addBreadcrumb(breadcrumb);
   }
 }
 

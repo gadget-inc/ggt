@@ -993,10 +993,7 @@ export enum Action {
   RESET = "Reset local files to remote ones",
 }
 
-export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION: Query<
-  RemoteFileSyncEventsSubscription,
-  RemoteFileSyncEventsSubscriptionVariables
-> = /* GraphQL */ `
+export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
   subscription RemoteFileSyncEvents($localFilesVersion: String!) {
     remoteFileSyncEvents(localFilesVersion: $localFilesVersion, encoding: base64) {
       remoteFilesVersion
@@ -1011,21 +1008,18 @@ export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION: Query<
       }
     }
   }
-`;
+`) as Query<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
 
-export const REMOTE_FILES_VERSION_QUERY: Query<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables> = /* GraphQL */ `
+export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
   query RemoteFilesVersion {
     remoteFilesVersion
   }
-`;
+`) as Query<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables>;
 
-export const PUBLISH_FILE_SYNC_EVENTS_MUTATION: Query<
-  PublishFileSyncEventsMutation,
-  PublishFileSyncEventsMutationVariables
-> = /* GraphQL */ `
+export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
   mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
     publishFileSyncEvents(input: $input) {
       remoteFilesVersion
     }
   }
-`;
+`) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;

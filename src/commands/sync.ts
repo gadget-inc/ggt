@@ -714,6 +714,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
           variables: { input: { expectedRemoteFilesVersion: String(this.state.filesVersion), changed, deleted } },
         });
 
+        if (BigInt(publishFileSyncEvents.remoteFilesVersion) > this.state.filesVersion) {
+          this.state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
+        }
+
         context.addBreadcrumb({
           category: "sync",
           message: "Published file sync events",
@@ -724,10 +728,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
             deleted: _.map(deleted, "path"),
           },
         });
-
-        if (BigInt(publishFileSyncEvents.remoteFilesVersion) > this.state.filesVersion) {
-          this.state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
-        }
 
         this.log(chalkTemplate`Sent {gray ${format(new Date(), "pp")}}`);
         this.logPaths("→", _.map(changed, "path"), _.map(deleted, "path"));

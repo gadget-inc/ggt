@@ -36,30 +36,40 @@ import { println, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
 
 export const usage = sprint`
-  Sync your Gadget application's source code to and from your local filesystem.
+  Sync your Gadget application's source code to and from
+  your local filesystem.
 
   {bold USAGE}
     $ ggt sync [DIRECTORY] [--app <name>]
 
   {bold ARGUMENTS}
-    DIRECTORY  {dim [default: .] The directory to sync files to. If the directory doesn't exist, it will be created.}
+    DIRECTORY  {dim [default: .] The directory to sync files to.
+
+               If the directory doesn't exist, it will be created.}
 
   {bold FLAGS}
     -a, --app=<name>  {dim The Gadget application to sync files to.}
-    --force           {dim Whether to sync even if we can't determine the state of your local files relative to your remote ones.}
+
+    --force           {dim Whether to sync even if we can't determine
+                      the state of your local files relative to
+                      your remote ones.}
 
   {bold DESCRIPTION}
-    Sync provides the ability to sync your Gadget application's source code to and from your local
-    filesystem. While ggt sync is running, local file changes are immediately reflected within
-    Gadget, while files that are changed remotely are immediately saved to your local filesystem.
+    Sync provides the ability to sync your Gadget application's source
+    code to and from your local filesystem.
+
+    While ggt sync is running, local file changes are immediately
+    reflected within Gadget, while files that are changed remotely are
+    immediately saved to your local filesystem.
 
     Use cases for this include:
-      - Developing locally with your own editor like VSCode {dim (https://code.visualstudio.com/)}
-      - Storing your source code in a Git repository like GitHub {dim (https://github.com/)}
+      - Developing locally with your own editor like VSCode
+      - Storing your source code in a Git repository like GitHub
 
-    Sync includes the concept of a {dim .ignore} file. This file may contain a list of files and
-    directories that won't be received or sent to Gadget when syncing. The format of this file is
-    identical to the one used by Git {dim (https://git-scm.com/docs/gitignore)}.
+    Sync includes the concept of a {dim .ignore} file. This file may
+    contain a list of files and directories that won't be received or
+    sent to Gadget when syncing. The format of this file is identical
+    to the one used by Git {dim (https://git-scm.com/docs/gitignore)}.
 
     The following files and directories are always ignored:
       - .gadget
@@ -68,9 +78,12 @@ export const usage = sprint`
       - .DS_STORE
 
     Note:
-      - If you have separate development and production environments, {dim ggt sync} will only sync with your development environment
-      - Gadget applications only support installing dependencies with Yarn 1 {dim (https://classic.yarnpkg.com/lang/en/)}
-      - Since file changes are immediately reflected in Gadget, avoid the following while {dim ggt sync} is running:
+      - If you have separate development and production environments,
+        {dim ggt sync} will only sync with your development environment
+      - Gadget applications only support installing dependencies
+        with Yarn 1 {dim (https://classic.yarnpkg.com/lang/en/)}
+      - Since file changes are immediately reflected in Gadget,
+        avoid the following while {dim ggt sync} is running:
           - Deleting all your files
           - Moving all your files to a different directory
 

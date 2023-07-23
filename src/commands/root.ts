@@ -14,11 +14,12 @@ export const usage = sprint`
       $ ggt [COMMAND]
 
     {bold COMMANDS}
-      sync    Sync your Gadget application's source code to and from your local filesystem.
-      list    List the apps available to the currently logged in user.
+      sync    Sync your Gadget application's source code to and
+              from your local filesystem.
+      list    List your apps.
       login   Log in to your account.
       logout  Log out of your account.
-      whoami  Show the name and email address of the currently logged in user.
+      whoami  Print the currently logged in account.
 `;
 
 export const run = async () => {
@@ -37,7 +38,7 @@ export const run = async () => {
     process.exit(1);
   }
 
-  const cmd: Command = await import(`./commands/${command}.js`);
+  const cmd: Command = await import(`./${command}.js`);
 
   if (globalArgs["--help"]) {
     println(cmd.usage);

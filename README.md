@@ -22,6 +22,18 @@
 
 </div>
 
+## Table of Contents
+
+- [Intro](#intro)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Commands](#commands)
+  - [`ggt sync`](#ggt-sync)
+  - [`ggt list`](#ggt-list)
+  - [`ggt login`](#ggt-login)
+  - [`ggt logout`](#ggt-logout)
+  - [`ggt whoami`](#ggt-whoami)
+
 ## Intro
 
 `ggt` is the command line interface for the Gadget platform, providing additional functionality for working with your Gadget applications using your existing tools on your machine. `ggt` isn't required for building end-to-end Gadget apps but supports syncing files locally (and more soon) for your preferred coding experience.
@@ -40,192 +52,153 @@ With this running in the background, your local `~/gadget/my-app` folder will be
 
 ```sh-session
 $ npm install -g @gadgetinc/ggt
-$ ggt COMMAND
-running command...
-$ ggt --version
-@gadgetinc/ggt/0.0.0 darwin-arm64 node-v18.0.0
-$ ggt help [COMMAND]
+$ ggt
+The command-line interface for Gadget
+
+VERSION
+  ggt/0.2.4 darwin-arm64 node-v16.18.1
+
 USAGE
-  $ ggt COMMAND
-...
+  $ ggt [COMMAND]
+
+COMMANDS
+  sync    Sync your Gadget application's source code to and
+          from your local filesystem.
+  list    List your apps.
+  login   Log in to your account.
+  logout  Log out of your account.
+  whoami  Print the currently logged in account.
 ```
 
 ## Commands
 
-  <!-- commands -->
+### `ggt sync`
 
-- [`ggt sync [DIRECTORY] [--app <name>]`](#ggt-sync-directory---app-name)
-- [`ggt help [COMMAND]`](#ggt-help-command)
-- [`ggt list`](#ggt-list)
-- [`ggt login`](#ggt-login)
-- [`ggt logout`](#ggt-logout)
-- [`ggt whoami`](#ggt-whoami)
+    Sync your Gadget application's source code to and from
+    your local filesystem.
 
-### `ggt sync [DIRECTORY] [--app <name>]`
+    USAGE
+      $ ggt sync [DIRECTORY] [--app <name>]
 
-Sync your Gadget application's source code to and from your local filesystem.
+    ARGUMENTS
+      DIRECTORY  [default: .] The directory to sync files to.
 
-```
-USAGE
-  $ ggt sync [DIRECTORY] [--app <name>]
+                 If the directory doesn't exist, it will be created.
 
-ARGUMENTS
-  DIRECTORY  [default: .] The directory to sync files to. If the directory doesn't exist, it will be created.
+    FLAGS
+      -a, --app=<name>  The Gadget application to sync files to.
 
-FLAGS
-  -a, --app=<name>  The Gadget application to sync files to.
-  --force           Whether to sync even if we can't determine the state of your local files relative to your remote
-                    ones.
+      --force           Whether to sync even if we can't determine
+                        the state of your local files relative to
+                        your remote ones.
 
-DESCRIPTION
-  Sync provides the ability to sync your Gadget application's source code to and from your local
-  filesystem. While ggt sync is running, local file changes are immediately reflected within
-  Gadget, while files that are changed remotely are immediately saved to your local filesystem.
+    DESCRIPTION
+      Sync provides the ability to sync your Gadget application's source
+      code to and from your local filesystem.
 
-  Use cases for this include:
-    - Developing locally with your own editor like VSCode (https://code.visualstudio.com/)
-    - Storing your source code in a Git repository like GitHub (https://github.com/)
+      While ggt sync is running, local file changes are immediately
+      reflected within Gadget, while files that are changed remotely are
+      immediately saved to your local filesystem.
 
-  Sync includes the concept of a .ignore file. This file may contain a list of files and
-  directories that won't be received or sent to Gadget when syncing. The format of this file is
-  identical to the one used by Git (https://git-scm.com/docs/gitignore).
+      Use cases for this include:
+        - Developing locally with your own editor like VSCode
+        - Storing your source code in a Git repository like GitHub
 
-  The following files and directories are always ignored:
-    - .gadget
-    - .git
-    - node_modules
-    - .DS_Store
+      Sync includes the concept of a .ignore file. This file may
+      contain a list of files and directories that won't be received or
+      sent to Gadget when syncing. The format of this file is identical
+      to the one used by Git (https://git-scm.com/docs/gitignore).
 
-  Note:
-    - If you have separate development and production environments, ggt sync will only sync with your development environment
-    - Gadget applications only support installing dependencies with Yarn 1 (https://classic.yarnpkg.com/lang/en/)
-    - Since file changes are immediately reflected in Gadget, avoid the following while ggt sync is running:
-        - Deleting all your files
-        - Moving all your files to a different directory
+      The following files and directories are always ignored:
+        - .gadget
+        - .git
+        - node_modules
+        - .DS_STORE
 
-EXAMPLES
-  $ ggt sync --app my-app ~/gadget/my-app
+      Note:
+        - If you have separate development and production environments,
+          ggt sync will only sync with your development environment
+        - Gadget applications only support installing dependencies
+          with Yarn 1 (https://classic.yarnpkg.com/lang/en/)
+        - Since file changes are immediately reflected in Gadget,
+          avoid the following while ggt sync is running:
+            - Deleting all your files
+            - Moving all your files to a different directory
 
-  App         my-app
-  Editor      https://my-app.gadget.app/edit
-  Playground  https://my-app.gadget.app/api/graphql/playground
-  Docs        https://docs.gadget.dev/api/my-app
+    EXAMPLES
+      $ ggt sync --app my-app ~/gadget/my-app
 
-  Endpoints
-    - https://my-app.gadget.app
-    - https://my-app--development.gadget.app
+      App         my-app
+      Editor      https://my-app.gadget.app/edit
+      Playground  https://my-app.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/my-app
 
-  Watching for file changes... Press Ctrl+C to stop
+      Endpoints
+        - https://my-app.gadget.app
+        - https://my-app--development.gadget.app
 
-  Received 12:00:00 PM
-  ← routes/GET.js (changed)
-  ← user/signUp/signIn.js (changed)
-  2 files in total. 2 changed, 0 deleted.
+      Watching for file changes... Press Ctrl+C to stop
 
-  Sent 12:00:03 PM
-  → routes/GET.ts (changed)
-  1 file in total. 1 changed, 0 deleted.
+      Received 12:00:00 PM
+      ← routes/GET.js (changed)
+      ← user/signUp/signIn.js (changed)
+      2 files in total. 2 changed, 0 deleted.
 
-  ^C Stopping... (press Ctrl+C again to force)
-  Goodbye!
-```
+      Sent 12:00:03 PM
+      → routes/GET.ts (changed)
+      1 file in total. 1 changed, 0 deleted.
 
-_See code: [src/commands/sync.ts](https://github.com/gadget-inc/ggt/blob/v0.2.4/src/commands/sync.ts)_
-
-### `ggt help [COMMAND]`
-
-Display help for ggt.
-
-```
-USAGE
-  $ ggt help [COMMAND]
-
-ARGUMENTS
-  COMMAND  The command to show help for.
-```
-
-_See code: [src/commands/help.ts](https://github.com/gadget-inc/ggt/blob/v0.2.4/src/commands/help.ts)_
+      ^C Stopping... (press Ctrl+C again to force)
+      Goodbye!
 
 ### `ggt list`
 
-List the apps available to the currently logged in user.
+    List the apps available to the currently logged in user.
 
-```
-USAGE
-  $ ggt list
+    USAGE
+      $ ggt list
 
-FLAGS
-  -x, --extended     show extra columns
-  --columns=<value>  only show provided columns (comma-separated)
-  --csv              output is csv format [alias: --output=csv]
-  --filter=<value>   filter property by partial string matching, ex: name=foo
-  --no-header        hide table header from output
-  --no-truncate      do not truncate output to fit screen
-  --output=<option>  output in a more machine friendly format
-                     <options: csv|json|yaml>
-  --sort=<value>     property to sort by (prepend '-' for descending)
-
-EXAMPLES
-  $ ggt list
-  $ ggt list --extended
-  $ ggt list --sort=slug
-```
-
-_See code: [src/commands/list.ts](https://github.com/gadget-inc/ggt/blob/v0.2.4/src/commands/list.ts)_
+    EXAMPLE
+      $ ggt list
+      Slug    Domain
+      ─────── ──────────────────
+      my-app  my-app.gadget.app
+      example example.gadget.app
+      test    test.gadget.app
 
 ### `ggt login`
 
-Log in to your account.
+    Log in to your account.
 
-```
-USAGE
-  $ ggt login
+    USAGE
+      $ ggt login
 
-EXAMPLES
-  $ ggt login
-  We've opened Gadget's login page using your default browser.
+    EXAMPLES
+      $ ggt login
+      We've opened Gadget's login page using your default browser.
 
-  Please log in and then return to this terminal.
+      Please log in and then return to this terminal.
 
-  Hello, Jane Doe (jane@example.com)
-```
-
-_See code: [src/commands/login.ts](https://github.com/gadget-inc/ggt/blob/v0.2.4/src/commands/login.ts)_
+      Hello, Jane Doe (jane@example.com)
 
 ### `ggt logout`
 
-Log out of your account.
+    Log out of your account.
 
-```
-USAGE
-  $ ggt logout
+    USAGE
+      $ ggt logout
 
-EXAMPLES
-  $ ggt logout
-  Goodbye
-```
-
-_See code: [src/commands/logout.ts](https://github.com/gadget-inc/ggt/blob/v0.2.4/src/commands/logout.ts)_
+    EXAMPLES
+      $ ggt logout
+      Goodbye
 
 ### `ggt whoami`
 
-Show the name and email address of the currently logged in user.
+    Show the name and email address of the currently logged in user.
 
-```
-USAGE
-  $ ggt whoami
+    USAGE
+      $ ggt whoami
 
-EXAMPLES
-  $ ggt whoami
-  You are logged in as Jane Doe (jane@example.com)
-```
-
-_See code: [src/commands/whoami.ts](https://github.com/gadget-inc/ggt/blob/v0.2.4/src/commands/whoami.ts)_
-
-<!-- commandsstop -->
-
-## Global Flags
-
-### Debug
-
-The `--debug` flag, shorthand `-D`, enables verbose output for debugging purposes.
+    EXAMPLES
+      $ ggt whoami
+      You are logged in as Jane Doe (jane@example.com)

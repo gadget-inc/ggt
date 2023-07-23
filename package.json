@@ -23,7 +23,8 @@
   "scripts": {
     "build": "npm run clean && swc src -d lib",
     "clean": "rimraf lib tmp",
-    "generate-graphql": "graphql-codegen --config graphql-codegen.yml",
+    "generate:graphql": "graphql-codegen --config graphql-codegen.yml",
+    "generate:readme": "FORCE_COLOR=0 node --no-warnings --loader ts-node/esm ./scripts/generate-readme.ts",
     "lint": "concurrently --prefix none --group 'npm:lint:*(!fix)'",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
     "lint:eslint": "eslint --max-warnings 0 .",
@@ -32,7 +33,7 @@
     "lint:typescript": "tsc --project tsconfig.json",
     "release": "npm run build && changeset publish",
     "test": "cross-env NODE_OPTIONS=\"--no-warnings --loader ./node_modules/ts-node/esm.mjs\" vitest",
-    "version": "changeset version && npm install --package-lock-only && npm run build"
+    "version": "changeset version && npm install --package-lock-only && npm run generate:readme"
   },
   "dependencies": {
     "@sentry/node": "^7.74.0",
@@ -100,6 +101,9 @@
     "prettier": "^3.0.3",
     "prettier-plugin-organize-imports": "^3.2.3",
     "prettier-plugin-packagejson": "^2.4.6",
+    "remark": "^14.0.3",
+    "remark-gfm": "^3.0.1",
+    "remark-toc": "^8.0.1",
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.1",
     "type-fest": "^4.4.0",

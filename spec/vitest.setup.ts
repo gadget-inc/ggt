@@ -1,11 +1,13 @@
-import Debug from "debug";
 import fs from "fs-extra";
 import path from "path";
 import { afterEach, beforeEach, expect, vi } from "vitest";
-import { testDebug, testDirPath, testStdout } from "./util.js";
+import { context, globalArgs } from "../src/services/context.js";
+import { testDirPath, testStdout } from "./util.js";
 
 beforeEach(async () => {
   process.env["GGT_ENV"] = "test";
+  context.clear();
+  globalArgs._ = [];
 
   const testDir = testDirPath();
   await fs.remove(testDir);
@@ -14,15 +16,6 @@ beforeEach(async () => {
   process.env["GGT_CONFIG_DIR"] = path.join(testDir, "config");
   process.env["GGT_CACHE_DIR"] = path.join(testDir, "cache");
   process.env["GGT_DATA_DIR"] = path.join(testDir, "data");
-
-  if (process.env["DEBUG"]) {
-    Debug.log = console.log.bind(console);
-    Debug.enable(process.env["DEBUG"]);
-  }
-
-  const { context } = await import("../src/services/context.js");
-  context.clear();
-  context.globalArgs = { _: [] };
 
   // write to in-memory stdout/stderr instead of real stdout/stderr
   const { Stream } = await import("../src/services/output.js");
@@ -37,11 +30,27 @@ beforeEach(async () => {
   // clear all mocks so that we can `expect(someFunction).not.toHaveBeenCalled()` in tests where someFunction was called in another test
   vi.clearAllMocks();
 
-  testDebug("starting %O", { test: expect.getState().currentTestName, path: expect.getState().testPath });
+  context.addBreadcrumb({
+    type: "info",
+    category: "test",
+    message: "Test started",
+    data: {
+      test: expect.getState().currentTestName,
+      path: expect.getState().testPath,
+    },
+  });
 });
 
 afterEach(() => {
-  testDebug("ended %O", { test: expect.getState().currentTestName, path: expect.getState().testPath });
+  context.addBreadcrumb({
+    type: "info",
+    category: "test",
+    message: "Test ended",
+    data: {
+      test: expect.getState().currentTestName,
+      path: expect.getState().testPath,
+    },
+  });
 });
 
 vi.mock("execa", () => ({ execa: vi.fn().mockName("execa").mockResolvedValue({}) }));

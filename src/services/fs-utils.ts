@@ -1,10 +1,8 @@
-import Debug from "debug";
 import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import path from "path";
-
-const debug = Debug("ggt:fs-utils");
+import { context } from "./context.js";
 
 export class FSIgnorer {
   readonly filepath;
@@ -35,7 +33,14 @@ export class FSIgnorer {
 
     try {
       this._ignorer.add(fs.readFileSync(this.filepath, "utf-8"));
-      debug("reloaded ignore rules from %s", path.relative(this._rootDir, this.filepath));
+      context.addBreadcrumb({
+        type: "debug",
+        category: "fs",
+        message: "Reloaded ignore rules",
+        data: {
+          path: path.relative(this._rootDir, this.filepath),
+        },
+      });
     } catch (error) {
       ignoreEnoent(error);
     }
@@ -110,7 +115,14 @@ export async function isEmptyDir(dir: string, opts = { ignoreEnoent: true }): Pr
 
 export function ignoreEnoent(error: any): void {
   if (error.code === "ENOENT") {
-    debug("ignoring ENOENT error %s", path.basename(error.path as string));
+    context.addBreadcrumb({
+      type: "debug",
+      category: "fs",
+      message: "Ignoring ENOENT error",
+      data: {
+        path: path.basename(error.path as string),
+      },
+    });
     return;
   }
   throw error;

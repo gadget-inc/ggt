@@ -52,21 +52,21 @@ export class Client {
           switch (this.status) {
             case ConnectionStatus.DISCONNECTED:
               this.status = ConnectionStatus.RECONNECTING;
-              context.addBreadcrumb({ category: "client", message: "Reconnecting" });
+              context.addBreadcrumb({ type: "info", category: "client", message: "Reconnecting" });
               break;
             case ConnectionStatus.RECONNECTING:
-              context.addBreadcrumb({ category: "client", message: "Retrying" });
+              context.addBreadcrumb({ type: "info", category: "client", message: "Retrying" });
               break;
             default:
-              context.addBreadcrumb({ category: "client", message: "Connecting" });
+              context.addBreadcrumb({ type: "info", category: "client", message: "Connecting" });
               break;
           }
         },
         connected: () => {
           if (this.status === ConnectionStatus.RECONNECTING) {
-            context.addBreadcrumb({ category: "client", message: "Reconnected" });
+            context.addBreadcrumb({ type: "info", category: "client", message: "Reconnected" });
           } else {
-            context.addBreadcrumb({ category: "client", message: "Connected" });
+            context.addBreadcrumb({ type: "info", category: "client", message: "Connected" });
           }
 
           // let the other on connected listeners see what status we're in
@@ -75,20 +75,34 @@ export class Client {
         closed: (e) => {
           const event = e as CloseEvent;
           if (event.wasClean) {
-            context.addBreadcrumb({ category: "client", message: "Connection Closed" });
+            context.addBreadcrumb({ type: "info", category: "client", message: "Connection Closed" });
             return;
           }
 
           if (this.status === ConnectionStatus.CONNECTED) {
             this.status = ConnectionStatus.DISCONNECTED;
-            context.addBreadcrumb({ category: "client", message: "Disconnected" });
+            context.addBreadcrumb({ type: "info", category: "client", message: "Disconnected" });
           }
         },
         error: (error) => {
           if (this.status == ConnectionStatus.RECONNECTING) {
-            context.addBreadcrumb({ category: "client", message: "Failed to reconnect", level: "error", data: { error } });
+            context.addBreadcrumb({
+              type: "error",
+              category: "client",
+              message: "Failed to reconnect",
+              level: "error",
+              data: {
+                error,
+              },
+            });
           } else {
-            context.addBreadcrumb({ category: "client", message: "Connection error", level: "error", data: { error } });
+            context.addBreadcrumb({
+              type: "error",
+              category: "client",
+              message: "Connection error",
+              level: "error",
+              data: { error },
+            });
           }
         },
       },
@@ -110,6 +124,7 @@ export class Client {
           // subscribePayload.variables is supposed to be readonly (it's not) and payload.variables may have been re-assigned (it won't)
           (subscribePayload as any).variables = (payload.variables as any)();
           context.addBreadcrumb({
+            type: "query",
             category: "client",
             message: "Re-sending GraphQL query",
             data: {
@@ -124,6 +139,7 @@ export class Client {
     }
 
     context.addBreadcrumb({
+      type: "query",
       category: "client",
       message: "Sending GraphQL query",
       data: {

@@ -2,7 +2,6 @@ import arg from "arg";
 import assert from "assert";
 import chalkTemplate from "chalk-template";
 import { format as formatDate } from "date-fns";
-import Debug from "debug";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
@@ -29,7 +28,7 @@ import {
 } from "../__generated__/graphql.js";
 import { App } from "../services/args.js";
 import { Client, type Query } from "../services/client.js";
-import { context } from "../services/context.js";
+import { context, globalArgs } from "../services/context.js";
 import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
 import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";
@@ -118,6 +117,7 @@ export class SyncState {
   #save = _.debounce(() => {
     fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
     context.addBreadcrumb({
+      type: "info",
       category: "sync",
       message: "Saved sync state",
       data: { state: this._inner },
@@ -191,6 +191,7 @@ export class SyncState {
     const state = fs.readJsonSync(path.join(rootDir, ".gadget/sync.json"));
 
     context.addBreadcrumb({
+      type: "info",
       category: "sync",
       message: "Loaded sync state",
       data: { state },
@@ -279,8 +280,6 @@ const argSpec = {
 
 export class Sync {
   args!: arg.Result<typeof argSpec>;
-
-  debug = Debug("ggt:sync");
 
   /**
    * The current status of the sync process.
@@ -394,7 +393,7 @@ export class Sync {
     let logged = 0;
     for (const line of lines) {
       println(line);
-      if (++logged == limit && !context.globalArgs["--debug"]) break;
+      if (++logged == limit && !globalArgs["--debug"]) break;
     }
 
     if (lines.length > logged) {
@@ -416,7 +415,7 @@ export class Sync {
   async init(): Promise<void> {
     await context.requireUser();
 
-    this.args = _.defaults(arg(argSpec, { argv: context.globalArgs._ }), {
+    this.args = _.defaults(arg(argSpec, { argv: globalArgs._ }), {
       "--file-push-delay": 100,
       "--file-watch-debounce": 300,
       "--file-watch-poll-interval": 3_000,
@@ -481,7 +480,7 @@ export class Sync {
 
           Then run {dim ggt sync} again with the {dim --force} flag:
 
-            $ ggt sync ${context.globalArgs._.join(" ")} --force
+            $ ggt sync ${globalArgs._.join(" ")} --force
       `);
     }
 
@@ -525,6 +524,7 @@ export class Sync {
     }
 
     context.addBreadcrumb({
+      type: "info",
       category: "sync",
       message: "Initializing",
       data: {
@@ -552,6 +552,7 @@ export class Sync {
     switch (action) {
       case Action.MERGE: {
         context.addBreadcrumb({
+          type: "info",
           category: "sync",
           message: "Merging local changes",
           data: {
@@ -589,6 +590,7 @@ export class Sync {
       }
       case Action.RESET: {
         context.addBreadcrumb({
+          type: "info",
           category: "sync",
           message: "Resetting local changes",
           data: {
@@ -610,6 +612,7 @@ export class Sync {
     }
 
     context.addBreadcrumb({
+      type: "info",
       category: "sync",
       message: "Initialized",
       data: {
@@ -632,6 +635,7 @@ export class Sync {
       error = e;
 
       context.addBreadcrumb({
+        type: "info",
         category: "sync",
         message: "Stopping",
         level: error ? "error" : undefined,
@@ -654,6 +658,7 @@ export class Sync {
         stopped.resolve();
 
         context.addBreadcrumb({
+          type: "info",
           category: "sync",
           message: "Stopped",
           data: {
@@ -690,6 +695,7 @@ export class Sync {
         error: (error) => void this.stop(error),
         next: ({ remoteFileSyncEvents }) => {
           context.addBreadcrumb({
+            type: "info",
             category: "sync",
             message: "Received file sync events",
             data: {
@@ -709,6 +715,7 @@ export class Sync {
 
           this._enqueue(async () => {
             context.addBreadcrumb({
+              type: "info",
               category: "sync",
               message: "Processing received file sync events",
               data: {
@@ -724,6 +731,7 @@ export class Sync {
                 // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
                 this.state.filesVersion = remoteFilesVersion;
                 context.addBreadcrumb({
+                  type: "info",
                   category: "sync",
                   message: "Received empty file sync events",
                   data: {
@@ -765,6 +773,7 @@ export class Sync {
               if (absolutePath == this.absolute("yarn.lock")) {
                 await execa("yarn", ["install"], { cwd: this.dir }).catch((error) => {
                   context.addBreadcrumb({
+                    type: "error",
                     category: "sync",
                     message: "Yarn install failed",
                     level: "error",
@@ -794,6 +803,7 @@ export class Sync {
             }
 
             context.addBreadcrumb({
+              type: "info",
               category: "sync",
               message: "Processed received file sync events",
               data: {
@@ -822,6 +832,7 @@ export class Sync {
 
       this._enqueue(async () => {
         context.addBreadcrumb({
+          type: "info",
           category: "sync",
           message: "Publishing file sync events",
           data: {
@@ -869,6 +880,7 @@ export class Sync {
 
         context.addBreadcrumb({
           category: "sync",
+          type: "info",
           message: "Published file sync events",
           data: {
             state: this.state,
@@ -906,7 +918,15 @@ export class Sync {
       if (filepath == this.ignorer.filepath) {
         this.ignorer.reload();
       } else if (this.ignorer.ignores(filepath)) {
-        this.debug("skipping event caused by ignored file %s", normalizedPath);
+        context.addBreadcrumb({
+          type: "debug",
+          category: "sync",
+          message: "Skipping event caused by ignored file",
+          data: {
+            event,
+            normalizedPath,
+          },
+        });
         return;
       }
 
@@ -925,11 +945,27 @@ export class Sync {
       }
 
       if (this.recentRemoteChanges.delete(normalizedPath)) {
-        this.debug("skipping event caused by recent write %s", normalizedPath);
+        context.addBreadcrumb({
+          type: "debug",
+          category: "sync",
+          message: "Skipping event caused by recent write",
+          data: {
+            event,
+            normalizedPath,
+          },
+        });
         return;
       }
 
-      this.debug("%s %s", event, normalizedPath);
+      context.addBreadcrumb({
+        type: "debug",
+        category: "sync",
+        message: "Received file system event",
+        data: {
+          event,
+          normalizedPath,
+        },
+      });
 
       switch (event) {
         case "add":

@@ -1,12 +1,9 @@
-import Debug from "debug";
 import _ from "lodash";
 import path from "path";
 import type { JsonObject } from "type-fest";
 import { assert, expect, vi } from "vitest";
 import type { Payload, Query, Sink } from "../src/services/client.js";
 import { Client } from "../src/services/client.js";
-
-export const testDebug = Debug("ggt:test");
 
 export function testDirPath(): string {
   const name = expect.getState().currentTestName;

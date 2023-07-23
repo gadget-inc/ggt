@@ -13,10 +13,15 @@ import os from "os";
 import path from "path";
 import process from "process";
 import { run as login } from "../commands/login.js";
+import { parseBoolean } from "./args.js";
 import { ignoreEnoent } from "./fs-utils.js";
 
 export interface Breadcrumb extends SentryBreadcrumb {
-  category: "command" | "client" | "sync";
+  /**
+   * @see https://develop.sentry.dev/sdk/event-payloads/breadcrumbs/#breadcrumb-types
+   */
+  type: "debug" | "info" | "error" | "http" | "query" | "user";
+  category: "fs" | "command" | "client" | "notification" | "sync" | "test";
   message: Capitalize<string>;
 }
 
@@ -33,25 +38,46 @@ export interface App {
   hasSplitEnvironments: boolean;
 }
 
+export const globalArgs = arg(
+  {
+    "--help": Boolean,
+    "-h": "--help",
+    "--debug": Boolean,
+    "-D": "--debug",
+  },
+  {
+    argv: process.argv.slice(2),
+    permissive: true,
+    stopAtPositional: false,
+  },
+);
+
+const loggers: Record<Breadcrumb["category"], Debug.Debugger> = {
+  client: Debug("ggt:client"),
+  command: Debug("ggt:command"),
+  fs: Debug("ggt:fs"),
+  notification: Debug("ggt:notification"),
+  sync: Debug("ggt:sync"),
+  test: Debug("ggt:test"),
+};
+
+if (globalArgs["--debug"]) {
+  Debug.enable("ggt:*");
+}
+
+if (process.env["DEBUG"]) {
+  if (parseBoolean(process.env["DEBUG"])) {
+    Debug.enable("ggt:*");
+  } else {
+    Debug.enable(process.env["DEBUG"]);
+  }
+}
+
 const ggtDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../");
 const pkgJson = fs.readJsonSync(path.join(ggtDir, "package.json")) as Package;
 normalizePackageData(pkgJson, true);
 
 export class Context {
-  globalArgs = arg(
-    {
-      "--help": Boolean,
-      "-h": "--help",
-      "--debug": Boolean,
-      "-D": "--debug",
-    },
-    {
-      argv: process.argv.slice(2),
-      permissive: true,
-      stopAtPositional: false,
-    },
-  );
-
   config = {
     ggtDir,
 
@@ -323,7 +349,8 @@ export class Context {
   }
 
   addBreadcrumb(breadcrumb: Breadcrumb) {
-    debug("breadcrumb %O", breadcrumb);
+    loggers[breadcrumb.category]("%s: %s %O", breadcrumb.type, breadcrumb.message, breadcrumb.data);
+    if (breadcrumb.type === "debug") return;
 
     // clone any objects in the data so that we get a snapshot of the object at the time the breadcrumb was added
     if (breadcrumb.data) {

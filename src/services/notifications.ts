@@ -21,6 +21,15 @@ export const notify = (
     | WindowsBalloon.Notification
     | Growl.Notification,
 ) => {
+  context.addBreadcrumb({
+    type: "debug",
+    category: "notification",
+    message: "Notifying user",
+    data: {
+      notification,
+    },
+  });
+
   notifier.notify(
     {
       title: "Gadget",
@@ -31,7 +40,16 @@ export const notify = (
       ...notification,
     },
     (error) => {
-      if (error) console.error(error);
+      if (error) {
+        context.addBreadcrumb({
+          type: "error",
+          category: "notification",
+          message: "Error notifying user",
+          data: {
+            error,
+          },
+        });
+      }
     },
   );
 };

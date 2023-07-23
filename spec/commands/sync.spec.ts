@@ -24,7 +24,7 @@ import {
   SyncState,
   SyncStatus,
 } from "../../src/commands/sync.js";
-import { context } from "../../src/services/context.js";
+import { context, globalArgs } from "../../src/services/context.js";
 import { ArgError, ClientError, InvalidSyncFileError, YarnNotFoundError } from "../../src/services/errors.js";
 import { walkDirSync } from "../../src/services/fs-utils.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
@@ -44,7 +44,7 @@ describe("Sync", () => {
     client = mockClient();
     dir = path.join(testDirPath(), "app");
     app = "test";
-    context.globalArgs._ = [dir, "--app", app];
+    globalArgs._ = [dir, "--app", app];
 
     sync = new Sync();
 
@@ -137,7 +137,7 @@ describe("Sync", () => {
         },
       });
 
-      context.globalArgs._.push("--force");
+      globalArgs._.push("--force");
       const init = sync.init();
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
@@ -167,7 +167,7 @@ describe("Sync", () => {
         },
       });
 
-      context.globalArgs._.push("--force");
+      globalArgs._.push("--force");
       const init = sync.init();
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));

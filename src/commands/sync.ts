@@ -29,7 +29,9 @@ import {
 import { App } from "../services/args.js";
 import { addBreadcrumb } from "../services/breadcrumbs.js";
 import { Client, type Query } from "../services/client.js";
-import { Context, globalArgs } from "../services/context.js";
+import { config } from "../services/config.js";
+import type { Context } from "../services/context.js";
+import { globalArgs } from "../services/context.js";
 import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
 import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";
@@ -431,8 +433,8 @@ export class Sync {
     });
 
     this.dir =
-      Context.config.windows && this.args._[0] && _.startsWith(this.args._[0], "~/")
-        ? path.join(Context.config.homeDir, this.args._[0].slice(2))
+      config.windows && this.args._[0] && _.startsWith(this.args._[0], "~/")
+        ? path.join(config.homeDir, this.args._[0].slice(2))
         : path.resolve(this.args._[0] || ".");
 
     const getApp = async (): Promise<string> => {
@@ -1028,7 +1030,7 @@ export class Sync {
 
     println();
     println`
-      {bold ggt v${Context.config.version}}
+      {bold ggt v${config.version}}
 
       App         ${ctx.app.slug}
       Editor      https://${ctx.app.slug}.gadget.app/edit

@@ -2,7 +2,8 @@ import getPort from "get-port";
 import type { Server } from "node:http";
 import http from "node:http";
 import open from "open";
-import { Context } from "../services/context.js";
+import { config } from "../services/config.js";
+import type { Context } from "../services/context.js";
 import { println, sprint } from "../services/output.js";
 
 export const usage = sprint`
@@ -28,7 +29,7 @@ export const run = async (ctx: Context) => {
     const receiveSession = new Promise<void>((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       server = http.createServer(async (req, res) => {
-        const redirectTo = new URL(`https://${Context.domains.services}/auth/cli`);
+        const redirectTo = new URL(`https://${config.domains.services}/auth/cli`);
 
         try {
           if (!req.url) throw new Error("missing url");
@@ -64,8 +65,8 @@ export const run = async (ctx: Context) => {
       server.listen(port);
     });
 
-    const url = new URL(`https://${Context.domains.services}/auth/login`);
-    url.searchParams.set("returnTo", `https://${Context.domains.services}/auth/cli/callback?port=${port}`);
+    const url = new URL(`https://${config.domains.services}/auth/login`);
+    url.searchParams.set("returnTo", `https://${config.domains.services}/auth/cli/callback?port=${port}`);
     await open(url.toString());
 
     println`

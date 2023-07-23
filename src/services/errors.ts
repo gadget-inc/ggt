@@ -12,7 +12,8 @@ import type { SetOptional } from "type-fest";
 import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
 import type { Payload } from "./client.js";
-import { Context } from "./context.js";
+import { config, env } from "./config.js";
+import type { Context } from "./context.js";
 
 /**
  * Base class for all errors.
@@ -26,7 +27,7 @@ export abstract class CLIError extends Error {
   /**
    * The Sentry event ID for this error.
    */
-  sentryEventId = Context.env.testLike ? "00000000-0000-0000-0000-000000000000" : randomUUID();
+  sentryEventId = env.testLike ? "00000000-0000-0000-0000-000000000000" : randomUUID();
 
   /**
    * The underlying *thing* that caused this error.
@@ -69,13 +70,13 @@ export abstract class CLIError extends Error {
         user: user ? { id: String(user.id), email: user.email, username: user.name } : undefined,
         tags: {
           applicationId: ctx.app?.id,
-          arch: Context.config.arch,
+          arch: config.arch,
           isBug: this.isBug,
           code: this.code,
-          environment: Context.env.value,
-          platform: Context.config.platform,
-          shell: Context.config.shell,
-          version: Context.config.version,
+          environment: env.value,
+          platform: config.platform,
+          shell: config.shell,
+          version: config.version,
         },
         contexts: {
           cause: this.cause ? serializeError(this.cause) : undefined,

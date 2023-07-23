@@ -4,6 +4,7 @@ import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { run } from "../../src/commands/login.js";
+import { config } from "../../src/services/config.js";
 import { Context } from "../../src/services/context.js";
 import { sleepUntil } from "../../src/services/sleep.js";
 import { expectStdout } from "../util.js";
@@ -35,8 +36,8 @@ describe("login", () => {
     expect(requestListener!).toBeDefined();
     expect(server.listen).toHaveBeenCalledWith(port);
     expect(open).toHaveBeenCalledWith(
-      `https://${Context.domains.services}/auth/login?returnTo=${encodeURIComponent(
-        `https://${Context.domains.services}/auth/cli/callback?port=${port}`,
+      `https://${config.domains.services}/auth/login?returnTo=${encodeURIComponent(
+        `https://${config.domains.services}/auth/cli/callback?port=${port}`,
       )}`,
     );
     expectStdout().toMatchInlineSnapshot(`
@@ -72,7 +73,7 @@ describe("login", () => {
 
       "
     `);
-    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${Context.domains.services}/auth/cli?success=true` });
+    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=true` });
     expect(res.end).toHaveBeenCalled();
     expect(server.close).toHaveBeenCalled();
   });
@@ -88,8 +89,8 @@ describe("login", () => {
     expect(requestListener!).toBeDefined();
     expect(server.listen).toHaveBeenCalledWith(port);
     expect(open).toHaveBeenCalledWith(
-      `https://${Context.domains.services}/auth/login?returnTo=${encodeURIComponent(
-        `https://${Context.domains.services}/auth/cli/callback?port=${port}`,
+      `https://${config.domains.services}/auth/login?returnTo=${encodeURIComponent(
+        `https://${config.domains.services}/auth/cli/callback?port=${port}`,
       )}`,
     );
     expectStdout().toMatchInlineSnapshot(`
@@ -116,7 +117,7 @@ describe("login", () => {
     await sleepUntil(() => server.close.mock.calls.length > 0);
     expect(ctx.session).toBeUndefined();
     expect(ctx.getUser).toHaveBeenCalled();
-    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${Context.domains.services}/auth/cli?success=false` });
+    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=false` });
     expect(res.end).toHaveBeenCalled();
     expect(server.close).toHaveBeenCalled();
   });

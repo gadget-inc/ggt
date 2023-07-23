@@ -6,7 +6,7 @@ import type NotifySend from "node-notifier/notifiers/notifysend.js";
 import type WindowsToaster from "node-notifier/notifiers/toaster.js";
 import path from "node:path";
 import { addBreadcrumb } from "./breadcrumbs.js";
-import { Context } from "./context.js";
+import { workspaceRoot } from "./config.js";
 
 /**
  * Sends a native OS notification to the user.
@@ -34,8 +34,8 @@ export const notify = (
   notifier.notify(
     {
       title: "Gadget",
-      contentImage: path.join(Context.config.ggtDir, "assets", "favicon-128@4x.png"),
-      icon: path.join(Context.config.ggtDir, "assets", "favicon-128@4x.png"),
+      contentImage: path.join(workspaceRoot, "assets/favicon-128@4x.png"),
+      icon: path.join(workspaceRoot, "assets/favicon-128@4x.png"),
       sound: true,
       timeout: false,
       ...notification,

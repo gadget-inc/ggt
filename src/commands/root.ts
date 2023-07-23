@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { config } from "../services/config.js";
 import { Context, globalArgs } from "../services/context.js";
 import { CLIError } from "../services/errors.js";
 import { didYouMean, println, sprint } from "../services/output.js";
@@ -8,7 +9,7 @@ export const usage = sprint`
     The command-line interface for Gadget
 
     {bold VERSION}
-      ${Context.config.versionFull}
+      ${config.versionFull}
 
     {bold USAGE}
       $ ggt [COMMAND]

@@ -8,7 +8,8 @@ import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
 import { addBreadcrumb } from "./breadcrumbs.js";
-import { Context } from "./context.js";
+import { config } from "./config.js";
+import type { Context } from "./context.js";
 import { ClientError } from "./errors.js";
 
 enum ConnectionStatus {
@@ -33,7 +34,7 @@ export class Client {
     assert(ctx.app, "context.app must be set before instantiating the Client");
 
     this._client = createClient({
-      url: `wss://${ctx.app.slug}.${Context.domains.app}/edit/api/graphql-ws`,
+      url: `wss://${ctx.app.slug}.${config.domains.app}/edit/api/graphql-ws`,
       shouldRetry: _.constant(true),
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
@@ -42,7 +43,7 @@ export class Client {
             ...wsOptions,
             headers: {
               ...wsOptions?.headers,
-              "user-agent": Context.config.versionFull,
+              "user-agent": config.versionFull,
               cookie: `session=${encodeURIComponent(ctx.session)};`,
             },
           });

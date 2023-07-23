@@ -1,7 +1,6 @@
-import { addBreadcrumb as addSentryBreadcrumb, setUser, type Breadcrumb as SentryBreadcrumb } from "@sentry/node";
+import { setUser } from "@sentry/node";
 import arg from "arg";
 import assert from "assert";
-import Debug from "debug";
 import fs from "fs-extra";
 import { HTTPError, got } from "got";
 import inquirer from "inquirer";
@@ -13,33 +12,7 @@ import os from "os";
 import path from "path";
 import process from "process";
 import { run as login } from "../commands/login.js";
-import { parseBoolean } from "./args.js";
 import { ignoreEnoent } from "./fs-utils.js";
-
-export interface Breadcrumb extends SentryBreadcrumb {
-  /**
-   * @see https://develop.sentry.dev/sdk/event-payloads/breadcrumbs/#breadcrumb-types
-   */
-  type: "debug" | "info" | "error" | "http" | "query" | "user";
-  category: "fs" | "command" | "client" | "notification" | "sync" | "test";
-  message: Capitalize<string>;
-}
-
-export const addBreadcrumb = (breadcrumb: Breadcrumb) => {
-  loggers[breadcrumb.category]("%s: %s %O", breadcrumb.type, breadcrumb.message, breadcrumb.data);
-  if (breadcrumb.type === "debug") return;
-
-  // clone any objects in the data so that we get a snapshot of the object at the time the breadcrumb was added
-  if (breadcrumb.data) {
-    for (const [key, value] of Object.entries(breadcrumb.data)) {
-      if (_.isObjectLike(value)) {
-        breadcrumb.data[key] = _.cloneDeep(value);
-      }
-    }
-  }
-
-  addSentryBreadcrumb(breadcrumb);
-};
 
 export interface User {
   id: string | number;
@@ -67,27 +40,6 @@ export const globalArgs = arg(
     stopAtPositional: false,
   },
 );
-
-const loggers: Record<Breadcrumb["category"], Debug.Debugger> = {
-  client: Debug("ggt:client"),
-  command: Debug("ggt:command"),
-  fs: Debug("ggt:fs"),
-  notification: Debug("ggt:notification"),
-  sync: Debug("ggt:sync"),
-  test: Debug("ggt:test"),
-};
-
-if (globalArgs["--debug"]) {
-  Debug.enable("ggt:*");
-}
-
-if (process.env["DEBUG"]) {
-  if (parseBoolean(process.env["DEBUG"])) {
-    Debug.enable("ggt:*");
-  } else {
-    Debug.enable(process.env["DEBUG"]);
-  }
-}
 
 const ggtDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../");
 const pkgJson = fs.readJsonSync(path.join(ggtDir, "package.json")) as Package;

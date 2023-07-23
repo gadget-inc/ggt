@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import path from "path";
-import { addBreadcrumb } from "./context.js";
+import { addBreadcrumb } from "./breadcrumbs.js";
 
 export class FSIgnorer {
   readonly filepath;

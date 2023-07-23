@@ -1,7 +1,8 @@
 import fs from "fs-extra";
 import path from "path";
 import { afterEach, beforeEach, expect, vi } from "vitest";
-import { addBreadcrumb, globalArgs } from "../src/services/context.js";
+import { addBreadcrumb } from "../src/services/breadcrumbs.js";
+import { globalArgs } from "../src/services/context.js";
 import { testDirPath, testStdout } from "./util.js";
 
 beforeEach(async () => {

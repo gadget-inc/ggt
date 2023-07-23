@@ -5,7 +5,8 @@ import type NotificationCenter from "node-notifier/notifiers/notificationcenter.
 import type NotifySend from "node-notifier/notifiers/notifysend.js";
 import type WindowsToaster from "node-notifier/notifiers/toaster.js";
 import path from "node:path";
-import { Context, addBreadcrumb } from "./context.js";
+import { addBreadcrumb } from "./breadcrumbs.js";
+import { Context } from "./context.js";
 
 /**
  * Sends a native OS notification to the user.

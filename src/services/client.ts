@@ -7,7 +7,8 @@ import _ from "lodash";
 import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
-import { Context, addBreadcrumb } from "./context.js";
+import { addBreadcrumb } from "./breadcrumbs.js";
+import { Context } from "./context.js";
 import { ClientError } from "./errors.js";
 
 enum ConnectionStatus {

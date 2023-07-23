@@ -27,8 +27,9 @@ import {
   type RemoteFilesVersionQueryVariables,
 } from "../__generated__/graphql.js";
 import { App } from "../services/args.js";
+import { addBreadcrumb } from "../services/breadcrumbs.js";
 import { Client, type Query } from "../services/client.js";
-import { Context, addBreadcrumb, globalArgs } from "../services/context.js";
+import { Context, globalArgs } from "../services/context.js";
 import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
 import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";

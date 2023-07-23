@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { context, globalArgs } from "../services/context.js";
+import { Context, globalArgs } from "../services/context.js";
 import { CLIError } from "../services/errors.js";
 import { didYouMean, println, sprint } from "../services/output.js";
 import { availableCommands, type Command } from "./index.js";
@@ -8,7 +8,7 @@ export const usage = sprint`
     The command-line interface for Gadget
 
     {bold VERSION}
-      ${context.config.versionFull}
+      ${Context.config.versionFull}
 
     {bold USAGE}
       $ ggt [COMMAND]
@@ -22,7 +22,7 @@ export const usage = sprint`
       whoami  Print the currently logged in account.
 `;
 
-export const run = async () => {
+export const run = async (ctx = new Context()) => {
   const command = globalArgs._.shift();
 
   if (_.isNil(command)) {
@@ -46,12 +46,12 @@ export const run = async () => {
   }
 
   try {
-    await cmd.init?.();
-    await cmd.run();
+    await cmd.init?.(ctx);
+    await cmd.run(ctx);
   } catch (cause) {
     const error = CLIError.from(cause);
     println(error.render());
-    await error.capture();
+    await error.capture(ctx);
     process.exit(1);
   }
 };

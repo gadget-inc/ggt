@@ -1,4 +1,4 @@
-import { context } from "../services/context.js";
+import type { Context } from "../services/context.js";
 import { println, sprint } from "../services/output.js";
 
 export const usage = sprint`
@@ -12,8 +12,8 @@ export const usage = sprint`
       You are logged in as Jane Doe (jane@example.com)
 `;
 
-export const run = async () => {
-  const user = await context.getUser();
+export const run = async (ctx: Context) => {
+  const user = await ctx.getUser();
   if (!user) {
     println`You are not logged in`;
     return;

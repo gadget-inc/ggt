@@ -24,7 +24,7 @@ import {
   SyncState,
   SyncStatus,
 } from "../../src/commands/sync.js";
-import { context, globalArgs } from "../../src/services/context.js";
+import { Context, globalArgs } from "../../src/services/context.js";
 import { ArgError, ClientError, InvalidSyncFileError, YarnNotFoundError } from "../../src/services/errors.js";
 import { walkDirSync } from "../../src/services/fs-utils.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
@@ -35,12 +35,14 @@ import { getError, mockClient, testDirPath } from "../util.js";
 it.todo("publishing does not send file changes if you delete more than N files at once");
 
 describe("Sync", () => {
+  let ctx: Context;
   let client: MockClient;
   let dir: string;
   let app: string;
   let sync: Sync;
 
   beforeEach(() => {
+    ctx = new Context();
     client = mockClient();
     dir = path.join(testDirPath(), "app");
     app = "test";
@@ -48,8 +50,8 @@ describe("Sync", () => {
 
     sync = new Sync();
 
-    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, name: "Jane Doe", email: "jane@example.come" });
-    vi.spyOn(context, "getAvailableApps").mockResolvedValue([
+    vi.spyOn(ctx, "getUser").mockResolvedValue({ id: 1, name: "Jane Doe", email: "jane@example.come" });
+    vi.spyOn(ctx, "getAvailableApps").mockResolvedValue([
       { id: "1", slug: "test", primaryDomain: "test.gadget.app", hasSplitEnvironments: true },
       { id: "2", slug: "not-test", primaryDomain: "not-test.gadget.app", hasSplitEnvironments: false },
     ]);
@@ -58,21 +60,21 @@ describe("Sync", () => {
   describe("init", () => {
     it("requires a user to be logged in", async () => {
       const error = new Error("not logged in");
-      vi.spyOn(context, "requireUser").mockRejectedValueOnce(error);
+      vi.spyOn(ctx, "requireUser").mockRejectedValueOnce(error);
 
-      await expect(sync.init()).rejects.toThrow(error);
+      await expect(sync.init(ctx)).rejects.toThrow(error);
     });
 
     it("throws YarnNotFoundError if yarn is not found", async () => {
       which.sync.mockReturnValue(null);
 
-      await expect(sync.init()).rejects.toThrow(YarnNotFoundError);
+      await expect(sync.init(ctx)).rejects.toThrow(YarnNotFoundError);
     });
 
     it("does not throw YarnNotFoundError if yarn is found", async () => {
       which.sync.mockReturnValue("/path/to/yarn");
 
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
@@ -84,7 +86,7 @@ describe("Sync", () => {
     it("ensures `dir` exists", async () => {
       expect(fs.existsSync(dir)).toBe(false);
 
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
@@ -97,14 +99,14 @@ describe("Sync", () => {
     it("loads state from .gadget/sync.json", async () => {
       const state = SyncState.create(dir, { app, filesVersion: "77", mtime: 1658153625236 });
 
-      void sync.init();
+      void sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       expect(sync.state).toEqual(state);
     });
 
     it("uses default state if .gadget/sync.json does not exist and `dir` is empty", async () => {
-      void sync.init();
+      void sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       expect(sync.state).toEqual({ _rootDir: dir, _inner: { app: "test", filesVersion: "0", mtime: 0 } });
@@ -115,7 +117,7 @@ describe("Sync", () => {
         "foo.js": "foo",
       });
 
-      await expect(sync.init()).rejects.toThrow(InvalidSyncFileError);
+      await expect(sync.init(ctx)).rejects.toThrow(InvalidSyncFileError);
     });
 
     it("throws InvalidSyncFileError if .gadget/sync.json is invalid and `dir` is not empty", async () => {
@@ -126,7 +128,7 @@ describe("Sync", () => {
         },
       });
 
-      await expect(sync.init()).rejects.toThrow(InvalidSyncFileError);
+      await expect(sync.init(ctx)).rejects.toThrow(InvalidSyncFileError);
     });
 
     it("does not throw InvalidSyncFileError if .gadget/sync.json is invalid, `dir` is not empty, and `--force` is passed", async () => {
@@ -138,7 +140,7 @@ describe("Sync", () => {
       });
 
       globalArgs._.push("--force");
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
@@ -154,7 +156,7 @@ describe("Sync", () => {
         },
       });
 
-      const error = await getError(() => sync.init());
+      const error = await getError(() => sync.init(ctx));
 
       expect(error).toBeInstanceOf(ArgError);
       expect(error.message).toMatch(/^You were about to sync the following app to the following directory:/);
@@ -168,7 +170,7 @@ describe("Sync", () => {
       });
 
       globalArgs._.push("--force");
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
@@ -186,7 +188,7 @@ describe("Sync", () => {
         "bar.js": "bar",
       });
 
-      void sync.init();
+      void sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "2" } });
@@ -215,7 +217,7 @@ describe("Sync", () => {
         "foo.js": "foo",
       });
 
-      void sync.init();
+      void sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
@@ -251,7 +253,7 @@ describe("Sync", () => {
       // write an ignored file
       fs.writeFileSync(path.join(dir, "bar.js"), "bar");
 
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
@@ -269,7 +271,7 @@ describe("Sync", () => {
       const stat = fs.statSync(path.join(dir, "foo.js"));
       fs.outputJSONSync(path.join(dir, ".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
 
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "2" } });
@@ -287,7 +289,7 @@ describe("Sync", () => {
       const stat = fs.statSync(path.join(dir, "foo.js"));
       fs.outputJsonSync(path.join(dir, ".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
 
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
@@ -317,7 +319,7 @@ describe("Sync", () => {
       // add a new file
       fs.writeFileSync(path.join(dir, "baz.js"), "baz", "utf-8");
 
-      void sync.init();
+      void sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
@@ -356,7 +358,7 @@ describe("Sync", () => {
       // add a new file
       fs.writeFileSync(path.join(dir, "baz.js"), "baz", "utf-8");
 
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
@@ -386,7 +388,7 @@ describe("Sync", () => {
     beforeEach(async () => {
       vi.spyOn(process, "on").mockImplementation(_.noop as any);
 
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
@@ -394,7 +396,7 @@ describe("Sync", () => {
 
       await init;
 
-      run = sync.run();
+      run = sync.run(ctx);
 
       vi.spyOn(sync, "publish");
 
@@ -1323,7 +1325,7 @@ describe("Sync", () => {
     let run: Promise<void>;
 
     beforeEach(async () => {
-      const init = sync.init();
+      const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
       client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
@@ -1331,7 +1333,7 @@ describe("Sync", () => {
 
       await init;
 
-      run = sync.run();
+      run = sync.run(ctx);
 
       vi.spyOn(sync.queue, "onIdle");
       vi.spyOn(sync.watcher, "close");

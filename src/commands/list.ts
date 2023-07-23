@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { context } from "../services/context.js";
+import type { Context } from "../services/context.js";
 import { println, sprint } from "../services/output.js";
 
 export const usage = sprint`
@@ -17,10 +17,10 @@ export const usage = sprint`
       test    test.gadget.app
 `;
 
-export const run = async () => {
-  await context.requireUser();
+export const run = async (ctx: Context) => {
+  await ctx.requireUser();
 
-  const apps = await context.getAvailableApps();
+  const apps = await ctx.getAvailableApps();
   if (!apps.length) {
     println`
         It doesn't look like you have any applications.

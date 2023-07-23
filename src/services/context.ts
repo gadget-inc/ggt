@@ -1,4 +1,4 @@
-import { addBreadcrumb, setUser, type Breadcrumb as SentryBreadcrumb } from "@sentry/node";
+import { addBreadcrumb as addSentryBreadcrumb, setUser, type Breadcrumb as SentryBreadcrumb } from "@sentry/node";
 import arg from "arg";
 import assert from "assert";
 import Debug from "debug";
@@ -24,6 +24,22 @@ export interface Breadcrumb extends SentryBreadcrumb {
   category: "fs" | "command" | "client" | "notification" | "sync" | "test";
   message: Capitalize<string>;
 }
+
+export const addBreadcrumb = (breadcrumb: Breadcrumb) => {
+  loggers[breadcrumb.category]("%s: %s %O", breadcrumb.type, breadcrumb.message, breadcrumb.data);
+  if (breadcrumb.type === "debug") return;
+
+  // clone any objects in the data so that we get a snapshot of the object at the time the breadcrumb was added
+  if (breadcrumb.data) {
+    for (const [key, value] of Object.entries(breadcrumb.data)) {
+      if (_.isObjectLike(value)) {
+        breadcrumb.data[key] = _.cloneDeep(value);
+      }
+    }
+  }
+
+  addSentryBreadcrumb(breadcrumb);
+};
 
 export interface User {
   id: string | number;
@@ -77,159 +93,169 @@ const ggtDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../")
 const pkgJson = fs.readJsonSync(path.join(ggtDir, "package.json")) as Package;
 normalizePackageData(pkgJson, true);
 
+const config = {
+  ggtDir,
+
+  get name(): string {
+    return pkgJson.name;
+  },
+
+  get version(): string {
+    return pkgJson.version;
+  },
+
+  /**
+   * @example "ggt/1.2.3 (darwin-arm64) node-v16.0.0"
+   */
+  get versionFull(): string {
+    return `${this.name}/${this.version} ${this.platform}-${this.arch} node-${process.version}`;
+  },
+
+  get arch(): string {
+    return os.arch() === "ia32" ? "x86" : os.arch();
+  },
+
+  get platform(): string {
+    return isWsl ? "wsl" : os.platform();
+  },
+
+  get windows(): boolean {
+    return process.platform === "win32";
+  },
+
+  get macos(): boolean {
+    return process.platform === "darwin";
+  },
+
+  get shell(): string | undefined {
+    const SHELL = process.env["SHELL"] ?? _.split(os.userInfo().shell, path.sep).pop();
+    if (SHELL) {
+      return _.split(SHELL, "/").at(-1);
+    }
+    if (this.windows && process.env["COMSPEC"]) {
+      return _.split(process.env["COMSPEC"], /\\|\//).at(-1);
+    }
+    return "unknown";
+  },
+
+  get homeDir(): string {
+    if (process.env["HOME"]) {
+      return process.env["HOME"];
+    }
+
+    if (this.windows) {
+      if (process.env["HOMEDRIVE"] && process.env["HOMEPATH"]) {
+        return path.join(process.env["HOMEDRIVE"], process.env["HOMEPATH"]);
+      }
+      if (process.env["USERPROFILE"]) {
+        return process.env["USERPROFILE"];
+      }
+    }
+
+    return os.homedir() || os.tmpdir();
+  },
+
+  /**
+   * - Unix: `~/.config/ggt`
+   * - Windows: `%LOCALAPPDATA%\ggt`
+   *
+   * Can be overridden by `GGT_CONFIG_DIR`
+   */
+  get configDir(): string {
+    if (process.env["GGT_CONFIG_DIR"]) {
+      return process.env["GGT_CONFIG_DIR"];
+    }
+
+    const base = process.env["XDG_CONFIG_HOME"] || (this.windows && process.env["LOCALAPPDATA"]) || path.join(this.homeDir, ".config");
+    return path.join(base, "ggt");
+  },
+
+  /**
+   * - Linux: `~/.cache/ggt`
+   * - macOS: `~/Library/Caches/ggt`
+   * - Windows: `%LOCALAPPDATA%\ggt`
+   *
+   * Can be overridden with `GGT_CACHE_DIR`
+   */
+  get cacheDir(): string {
+    if (process.env["GGT_CACHE_DIR"]) {
+      return process.env["GGT_CACHE_DIR"];
+    }
+
+    if (this.macos) {
+      return path.join(this.homeDir, "Library/Caches/ggt");
+    }
+
+    const base = process.env["XDG_CACHE_HOME"] || (this.windows && process.env["LOCALAPPDATA"]) || path.join(this.homeDir, ".cache");
+    return path.join(base, "ggt");
+  },
+
+  /**
+   * - Unix: `~/.local/share/ggt`
+   * - Windows: `%LOCALAPPDATA%\ggt`
+   *
+   * Can be overridden with `GGT_DATA_DIR`
+   */
+  get dataDir(): string {
+    if (process.env["GGT_DATA_DIR"]) {
+      return process.env["GGT_DATA_DIR"];
+    }
+
+    const base = process.env[`XDG_DATA_HOME`] || (this.windows && process.env["LOCALAPPDATA"]) || path.join(this.homeDir, ".local/share");
+    return path.join(base, "ggt");
+  },
+};
+
+/**
+ * Captures the name and nature of the environment
+ */
+const env = {
+  get value(): string {
+    return process.env["GGT_ENV"] || "production";
+  },
+
+  get productionLike(): boolean {
+    return !this.developmentOrTestLike;
+  },
+
+  get developmentLike(): boolean {
+    return _.startsWith(this.value, "development");
+  },
+
+  get testLike(): boolean {
+    return _.startsWith(this.value, "test");
+  },
+
+  get developmentOrTestLike(): boolean {
+    return this.developmentLike || this.testLike;
+  },
+};
+
+/**
+ * Domains for various Gadget services.
+ */
+const domains = {
+  /**
+   * The domain for the Gadget applications. This is where the user's application is hosted.
+   */
+  get app() {
+    return process.env["GGT_GADGET_APP_DOMAIN"] || (env.productionLike ? "gadget.app" : "ggt.pub");
+  },
+
+  /**
+   * The domain for the Gadget services. This is where Gadget's API is hosted.
+   */
+  get services() {
+    return process.env["GGT_GADGET_SERVICES_DOMAIN"] || (env.productionLike ? "app.gadget.dev" : "app.ggt.dev");
+  },
+};
+
 export class Context {
-  config = {
-    ggtDir,
+  static config = config;
 
-    get name(): string {
-      return pkgJson.name;
-    },
+  static env = env;
 
-    get version(): string {
-      return pkgJson.version;
-    },
-
-    /**
-     * @example "ggt/1.2.3 (darwin-arm64) node-v16.0.0"
-     */
-    get versionFull(): string {
-      return `${this.name}/${this.version} ${this.platform}-${this.arch} node-${process.version}`;
-    },
-
-    get arch(): string {
-      return os.arch() === "ia32" ? "x86" : os.arch();
-    },
-
-    get platform(): string {
-      return isWsl ? "wsl" : os.platform();
-    },
-
-    get windows(): boolean {
-      return process.platform === "win32";
-    },
-
-    get macos(): boolean {
-      return process.platform === "darwin";
-    },
-
-    get shell(): string | undefined {
-      const SHELL = process.env["SHELL"] ?? _.split(os.userInfo().shell, path.sep).pop();
-      if (SHELL) {
-        return _.split(SHELL, "/").at(-1);
-      }
-      if (this.windows && process.env["COMSPEC"]) {
-        return _.split(process.env["COMSPEC"], /\\|\//).at(-1);
-      }
-      return "unknown";
-    },
-
-    get homeDir(): string {
-      if (process.env["HOME"]) {
-        return process.env["HOME"];
-      }
-
-      if (this.windows) {
-        if (process.env["HOMEDRIVE"] && process.env["HOMEPATH"]) {
-          return path.join(process.env["HOMEDRIVE"], process.env["HOMEPATH"]);
-        }
-        if (process.env["USERPROFILE"]) {
-          return process.env["USERPROFILE"];
-        }
-      }
-
-      return os.homedir() || os.tmpdir();
-    },
-
-    /**
-     * - Unix: `~/.config/ggt`
-     * - Windows: `%LOCALAPPDATA%\ggt`
-     *
-     * Can be overridden by `GGT_CONFIG_DIR`
-     */
-    get configDir(): string {
-      if (process.env["GGT_CONFIG_DIR"]) {
-        return process.env["GGT_CONFIG_DIR"];
-      }
-
-      const base = process.env["XDG_CONFIG_HOME"] || (this.windows && process.env["LOCALAPPDATA"]) || path.join(this.homeDir, ".config");
-      return path.join(base, "ggt");
-    },
-
-    /**
-     * - Linux: `~/.cache/ggt`
-     * - macOS: `~/Library/Caches/ggt`
-     * - Windows: `%LOCALAPPDATA%\ggt`
-     *
-     * Can be overridden with `GGT_CACHE_DIR`
-     */
-    get cacheDir(): string {
-      if (process.env["GGT_CACHE_DIR"]) {
-        return process.env["GGT_CACHE_DIR"];
-      }
-
-      if (this.macos) {
-        return path.join(this.homeDir, "Library/Caches/ggt");
-      }
-
-      const base = process.env["XDG_CACHE_HOME"] || (this.windows && process.env["LOCALAPPDATA"]) || path.join(this.homeDir, ".cache");
-      return path.join(base, "ggt");
-    },
-
-    /**
-     * - Unix: `~/.local/share/ggt`
-     * - Windows: `%LOCALAPPDATA%\ggt`
-     *
-     * Can be overridden with `GGT_DATA_DIR`
-     */
-    get dataDir(): string {
-      if (process.env["GGT_DATA_DIR"]) {
-        return process.env["GGT_DATA_DIR"];
-      }
-
-      const base = process.env[`XDG_DATA_HOME`] || (this.windows && process.env["LOCALAPPDATA"]) || path.join(this.homeDir, ".local/share");
-      return path.join(base, "ggt");
-    },
-  };
-
-  /**
-   * Captures the name and nature of the environment
-   */
-  env = {
-    get value(): string {
-      return process.env["GGT_ENV"] || "production";
-    },
-
-    get productionLike(): boolean {
-      return !this.developmentOrTestLike;
-    },
-
-    get developmentLike(): boolean {
-      return _.startsWith(this.value, "development");
-    },
-
-    get testLike(): boolean {
-      return _.startsWith(this.value, "test");
-    },
-
-    get developmentOrTestLike(): boolean {
-      return this.developmentLike || this.testLike;
-    },
-  };
-
-  /**
-   * Domains for various Gadget services.
-   */
-  domains = {
-    /**
-     * The domain for the Gadget applications. This is where the user's application is hosted.
-     */
-    app: process.env["GGT_GADGET_APP_DOMAIN"] || (this.env.productionLike ? "gadget.app" : "ggt.pub"),
-
-    /**
-     * The domain for the Gadget services. This is where Gadget's API is hosted.
-     */
-    services: process.env["GGT_GADGET_SERVICES_DOMAIN"] || (this.env.productionLike ? "app.gadget.dev" : "app.ggt.dev"),
-  };
+  static domains = domains;
 
   /**
    * The current Gadget application the CLI is operating on.
@@ -246,8 +272,8 @@ export class Context {
     hooks: {
       beforeRequest: [
         (options) => {
-          options.headers["user-agent"] = this.config.versionFull;
-          if (options.url instanceof URL && options.url.host === this.domains.services && this.session) {
+          options.headers["user-agent"] = Context.config.versionFull;
+          if (options.url instanceof URL && options.url.host === Context.domains.services && this.session) {
             options.headers["cookie"] = `session=${encodeURIComponent(this.session)};`;
           }
         },
@@ -259,7 +285,7 @@ export class Context {
     if (this._session) return this._session;
 
     try {
-      this._session = fs.readFileSync(path.join(this.config.configDir, "session.txt"), "utf-8");
+      this._session = fs.readFileSync(path.join(Context.config.configDir, "session.txt"), "utf-8");
       return this._session;
     } catch (error) {
       ignoreEnoent(error);
@@ -271,9 +297,9 @@ export class Context {
     this.clear();
     this._session = value;
     if (this._session) {
-      fs.outputFileSync(path.join(this.config.configDir, "session.txt"), this._session);
+      fs.outputFileSync(path.join(Context.config.configDir, "session.txt"), this._session);
     } else {
-      fs.removeSync(path.join(this.config.configDir, "session.txt"));
+      fs.removeSync(path.join(Context.config.configDir, "session.txt"));
     }
   }
 
@@ -285,7 +311,7 @@ export class Context {
     if (this._user) return this._user;
 
     try {
-      this._user = await this._request(`https://${this.domains.services}/auth/api/current-user`).json<User>();
+      this._user = await this._request(`https://${Context.domains.services}/auth/api/current-user`).json<User>();
       setUser(this._user);
       return this._user;
     } catch (error) {
@@ -313,7 +339,7 @@ export class Context {
       process.exit(0);
     }
 
-    await login();
+    await login(this);
 
     assert(this._user, "expected user to be logged");
     return this._user;
@@ -326,7 +352,7 @@ export class Context {
     if (!this.session) return [];
     if (this._availableApps.length > 0) return this._availableApps;
 
-    this._availableApps = await this._request(`https://${this.domains.services}/auth/api/apps`).json<App[]>();
+    this._availableApps = await this._request(`https://${Context.domains.services}/auth/api/apps`).json<App[]>();
     return this._availableApps;
   }
 
@@ -347,22 +373,4 @@ export class Context {
     this._availableApps = [];
     setUser(null);
   }
-
-  addBreadcrumb(breadcrumb: Breadcrumb) {
-    loggers[breadcrumb.category]("%s: %s %O", breadcrumb.type, breadcrumb.message, breadcrumb.data);
-    if (breadcrumb.type === "debug") return;
-
-    // clone any objects in the data so that we get a snapshot of the object at the time the breadcrumb was added
-    if (breadcrumb.data) {
-      for (const [key, value] of Object.entries(breadcrumb.data)) {
-        if (_.isObjectLike(value)) {
-          breadcrumb.data[key] = _.cloneDeep(value);
-        }
-      }
-    }
-
-    addBreadcrumb(breadcrumb);
-  }
 }
-
-export const context = new Context();

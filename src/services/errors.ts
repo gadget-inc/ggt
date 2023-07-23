@@ -12,7 +12,7 @@ import type { SetOptional } from "type-fest";
 import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
 import type { Payload } from "./client.js";
-import { context } from "./context.js";
+import { Context } from "./context.js";
 
 /**
  * Base class for all errors.
@@ -26,7 +26,7 @@ export abstract class CLIError extends Error {
   /**
    * The Sentry event ID for this error.
    */
-  sentryEventId = context.env.testLike ? "00000000-0000-0000-0000-000000000000" : randomUUID();
+  sentryEventId = Context.env.testLike ? "00000000-0000-0000-0000-000000000000" : randomUUID();
 
   /**
    * The underlying *thing* that caused this error.
@@ -58,24 +58,24 @@ export abstract class CLIError extends Error {
     return new UnexpectedError(cause);
   }
 
-  async capture(): Promise<void> {
+  async capture(ctx: Context): Promise<void> {
     if (this.isBug == IsBug.NO) return;
 
-    const user = await context.getUser().catch(_.noop.bind(_));
+    const user = await ctx.getUser().catch(_.noop.bind(_));
 
     Sentry.getCurrentHub().captureException(this, {
       event_id: this.sentryEventId,
       captureContext: {
         user: user ? { id: String(user.id), email: user.email, username: user.name } : undefined,
         tags: {
-          applicationId: context.app?.id,
-          arch: context.config.arch,
+          applicationId: ctx.app?.id,
+          arch: Context.config.arch,
           isBug: this.isBug,
           code: this.code,
-          environment: context.env.value,
-          platform: context.config.platform,
-          shell: context.config.shell,
-          version: context.config.version,
+          environment: Context.env.value,
+          platform: Context.config.platform,
+          shell: Context.config.shell,
+          version: Context.config.version,
         },
         contexts: {
           cause: this.cause ? serializeError(this.cause) : undefined,

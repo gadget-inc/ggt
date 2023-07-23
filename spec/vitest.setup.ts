@@ -1,12 +1,11 @@
 import fs from "fs-extra";
 import path from "path";
 import { afterEach, beforeEach, expect, vi } from "vitest";
-import { context, globalArgs } from "../src/services/context.js";
+import { addBreadcrumb, globalArgs } from "../src/services/context.js";
 import { testDirPath, testStdout } from "./util.js";
 
 beforeEach(async () => {
   process.env["GGT_ENV"] = "test";
-  context.clear();
   globalArgs._ = [];
 
   const testDir = testDirPath();
@@ -30,7 +29,7 @@ beforeEach(async () => {
   // clear all mocks so that we can `expect(someFunction).not.toHaveBeenCalled()` in tests where someFunction was called in another test
   vi.clearAllMocks();
 
-  context.addBreadcrumb({
+  addBreadcrumb({
     type: "info",
     category: "test",
     message: "Test started",
@@ -42,7 +41,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  context.addBreadcrumb({
+  addBreadcrumb({
     type: "info",
     category: "test",
     message: "Test ended",

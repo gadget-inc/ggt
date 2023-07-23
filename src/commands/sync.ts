@@ -28,7 +28,7 @@ import {
 } from "../__generated__/graphql.js";
 import { App } from "../services/args.js";
 import { Client, type Query } from "../services/client.js";
-import { context, globalArgs } from "../services/context.js";
+import { Context, addBreadcrumb, globalArgs } from "../services/context.js";
 import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
 import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";
@@ -129,7 +129,7 @@ export class SyncState {
    */
   #save = _.debounce(() => {
     fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
-    context.addBreadcrumb({
+    addBreadcrumb({
       type: "info",
       category: "sync",
       message: "Saved sync state",
@@ -202,13 +202,6 @@ export class SyncState {
    */
   static load(rootDir: string): SyncState {
     const state = fs.readJsonSync(path.join(rootDir, ".gadget/sync.json"));
-
-    context.addBreadcrumb({
-      type: "info",
-      category: "sync",
-      message: "Loaded sync state",
-      data: { state },
-    });
 
     assert(_.isString(state.app), "missing or invalid app");
     assert(_.isString(state.filesVersion), "missing or invalid filesVersion");
@@ -425,8 +418,8 @@ export class Sync {
    * - Ensures yarn v1 is installed.
    * - Prompts the user how to resolve conflicts if the local filesystem has changed since the last sync.
    */
-  async init(): Promise<void> {
-    await context.requireUser();
+  async init(ctx: Context): Promise<void> {
+    await ctx.requireUser();
 
     this.args = _.defaults(arg(argSpec, { argv: globalArgs._ }), {
       "--file-push-delay": 100,
@@ -437,8 +430,8 @@ export class Sync {
     });
 
     this.dir =
-      context.config.windows && this.args._[0] && _.startsWith(this.args._[0], "~/")
-        ? path.join(context.config.homeDir, this.args._[0].slice(2))
+      Context.config.windows && this.args._[0] && _.startsWith(this.args._[0], "~/")
+        ? path.join(Context.config.homeDir, this.args._[0].slice(2))
         : path.resolve(this.args._[0] || ".");
 
     const getApp = async (): Promise<string> => {
@@ -456,7 +449,7 @@ export class Sync {
         type: "list",
         name: "app",
         message: "Please select the app to sync to.",
-        choices: await context.getAvailableApps().then((apps) => _.map(apps, "slug")),
+        choices: await ctx.getAvailableApps().then((apps) => _.map(apps, "slug")),
       });
 
       return selected.app;
@@ -465,15 +458,33 @@ export class Sync {
     if (await isEmptyDir(this.dir)) {
       const app = await getApp();
       this.state = SyncState.create(this.dir, { app });
+      addBreadcrumb({
+        type: "info",
+        category: "sync",
+        message: "Created sync state",
+        data: { state: this.state },
+      });
     } else {
       try {
         this.state = SyncState.load(this.dir);
+        addBreadcrumb({
+          type: "info",
+          category: "sync",
+          message: "Loaded sync state",
+          data: { state: this.state },
+        });
       } catch (error) {
         if (!this.args["--force"]) {
           throw new InvalidSyncFileError(error, this.dir, this.args["--app"]);
         }
         const app = await getApp();
         this.state = SyncState.create(this.dir, { app });
+        addBreadcrumb({
+          type: "info",
+          category: "sync",
+          message: "Created sync state (forced)",
+          data: { state: this.state },
+        });
       }
     }
 
@@ -497,9 +508,9 @@ export class Sync {
       `);
     }
 
-    await context.setApp(this.state.app);
+    await ctx.setApp(this.state.app);
 
-    this.client = new Client();
+    this.client = new Client(ctx);
 
     // local files/folders that should never be published
     this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git", ".DS_STORE"]);
@@ -536,7 +547,7 @@ export class Sync {
       println();
     }
 
-    context.addBreadcrumb({
+    addBreadcrumb({
       type: "info",
       category: "sync",
       message: "Initializing",
@@ -564,7 +575,7 @@ export class Sync {
 
     switch (action) {
       case Action.MERGE: {
-        context.addBreadcrumb({
+        addBreadcrumb({
           type: "info",
           category: "sync",
           message: "Merging local changes",
@@ -602,7 +613,7 @@ export class Sync {
         break;
       }
       case Action.RESET: {
-        context.addBreadcrumb({
+        addBreadcrumb({
           type: "info",
           category: "sync",
           message: "Resetting local changes",
@@ -624,7 +635,7 @@ export class Sync {
       }
     }
 
-    context.addBreadcrumb({
+    addBreadcrumb({
       type: "info",
       category: "sync",
       message: "Initialized",
@@ -637,7 +648,7 @@ export class Sync {
   /**
    * Runs the sync process until it is stopped or an error occurs.
    */
-  async run(): Promise<void> {
+  async run(ctx: Context): Promise<void> {
     let error: unknown;
     const stopped = new PromiseSignal();
 
@@ -647,7 +658,7 @@ export class Sync {
       this.status = SyncStatus.STOPPING;
       error = e;
 
-      context.addBreadcrumb({
+      addBreadcrumb({
         type: "info",
         category: "sync",
         message: "Stopping",
@@ -670,7 +681,7 @@ export class Sync {
         this.status = SyncStatus.STOPPED;
         stopped.resolve();
 
-        context.addBreadcrumb({
+        addBreadcrumb({
           type: "info",
           category: "sync",
           message: "Stopped",
@@ -707,7 +718,7 @@ export class Sync {
       {
         error: (error) => void this.stop(error),
         next: ({ remoteFileSyncEvents }) => {
-          context.addBreadcrumb({
+          addBreadcrumb({
             type: "info",
             category: "sync",
             message: "Received file sync events",
@@ -727,7 +738,7 @@ export class Sync {
           const deleted = _.filter(remoteFileSyncEvents.deleted, filter);
 
           this._enqueue(async () => {
-            context.addBreadcrumb({
+            addBreadcrumb({
               type: "info",
               category: "sync",
               message: "Processing received file sync events",
@@ -743,7 +754,7 @@ export class Sync {
               if (BigInt(remoteFilesVersion) > this.state.filesVersion) {
                 // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
                 this.state.filesVersion = remoteFilesVersion;
-                context.addBreadcrumb({
+                addBreadcrumb({
                   type: "info",
                   category: "sync",
                   message: "Received empty file sync events",
@@ -785,7 +796,7 @@ export class Sync {
 
               if (absolutePath == this.absolute("yarn.lock")) {
                 await execa("yarn", ["install"], { cwd: this.dir }).catch((error) => {
-                  context.addBreadcrumb({
+                  addBreadcrumb({
                     type: "error",
                     category: "sync",
                     message: "Yarn install failed",
@@ -815,7 +826,7 @@ export class Sync {
               }
             }
 
-            context.addBreadcrumb({
+            addBreadcrumb({
               type: "info",
               category: "sync",
               message: "Processed received file sync events",
@@ -844,7 +855,7 @@ export class Sync {
       localFilesBuffer.clear();
 
       this._enqueue(async () => {
-        context.addBreadcrumb({
+        addBreadcrumb({
           type: "info",
           category: "sync",
           message: "Publishing file sync events",
@@ -891,7 +902,7 @@ export class Sync {
           this.state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
         }
 
-        context.addBreadcrumb({
+        addBreadcrumb({
           category: "sync",
           type: "info",
           message: "Published file sync events",
@@ -931,7 +942,7 @@ export class Sync {
       if (filepath == this.ignorer.filepath) {
         this.ignorer.reload();
       } else if (this.ignorer.ignores(filepath)) {
-        context.addBreadcrumb({
+        addBreadcrumb({
           type: "debug",
           category: "sync",
           message: "Skipping event caused by ignored file",
@@ -958,7 +969,7 @@ export class Sync {
       }
 
       if (this.recentRemoteChanges.delete(normalizedPath)) {
-        context.addBreadcrumb({
+        addBreadcrumb({
           type: "debug",
           category: "sync",
           message: "Skipping event caused by recent write",
@@ -970,7 +981,7 @@ export class Sync {
         return;
       }
 
-      context.addBreadcrumb({
+      addBreadcrumb({
         type: "debug",
         category: "sync",
         message: "Received file system event",
@@ -1012,24 +1023,24 @@ export class Sync {
     this.status = SyncStatus.RUNNING;
 
     // app should be defined at this point
-    assert(context.app);
+    assert(ctx.app);
 
     println();
     println`
-      {bold ggt v${context.config.version}}
+      {bold ggt v${Context.config.version}}
 
-      App         ${context.app.slug}
-      Editor      https://${context.app.slug}.gadget.app/edit
-      Playground  https://${context.app.slug}.gadget.app/api/graphql/playground
-      Docs        https://docs.gadget.dev/api/${context.app.slug}
+      App         ${ctx.app.slug}
+      Editor      https://${ctx.app.slug}.gadget.app/edit
+      Playground  https://${ctx.app.slug}.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/${ctx.app.slug}
 
       {underline Endpoints} ${
-        context.app.hasSplitEnvironments
+        ctx.app.hasSplitEnvironments
           ? `
-        - https://${context.app.primaryDomain}
-        - https://${context.app.slug}--development.gadget.app`
+        - https://${ctx.app.primaryDomain}
+        - https://${ctx.app.slug}--development.gadget.app`
           : `
-        - https://${context.app.primaryDomain}`
+        - https://${ctx.app.primaryDomain}`
       }
 
       Watching for file changes... {gray Press Ctrl+C to stop}

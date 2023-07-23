@@ -1,4 +1,4 @@
-import { context } from "../services/context.js";
+import type { Context } from "../services/context.js";
 import { println, sprint } from "../services/output.js";
 
 export const usage = sprint`
@@ -12,9 +12,9 @@ export const usage = sprint`
       Goodbye
 `;
 
-export const run = () => {
-  if (context.session) {
-    context.session = undefined;
+export const run = (ctx: Context) => {
+  if (ctx.session) {
+    ctx.session = undefined;
     println`Goodbye`;
   } else {
     println`You are not logged in`;

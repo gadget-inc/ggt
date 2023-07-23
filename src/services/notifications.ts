@@ -5,7 +5,7 @@ import type NotificationCenter from "node-notifier/notifiers/notificationcenter.
 import type NotifySend from "node-notifier/notifiers/notifysend.js";
 import type WindowsToaster from "node-notifier/notifiers/toaster.js";
 import path from "node:path";
-import { context } from "./context.js";
+import { Context, addBreadcrumb } from "./context.js";
 
 /**
  * Sends a native OS notification to the user.
@@ -21,7 +21,7 @@ export const notify = (
     | WindowsBalloon.Notification
     | Growl.Notification,
 ) => {
-  context.addBreadcrumb({
+  addBreadcrumb({
     type: "debug",
     category: "notification",
     message: "Notifying user",
@@ -33,15 +33,15 @@ export const notify = (
   notifier.notify(
     {
       title: "Gadget",
-      contentImage: path.join(context.config.ggtDir, "assets", "favicon-128@4x.png"),
-      icon: path.join(context.config.ggtDir, "assets", "favicon-128@4x.png"),
+      contentImage: path.join(Context.config.ggtDir, "assets", "favicon-128@4x.png"),
+      icon: path.join(Context.config.ggtDir, "assets", "favicon-128@4x.png"),
       sound: true,
       timeout: false,
       ...notification,
     },
     (error) => {
       if (error) {
-        context.addBreadcrumb({
+        addBreadcrumb({
           type: "error",
           category: "notification",
           message: "Error notifying user",

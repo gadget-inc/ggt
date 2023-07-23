@@ -4,16 +4,18 @@ import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { run } from "../../src/commands/login.js";
-import { context } from "../../src/services/context.js";
+import { Context } from "../../src/services/context.js";
 import { sleepUntil } from "../../src/services/sleep.js";
 import { expectStdout } from "../util.js";
 
 describe("login", () => {
+  let ctx: Context;
   let port: number;
   let server: http.Server;
   let requestListener: http.RequestListener;
 
   beforeEach(async () => {
+    ctx = new Context();
     port = await getPort();
     server = { listen: vi.fn(), close: vi.fn() } as any;
     vi.spyOn(http, "createServer").mockImplementation((opt, cb) => {
@@ -23,18 +25,18 @@ describe("login", () => {
   });
 
   it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
-    context.session = undefined;
-    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    ctx.session = undefined;
+    vi.spyOn(ctx, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
 
-    void run();
+    void run(ctx);
 
     await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
     expect(requestListener!).toBeDefined();
     expect(server.listen).toHaveBeenCalledWith(port);
     expect(open).toHaveBeenCalledWith(
-      `https://${context.domains.services}/auth/login?returnTo=${encodeURIComponent(
-        `https://${context.domains.services}/auth/cli/callback?port=${port}`,
+      `https://${Context.domains.services}/auth/login?returnTo=${encodeURIComponent(
+        `https://${Context.domains.services}/auth/cli/callback?port=${port}`,
       )}`,
     );
     expectStdout().toMatchInlineSnapshot(`
@@ -46,8 +48,8 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(context.session).toBeUndefined();
-    expect(context.getUser).not.toHaveBeenCalled();
+    expect(ctx.session).toBeUndefined();
+    expect(ctx.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(null as any);
     req.url = `?session=test`;
@@ -59,8 +61,8 @@ describe("login", () => {
     requestListener!(req, res);
 
     await sleepUntil(() => server.close.mock.calls.length > 0);
-    expect(context.session).toBe("test");
-    expect(context.getUser).toHaveBeenCalled();
+    expect(ctx.session).toBe("test");
+    expect(ctx.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "We've opened Gadget's login page using your default browser.
 
@@ -70,24 +72,24 @@ describe("login", () => {
 
       "
     `);
-    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${context.domains.services}/auth/cli?success=true` });
+    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${Context.domains.services}/auth/cli?success=true` });
     expect(res.end).toHaveBeenCalled();
     expect(server.close).toHaveBeenCalled();
   });
 
   it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
-    context.session = undefined;
-    vi.spyOn(context, "getUser").mockRejectedValue(new Error("boom"));
+    ctx.session = undefined;
+    vi.spyOn(ctx, "getUser").mockRejectedValue(new Error("boom"));
 
-    void run().catch(_.noop);
+    void run(ctx).catch(_.noop);
 
     await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
     expect(requestListener!).toBeDefined();
     expect(server.listen).toHaveBeenCalledWith(port);
     expect(open).toHaveBeenCalledWith(
-      `https://${context.domains.services}/auth/login?returnTo=${encodeURIComponent(
-        `https://${context.domains.services}/auth/cli/callback?port=${port}`,
+      `https://${Context.domains.services}/auth/login?returnTo=${encodeURIComponent(
+        `https://${Context.domains.services}/auth/cli/callback?port=${port}`,
       )}`,
     );
     expectStdout().toMatchInlineSnapshot(`
@@ -99,8 +101,8 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(context.session).toBeUndefined();
-    expect(context.getUser).not.toHaveBeenCalled();
+    expect(ctx.session).toBeUndefined();
+    expect(ctx.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(null as any);
     req.url = `?session=test`;
@@ -112,9 +114,9 @@ describe("login", () => {
     requestListener!(req, res);
 
     await sleepUntil(() => server.close.mock.calls.length > 0);
-    expect(context.session).toBeUndefined();
-    expect(context.getUser).toHaveBeenCalled();
-    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${context.domains.services}/auth/cli?success=false` });
+    expect(ctx.session).toBeUndefined();
+    expect(ctx.getUser).toHaveBeenCalled();
+    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${Context.domains.services}/auth/cli?success=false` });
     expect(res.end).toHaveBeenCalled();
     expect(server.close).toHaveBeenCalled();
   });

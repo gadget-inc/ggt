@@ -2,7 +2,7 @@ import getPort from "get-port";
 import type { Server } from "node:http";
 import http from "node:http";
 import open from "open";
-import { context } from "../services/context.js";
+import { Context } from "../services/context.js";
 import { println, sprint } from "../services/output.js";
 
 export const usage = sprint`
@@ -20,7 +20,7 @@ export const usage = sprint`
       Hello, Jane Doe (jane@example.com)
 `;
 
-export const run = async () => {
+export const run = async (ctx: Context) => {
   let server: Server | undefined;
 
   try {
@@ -28,7 +28,7 @@ export const run = async () => {
     const receiveSession = new Promise<void>((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       server = http.createServer(async (req, res) => {
-        const redirectTo = new URL(`https://${context.domains.services}/auth/cli`);
+        const redirectTo = new URL(`https://${Context.domains.services}/auth/cli`);
 
         try {
           if (!req.url) throw new Error("missing url");
@@ -37,9 +37,9 @@ export const run = async () => {
           const value = incomingUrl.searchParams.get("session");
           if (!value) throw new Error("missing session");
 
-          context.session = value;
+          ctx.session = value;
 
-          const user = await context.getUser();
+          const user = await ctx.getUser();
           if (!user) throw new Error("missing current user");
 
           if (user.name) {
@@ -52,7 +52,7 @@ export const run = async () => {
           redirectTo.searchParams.set("success", "true");
           resolve();
         } catch (error) {
-          context.session = undefined;
+          ctx.session = undefined;
           redirectTo.searchParams.set("success", "false");
           reject(error);
         } finally {
@@ -64,8 +64,8 @@ export const run = async () => {
       server.listen(port);
     });
 
-    const url = new URL(`https://${context.domains.services}/auth/login`);
-    url.searchParams.set("returnTo", `https://${context.domains.services}/auth/cli/callback?port=${port}`);
+    const url = new URL(`https://${Context.domains.services}/auth/login`);
+    url.searchParams.set("returnTo", `https://${Context.domains.services}/auth/cli/callback?port=${port}`);
     await open(url.toString());
 
     println`

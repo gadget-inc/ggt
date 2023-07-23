@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import path from "path";
-import { context } from "./context.js";
+import { addBreadcrumb } from "./context.js";
 
 export class FSIgnorer {
   readonly filepath;
@@ -33,7 +33,7 @@ export class FSIgnorer {
 
     try {
       this._ignorer.add(fs.readFileSync(this.filepath, "utf-8"));
-      context.addBreadcrumb({
+      addBreadcrumb({
         type: "debug",
         category: "fs",
         message: "Reloaded ignore rules",
@@ -115,7 +115,7 @@ export async function isEmptyDir(dir: string, opts = { ignoreEnoent: true }): Pr
 
 export function ignoreEnoent(error: any): void {
   if (error.code === "ENOENT") {
-    context.addBreadcrumb({
+    addBreadcrumb({
       type: "debug",
       category: "fs",
       message: "Ignoring ENOENT error",

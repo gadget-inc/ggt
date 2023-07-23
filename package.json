@@ -30,7 +30,7 @@
     "lint:fix": "eslint --fix . && prettier --write .",
     "lint:prettier": "prettier --check .",
     "lint:typescript": "tsc --project tsconfig.json",
-    "publish": "npm run build && changeset publish",
+    "release": "npm run build && changeset publish",
     "test": "cross-env NODE_OPTIONS=\"--no-warnings --loader ./node_modules/ts-node/esm.mjs\" vitest",
     "version": "changeset version && npm install --package-lock-only && npm run build"
   },

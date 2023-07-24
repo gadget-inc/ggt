@@ -149,6 +149,40 @@ describe("Sync", () => {
       await expect(init).resolves.toBeUndefined();
     });
 
+    it("throws ArgError if the `--app` flag is passed an app name that does not exist within the user's available apps", async () => {
+      globalArgs._ = [dir, "--app", "nope"];
+
+      const error = await getError(() => sync.init(ctx));
+      expect(error).toBeInstanceOf(ArgError);
+      expect(error.message).toMatchInlineSnapshot(`
+        "Unknown application:
+
+          nope
+
+        Did you mean one of these?
+
+          • test
+          • not-test"
+      `);
+    });
+
+    it("throws ArgError if the user doesn't have any available apps", async () => {
+      vi.spyOn(ctx, "getAvailableApps").mockResolvedValue([]);
+      globalArgs._ = [dir, "--app", "nope"];
+
+      const error = await getError(() => sync.init(ctx));
+      expect(error).toBeInstanceOf(ArgError);
+      expect(error.message).toMatchInlineSnapshot(`
+        "Unknown application:
+
+          nope
+
+        It doesn't look like you have any applications.
+
+        Visit https://gadget.new to create one!"
+      `);
+    });
+
     it("throws ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json", async () => {
       writeDir(dir, {
         ".gadget": {
@@ -162,7 +196,7 @@ describe("Sync", () => {
       expect(error.message).toMatch(/^You were about to sync the following app to the following directory:/);
     });
 
-    it("does not throw FlagError if the `--app` flag is passed a different app name than the one in .gadget/sync.json and `--force` is passed", async () => {
+    it("does not throw ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json and `--force` is passed", async () => {
       writeDir(dir, {
         ".gadget": {
           "sync.json": prettyJson({ app: "not-test", filesVersion: "77", mtime: 1658153625236 }),

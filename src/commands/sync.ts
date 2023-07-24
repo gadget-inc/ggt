@@ -35,7 +35,7 @@ import { globalArgs } from "../services/context.js";
 import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
 import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";
-import { println, sprint } from "../services/output.js";
+import { didYouMean, println, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
 
 export const usage = sprint`
@@ -511,7 +511,38 @@ export class Sync {
       `);
     }
 
-    await ctx.setApp(this.state.app);
+    const availableApps = await ctx.getAvailableApps();
+    ctx.app = _.find(availableApps, (a) => a.slug == this.state.app);
+
+    if (!ctx.app) {
+      if (availableApps.length == 0) {
+        throw new ArgError(
+          sprint`
+              Unknown application:
+
+                ${this.state.app}
+
+              It doesn't look like you have any applications.
+
+              Visit https://gadget.new to create one!
+          `,
+        );
+      }
+
+      const sorted = didYouMean(this.state.app, _.map(availableApps, "slug")).slice(0, 5);
+      let message = sprint`
+        Unknown application:
+
+          ${this.state.app}
+
+        Did you mean one of these?
+
+      `;
+      for (const slug of sorted) {
+        message += `\n  • ${slug}`;
+      }
+      throw new ArgError(message);
+    }
 
     this.client = new Client(ctx);
 

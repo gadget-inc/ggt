@@ -101,8 +101,8 @@ COMMANDS
       immediately saved to your local filesystem.
 
       Use cases for this include:
-        - Developing locally with your own editor like VSCode
-        - Storing your source code in a Git repository like GitHub
+        • Developing locally with your own editor like VSCode
+        • Storing your source code in a Git repository like GitHub
 
       Sync includes the concept of a .ignore file. This file may
       contain a list of files and directories that won't be received or
@@ -110,20 +110,20 @@ COMMANDS
       to the one used by Git (https://git-scm.com/docs/gitignore).
 
       The following files and directories are always ignored:
-        - .gadget
-        - .git
-        - node_modules
-        - .DS_STORE
+        • .gadget
+        • .git
+        • node_modules
+        • .DS_STORE
 
       Note:
-        - If you have separate development and production environments,
+        • If you have separate development and production environments,
           ggt sync will only sync with your development environment
-        - Gadget applications only support installing dependencies
+        • Gadget applications only support installing dependencies
           with Yarn 1 (https://classic.yarnpkg.com/lang/en/)
-        - Since file changes are immediately reflected in Gadget,
+        • Since file changes are immediately reflected in Gadget,
           avoid the following while ggt sync is running:
-            - Deleting all your files
-            - Moving all your files to a different directory
+            • Deleting all your files
+            • Moving all your files to a different directory
 
     EXAMPLES
       $ ggt sync --app my-app ~/gadget/my-app
@@ -134,8 +134,8 @@ COMMANDS
       Docs        https://docs.gadget.dev/api/my-app
 
       Endpoints
-        - https://my-app.gadget.app
-        - https://my-app--development.gadget.app
+        • https://my-app.gadget.app
+        • https://my-app--development.gadget.app
 
       Watching for file changes... Press Ctrl+C to stop
 

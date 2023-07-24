@@ -66,8 +66,8 @@ export const usage = sprint`
     immediately saved to your local filesystem.
 
     Use cases for this include:
-      - Developing locally with your own editor like VSCode
-      - Storing your source code in a Git repository like GitHub
+      • Developing locally with your own editor like VSCode
+      • Storing your source code in a Git repository like GitHub
 
     Sync includes the concept of a {dim .ignore} file. This file may
     contain a list of files and directories that won't be received or
@@ -75,20 +75,20 @@ export const usage = sprint`
     to the one used by Git {dim (https://git-scm.com/docs/gitignore)}.
 
     The following files and directories are always ignored:
-      - .gadget
-      - .git
-      - node_modules
-      - .DS_STORE
+      • .gadget
+      • .git
+      • node_modules
+      • .DS_STORE
 
     Note:
-      - If you have separate development and production environments,
+      • If you have separate development and production environments,
         {dim ggt sync} will only sync with your development environment
-      - Gadget applications only support installing dependencies
+      • Gadget applications only support installing dependencies
         with Yarn 1 {dim (https://classic.yarnpkg.com/lang/en/)}
-      - Since file changes are immediately reflected in Gadget,
+      • Since file changes are immediately reflected in Gadget,
         avoid the following while {dim ggt sync} is running:
-          - Deleting all your files
-          - Moving all your files to a different directory
+          • Deleting all your files
+          • Moving all your files to a different directory
 
   {bold EXAMPLES}
     {dim $ ggt sync --app my-app ~/gadget/my-app}
@@ -99,8 +99,8 @@ export const usage = sprint`
     Docs        https://docs.gadget.dev/api/my-app
 
     Endpoints
-      - https://my-app.gadget.app
-      - https://my-app--development.gadget.app
+      • https://my-app.gadget.app
+      • https://my-app--development.gadget.app
 
     Watching for file changes... {dim Press Ctrl+C to stop}
 
@@ -1071,10 +1071,10 @@ export class Sync {
       {underline Endpoints} ${
         ctx.app.hasSplitEnvironments
           ? `
-        - https://${ctx.app.primaryDomain}
-        - https://${ctx.app.slug}--development.gadget.app`
+        • https://${ctx.app.primaryDomain}
+        • https://${ctx.app.slug}--development.gadget.app`
           : `
-        - https://${ctx.app.primaryDomain}`
+        • https://${ctx.app.primaryDomain}`
       }
 
       Watching for file changes... {gray Press Ctrl+C to stop}

@@ -1,7 +1,10 @@
 import fs from "fs-extra";
+import inquirer from "inquirer";
 import nock from "nock";
-import path from "path";
+import path from "node:path";
+import process from "node:process";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as loginModule from "../../src/commands/login.js";
 import { config } from "../../src/services/config.js";
 import { Context } from "../../src/services/context.js";
 
@@ -95,6 +98,74 @@ describe("Context", () => {
         expect(nock.isDone()).toBe(true);
         await expect(ctx.getUser()).resolves.toEqual(user);
       }
+    });
+  });
+
+  describe("requireUser", () => {
+    it("returns the user if the session is set", async () => {
+      const user = { email: "test@example.com", name: "Jane Doe" };
+      nock(`https://${config.domains.services}`).get("/auth/api/current-user").reply(200, user);
+      ctx.session = "test";
+
+      await expect(ctx.requireUser()).resolves.toEqual(user);
+      expect(nock.isDone()).toBe(true);
+    });
+
+    it("prompts the user to log in if the session is not set", async () => {
+      inquirer.prompt.mockResolvedValue({ yes: true });
+      vi.spyOn(process, "exit");
+
+      const user = { id: 1, email: "test@example.com", name: "Jane Doe" };
+      vi.spyOn(loginModule, "run").mockImplementation(() => {
+        // @ts-expect-error _user is private
+        ctx._user = user;
+        return Promise.resolve();
+      });
+
+      ctx.session = undefined;
+      await expect(ctx.requireUser()).resolves.toEqual(user);
+
+      expect(inquirer.prompt).toHaveBeenCalled();
+      expect(process.exit).not.toHaveBeenCalled();
+      expect(loginModule.run).toHaveBeenCalled();
+    });
+
+    it("prompts the user to log in if the session is invalid or expired", async () => {
+      inquirer.prompt.mockResolvedValue({ yes: true });
+      vi.spyOn(process, "exit");
+
+      const user = { id: 1, email: "test@example.com", name: "Jane Doe" };
+      vi.spyOn(loginModule, "run").mockImplementation(() => {
+        // @ts-expect-error _user is private
+        ctx._user = user;
+        return Promise.resolve();
+      });
+
+      nock(`https://${config.domains.services}`).get("/auth/api/current-user").reply(401);
+
+      ctx.session = "test";
+      await expect(ctx.requireUser()).resolves.toEqual(user);
+
+      expect(nock.isDone()).toBe(true);
+      expect(inquirer.prompt).toHaveBeenCalled();
+      expect(process.exit).not.toHaveBeenCalled();
+      expect(loginModule.run).toHaveBeenCalled();
+    });
+
+    it("calls process.exit if the user declines to log in", async () => {
+      inquirer.prompt.mockResolvedValue({ yes: false });
+      vi.spyOn(loginModule, "run").mockResolvedValue();
+
+      const exitError = new Error("exit");
+      vi.spyOn(process, "exit").mockImplementation(() => {
+        throw exitError;
+      });
+
+      await expect(ctx.requireUser()).rejects.toEqual(exitError);
+
+      expect(inquirer.prompt).toHaveBeenCalled();
+      expect(loginModule.run).not.toHaveBeenCalled();
+      expect(process.exit).toHaveBeenCalledWith(0);
     });
   });
 

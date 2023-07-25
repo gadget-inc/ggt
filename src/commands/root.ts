@@ -33,9 +33,13 @@ export const run = async (ctx = new Context()) => {
 
   if (!_.includes(availableCommands, command)) {
     const [closest] = didYouMean(command, availableCommands);
-    println`{yellow ${command}} is not a ggt command, did you mean {blueBright ${closest}}?`;
-    println();
-    println(usage);
+    println`
+      Unknown command {yellow ${command}}
+
+      Did you mean {blueBright ${closest}}?
+
+      Run {gray ggt --help} for usage
+    `;
     process.exit(1);
   }
 

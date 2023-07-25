@@ -53,7 +53,7 @@ export const config = {
   },
 
   /**
-   * @example "ggt/1.2.3 (darwin-arm64) node-v16.0.0"
+   * @example "ggt/1.2.3 darwin-arm64 node-v16.0.0"
    */
   get versionFull(): string {
     return `${this.name}/${this.version} ${this.platform}-${this.arch} node-${process.version}`;

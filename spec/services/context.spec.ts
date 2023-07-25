@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as loginModule from "../../src/commands/login.js";
 import { config } from "../../src/services/config.js";
 import { Context } from "../../src/services/context.js";
+import { expectProcessExit } from "../util.js";
 
 describe("Context", () => {
   let ctx: Context;
@@ -156,12 +157,7 @@ describe("Context", () => {
       inquirer.prompt.mockResolvedValue({ yes: false });
       vi.spyOn(loginModule, "run").mockResolvedValue();
 
-      const exitError = new Error("exit");
-      vi.spyOn(process, "exit").mockImplementation(() => {
-        throw exitError;
-      });
-
-      await expect(ctx.requireUser()).rejects.toEqual(exitError);
+      await expectProcessExit(() => ctx.requireUser());
 
       expect(inquirer.prompt).toHaveBeenCalled();
       expect(loginModule.run).not.toHaveBeenCalled();

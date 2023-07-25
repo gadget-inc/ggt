@@ -7,10 +7,14 @@ import { testDirPath, testStdout } from "./util.js";
 
 beforeEach(async () => {
   process.env["GGT_ENV"] = "test";
-  globalArgs._ = [];
 
   const testDir = testDirPath();
   await fs.remove(testDir);
+
+  // reset globalArgs
+  globalArgs["--help"] = undefined;
+  globalArgs["--debug"] = undefined;
+  globalArgs._ = [];
 
   // store files in the test's tmp directory
   process.env["GGT_CONFIG_DIR"] = path.join(testDir, "config");

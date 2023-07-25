@@ -22,6 +22,21 @@ export const testStdout: string[] = [];
 
 export const expectStdout = () => expect(testStdout.join(""));
 
+export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode = 0) => {
+  const exitError = new Error("process.exit() was called");
+  vi.spyOn(process, "exit").mockImplementationOnce((exitCode) => {
+    expect(exitCode).toBe(expectedCode);
+    throw exitError;
+  });
+
+  try {
+    await fnThatExits();
+    expect.fail("Expected process.exit() to be called");
+  } catch (error) {
+    expect(error).toBe(exitError);
+  }
+};
+
 export async function getError(fnThatThrows: () => unknown): Promise<any> {
   try {
     await fnThatThrows();

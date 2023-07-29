@@ -23,9 +23,9 @@ export const testStdout: string[] = [];
 export const expectStdout = () => expect(testStdout.join(""));
 
 export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode = 0) => {
-  const exitError = new Error("process.exit() was called");
+  const exitError = new Error("process.exit() was called") as Error & { code?: number };
   vi.spyOn(process, "exit").mockImplementationOnce((exitCode) => {
-    expect(exitCode).toBe(expectedCode);
+    exitError.code = exitCode;
     throw exitError;
   });
 
@@ -34,6 +34,7 @@ export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode
     expect.fail("Expected process.exit() to be called");
   } catch (error) {
     expect(error).toBe(exitError);
+    expect(exitError.code).toBe(expectedCode);
   }
 };
 

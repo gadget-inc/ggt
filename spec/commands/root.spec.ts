@@ -9,6 +9,18 @@ import { CLIError, IsBug } from "../../src/services/errors.js";
 import { expectProcessExit, expectStdout } from "../util.js";
 
 describe("root", () => {
+  it("prints the version when --version is given", async () => {
+    globalArgs["--version"] = true;
+    vi.spyOn(config, "version", "get").mockReturnValue("0.0.0");
+
+    await expectProcessExit(run);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "0.0.0
+      "
+    `);
+  });
+
   it("prints root usage when no command is given", async () => {
     vi.spyOn(config, "versionFull", "get").mockReturnValue("ggt/1.2.3 darwin-arm64 node-v16.0.0");
 
@@ -22,6 +34,11 @@ describe("root", () => {
 
       USAGE
         $ ggt [COMMAND]
+
+      FLAGS
+        -h, --help     Print command's usage
+        -v, --version  Print version
+        -d, --debug    Print debug output
 
       COMMANDS
         sync    Sync your Gadget application's source code to and

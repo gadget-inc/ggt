@@ -1,12 +1,12 @@
 import { setUser } from "@sentry/node";
 import arg from "arg";
-import assert from "assert";
 import fs from "fs-extra";
 import { HTTPError, got } from "got";
 import inquirer from "inquirer";
 import _ from "lodash";
-import path from "path";
-import process from "process";
+import assert from "node:assert";
+import path from "node:path";
+import process from "node:process";
 import { run as login } from "../commands/login.js";
 import { config } from "./config.js";
 import { ignoreEnoent } from "./fs-utils.js";
@@ -28,8 +28,10 @@ export const globalArgs = arg(
   {
     "--help": Boolean,
     "-h": "--help",
+    "--version": Boolean,
+    "-v": "--version",
     "--debug": Boolean,
-    "-D": "--debug",
+    "-d": "--debug",
   },
   {
     argv: process.argv.slice(2),

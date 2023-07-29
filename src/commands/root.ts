@@ -14,6 +14,11 @@ export const usage = sprint`
     {bold USAGE}
       $ ggt [COMMAND]
 
+    {bold FLAGS}
+      -h, --help     {gray Print command's usage}
+      -v, --version  {gray Print version}
+      -d, --debug    {gray Print debug output}
+
     {bold COMMANDS}
       sync    Sync your Gadget application's source code to and
               from your local filesystem.
@@ -24,8 +29,12 @@ export const usage = sprint`
 `;
 
 export const run = async (ctx = new Context()) => {
-  const command = globalArgs._.shift();
+  if (globalArgs["--version"]) {
+    println(config.version);
+    process.exit(0);
+  }
 
+  const command = globalArgs._.shift();
   if (_.isNil(command)) {
     println(usage);
     process.exit(0);

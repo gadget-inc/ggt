@@ -13,6 +13,7 @@ beforeEach(async () => {
 
   // reset globalArgs
   globalArgs["--help"] = undefined;
+  globalArgs["--version"] = undefined;
   globalArgs["--debug"] = undefined;
   globalArgs._ = [];
 

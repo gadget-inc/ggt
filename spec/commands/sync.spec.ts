@@ -46,7 +46,21 @@ describe("Sync", () => {
     client = mockClient();
     dir = path.join(testDirPath(), "app");
     app = "test";
-    globalArgs._ = [dir, "--app", app];
+    globalArgs._ = [
+      dir,
+      "--app",
+      app,
+      "--file-push-delay",
+      "10", // default 100ms
+      "--file-watch-debounce",
+      "300", // default 300ms
+      "--file-watch-poll-interval",
+      "30", // default 3_000ms
+      "--file-watch-poll-timeout",
+      "20", // default 20_000ms
+      "--file-watch-rename-timeout",
+      "50", // default 1_250ms
+    ];
 
     sync = new Sync();
 

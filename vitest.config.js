@@ -1,9 +1,5 @@
 import { defineConfig } from "vitest/config";
-
-let timeout = 30_000;
-if (process.env["CI"]) {
-  timeout *= 2;
-}
+import { timeoutMs } from "./src/services/timeout.js";
 
 export default defineConfig({
   test: {
@@ -17,8 +13,8 @@ export default defineConfig({
     },
     watch: false,
     hideSkippedTests: true,
-    testTimeout: timeout,
-    hookTimeout: timeout,
+    testTimeout: timeoutMs("30s"),
+    hookTimeout: timeoutMs("30s"),
     threads: false,
     chaiConfig: {
       truncateThreshold: 10_000,

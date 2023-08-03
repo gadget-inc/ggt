@@ -73,7 +73,7 @@
         "cross-env": "^7.0.3",
         "cspell": "^6.31.2",
         "eslint": "^8.45.0",
-        "eslint-config-prettier": "^8.8.0",
+        "eslint-config-prettier": "^8.10.0",
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-lodash": "^7.4.0",
         "nock": "^13.3.2",
@@ -8961,9 +8961,9 @@
       }
     },
     "node_modules/eslint-config-prettier": {
-      "version": "8.8.0",
-      "resolved": "https://registry.npmjs.org/eslint-config-prettier/-/eslint-config-prettier-8.8.0.tgz",
-      "integrity": "sha512-wLbQiFre3tdGgpDv67NQKnJuTlcUVYHas3k+DZCc2U2BadthoEY4B7hLPvAxaqdyOGCzuLfii2fqGph10va7oA==",
+      "version": "8.10.0",
+      "resolved": "https://registry.npmjs.org/eslint-config-prettier/-/eslint-config-prettier-8.10.0.tgz",
+      "integrity": "sha512-SM8AMJdeQqRYT9O9zguiruQZaN7+z+E4eAP9oiLNGKMtomwaB1E9dcgUD6ZAn/eQAb52USbvezbiljfZUhbJcg==",
       "dev": true,
       "bin": {
         "eslint-config-prettier": "bin/cli.js"
@@ -27930,9 +27930,9 @@
       }
     },
     "eslint-config-prettier": {
-      "version": "8.8.0",
-      "resolved": "https://registry.npmjs.org/eslint-config-prettier/-/eslint-config-prettier-8.8.0.tgz",
-      "integrity": "sha512-wLbQiFre3tdGgpDv67NQKnJuTlcUVYHas3k+DZCc2U2BadthoEY4B7hLPvAxaqdyOGCzuLfii2fqGph10va7oA==",
+      "version": "8.10.0",
+      "resolved": "https://registry.npmjs.org/eslint-config-prettier/-/eslint-config-prettier-8.10.0.tgz",
+      "integrity": "sha512-SM8AMJdeQqRYT9O9zguiruQZaN7+z+E4eAP9oiLNGKMtomwaB1E9dcgUD6ZAn/eQAb52USbvezbiljfZUhbJcg==",
       "dev": true,
       "requires": {}
     },

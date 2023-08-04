@@ -77,7 +77,7 @@
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-lodash": "^7.4.0",
         "nock": "^13.3.2",
-        "oclif": "^3.10.0",
+        "oclif": "^3.11.2",
         "patch-package": "^7.0.2",
         "prettier": "^3.0.0",
         "prettier-plugin-organize-imports": "^3.2.3",
@@ -4572,9 +4572,9 @@
       }
     },
     "node_modules/@oclif/core": {
-      "version": "2.9.4",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.9.4.tgz",
-      "integrity": "sha512-eFRRpV+tJ6nMkhay2M9IppjSF3atRrgj6Qo83qUslaFSAW3NAl4mIhx1mKmTwQx5rgSrar03xICtSAWJ6gZtag==",
+      "version": "2.11.7",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.11.7.tgz",
+      "integrity": "sha512-0jbHePVekndUTd+Wee0+pnCpRhuHJrKiG9OtMqf4JSBCxp5Q8V+ACf8QKN4gNH9ppbGORfnTIYtXWh60+DcIiw==",
       "dependencies": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -7450,14 +7450,6 @@
         "url": "https://github.com/sponsors/sindresorhus"
       }
     },
-    "node_modules/cli-boxes": {
-      "version": "1.0.0",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
     "node_modules/cli-cursor": {
       "version": "3.1.0",
       "license": "MIT",
@@ -7628,14 +7620,6 @@
       },
       "engines": {
         "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
-      }
-    },
-    "node_modules/code-point-at": {
-      "version": "1.1.0",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=0.10.0"
       }
     },
     "node_modules/color-convert": {
@@ -10004,14 +9988,6 @@
         "url": "https://github.com/sponsors/sindresorhus"
       }
     },
-    "node_modules/get-stdin": {
-      "version": "4.0.1",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
     "node_modules/get-stream": {
       "version": "6.0.1",
       "resolved": "https://registry.npmjs.org/get-stream/-/get-stream-6.0.1.tgz",
@@ -10363,25 +10339,6 @@
       },
       "engines": {
         "node": ">= 0.4.0"
-      }
-    },
-    "node_modules/has-ansi": {
-      "version": "2.0.0",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "ansi-regex": "^2.0.0"
-      },
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
-    "node_modules/has-ansi/node_modules/ansi-regex": {
-      "version": "2.1.1",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=0.10.0"
       }
     },
     "node_modules/has-bigints": {
@@ -16293,14 +16250,6 @@
       "integrity": "sha512-2vPPEi+Z7WqML2jZYddDIfy5Dqb0r2fze2zTxNNknZaFpVHU3mFB3R+DWeJWGVx0ecvttSGlJTI+WG+8Z4cDWw==",
       "dev": true
     },
-    "node_modules/number-is-nan": {
-      "version": "1.0.1",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
     "node_modules/object-assign": {
       "version": "4.1.1",
       "dev": true,
@@ -16370,12 +16319,12 @@
       }
     },
     "node_modules/oclif": {
-      "version": "3.10.0",
-      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.10.0.tgz",
-      "integrity": "sha512-Kf/nL7GrfezePsZGQytbPJG1EGNFRAG+lC6NhYqPOgeBIGppLuQDg6vO9wz0QRoijSJv/Yf4wCe2URMoCFtBNw==",
+      "version": "3.11.2",
+      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.11.2.tgz",
+      "integrity": "sha512-y2pEJlSu4gCmSFZFKvgrMYIcDym5zzNErqQ5T2x/UlFy6xZiDhkrsxRteR6WgdlagONkFZg+Akti5qTn/wZwAg==",
       "dev": true,
       "dependencies": {
-        "@oclif/core": "^2.9.4",
+        "@oclif/core": "^2.11.4",
         "@oclif/plugin-help": "^5.2.14",
         "@oclif/plugin-not-found": "^2.3.32",
         "@oclif/plugin-warn-if-update-available": "^2.0.44",
@@ -16392,12 +16341,10 @@
         "shelljs": "^0.8.5",
         "tslib": "^2.3.1",
         "yeoman-environment": "^3.15.1",
-        "yeoman-generator": "^5.8.0",
-        "yosay": "^2.0.2"
+        "yeoman-generator": "^5.8.0"
       },
       "bin": {
-        "oclif": "bin/run",
-        "oclif2": "bin/run"
+        "oclif": "bin/run"
       },
       "engines": {
         "node": ">=12.0.0"
@@ -16966,10 +16913,6 @@
       "funding": {
         "url": "https://github.com/sponsors/isaacs"
       }
-    },
-    "node_modules/pad-component": {
-      "version": "0.0.1",
-      "dev": true
     },
     "node_modules/param-case": {
       "version": "3.0.4",
@@ -19440,15 +19383,6 @@
         "url": "https://opencollective.com/unts"
       }
     },
-    "node_modules/taketalk": {
-      "version": "1.0.0",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "get-stdin": "^4.0.1",
-        "minimist": "^1.1.0"
-      }
-    },
     "node_modules/tar": {
       "version": "6.1.13",
       "resolved": "https://registry.npmjs.org/tar/-/tar-6.1.13.tgz",
@@ -21077,185 +21011,6 @@
       },
       "funding": {
         "url": "https://github.com/sponsors/sindresorhus"
-      }
-    },
-    "node_modules/yosay": {
-      "version": "2.0.2",
-      "dev": true,
-      "license": "BSD-2-Clause",
-      "dependencies": {
-        "ansi-regex": "^2.0.0",
-        "ansi-styles": "^3.0.0",
-        "chalk": "^1.0.0",
-        "cli-boxes": "^1.0.0",
-        "pad-component": "0.0.1",
-        "string-width": "^2.0.0",
-        "strip-ansi": "^3.0.0",
-        "taketalk": "^1.0.0",
-        "wrap-ansi": "^2.0.0"
-      },
-      "bin": {
-        "yosay": "cli.js"
-      },
-      "engines": {
-        "node": ">=4"
-      }
-    },
-    "node_modules/yosay/node_modules/ansi-regex": {
-      "version": "2.1.1",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
-    "node_modules/yosay/node_modules/ansi-styles": {
-      "version": "3.2.1",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "color-convert": "^1.9.0"
-      },
-      "engines": {
-        "node": ">=4"
-      }
-    },
-    "node_modules/yosay/node_modules/chalk": {
-      "version": "1.1.3",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "ansi-styles": "^2.2.1",
-        "escape-string-regexp": "^1.0.2",
-        "has-ansi": "^2.0.0",
-        "strip-ansi": "^3.0.0",
-        "supports-color": "^2.0.0"
-      },
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
-    "node_modules/yosay/node_modules/chalk/node_modules/ansi-styles": {
-      "version": "2.2.1",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
-    "node_modules/yosay/node_modules/color-convert": {
-      "version": "1.9.3",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "color-name": "1.1.3"
-      }
-    },
-    "node_modules/yosay/node_modules/color-name": {
-      "version": "1.1.3",
-      "dev": true,
-      "license": "MIT"
-    },
-    "node_modules/yosay/node_modules/escape-string-regexp": {
-      "version": "1.0.5",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=0.8.0"
-      }
-    },
-    "node_modules/yosay/node_modules/is-fullwidth-code-point": {
-      "version": "2.0.0",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=4"
-      }
-    },
-    "node_modules/yosay/node_modules/string-width": {
-      "version": "2.1.1",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "is-fullwidth-code-point": "^2.0.0",
-        "strip-ansi": "^4.0.0"
-      },
-      "engines": {
-        "node": ">=4"
-      }
-    },
-    "node_modules/yosay/node_modules/string-width/node_modules/ansi-regex": {
-      "version": "3.0.1",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=4"
-      }
-    },
-    "node_modules/yosay/node_modules/string-width/node_modules/strip-ansi": {
-      "version": "4.0.0",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "ansi-regex": "^3.0.0"
-      },
-      "engines": {
-        "node": ">=4"
-      }
-    },
-    "node_modules/yosay/node_modules/strip-ansi": {
-      "version": "3.0.1",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "ansi-regex": "^2.0.0"
-      },
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
-    "node_modules/yosay/node_modules/supports-color": {
-      "version": "2.0.0",
-      "dev": true,
-      "license": "MIT",
-      "engines": {
-        "node": ">=0.8.0"
-      }
-    },
-    "node_modules/yosay/node_modules/wrap-ansi": {
-      "version": "2.1.0",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "string-width": "^1.0.1",
-        "strip-ansi": "^3.0.1"
-      },
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
-    "node_modules/yosay/node_modules/wrap-ansi/node_modules/is-fullwidth-code-point": {
-      "version": "1.0.0",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "number-is-nan": "^1.0.0"
-      },
-      "engines": {
-        "node": ">=0.10.0"
-      }
-    },
-    "node_modules/yosay/node_modules/wrap-ansi/node_modules/string-width": {
-      "version": "1.0.2",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "code-point-at": "^1.0.0",
-        "is-fullwidth-code-point": "^1.0.0",
-        "strip-ansi": "^3.0.0"
-      },
-      "engines": {
-        "node": ">=0.10.0"
       }
     }
   },
@@ -24660,9 +24415,9 @@
       }
     },
     "@oclif/core": {
-      "version": "2.9.4",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.9.4.tgz",
-      "integrity": "sha512-eFRRpV+tJ6nMkhay2M9IppjSF3atRrgj6Qo83qUslaFSAW3NAl4mIhx1mKmTwQx5rgSrar03xICtSAWJ6gZtag==",
+      "version": "2.11.7",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.11.7.tgz",
+      "integrity": "sha512-0jbHePVekndUTd+Wee0+pnCpRhuHJrKiG9OtMqf4JSBCxp5Q8V+ACf8QKN4gNH9ppbGORfnTIYtXWh60+DcIiw==",
       "requires": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -26760,10 +26515,6 @@
         "resolve-from": "^5.0.0"
       }
     },
-    "cli-boxes": {
-      "version": "1.0.0",
-      "dev": true
-    },
     "cli-cursor": {
       "version": "3.1.0",
       "requires": {
@@ -26895,10 +26646,6 @@
       "requires": {
         "mkdirp-infer-owner": "^2.0.0"
       }
-    },
-    "code-point-at": {
-      "version": "1.1.0",
-      "dev": true
     },
     "color-convert": {
       "version": "2.0.1",
@@ -28630,10 +28377,6 @@
       "resolved": "https://registry.npmjs.org/get-port/-/get-port-7.0.0.tgz",
       "integrity": "sha512-mDHFgApoQd+azgMdwylJrv2DX47ywGq1i5VFJE7fZ0dttNq3iQMfsU4IvEgBHojA3KqEudyu7Vq+oN8kNaNkWw=="
     },
-    "get-stdin": {
-      "version": "4.0.1",
-      "dev": true
-    },
     "get-stream": {
       "version": "6.0.1",
       "resolved": "https://registry.npmjs.org/get-stream/-/get-stream-6.0.1.tgz",
@@ -28875,19 +28618,6 @@
       "dev": true,
       "requires": {
         "function-bind": "^1.1.1"
-      }
-    },
-    "has-ansi": {
-      "version": "2.0.0",
-      "dev": true,
-      "requires": {
-        "ansi-regex": "^2.0.0"
-      },
-      "dependencies": {
-        "ansi-regex": {
-          "version": "2.1.1",
-          "dev": true
-        }
       }
     },
     "has-bigints": {
@@ -32972,10 +32702,6 @@
       "integrity": "sha512-2vPPEi+Z7WqML2jZYddDIfy5Dqb0r2fze2zTxNNknZaFpVHU3mFB3R+DWeJWGVx0ecvttSGlJTI+WG+8Z4cDWw==",
       "dev": true
     },
-    "number-is-nan": {
-      "version": "1.0.1",
-      "dev": true
-    },
     "object-assign": {
       "version": "4.1.1",
       "dev": true
@@ -33019,12 +32745,12 @@
       }
     },
     "oclif": {
-      "version": "3.10.0",
-      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.10.0.tgz",
-      "integrity": "sha512-Kf/nL7GrfezePsZGQytbPJG1EGNFRAG+lC6NhYqPOgeBIGppLuQDg6vO9wz0QRoijSJv/Yf4wCe2URMoCFtBNw==",
+      "version": "3.11.2",
+      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.11.2.tgz",
+      "integrity": "sha512-y2pEJlSu4gCmSFZFKvgrMYIcDym5zzNErqQ5T2x/UlFy6xZiDhkrsxRteR6WgdlagONkFZg+Akti5qTn/wZwAg==",
       "dev": true,
       "requires": {
-        "@oclif/core": "^2.9.4",
+        "@oclif/core": "^2.11.4",
         "@oclif/plugin-help": "^5.2.14",
         "@oclif/plugin-not-found": "^2.3.32",
         "@oclif/plugin-warn-if-update-available": "^2.0.44",
@@ -33041,8 +32767,7 @@
         "shelljs": "^0.8.5",
         "tslib": "^2.3.1",
         "yeoman-environment": "^3.15.1",
-        "yeoman-generator": "^5.8.0",
-        "yosay": "^2.0.2"
+        "yeoman-generator": "^5.8.0"
       },
       "dependencies": {
         "@sindresorhus/is": {
@@ -33438,10 +33163,6 @@
           }
         }
       }
-    },
-    "pad-component": {
-      "version": "0.0.1",
-      "dev": true
     },
     "param-case": {
       "version": "3.0.4",
@@ -35192,14 +34913,6 @@
         "tslib": "^2.5.0"
       }
     },
-    "taketalk": {
-      "version": "1.0.0",
-      "dev": true,
-      "requires": {
-        "get-stdin": "^4.0.1",
-        "minimist": "^1.1.0"
-      }
-    },
     "tar": {
       "version": "6.1.13",
       "resolved": "https://registry.npmjs.org/tar/-/tar-6.1.13.tgz",
@@ -36323,128 +36036,6 @@
     "yocto-queue": {
       "version": "0.1.0",
       "dev": true
-    },
-    "yosay": {
-      "version": "2.0.2",
-      "dev": true,
-      "requires": {
-        "ansi-regex": "^2.0.0",
-        "ansi-styles": "^3.0.0",
-        "chalk": "^1.0.0",
-        "cli-boxes": "^1.0.0",
-        "pad-component": "0.0.1",
-        "string-width": "^2.0.0",
-        "strip-ansi": "^3.0.0",
-        "taketalk": "^1.0.0",
-        "wrap-ansi": "^2.0.0"
-      },
-      "dependencies": {
-        "ansi-regex": {
-          "version": "2.1.1",
-          "dev": true
-        },
-        "ansi-styles": {
-          "version": "3.2.1",
-          "dev": true,
-          "requires": {
-            "color-convert": "^1.9.0"
-          }
-        },
-        "chalk": {
-          "version": "1.1.3",
-          "dev": true,
-          "requires": {
-            "ansi-styles": "^2.2.1",
-            "escape-string-regexp": "^1.0.2",
-            "has-ansi": "^2.0.0",
-            "strip-ansi": "^3.0.0",
-            "supports-color": "^2.0.0"
-          },
-          "dependencies": {
-            "ansi-styles": {
-              "version": "2.2.1",
-              "dev": true
-            }
-          }
-        },
-        "color-convert": {
-          "version": "1.9.3",
-          "dev": true,
-          "requires": {
-            "color-name": "1.1.3"
-          }
-        },
-        "color-name": {
-          "version": "1.1.3",
-          "dev": true
-        },
-        "escape-string-regexp": {
-          "version": "1.0.5",
-          "dev": true
-        },
-        "is-fullwidth-code-point": {
-          "version": "2.0.0",
-          "dev": true
-        },
-        "string-width": {
-          "version": "2.1.1",
-          "dev": true,
-          "requires": {
-            "is-fullwidth-code-point": "^2.0.0",
-            "strip-ansi": "^4.0.0"
-          },
-          "dependencies": {
-            "ansi-regex": {
-              "version": "3.0.1",
-              "dev": true
-            },
-            "strip-ansi": {
-              "version": "4.0.0",
-              "dev": true,
-              "requires": {
-                "ansi-regex": "^3.0.0"
-              }
-            }
-          }
-        },
-        "strip-ansi": {
-          "version": "3.0.1",
-          "dev": true,
-          "requires": {
-            "ansi-regex": "^2.0.0"
-          }
-        },
-        "supports-color": {
-          "version": "2.0.0",
-          "dev": true
-        },
-        "wrap-ansi": {
-          "version": "2.1.0",
-          "dev": true,
-          "requires": {
-            "string-width": "^1.0.1",
-            "strip-ansi": "^3.0.1"
-          },
-          "dependencies": {
-            "is-fullwidth-code-point": {
-              "version": "1.0.0",
-              "dev": true,
-              "requires": {
-                "number-is-nan": "^1.0.0"
-              }
-            },
-            "string-width": {
-              "version": "1.0.2",
-              "dev": true,
-              "requires": {
-                "code-point-at": "^1.0.0",
-                "is-fullwidth-code-point": "^1.0.0",
-                "strip-ansi": "^3.0.0"
-              }
-            }
-          }
-        }
-      }
     }
   }
 }

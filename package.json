@@ -56,7 +56,7 @@
     "graphql": "^16.7.1",
     "graphql-ws": "^5.14.0",
     "ignore": "^5.2.4",
-    "inquirer": "^9.2.8",
+    "inquirer": "^9.2.10",
     "lodash": "^4.17.21",
     "node-notifier": "^10.0.1",
     "normalize-path": "^3.0.0",

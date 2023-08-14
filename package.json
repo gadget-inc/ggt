@@ -64,7 +64,7 @@
     "p-map": "^6.0.0",
     "p-queue": "^7.3.4",
     "pluralize": "^8.0.0",
-    "serialize-error": "^11.0.0",
+    "serialize-error": "^11.0.1",
     "ts-dedent": "^2.2.0",
     "watcher": "^2.2.2",
     "which": "^3.0.1",

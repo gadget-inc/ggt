@@ -66,7 +66,7 @@
     "pluralize": "^8.0.0",
     "serialize-error": "^11.0.1",
     "ts-dedent": "^2.2.0",
-    "watcher": "^2.2.2",
+    "watcher": "^2.3.0",
     "which": "^3.0.1",
     "ws": "^8.13.0"
   },

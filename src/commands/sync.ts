@@ -59,6 +59,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
       - .gadget
       - .git
       - node_modules
+      - .DS_Store
 
     Note:
       - If you have separate development and production environments, {gray ggt sync} will only sync with your development environment
@@ -341,7 +342,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
     this.client = new Client();
 
     // local files/folders that should never be published
-    this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git"]);
+    this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git", ".DS_Store"]);
 
     if (!which.sync("yarn", { nothrow: true })) {
       throw new YarnNotFoundError();
@@ -736,7 +737,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     this.watcher = new FSWatcher(this.dir, {
       // paths that we never want to publish
-      ignore: /(\.gadget|\.git|node_modules)/,
+      ignore: /(\.gadget|\.git|node_modules|\.DS_Store)/,
       // don't emit an event for every watched file on boot
       ignoreInitial: true,
       renameDetection: true,

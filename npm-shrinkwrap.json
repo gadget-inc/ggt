@@ -51,7 +51,7 @@
         "@graphql-codegen/cli": "^5.0.0",
         "@graphql-codegen/typescript": "^4.0.0",
         "@graphql-codegen/typescript-operations": "^4.0.1",
-        "@oclif/plugin-plugins": "^3.1.8",
+        "@oclif/plugin-plugins": "^3.3.1",
         "@oclif/test": "^2.3.33",
         "@swc/cli": "^0.1.62",
         "@swc/core": "^1.3.80",
@@ -4611,9 +4611,9 @@
       }
     },
     "node_modules/@oclif/core": {
-      "version": "2.9.4",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.9.4.tgz",
-      "integrity": "sha512-eFRRpV+tJ6nMkhay2M9IppjSF3atRrgj6Qo83qUslaFSAW3NAl4mIhx1mKmTwQx5rgSrar03xICtSAWJ6gZtag==",
+      "version": "2.11.11",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.11.11.tgz",
+      "integrity": "sha512-B0yaeJhdaLlPU0i95mHItV6C7xtoGFBNZrrd0IQzxKhdMhRxzmCmJyoVh8YaZVlsdsT/cjVAZ/6Aoctg3G4MmQ==",
       "dependencies": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -4801,23 +4801,22 @@
       }
     },
     "node_modules/@oclif/plugin-plugins": {
-      "version": "3.1.8",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-3.1.8.tgz",
-      "integrity": "sha512-514sFBzLcR9QCSMWCHt/1XntfjJEZvb637b9YuV4kwq749pKEPF7fjCxSV1gYQCCP4TjMB5gB4AwPL4cCbe+/A==",
+      "version": "3.3.1",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-3.3.1.tgz",
+      "integrity": "sha512-pC/lcVYia0jYwgpBNXXkYMXzcAWzxs9I7uVepmnMrHMpVTEovwH7+pdRZutcCvD5sZb1WSZmGcTD8QuDvt77dA==",
       "dev": true,
       "dependencies": {
-        "@oclif/color": "^1.0.4",
-        "@oclif/core": "^2.8.7",
+        "@oclif/core": "^2.11.10",
         "chalk": "^4.1.2",
         "debug": "^4.3.4",
         "fs-extra": "^9.0",
         "http-call": "^5.2.2",
         "load-json-file": "^5.3.0",
-        "npm": "^9.7.2",
+        "npm": "9.6.7",
         "npm-run-path": "^4.0.1",
-        "semver": "^7.5.3",
+        "semver": "^7.5.4",
         "shelljs": "^0.8.5",
-        "tslib": "^2.6.0",
+        "tslib": "^2.6.2",
         "validate-npm-package-name": "^5.0.0",
         "yarn": "^1.22.18"
       },
@@ -4877,9 +4876,9 @@
       }
     },
     "node_modules/@oclif/plugin-plugins/node_modules/tslib": {
-      "version": "2.6.0",
-      "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.6.0.tgz",
-      "integrity": "sha512-7At1WUettjcSRHXCyYtTselblcHl9PJFFVKiCAy/bY97+BPZXSQ2wbq0P9s8tK2G7dFQfNnlJnPAiArVBVBsfA==",
+      "version": "2.6.2",
+      "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz",
+      "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
       "dev": true
     },
     "node_modules/@oclif/plugin-plugins/node_modules/validate-npm-package-name": {
@@ -13068,9 +13067,9 @@
       }
     },
     "node_modules/npm": {
-      "version": "9.7.2",
-      "resolved": "https://registry.npmjs.org/npm/-/npm-9.7.2.tgz",
-      "integrity": "sha512-LLoOudiSURxzRxfGj+vsD+hKKv2EfxyshDOznxruIkZMouvbaF5sFm4yAwHqxS8aVaOdRl03pRmGpcrFMqMt3g==",
+      "version": "9.6.7",
+      "resolved": "https://registry.npmjs.org/npm/-/npm-9.6.7.tgz",
+      "integrity": "sha512-xwkU1hSZl6Qrkfw3fhxVmMfNWu0A67+aZZs5gz/LoehCeAPkVhQDB90Z2NFoPSI1KpfBWCJ6Bp28wXzv5U5/2g==",
       "bundleDependencies": [
         "@isaacs/string-locale-compare",
         "@npmcli/arborist",
@@ -13127,10 +13126,10 @@
         "proc-log",
         "qrcode-terminal",
         "read",
+        "read-package-json",
+        "read-package-json-fast",
         "semver",
-        "sigstore",
         "ssri",
-        "supports-color",
         "tar",
         "text-table",
         "tiny-relative-date",
@@ -13142,36 +13141,36 @@
       "dev": true,
       "dependencies": {
         "@isaacs/string-locale-compare": "^1.1.0",
-        "@npmcli/arborist": "^6.2.10",
-        "@npmcli/config": "^6.2.1",
+        "@npmcli/arborist": "^6.2.9",
+        "@npmcli/config": "^6.1.7",
         "@npmcli/map-workspaces": "^3.0.4",
-        "@npmcli/package-json": "^3.1.1",
+        "@npmcli/package-json": "^3.1.0",
         "@npmcli/run-script": "^6.0.2",
         "abbrev": "^2.0.0",
         "archy": "~1.0.0",
-        "cacache": "^17.1.3",
-        "chalk": "^5.2.0",
+        "cacache": "^17.1.2",
+        "chalk": "^4.1.2",
         "ci-info": "^3.8.0",
         "cli-columns": "^4.0.0",
         "cli-table3": "^0.6.3",
         "columnify": "^1.6.0",
         "fastest-levenshtein": "^1.0.16",
         "fs-minipass": "^3.0.2",
-        "glob": "^10.2.7",
+        "glob": "^10.2.4",
         "graceful-fs": "^4.2.11",
         "hosted-git-info": "^6.1.1",
-        "ini": "^4.1.1",
+        "ini": "^4.1.0",
         "init-package-json": "^5.0.0",
         "is-cidr": "^4.0.2",
         "json-parse-even-better-errors": "^3.0.0",
         "libnpmaccess": "^7.0.2",
-        "libnpmdiff": "^5.0.18",
-        "libnpmexec": "^6.0.1",
-        "libnpmfund": "^4.0.18",
+        "libnpmdiff": "^5.0.17",
+        "libnpmexec": "^5.0.17",
+        "libnpmfund": "^4.0.17",
         "libnpmhook": "^9.0.3",
         "libnpmorg": "^5.0.4",
-        "libnpmpack": "^5.0.18",
-        "libnpmpublish": "^7.4.0",
+        "libnpmpack": "^5.0.17",
+        "libnpmpublish": "^7.2.0",
         "libnpmsearch": "^6.0.2",
         "libnpmteam": "^5.0.3",
         "libnpmversion": "^4.0.2",
@@ -13180,9 +13179,9 @@
         "minipass": "^5.0.0",
         "minipass-pipeline": "^1.2.4",
         "ms": "^2.1.2",
-        "node-gyp": "^9.4.0",
-        "nopt": "^7.2.0",
-        "npm-audit-report": "^5.0.0",
+        "node-gyp": "^9.3.1",
+        "nopt": "^7.1.0",
+        "npm-audit-report": "^4.0.0",
         "npm-install-checks": "^6.1.1",
         "npm-package-arg": "^10.1.0",
         "npm-pick-manifest": "^8.0.1",
@@ -13191,16 +13190,16 @@
         "npm-user-validate": "^2.0.0",
         "npmlog": "^7.0.1",
         "p-map": "^4.0.0",
-        "pacote": "^15.2.0",
+        "pacote": "^15.1.3",
         "parse-conflict-json": "^3.0.1",
         "proc-log": "^3.0.0",
         "qrcode-terminal": "^0.12.0",
         "read": "^2.1.0",
-        "semver": "^7.5.2",
-        "sigstore": "^1.6.0",
+        "read-package-json": "^6.0.3",
+        "read-package-json-fast": "^3.0.2",
+        "semver": "^7.5.1",
         "ssri": "^10.0.4",
-        "supports-color": "^9.3.1",
-        "tar": "^6.1.15",
+        "tar": "^6.1.14",
         "text-table": "~0.2.0",
         "tiny-relative-date": "^1.3.0",
         "treeverse": "^3.0.0",
@@ -13618,6 +13617,12 @@
         "node": ">=0.1.90"
       }
     },
+    "node_modules/npm/node_modules/@gar/promisify": {
+      "version": "1.1.3",
+      "dev": true,
+      "inBundle": true,
+      "license": "MIT"
+    },
     "node_modules/npm/node_modules/@isaacs/cliui": {
       "version": "8.0.2",
       "dev": true,
@@ -13671,7 +13676,7 @@
       }
     },
     "node_modules/npm/node_modules/@isaacs/cliui/node_modules/strip-ansi": {
-      "version": "7.1.0",
+      "version": "7.0.1",
       "dev": true,
       "inBundle": true,
       "license": "MIT",
@@ -13692,7 +13697,7 @@
       "license": "ISC"
     },
     "node_modules/npm/node_modules/@npmcli/arborist": {
-      "version": "6.2.10",
+      "version": "6.2.9",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -13739,13 +13744,12 @@
       }
     },
     "node_modules/npm/node_modules/@npmcli/config": {
-      "version": "6.2.1",
+      "version": "6.1.7",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
       "dependencies": {
         "@npmcli/map-workspaces": "^3.0.2",
-        "ci-info": "^3.8.0",
         "ini": "^4.1.0",
         "nopt": "^7.0.0",
         "proc-log": "^3.0.0",
@@ -13782,7 +13786,7 @@
       }
     },
     "node_modules/npm/node_modules/@npmcli/git": {
-      "version": "4.1.0",
+      "version": "4.0.4",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -13846,6 +13850,19 @@
         "node": "^14.17.0 || ^16.13.0 || >=18.0.0"
       }
     },
+    "node_modules/npm/node_modules/@npmcli/move-file": {
+      "version": "2.0.1",
+      "dev": true,
+      "inBundle": true,
+      "license": "MIT",
+      "dependencies": {
+        "mkdirp": "^1.0.4",
+        "rimraf": "^3.0.2"
+      },
+      "engines": {
+        "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
+      }
+    },
     "node_modules/npm/node_modules/@npmcli/name-from-folder": {
       "version": "2.0.0",
       "dev": true,
@@ -13865,17 +13882,15 @@
       }
     },
     "node_modules/npm/node_modules/@npmcli/package-json": {
-      "version": "3.1.1",
+      "version": "3.1.0",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
       "dependencies": {
-        "@npmcli/git": "^4.1.0",
         "glob": "^10.2.2",
         "json-parse-even-better-errors": "^3.0.0",
         "normalize-package-data": "^5.0.0",
-        "npm-normalize-package-bin": "^3.0.1",
-        "proc-log": "^3.0.0"
+        "npm-normalize-package-bin": "^3.0.1"
       },
       "engines": {
         "node": "^14.17.0 || ^16.13.0 || >=18.0.0"
@@ -13936,20 +13951,6 @@
       "dev": true,
       "inBundle": true,
       "license": "Apache-2.0",
-      "engines": {
-        "node": "^14.17.0 || ^16.13.0 || >=18.0.0"
-      }
-    },
-    "node_modules/npm/node_modules/@sigstore/tuf": {
-      "version": "1.0.0",
-      "dev": true,
-      "inBundle": true,
-      "license": "Apache-2.0",
-      "dependencies": {
-        "@sigstore/protobuf-specs": "^0.1.0",
-        "make-fetch-happen": "^11.0.1",
-        "tuf-js": "^1.1.3"
-      },
       "engines": {
         "node": "^14.17.0 || ^16.13.0 || >=18.0.0"
       }
@@ -14187,7 +14188,7 @@
       }
     },
     "node_modules/npm/node_modules/cacache": {
-      "version": "17.1.3",
+      "version": "17.1.2",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -14210,12 +14211,16 @@
       }
     },
     "node_modules/npm/node_modules/chalk": {
-      "version": "5.2.0",
+      "version": "4.1.2",
       "dev": true,
       "inBundle": true,
       "license": "MIT",
+      "dependencies": {
+        "ansi-styles": "^4.1.0",
+        "supports-color": "^7.1.0"
+      },
       "engines": {
-        "node": "^12.17.0 || ^14.13 || >=16.0.0"
+        "node": ">=10"
       },
       "funding": {
         "url": "https://github.com/chalk/chalk?sponsor=1"
@@ -14525,12 +14530,6 @@
         "node": ">=0.8.x"
       }
     },
-    "node_modules/npm/node_modules/exponential-backoff": {
-      "version": "3.1.1",
-      "dev": true,
-      "inBundle": true,
-      "license": "Apache-2.0"
-    },
     "node_modules/npm/node_modules/fastest-levenshtein": {
       "version": "1.0.16",
       "dev": true,
@@ -14600,15 +14599,15 @@
       }
     },
     "node_modules/npm/node_modules/glob": {
-      "version": "10.2.7",
+      "version": "10.2.4",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
       "dependencies": {
         "foreground-child": "^3.1.0",
         "jackspeak": "^2.0.3",
-        "minimatch": "^9.0.1",
-        "minipass": "^5.0.0 || ^6.0.2",
+        "minimatch": "^9.0.0",
+        "minipass": "^5.0.0 || ^6.0.0",
         "path-scurry": "^1.7.0"
       },
       "bin": {
@@ -14637,6 +14636,15 @@
       },
       "engines": {
         "node": ">= 0.4.0"
+      }
+    },
+    "node_modules/npm/node_modules/has-flag": {
+      "version": "4.0.0",
+      "dev": true,
+      "inBundle": true,
+      "license": "MIT",
+      "engines": {
+        "node": ">=8"
       }
     },
     "node_modules/npm/node_modules/has-unicode": {
@@ -14762,6 +14770,12 @@
         "node": ">=8"
       }
     },
+    "node_modules/npm/node_modules/infer-owner": {
+      "version": "1.0.4",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC"
+    },
     "node_modules/npm/node_modules/inflight": {
       "version": "1.0.6",
       "dev": true,
@@ -14779,7 +14793,7 @@
       "license": "ISC"
     },
     "node_modules/npm/node_modules/ini": {
-      "version": "4.1.1",
+      "version": "4.1.0",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -14833,7 +14847,7 @@
       }
     },
     "node_modules/npm/node_modules/is-core-module": {
-      "version": "2.12.1",
+      "version": "2.12.0",
       "dev": true,
       "inBundle": true,
       "license": "MIT",
@@ -14866,7 +14880,7 @@
       "license": "ISC"
     },
     "node_modules/npm/node_modules/jackspeak": {
-      "version": "2.2.1",
+      "version": "2.2.0",
       "dev": true,
       "inBundle": true,
       "license": "BlueOak-1.0.0",
@@ -14936,12 +14950,12 @@
       }
     },
     "node_modules/npm/node_modules/libnpmdiff": {
-      "version": "5.0.18",
+      "version": "5.0.17",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
       "dependencies": {
-        "@npmcli/arborist": "^6.2.10",
+        "@npmcli/arborist": "^6.2.9",
         "@npmcli/disparity-colors": "^3.0.0",
         "@npmcli/installed-package-contents": "^2.0.2",
         "binary-extensions": "^2.2.0",
@@ -14956,13 +14970,14 @@
       }
     },
     "node_modules/npm/node_modules/libnpmexec": {
-      "version": "6.0.1",
+      "version": "5.0.17",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
       "dependencies": {
-        "@npmcli/arborist": "^6.2.10",
+        "@npmcli/arborist": "^6.2.9",
         "@npmcli/run-script": "^6.0.0",
+        "chalk": "^4.1.0",
         "ci-info": "^3.7.1",
         "npm-package-arg": "^10.1.0",
         "npmlog": "^7.0.1",
@@ -14978,12 +14993,12 @@
       }
     },
     "node_modules/npm/node_modules/libnpmfund": {
-      "version": "4.0.18",
+      "version": "4.0.17",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
       "dependencies": {
-        "@npmcli/arborist": "^6.2.10"
+        "@npmcli/arborist": "^6.2.9"
       },
       "engines": {
         "node": "^14.17.0 || ^16.13.0 || >=18.0.0"
@@ -15016,12 +15031,12 @@
       }
     },
     "node_modules/npm/node_modules/libnpmpack": {
-      "version": "5.0.18",
+      "version": "5.0.17",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
       "dependencies": {
-        "@npmcli/arborist": "^6.2.10",
+        "@npmcli/arborist": "^6.2.9",
         "@npmcli/run-script": "^6.0.0",
         "npm-package-arg": "^10.1.0",
         "pacote": "^15.0.8"
@@ -15031,7 +15046,7 @@
       }
     },
     "node_modules/npm/node_modules/libnpmpublish": {
-      "version": "7.4.0",
+      "version": "7.2.0",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -15126,7 +15141,7 @@
       }
     },
     "node_modules/npm/node_modules/minimatch": {
-      "version": "9.0.1",
+      "version": "9.0.0",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -15346,16 +15361,15 @@
       }
     },
     "node_modules/npm/node_modules/node-gyp": {
-      "version": "9.4.0",
+      "version": "9.3.1",
       "dev": true,
       "inBundle": true,
       "license": "MIT",
       "dependencies": {
         "env-paths": "^2.2.0",
-        "exponential-backoff": "^3.1.1",
         "glob": "^7.1.4",
         "graceful-fs": "^4.2.6",
-        "make-fetch-happen": "^11.0.3",
+        "make-fetch-happen": "^10.0.3",
         "nopt": "^6.0.0",
         "npmlog": "^6.0.0",
         "rimraf": "^3.0.2",
@@ -15368,6 +15382,19 @@
       },
       "engines": {
         "node": "^12.13 || ^14.13 || >=16"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/@npmcli/fs": {
+      "version": "2.1.2",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "@gar/promisify": "^1.1.3",
+        "semver": "^7.3.5"
+      },
+      "engines": {
+        "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
       }
     },
     "node_modules/npm/node_modules/node-gyp/node_modules/abbrev": {
@@ -15397,6 +15424,87 @@
       "dependencies": {
         "balanced-match": "^1.0.0",
         "concat-map": "0.0.1"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/cacache": {
+      "version": "16.1.3",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "@npmcli/fs": "^2.1.0",
+        "@npmcli/move-file": "^2.0.0",
+        "chownr": "^2.0.0",
+        "fs-minipass": "^2.1.0",
+        "glob": "^8.0.1",
+        "infer-owner": "^1.0.4",
+        "lru-cache": "^7.7.1",
+        "minipass": "^3.1.6",
+        "minipass-collect": "^1.0.2",
+        "minipass-flush": "^1.0.5",
+        "minipass-pipeline": "^1.2.4",
+        "mkdirp": "^1.0.4",
+        "p-map": "^4.0.0",
+        "promise-inflight": "^1.0.1",
+        "rimraf": "^3.0.2",
+        "ssri": "^9.0.0",
+        "tar": "^6.1.11",
+        "unique-filename": "^2.0.0"
+      },
+      "engines": {
+        "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/cacache/node_modules/brace-expansion": {
+      "version": "2.0.1",
+      "dev": true,
+      "inBundle": true,
+      "license": "MIT",
+      "dependencies": {
+        "balanced-match": "^1.0.0"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/cacache/node_modules/glob": {
+      "version": "8.1.0",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "fs.realpath": "^1.0.0",
+        "inflight": "^1.0.4",
+        "inherits": "2",
+        "minimatch": "^5.0.1",
+        "once": "^1.3.0"
+      },
+      "engines": {
+        "node": ">=12"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/isaacs"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/cacache/node_modules/minimatch": {
+      "version": "5.1.6",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "brace-expansion": "^2.0.1"
+      },
+      "engines": {
+        "node": ">=10"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/fs-minipass": {
+      "version": "2.1.0",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "minipass": "^3.0.0"
+      },
+      "engines": {
+        "node": ">= 8"
       }
     },
     "node_modules/npm/node_modules/node-gyp/node_modules/gauge": {
@@ -15438,6 +15546,33 @@
         "url": "https://github.com/sponsors/isaacs"
       }
     },
+    "node_modules/npm/node_modules/node-gyp/node_modules/make-fetch-happen": {
+      "version": "10.2.1",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "agentkeepalive": "^4.2.1",
+        "cacache": "^16.1.0",
+        "http-cache-semantics": "^4.1.0",
+        "http-proxy-agent": "^5.0.0",
+        "https-proxy-agent": "^5.0.0",
+        "is-lambda": "^1.0.1",
+        "lru-cache": "^7.7.1",
+        "minipass": "^3.1.6",
+        "minipass-collect": "^1.0.2",
+        "minipass-fetch": "^2.0.3",
+        "minipass-flush": "^1.0.5",
+        "minipass-pipeline": "^1.2.4",
+        "negotiator": "^0.6.3",
+        "promise-retry": "^2.0.1",
+        "socks-proxy-agent": "^7.0.0",
+        "ssri": "^9.0.0"
+      },
+      "engines": {
+        "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
+      }
+    },
     "node_modules/npm/node_modules/node-gyp/node_modules/minimatch": {
       "version": "3.1.2",
       "dev": true,
@@ -15448,6 +15583,35 @@
       },
       "engines": {
         "node": "*"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/minipass": {
+      "version": "3.3.6",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "yallist": "^4.0.0"
+      },
+      "engines": {
+        "node": ">=8"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/minipass-fetch": {
+      "version": "2.1.2",
+      "dev": true,
+      "inBundle": true,
+      "license": "MIT",
+      "dependencies": {
+        "minipass": "^3.1.6",
+        "minipass-sized": "^1.0.3",
+        "minizlib": "^2.1.2"
+      },
+      "engines": {
+        "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
+      },
+      "optionalDependencies": {
+        "encoding": "^0.1.13"
       }
     },
     "node_modules/npm/node_modules/node-gyp/node_modules/nopt": {
@@ -15500,6 +15664,42 @@
       "inBundle": true,
       "license": "ISC"
     },
+    "node_modules/npm/node_modules/node-gyp/node_modules/ssri": {
+      "version": "9.0.1",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "minipass": "^3.1.1"
+      },
+      "engines": {
+        "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/unique-filename": {
+      "version": "2.0.1",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "unique-slug": "^3.0.0"
+      },
+      "engines": {
+        "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
+      }
+    },
+    "node_modules/npm/node_modules/node-gyp/node_modules/unique-slug": {
+      "version": "3.0.0",
+      "dev": true,
+      "inBundle": true,
+      "license": "ISC",
+      "dependencies": {
+        "imurmurhash": "^0.1.4"
+      },
+      "engines": {
+        "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
+      }
+    },
     "node_modules/npm/node_modules/node-gyp/node_modules/which": {
       "version": "2.0.2",
       "dev": true,
@@ -15516,7 +15716,7 @@
       }
     },
     "node_modules/npm/node_modules/nopt": {
-      "version": "7.2.0",
+      "version": "7.1.0",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -15546,10 +15746,13 @@
       }
     },
     "node_modules/npm/node_modules/npm-audit-report": {
-      "version": "5.0.0",
+      "version": "4.0.0",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
+      "dependencies": {
+        "chalk": "^4.0.0"
+      },
       "engines": {
         "node": "^14.17.0 || ^16.13.0 || >=18.0.0"
       }
@@ -15709,7 +15912,7 @@
       }
     },
     "node_modules/npm/node_modules/pacote": {
-      "version": "15.2.0",
+      "version": "15.1.3",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -15773,13 +15976,13 @@
       }
     },
     "node_modules/npm/node_modules/path-scurry": {
-      "version": "1.9.2",
+      "version": "1.9.1",
       "dev": true,
       "inBundle": true,
       "license": "BlueOak-1.0.0",
       "dependencies": {
         "lru-cache": "^9.1.1",
-        "minipass": "^5.0.0 || ^6.0.2"
+        "minipass": "^5.0.0 || ^6.0.0"
       },
       "engines": {
         "node": ">=16 || 14 >=14.17"
@@ -15907,7 +16110,7 @@
       }
     },
     "node_modules/npm/node_modules/read-package-json": {
-      "version": "6.0.4",
+      "version": "6.0.3",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -16016,22 +16219,8 @@
       }
     },
     "node_modules/npm/node_modules/safe-buffer": {
-      "version": "5.2.1",
+      "version": "5.1.2",
       "dev": true,
-      "funding": [
-        {
-          "type": "github",
-          "url": "https://github.com/sponsors/feross"
-        },
-        {
-          "type": "patreon",
-          "url": "https://www.patreon.com/feross"
-        },
-        {
-          "type": "consulting",
-          "url": "https://feross.org/support"
-        }
-      ],
       "inBundle": true,
       "license": "MIT"
     },
@@ -16043,7 +16232,7 @@
       "optional": true
     },
     "node_modules/npm/node_modules/semver": {
-      "version": "7.5.2",
+      "version": "7.5.1",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -16109,13 +16298,12 @@
       }
     },
     "node_modules/npm/node_modules/sigstore": {
-      "version": "1.6.0",
+      "version": "1.5.2",
       "dev": true,
       "inBundle": true,
       "license": "Apache-2.0",
       "dependencies": {
         "@sigstore/protobuf-specs": "^0.1.0",
-        "@sigstore/tuf": "^1.0.0",
         "make-fetch-happen": "^11.0.1",
         "tuf-js": "^1.1.3"
       },
@@ -16209,12 +16397,12 @@
       }
     },
     "node_modules/npm/node_modules/string_decoder": {
-      "version": "1.3.0",
+      "version": "1.1.1",
       "dev": true,
       "inBundle": true,
       "license": "MIT",
       "dependencies": {
-        "safe-buffer": "~5.2.0"
+        "safe-buffer": "~5.1.0"
       }
     },
     "node_modules/npm/node_modules/string-width": {
@@ -16272,19 +16460,19 @@
       }
     },
     "node_modules/npm/node_modules/supports-color": {
-      "version": "9.3.1",
+      "version": "7.2.0",
       "dev": true,
       "inBundle": true,
       "license": "MIT",
-      "engines": {
-        "node": ">=12"
+      "dependencies": {
+        "has-flag": "^4.0.0"
       },
-      "funding": {
-        "url": "https://github.com/chalk/supports-color?sponsor=1"
+      "engines": {
+        "node": ">=8"
       }
     },
     "node_modules/npm/node_modules/tar": {
-      "version": "6.1.15",
+      "version": "6.1.14",
       "dev": true,
       "inBundle": true,
       "license": "ISC",
@@ -16346,14 +16534,14 @@
       }
     },
     "node_modules/npm/node_modules/tuf-js": {
-      "version": "1.1.7",
+      "version": "1.1.6",
       "dev": true,
       "inBundle": true,
       "license": "MIT",
       "dependencies": {
         "@tufjs/models": "1.0.4",
         "debug": "^4.3.4",
-        "make-fetch-happen": "^11.1.1"
+        "make-fetch-happen": "^11.1.0"
       },
       "engines": {
         "node": "^14.17.0 || ^16.13.0 || >=18.0.0"
@@ -16533,7 +16721,7 @@
       }
     },
     "node_modules/npm/node_modules/wrap-ansi/node_modules/strip-ansi": {
-      "version": "7.1.0",
+      "version": "7.0.1",
       "dev": true,
       "inBundle": true,
       "license": "MIT",
@@ -25097,9 +25285,9 @@
       }
     },
     "@oclif/core": {
-      "version": "2.9.4",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.9.4.tgz",
-      "integrity": "sha512-eFRRpV+tJ6nMkhay2M9IppjSF3atRrgj6Qo83qUslaFSAW3NAl4mIhx1mKmTwQx5rgSrar03xICtSAWJ6gZtag==",
+      "version": "2.11.11",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.11.11.tgz",
+      "integrity": "sha512-B0yaeJhdaLlPU0i95mHItV6C7xtoGFBNZrrd0IQzxKhdMhRxzmCmJyoVh8YaZVlsdsT/cjVAZ/6Aoctg3G4MmQ==",
       "requires": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -25242,23 +25430,22 @@
       }
     },
     "@oclif/plugin-plugins": {
-      "version": "3.1.8",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-3.1.8.tgz",
-      "integrity": "sha512-514sFBzLcR9QCSMWCHt/1XntfjJEZvb637b9YuV4kwq749pKEPF7fjCxSV1gYQCCP4TjMB5gB4AwPL4cCbe+/A==",
+      "version": "3.3.1",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-plugins/-/plugin-plugins-3.3.1.tgz",
+      "integrity": "sha512-pC/lcVYia0jYwgpBNXXkYMXzcAWzxs9I7uVepmnMrHMpVTEovwH7+pdRZutcCvD5sZb1WSZmGcTD8QuDvt77dA==",
       "dev": true,
       "requires": {
-        "@oclif/color": "^1.0.4",
-        "@oclif/core": "^2.8.7",
+        "@oclif/core": "^2.11.10",
         "chalk": "^4.1.2",
         "debug": "^4.3.4",
         "fs-extra": "^9.0",
         "http-call": "^5.2.2",
         "load-json-file": "^5.3.0",
-        "npm": "^9.7.2",
+        "npm": "9.6.7",
         "npm-run-path": "^4.0.1",
-        "semver": "^7.5.3",
+        "semver": "^7.5.4",
         "shelljs": "^0.8.5",
-        "tslib": "^2.6.0",
+        "tslib": "^2.6.2",
         "validate-npm-package-name": "^5.0.0",
         "yarn": "^1.22.18"
       },
@@ -25302,9 +25489,9 @@
           }
         },
         "tslib": {
-          "version": "2.6.0",
-          "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.6.0.tgz",
-          "integrity": "sha512-7At1WUettjcSRHXCyYtTselblcHl9PJFFVKiCAy/bY97+BPZXSQ2wbq0P9s8tK2G7dFQfNnlJnPAiArVBVBsfA==",
+          "version": "2.6.2",
+          "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz",
+          "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
           "dev": true
         },
         "validate-npm-package-name": {
@@ -31156,42 +31343,42 @@
       "integrity": "sha512-uVFpKhj5MheNBJRTiMZ9pE/7hD1QTeEvugSJW/OmLzAp78PB5O6adfMNTvmfKhXBkvCzC+rqifWcVYpGFwTjnw=="
     },
     "npm": {
-      "version": "9.7.2",
-      "resolved": "https://registry.npmjs.org/npm/-/npm-9.7.2.tgz",
-      "integrity": "sha512-LLoOudiSURxzRxfGj+vsD+hKKv2EfxyshDOznxruIkZMouvbaF5sFm4yAwHqxS8aVaOdRl03pRmGpcrFMqMt3g==",
+      "version": "9.6.7",
+      "resolved": "https://registry.npmjs.org/npm/-/npm-9.6.7.tgz",
+      "integrity": "sha512-xwkU1hSZl6Qrkfw3fhxVmMfNWu0A67+aZZs5gz/LoehCeAPkVhQDB90Z2NFoPSI1KpfBWCJ6Bp28wXzv5U5/2g==",
       "dev": true,
       "requires": {
         "@isaacs/string-locale-compare": "^1.1.0",
-        "@npmcli/arborist": "^6.2.10",
-        "@npmcli/config": "^6.2.1",
+        "@npmcli/arborist": "^6.2.9",
+        "@npmcli/config": "^6.1.7",
         "@npmcli/map-workspaces": "^3.0.4",
-        "@npmcli/package-json": "^3.1.1",
+        "@npmcli/package-json": "^3.1.0",
         "@npmcli/run-script": "^6.0.2",
         "abbrev": "^2.0.0",
         "archy": "~1.0.0",
-        "cacache": "^17.1.3",
-        "chalk": "^5.2.0",
+        "cacache": "^17.1.2",
+        "chalk": "^4.1.2",
         "ci-info": "^3.8.0",
         "cli-columns": "^4.0.0",
         "cli-table3": "^0.6.3",
         "columnify": "^1.6.0",
         "fastest-levenshtein": "^1.0.16",
         "fs-minipass": "^3.0.2",
-        "glob": "^10.2.7",
+        "glob": "^10.2.4",
         "graceful-fs": "^4.2.11",
         "hosted-git-info": "^6.1.1",
-        "ini": "^4.1.1",
+        "ini": "^4.1.0",
         "init-package-json": "^5.0.0",
         "is-cidr": "^4.0.2",
         "json-parse-even-better-errors": "^3.0.0",
         "libnpmaccess": "^7.0.2",
-        "libnpmdiff": "^5.0.18",
-        "libnpmexec": "^6.0.1",
-        "libnpmfund": "^4.0.18",
+        "libnpmdiff": "^5.0.17",
+        "libnpmexec": "^5.0.17",
+        "libnpmfund": "^4.0.17",
         "libnpmhook": "^9.0.3",
         "libnpmorg": "^5.0.4",
-        "libnpmpack": "^5.0.18",
-        "libnpmpublish": "^7.4.0",
+        "libnpmpack": "^5.0.17",
+        "libnpmpublish": "^7.2.0",
         "libnpmsearch": "^6.0.2",
         "libnpmteam": "^5.0.3",
         "libnpmversion": "^4.0.2",
@@ -31200,9 +31387,9 @@
         "minipass": "^5.0.0",
         "minipass-pipeline": "^1.2.4",
         "ms": "^2.1.2",
-        "node-gyp": "^9.4.0",
-        "nopt": "^7.2.0",
-        "npm-audit-report": "^5.0.0",
+        "node-gyp": "^9.3.1",
+        "nopt": "^7.1.0",
+        "npm-audit-report": "^4.0.0",
         "npm-install-checks": "^6.1.1",
         "npm-package-arg": "^10.1.0",
         "npm-pick-manifest": "^8.0.1",
@@ -31211,16 +31398,16 @@
         "npm-user-validate": "^2.0.0",
         "npmlog": "^7.0.1",
         "p-map": "^4.0.0",
-        "pacote": "^15.2.0",
+        "pacote": "^15.1.3",
         "parse-conflict-json": "^3.0.1",
         "proc-log": "^3.0.0",
         "qrcode-terminal": "^0.12.0",
         "read": "^2.1.0",
-        "semver": "^7.5.2",
-        "sigstore": "^1.6.0",
+        "read-package-json": "^6.0.3",
+        "read-package-json-fast": "^3.0.2",
+        "semver": "^7.5.1",
         "ssri": "^10.0.4",
-        "supports-color": "^9.3.1",
-        "tar": "^6.1.15",
+        "tar": "^6.1.14",
         "text-table": "~0.2.0",
         "tiny-relative-date": "^1.3.0",
         "treeverse": "^3.0.0",
@@ -31234,6 +31421,11 @@
           "bundled": true,
           "dev": true,
           "optional": true
+        },
+        "@gar/promisify": {
+          "version": "1.1.3",
+          "bundled": true,
+          "dev": true
         },
         "@isaacs/cliui": {
           "version": "8.0.2",
@@ -31269,7 +31461,7 @@
               }
             },
             "strip-ansi": {
-              "version": "7.1.0",
+              "version": "7.0.1",
               "bundled": true,
               "dev": true,
               "requires": {
@@ -31284,7 +31476,7 @@
           "dev": true
         },
         "@npmcli/arborist": {
-          "version": "6.2.10",
+          "version": "6.2.9",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -31324,12 +31516,11 @@
           }
         },
         "@npmcli/config": {
-          "version": "6.2.1",
+          "version": "6.1.7",
           "bundled": true,
           "dev": true,
           "requires": {
             "@npmcli/map-workspaces": "^3.0.2",
-            "ci-info": "^3.8.0",
             "ini": "^4.1.0",
             "nopt": "^7.0.0",
             "proc-log": "^3.0.0",
@@ -31355,7 +31546,7 @@
           }
         },
         "@npmcli/git": {
-          "version": "4.1.0",
+          "version": "4.0.4",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -31400,6 +31591,15 @@
             "semver": "^7.3.5"
           }
         },
+        "@npmcli/move-file": {
+          "version": "2.0.1",
+          "bundled": true,
+          "dev": true,
+          "requires": {
+            "mkdirp": "^1.0.4",
+            "rimraf": "^3.0.2"
+          }
+        },
         "@npmcli/name-from-folder": {
           "version": "2.0.0",
           "bundled": true,
@@ -31411,16 +31611,14 @@
           "dev": true
         },
         "@npmcli/package-json": {
-          "version": "3.1.1",
+          "version": "3.1.0",
           "bundled": true,
           "dev": true,
           "requires": {
-            "@npmcli/git": "^4.1.0",
             "glob": "^10.2.2",
             "json-parse-even-better-errors": "^3.0.0",
             "normalize-package-data": "^5.0.0",
-            "npm-normalize-package-bin": "^3.0.1",
-            "proc-log": "^3.0.0"
+            "npm-normalize-package-bin": "^3.0.1"
           }
         },
         "@npmcli/promise-spawn": {
@@ -31461,16 +31659,6 @@
           "version": "0.1.0",
           "bundled": true,
           "dev": true
-        },
-        "@sigstore/tuf": {
-          "version": "1.0.0",
-          "bundled": true,
-          "dev": true,
-          "requires": {
-            "@sigstore/protobuf-specs": "^0.1.0",
-            "make-fetch-happen": "^11.0.1",
-            "tuf-js": "^1.1.3"
-          }
         },
         "@tootallnate/once": {
           "version": "2.0.0",
@@ -31615,7 +31803,7 @@
           }
         },
         "cacache": {
-          "version": "17.1.3",
+          "version": "17.1.2",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -31634,9 +31822,13 @@
           }
         },
         "chalk": {
-          "version": "5.2.0",
+          "version": "4.1.2",
           "bundled": true,
-          "dev": true
+          "dev": true,
+          "requires": {
+            "ansi-styles": "^4.1.0",
+            "supports-color": "^7.1.0"
+          }
         },
         "chownr": {
           "version": "2.0.0",
@@ -31833,11 +32025,6 @@
           "bundled": true,
           "dev": true
         },
-        "exponential-backoff": {
-          "version": "3.1.1",
-          "bundled": true,
-          "dev": true
-        },
         "fastest-levenshtein": {
           "version": "1.0.16",
           "bundled": true,
@@ -31886,14 +32073,14 @@
           }
         },
         "glob": {
-          "version": "10.2.7",
+          "version": "10.2.4",
           "bundled": true,
           "dev": true,
           "requires": {
             "foreground-child": "^3.1.0",
             "jackspeak": "^2.0.3",
-            "minimatch": "^9.0.1",
-            "minipass": "^5.0.0 || ^6.0.2",
+            "minimatch": "^9.0.0",
+            "minipass": "^5.0.0 || ^6.0.0",
             "path-scurry": "^1.7.0"
           }
         },
@@ -31909,6 +32096,11 @@
           "requires": {
             "function-bind": "^1.1.1"
           }
+        },
+        "has-flag": {
+          "version": "4.0.0",
+          "bundled": true,
+          "dev": true
         },
         "has-unicode": {
           "version": "2.0.1",
@@ -31987,6 +32179,11 @@
           "bundled": true,
           "dev": true
         },
+        "infer-owner": {
+          "version": "1.0.4",
+          "bundled": true,
+          "dev": true
+        },
         "inflight": {
           "version": "1.0.6",
           "bundled": true,
@@ -32002,7 +32199,7 @@
           "dev": true
         },
         "ini": {
-          "version": "4.1.1",
+          "version": "4.1.0",
           "bundled": true,
           "dev": true
         },
@@ -32039,7 +32236,7 @@
           }
         },
         "is-core-module": {
-          "version": "2.12.1",
+          "version": "2.12.0",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -32062,7 +32259,7 @@
           "dev": true
         },
         "jackspeak": {
-          "version": "2.2.1",
+          "version": "2.2.0",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -32105,11 +32302,11 @@
           }
         },
         "libnpmdiff": {
-          "version": "5.0.18",
+          "version": "5.0.17",
           "bundled": true,
           "dev": true,
           "requires": {
-            "@npmcli/arborist": "^6.2.10",
+            "@npmcli/arborist": "^6.2.9",
             "@npmcli/disparity-colors": "^3.0.0",
             "@npmcli/installed-package-contents": "^2.0.2",
             "binary-extensions": "^2.2.0",
@@ -32121,12 +32318,13 @@
           }
         },
         "libnpmexec": {
-          "version": "6.0.1",
+          "version": "5.0.17",
           "bundled": true,
           "dev": true,
           "requires": {
-            "@npmcli/arborist": "^6.2.10",
+            "@npmcli/arborist": "^6.2.9",
             "@npmcli/run-script": "^6.0.0",
+            "chalk": "^4.1.0",
             "ci-info": "^3.7.1",
             "npm-package-arg": "^10.1.0",
             "npmlog": "^7.0.1",
@@ -32139,11 +32337,11 @@
           }
         },
         "libnpmfund": {
-          "version": "4.0.18",
+          "version": "4.0.17",
           "bundled": true,
           "dev": true,
           "requires": {
-            "@npmcli/arborist": "^6.2.10"
+            "@npmcli/arborist": "^6.2.9"
           }
         },
         "libnpmhook": {
@@ -32165,18 +32363,18 @@
           }
         },
         "libnpmpack": {
-          "version": "5.0.18",
+          "version": "5.0.17",
           "bundled": true,
           "dev": true,
           "requires": {
-            "@npmcli/arborist": "^6.2.10",
+            "@npmcli/arborist": "^6.2.9",
             "@npmcli/run-script": "^6.0.0",
             "npm-package-arg": "^10.1.0",
             "pacote": "^15.0.8"
           }
         },
         "libnpmpublish": {
-          "version": "7.4.0",
+          "version": "7.2.0",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -32247,7 +32445,7 @@
           }
         },
         "minimatch": {
-          "version": "9.0.1",
+          "version": "9.0.0",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -32401,15 +32599,14 @@
           "dev": true
         },
         "node-gyp": {
-          "version": "9.4.0",
+          "version": "9.3.1",
           "bundled": true,
           "dev": true,
           "requires": {
             "env-paths": "^2.2.0",
-            "exponential-backoff": "^3.1.1",
             "glob": "^7.1.4",
             "graceful-fs": "^4.2.6",
-            "make-fetch-happen": "^11.0.3",
+            "make-fetch-happen": "^10.0.3",
             "nopt": "^6.0.0",
             "npmlog": "^6.0.0",
             "rimraf": "^3.0.2",
@@ -32418,6 +32615,15 @@
             "which": "^2.0.2"
           },
           "dependencies": {
+            "@npmcli/fs": {
+              "version": "2.1.2",
+              "bundled": true,
+              "dev": true,
+              "requires": {
+                "@gar/promisify": "^1.1.3",
+                "semver": "^7.3.5"
+              }
+            },
             "abbrev": {
               "version": "1.1.1",
               "bundled": true,
@@ -32439,6 +32645,69 @@
               "requires": {
                 "balanced-match": "^1.0.0",
                 "concat-map": "0.0.1"
+              }
+            },
+            "cacache": {
+              "version": "16.1.3",
+              "bundled": true,
+              "dev": true,
+              "requires": {
+                "@npmcli/fs": "^2.1.0",
+                "@npmcli/move-file": "^2.0.0",
+                "chownr": "^2.0.0",
+                "fs-minipass": "^2.1.0",
+                "glob": "^8.0.1",
+                "infer-owner": "^1.0.4",
+                "lru-cache": "^7.7.1",
+                "minipass": "^3.1.6",
+                "minipass-collect": "^1.0.2",
+                "minipass-flush": "^1.0.5",
+                "minipass-pipeline": "^1.2.4",
+                "mkdirp": "^1.0.4",
+                "p-map": "^4.0.0",
+                "promise-inflight": "^1.0.1",
+                "rimraf": "^3.0.2",
+                "ssri": "^9.0.0",
+                "tar": "^6.1.11",
+                "unique-filename": "^2.0.0"
+              },
+              "dependencies": {
+                "brace-expansion": {
+                  "version": "2.0.1",
+                  "bundled": true,
+                  "dev": true,
+                  "requires": {
+                    "balanced-match": "^1.0.0"
+                  }
+                },
+                "glob": {
+                  "version": "8.1.0",
+                  "bundled": true,
+                  "dev": true,
+                  "requires": {
+                    "fs.realpath": "^1.0.0",
+                    "inflight": "^1.0.4",
+                    "inherits": "2",
+                    "minimatch": "^5.0.1",
+                    "once": "^1.3.0"
+                  }
+                },
+                "minimatch": {
+                  "version": "5.1.6",
+                  "bundled": true,
+                  "dev": true,
+                  "requires": {
+                    "brace-expansion": "^2.0.1"
+                  }
+                }
+              }
+            },
+            "fs-minipass": {
+              "version": "2.1.0",
+              "bundled": true,
+              "dev": true,
+              "requires": {
+                "minipass": "^3.0.0"
               }
             },
             "gauge": {
@@ -32469,12 +32738,54 @@
                 "path-is-absolute": "^1.0.0"
               }
             },
+            "make-fetch-happen": {
+              "version": "10.2.1",
+              "bundled": true,
+              "dev": true,
+              "requires": {
+                "agentkeepalive": "^4.2.1",
+                "cacache": "^16.1.0",
+                "http-cache-semantics": "^4.1.0",
+                "http-proxy-agent": "^5.0.0",
+                "https-proxy-agent": "^5.0.0",
+                "is-lambda": "^1.0.1",
+                "lru-cache": "^7.7.1",
+                "minipass": "^3.1.6",
+                "minipass-collect": "^1.0.2",
+                "minipass-fetch": "^2.0.3",
+                "minipass-flush": "^1.0.5",
+                "minipass-pipeline": "^1.2.4",
+                "negotiator": "^0.6.3",
+                "promise-retry": "^2.0.1",
+                "socks-proxy-agent": "^7.0.0",
+                "ssri": "^9.0.0"
+              }
+            },
             "minimatch": {
               "version": "3.1.2",
               "bundled": true,
               "dev": true,
               "requires": {
                 "brace-expansion": "^1.1.7"
+              }
+            },
+            "minipass": {
+              "version": "3.3.6",
+              "bundled": true,
+              "dev": true,
+              "requires": {
+                "yallist": "^4.0.0"
+              }
+            },
+            "minipass-fetch": {
+              "version": "2.1.2",
+              "bundled": true,
+              "dev": true,
+              "requires": {
+                "encoding": "^0.1.13",
+                "minipass": "^3.1.6",
+                "minipass-sized": "^1.0.3",
+                "minizlib": "^2.1.2"
               }
             },
             "nopt": {
@@ -32511,6 +32822,30 @@
               "bundled": true,
               "dev": true
             },
+            "ssri": {
+              "version": "9.0.1",
+              "bundled": true,
+              "dev": true,
+              "requires": {
+                "minipass": "^3.1.1"
+              }
+            },
+            "unique-filename": {
+              "version": "2.0.1",
+              "bundled": true,
+              "dev": true,
+              "requires": {
+                "unique-slug": "^3.0.0"
+              }
+            },
+            "unique-slug": {
+              "version": "3.0.0",
+              "bundled": true,
+              "dev": true,
+              "requires": {
+                "imurmurhash": "^0.1.4"
+              }
+            },
             "which": {
               "version": "2.0.2",
               "bundled": true,
@@ -32522,7 +32857,7 @@
           }
         },
         "nopt": {
-          "version": "7.2.0",
+          "version": "7.1.0",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -32541,9 +32876,12 @@
           }
         },
         "npm-audit-report": {
-          "version": "5.0.0",
+          "version": "4.0.0",
           "bundled": true,
-          "dev": true
+          "dev": true,
+          "requires": {
+            "chalk": "^4.0.0"
+          }
         },
         "npm-bundled": {
           "version": "3.0.0",
@@ -32652,7 +32990,7 @@
           }
         },
         "pacote": {
-          "version": "15.2.0",
+          "version": "15.1.3",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -32697,12 +33035,12 @@
           "dev": true
         },
         "path-scurry": {
-          "version": "1.9.2",
+          "version": "1.9.1",
           "bundled": true,
           "dev": true,
           "requires": {
             "lru-cache": "^9.1.1",
-            "minipass": "^5.0.0 || ^6.0.2"
+            "minipass": "^5.0.0 || ^6.0.0"
           },
           "dependencies": {
             "lru-cache": {
@@ -32782,7 +33120,7 @@
           "dev": true
         },
         "read-package-json": {
-          "version": "6.0.4",
+          "version": "6.0.3",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -32858,7 +33196,7 @@
           }
         },
         "safe-buffer": {
-          "version": "5.2.1",
+          "version": "5.1.2",
           "bundled": true,
           "dev": true
         },
@@ -32869,7 +33207,7 @@
           "optional": true
         },
         "semver": {
-          "version": "7.5.2",
+          "version": "7.5.1",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -32910,12 +33248,11 @@
           "dev": true
         },
         "sigstore": {
-          "version": "1.6.0",
+          "version": "1.5.2",
           "bundled": true,
           "dev": true,
           "requires": {
             "@sigstore/protobuf-specs": "^0.1.0",
-            "@sigstore/tuf": "^1.0.0",
             "make-fetch-happen": "^11.0.1",
             "tuf-js": "^1.1.3"
           }
@@ -32981,11 +33318,11 @@
           }
         },
         "string_decoder": {
-          "version": "1.3.0",
+          "version": "1.1.1",
           "bundled": true,
           "dev": true,
           "requires": {
-            "safe-buffer": "~5.2.0"
+            "safe-buffer": "~5.1.0"
           }
         },
         "string-width": {
@@ -33025,12 +33362,15 @@
           }
         },
         "supports-color": {
-          "version": "9.3.1",
+          "version": "7.2.0",
           "bundled": true,
-          "dev": true
+          "dev": true,
+          "requires": {
+            "has-flag": "^4.0.0"
+          }
         },
         "tar": {
-          "version": "6.1.15",
+          "version": "6.1.14",
           "bundled": true,
           "dev": true,
           "requires": {
@@ -33078,13 +33418,13 @@
           "dev": true
         },
         "tuf-js": {
-          "version": "1.1.7",
+          "version": "1.1.6",
           "bundled": true,
           "dev": true,
           "requires": {
             "@tufjs/models": "1.0.4",
             "debug": "^4.3.4",
-            "make-fetch-happen": "^11.1.1"
+            "make-fetch-happen": "^11.1.0"
           }
         },
         "unique-filename": {
@@ -33190,7 +33530,7 @@
               }
             },
             "strip-ansi": {
-              "version": "7.1.0",
+              "version": "7.0.1",
               "bundled": true,
               "dev": true,
               "requires": {

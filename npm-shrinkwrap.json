@@ -9,7 +9,7 @@
       "version": "0.2.3",
       "license": "MIT",
       "dependencies": {
-        "@oclif/core": "^2.9.4",
+        "@oclif/core": "^2.13.0",
         "@oclif/errors": "^1.3.6",
         "@oclif/plugin-not-found": "^2.3.32",
         "@oclif/plugin-warn-if-update-available": "^2.0.45",
@@ -4611,9 +4611,9 @@
       }
     },
     "node_modules/@oclif/core": {
-      "version": "2.9.4",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.9.4.tgz",
-      "integrity": "sha512-eFRRpV+tJ6nMkhay2M9IppjSF3atRrgj6Qo83qUslaFSAW3NAl4mIhx1mKmTwQx5rgSrar03xICtSAWJ6gZtag==",
+      "version": "2.13.0",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.13.0.tgz",
+      "integrity": "sha512-U/AgA/Jcqc04VwmsO/xSc3gJjVKkST8SB3wC3o3kzTAE4UWTOTMkHTtLujYZA5sUvBLhs66+A4dfrjz2sZQBdA==",
       "dependencies": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",
@@ -25106,9 +25106,9 @@
       }
     },
     "@oclif/core": {
-      "version": "2.9.4",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.9.4.tgz",
-      "integrity": "sha512-eFRRpV+tJ6nMkhay2M9IppjSF3atRrgj6Qo83qUslaFSAW3NAl4mIhx1mKmTwQx5rgSrar03xICtSAWJ6gZtag==",
+      "version": "2.13.0",
+      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-2.13.0.tgz",
+      "integrity": "sha512-U/AgA/Jcqc04VwmsO/xSc3gJjVKkST8SB3wC3o3kzTAE4UWTOTMkHTtLujYZA5sUvBLhs66+A4dfrjz2sZQBdA==",
       "requires": {
         "@types/cli-progress": "^3.11.0",
         "ansi-escapes": "^4.3.2",

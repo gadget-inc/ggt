@@ -34,7 +34,7 @@
         "normalize-path": "^3.0.0",
         "open": "^9.1.0",
         "p-map": "^6.0.0",
-        "p-queue": "^7.3.4",
+        "p-queue": "^7.4.0",
         "pluralize": "^8.0.0",
         "serialize-error": "^11.0.2",
         "ts-dedent": "^2.2.0",
@@ -9556,6 +9556,7 @@
     },
     "node_modules/eventemitter3": {
       "version": "4.0.7",
+      "dev": true,
       "license": "MIT"
     },
     "node_modules/events": {
@@ -17172,11 +17173,11 @@
       }
     },
     "node_modules/p-queue": {
-      "version": "7.3.4",
-      "resolved": "https://registry.npmjs.org/p-queue/-/p-queue-7.3.4.tgz",
-      "integrity": "sha512-esox8CWt0j9EZECFvkFl2WNPat8LN4t7WWeXq73D9ha0V96qPRufApZi4ZhPwXAln1uVVal429HVVKPa2X0yQg==",
+      "version": "7.4.0",
+      "resolved": "https://registry.npmjs.org/p-queue/-/p-queue-7.4.0.tgz",
+      "integrity": "sha512-1FYFpop2WjLUfhSpKb0pi01JL+Z+H0Z8F2XPn2g04WxGynU/X8mx8s/66fb7jZ39pS2ZliAWCX97EoTSIdMmtw==",
       "dependencies": {
-        "eventemitter3": "^4.0.7",
+        "eventemitter3": "^5.0.1",
         "p-timeout": "^5.0.2"
       },
       "engines": {
@@ -17185,6 +17186,11 @@
       "funding": {
         "url": "https://github.com/sponsors/sindresorhus"
       }
+    },
+    "node_modules/p-queue/node_modules/eventemitter3": {
+      "version": "5.0.1",
+      "resolved": "https://registry.npmjs.org/eventemitter3/-/eventemitter3-5.0.1.tgz",
+      "integrity": "sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA=="
     },
     "node_modules/p-timeout": {
       "version": "5.1.0",
@@ -28695,7 +28701,8 @@
       "dev": true
     },
     "eventemitter3": {
-      "version": "4.0.7"
+      "version": "4.0.7",
+      "dev": true
     },
     "events": {
       "version": "1.1.1",
@@ -33972,12 +33979,19 @@
       "integrity": "sha512-T8BatKGY+k5rU+Q/GTYgrEf2r4xRMevAN5mtXc2aPc4rS1j3s+vWTaO2Wag94neXuCAUAs8cxBL9EeB5EA6diw=="
     },
     "p-queue": {
-      "version": "7.3.4",
-      "resolved": "https://registry.npmjs.org/p-queue/-/p-queue-7.3.4.tgz",
-      "integrity": "sha512-esox8CWt0j9EZECFvkFl2WNPat8LN4t7WWeXq73D9ha0V96qPRufApZi4ZhPwXAln1uVVal429HVVKPa2X0yQg==",
+      "version": "7.4.0",
+      "resolved": "https://registry.npmjs.org/p-queue/-/p-queue-7.4.0.tgz",
+      "integrity": "sha512-1FYFpop2WjLUfhSpKb0pi01JL+Z+H0Z8F2XPn2g04WxGynU/X8mx8s/66fb7jZ39pS2ZliAWCX97EoTSIdMmtw==",
       "requires": {
-        "eventemitter3": "^4.0.7",
+        "eventemitter3": "^5.0.1",
         "p-timeout": "^5.0.2"
+      },
+      "dependencies": {
+        "eventemitter3": {
+          "version": "5.0.1",
+          "resolved": "https://registry.npmjs.org/eventemitter3/-/eventemitter3-5.0.1.tgz",
+          "integrity": "sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA=="
+        }
       }
     },
     "p-timeout": {

@@ -77,7 +77,7 @@
         "eslint-plugin-import": "^2.28.1",
         "eslint-plugin-lodash": "^7.4.0",
         "nock": "^13.3.3",
-        "oclif": "^3.13.0",
+        "oclif": "^3.13.1",
         "patch-package": "^8.0.0",
         "prettier": "^3.0.3",
         "prettier-plugin-organize-imports": "^3.2.3",
@@ -16805,12 +16805,12 @@
       }
     },
     "node_modules/oclif": {
-      "version": "3.13.0",
-      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.13.0.tgz",
-      "integrity": "sha512-4MU3fFQmEcr001XRfHoAZjKWEBWvnYqvV6NKlJcU8b1HLxl13cXkeOSh+dC/PFydgfQ0m9jk2WikOtIvRwge+A==",
+      "version": "3.13.1",
+      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.13.1.tgz",
+      "integrity": "sha512-t4OqJjLK/xP3J1BlmQgkQVDn99F3CnN/RY/X6QbJXn7GfCdZ0LdJXt2zjYP+rQ1cxy9ejbNiwdo/TxVfXSYa6A==",
       "dev": true,
       "dependencies": {
-        "@oclif/core": "^3.0.0-beta.4",
+        "@oclif/core": "^2.11.4",
         "@oclif/plugin-help": "^5.2.14",
         "@oclif/plugin-not-found": "^2.3.32",
         "@oclif/plugin-warn-if-update-available": "^2.0.44",
@@ -16830,49 +16830,10 @@
         "yeoman-generator": "^5.8.0"
       },
       "bin": {
-        "oclif": "bin/run.js"
+        "oclif": "bin/run"
       },
       "engines": {
         "node": ">=12.0.0"
-      }
-    },
-    "node_modules/oclif/node_modules/@oclif/core": {
-      "version": "3.0.0-beta.5",
-      "resolved": "https://registry.npmjs.org/@oclif/core/-/core-3.0.0-beta.5.tgz",
-      "integrity": "sha512-M2GOYi2uAnE9ouI74IWp/Xby93LQj4DO1OKQlVmEotZBp4ZBHhfIza+t61bBffDRNTe3+FH+aQisGZQOuiCpGw==",
-      "dev": true,
-      "dependencies": {
-        "@types/cli-progress": "^3.11.0",
-        "ansi-escapes": "^4.3.2",
-        "ansi-styles": "^4.3.0",
-        "cardinal": "^2.1.1",
-        "chalk": "^4.1.2",
-        "clean-stack": "^3.0.1",
-        "cli-progress": "^3.12.0",
-        "debug": "^4.3.4",
-        "ejs": "^3.1.8",
-        "get-package-type": "^0.1.0",
-        "globby": "^11.1.0",
-        "hyperlinker": "^1.0.0",
-        "indent-string": "^4.0.0",
-        "is-wsl": "^2.2.0",
-        "js-yaml": "^3.14.1",
-        "natural-orderby": "^2.0.3",
-        "object-treeify": "^1.1.33",
-        "password-prompt": "^1.1.2",
-        "slice-ansi": "^4.0.0",
-        "string-width": "^4.2.3",
-        "strip-ansi": "^6.0.1",
-        "supports-color": "^8.1.1",
-        "supports-hyperlinks": "^2.2.0",
-        "ts-node": "^10.9.1",
-        "tslib": "^2.5.0",
-        "widest-line": "^3.1.0",
-        "wordwrap": "^1.0.0",
-        "wrap-ansi": "^7.0.0"
-      },
-      "engines": {
-        "node": ">=16.0.0"
       }
     },
     "node_modules/oclif/node_modules/@sindresorhus/is": {
@@ -16952,21 +16913,6 @@
       },
       "engines": {
         "node": ">=8"
-      }
-    },
-    "node_modules/oclif/node_modules/clean-stack": {
-      "version": "3.0.1",
-      "resolved": "https://registry.npmjs.org/clean-stack/-/clean-stack-3.0.1.tgz",
-      "integrity": "sha512-lR9wNiMRcVQjSB3a7xXGLuz4cr4wJuuXlaAEbRutGowQTmlp7R72/DOgN21e8jdwblMWl9UOJMJXarX94pzKdg==",
-      "dev": true,
-      "dependencies": {
-        "escape-string-regexp": "4.0.0"
-      },
-      "engines": {
-        "node": ">=10"
-      },
-      "funding": {
-        "url": "https://github.com/sponsors/sindresorhus"
       }
     },
     "node_modules/oclif/node_modules/concurrently": {
@@ -17110,23 +17056,6 @@
       },
       "funding": {
         "url": "https://github.com/sponsors/sindresorhus"
-      }
-    },
-    "node_modules/oclif/node_modules/slice-ansi": {
-      "version": "4.0.0",
-      "resolved": "https://registry.npmjs.org/slice-ansi/-/slice-ansi-4.0.0.tgz",
-      "integrity": "sha512-qMCMfhY040cVHT43K9BFygqYbUPFZKHOg7K73mtTWJRb8pyP3fzf4Ixd5SzdEJQ6MRUg/WBnOLxghZtKKurENQ==",
-      "dev": true,
-      "dependencies": {
-        "ansi-styles": "^4.0.0",
-        "astral-regex": "^2.0.0",
-        "is-fullwidth-code-point": "^3.0.0"
-      },
-      "engines": {
-        "node": ">=10"
-      },
-      "funding": {
-        "url": "https://github.com/chalk/slice-ansi?sponsor=1"
       }
     },
     "node_modules/oclif/node_modules/universalify": {
@@ -33726,12 +33655,12 @@
       }
     },
     "oclif": {
-      "version": "3.13.0",
-      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.13.0.tgz",
-      "integrity": "sha512-4MU3fFQmEcr001XRfHoAZjKWEBWvnYqvV6NKlJcU8b1HLxl13cXkeOSh+dC/PFydgfQ0m9jk2WikOtIvRwge+A==",
+      "version": "3.13.1",
+      "resolved": "https://registry.npmjs.org/oclif/-/oclif-3.13.1.tgz",
+      "integrity": "sha512-t4OqJjLK/xP3J1BlmQgkQVDn99F3CnN/RY/X6QbJXn7GfCdZ0LdJXt2zjYP+rQ1cxy9ejbNiwdo/TxVfXSYa6A==",
       "dev": true,
       "requires": {
-        "@oclif/core": "^3.0.0-beta.4",
+        "@oclif/core": "^2.11.4",
         "@oclif/plugin-help": "^5.2.14",
         "@oclif/plugin-not-found": "^2.3.32",
         "@oclif/plugin-warn-if-update-available": "^2.0.44",
@@ -33751,42 +33680,6 @@
         "yeoman-generator": "^5.8.0"
       },
       "dependencies": {
-        "@oclif/core": {
-          "version": "3.0.0-beta.5",
-          "resolved": "https://registry.npmjs.org/@oclif/core/-/core-3.0.0-beta.5.tgz",
-          "integrity": "sha512-M2GOYi2uAnE9ouI74IWp/Xby93LQj4DO1OKQlVmEotZBp4ZBHhfIza+t61bBffDRNTe3+FH+aQisGZQOuiCpGw==",
-          "dev": true,
-          "requires": {
-            "@types/cli-progress": "^3.11.0",
-            "ansi-escapes": "^4.3.2",
-            "ansi-styles": "^4.3.0",
-            "cardinal": "^2.1.1",
-            "chalk": "^4.1.2",
-            "clean-stack": "^3.0.1",
-            "cli-progress": "^3.12.0",
-            "debug": "^4.3.4",
-            "ejs": "^3.1.8",
-            "get-package-type": "^0.1.0",
-            "globby": "^11.1.0",
-            "hyperlinker": "^1.0.0",
-            "indent-string": "^4.0.0",
-            "is-wsl": "^2.2.0",
-            "js-yaml": "^3.14.1",
-            "natural-orderby": "^2.0.3",
-            "object-treeify": "^1.1.33",
-            "password-prompt": "^1.1.2",
-            "slice-ansi": "^4.0.0",
-            "string-width": "^4.2.3",
-            "strip-ansi": "^6.0.1",
-            "supports-color": "^8.1.1",
-            "supports-hyperlinks": "^2.2.0",
-            "ts-node": "^10.9.1",
-            "tslib": "^2.5.0",
-            "widest-line": "^3.1.0",
-            "wordwrap": "^1.0.0",
-            "wrap-ansi": "^7.0.0"
-          }
-        },
         "@sindresorhus/is": {
           "version": "4.6.0",
           "resolved": "https://registry.npmjs.org/@sindresorhus/is/-/is-4.6.0.tgz",
@@ -33842,15 +33735,6 @@
                 "has-flag": "^4.0.0"
               }
             }
-          }
-        },
-        "clean-stack": {
-          "version": "3.0.1",
-          "resolved": "https://registry.npmjs.org/clean-stack/-/clean-stack-3.0.1.tgz",
-          "integrity": "sha512-lR9wNiMRcVQjSB3a7xXGLuz4cr4wJuuXlaAEbRutGowQTmlp7R72/DOgN21e8jdwblMWl9UOJMJXarX94pzKdg==",
-          "dev": true,
-          "requires": {
-            "escape-string-regexp": "4.0.0"
           }
         },
         "concurrently": {
@@ -33949,17 +33833,6 @@
           "dev": true,
           "requires": {
             "lowercase-keys": "^2.0.0"
-          }
-        },
-        "slice-ansi": {
-          "version": "4.0.0",
-          "resolved": "https://registry.npmjs.org/slice-ansi/-/slice-ansi-4.0.0.tgz",
-          "integrity": "sha512-qMCMfhY040cVHT43K9BFygqYbUPFZKHOg7K73mtTWJRb8pyP3fzf4Ixd5SzdEJQ6MRUg/WBnOLxghZtKKurENQ==",
-          "dev": true,
-          "requires": {
-            "ansi-styles": "^4.0.0",
-            "astral-regex": "^2.0.0",
-            "is-fullwidth-code-point": "^3.0.0"
           }
         },
         "universalify": {

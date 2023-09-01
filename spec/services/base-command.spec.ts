@@ -66,7 +66,7 @@ describe("BaseCommand", () => {
       it("prompts the user to log in", async () => {
         inquirer.prompt.mockResolvedValue({ login: true });
         vi.spyOn(base, "login").mockResolvedValue();
-        vi.spyOn(base, "exit").mockImplementation(_.noop);
+        vi.spyOn(base, "exit").mockImplementation(_.noop as any);
 
         await base.init();
 
@@ -78,7 +78,7 @@ describe("BaseCommand", () => {
       it("exits if the user declines to log in", async () => {
         inquirer.prompt.mockResolvedValue({ login: false });
         vi.spyOn(base, "login").mockResolvedValue();
-        vi.spyOn(base, "exit").mockImplementation(_.noop);
+        vi.spyOn(base, "exit").mockImplementation(_.noop as any);
 
         await base.init();
 

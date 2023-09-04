@@ -62,7 +62,7 @@
     "normalize-path": "^3.0.0",
     "open": "^9.1.0",
     "p-map": "^6.0.0",
-    "p-queue": "^7.4.0",
+    "p-queue": "^7.4.1",
     "pluralize": "^8.0.0",
     "serialize-error": "^11.0.2",
     "ts-dedent": "^2.2.0",

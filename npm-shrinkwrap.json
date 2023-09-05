@@ -12,7 +12,7 @@
         "@oclif/core": "^2.15.0",
         "@oclif/errors": "^1.3.6",
         "@oclif/plugin-not-found": "^2.4.1",
-        "@oclif/plugin-warn-if-update-available": "^2.0.50",
+        "@oclif/plugin-warn-if-update-available": "^2.1.0",
         "@sentry/node": "^7.67.0",
         "@swc/helpers": "^0.5.1",
         "chalk": "^5.3.0",
@@ -4863,16 +4863,15 @@
       }
     },
     "node_modules/@oclif/plugin-warn-if-update-available": {
-      "version": "2.0.50",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.50.tgz",
-      "integrity": "sha512-+VtxuK31PX49suwkwcR8no0P55KUjvZzfKURTYhveLGAeGHSPLnA60TqB+94+FQN88nlPZncw3867zfwgw6rfw==",
+      "version": "2.1.0",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.1.0.tgz",
+      "integrity": "sha512-liTWd/qSIqALsikr88CAB9o2xGFt0LdT5REbhxtrx16/trRmkxQ+0RHK1FieGZAzEENx/4D3YcC/Y67a0uyO0g==",
       "dependencies": {
         "@oclif/core": "^2.15.0",
         "chalk": "^4.1.0",
         "debug": "^4.1.0",
-        "fs-extra": "^9.0.1",
         "http-call": "^5.2.2",
-        "lodash": "^4.17.21",
+        "lodash.template": "^4.5.0",
         "semver": "^7.5.4"
       },
       "engines": {
@@ -4892,20 +4891,6 @@
       },
       "funding": {
         "url": "https://github.com/chalk/chalk?sponsor=1"
-      }
-    },
-    "node_modules/@oclif/plugin-warn-if-update-available/node_modules/fs-extra": {
-      "version": "9.1.0",
-      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-9.1.0.tgz",
-      "integrity": "sha512-hcg3ZmepS30/7BSFqRvoo3DOMQu7IjqxO5nCDt+zM9XWjb33Wg7ziNT+Qvqbuc3+gWpzO02JubVyk2G4Zvo1OQ==",
-      "dependencies": {
-        "at-least-node": "^1.0.0",
-        "graceful-fs": "^4.2.0",
-        "jsonfile": "^6.0.1",
-        "universalify": "^2.0.0"
-      },
-      "engines": {
-        "node": ">=10"
       }
     },
     "node_modules/@oclif/plugin-warn-if-update-available/node_modules/supports-color": {
@@ -6573,6 +6558,7 @@
     },
     "node_modules/at-least-node": {
       "version": "1.0.0",
+      "dev": true,
       "license": "ISC",
       "engines": {
         "node": ">= 4.0.0"
@@ -11989,6 +11975,11 @@
       "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
       "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
     },
+    "node_modules/lodash._reinterpolate": {
+      "version": "3.0.0",
+      "resolved": "https://registry.npmjs.org/lodash._reinterpolate/-/lodash._reinterpolate-3.0.0.tgz",
+      "integrity": "sha512-xYHt68QRoYGjeeM/XOE1uJtvXQAgvszfBhjV4yvsQH0u2i9I6cI6c6/eG4Hh3UAOVn0y/xAXwmTzEay49Q//HA=="
+    },
     "node_modules/lodash.merge": {
       "version": "4.6.2",
       "dev": true,
@@ -11999,6 +11990,23 @@
       "resolved": "https://registry.npmjs.org/lodash.startcase/-/lodash.startcase-4.4.0.tgz",
       "integrity": "sha512-+WKqsK294HMSc2jEbNgpHpd0JfIBhp7rEV4aqXWqFr6AlXov+SlcgB1Fv01y2kGe3Gc8nMW7VA0SrGuSkRfIEg==",
       "dev": true
+    },
+    "node_modules/lodash.template": {
+      "version": "4.5.0",
+      "resolved": "https://registry.npmjs.org/lodash.template/-/lodash.template-4.5.0.tgz",
+      "integrity": "sha512-84vYFxIkmidUiFxidA/KjjH9pAycqW+h980j7Fuz5qxRtO9pgB7MDFTdys1N7A5mcucRiDyEq4fusljItR1T/A==",
+      "dependencies": {
+        "lodash._reinterpolate": "^3.0.0",
+        "lodash.templatesettings": "^4.0.0"
+      }
+    },
+    "node_modules/lodash.templatesettings": {
+      "version": "4.2.0",
+      "resolved": "https://registry.npmjs.org/lodash.templatesettings/-/lodash.templatesettings-4.2.0.tgz",
+      "integrity": "sha512-stgLz+i3Aa9mZgnjr/O+v9ruKZsPsndy7qPZOchbqk2cnTU1ZaldKK+v7m54WoKIyxiuMZTKT2H81F8BeAc3ZQ==",
+      "dependencies": {
+        "lodash._reinterpolate": "^3.0.0"
+      }
     },
     "node_modules/log-symbols": {
       "version": "4.1.0",
@@ -25218,16 +25226,15 @@
       }
     },
     "@oclif/plugin-warn-if-update-available": {
-      "version": "2.0.50",
-      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.0.50.tgz",
-      "integrity": "sha512-+VtxuK31PX49suwkwcR8no0P55KUjvZzfKURTYhveLGAeGHSPLnA60TqB+94+FQN88nlPZncw3867zfwgw6rfw==",
+      "version": "2.1.0",
+      "resolved": "https://registry.npmjs.org/@oclif/plugin-warn-if-update-available/-/plugin-warn-if-update-available-2.1.0.tgz",
+      "integrity": "sha512-liTWd/qSIqALsikr88CAB9o2xGFt0LdT5REbhxtrx16/trRmkxQ+0RHK1FieGZAzEENx/4D3YcC/Y67a0uyO0g==",
       "requires": {
         "@oclif/core": "^2.15.0",
         "chalk": "^4.1.0",
         "debug": "^4.1.0",
-        "fs-extra": "^9.0.1",
         "http-call": "^5.2.2",
-        "lodash": "^4.17.21",
+        "lodash.template": "^4.5.0",
         "semver": "^7.5.4"
       },
       "dependencies": {
@@ -25238,17 +25245,6 @@
           "requires": {
             "ansi-styles": "^4.1.0",
             "supports-color": "^7.1.0"
-          }
-        },
-        "fs-extra": {
-          "version": "9.1.0",
-          "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-9.1.0.tgz",
-          "integrity": "sha512-hcg3ZmepS30/7BSFqRvoo3DOMQu7IjqxO5nCDt+zM9XWjb33Wg7ziNT+Qvqbuc3+gWpzO02JubVyk2G4Zvo1OQ==",
-          "requires": {
-            "at-least-node": "^1.0.0",
-            "graceful-fs": "^4.2.0",
-            "jsonfile": "^6.0.1",
-            "universalify": "^2.0.0"
           }
         },
         "supports-color": {
@@ -26462,7 +26458,8 @@
       "version": "3.2.4"
     },
     "at-least-node": {
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "dev": true
     },
     "auto-bind": {
       "version": "4.0.0",
@@ -30301,6 +30298,11 @@
       "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
       "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
     },
+    "lodash._reinterpolate": {
+      "version": "3.0.0",
+      "resolved": "https://registry.npmjs.org/lodash._reinterpolate/-/lodash._reinterpolate-3.0.0.tgz",
+      "integrity": "sha512-xYHt68QRoYGjeeM/XOE1uJtvXQAgvszfBhjV4yvsQH0u2i9I6cI6c6/eG4Hh3UAOVn0y/xAXwmTzEay49Q//HA=="
+    },
     "lodash.merge": {
       "version": "4.6.2",
       "dev": true
@@ -30310,6 +30312,23 @@
       "resolved": "https://registry.npmjs.org/lodash.startcase/-/lodash.startcase-4.4.0.tgz",
       "integrity": "sha512-+WKqsK294HMSc2jEbNgpHpd0JfIBhp7rEV4aqXWqFr6AlXov+SlcgB1Fv01y2kGe3Gc8nMW7VA0SrGuSkRfIEg==",
       "dev": true
+    },
+    "lodash.template": {
+      "version": "4.5.0",
+      "resolved": "https://registry.npmjs.org/lodash.template/-/lodash.template-4.5.0.tgz",
+      "integrity": "sha512-84vYFxIkmidUiFxidA/KjjH9pAycqW+h980j7Fuz5qxRtO9pgB7MDFTdys1N7A5mcucRiDyEq4fusljItR1T/A==",
+      "requires": {
+        "lodash._reinterpolate": "^3.0.0",
+        "lodash.templatesettings": "^4.0.0"
+      }
+    },
+    "lodash.templatesettings": {
+      "version": "4.2.0",
+      "resolved": "https://registry.npmjs.org/lodash.templatesettings/-/lodash.templatesettings-4.2.0.tgz",
+      "integrity": "sha512-stgLz+i3Aa9mZgnjr/O+v9ruKZsPsndy7qPZOchbqk2cnTU1ZaldKK+v7m54WoKIyxiuMZTKT2H81F8BeAc3ZQ==",
+      "requires": {
+        "lodash._reinterpolate": "^3.0.0"
+      }
     },
     "log-symbols": {
       "version": "4.1.0",

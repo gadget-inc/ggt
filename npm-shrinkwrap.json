@@ -14,7 +14,7 @@
         "@oclif/plugin-not-found": "^2.4.1",
         "@oclif/plugin-warn-if-update-available": "^2.1.0",
         "@sentry/node": "^7.68.0",
-        "@swc/helpers": "^0.5.1",
+        "@swc/helpers": "^0.5.2",
         "chalk": "^5.3.0",
         "chalk-template": "^1.1.0",
         "clean-stack": "^5.2.0",
@@ -5509,9 +5509,9 @@
       }
     },
     "node_modules/@swc/helpers": {
-      "version": "0.5.1",
-      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.1.tgz",
-      "integrity": "sha512-sJ902EfIzn1Fa+qYmjdQqh8tPsoxyBz+8yBKC2HKUxyezKJFwPGOn7pv4WY6QuQW//ySQi5lJjA/ZT9sNWWNTg==",
+      "version": "0.5.2",
+      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.2.tgz",
+      "integrity": "sha512-E4KcWTpoLHqwPHLxidpOqQbcrZVgi0rsmmZXUle1jXmJfuIf/UWpczUJ7MZZ5tlxytgJXyp0w4PGkkeLiuIdZw==",
       "dependencies": {
         "tslib": "^2.4.0"
       }
@@ -25679,9 +25679,9 @@
       "optional": true
     },
     "@swc/helpers": {
-      "version": "0.5.1",
-      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.1.tgz",
-      "integrity": "sha512-sJ902EfIzn1Fa+qYmjdQqh8tPsoxyBz+8yBKC2HKUxyezKJFwPGOn7pv4WY6QuQW//ySQi5lJjA/ZT9sNWWNTg==",
+      "version": "0.5.2",
+      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.2.tgz",
+      "integrity": "sha512-E4KcWTpoLHqwPHLxidpOqQbcrZVgi0rsmmZXUle1jXmJfuIf/UWpczUJ7MZZ5tlxytgJXyp0w4PGkkeLiuIdZw==",
       "requires": {
         "tslib": "^2.4.0"
       }

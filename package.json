@@ -68,7 +68,7 @@
     "ts-dedent": "^2.2.0",
     "watcher": "^2.3.0",
     "which": "^4.0.0",
-    "ws": "^8.14.1"
+    "ws": "^8.14.2"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",

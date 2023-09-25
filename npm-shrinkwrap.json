@@ -60,7 +60,7 @@
         "@types/fast-levenshtein": "^0.0.2",
         "@types/fs-extra": "^11.0.2",
         "@types/inquirer": "^9.0.3",
-        "@types/lodash": "^4.14.198",
+        "@types/lodash": "^4.14.199",
         "@types/node": "^20.6.3",
         "@types/node-notifier": "^8.0.3",
         "@types/normalize-path": "^3.0.0",
@@ -5720,9 +5720,9 @@
       }
     },
     "node_modules/@types/lodash": {
-      "version": "4.14.198",
-      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.198.tgz",
-      "integrity": "sha512-trNJ/vtMZYMLhfN45uLq4ShQSw0/S7xCTLLVM+WM1rmFpba/VS42jVUgaO3w/NOLiWR/09lnYk0yMaA/atdIsg==",
+      "version": "4.14.199",
+      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.199.tgz",
+      "integrity": "sha512-Vrjz5N5Ia4SEzWWgIVwnHNEnb1UE1XMkvY5DGXrAeOGE9imk0hgTHh5GyDjLDJi9OTCn9oo9dXH1uToK1VRfrg==",
       "dev": true
     },
     "node_modules/@types/minimatch": {
@@ -25914,9 +25914,9 @@
       }
     },
     "@types/lodash": {
-      "version": "4.14.198",
-      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.198.tgz",
-      "integrity": "sha512-trNJ/vtMZYMLhfN45uLq4ShQSw0/S7xCTLLVM+WM1rmFpba/VS42jVUgaO3w/NOLiWR/09lnYk0yMaA/atdIsg==",
+      "version": "4.14.199",
+      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.199.tgz",
+      "integrity": "sha512-Vrjz5N5Ia4SEzWWgIVwnHNEnb1UE1XMkvY5DGXrAeOGE9imk0hgTHh5GyDjLDJi9OTCn9oo9dXH1uToK1VRfrg==",
       "dev": true
     },
     "@types/minimatch": {

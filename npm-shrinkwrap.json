@@ -81,7 +81,7 @@
         "patch-package": "^8.0.0",
         "prettier": "^3.0.3",
         "prettier-plugin-organize-imports": "^3.2.3",
-        "prettier-plugin-packagejson": "^2.4.5",
+        "prettier-plugin-packagejson": "^2.4.6",
         "rimraf": "^5.0.5",
         "ts-node": "^10.9.1",
         "type-fest": "^4.3.2",
@@ -8441,18 +8441,6 @@
         "node": ">=12.0.0"
       }
     },
-    "node_modules/cspell/node_modules/get-stdin": {
-      "version": "9.0.0",
-      "resolved": "https://registry.npmjs.org/get-stdin/-/get-stdin-9.0.0.tgz",
-      "integrity": "sha512-dVKBjfWisLAicarI2Sf+JuBE/DghV4UzNAVe9yhEJuzeREd3JhOTE9cUaJTeSa77fsbQUK3pcOpJfM59+VKZaA==",
-      "dev": true,
-      "engines": {
-        "node": ">=12"
-      },
-      "funding": {
-        "url": "https://github.com/sponsors/sindresorhus"
-      }
-    },
     "node_modules/cspell/node_modules/strip-ansi": {
       "version": "7.1.0",
       "resolved": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-7.1.0.tgz",
@@ -8859,9 +8847,9 @@
       }
     },
     "node_modules/detect-newline": {
-      "version": "4.0.0",
-      "resolved": "https://registry.npmjs.org/detect-newline/-/detect-newline-4.0.0.tgz",
-      "integrity": "sha512-1aXUEPdfGdzVPFpzGJJNgq9o81bGg1s09uxTWsqBlo9PI332uyJRQq13+LK/UN4JfxJbFdCXonUFQ9R/p7yCtw==",
+      "version": "4.0.1",
+      "resolved": "https://registry.npmjs.org/detect-newline/-/detect-newline-4.0.1.tgz",
+      "integrity": "sha512-qE3Veg1YXzGHQhlA6jzebZN2qVf6NX+A7m7qlhCGG30dJixrAQhYOsJjsnBjJkCSmuOPpCk30145fr8FV0bzog==",
       "dev": true,
       "engines": {
         "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
@@ -10320,6 +10308,18 @@
       "integrity": "sha512-mDHFgApoQd+azgMdwylJrv2DX47ywGq1i5VFJE7fZ0dttNq3iQMfsU4IvEgBHojA3KqEudyu7Vq+oN8kNaNkWw==",
       "engines": {
         "node": ">=16"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/sindresorhus"
+      }
+    },
+    "node_modules/get-stdin": {
+      "version": "9.0.0",
+      "resolved": "https://registry.npmjs.org/get-stdin/-/get-stdin-9.0.0.tgz",
+      "integrity": "sha512-dVKBjfWisLAicarI2Sf+JuBE/DghV4UzNAVe9yhEJuzeREd3JhOTE9cUaJTeSa77fsbQUK3pcOpJfM59+VKZaA==",
+      "dev": true,
+      "engines": {
+        "node": ">=12"
       },
       "funding": {
         "url": "https://github.com/sponsors/sindresorhus"
@@ -18049,12 +18049,12 @@
       }
     },
     "node_modules/prettier-plugin-packagejson": {
-      "version": "2.4.5",
-      "resolved": "https://registry.npmjs.org/prettier-plugin-packagejson/-/prettier-plugin-packagejson-2.4.5.tgz",
-      "integrity": "sha512-glG71jE1gO3y5+JNAhC8X+4yrlN28rub6Aj461SKbaPie9RgMiHKcInH2Moi2VGOfkTXaEHBhg4uVMBqa+kBUA==",
+      "version": "2.4.6",
+      "resolved": "https://registry.npmjs.org/prettier-plugin-packagejson/-/prettier-plugin-packagejson-2.4.6.tgz",
+      "integrity": "sha512-5JGfzkJRL0DLNyhwmiAV9mV0hZLHDwddFCs2lc9CNxOChpoWUQVe8K4qTMktmevmDlMpok2uT10nvHUyU59sNw==",
       "dev": true,
       "dependencies": {
-        "sort-package-json": "2.5.1",
+        "sort-package-json": "2.6.0",
         "synckit": "0.8.5"
       },
       "peerDependencies": {
@@ -19361,9 +19361,9 @@
       "dev": true
     },
     "node_modules/sort-package-json": {
-      "version": "2.5.1",
-      "resolved": "https://registry.npmjs.org/sort-package-json/-/sort-package-json-2.5.1.tgz",
-      "integrity": "sha512-vx/KoZxm8YNMUqdlw7SGTfqR5pqZ/sUfgOuRtDILiOy/3AvzhAibyUe2cY3OpLs3oRSow9up4yLVtQaM24rbDQ==",
+      "version": "2.6.0",
+      "resolved": "https://registry.npmjs.org/sort-package-json/-/sort-package-json-2.6.0.tgz",
+      "integrity": "sha512-XSQ+lY9bAYA8ZsoChcEoPlgcSMaheziEp1beox1JVxy1SV4F2jSq9+h2rJ+3mC/Dhu9Ius1DLnInD5AWcsDXZw==",
       "dev": true,
       "dependencies": {
         "detect-indent": "^7.0.1",
@@ -19385,18 +19385,6 @@
       "dev": true,
       "engines": {
         "node": ">=12.20"
-      }
-    },
-    "node_modules/sort-package-json/node_modules/get-stdin": {
-      "version": "9.0.0",
-      "resolved": "https://registry.npmjs.org/get-stdin/-/get-stdin-9.0.0.tgz",
-      "integrity": "sha512-dVKBjfWisLAicarI2Sf+JuBE/DghV4UzNAVe9yhEJuzeREd3JhOTE9cUaJTeSa77fsbQUK3pcOpJfM59+VKZaA==",
-      "dev": true,
-      "engines": {
-        "node": ">=12"
-      },
-      "funding": {
-        "url": "https://github.com/sponsors/sindresorhus"
       }
     },
     "node_modules/sort-package-json/node_modules/globby": {
@@ -27671,12 +27659,6 @@
             "flat-cache": "^3.1.0"
           }
         },
-        "get-stdin": {
-          "version": "9.0.0",
-          "resolved": "https://registry.npmjs.org/get-stdin/-/get-stdin-9.0.0.tgz",
-          "integrity": "sha512-dVKBjfWisLAicarI2Sf+JuBE/DghV4UzNAVe9yhEJuzeREd3JhOTE9cUaJTeSa77fsbQUK3pcOpJfM59+VKZaA==",
-          "dev": true
-        },
         "strip-ansi": {
           "version": "7.1.0",
           "resolved": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-7.1.0.tgz",
@@ -28151,9 +28133,9 @@
       "dev": true
     },
     "detect-newline": {
-      "version": "4.0.0",
-      "resolved": "https://registry.npmjs.org/detect-newline/-/detect-newline-4.0.0.tgz",
-      "integrity": "sha512-1aXUEPdfGdzVPFpzGJJNgq9o81bGg1s09uxTWsqBlo9PI332uyJRQq13+LK/UN4JfxJbFdCXonUFQ9R/p7yCtw==",
+      "version": "4.0.1",
+      "resolved": "https://registry.npmjs.org/detect-newline/-/detect-newline-4.0.1.tgz",
+      "integrity": "sha512-qE3Veg1YXzGHQhlA6jzebZN2qVf6NX+A7m7qlhCGG30dJixrAQhYOsJjsnBjJkCSmuOPpCk30145fr8FV0bzog==",
       "dev": true
     },
     "dettle": {
@@ -29225,6 +29207,12 @@
       "version": "7.0.0",
       "resolved": "https://registry.npmjs.org/get-port/-/get-port-7.0.0.tgz",
       "integrity": "sha512-mDHFgApoQd+azgMdwylJrv2DX47ywGq1i5VFJE7fZ0dttNq3iQMfsU4IvEgBHojA3KqEudyu7Vq+oN8kNaNkWw=="
+    },
+    "get-stdin": {
+      "version": "9.0.0",
+      "resolved": "https://registry.npmjs.org/get-stdin/-/get-stdin-9.0.0.tgz",
+      "integrity": "sha512-dVKBjfWisLAicarI2Sf+JuBE/DghV4UzNAVe9yhEJuzeREd3JhOTE9cUaJTeSa77fsbQUK3pcOpJfM59+VKZaA==",
+      "dev": true
     },
     "get-stream": {
       "version": "6.0.1",
@@ -34587,12 +34575,12 @@
       "requires": {}
     },
     "prettier-plugin-packagejson": {
-      "version": "2.4.5",
-      "resolved": "https://registry.npmjs.org/prettier-plugin-packagejson/-/prettier-plugin-packagejson-2.4.5.tgz",
-      "integrity": "sha512-glG71jE1gO3y5+JNAhC8X+4yrlN28rub6Aj461SKbaPie9RgMiHKcInH2Moi2VGOfkTXaEHBhg4uVMBqa+kBUA==",
+      "version": "2.4.6",
+      "resolved": "https://registry.npmjs.org/prettier-plugin-packagejson/-/prettier-plugin-packagejson-2.4.6.tgz",
+      "integrity": "sha512-5JGfzkJRL0DLNyhwmiAV9mV0hZLHDwddFCs2lc9CNxOChpoWUQVe8K4qTMktmevmDlMpok2uT10nvHUyU59sNw==",
       "dev": true,
       "requires": {
-        "sort-package-json": "2.5.1",
+        "sort-package-json": "2.6.0",
         "synckit": "0.8.5"
       }
     },
@@ -35524,9 +35512,9 @@
       "dev": true
     },
     "sort-package-json": {
-      "version": "2.5.1",
-      "resolved": "https://registry.npmjs.org/sort-package-json/-/sort-package-json-2.5.1.tgz",
-      "integrity": "sha512-vx/KoZxm8YNMUqdlw7SGTfqR5pqZ/sUfgOuRtDILiOy/3AvzhAibyUe2cY3OpLs3oRSow9up4yLVtQaM24rbDQ==",
+      "version": "2.6.0",
+      "resolved": "https://registry.npmjs.org/sort-package-json/-/sort-package-json-2.6.0.tgz",
+      "integrity": "sha512-XSQ+lY9bAYA8ZsoChcEoPlgcSMaheziEp1beox1JVxy1SV4F2jSq9+h2rJ+3mC/Dhu9Ius1DLnInD5AWcsDXZw==",
       "dev": true,
       "requires": {
         "detect-indent": "^7.0.1",
@@ -35542,12 +35530,6 @@
           "version": "7.0.1",
           "resolved": "https://registry.npmjs.org/detect-indent/-/detect-indent-7.0.1.tgz",
           "integrity": "sha512-Mc7QhQ8s+cLrnUfU/Ji94vG/r8M26m8f++vyres4ZoojaRDpZ1eSIh/EpzLNwlWuvzSZ3UbDFspjFvTDXe6e/g==",
-          "dev": true
-        },
-        "get-stdin": {
-          "version": "9.0.0",
-          "resolved": "https://registry.npmjs.org/get-stdin/-/get-stdin-9.0.0.tgz",
-          "integrity": "sha512-dVKBjfWisLAicarI2Sf+JuBE/DghV4UzNAVe9yhEJuzeREd3JhOTE9cUaJTeSa77fsbQUK3pcOpJfM59+VKZaA==",
           "dev": true
         },
         "globby": {

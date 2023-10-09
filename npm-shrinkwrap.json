@@ -59,7 +59,7 @@
         "@types/eslint": "^8.44.3",
         "@types/fast-levenshtein": "^0.0.2",
         "@types/fs-extra": "^11.0.2",
-        "@types/inquirer": "^9.0.3",
+        "@types/inquirer": "^9.0.4",
         "@types/lodash": "^4.14.199",
         "@types/node": "^20.8.4",
         "@types/node-notifier": "^8.0.3",
@@ -5800,9 +5800,9 @@
       "integrity": "sha512-SZs7ekbP8CN0txVG2xVRH6EgKmEm31BOxA07vkFaETzZz1xh+cbt8BcI0slpymvwhx5dlFnQG2rTlPVQn+iRPQ=="
     },
     "node_modules/@types/inquirer": {
-      "version": "9.0.3",
-      "resolved": "https://registry.npmjs.org/@types/inquirer/-/inquirer-9.0.3.tgz",
-      "integrity": "sha512-CzNkWqQftcmk2jaCWdBTf9Sm7xSw4rkI1zpU/Udw3HX5//adEZUIm9STtoRP1qgWj0CWQtJ9UTvqmO2NNjhMJw==",
+      "version": "9.0.4",
+      "resolved": "https://registry.npmjs.org/@types/inquirer/-/inquirer-9.0.4.tgz",
+      "integrity": "sha512-x8UgutCLm5tsp995aeYB8dlT+sGBCtv0zE43tHvo7OljtlA2Rn4+COyLKe9+YjB20uy0G14y0C9vCD2KtNtyGA==",
       "dev": true,
       "dependencies": {
         "@types/through": "*",
@@ -26149,9 +26149,9 @@
       "integrity": "sha512-SZs7ekbP8CN0txVG2xVRH6EgKmEm31BOxA07vkFaETzZz1xh+cbt8BcI0slpymvwhx5dlFnQG2rTlPVQn+iRPQ=="
     },
     "@types/inquirer": {
-      "version": "9.0.3",
-      "resolved": "https://registry.npmjs.org/@types/inquirer/-/inquirer-9.0.3.tgz",
-      "integrity": "sha512-CzNkWqQftcmk2jaCWdBTf9Sm7xSw4rkI1zpU/Udw3HX5//adEZUIm9STtoRP1qgWj0CWQtJ9UTvqmO2NNjhMJw==",
+      "version": "9.0.4",
+      "resolved": "https://registry.npmjs.org/@types/inquirer/-/inquirer-9.0.4.tgz",
+      "integrity": "sha512-x8UgutCLm5tsp995aeYB8dlT+sGBCtv0zE43tHvo7OljtlA2Rn4+COyLKe9+YjB20uy0G14y0C9vCD2KtNtyGA==",
       "dev": true,
       "requires": {
         "@types/through": "*",

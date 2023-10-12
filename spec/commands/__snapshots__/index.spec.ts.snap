@@ -81,6 +81,7 @@ DESCRIPTION
     • .gadget
     • .git
     • node_modules
+    • .DS_STORE
 
   Note:
     • If you have separate development and production environments,

@@ -61,6 +61,11 @@ VERSION
 USAGE
   $ ggt [COMMAND]
 
+FLAGS
+  -h, --help     Print command's usage
+  -v, --version  Print version
+  -d, --debug    Print debug output
+
 COMMANDS
   sync    Sync your Gadget application's source code to and
           from your local filesystem.

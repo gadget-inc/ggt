@@ -2,9 +2,6 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "include": ["bin/dev.js", "scripts", "spec", "src", "*.js", "*.cjs", ".*.cjs"],
   "exclude": ["node_modules"],
-  "ts-node": {
-    "swc": true
-  },
   "compilerOptions": {
     /* Type Checking */
     "noFallthroughCasesInSwitch": true,

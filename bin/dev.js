@@ -1,4 +1,4 @@
-#!/usr/bin/env node --loader ts-node/esm --no-warnings
+#!/usr/bin/env node --loader @swc-node/register/esm --no-warnings
 
 import { dirname, join } from "node:path";
 import process from "node:process";

@@ -1,5 +1,48 @@
 # @gadgetinc/ggt
 
+## 0.2.4
+
+### Patch Changes
+
+- 2d18526: Bump @oclif/plugin-warn-if-update-available from 2.1.0 to 2.1.1
+- 29b1454: Bump @sentry/node from 7.62.0 to 7.64.0
+- b5f886c: Bump graphql from 16.8.0 to 16.8.1
+- 66c069d: Bump @sentry/node from 7.71.0 to 7.72.0
+- 28c489a: Bump inquirer from 9.2.10 to 9.2.11
+- 29bb98f: Bump watcher from 2.2.2 to 2.3.0
+- 61790c6: Bump @sentry/node from 7.60.0 to 7.62.0
+- e19a44a: Bump execa from 7.1.1 to 8.0.1
+- 8de7bd7: Bump serialize-error from 11.0.0 to 11.0.1
+- 450cb48: Bump @sentry/node from 7.69.0 to 7.70.0
+- 7ee064c: Bump p-queue from 7.4.0 to 7.4.1
+- b6a8c35: Bump which from 3.0.1 to 4.0.0
+- b8b9810: Bump @sentry/node from 7.66.0 to 7.67.0
+- e01a55b: Bump @sentry/node from 7.70.0 to 7.71.0
+- 26b789a: Bump @oclif/plugin-warn-if-update-available from 2.0.45 to 2.0.49
+- fa48fcf: Bump @sentry/node from 7.65.0 to 7.66.0
+- 05bcd69: Bump @sentry/node from 7.72.0 to 7.73.0
+- b84e537: Bump @sentry/node from 7.67.0 to 7.68.0
+- 1f1b51a: Bump ws from 8.14.0 to 8.14.1
+- 514fb8d: Bump ws from 8.13.0 to 8.14.0
+- 7f1bdd3: Bump graphql-ws from 5.14.0 to 5.14.1
+- 0fae690: Bump @oclif/plugin-warn-if-update-available from 2.0.44 to 2.0.45
+- 27f19bf: Bump @sentry/node from 7.64.0 to 7.65.0
+- ef16057: Bump p-queue from 7.3.4 to 7.4.0
+- 0f39fc9: Bump inquirer from 9.2.8 to 9.2.10
+- ea2c1b5: Bump @sentry/node from 7.68.0 to 7.69.0
+- 6f5ef1a: Bump graphql from 16.7.1 to 16.8.0
+- 6921231: Bump ws from 8.14.1 to 8.14.2
+- eef1f4a: Bump @oclif/plugin-not-found from 2.3.32 to 2.4.0
+- fb2626a: Bump @swc/helpers from 0.5.1 to 0.5.2
+- ebcecc8: Bump @oclif/core from 2.14.0 to 2.15.0
+- 02829e8: Bump @swc/helpers from 0.5.2 to 0.5.3
+- 18fee1d: Bump @oclif/plugin-warn-if-update-available from 2.0.49 to 2.0.50
+- 8dda978: Bump @oclif/plugin-warn-if-update-available from 2.0.50 to 2.1.0
+- d570f4c: Bump @oclif/plugin-not-found from 2.4.1 to 2.4.3
+- 3c9b37b: Bump @oclif/plugin-not-found from 2.4.0 to 2.4.1
+- 3efb826: Bump serialize-error from 11.0.1 to 11.0.2
+- 24072e1: change(ignorePaths): .DS_Store is ignored from syncing with Gadget
+
 ## 0.2.3
 
 ### Patch Changes

@@ -60,7 +60,7 @@ export const println = (template?: TemplateStringsArray | string, ...values: unk
   stdout.write("\n");
 };
 
-export const didYouMean = (input: string, options: readonly string[]): [closest: string, ...sorted: string[]] => {
+export const sortByLevenshtein = (input: string, options: readonly string[]): [closest: string, ...sorted: string[]] => {
   assert(options.length > 0, "options must not be empty");
   return _.sortBy(options, (opt) => levenshtein.get(opt, input)) as [string, ...string[]];
 };

@@ -2,7 +2,7 @@ import _ from "lodash";
 import { config } from "../services/config.js";
 import { Context, globalArgs } from "../services/context.js";
 import { CLIError } from "../services/errors.js";
-import { didYouMean, println, sprint } from "../services/output.js";
+import { println, sortByLevenshtein, sprint } from "../services/output.js";
 import { availableCommands, type Command } from "./index.js";
 
 export const usage = sprint`
@@ -41,7 +41,7 @@ export const run = async (ctx = new Context()) => {
   }
 
   if (!_.includes(availableCommands, command)) {
-    const [closest] = didYouMean(command, availableCommands);
+    const [closest] = sortByLevenshtein(command, availableCommands);
     println`
       Unknown command {yellow ${command}}
 

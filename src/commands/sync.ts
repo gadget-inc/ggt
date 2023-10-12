@@ -35,7 +35,7 @@ import { globalArgs } from "../services/context.js";
 import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
 import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";
-import { didYouMean, println, sprint } from "../services/output.js";
+import { println, sortByLevenshtein, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
 
 export const usage = sprint`
@@ -529,7 +529,7 @@ export class Sync {
         );
       }
 
-      const sorted = didYouMean(this.state.app, _.map(availableApps, "slug")).slice(0, 5);
+      const sorted = sortByLevenshtein(this.state.app, _.map(availableApps, "slug")).slice(0, 5);
       let message = sprint`
         Unknown application:
 

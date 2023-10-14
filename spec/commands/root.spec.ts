@@ -2,13 +2,22 @@ import _ from "lodash";
 import { dedent } from "ts-dedent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { availableCommands, type Command } from "../../src/commands/index.js";
-import { run } from "../../src/commands/root.js";
 import { config } from "../../src/services/config.js";
 import { globalArgs } from "../../src/services/context.js";
 import { CLIError, IsBug } from "../../src/services/errors.js";
 import { expectProcessExit, expectStdout } from "../util.js";
 
 describe("root", () => {
+  let run: () => Promise<void>;
+
+  beforeEach(async () => {
+    // mock the versionFull so that it doesn't change between releases, node versions, ci architectures, etc.
+    // we have to mock this before importing root so that the top-level usage uses the mocked version
+    vi.spyOn(config, "versionFull", "get").mockReturnValue("ggt/1.2.3 darwin-arm64 node-v16.0.0");
+
+    ({ run } = await import("../../src/commands/root.js"));
+  });
+
   it("prints the version when --version is given", async () => {
     globalArgs["--version"] = true;
     vi.spyOn(config, "version", "get").mockReturnValue("0.0.0");
@@ -22,15 +31,13 @@ describe("root", () => {
   });
 
   it("prints root usage when no command is given", async () => {
-    vi.spyOn(config, "versionFull", "get").mockReturnValue("ggt/1.2.3 darwin-arm64 node-v16.0.0");
-
     await expectProcessExit(run);
 
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget
 
       VERSION
-        ggt/0.2.3 darwin-arm64 node-v16.18.1
+        ggt/1.2.3 darwin-arm64 node-v16.0.0
 
       USAGE
         $ ggt [COMMAND]

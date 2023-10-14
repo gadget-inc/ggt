@@ -1,7 +1,9 @@
 /**
- * Long lived references to Promises stress the garbage collector in JS. Instead of caching resolved Promises, we cache
- * these little data objects instead which reference the resolution or rejection of the Promise, allowing the Promise
- * object to be free'd.
+ * Long lived references to Promises stress the garbage collector in JS.
+ *
+ * Instead of caching resolved Promises, we cache these little data
+ * objects instead which reference the resolution or rejection of the
+ * Promise, allowing the Promise object to be free'd.
  */
 export class PromiseWrapper<T> {
   resolution?: T;
@@ -39,8 +41,9 @@ export class PromiseWrapper<T> {
 /**
  * A promise that can be resolved or rejected from outside its callback.
  *
- * This is typically used when you want to await a promise that is resolved or rejected from outside the current scope,
- * such as from an event handler.
+ * This is typically used when you want to await a promise that is
+ * resolved or rejected from outside the current scope, such as from an
+ * event handler.
  *
  * @example
  * const signal = new PromiseSignal();

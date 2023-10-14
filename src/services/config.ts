@@ -1,11 +1,11 @@
 import fs from "fs-extra";
 import isWsl from "is-wsl";
 import _ from "lodash";
+import os from "node:os";
+import path from "node:path";
+import process from "node:process";
 import { fileURLToPath } from "node:url";
 import normalizePackageData, { type Package } from "normalize-package-data";
-import os from "os";
-import path from "path";
-import process from "process";
 
 /**
  * The root directory of the ggt package.

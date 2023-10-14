@@ -2,7 +2,9 @@ import _ from "lodash";
 import { ArgError } from "./errors.js";
 import { sprint } from "./output.js";
 
-export const parseBoolean = (value: string) => _.includes(["true", "1"], _.toLower(_.trim(value)));
+export const parseBoolean = (value: string) => {
+  return _.includes(["true", "1"], _.toLower(_.trim(value)));
+};
 
 export const App = (value: string, name: string) => {
   const slug = /^(https:\/\/)?(?<slug>[\w-]+?)(--development)?(\..*)?$/.exec(value)?.groups?.["slug"];
@@ -16,11 +18,11 @@ export const App = (value: string, name: string) => {
 
       Examples:
 
-        --app my-app
-        --app my-app.gadget.app
-        --app https://my-app.gadget.app
-        --app https://my-app.gadget.app/edit
-        --app https://my-app--development.gadget.app/edit
+        --${name} my-app
+        --${name} my-app.gadget.app
+        --${name} https://my-app.gadget.app
+        --${name} https://my-app.gadget.app/edit
+        --${name} https://my-app--development.gadget.app/edit
     `,
   );
 };

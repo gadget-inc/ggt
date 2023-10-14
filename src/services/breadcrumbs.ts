@@ -15,8 +15,10 @@ const loggers: Record<Breadcrumb["category"], Debug.Debugger> = {
 
 if (process.env["DEBUG"]) {
   if (parseBoolean(process.env["DEBUG"])) {
+    // treat DEBUG=true as DEBUG=ggt:*
     Debug.enable("ggt:*");
   } else {
+    // otherwise, use the value of DEBUG as-is
     Debug.enable(process.env["DEBUG"]);
   }
 }
@@ -30,9 +32,20 @@ export interface Breadcrumb extends SentryBreadcrumb {
   message: Capitalize<string>;
 }
 
+/**
+ * Add a breadcrumb that will be logged and sent to Sentry.
+ *
+ * _Note_: Breadcrumbs are not sent to Sentry if the {@linkcode Breadcrumb.type} is "debug".
+ * @param breadcrumb
+ * @returns
+ */
 export const addBreadcrumb = (breadcrumb: Breadcrumb) => {
   loggers[breadcrumb.category]("%s: %s %O", breadcrumb.type, breadcrumb.message, breadcrumb.data);
-  if (breadcrumb.type === "debug") return;
+
+  if (breadcrumb.type === "debug") {
+    // don't send debug breadcrumbs to Sentry
+    return;
+  }
 
   // clone any objects in the data so that we get a snapshot of the object at the time the breadcrumb was added
   if (breadcrumb.data) {

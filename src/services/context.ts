@@ -24,23 +24,32 @@ export interface App {
   hasSplitEnvironments: boolean;
 }
 
-export const globalArgs = arg(
-  {
-    "--help": Boolean,
-    "-h": "--help",
-    "--version": Boolean,
-    "-v": "--version",
-    "--debug": Boolean,
-    "-d": "--debug",
-  },
-  {
+export const globalArgsSpec = {
+  "--help": Boolean,
+  "-h": "--help",
+  "--version": Boolean,
+  "-v": "--version",
+  "--debug": Boolean,
+  "-d": "--debug",
+};
+
+export class Context {
+  /**
+   * The global arguments passed to the CLI.
+   *
+   * Global arguments defined in {@linkcode globalArgsSpec} are parsed,
+   * extracted, and stored here. The remaining arguments are stored in
+   * `globalArgs._`.
+   *
+   * Commands should parse their own arguments from this object's `_`
+   * property.
+   */
+  globalArgs = arg(globalArgsSpec, {
     argv: process.argv.slice(2),
     permissive: true,
     stopAtPositional: false,
-  },
-);
+  });
 
-export class Context {
   /**
    * The current Gadget application the CLI is operating on.
    */

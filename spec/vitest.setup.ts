@@ -2,7 +2,6 @@ import fs from "fs-extra";
 import path from "path";
 import { afterEach, beforeEach, expect, vi } from "vitest";
 import { addBreadcrumb } from "../src/services/breadcrumbs.js";
-import { globalArgs } from "../src/services/context.js";
 import { testDirPath, testStdout } from "./util.js";
 
 beforeEach(async () => {
@@ -10,12 +9,6 @@ beforeEach(async () => {
 
   const testDir = testDirPath();
   await fs.remove(testDir);
-
-  // reset globalArgs
-  globalArgs["--help"] = undefined;
-  globalArgs["--version"] = undefined;
-  globalArgs["--debug"] = undefined;
-  globalArgs._ = [];
 
   // store files in the test's tmp directory
   process.env["GGT_CONFIG_DIR"] = path.join(testDir, "config");

@@ -31,7 +31,6 @@ import { addBreadcrumb } from "../services/breadcrumbs.js";
 import { Client, type Query } from "../services/client.js";
 import { config } from "../services/config.js";
 import type { Context } from "../services/context.js";
-import { globalArgs } from "../services/context.js";
 import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
 import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";
@@ -388,7 +387,7 @@ export class Sync {
    * @param prefix The prefix to print before each line.
    * @param changed The normalized paths that have changed.
    * @param deleted The normalized paths that have been deleted.
-   * @param options.limit The maximum number of lines to print. Defaults to 10. If debug is enabled, this is ignored.
+   * @param options.limit The maximum number of lines to print. Defaults to 10.
    */
   outputPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
     const lines = _.sortBy(
@@ -402,7 +401,7 @@ export class Sync {
     let logged = 0;
     for (const line of lines) {
       println(line);
-      if (++logged == limit && !globalArgs["--debug"]) break;
+      if (++logged == limit) break;
     }
 
     if (lines.length > logged) {
@@ -424,7 +423,7 @@ export class Sync {
   async init(ctx: Context): Promise<void> {
     await ctx.requireUser();
 
-    this.args = _.defaults(arg(argSpec, { argv: globalArgs._ }), {
+    this.args = _.defaults(arg(argSpec, { argv: ctx.globalArgs._ }), {
       "--file-push-delay": 100,
       "--file-watch-debounce": 300,
       "--file-watch-poll-interval": 3_000,
@@ -507,7 +506,7 @@ export class Sync {
 
           Then run {dim ggt sync} again with the {dim --force} flag:
 
-            $ ggt sync ${globalArgs._.join(" ")} --force
+            $ ggt sync ${ctx.globalArgs._.join(" ")} --force
       `);
     }
 

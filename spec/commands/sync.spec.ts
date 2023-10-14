@@ -24,7 +24,7 @@ import {
   SyncState,
   SyncStatus,
 } from "../../src/commands/sync.js";
-import { Context, globalArgs } from "../../src/services/context.js";
+import { Context } from "../../src/services/context.js";
 import { ArgError, ClientError, InvalidSyncFileError, YarnNotFoundError } from "../../src/services/errors.js";
 import { walkDirSync } from "../../src/services/fs-utils.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
@@ -35,18 +35,17 @@ import { getError, mockClient, testDirPath } from "../util.js";
 it.todo("publishing does not send file changes if you delete more than N files at once");
 
 describe("Sync", () => {
+  const app = "test";
+  let dir: string;
   let ctx: Context;
   let client: MockClient;
-  let dir: string;
-  let app: string;
   let sync: Sync;
 
   beforeEach(() => {
-    ctx = new Context();
-    client = mockClient();
     dir = path.join(testDirPath(), "app");
-    app = "test";
-    globalArgs._ = [
+
+    ctx = new Context();
+    ctx.globalArgs._ = [
       dir,
       "--app",
       app,
@@ -61,6 +60,8 @@ describe("Sync", () => {
       "--file-watch-rename-timeout",
       "50", // default 1_250ms
     ];
+
+    client = mockClient();
 
     sync = new Sync();
 
@@ -153,7 +154,7 @@ describe("Sync", () => {
         },
       });
 
-      globalArgs._.push("--force");
+      ctx.globalArgs._.push("--force");
       const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
@@ -164,7 +165,7 @@ describe("Sync", () => {
     });
 
     it("throws ArgError if the `--app` flag is passed an app name that does not exist within the user's available apps", async () => {
-      globalArgs._ = [dir, "--app", "nope"];
+      ctx.globalArgs._ = [dir, "--app", "nope"];
 
       const error = await getError(() => sync.init(ctx));
       expect(error).toBeInstanceOf(ArgError);
@@ -182,7 +183,7 @@ describe("Sync", () => {
 
     it("throws ArgError if the user doesn't have any available apps", async () => {
       vi.spyOn(ctx, "getAvailableApps").mockResolvedValue([]);
-      globalArgs._ = [dir, "--app", "nope"];
+      ctx.globalArgs._ = [dir, "--app", "nope"];
 
       const error = await getError(() => sync.init(ctx));
       expect(error).toBeInstanceOf(ArgError);
@@ -217,7 +218,7 @@ describe("Sync", () => {
         },
       });
 
-      globalArgs._.push("--force");
+      ctx.globalArgs._.push("--force");
       const init = sync.init(ctx);
 
       await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));

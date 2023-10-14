@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { config } from "../services/config.js";
-import { Context, globalArgs } from "../services/context.js";
+import type { Context } from "../services/context.js";
 import { CLIError } from "../services/errors.js";
 import { println, sortByLevenshtein, sprint } from "../services/output.js";
 import { availableCommands, type Command } from "./index.js";
@@ -28,13 +28,13 @@ export const usage = sprint`
       whoami  Print the currently logged in account.
 `;
 
-export const run = async (ctx = new Context()) => {
-  if (globalArgs["--version"]) {
+export const run = async (ctx: Context) => {
+  if (ctx.globalArgs["--version"]) {
     println(config.version);
     process.exit(0);
   }
 
-  const command = globalArgs._.shift();
+  const command = ctx.globalArgs._.shift();
   if (_.isNil(command)) {
     println(usage);
     process.exit(0);
@@ -54,7 +54,7 @@ export const run = async (ctx = new Context()) => {
 
   const cmd: Command = await import(`./${command}.js`);
 
-  if (globalArgs["--help"]) {
+  if (ctx.globalArgs["--help"]) {
     println(cmd.usage);
     process.exit(0);
   }

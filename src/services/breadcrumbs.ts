@@ -3,7 +3,6 @@ import Debug from "debug";
 import _ from "lodash";
 import process from "process";
 import { parseBoolean } from "./args.js";
-import { globalArgs } from "./context.js";
 
 const loggers: Record<Breadcrumb["category"], Debug.Debugger> = {
   client: Debug("ggt:client"),
@@ -13,13 +12,6 @@ const loggers: Record<Breadcrumb["category"], Debug.Debugger> = {
   sync: Debug("ggt:sync"),
   test: Debug("ggt:test"),
 };
-
-process.nextTick(() => {
-  // globalArgs is not available until the next tick
-  if (globalArgs["--debug"]) {
-    Debug.enable("ggt:*");
-  }
-});
 
 if (process.env["DEBUG"]) {
   if (parseBoolean(process.env["DEBUG"])) {

@@ -1,10 +1,12 @@
 import _ from "lodash";
+import { afterEach } from "node:test";
 import { dedent } from "ts-dedent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { availableCommands, type Command } from "../../src/commands/index.js";
 import type { GlobalArgs } from "../../src/services/args.js";
 import { config } from "../../src/services/config.js";
 import { CLIError, IsBug } from "../../src/services/errors.js";
+import * as version from "../../src/services/version.js";
 import { expectProcessExit, expectStdout } from "../util.js";
 
 describe("root", () => {
@@ -12,6 +14,9 @@ describe("root", () => {
   let globalArgs: GlobalArgs;
 
   beforeEach(async () => {
+    // don't check for updates
+    vi.spyOn(version, "warnIfUpdateAvailable").mockResolvedValue();
+
     // mock the versionFull so that it doesn't change between releases, node versions, ci architectures, etc.
     // we have to mock this before importing root so that the top-level usage uses the mocked version
     vi.spyOn(config, "versionFull", "get").mockReturnValue("ggt/1.2.3 darwin-arm64 node-v16.0.0");
@@ -19,6 +24,10 @@ describe("root", () => {
     ({ run } = await import("../../src/commands/root.js"));
 
     globalArgs = { _: [] };
+  });
+
+  afterEach(() => {
+    expect(version.warnIfUpdateAvailable).toHaveBeenCalled();
   });
 
   it("prints the version when --version is given", async () => {

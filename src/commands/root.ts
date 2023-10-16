@@ -3,6 +3,7 @@ import type { GlobalArgs } from "../services/args.js";
 import { config } from "../services/config.js";
 import { CLIError } from "../services/errors.js";
 import { println, sortByLevenshtein, sprint } from "../services/output.js";
+import { warnIfUpdateAvailable } from "../services/version.js";
 import { availableCommands, type Command } from "./index.js";
 
 export const usage = sprint`
@@ -29,6 +30,8 @@ export const usage = sprint`
 `;
 
 export const run = async (globalArgs: GlobalArgs) => {
+  await warnIfUpdateAvailable();
+
   if (globalArgs["--version"]) {
     println(config.version);
     process.exit(0);

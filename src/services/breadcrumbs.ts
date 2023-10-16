@@ -11,13 +11,13 @@ const loggers: Record<Breadcrumb["category"], Debug.Debugger> = {
   notification: Debug("ggt:notification"),
   session: Debug("ggt:session"),
   sync: Debug("ggt:sync"),
-  test: Debug("ggt:test"),
   user: Debug("ggt:user"),
+  version: Debug("ggt:version"),
 };
 
 export interface Breadcrumb extends SentryBreadcrumb {
   type: "debug" | "info" | "error";
-  category: "fs" | "command" | "client" | "notification" | "sync" | "test" | "session" | "http" | "user";
+  category: "fs" | "command" | "client" | "notification" | "sync" | "session" | "http" | "user" | "version";
   message: Capitalize<string>;
 }
 

@@ -149,7 +149,7 @@ export const config = {
       return process.env["GGT_DATA_DIR"];
     }
 
-    const base = process.env[`XDG_DATA_HOME`] || (this.windows && process.env["LOCALAPPDATA"]) || path.join(this.homeDir, ".local/share");
+    const base = process.env["XDG_DATA_HOME"] || (this.windows && process.env["LOCALAPPDATA"]) || path.join(this.homeDir, ".local/share");
     return path.join(base, "ggt");
   },
 

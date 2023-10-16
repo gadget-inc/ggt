@@ -11,9 +11,22 @@ import { dedent } from "ts-dedent";
 import type { SetOptional } from "type-fest";
 import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
+import type { App } from "./app.js";
 import type { Payload } from "./client.js";
 import { config, env } from "./config.js";
-import type { Context } from "./context.js";
+import type { User } from "./user.js";
+
+let app: App | undefined;
+let user: User | undefined;
+
+export const setUser = (newUser: User | undefined): void => {
+  user = newUser;
+  Sentry.setUser(newUser ?? null);
+};
+
+export const setApp = (newApp: App | undefined): void => {
+  app = newApp;
+};
 
 /**
  * Base class for all errors.
@@ -59,17 +72,15 @@ export abstract class CLIError extends Error {
     return new UnexpectedError(cause);
   }
 
-  async capture(ctx: Context): Promise<void> {
+  async capture(): Promise<void> {
     if (this.isBug == IsBug.NO) return;
-
-    const user = await ctx.getUser().catch(_.noop.bind(_));
 
     Sentry.getCurrentHub().captureException(this, {
       event_id: this.sentryEventId,
       captureContext: {
-        user: user ? { id: String(user.id), email: user.email, username: user.name } : undefined,
+        user: user ? { id: String(user.id), email: user.email, username: user.name ?? undefined } : undefined,
         tags: {
-          applicationId: ctx.app?.id,
+          applicationId: app ? app.id : undefined,
           arch: config.arch,
           isBug: this.isBug,
           code: this.code,

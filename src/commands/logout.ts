@@ -1,5 +1,5 @@
-import type { Context } from "../services/context.js";
 import { println, sprint } from "../services/output.js";
+import { readSession, writeSession } from "../services/session.js";
 
 export const usage = sprint`
     Log out of your account.
@@ -12,9 +12,10 @@ export const usage = sprint`
       Goodbye
 `;
 
-export const run = (ctx: Context) => {
-  if (ctx.session) {
-    ctx.session = undefined;
+export const run = () => {
+  const token = readSession();
+  if (token) {
+    writeSession(undefined);
     println`Goodbye`;
   } else {
     println`You are not logged in`;

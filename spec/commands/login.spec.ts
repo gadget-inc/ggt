@@ -5,18 +5,17 @@ import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { run } from "../../src/commands/login.js";
 import { config } from "../../src/services/config.js";
-import { Context } from "../../src/services/context.js";
+import { readSession, writeSession } from "../../src/services/session.js";
 import { sleepUntil } from "../../src/services/sleep.js";
-import { expectStdout } from "../util.js";
+import * as user from "../../src/services/user.js";
+import { expectStdout, testUser } from "../util.js";
 
 describe("login", () => {
-  let ctx: Context;
   let port: number;
   let server: http.Server;
   let requestListener: http.RequestListener;
 
   beforeEach(async () => {
-    ctx = new Context();
     port = await getPort();
     server = { listen: vi.fn(), close: vi.fn() } as any;
     vi.spyOn(http, "createServer").mockImplementation((opt, cb) => {
@@ -26,10 +25,10 @@ describe("login", () => {
   });
 
   it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
-    ctx.session = undefined;
-    vi.spyOn(ctx, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    writeSession(undefined);
+    vi.spyOn(user, "loadUser").mockResolvedValue(testUser);
 
-    void run(ctx);
+    void run();
 
     await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
@@ -49,8 +48,8 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(ctx.session).toBeUndefined();
-    expect(ctx.getUser).not.toHaveBeenCalled();
+    expect(readSession()).toBeUndefined();
+    expect(user.loadUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(null as any);
     req.url = `?session=test`;
@@ -62,8 +61,8 @@ describe("login", () => {
     requestListener!(req, res);
 
     await sleepUntil(() => server.close.mock.calls.length > 0);
-    expect(ctx.session).toBe("test");
-    expect(ctx.getUser).toHaveBeenCalled();
+    expect(readSession()).toBe("test");
+    expect(user.loadUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "We've opened Gadget's login page using your default browser.
 
@@ -79,10 +78,10 @@ describe("login", () => {
   });
 
   it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
-    ctx.session = undefined;
-    vi.spyOn(ctx, "getUser").mockRejectedValue(new Error("boom"));
+    writeSession(undefined);
+    vi.spyOn(user, "loadUser").mockRejectedValue(new Error("boom"));
 
-    void run(ctx).catch(_.noop);
+    void run().catch(_.noop);
 
     await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
@@ -102,8 +101,8 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(ctx.session).toBeUndefined();
-    expect(ctx.getUser).not.toHaveBeenCalled();
+    expect(readSession()).toBeUndefined();
+    expect(user.loadUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(null as any);
     req.url = `?session=test`;
@@ -115,8 +114,8 @@ describe("login", () => {
     requestListener!(req, res);
 
     await sleepUntil(() => server.close.mock.calls.length > 0);
-    expect(ctx.session).toBeUndefined();
-    expect(ctx.getUser).toHaveBeenCalled();
+    expect(readSession()).toBeUndefined();
+    expect(user.loadUser).toHaveBeenCalled();
     expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=false` });
     expect(res.end).toHaveBeenCalled();
     expect(server.close).toHaveBeenCalled();

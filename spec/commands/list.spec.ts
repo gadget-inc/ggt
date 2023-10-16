@@ -1,25 +1,20 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { run } from "../../src/commands/list.js";
-import { Context } from "../../src/services/context.js";
-import { expectStdout } from "../util.js";
+import * as app from "../../src/services/app.js";
+import * as user from "../../src/services/user.js";
+import { expectStdout, testUser } from "../util.js";
 
 describe("list", () => {
-  let ctx: Context;
-
-  beforeEach(() => {
-    ctx = new Context();
-  });
-
   it("lists apps", async () => {
-    vi.spyOn(ctx, "requireUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    vi.spyOn(ctx, "getAvailableApps").mockResolvedValue([
-      { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true },
-      { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true },
+    vi.spyOn(user, "loadUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    vi.spyOn(app, "getAvailableApps").mockResolvedValue([
+      { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true, user: testUser },
+      { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, user: testUser },
     ]);
 
-    await run(ctx);
+    await run();
 
-    expect(ctx.requireUser).toHaveBeenCalled();
+    expect(user.loadUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "Slug  Domain
       ───── ─────────────────
@@ -30,12 +25,12 @@ describe("list", () => {
   });
 
   it("lists no apps if the user doesn't have any", async () => {
-    vi.spyOn(ctx, "requireUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    vi.spyOn(ctx, "getAvailableApps").mockResolvedValue([]);
+    vi.spyOn(user, "loadUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    vi.spyOn(app, "getAvailableApps").mockResolvedValue([]);
 
-    await run(ctx);
+    await run();
 
-    expect(ctx.requireUser).toHaveBeenCalled();
+    expect(user.loadUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "It doesn't look like you have any applications.
 

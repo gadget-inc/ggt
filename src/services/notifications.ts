@@ -5,7 +5,7 @@ import type NotificationCenter from "node-notifier/notifiers/notificationcenter.
 import type NotifySend from "node-notifier/notifiers/notifysend.js";
 import type WindowsToaster from "node-notifier/notifiers/toaster.js";
 import path from "node:path";
-import { addBreadcrumb } from "./breadcrumbs.js";
+import { breadcrumb } from "./breadcrumbs.js";
 import { workspaceRoot } from "./config.js";
 
 /**
@@ -22,7 +22,7 @@ export const notify = (
     | WindowsBalloon.Notification
     | Growl.Notification,
 ) => {
-  addBreadcrumb({
+  breadcrumb({
     type: "debug",
     category: "notification",
     message: "Notifying user",
@@ -42,7 +42,7 @@ export const notify = (
     },
     (error) => {
       if (error) {
-        addBreadcrumb({
+        breadcrumb({
           type: "error",
           category: "notification",
           message: "Error notifying user",

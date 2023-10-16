@@ -1,10 +1,12 @@
 import getPort from "get-port";
-import type { Server } from "node:http";
-import http from "node:http";
+import assert from "node:assert";
+import http, { type Server } from "node:http";
 import open from "open";
+import { breadcrumb } from "../services/breadcrumbs.js";
 import { config } from "../services/config.js";
-import type { Context } from "../services/context.js";
 import { println, sprint } from "../services/output.js";
+import { writeSession } from "../services/session.js";
+import { loadUser } from "../services/user.js";
 
 export const usage = sprint`
     Log in to your account.
@@ -21,7 +23,7 @@ export const usage = sprint`
       Hello, Jane Doe (jane@example.com)
 `;
 
-export const run = async (ctx: Context) => {
+export const run = async () => {
   let server: Server | undefined;
 
   try {
@@ -29,19 +31,17 @@ export const run = async (ctx: Context) => {
     const receiveSession = new Promise<void>((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       server = http.createServer(async (req, res) => {
-        const redirectTo = new URL(`https://${config.domains.services}/auth/cli`);
+        const landingPage = new URL(`https://${config.domains.services}/auth/cli`);
 
         try {
-          if (!req.url) throw new Error("missing url");
-          const incomingUrl = new URL(req.url, `http://localhost:${port}`);
+          assert(req.url, "missing url");
+          const session = new URL(req.url, `http://localhost:${port}`).searchParams.get("session");
+          assert(session, "missing session");
 
-          const value = incomingUrl.searchParams.get("session");
-          if (!value) throw new Error("missing session");
+          writeSession(session);
 
-          ctx.session = value;
-
-          const user = await ctx.getUser();
-          if (!user) throw new Error("missing current user");
+          const user = await loadUser();
+          assert(user, "missing user after successful login");
 
           if (user.name) {
             println`Hello, ${user.name} {gray (${user.email})}`;
@@ -50,21 +50,31 @@ export const run = async (ctx: Context) => {
           }
           println();
 
-          redirectTo.searchParams.set("success", "true");
+          landingPage.searchParams.set("success", "true");
           resolve();
         } catch (error) {
-          ctx.session = undefined;
-          redirectTo.searchParams.set("success", "false");
+          writeSession(undefined);
+          landingPage.searchParams.set("success", "false");
           reject(error);
         } finally {
-          res.writeHead(303, { Location: redirectTo.toString() });
+          res.writeHead(303, { Location: landingPage.toString() });
           res.end();
         }
+      });
+
+      breadcrumb({
+        type: "info",
+        category: "user",
+        message: "Starting login server",
+        data: { port },
       });
 
       server.listen(port);
     });
 
+    // open the login page in the user's default browser have it
+    // redirect to the cli callback route. The cli callback route will
+    // send the session to the server we just started.
     const url = new URL(`https://${config.domains.services}/auth/login`);
     url.searchParams.set("returnTo", `https://${config.domains.services}/auth/cli/callback?port=${port}`);
     await open(url.toString());

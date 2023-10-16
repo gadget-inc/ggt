@@ -1,9 +1,15 @@
 import _ from "lodash";
+import nock from "nock";
 import path from "path";
 import type { JsonObject } from "type-fest";
 import { assert, expect, vi } from "vitest";
+import type { App } from "../src/services/app.js";
 import type { Payload, Query, Sink } from "../src/services/client.js";
 import { Client } from "../src/services/client.js";
+import { config } from "../src/services/config.js";
+import { loadCookie } from "../src/services/http.js";
+import { writeSession } from "../src/services/session.js";
+import type { User } from "../src/services/user.js";
 
 export function testDirPath(): string {
   const name = expect.getState().currentTestName;
@@ -18,9 +24,32 @@ export function testDirPath(): string {
   return path.join(__dirname, "../tmp/", testFile, describes.join("/"), _.replace(testName, /[^\s\w-]/g, ""));
 }
 
+export const testUser: User = {
+  id: 1,
+  email: "test@example.com",
+  name: "Jane Doe",
+};
+
+export const testApp: App = {
+  id: 1,
+  slug: "test",
+  primaryDomain: "test.gadget.app",
+  hasSplitEnvironments: true,
+  user: testUser,
+};
+
+export const loginTestUser = () => {
+  writeSession("test");
+  const cookie = loadCookie();
+  expect(cookie, "Cookie to be set after writing session").toBeTruthy();
+  nock(`https://${config.domains.services}`).get("/auth/api/current-user").matchHeader("cookie", cookie!).reply(200, testUser);
+};
+
 export const testStdout: string[] = [];
 
-export const expectStdout = () => expect(testStdout.join(""));
+export const expectStdout = () => {
+  return expect(testStdout.join(""));
+};
 
 export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode = 0) => {
   const exitError = new Error("process.exit() was called") as Error & { code?: number };
@@ -38,7 +67,7 @@ export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode
   }
 };
 
-export async function getError(fnThatThrows: () => unknown): Promise<any> {
+export async function expectError(fnThatThrows: () => unknown): Promise<any> {
   try {
     await fnThatThrows();
     expect.fail("Expected error to be thrown");

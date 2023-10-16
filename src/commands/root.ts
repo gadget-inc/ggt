@@ -1,6 +1,6 @@
 import _ from "lodash";
+import type { GlobalArgs } from "../services/args.js";
 import { config } from "../services/config.js";
-import type { Context } from "../services/context.js";
 import { CLIError } from "../services/errors.js";
 import { println, sortByLevenshtein, sprint } from "../services/output.js";
 import { availableCommands, type Command } from "./index.js";
@@ -28,13 +28,13 @@ export const usage = sprint`
       whoami  Print the currently logged in account.
 `;
 
-export const run = async (ctx: Context) => {
-  if (ctx.globalArgs["--version"]) {
+export const run = async (globalArgs: GlobalArgs) => {
+  if (globalArgs["--version"]) {
     println(config.version);
     process.exit(0);
   }
 
-  const command = ctx.globalArgs._.shift();
+  const command = globalArgs._.shift();
   if (_.isNil(command)) {
     println(usage);
     process.exit(0);
@@ -54,18 +54,18 @@ export const run = async (ctx: Context) => {
 
   const cmd: Command = await import(`./${command}.js`);
 
-  if (ctx.globalArgs["--help"]) {
+  if (globalArgs["--help"]) {
     println(cmd.usage);
     process.exit(0);
   }
 
   try {
-    await cmd.init?.(ctx);
-    await cmd.run(ctx);
+    await cmd.init?.(globalArgs);
+    await cmd.run(globalArgs);
   } catch (cause) {
     const error = CLIError.from(cause);
     println(error.render());
-    await error.capture(ctx);
+    await error.capture();
     process.exit(1);
   }
 };

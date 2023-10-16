@@ -1,34 +1,23 @@
 import { addBreadcrumb as addSentryBreadcrumb, type Breadcrumb as SentryBreadcrumb } from "@sentry/node";
 import Debug from "debug";
 import _ from "lodash";
-import process from "process";
-import { parseBoolean } from "./args.js";
+import { serializeError } from "./errors.js";
 
 const loggers: Record<Breadcrumb["category"], Debug.Debugger> = {
   client: Debug("ggt:client"),
   command: Debug("ggt:command"),
   fs: Debug("ggt:fs"),
+  http: Debug("ggt:http"),
   notification: Debug("ggt:notification"),
+  session: Debug("ggt:session"),
   sync: Debug("ggt:sync"),
   test: Debug("ggt:test"),
+  user: Debug("ggt:user"),
 };
 
-if (process.env["DEBUG"]) {
-  if (parseBoolean(process.env["DEBUG"])) {
-    // treat DEBUG=true as DEBUG=ggt:*
-    Debug.enable("ggt:*");
-  } else {
-    // otherwise, use the value of DEBUG as-is
-    Debug.enable(process.env["DEBUG"]);
-  }
-}
-
 export interface Breadcrumb extends SentryBreadcrumb {
-  /**
-   * @see https://develop.sentry.dev/sdk/event-payloads/breadcrumbs/#breadcrumb-types
-   */
-  type: "debug" | "info" | "error" | "http" | "query" | "user";
-  category: "fs" | "command" | "client" | "notification" | "sync" | "test";
+  type: "debug" | "info" | "error";
+  category: "fs" | "command" | "client" | "notification" | "sync" | "test" | "session" | "http" | "user";
   message: Capitalize<string>;
 }
 
@@ -39,8 +28,12 @@ export interface Breadcrumb extends SentryBreadcrumb {
  * @param breadcrumb
  * @returns
  */
-export const addBreadcrumb = (breadcrumb: Breadcrumb) => {
-  loggers[breadcrumb.category]("%s: %s %O", breadcrumb.type, breadcrumb.message, breadcrumb.data);
+export const breadcrumb = (breadcrumb: Breadcrumb) => {
+  if (breadcrumb.data) {
+    loggers[breadcrumb.category]("%s: %s %O", breadcrumb.type, breadcrumb.message, breadcrumb.data);
+  } else {
+    loggers[breadcrumb.category]("%s: %s", breadcrumb.type, breadcrumb.message);
+  }
 
   if (breadcrumb.type === "debug") {
     // don't send debug breadcrumbs to Sentry
@@ -51,7 +44,11 @@ export const addBreadcrumb = (breadcrumb: Breadcrumb) => {
   if (breadcrumb.data) {
     for (const [key, value] of Object.entries(breadcrumb.data)) {
       if (_.isObjectLike(value)) {
-        breadcrumb.data[key] = _.cloneDeep(value);
+        if (key === "error") {
+          breadcrumb.data[key] = serializeError(value);
+        } else {
+          breadcrumb.data[key] = _.cloneDeep(value);
+        }
       }
     }
   }

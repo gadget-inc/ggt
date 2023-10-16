@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { App, parseBoolean } from "../../src/services/args.js";
+import { AppArg, parseBoolean } from "../../src/services/args.js";
 import { ArgError } from "../../src/services/errors.js";
-import { getError } from "../util.js";
+import { expectError } from "../util.js";
 
 describe("args", () => {
   describe("parseBoolean", () => {
@@ -14,7 +14,7 @@ describe("args", () => {
     });
   });
 
-  describe("App", () => {
+  describe("AppArg", () => {
     it.each([
       "my-app",
       "my-app.gadget.app",
@@ -24,11 +24,11 @@ describe("args", () => {
       "https://my-app.gadget.app/edit",
       "https://my-app.gadget.app/edit/files/routes/GET.js",
     ])("accepts %s", (value) => {
-      expect(App(value, "app")).toEqual("my-app");
+      expect(AppArg(value, "app")).toEqual("my-app");
     });
 
     it.each(["~"])("rejects %s", async (value) => {
-      const error = await getError(() => App(value, "app"));
+      const error = await expectError(() => AppArg(value, "app"));
       expect(error).toBeInstanceOf(ArgError);
       expect(error.message).toMatchSnapshot();
     });

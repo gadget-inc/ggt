@@ -1,0 +1,38 @@
+import _ from "lodash";
+import { z } from "zod";
+import { config } from "./config.js";
+import { http, loadCookie, swallowUnauthorized } from "./http.js";
+import type { User } from "./user.js";
+
+export const App = z.object({
+  id: z.union([z.string(), z.number(), z.bigint()]),
+  slug: z.string(),
+  primaryDomain: z.string(),
+  hasSplitEnvironments: z.boolean(),
+});
+
+export type App = z.infer<typeof App> & { user: User };
+
+/**
+ * @returns The list of Gadget applications the current user has access to.
+ */
+export const getAvailableApps = async (user: User): Promise<App[]> => {
+  const cookie = loadCookie();
+  if (!cookie) {
+    return [];
+  }
+
+  try {
+    const json = await http({
+      url: `https://${config.domains.services}/auth/api/apps`,
+      headers: { cookie },
+      responseType: "json",
+      resolveBodyOnly: true,
+    });
+
+    return _.map(z.array(App).parse(json), (app) => ({ ...app, user }));
+  } catch (error) {
+    swallowUnauthorized(error);
+    return [];
+  }
+};

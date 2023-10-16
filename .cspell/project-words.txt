@@ -8,6 +8,7 @@ gadgetinc
 getsentry
 HOMEDRIVE
 HOMEPATH
+Jsonify
 linkcode
 LOCALAPPDATA
 nothrow

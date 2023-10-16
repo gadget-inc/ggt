@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["bin/dev.js", "scripts", "spec", "src", "*.js", "*.cjs", ".*.cjs"],
+  "include": ["bin/dev.js", "scripts", "src", "*.js", "*.cjs", ".*.cjs"],
   "exclude": ["node_modules"],
   "compilerOptions": {
     /* Type Checking */

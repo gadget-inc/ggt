@@ -1,6 +1,7 @@
 import _ from "lodash";
-import type { Context } from "../services/context.js";
+import { getAvailableApps } from "../services/app.js";
 import { println, sprint } from "../services/output.js";
+import { loadUserOrLogin } from "../services/user.js";
 
 export const usage = sprint`
     List the apps available to the currently logged in user.
@@ -17,10 +18,10 @@ export const usage = sprint`
       test    test.gadget.app
 `;
 
-export const run = async (ctx: Context) => {
-  await ctx.requireUser();
+export const run = async () => {
+  const user = await loadUserOrLogin();
 
-  const apps = await ctx.getAvailableApps();
+  const apps = await getAvailableApps(user);
   if (!apps.length) {
     println`
         It doesn't look like you have any applications.

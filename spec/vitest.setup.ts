@@ -1,7 +1,6 @@
 import fs from "fs-extra";
-import path from "path";
-import { afterEach, beforeEach, expect, vi } from "vitest";
-import { addBreadcrumb } from "../src/services/breadcrumbs.js";
+import path from "node:path";
+import { beforeEach, vi } from "vitest";
 import { testDirPath, testStdout } from "./util.js";
 
 beforeEach(async () => {
@@ -27,28 +26,6 @@ beforeEach(async () => {
 
   // clear all mocks so that we can `expect(someFunction).not.toHaveBeenCalled()` in tests where someFunction was called in another test
   vi.clearAllMocks();
-
-  addBreadcrumb({
-    type: "info",
-    category: "test",
-    message: "Test started",
-    data: {
-      test: expect.getState().currentTestName,
-      path: expect.getState().testPath,
-    },
-  });
-});
-
-afterEach(() => {
-  addBreadcrumb({
-    type: "info",
-    category: "test",
-    message: "Test ended",
-    data: {
-      test: expect.getState().currentTestName,
-      path: expect.getState().testPath,
-    },
-  });
 });
 
 vi.mock("execa", () => ({ execa: vi.fn().mockName("execa").mockResolvedValue({}) }));

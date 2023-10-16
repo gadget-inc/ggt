@@ -40,7 +40,8 @@
         "ts-dedent": "^2.2.0",
         "watcher": "^2.3.0",
         "which": "^4.0.0",
-        "ws": "^8.14.2"
+        "ws": "^8.14.2",
+        "zod": "^3.22.4"
       },
       "bin": {
         "ggt": "bin/run.js"
@@ -15154,6 +15155,14 @@
         "url": "https://github.com/sponsors/sindresorhus"
       }
     },
+    "node_modules/zod": {
+      "version": "3.22.4",
+      "resolved": "https://registry.npmjs.org/zod/-/zod-3.22.4.tgz",
+      "integrity": "sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==",
+      "funding": {
+        "url": "https://github.com/sponsors/colinhacks"
+      }
+    },
     "node_modules/zwitch": {
       "version": "2.0.4",
       "resolved": "https://registry.npmjs.org/zwitch/-/zwitch-2.0.4.tgz",
@@ -25902,6 +25911,11 @@
     "yocto-queue": {
       "version": "0.1.0",
       "dev": true
+    },
+    "zod": {
+      "version": "3.22.4",
+      "resolved": "https://registry.npmjs.org/zod/-/zod-3.22.4.tgz",
+      "integrity": "sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg=="
     },
     "zwitch": {
       "version": "2.0.4",

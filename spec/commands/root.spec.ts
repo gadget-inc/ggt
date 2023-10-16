@@ -2,29 +2,30 @@ import _ from "lodash";
 import { dedent } from "ts-dedent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { availableCommands, type Command } from "../../src/commands/index.js";
+import type { GlobalArgs } from "../../src/services/args.js";
 import { config } from "../../src/services/config.js";
-import { Context } from "../../src/services/context.js";
 import { CLIError, IsBug } from "../../src/services/errors.js";
 import { expectProcessExit, expectStdout } from "../util.js";
 
 describe("root", () => {
-  let ctx: Context;
   let run: Command["run"];
+  let globalArgs: GlobalArgs;
 
   beforeEach(async () => {
     // mock the versionFull so that it doesn't change between releases, node versions, ci architectures, etc.
     // we have to mock this before importing root so that the top-level usage uses the mocked version
     vi.spyOn(config, "versionFull", "get").mockReturnValue("ggt/1.2.3 darwin-arm64 node-v16.0.0");
 
-    ctx = new Context();
     ({ run } = await import("../../src/commands/root.js"));
+
+    globalArgs = { _: [] };
   });
 
   it("prints the version when --version is given", async () => {
-    ctx.globalArgs["--version"] = true;
+    globalArgs["--version"] = true;
     vi.spyOn(config, "version", "get").mockReturnValue("0.0.0");
 
-    await expectProcessExit(() => run(ctx));
+    await expectProcessExit(() => run(globalArgs));
 
     expectStdout().toMatchInlineSnapshot(`
       "0.0.0
@@ -33,7 +34,7 @@ describe("root", () => {
   });
 
   it("prints root usage when no command is given", async () => {
-    await expectProcessExit(() => run(ctx));
+    await expectProcessExit(() => run(globalArgs));
 
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget
@@ -61,9 +62,9 @@ describe("root", () => {
   });
 
   it("prints out a helpful message when an unknown command is given", async () => {
-    ctx.globalArgs._.push("foobar");
+    globalArgs._.push("foobar");
 
-    await expectProcessExit(() => run(ctx), 1);
+    await expectProcessExit(() => run(globalArgs), 1);
 
     expectStdout().toMatchInlineSnapshot(`
       "Unknown command foobar
@@ -87,18 +88,18 @@ describe("root", () => {
     });
 
     it("prints the usage when --help is passed", async () => {
-      ctx.globalArgs._.push(name);
-      ctx.globalArgs["--help"] = true;
+      globalArgs._.push(name);
+      globalArgs["--help"] = true;
 
-      await expectProcessExit(() => run(ctx));
+      await expectProcessExit(() => run(globalArgs));
 
       expectStdout().toEqual(command.usage + "\n");
     });
 
     it("runs the command", async () => {
-      ctx.globalArgs._.push(name);
+      globalArgs._.push(name);
 
-      await run(ctx);
+      await run(globalArgs);
 
       if (command.init) {
         expect(command.init).toHaveBeenCalled();
@@ -122,10 +123,10 @@ describe("root", () => {
       const error = new TestError();
       vi.spyOn(error, "capture");
 
-      ctx.globalArgs._.push(name);
+      globalArgs._.push(name);
       vi.spyOn(command, "run").mockRejectedValue(error);
 
-      await expectProcessExit(() => run(ctx), 1);
+      await expectProcessExit(() => run(globalArgs), 1);
 
       expectStdout().toEqual(
         dedent`

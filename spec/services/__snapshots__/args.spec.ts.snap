@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`args > App > rejects ~ 1`] = `
+exports[`args > AppArg > rejects ~ 1`] = `
 "The app option must be the application's slug or URL
 
 Examples:

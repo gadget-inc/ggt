@@ -26,16 +26,18 @@ import {
   type RemoteFilesVersionQuery,
   type RemoteFilesVersionQueryVariables,
 } from "../__generated__/graphql.js";
-import { App } from "../services/args.js";
-import { addBreadcrumb } from "../services/breadcrumbs.js";
+import type { App } from "../services/app.js";
+import { getAvailableApps } from "../services/app.js";
+import { AppArg, type GlobalArgs } from "../services/args.js";
+import { breadcrumb } from "../services/breadcrumbs.js";
 import { Client, type Query } from "../services/client.js";
 import { config } from "../services/config.js";
-import type { Context } from "../services/context.js";
 import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
 import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";
 import { println, sortByLevenshtein, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
+import { loadUserOrLogin } from "../services/user.js";
 
 export const usage = sprint`
   Sync your Gadget application's source code to and from
@@ -131,7 +133,7 @@ export class SyncState {
    */
   #save = _.debounce(() => {
     fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
-    addBreadcrumb({
+    breadcrumb({
       type: "info",
       category: "sync",
       message: "Saved sync state",
@@ -277,7 +279,7 @@ export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
 
 const argSpec = {
   "-a": "--app",
-  "--app": App,
+  "--app": AppArg,
   "--force": Boolean,
   "--file-push-delay": Number,
   "--file-watch-debounce": Number,
@@ -298,6 +300,11 @@ export class Sync {
    * The absolute path to the directory to sync files to.
    */
   dir!: string;
+
+  /**
+   * The app this filesystem is synced to.
+   */
+  app!: App;
 
   /**
    * A list of filepaths that have changed because of a remote file-sync event. This is used to avoid sending files that
@@ -420,10 +427,10 @@ export class Sync {
    * - Ensures yarn v1 is installed.
    * - Prompts the user how to resolve conflicts if the local filesystem has changed since the last sync.
    */
-  async init(ctx: Context): Promise<void> {
-    await ctx.requireUser();
+  async init(globalArgs: GlobalArgs): Promise<void> {
+    const user = await loadUserOrLogin();
 
-    this.args = _.defaults(arg(argSpec, { argv: ctx.globalArgs._ }), {
+    this.args = _.defaults(arg(argSpec, { argv: globalArgs._ }), {
       "--file-push-delay": 100,
       "--file-watch-debounce": 300,
       "--file-watch-poll-interval": 3_000,
@@ -451,7 +458,7 @@ export class Sync {
         type: "list",
         name: "app",
         message: "Please select the app to sync to.",
-        choices: await ctx.getAvailableApps().then((apps) => _.map(apps, "slug")),
+        choices: await getAvailableApps(user).then((apps) => _.map(apps, "slug")),
       });
 
       return selected.app;
@@ -460,7 +467,7 @@ export class Sync {
     if (await isEmptyDir(this.dir)) {
       const app = await getApp();
       this.state = SyncState.create(this.dir, { app });
-      addBreadcrumb({
+      breadcrumb({
         type: "info",
         category: "sync",
         message: "Created sync state",
@@ -469,7 +476,7 @@ export class Sync {
     } else {
       try {
         this.state = SyncState.load(this.dir);
-        addBreadcrumb({
+        breadcrumb({
           type: "info",
           category: "sync",
           message: "Loaded sync state",
@@ -481,7 +488,7 @@ export class Sync {
         }
         const app = await getApp();
         this.state = SyncState.create(this.dir, { app });
-        addBreadcrumb({
+        breadcrumb({
           type: "info",
           category: "sync",
           message: "Created sync state (forced)",
@@ -506,14 +513,14 @@ export class Sync {
 
           Then run {dim ggt sync} again with the {dim --force} flag:
 
-            $ ggt sync ${ctx.globalArgs._.join(" ")} --force
+            $ ggt sync ${globalArgs._.join(" ")} --force
       `);
     }
 
-    const availableApps = await ctx.getAvailableApps();
-    ctx.app = _.find(availableApps, (a) => a.slug == this.state.app);
+    const availableApps = await getAvailableApps(user);
+    const app = _.find(availableApps, (a) => a.slug == this.state.app);
 
-    if (!ctx.app) {
+    if (!app) {
       if (availableApps.length == 0) {
         throw new ArgError(
           sprint`
@@ -543,7 +550,8 @@ export class Sync {
       throw new ArgError(message);
     }
 
-    this.client = new Client(ctx);
+    this.app = app;
+    this.client = new Client(this.app);
 
     // local files/folders that should never be published
     this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git", ".DS_STORE"]);
@@ -580,7 +588,7 @@ export class Sync {
       println();
     }
 
-    addBreadcrumb({
+    breadcrumb({
       type: "info",
       category: "sync",
       message: "Initializing",
@@ -608,7 +616,7 @@ export class Sync {
 
     switch (action) {
       case Action.MERGE: {
-        addBreadcrumb({
+        breadcrumb({
           type: "info",
           category: "sync",
           message: "Merging local changes",
@@ -646,7 +654,7 @@ export class Sync {
         break;
       }
       case Action.RESET: {
-        addBreadcrumb({
+        breadcrumb({
           type: "info",
           category: "sync",
           message: "Resetting local changes",
@@ -668,7 +676,7 @@ export class Sync {
       }
     }
 
-    addBreadcrumb({
+    breadcrumb({
       type: "info",
       category: "sync",
       message: "Initialized",
@@ -681,7 +689,7 @@ export class Sync {
   /**
    * Runs the sync process until it is stopped or an error occurs.
    */
-  async run(ctx: Context): Promise<void> {
+  async run(): Promise<void> {
     let error: unknown;
     const stopped = new PromiseSignal();
 
@@ -691,7 +699,7 @@ export class Sync {
       this.status = SyncStatus.STOPPING;
       error = e;
 
-      addBreadcrumb({
+      breadcrumb({
         type: "info",
         category: "sync",
         message: "Stopping",
@@ -714,7 +722,7 @@ export class Sync {
         this.status = SyncStatus.STOPPED;
         stopped.resolve();
 
-        addBreadcrumb({
+        breadcrumb({
           type: "info",
           category: "sync",
           message: "Stopped",
@@ -751,7 +759,7 @@ export class Sync {
       {
         error: (error) => void this.stop(error),
         next: ({ remoteFileSyncEvents }) => {
-          addBreadcrumb({
+          breadcrumb({
             type: "info",
             category: "sync",
             message: "Received file sync events",
@@ -771,7 +779,7 @@ export class Sync {
           const deleted = _.filter(remoteFileSyncEvents.deleted, filter);
 
           this._enqueue(async () => {
-            addBreadcrumb({
+            breadcrumb({
               type: "info",
               category: "sync",
               message: "Processing received file sync events",
@@ -787,7 +795,7 @@ export class Sync {
               if (BigInt(remoteFilesVersion) > this.state.filesVersion) {
                 // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
                 this.state.filesVersion = remoteFilesVersion;
-                addBreadcrumb({
+                breadcrumb({
                   type: "info",
                   category: "sync",
                   message: "Received empty file sync events",
@@ -829,7 +837,7 @@ export class Sync {
 
               if (absolutePath == this.absolute("yarn.lock")) {
                 await execa("yarn", ["install"], { cwd: this.dir }).catch((error) => {
-                  addBreadcrumb({
+                  breadcrumb({
                     type: "error",
                     category: "sync",
                     message: "Yarn install failed",
@@ -859,7 +867,7 @@ export class Sync {
               }
             }
 
-            addBreadcrumb({
+            breadcrumb({
               type: "info",
               category: "sync",
               message: "Processed received file sync events",
@@ -888,7 +896,7 @@ export class Sync {
       localFilesBuffer.clear();
 
       this._enqueue(async () => {
-        addBreadcrumb({
+        breadcrumb({
           type: "info",
           category: "sync",
           message: "Publishing file sync events",
@@ -935,7 +943,7 @@ export class Sync {
           this.state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
         }
 
-        addBreadcrumb({
+        breadcrumb({
           category: "sync",
           type: "info",
           message: "Published file sync events",
@@ -975,7 +983,7 @@ export class Sync {
       if (filepath == this.ignorer.filepath) {
         this.ignorer.reload();
       } else if (this.ignorer.ignores(filepath)) {
-        addBreadcrumb({
+        breadcrumb({
           type: "debug",
           category: "sync",
           message: "Skipping event caused by ignored file",
@@ -1002,7 +1010,7 @@ export class Sync {
       }
 
       if (this.recentRemoteChanges.delete(normalizedPath)) {
-        addBreadcrumb({
+        breadcrumb({
           type: "debug",
           category: "sync",
           message: "Skipping event caused by recent write",
@@ -1014,7 +1022,7 @@ export class Sync {
         return;
       }
 
-      addBreadcrumb({
+      breadcrumb({
         type: "debug",
         category: "sync",
         message: "Received file system event",
@@ -1055,25 +1063,22 @@ export class Sync {
 
     this.status = SyncStatus.RUNNING;
 
-    // app should be defined at this point
-    assert(ctx.app);
-
     println();
     println`
       {bold ggt v${config.version}}
 
-      App         ${ctx.app.slug}
-      Editor      https://${ctx.app.slug}.gadget.app/edit
-      Playground  https://${ctx.app.slug}.gadget.app/api/graphql/playground
-      Docs        https://docs.gadget.dev/api/${ctx.app.slug}
+      App         ${this.app.slug}
+      Editor      https://${this.app.slug}.gadget.app/edit
+      Playground  https://${this.app.slug}.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/${this.app.slug}
 
       {underline Endpoints} ${
-        ctx.app.hasSplitEnvironments
+        this.app.hasSplitEnvironments
           ? `
-        • https://${ctx.app.primaryDomain}
-        • https://${ctx.app.slug}--development.gadget.app`
+        • https://${this.app.primaryDomain}
+        • https://${this.app.slug}--development.gadget.app`
           : `
-        • https://${ctx.app.primaryDomain}`
+        • https://${this.app.primaryDomain}`
       }
 
       Watching for file changes... {gray Press Ctrl+C to stop}

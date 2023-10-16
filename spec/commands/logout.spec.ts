@@ -1,29 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { run } from "../../src/commands/logout.js";
-import { Context } from "../../src/services/context.js";
+import * as session from "../../src/services/session.js";
 import { expectStdout } from "../util.js";
 
 describe("logout", () => {
-  let ctx: Context;
-
-  beforeEach(() => {
-    ctx = new Context();
-  });
-
   it("sets context.session = undefined", () => {
-    ctx.session = "test";
-    const spy = vi.spyOn(ctx, "session", "set");
+    session.writeSession("test");
+    const spy = vi.spyOn(session, "writeSession");
 
-    run(ctx);
+    run();
 
     expect(spy).toHaveBeenLastCalledWith(undefined);
-    expect(ctx.session).toBeUndefined();
+    expect(session.readSession()).toBeUndefined();
   });
 
   it("prints a message if the user is logged in", () => {
-    ctx.session = "test";
+    session.writeSession("test");
 
-    run(ctx);
+    run();
 
     expectStdout().toMatchInlineSnapshot(`
       "Goodbye
@@ -32,9 +26,9 @@ describe("logout", () => {
   });
 
   it("prints a different message if the user is logged out", () => {
-    ctx.session = undefined;
+    session.writeSession(undefined);
 
-    run(ctx);
+    run();
 
     expectStdout().toMatchInlineSnapshot(`
       "You are not logged in

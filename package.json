@@ -24,7 +24,7 @@
     "build": "npm run clean && swc src -d lib",
     "clean": "rimraf lib tmp",
     "generate:graphql": "graphql-codegen --config graphql-codegen.yml",
-    "generate:readme": "FORCE_COLOR=0 node --no-warnings --loader ts-node/esm ./scripts/generate-readme.ts",
+    "generate:readme": "FORCE_COLOR=0 node --loader @swc-node/register/esm --no-warnings ./scripts/generate-readme.ts",
     "lint": "concurrently --prefix none --group 'npm:lint:*(!fix)'",
     "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
     "lint:eslint": "eslint --max-warnings 0 .",
@@ -32,7 +32,7 @@
     "lint:prettier": "prettier --check .",
     "lint:typescript": "tsc --project tsconfig.json",
     "release": "npm run build && changeset publish",
-    "test": "cross-env NODE_OPTIONS=\"--no-warnings --loader @swc-node/register/esm\" vitest",
+    "test": "cross-env NODE_OPTIONS=\"--loader @swc-node/register/esm --no-warnings\" vitest",
     "version": "changeset version && npm install --package-lock-only && npm run generate:readme"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-#!/usr/bin/env FORCE_COLOR=0 node --no-warnings --loader ts-node/esm
+#!/usr/bin/env FORCE_COLOR=0 node --loader @swc-node/register/esm --no-warnings
 
 import { $ } from "execa";
 import fs from "fs-extra";

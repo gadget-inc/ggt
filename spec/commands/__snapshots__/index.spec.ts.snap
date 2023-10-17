@@ -78,10 +78,10 @@ DESCRIPTION
   to the one used by Git (https://git-scm.com/docs/gitignore).
 
   The following files and directories are always ignored:
+    • .DS_Store
     • .gadget
     • .git
     • node_modules
-    • .DS_STORE
 
   Note:
     • If you have separate development and production environments,

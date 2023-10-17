@@ -77,10 +77,10 @@ export const usage = sprint`
     to the one used by Git {dim (https://git-scm.com/docs/gitignore)}.
 
     The following files and directories are always ignored:
+      • .DS_Store
       • .gadget
       • .git
       • node_modules
-      • .DS_STORE
 
     Note:
       • If you have separate development and production environments,
@@ -555,7 +555,7 @@ export class Sync {
     this.client = new Client(this.app);
 
     // local files/folders that should never be published
-    this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git", ".DS_STORE"]);
+    this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git", ".DS_Store"]);
 
     if (!which.sync("yarn", { nothrow: true })) {
       throw new YarnNotFoundError();
@@ -963,7 +963,7 @@ export class Sync {
 
     this.watcher = new FSWatcher(this.dir, {
       // paths that we never want to publish
-      ignore: /(\.gadget|\.git|node_modules|\.DS_STORE)/,
+      ignore: /(\.gadget|\.git|node_modules|\.DS_Store)/,
       // don't emit an event for every watched file on boot
       ignoreInitial: true,
       renameDetection: true,

@@ -1,52 +1,41 @@
 import { describe, expect, it, vi } from "vitest";
-import List from "../../src/commands/list.js";
-import { context } from "../../src/services/context.js";
+import { run } from "../../src/commands/list.js";
+import * as app from "../../src/services/app.js";
+import * as user from "../../src/services/user.js";
+import { expectStdout, testUser } from "../util.js";
 
 describe("list", () => {
-  it("requires a user to be logged in", () => {
-    const list = new List([], context.config);
-    expect(list.requireUser).toBe(true);
-  });
-
   it("lists apps", async () => {
-    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    vi.spyOn(context, "getAvailableApps").mockResolvedValue([
-      { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true },
-      { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true },
+    vi.spyOn(user, "loadUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    vi.spyOn(app, "getAvailableApps").mockResolvedValue([
+      { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true, user: testUser },
+      { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, user: testUser },
     ]);
 
-    await List.run([]);
+    await run();
 
-    expect(context.getUser).toHaveBeenCalled();
-    expect(List.prototype.log.mock.calls).toMatchInlineSnapshot(`
-      [
-        [
-          " Slug  Domain            ",
-        ],
-        [
-          " ───── ───────────────── ",
-        ],
-        [
-          " app-a app-a.example.com ",
-        ],
-        [
-          " app-b cool-app.com      ",
-        ],
-      ]
+    expect(user.loadUserOrLogin).toHaveBeenCalled();
+    expectStdout().toMatchInlineSnapshot(`
+      "Slug  Domain
+      ───── ─────────────────
+      app-a app-a.example.com
+      app-b cool-app.com
+      "
     `);
   });
 
   it("lists no apps if the user doesn't have any", async () => {
-    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    vi.spyOn(context, "getAvailableApps").mockResolvedValue([]);
+    vi.spyOn(user, "loadUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    vi.spyOn(app, "getAvailableApps").mockResolvedValue([]);
 
-    await List.run([]);
+    await run();
 
-    expect(context.getUser).toHaveBeenCalled();
-    expect(List.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`
+    expect(user.loadUserOrLogin).toHaveBeenCalled();
+    expectStdout().toMatchInlineSnapshot(`
       "It doesn't look like you have any applications.
 
-      Visit https://gadget.new to create one!"
+      Visit https://gadget.new to create one!
+      "
     `);
   });
 });

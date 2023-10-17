@@ -1,7 +1,7 @@
-import { Args, Flags } from "@oclif/core";
+import arg from "arg";
 import assert from "assert";
 import chalkTemplate from "chalk-template";
-import { format } from "date-fns";
+import { format as formatDate } from "date-fns";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
@@ -15,146 +15,282 @@ import pluralize from "pluralize";
 import { dedent } from "ts-dedent";
 import FSWatcher from "watcher";
 import which from "which";
-import type {
-  FileSyncChangedEventInput,
-  FileSyncDeletedEventInput,
-  PublishFileSyncEventsMutation,
-  PublishFileSyncEventsMutationVariables,
-  RemoteFileSyncEventsSubscription,
-  RemoteFileSyncEventsSubscriptionVariables,
-  RemoteFilesVersionQuery,
-  RemoteFilesVersionQueryVariables,
+import {
+  FileSyncEncoding,
+  type FileSyncChangedEventInput,
+  type FileSyncDeletedEventInput,
+  type PublishFileSyncEventsMutation,
+  type PublishFileSyncEventsMutationVariables,
+  type RemoteFileSyncEventsSubscription,
+  type RemoteFileSyncEventsSubscriptionVariables,
+  type RemoteFilesVersionQuery,
+  type RemoteFilesVersionQueryVariables,
 } from "../__generated__/graphql.js";
-import { FileSyncEncoding } from "../__generated__/graphql.js";
-import { BaseCommand } from "../services/base-command.js";
-import type { Query } from "../services/client.js";
-import { Client } from "../services/client.js";
-import { context } from "../services/context.js";
-import { InvalidSyncAppFlagError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
-import { app } from "../services/flags.js";
+import type { App } from "../services/app.js";
+import { getAvailableApps } from "../services/app.js";
+import { AppArg } from "../services/args.js";
+import { breadcrumb } from "../services/breadcrumbs.js";
+import { Client, type Query } from "../services/client.js";
+import { config } from "../services/config.js";
+import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
 import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
+import { notify } from "../services/notifications.js";
+import { println, sortByLevenshtein, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
+import { loadUserOrLogin } from "../services/user.js";
+import { type RootArgs } from "./root.js";
 
-export default class Sync extends BaseCommand<typeof Sync> {
-  static override priority = 1;
+export const usage = sprint`
+  Sync your Gadget application's source code to and from
+  your local filesystem.
 
-  static override summary = "Sync your Gadget application's source code to and from your local filesystem.";
+  {bold USAGE}
+    $ ggt sync [DIRECTORY] [--app <name>]
 
-  static override usage = "sync [DIRECTORY] [--app <name>]";
+  {bold ARGUMENTS}
+    DIRECTORY  {dim [default: .] The directory to sync files to.
 
-  static override description = dedent(chalkTemplate`
-    Sync provides the ability to sync your Gadget application's source code to and from your local
-    filesystem. While {gray ggt sync} is running, local file changes are immediately reflected within
-    Gadget, while files that are changed remotely are immediately saved to your local filesystem.
+               If the directory doesn't exist, it will be created.}
+
+  {bold FLAGS}
+    -a, --app=<name>  {dim The Gadget application to sync files to.}
+
+    --force           {dim Whether to sync even if we can't determine
+                      the state of your local files relative to
+                      your remote ones.}
+
+  {bold DESCRIPTION}
+    Sync provides the ability to sync your Gadget application's source
+    code to and from your local filesystem.
+
+    While ggt sync is running, local file changes are immediately
+    reflected within Gadget, while files that are changed remotely are
+    immediately saved to your local filesystem.
 
     Use cases for this include:
-      - Developing locally with your own editor like VSCode {gray (https://code.visualstudio.com/)}
-      - Storing your source code in a Git repository like GitHub {gray (https://github.com/)}
+      • Developing locally with your own editor like VSCode
+      • Storing your source code in a Git repository like GitHub
 
-    Sync includes the concept of a {gray .ignore} file. This file may contain a list of files and
-    directories that won't be received or sent to Gadget when syncing. The format of this file is
-    identical to the one used by Git {gray (https://git-scm.com/docs/gitignore)}.
+    Sync includes the concept of a {dim .ignore} file. This file may
+    contain a list of files and directories that won't be received or
+    sent to Gadget when syncing. The format of this file is identical
+    to the one used by Git {dim (https://git-scm.com/docs/gitignore)}.
 
     The following files and directories are always ignored:
-      - .gadget
-      - .git
-      - node_modules
-      - .DS_Store
+      • .DS_Store
+      • .gadget
+      • .git
+      • node_modules
 
     Note:
-      - If you have separate development and production environments, {gray ggt sync} will only sync with your development environment
-      - Gadget applications only support installing dependencies with Yarn 1 {gray (https://classic.yarnpkg.com/lang/en/)}
-      - Since file changes are immediately reflected in Gadget, avoid the following while {gray ggt sync} is running:
-          - Deleting all your files
-          - Moving all your files to a different directory
-  `);
+      • If you have separate development and production environments,
+        {dim ggt sync} will only sync with your development environment
+      • Gadget applications only support installing dependencies
+        with Yarn 1 {dim (https://classic.yarnpkg.com/lang/en/)}
+      • Since file changes are immediately reflected in Gadget,
+        avoid the following while {dim ggt sync} is running:
+          • Deleting all your files
+          • Moving all your files to a different directory
 
-  static override args = {
-    directory: Args.string({
-      description: "The directory to sync files to. If the directory doesn't exist, it will be created.",
-      default: ".",
-    }),
+  {bold EXAMPLES}
+    {dim $ ggt sync --app my-app ~/gadget/my-app}
+
+    App         my-app
+    Editor      https://my-app.gadget.app/edit
+    Playground  https://my-app.gadget.app/api/graphql/playground
+    Docs        https://docs.gadget.dev/api/my-app
+
+    Endpoints
+      • https://my-app.gadget.app
+      • https://my-app--development.gadget.app
+
+    Watching for file changes... {dim Press Ctrl+C to stop}
+
+    Received {dim 12:00:00 PM}
+    {green ←} routes/GET.js {dim (changed)}
+    {green ←} user/signUp/signIn.js {dim (changed)}
+    {dim 2 files in total. 2 changed, 0 deleted.}
+
+    Sent {dim 12:00:03 PM}
+    {green →} routes/GET.ts {dim (changed)}
+    {dim 1 file in total. 1 changed, 0 deleted.}
+
+    ^C Stopping... {dim (press Ctrl+C again to force)}
+    Goodbye!
+`;
+
+/**
+ * Holds information about the state of the local filesystem. It's persisted to `.gadget/sync.json`.
+ */
+export class SyncState {
+  private _inner: {
+    app: string;
+    filesVersion: string;
+    mtime: number;
   };
 
-  static override flags = {
-    app: app({
-      summary: "The Gadget application to sync files to.",
-    }),
-    force: Flags.boolean({
-      summary: "Whether to sync even if we can't determine the state of your local files relative to your remote ones.",
-      default: false,
-    }),
-    "file-push-delay": Flags.integer({
-      summary: "Delay in milliseconds before pushing files to your app.",
-      helpGroup: "file",
-      helpValue: "ms",
-      default: 100,
-      hidden: true,
-    }),
-    // The following flags are passed to FSWatcher (https://github.com/fabiospampinato/watcher)
-    "file-watch-debounce": Flags.integer({
-      summary: "Amount of milliseconds to debounce file changed events",
-      helpGroup: "file",
-      helpValue: "ms",
-      default: 300,
-      hidden: true,
-    }),
-    "file-watch-poll-interval": Flags.integer({
-      summary:
-        "Polling is used as a last resort measure when watching non-existent paths inside non-existent directories, this controls how often polling is performed, in milliseconds. You can set it to a lower value to make the app detect events much more quickly, but don't set it too low if you are watching many paths that require polling as polling is expensive.",
-      helpGroup: "file",
-      helpValue: "ms",
-      default: 3_000,
-      hidden: true,
-    }),
-    "file-watch-poll-timeout": Flags.integer({
-      summary:
-        "Sometimes polling will fail, for example if there are too many file descriptors currently open, usually eventually polling will succeed after a few tries though, this controls the amount of milliseconds the library should keep retrying for.",
-      helpGroup: "file",
-      helpValue: "ms",
-      default: 20_000,
-      hidden: true,
-    }),
-    "file-watch-rename-timeout": Flags.integer({
-      summary:
-        "Amount of milliseconds to wait for a potential rename/renameDir event to be detected. The higher this value is the more reliably renames will be detected, but don't set this too high, or the emission of some events could be delayed by that amount. The higher this value is the longer the library will take to emit add/addDir/unlink/unlinkDir events.",
-      helpGroup: "file",
-      helpValue: "ms",
-      default: 1_250,
-      hidden: true,
-    }),
-  };
+  /**
+   * Saves the current state of the filesystem to `.gadget/sync.json`.
+   */
+  #save = _.debounce(() => {
+    fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
+    breadcrumb({
+      type: "info",
+      category: "sync",
+      message: "Saved sync state",
+      data: { state: this._inner },
+    });
+  }, 100);
 
-  static override examples = [
-    dedent(chalkTemplate`
-      {gray $ ggt sync --app my-app ~/gadget/my-app}
+  private constructor(
+    private _rootDir: string,
+    inner: { app: string; filesVersion: string; mtime: number },
+  ) {
+    this._inner = inner;
+  }
 
-      App         my-app
-      Editor      https://my-app.gadget.app/edit
-      Playground  https://my-app.gadget.app/api/graphql/playground
-      Docs        https://docs.gadget.dev/api/my-app
+  /**
+   * The app this filesystem is synced to.
+   */
+  get app(): string {
+    return this._inner.app;
+  }
 
-      {underline Endpoints}
-        - https://my-app.gadget.app
-        - https://my-app--development.gadget.app
+  /**
+   * The last filesVersion that was successfully written to the filesystem. This is used to determine if the remote
+   * filesystem is ahead of the local one.
+   */
+  get filesVersion(): bigint {
+    return BigInt(this._inner.filesVersion);
+  }
 
-      Watching for file changes... {gray Press Ctrl+C to stop}
+  set filesVersion(value: bigint | string) {
+    this._inner.filesVersion = String(value);
+    this.#save();
+  }
 
-      Received {gray 12:00:00 PM}
-      {green ←} routes/GET.js {gray (changed)}
-      {green ←} user/signUp/signIn.js {gray (changed)}
-      {gray 2 files in total. 2 changed, 0 deleted.}
+  /**
+   * The largest mtime that was seen on the local filesystem before `ggt sync` stopped. This is used to determine if
+   * the local filesystem has changed since the last sync.
+   *
+   * Note: This does not include the mtime of files that are ignored.
+   */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  get mtime(): number {
+    return this._inner.mtime;
+  }
 
-      Sent {gray 12:00:03 PM}
-      {green →} routes/GET.ts {gray (changed)}
-      {gray 1 file in total. 1 changed, 0 deleted.}
+  set mtime(value: number) {
+    this._inner.mtime = value;
+    this.#save();
+  }
 
-      ^C Stopping... {gray (press Ctrl+C again to force)}
-      Goodbye!
-    `),
-  ];
+  /**
+   * Creates a new SyncFile instance and saves it to the filesystem.
+   *
+   * @param rootDir The root directory of the app.
+   * @param app The app slug.
+   * @returns A new SyncFile instance.
+   */
+  static create(rootDir: string, opts: { app: string; filesVersion?: string; mtime?: number }): SyncState {
+    const state = new SyncState(rootDir, { filesVersion: "0", mtime: 0, ...opts });
+    state.#save();
+    state.flush();
+    return state;
+  }
 
-  override requireUser = true;
+  /**
+   * Loads a SyncFile instance from the filesystem.
+   *
+   * @param rootDir The root directory of the app.
+   * @returns The SyncFile instance.
+   */
+  static load(rootDir: string): SyncState {
+    const state = fs.readJsonSync(path.join(rootDir, ".gadget/sync.json"));
+
+    assert(_.isString(state.app), "missing or invalid app");
+    assert(_.isString(state.filesVersion), "missing or invalid filesVersion");
+    assert(_.isNumber(state.mtime), "missing or invalid mtime");
+
+    return new SyncState(rootDir, {
+      app: state.app,
+      filesVersion: state.filesVersion,
+      mtime: state.mtime,
+    });
+  }
+
+  /**
+   * Flushes any pending writes to the filesystem.
+   */
+  flush(): void {
+    this.#save.flush();
+  }
+
+  /**
+   * @returns The JSON representation of this instance.
+   */
+  toJSON() {
+    return this._inner;
+  }
+}
+
+export enum SyncStatus {
+  STARTING,
+  RUNNING,
+  STOPPING,
+  STOPPED,
+}
+
+export enum Action {
+  CANCEL = "Cancel (Ctrl+C)",
+  MERGE = "Merge local files with remote ones",
+  RESET = "Reset local files to remote ones",
+}
+
+export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
+  subscription RemoteFileSyncEvents($localFilesVersion: String!) {
+    remoteFileSyncEvents(localFilesVersion: $localFilesVersion, encoding: base64) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+      deleted {
+        path
+      }
+    }
+  }
+`) as Query<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
+
+export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
+  query RemoteFilesVersion {
+    remoteFilesVersion
+  }
+`) as Query<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables>;
+
+export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
+  mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
+    publishFileSyncEvents(input: $input) {
+      remoteFilesVersion
+    }
+  }
+`) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
+
+const argSpec = {
+  "-a": "--app",
+  "--app": AppArg,
+  "--force": Boolean,
+  "--file-push-delay": Number,
+  "--file-watch-debounce": Number,
+  "--file-watch-poll-interval": Number,
+  "--file-watch-poll-timeout": Number,
+  "--file-watch-rename-timeout": Number,
+};
+
+export class Sync {
+  args!: arg.Result<typeof argSpec>;
 
   /**
    * The current status of the sync process.
@@ -165,6 +301,11 @@ export default class Sync extends BaseCommand<typeof Sync> {
    * The absolute path to the directory to sync files to.
    */
   dir!: string;
+
+  /**
+   * The app this filesystem is synced to.
+   */
+  app!: App;
 
   /**
    * A list of filepaths that have changed because of a remote file-sync event. This is used to avoid sending files that
@@ -254,9 +395,9 @@ export default class Sync extends BaseCommand<typeof Sync> {
    * @param prefix The prefix to print before each line.
    * @param changed The normalized paths that have changed.
    * @param deleted The normalized paths that have been deleted.
-   * @param options.limit The maximum number of lines to print. Defaults to 10. If debug is enabled, this is ignored.
+   * @param options.limit The maximum number of lines to print. Defaults to 10.
    */
-  logPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
+  outputPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
     const lines = _.sortBy(
       [
         ..._.map(changed, (normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
@@ -267,18 +408,16 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     let logged = 0;
     for (const line of lines) {
-      this.log(line);
-      if (++logged == limit && !this.debugEnabled) break;
+      println(line);
+      if (++logged == limit) break;
     }
 
     if (lines.length > logged) {
-      this.log(chalkTemplate`{gray … ${lines.length - logged} more}`);
+      println`{gray … ${lines.length - logged} more}`;
     }
 
-    this.log(
-      chalkTemplate`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`,
-    );
-    this.log();
+    println`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`;
+    println();
   }
 
   /**
@@ -289,17 +428,25 @@ export default class Sync extends BaseCommand<typeof Sync> {
    * - Ensures yarn v1 is installed.
    * - Prompts the user how to resolve conflicts if the local filesystem has changed since the last sync.
    */
-  override async init(): Promise<void> {
-    await super.init();
+  async init(rootArgs: RootArgs): Promise<void> {
+    const user = await loadUserOrLogin();
+
+    this.args = _.defaults(arg(argSpec, { argv: rootArgs._ }), {
+      "--file-push-delay": 100,
+      "--file-watch-debounce": 300,
+      "--file-watch-poll-interval": 3_000,
+      "--file-watch-poll-timeout": 20_000,
+      "--file-watch-rename-timeout": 1_250,
+    });
 
     this.dir =
-      this.config.windows && _.startsWith(this.args.directory, "~/")
-        ? path.join(this.config.home, this.args.directory.slice(2))
-        : path.resolve(this.args.directory);
+      config.windows && this.args._[0] && _.startsWith(this.args._[0], "~/")
+        ? path.join(config.homeDir, this.args._[0].slice(2))
+        : path.resolve(this.args._[0] || ".");
 
     const getApp = async (): Promise<string> => {
-      if (this.flags.app) {
-        return this.flags.app;
+      if (this.args["--app"]) {
+        return this.args["--app"];
       }
 
       // this.state can be undefined if the user is running `ggt sync` for the first time
@@ -312,7 +459,7 @@ export default class Sync extends BaseCommand<typeof Sync> {
         type: "list",
         name: "app",
         message: "Please select the app to sync to.",
-        choices: await context.getAvailableApps().then((apps) => _.map(apps, "slug")),
+        choices: await getAvailableApps(user).then((apps) => _.map(apps, "slug")),
       });
 
       return selected.app;
@@ -321,25 +468,91 @@ export default class Sync extends BaseCommand<typeof Sync> {
     if (await isEmptyDir(this.dir)) {
       const app = await getApp();
       this.state = SyncState.create(this.dir, { app });
+      breadcrumb({
+        type: "info",
+        category: "sync",
+        message: "Created sync state",
+        data: { state: this.state },
+      });
     } else {
       try {
         this.state = SyncState.load(this.dir);
+        breadcrumb({
+          type: "info",
+          category: "sync",
+          message: "Loaded sync state",
+          data: { state: this.state },
+        });
       } catch (error) {
-        if (!this.flags.force) {
-          throw new InvalidSyncFileError(error, this, this.flags.app);
+        if (!this.args["--force"]) {
+          throw new InvalidSyncFileError(error, this.dir, this.args["--app"]);
         }
         const app = await getApp();
         this.state = SyncState.create(this.dir, { app });
+        breadcrumb({
+          type: "info",
+          category: "sync",
+          message: "Created sync state (forced)",
+          data: { state: this.state },
+        });
       }
     }
 
-    if (this.flags.app && this.flags.app !== this.state.app && !this.flags.force) {
-      throw new InvalidSyncAppFlagError(this);
+    if (this.args["--app"] && this.args["--app"] !== this.state.app && !this.args["--force"]) {
+      throw new ArgError(sprint`
+          You were about to sync the following app to the following directory:
+
+            {dim ${this.args["--app"]}} → {dim ${this.dir}}
+
+          However, that directory has already been synced with this app:
+
+            {dim ${this.state.app}}
+
+          If you're sure that you want to sync:
+
+            {dim ${this.args["--app"]}} → {dim ${this.dir}}
+
+          Then run {dim ggt sync} again with the {dim --force} flag:
+
+            $ ggt sync ${rootArgs._.join(" ")} --force
+      `);
     }
 
-    await context.setApp(this.state.app);
+    const availableApps = await getAvailableApps(user);
+    const app = _.find(availableApps, (a) => a.slug == this.state.app);
 
-    this.client = new Client();
+    if (!app) {
+      if (availableApps.length == 0) {
+        throw new ArgError(
+          sprint`
+              Unknown application:
+
+                ${this.state.app}
+
+              It doesn't look like you have any applications.
+
+              Visit https://gadget.new to create one!
+          `,
+        );
+      }
+
+      const sorted = sortByLevenshtein(this.state.app, _.map(availableApps, "slug")).slice(0, 5);
+      let message = sprint`
+        Unknown application:
+
+          ${this.state.app}
+
+        Did you mean one of these?
+
+      `;
+      for (const slug of sorted) {
+        message += `\n  • ${slug}`;
+      }
+      throw new ArgError(message);
+    }
+
+    this.app = app;
+    this.client = new Client(this.app);
 
     // local files/folders that should never be published
     this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git", ".DS_Store"]);
@@ -371,12 +584,13 @@ export default class Sync extends BaseCommand<typeof Sync> {
     let changedFiles = await getChangedFiles();
     const hasLocalChanges = changedFiles.size > 0;
     if (hasLocalChanges) {
-      this.log("Local files have changed since you last synced");
-      this.logPaths("-", Array.from(changedFiles.keys()), [], { limit: changedFiles.size });
-      this.log();
+      println("Local files have changed since you last synced");
+      this.outputPaths("-", Array.from(changedFiles.keys()), [], { limit: changedFiles.size });
+      println();
     }
 
-    context.addBreadcrumb({
+    breadcrumb({
+      type: "info",
       category: "sync",
       message: "Initializing",
       data: {
@@ -403,7 +617,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     switch (action) {
       case Action.MERGE: {
-        context.addBreadcrumb({
+        breadcrumb({
+          type: "info",
           category: "sync",
           message: "Merging local changes",
           data: {
@@ -440,7 +655,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
         break;
       }
       case Action.RESET: {
-        context.addBreadcrumb({
+        breadcrumb({
+          type: "info",
           category: "sync",
           message: "Resetting local changes",
           data: {
@@ -461,7 +677,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
       }
     }
 
-    context.addBreadcrumb({
+    breadcrumb({
+      type: "info",
       category: "sync",
       message: "Initialized",
       data: {
@@ -483,7 +700,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
       this.status = SyncStatus.STOPPING;
       error = e;
 
-      context.addBreadcrumb({
+      breadcrumb({
+        type: "info",
         category: "sync",
         message: "Stopping",
         level: error ? "error" : undefined,
@@ -505,7 +723,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
         this.status = SyncStatus.STOPPED;
         stopped.resolve();
 
-        context.addBreadcrumb({
+        breadcrumb({
+          type: "info",
           category: "sync",
           message: "Stopped",
           data: {
@@ -519,14 +738,14 @@ export default class Sync extends BaseCommand<typeof Sync> {
       process.on(signal, () => {
         if (this.status != SyncStatus.RUNNING) return;
 
-        this.log(chalkTemplate` Stopping... {gray (press Ctrl+C again to force)}`);
+        println` Stopping... {gray (press Ctrl+C again to force)}`;
         void this.stop();
 
         // When ggt is run via npx, and the user presses Ctrl+C, npx sends SIGINT twice in quick succession. In order to prevent the second
         // SIGINT from triggering the force exit listener, we wait a bit before registering it. This is a bit of a hack, but it works.
         setTimeout(() => {
           process.once(signal, () => {
-            this.log(" Exiting immediately. Note that files may not have finished syncing.");
+            println(" Exiting immediately. Note that files may not have finished syncing.");
             process.exit(1);
           });
         }, 100).unref();
@@ -541,7 +760,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
       {
         error: (error) => void this.stop(error),
         next: ({ remoteFileSyncEvents }) => {
-          context.addBreadcrumb({
+          breadcrumb({
+            type: "info",
             category: "sync",
             message: "Received file sync events",
             data: {
@@ -560,7 +780,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
           const deleted = _.filter(remoteFileSyncEvents.deleted, filter);
 
           this._enqueue(async () => {
-            context.addBreadcrumb({
+            breadcrumb({
+              type: "info",
               category: "sync",
               message: "Processing received file sync events",
               data: {
@@ -575,7 +796,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
               if (BigInt(remoteFilesVersion) > this.state.filesVersion) {
                 // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
                 this.state.filesVersion = remoteFilesVersion;
-                context.addBreadcrumb({
+                breadcrumb({
+                  type: "info",
                   category: "sync",
                   message: "Received empty file sync events",
                   data: {
@@ -587,8 +809,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
               return;
             }
 
-            this.log(chalkTemplate`Received {gray ${format(new Date(), "pp")}}`);
-            this.logPaths("←", _.map(changed, "path"), _.map(deleted, "path"));
+            println`Received {gray ${formatDate(new Date(), "pp")}}`;
+            this.outputPaths("←", _.map(changed, "path"), _.map(deleted, "path"));
 
             // we need to processed deleted files first as we may delete an empty directory after a file has been put
             // into it. if processed out of order the new file will be deleted as well
@@ -616,7 +838,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
               if (absolutePath == this.absolute("yarn.lock")) {
                 await execa("yarn", ["install"], { cwd: this.dir }).catch((error) => {
-                  context.addBreadcrumb({
+                  breadcrumb({
+                    type: "error",
                     category: "sync",
                     message: "Yarn install failed",
                     level: "error",
@@ -645,7 +868,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
               }
             }
 
-            context.addBreadcrumb({
+            breadcrumb({
+              type: "info",
               category: "sync",
               message: "Processed received file sync events",
               data: {
@@ -673,7 +897,8 @@ export default class Sync extends BaseCommand<typeof Sync> {
       localFilesBuffer.clear();
 
       this._enqueue(async () => {
-        context.addBreadcrumb({
+        breadcrumb({
+          type: "info",
           category: "sync",
           message: "Publishing file sync events",
           data: {
@@ -719,8 +944,9 @@ export default class Sync extends BaseCommand<typeof Sync> {
           this.state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
         }
 
-        context.addBreadcrumb({
+        breadcrumb({
           category: "sync",
+          type: "info",
           message: "Published file sync events",
           data: {
             state: this.state,
@@ -730,10 +956,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
           },
         });
 
-        this.log(chalkTemplate`Sent {gray ${format(new Date(), "pp")}}`);
-        this.logPaths("→", _.map(changed, "path"), _.map(deleted, "path"));
+        println`Sent {gray ${formatDate(new Date(), "pp")}}`;
+        this.outputPaths("→", _.map(changed, "path"), _.map(deleted, "path"));
       });
-    }, this.flags["file-push-delay"]);
+    }, this.args["--file-push-delay"]);
 
     this.watcher = new FSWatcher(this.dir, {
       // paths that we never want to publish
@@ -742,10 +968,10 @@ export default class Sync extends BaseCommand<typeof Sync> {
       ignoreInitial: true,
       renameDetection: true,
       recursive: true,
-      debounce: this.flags["file-watch-debounce"],
-      pollingInterval: this.flags["file-watch-poll-interval"],
-      pollingTimeout: this.flags["file-watch-poll-timeout"],
-      renameTimeout: this.flags["file-watch-rename-timeout"],
+      debounce: this.args["--file-watch-debounce"],
+      pollingInterval: this.args["--file-watch-poll-interval"],
+      pollingTimeout: this.args["--file-watch-poll-timeout"],
+      renameTimeout: this.args["--file-watch-rename-timeout"],
     });
 
     this.watcher.once("error", (error) => void this.stop(error));
@@ -758,7 +984,15 @@ export default class Sync extends BaseCommand<typeof Sync> {
       if (filepath == this.ignorer.filepath) {
         this.ignorer.reload();
       } else if (this.ignorer.ignores(filepath)) {
-        this.debug("skipping event caused by ignored file %s", normalizedPath);
+        breadcrumb({
+          type: "debug",
+          category: "sync",
+          message: "Skipping event caused by ignored file",
+          data: {
+            event,
+            normalizedPath,
+          },
+        });
         return;
       }
 
@@ -777,11 +1011,27 @@ export default class Sync extends BaseCommand<typeof Sync> {
       }
 
       if (this.recentRemoteChanges.delete(normalizedPath)) {
-        this.debug("skipping event caused by recent write %s", normalizedPath);
+        breadcrumb({
+          type: "debug",
+          category: "sync",
+          message: "Skipping event caused by recent write",
+          data: {
+            event,
+            normalizedPath,
+          },
+        });
         return;
       }
 
-      this.debug("%s %s", event, normalizedPath);
+      breadcrumb({
+        type: "debug",
+        category: "sync",
+        message: "Received file system event",
+        data: {
+          event,
+          normalizedPath,
+        },
+      });
 
       switch (event) {
         case "add":
@@ -814,40 +1064,35 @@ export default class Sync extends BaseCommand<typeof Sync> {
 
     this.status = SyncStatus.RUNNING;
 
-    // app should be defined at this point
-    assert(context.app);
+    println();
+    println`
+      {bold ggt v${config.version}}
 
-    this.log();
-    this.log(
-      dedent(chalkTemplate`
-      {bold ggt v${this.config.version}}
-
-      App         ${context.app.slug}
-      Editor      https://${context.app.slug}.gadget.app/edit
-      Playground  https://${context.app.slug}.gadget.app/api/graphql/playground
-      Docs        https://docs.gadget.dev/api/${context.app.slug}
+      App         ${this.app.slug}
+      Editor      https://${this.app.slug}.gadget.app/edit
+      Playground  https://${this.app.slug}.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/${this.app.slug}
 
       {underline Endpoints} ${
-        context.app.hasSplitEnvironments
+        this.app.hasSplitEnvironments
           ? `
-        - https://${context.app.primaryDomain}
-        - https://${context.app.slug}--development.gadget.app`
+        • https://${this.app.primaryDomain}
+        • https://${this.app.slug}--development.gadget.app`
           : `
-        - https://${context.app.primaryDomain}`
+        • https://${this.app.primaryDomain}`
       }
 
       Watching for file changes... {gray Press Ctrl+C to stop}
-    `),
-    );
-    this.log();
+    `;
+    println();
 
     await stopped;
 
     if (error) {
-      this.notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
+      notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
       throw error as Error;
     } else {
-      this.log("Goodbye!");
+      println("Goodbye!");
     }
   }
 
@@ -861,166 +1106,6 @@ export default class Sync extends BaseCommand<typeof Sync> {
   }
 }
 
-/**
- * Holds information about the state of the local filesystem. It's persisted to `.gadget/sync.json`.
- */
-export class SyncState {
-  private _inner: {
-    app: string;
-    filesVersion: string;
-    mtime: number;
-  };
-
-  /**
-   * Saves the current state of the filesystem to `.gadget/sync.json`.
-   */
-  #save = _.debounce(() => {
-    fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
-    context.addBreadcrumb({
-      category: "sync",
-      message: "Saved sync state",
-      data: { state: this._inner },
-    });
-  }, 100);
-
-  private constructor(
-    private _rootDir: string,
-    inner: { app: string; filesVersion: string; mtime: number },
-  ) {
-    this._inner = inner;
-  }
-
-  /**
-   * The app this filesystem is synced to.
-   */
-  get app(): string {
-    return this._inner.app;
-  }
-
-  /**
-   * The last filesVersion that was successfully written to the filesystem. This is used to determine if the remote
-   * filesystem is ahead of the local one.
-   */
-  get filesVersion(): bigint {
-    return BigInt(this._inner.filesVersion);
-  }
-
-  set filesVersion(value: bigint | string) {
-    this._inner.filesVersion = String(value);
-    this.#save();
-  }
-
-  /**
-   * The largest mtime that was seen on the local filesystem before `ggt sync` stopped. This is used to determine if
-   * the local filesystem has changed since the last sync.
-   *
-   * Note: This does not include the mtime of files that are ignored.
-   */
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  get mtime(): number {
-    return this._inner.mtime;
-  }
-
-  set mtime(value: number) {
-    this._inner.mtime = value;
-    this.#save();
-  }
-
-  /**
-   * Creates a new SyncFile instance and saves it to the filesystem.
-   *
-   * @param rootDir The root directory of the app.
-   * @param app The app slug.
-   * @returns A new SyncFile instance.
-   */
-  static create(rootDir: string, opts: { app: string; filesVersion?: string; mtime?: number }): SyncState {
-    const state = new SyncState(rootDir, { filesVersion: "0", mtime: 0, ...opts });
-    state.#save();
-    state.flush();
-    return state;
-  }
-
-  /**
-   * Loads a SyncFile instance from the filesystem.
-   *
-   * @param rootDir The root directory of the app.
-   * @returns The SyncFile instance.
-   */
-  static load(rootDir: string): SyncState {
-    const state = fs.readJsonSync(path.join(rootDir, ".gadget/sync.json"));
-
-    context.addBreadcrumb({
-      category: "sync",
-      message: "Loaded sync state",
-      data: { state },
-    });
-
-    assert(_.isString(state.app), "missing or invalid app");
-    assert(_.isString(state.filesVersion), "missing or invalid filesVersion");
-    assert(_.isNumber(state.mtime), "missing or invalid mtime");
-
-    return new SyncState(rootDir, {
-      app: state.app,
-      filesVersion: state.filesVersion,
-      mtime: state.mtime,
-    });
-  }
-
-  /**
-   * Flushes any pending writes to the filesystem.
-   */
-  flush(): void {
-    this.#save.flush();
-  }
-
-  /**
-   * @returns The JSON representation of this instance.
-   */
-  toJSON() {
-    return this._inner;
-  }
-}
-
-export enum SyncStatus {
-  STARTING,
-  RUNNING,
-  STOPPING,
-  STOPPED,
-}
-
-export enum Action {
-  CANCEL = "Cancel (Ctrl+C)",
-  MERGE = "Merge local files with remote ones",
-  RESET = "Reset local files to remote ones",
-}
-
-export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
-  subscription RemoteFileSyncEvents($localFilesVersion: String!) {
-    remoteFileSyncEvents(localFilesVersion: $localFilesVersion, encoding: base64) {
-      remoteFilesVersion
-      changed {
-        path
-        mode
-        content
-        encoding
-      }
-      deleted {
-        path
-      }
-    }
-  }
-`) as Query<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
-
-export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
-  query RemoteFilesVersion {
-    remoteFilesVersion
-  }
-`) as Query<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables>;
-
-export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
-  mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
-    publishFileSyncEvents(input: $input) {
-      remoteFilesVersion
-    }
-  }
-`) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
+const sync = new Sync();
+export const init = sync.init.bind(sync);
+export const run = sync.run.bind(sync);

@@ -3,5 +3,4 @@ lib
 tmp/*
 !tmp/apps
 npm-shrinkwrap.json
-oclif.manifest.json
 .direnv

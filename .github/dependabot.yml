@@ -7,19 +7,3 @@ updates:
     rebase-strategy: auto
     schedule:
       interval: daily
-    ignore:
-      # oclif no longer supports node 16
-      - dependency-name: "@oclif/plugin-plugins"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@oclif/test"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@oclif/core"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@oclif/plugin-warn-if-update-available"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@oclif/plugin-not-found"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@oclif/errors"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "oclif"
-        update-types: ["version-update:semver-major"]

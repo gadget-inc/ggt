@@ -34,7 +34,7 @@ jobs:
         id: changesets
         with:
           version: npm run version
-          publish: npm run publish
+          publish: npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

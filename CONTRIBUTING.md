@@ -1,6 +1,6 @@
 # Contributing to `ggt`
 
-Contributions to `ggt` are welcomed from all! Contributors must adhere to the Code of Conduct for the ggt product, outlined in the CODE_OF_CONDUCT.md document.
+Contributions to `ggt` are welcomed from all! Contributors must adhere to the Code of Conduct for the ggt product, outlined in the [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) document.
 
 ## System dependencies
 
@@ -33,17 +33,16 @@ $ bin/dev.js --help
 The command-line interface for Gadget
 
 VERSION
-  @gadgetinc/ggt/0.1.16 darwin-arm64 node-v16.18.1
+  ggt/0.2.3 darwin-arm64 node-v16.18.1
 
 USAGE
   $ ggt [COMMAND]
 
 COMMANDS
-  help    Display help for ggt.
+  sync    Sync your Gadget application's source code to and from your local filesystem.
   list    List the apps available to the currently logged in user.
   login   Log in to your account.
   logout  Log out of your account.
-  sync    Sync your Gadget application's source code to and from your local filesystem.
   whoami  Show the name and email address of the currently logged in user.
 ```
 
@@ -67,11 +66,11 @@ The other differences between `bin/dev.js` and `ggt` are:
 
   ```shell-session
   $ bin/dev.js whoami --debug
-  ggt:fs-utils ignoring ENOENT error tmp/config/session.txt +0ms
+    ggt:fs debug: Ignoring ENOENT error { path: 'session.txt' } +0ms
   You are not logged in
   ```
 
-  We use the [debug](https://www.npmjs.com/package/debug) package to log debug messages. When you pass the `--debug` flag, `ggt` will log all debug messages in the `ggt:*` namespace. If you want to log debug messages for all namespaces, you can use the `DEBUG` environment variable directly.
+  We use the [debug](https://www.npmjs.com/package/debug) package to log debug messages. When you pass the `--debug` flag, `ggt` will log all debug messages in the `ggt:*` namespace. If you want to log debug messages for all namespaces, you can use the `DEBUG` environment variable directly (e.g. `DEBUG='*' bin/dev.js`)
 
 - If you're working on file sync, you can `ggt sync` apps into the `tmp/apps` directory. This way, you can have your synced files and `ggt` code in the same directory without worrying about them interfering with each other.
 
@@ -82,26 +81,26 @@ The other differences between `bin/dev.js` and `ggt` are:
 ```shell-session
 $ npm run test
 
-> ggt@0.2.1 test
+> ggt@0.2.3 test
 > cross-env NODE_OPTIONS="--no-warnings --loader ./node_modules/ts-node/esm.mjs" vitest
 
 
- RUN  v0.32.2 /Users/scott/Code/gadget/ggt
+ RUN  v0.33.0 /Users/scott/Code/gadget/ggt
 
- ✓ spec/services/context.spec.ts (18) 756ms
- ✓ spec/commands/whoami.spec.ts (3) 524ms
- ✓ spec/commands/logout.spec.ts (3) 554ms
- ✓ spec/commands/list.spec.ts (3) 534ms
- ✓ spec/commands/login.spec.ts (1) 523ms
- ✓ spec/services/base-command.spec.ts (18) 537ms
- ✓ spec/services/flags.spec.ts (10) 514ms
- ✓ spec/services/errors.spec.ts (10)
- ✓ spec/commands/sync.spec.ts (52) 36980ms
+ ✓ spec/commands/sync.spec.ts (52) 36946ms
+ ✓ spec/services/context.spec.ts (20)
+ ✓ spec/commands/index.spec.ts (15)
+ ✓ spec/services/errors.spec.ts (8)
+ ✓ spec/commands/login.spec.ts (2)
+ ✓ spec/services/args.spec.ts (8)
+ ✓ spec/commands/logout.spec.ts (3)
+ ✓ spec/commands/list.spec.ts (2)
+ ✓ spec/commands/whoami.spec.ts (3)
 
  Test Files  9 passed (9)
-      Tests  117 passed | 1 todo (118)
-   Start at  17:54:44
-   Duration  38.30s (transform 573ms, setup 538ms, collect 4.00s, tests 41.20s, environment 1ms, prepare 754ms)
+      Tests  112 passed | 1 todo (113)
+   Start at  14:31:38
+   Duration  38.55s (transform 119ms, setup 565ms, collect 477ms, tests 37.06s, environment 0ms, prepare 75ms)
 ```
 
 Tests also make use of the `tmp` directory. Every test gets its own directory in `tmp/<spec-file>/<test-name>` to store temporary files. This means you can run tests in parallel without worrying about them interfering with each other.

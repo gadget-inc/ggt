@@ -1,24 +1,16 @@
-#!/usr/bin/env node --loader ts-node/esm --no-warnings
+#!/usr/bin/env node --loader @swc-node/register/esm --no-warnings
 
-import oclif from "@oclif/core";
-import path from "node:path";
+import { dirname, join } from "node:path";
 import process from "node:process";
-import url from "node:url";
+import { fileURLToPath } from "node:url";
 
-process.env["NODE_ENV"] = "development";
+const workspaceRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+process.env["NODE_ENV"] ??= "development";
 process.env["GGT_ENV"] ??= "development";
+process.env["GGT_SENTRY_ENABLED"] ??= "false";
+process.env["GGT_CONFIG_DIR"] ??= join(workspaceRoot, "tmp/config");
+process.env["GGT_CACHE_DIR"] ??= join(workspaceRoot, "tmp/cache");
+process.env["GGT_DATA_DIR"] ??= join(workspaceRoot, "tmp/data");
 
-const workspaceRoot = path.join(path.dirname(url.fileURLToPath(import.meta.url)), "..");
-
-// store files in the project's tmp directory
-// https://github.com/oclif/core/blob/503e263f1c224fb2b2e28538975e4d5e0a5d2028/src/config/config.ts#L155
-process.env["GGT_CONFIG_DIR"] = path.join(workspaceRoot, "tmp", "config");
-process.env["GGT_CACHE_DIR"] = path.join(workspaceRoot, "tmp", "cache");
-process.env["GGT_DATA_DIR"] = path.join(workspaceRoot, "tmp", "data");
-
-process.on("unhandledRejection", oclif.Errors.handle);
-
-oclif
-  .run(process.argv.slice(2), import.meta.url)
-  .then(() => oclif.flush())
-  .catch(oclif.Errors.handle);
+await import("../src/main.js");

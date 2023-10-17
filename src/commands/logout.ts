@@ -1,27 +1,23 @@
-import chalkTemplate from "chalk-template";
-import { dedent } from "ts-dedent";
-import { BaseCommand } from "../services/base-command.js";
-import { context } from "../services/context.js";
+import { println, sprint } from "../services/output.js";
+import { readSession, writeSession } from "../services/session.js";
 
-export default class Logout extends BaseCommand<typeof Logout> {
-  static override summary = "Log out of your account.";
+export const usage = sprint`
+    Log out of your account.
 
-  static override usage = "logout";
+    {bold USAGE}
+      $ ggt logout
 
-  static override examples = [
-    dedent(chalkTemplate`
+    {bold EXAMPLES}
       {gray $ ggt logout}
       Goodbye
-    `),
-  ];
+`;
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async run(): Promise<void> {
-    if (context.session) {
-      context.session = undefined;
-      this.log("Goodbye");
-    } else {
-      this.log("You are not logged in");
-    }
+export const run = () => {
+  const token = readSession();
+  if (token) {
+    writeSession(undefined);
+    println`Goodbye`;
+  } else {
+    println`You are not logged in`;
   }
-}
+};

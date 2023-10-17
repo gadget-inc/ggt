@@ -1,31 +1,37 @@
-import { describe, expect, it, vi } from "vitest";
-import Logout from "../../src/commands/logout.js";
-import { context } from "../../src/services/context.js";
+import { describe, expect, it } from "vitest";
+import { run } from "../../src/commands/logout.js";
+import { readSession, writeSession } from "../../src/services/session.js";
+import { expectStdout } from "../util.js";
 
-describe("Logout", () => {
-  it("sets context.session = undefined", async () => {
-    context.session = "test";
-    const spy = vi.spyOn(context, "session", "set");
+describe("logout", () => {
+  it("deletes the session from disk", () => {
+    writeSession("test");
+    expect(readSession()).toBe("test");
 
-    await Logout.run();
+    run();
 
-    expect(spy).toHaveBeenLastCalledWith(undefined);
-    expect(context.session).toBeUndefined();
+    expect(readSession()).toBeUndefined();
   });
 
-  it("prints a message if the user is logged in", async () => {
-    context.session = "test";
+  it("prints a message if the user is logged in", () => {
+    writeSession("test");
 
-    await Logout.run();
+    run();
 
-    expect(Logout.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"Goodbye"`);
+    expectStdout().toMatchInlineSnapshot(`
+      "Goodbye
+      "
+    `);
   });
 
-  it("prints a different message if the user is logged out", async () => {
-    context.session = undefined;
+  it("prints a different message if the user is logged out", () => {
+    writeSession(undefined);
 
-    await Logout.run();
+    run();
 
-    expect(Logout.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"You are not logged in"`);
+    expectStdout().toMatchInlineSnapshot(`
+      "You are not logged in
+      "
+    `);
   });
 });

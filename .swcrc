@@ -8,8 +8,7 @@
     "externalHelpers": true
   },
   "module": {
-    "type": "es6",
-    "lazy": true
+    "type": "es6"
   },
   "sourceMaps": true
 }

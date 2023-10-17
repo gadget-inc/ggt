@@ -1,13 +1,123 @@
-import { describe, expect, it, vi } from "vitest";
-import Login from "../../src/commands/login.js";
-import { BaseCommand } from "../../src/services/base-command.js";
+import getPort from "get-port";
+import _ from "lodash";
+import http from "node:http";
+import open from "open";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { run } from "../../src/commands/login.js";
+import { config } from "../../src/services/config.js";
+import { readSession, writeSession } from "../../src/services/session.js";
+import { sleepUntil } from "../../src/services/sleep.js";
+import * as user from "../../src/services/user.js";
+import { expectStdout, testUser } from "../util.js";
 
-describe("Login", () => {
-  it("delegates to BaseCommand.login", async () => {
-    vi.spyOn(BaseCommand.prototype, "login").mockResolvedValue();
+describe("login", () => {
+  let port: number;
+  let server: http.Server;
+  let requestListener: http.RequestListener;
 
-    await Login.run();
+  beforeEach(async () => {
+    port = await getPort();
+    server = { listen: vi.fn(), close: vi.fn() } as any;
+    vi.spyOn(http, "createServer").mockImplementation((opt, cb) => {
+      requestListener = cb ?? (opt as http.RequestListener);
+      return server;
+    });
+  });
 
-    expect(BaseCommand.prototype.login).toHaveBeenCalled();
+  it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
+    writeSession(undefined);
+    vi.spyOn(user, "loadUser").mockResolvedValue(testUser);
+
+    void run();
+
+    await sleepUntil(() => http.createServer.mock.calls.length > 0);
+    expect(getPort).toHaveBeenCalled();
+    expect(requestListener!).toBeDefined();
+    expect(server.listen).toHaveBeenCalledWith(port);
+    expect(open).toHaveBeenCalledWith(
+      `https://${config.domains.services}/auth/login?returnTo=${encodeURIComponent(
+        `https://${config.domains.services}/auth/cli/callback?port=${port}`,
+      )}`,
+    );
+    expectStdout().toMatchInlineSnapshot(`
+      "We've opened Gadget's login page using your default browser.
+
+      Please log in and then return to this terminal.
+
+      "
+    `);
+
+    // we should be at `await receiveSession`
+    expect(readSession()).toBeUndefined();
+    expect(user.loadUser).not.toHaveBeenCalled();
+
+    const req = new http.IncomingMessage(null as any);
+    req.url = `?session=test`;
+
+    const res = new http.ServerResponse(req);
+    vi.spyOn(res, "writeHead");
+    vi.spyOn(res, "end");
+
+    requestListener!(req, res);
+
+    await sleepUntil(() => server.close.mock.calls.length > 0);
+    expect(readSession()).toBe("test");
+    expect(user.loadUser).toHaveBeenCalled();
+    expectStdout().toMatchInlineSnapshot(`
+      "We've opened Gadget's login page using your default browser.
+
+      Please log in and then return to this terminal.
+
+      Hello, Jane Doe (test@example.com)
+
+      "
+    `);
+    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=true` });
+    expect(res.end).toHaveBeenCalled();
+    expect(server.close).toHaveBeenCalled();
+  });
+
+  it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
+    writeSession(undefined);
+    vi.spyOn(user, "loadUser").mockRejectedValue(new Error("boom"));
+
+    void run().catch(_.noop);
+
+    await sleepUntil(() => http.createServer.mock.calls.length > 0);
+    expect(getPort).toHaveBeenCalled();
+    expect(requestListener!).toBeDefined();
+    expect(server.listen).toHaveBeenCalledWith(port);
+    expect(open).toHaveBeenCalledWith(
+      `https://${config.domains.services}/auth/login?returnTo=${encodeURIComponent(
+        `https://${config.domains.services}/auth/cli/callback?port=${port}`,
+      )}`,
+    );
+    expectStdout().toMatchInlineSnapshot(`
+      "We've opened Gadget's login page using your default browser.
+
+      Please log in and then return to this terminal.
+
+      "
+    `);
+
+    // we should be at `await receiveSession`
+    expect(readSession()).toBeUndefined();
+    expect(user.loadUser).not.toHaveBeenCalled();
+
+    const req = new http.IncomingMessage(null as any);
+    req.url = `?session=test`;
+
+    const res = new http.ServerResponse(req);
+    vi.spyOn(res, "writeHead");
+    vi.spyOn(res, "end");
+
+    requestListener!(req, res);
+
+    await sleepUntil(() => server.close.mock.calls.length > 0);
+    expect(readSession()).toBeUndefined();
+    expect(user.loadUser).toHaveBeenCalled();
+    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=false` });
+    expect(res.end).toHaveBeenCalled();
+    expect(server.close).toHaveBeenCalled();
   });
 });

@@ -1,47 +1,32 @@
-import Debug from "debug";
 import fs from "fs-extra";
-import _ from "lodash";
-import path from "path";
-import { afterEach, beforeEach, expect, vi } from "vitest";
-import { testDebug, testDirPath } from "./util.js";
-
-// disable chalk so that we get predictable output in tests
-process.env["FORCE_COLOR"] = "0";
+import path from "node:path";
+import { beforeEach, vi } from "vitest";
+import { config } from "../src/services/config.js";
+import { testDirPath, testStdout } from "./util.js";
 
 beforeEach(async () => {
   process.env["GGT_ENV"] = "test";
-
-  testDebug("starting %O", { test: expect.getState().currentTestName, path: expect.getState().testPath });
 
   const testDir = testDirPath();
   await fs.remove(testDir);
 
   // store files in the test's tmp directory
-  // https://github.com/oclif/core/blob/main/src/config/config.ts#L171
-  process.env["GGT_CONFIG_DIR"] = path.join(testDir, "config");
-  process.env["GGT_CACHE_DIR"] = path.join(testDir, "cache");
-  process.env["GGT_DATA_DIR"] = path.join(testDir, "data");
+  vi.spyOn(config, "configDir", "get").mockReturnValue(path.join(testDir, "config"));
+  vi.spyOn(config, "cacheDir", "get").mockReturnValue(path.join(testDir, "cache"));
+  vi.spyOn(config, "dataDir", "get").mockReturnValue(path.join(testDir, "data"));
 
-  const { Config, Command } = await import("@oclif/core");
-  if (process.env["DEBUG"]) {
-    Debug.log = console.log.bind(console);
-    Debug.enable(process.env["DEBUG"]);
-  }
+  // write to in-memory stdout/stderr instead of real stdout/stderr
+  const { Stream } = await import("../src/services/output.js");
+  Stream.prototype.write = function (data) {
+    testStdout.push(data);
+    return true;
+  };
 
-  const { context } = await import("../src/services/context.js");
-  context.clear();
-  context.config = await Config.load(path.join(__dirname, ".."));
-
-  vi.spyOn(Command.prototype, "log").mockImplementation(_.noop);
-  vi.spyOn(Command.prototype, "warn").mockImplementation(_.noop as any);
-  vi.spyOn(Command.prototype, "error").mockImplementation(_.noop as any);
+  // clear testOutput so that we can `expect(testOutput).not.toContain("some output")` in tests where "some output" was output in another test
+  testStdout.length = 0;
 
   // clear all mocks so that we can `expect(someFunction).not.toHaveBeenCalled()` in tests where someFunction was called in another test
   vi.clearAllMocks();
-});
-
-afterEach(() => {
-  testDebug("ending %O", { test: expect.getState().currentTestName, path: expect.getState().testPath });
 });
 
 vi.mock("execa", () => ({ execa: vi.fn().mockName("execa").mockResolvedValue({}) }));

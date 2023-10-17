@@ -1,13 +1,10 @@
+import { timeoutMs } from "./timeout.js";
+
 export function sleep(ms = 0): Promise<void> {
   return new Promise((resolve) => (ms == 0 ? setImmediate(resolve) : setTimeout(resolve, ms)));
 }
 
-export async function sleepUntil(fn: () => boolean, { interval = 0, timeout = 5_000 } = {}): Promise<void> {
-  if (process.env["CI"]) {
-    // double the timeout in CI to account for slower machines
-    timeout *= 2;
-  }
-
+export async function sleepUntil(fn: () => boolean, { interval = 0, timeout = timeoutMs("5s") } = {}): Promise<void> {
   const start = isFinite(timeout) && Date.now();
 
   // eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition

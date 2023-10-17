@@ -1,16 +1,7 @@
 import { GraphQLError } from "graphql";
 import { describe, expect, it } from "vitest";
 import type { CloseEvent, ErrorEvent } from "ws";
-import Sync from "../../src/commands/sync.js";
-import { context } from "../../src/services/context.js";
-import {
-  ClientError,
-  FlagError,
-  InvalidSyncAppFlagError,
-  InvalidSyncFileError,
-  UnexpectedError,
-  YarnNotFoundError,
-} from "../../src/services/errors.js";
+import { ClientError, InvalidSyncFileError, UnexpectedError, YarnNotFoundError } from "../../src/services/errors.js";
 
 describe("UnexpectedError", () => {
   it("renders correctly", () => {
@@ -73,35 +64,12 @@ describe("YarnNotFoundError", () => {
   });
 });
 
-describe("FlagError", () => {
-  it("renders correctly", () => {
-    const error = new FlagError({ name: "bad", char: "b" }, "You were about to do something dangerous, so we stopped you.");
-    expect(error.render()).toMatchSnapshot();
-  });
-});
-
 describe("InvalidSyncFileError", () => {
   it("renders correctly", () => {
+    const dir = "~/gadget/test";
     const app = "test";
-    const dir = "~/gadget/test";
-    const sync = new Sync(["--app", app, dir], context.config);
-    sync.dir = dir;
 
-    const error = new InvalidSyncFileError(new Error(), sync, app);
-    expect(error.render()).toMatchSnapshot();
-  });
-});
-
-describe("InvalidSyncAppFlagError", () => {
-  it("renders correctly", () => {
-    const app = "not-test";
-    const dir = "~/gadget/test";
-    const sync = new Sync(["--app", app, dir], context.config);
-    sync.dir = dir;
-    sync.state = { app: "test" } as any;
-    sync.flags = { app } as any;
-
-    const error = new InvalidSyncAppFlagError(sync);
+    const error = new InvalidSyncFileError(new Error(), dir, app);
     expect(error.render()).toMatchSnapshot();
   });
 });

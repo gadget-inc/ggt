@@ -1,14 +1,17 @@
-import assert from "assert";
 import type { GraphQLError } from "graphql";
 import type { ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import type { ClientRequestArgs } from "http";
 import _ from "lodash";
+import assert from "node:assert";
 import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
-import { context } from "./context.js";
+import type { App } from "./app.js";
+import { breadcrumb } from "./breadcrumbs.js";
+import { config } from "./config.js";
 import { ClientError } from "./errors.js";
+import { loadCookie } from "./http.js";
 
 enum ConnectionStatus {
   CONNECTED,
@@ -28,21 +31,22 @@ export class Client {
 
   private _client: ReturnType<typeof createClient>;
 
-  constructor() {
-    assert(context.app, "context.app must be set before instantiating the Client");
-
+  constructor(app: App) {
     this._client = createClient({
-      url: `wss://${context.app.slug}.${context.domains.app}/edit/api/graphql-ws`,
+      url: `wss://${app.slug}.${config.domains.app}/edit/api/graphql-ws`,
       shouldRetry: _.constant(true),
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
-          assert(context.session, "context.session must be set before instantiating the Client");
+          // this cookie should be available since we were given an app which requires a cookie to load
+          const cookie = loadCookie();
+          assert(cookie, "missing cookie when connecting to GraphQL API");
+
           super(address, protocols, {
             ...wsOptions,
             headers: {
               ...wsOptions?.headers,
-              "user-agent": context.config.userAgent,
-              cookie: `session=${encodeURIComponent(context.session)};`,
+              "user-agent": config.versionFull,
+              cookie,
             },
           });
         }
@@ -52,21 +56,21 @@ export class Client {
           switch (this.status) {
             case ConnectionStatus.DISCONNECTED:
               this.status = ConnectionStatus.RECONNECTING;
-              context.addBreadcrumb({ category: "client", message: "Reconnecting" });
+              breadcrumb({ type: "info", category: "client", message: "Reconnecting" });
               break;
             case ConnectionStatus.RECONNECTING:
-              context.addBreadcrumb({ category: "client", message: "Retrying" });
+              breadcrumb({ type: "info", category: "client", message: "Retrying" });
               break;
             default:
-              context.addBreadcrumb({ category: "client", message: "Connecting" });
+              breadcrumb({ type: "info", category: "client", message: "Connecting" });
               break;
           }
         },
         connected: () => {
           if (this.status === ConnectionStatus.RECONNECTING) {
-            context.addBreadcrumb({ category: "client", message: "Reconnected" });
+            breadcrumb({ type: "info", category: "client", message: "Reconnected" });
           } else {
-            context.addBreadcrumb({ category: "client", message: "Connected" });
+            breadcrumb({ type: "info", category: "client", message: "Connected" });
           }
 
           // let the other on connected listeners see what status we're in
@@ -75,20 +79,32 @@ export class Client {
         closed: (e) => {
           const event = e as CloseEvent;
           if (event.wasClean) {
-            context.addBreadcrumb({ category: "client", message: "Connection Closed" });
+            breadcrumb({ type: "info", category: "client", message: "Connection Closed" });
             return;
           }
 
           if (this.status === ConnectionStatus.CONNECTED) {
             this.status = ConnectionStatus.DISCONNECTED;
-            context.addBreadcrumb({ category: "client", message: "Disconnected" });
+            breadcrumb({ type: "info", category: "client", message: "Disconnected" });
           }
         },
         error: (error) => {
           if (this.status == ConnectionStatus.RECONNECTING) {
-            context.addBreadcrumb({ category: "client", message: "Failed to reconnect", level: "error", data: { error } });
+            breadcrumb({
+              type: "error",
+              category: "client",
+              message: "Failed to reconnect",
+              level: "error",
+              data: { error },
+            });
           } else {
-            context.addBreadcrumb({ category: "client", message: "Connection error", level: "error", data: { error } });
+            breadcrumb({
+              type: "error",
+              category: "client",
+              message: "Connection error",
+              level: "error",
+              data: { error },
+            });
           }
         },
       },
@@ -109,7 +125,8 @@ export class Client {
         if (this.status == ConnectionStatus.RECONNECTING) {
           // subscribePayload.variables is supposed to be readonly (it's not) and payload.variables may have been re-assigned (it won't)
           (subscribePayload as any).variables = (payload.variables as any)();
-          context.addBreadcrumb({
+          breadcrumb({
+            type: "info",
             category: "client",
             message: "Re-sending GraphQL query",
             data: {
@@ -123,7 +140,8 @@ export class Client {
       subscribePayload = payload as SubscribePayload;
     }
 
-    context.addBreadcrumb({
+    breadcrumb({
+      type: "info",
       category: "client",
       message: "Sending GraphQL query",
       data: {

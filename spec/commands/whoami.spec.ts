@@ -1,32 +1,42 @@
 import { describe, expect, it, vi } from "vitest";
-import Whoami from "../../src/commands/whoami.js";
-import { context } from "../../src/services/context.js";
+import { run } from "../../src/commands/whoami.js";
+import * as user from "../../src/services/user.js";
+import { expectStdout } from "../util.js";
 
-describe("Whoami", () => {
-  it("logs the current user", async () => {
-    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+describe("whoami", () => {
+  it("outputs the current user", async () => {
+    vi.spyOn(user, "loadUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
 
-    await Whoami.run();
+    await run();
 
-    expect(context.getUser).toHaveBeenCalled();
-    expect(Whoami.prototype.log.mock.lastCall?.[0]).toMatchInlineSnapshot(`"You are logged in as Jane Doe (test@example.com)"`);
+    expect(user.loadUser).toHaveBeenCalled();
+    expectStdout().toMatchInlineSnapshot(`
+      "You are logged in as Jane Doe (test@example.com)
+      "
+    `);
   });
 
-  it("logs only the email if the current user's name is missing", async () => {
-    vi.spyOn(context, "getUser").mockResolvedValue({ id: 1, email: "test@example.com" });
+  it("outputs only the email if the current user's name is missing", async () => {
+    vi.spyOn(user, "loadUser").mockResolvedValue({ id: 1, email: "test@example.com" });
 
-    await Whoami.run();
+    await run();
 
-    expect(context.getUser).toHaveBeenCalled();
-    expect(Whoami.prototype.log).toHaveBeenLastCalledWith("You are logged in as test@example.com");
+    expect(user.loadUser).toHaveBeenCalled();
+    expectStdout().toMatchInlineSnapshot(`
+      "You are logged in as test@example.com
+      "
+    `);
   });
 
-  it("logs nothing if the current user is undefined", async () => {
-    vi.spyOn(context, "getUser").mockResolvedValue(undefined);
+  it("outputs 'not logged in' if the current user is undefined", async () => {
+    vi.spyOn(user, "loadUser").mockResolvedValue(undefined);
 
-    await Whoami.run();
+    await run();
 
-    expect(context.getUser).toHaveBeenCalled();
-    expect(Whoami.prototype.log).toHaveBeenLastCalledWith("You are not logged in");
+    expect(user.loadUser).toHaveBeenCalled();
+    expectStdout().toMatchInlineSnapshot(`
+      "You are not logged in
+      "
+    `);
   });
 });

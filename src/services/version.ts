@@ -73,7 +73,7 @@ export const warnIfUpdateAvailable = async () => {
           sprint`
             Update available! {red ${config.version}} -> {green ${tags.latest}}.
             Changelog: https://github.com/gadget-inc/ggt/releases/tag/v${tags.latest}
-            Run "npm install -g ggt" to update.
+            Run "npm install -g ${config.name}" to update.
           `,
           {
             padding: 1,

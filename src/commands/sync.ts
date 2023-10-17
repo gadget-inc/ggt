@@ -28,7 +28,7 @@ import {
 } from "../__generated__/graphql.js";
 import type { App } from "../services/app.js";
 import { getAvailableApps } from "../services/app.js";
-import { AppArg, type GlobalArgs } from "../services/args.js";
+import { AppArg } from "../services/args.js";
 import { breadcrumb } from "../services/breadcrumbs.js";
 import { Client, type Query } from "../services/client.js";
 import { config } from "../services/config.js";
@@ -38,6 +38,7 @@ import { notify } from "../services/notifications.js";
 import { println, sortByLevenshtein, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
 import { loadUserOrLogin } from "../services/user.js";
+import { type RootArgs } from "./root.js";
 
 export const usage = sprint`
   Sync your Gadget application's source code to and from
@@ -427,10 +428,10 @@ export class Sync {
    * - Ensures yarn v1 is installed.
    * - Prompts the user how to resolve conflicts if the local filesystem has changed since the last sync.
    */
-  async init(globalArgs: GlobalArgs): Promise<void> {
+  async init(rootArgs: RootArgs): Promise<void> {
     const user = await loadUserOrLogin();
 
-    this.args = _.defaults(arg(argSpec, { argv: globalArgs._ }), {
+    this.args = _.defaults(arg(argSpec, { argv: rootArgs._ }), {
       "--file-push-delay": 100,
       "--file-watch-debounce": 300,
       "--file-watch-poll-interval": 3_000,
@@ -513,7 +514,7 @@ export class Sync {
 
           Then run {dim ggt sync} again with the {dim --force} flag:
 
-            $ ggt sync ${globalArgs._.join(" ")} --force
+            $ ggt sync ${rootArgs._.join(" ")} --force
       `);
     }
 

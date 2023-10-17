@@ -1,24 +1,9 @@
-import type arg from "arg";
 import _ from "lodash";
 import { ArgError } from "./errors.js";
 import { sprint } from "./output.js";
 
-export const globalArgsSpec = {
-  "--help": Boolean,
-  "-h": "--help",
-  "--version": Boolean,
-  "-v": "--version",
-  "--debug": Boolean,
-  "-d": "--debug",
-};
-
-/**
- * The global arguments passed to the CLI.
- */
-export type GlobalArgs = arg.Result<typeof globalArgsSpec>;
-
-export const parseBoolean = (value: string) => {
-  return _.includes(["true", "1"], _.toLower(_.trim(value)));
+export const parseBoolean = (value: string | null | undefined) => {
+  return _.includes(["true", "1"], _.toLower(_.trim(value ?? "")));
 };
 
 export const AppArg = (value: string, name: string) => {

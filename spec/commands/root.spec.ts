@@ -1,17 +1,16 @@
+import debug from "debug";
 import _ from "lodash";
 import { afterEach } from "node:test";
 import { dedent } from "ts-dedent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { availableCommands, type Command } from "../../src/commands/index.js";
-import type { GlobalArgs } from "../../src/services/args.js";
 import { config } from "../../src/services/config.js";
 import { CLIError, IsBug } from "../../src/services/errors.js";
 import * as version from "../../src/services/version.js";
 import { expectProcessExit, expectStdout } from "../util.js";
 
 describe("root", () => {
-  let run: Command["run"];
-  let globalArgs: GlobalArgs;
+  let run: () => Promise<void>;
 
   beforeEach(async () => {
     // don't check for updates
@@ -22,28 +21,34 @@ describe("root", () => {
     vi.spyOn(config, "versionFull", "get").mockReturnValue("ggt/1.2.3 darwin-arm64 node-v16.0.0");
 
     ({ run } = await import("../../src/commands/root.js"));
-
-    globalArgs = { _: [] };
   });
 
   afterEach(() => {
     expect(version.warnIfUpdateAvailable).toHaveBeenCalled();
   });
 
-  it("prints the version when --version is given", async () => {
-    globalArgs["--version"] = true;
-    vi.spyOn(config, "version", "get").mockReturnValue("0.0.0");
+  it("enables debug when --debug is given", async () => {
+    process.argv = ["node", "ggt", "--debug"];
+    vi.spyOn(debug, "enable").mockImplementation(_.noop);
 
-    await expectProcessExit(() => run(globalArgs));
+    await expectProcessExit(run);
 
-    expectStdout().toMatchInlineSnapshot(`
-      "0.0.0
-      "
-    `);
+    expect(debug.enable).toHaveBeenCalledWith(`ggt:*`);
+  });
+
+  it.each(["--version", "-v"])("prints the version when %s is given", async (flag) => {
+    process.argv = ["node", "ggt", flag];
+    vi.spyOn(config, "version", "get").mockReturnValue("1.2.3");
+
+    await expectProcessExit(run);
+
+    expectStdout().toEqual("1.2.3\n");
   });
 
   it("prints root usage when no command is given", async () => {
-    await expectProcessExit(() => run(globalArgs));
+    process.argv = ["node", "ggt"];
+
+    await expectProcessExit(run);
 
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget
@@ -57,7 +62,7 @@ describe("root", () => {
       FLAGS
         -h, --help     Print command's usage
         -v, --version  Print version
-        -d, --debug    Print debug output
+            --debug    Print debug output
 
       COMMANDS
         sync    Sync your Gadget application's source code to and
@@ -71,9 +76,9 @@ describe("root", () => {
   });
 
   it("prints out a helpful message when an unknown command is given", async () => {
-    globalArgs._.push("foobar");
+    process.argv = ["node", "ggt", "foobar"];
 
-    await expectProcessExit(() => run(globalArgs), 1);
+    await expectProcessExit(run, 1);
 
     expectStdout().toMatchInlineSnapshot(`
       "Unknown command foobar
@@ -96,19 +101,18 @@ describe("root", () => {
       }
     });
 
-    it("prints the usage when --help is passed", async () => {
-      globalArgs._.push(name);
-      globalArgs["--help"] = true;
+    it.each(["--help", "-h"])("prints the usage when %s is passed", async (flag) => {
+      process.argv = ["node", "ggt", name, flag];
 
-      await expectProcessExit(() => run(globalArgs));
+      await expectProcessExit(run);
 
       expectStdout().toEqual(command.usage + "\n");
     });
 
     it("runs the command", async () => {
-      globalArgs._.push(name);
+      process.argv = ["node", "ggt", name];
 
-      await run(globalArgs);
+      await run();
 
       if (command.init) {
         expect(command.init).toHaveBeenCalled();
@@ -132,10 +136,10 @@ describe("root", () => {
       const error = new TestError();
       vi.spyOn(error, "capture");
 
-      globalArgs._.push(name);
+      process.argv = ["node", "ggt", name];
       vi.spyOn(command, "run").mockRejectedValue(error);
 
-      await expectProcessExit(() => run(globalArgs), 1);
+      await expectProcessExit(run, 1);
 
       expectStdout().toEqual(
         dedent`

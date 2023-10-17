@@ -1,5 +1,7 @@
+import arg from "arg";
+import debug from "debug";
 import _ from "lodash";
-import type { GlobalArgs } from "../services/args.js";
+import { parseBoolean } from "../services/args.js";
 import { config } from "../services/config.js";
 import { CLIError } from "../services/errors.js";
 import { println, sortByLevenshtein, sprint } from "../services/output.js";
@@ -18,7 +20,7 @@ export const usage = sprint`
     {bold FLAGS}
       -h, --help     {gray Print command's usage}
       -v, --version  {gray Print version}
-      -d, --debug    {gray Print debug output}
+          --debug    {gray Print debug output}
 
     {bold COMMANDS}
       sync    Sync your Gadget application's source code to and
@@ -29,15 +31,35 @@ export const usage = sprint`
       whoami  Print the currently logged in account.
 `;
 
-export const run = async (globalArgs: GlobalArgs) => {
+export const rootArgsSpec = {
+  "--help": Boolean,
+  "-h": "--help",
+  "--version": Boolean,
+  "-v": "--version",
+  "--debug": Boolean,
+};
+
+export type RootArgs = arg.Result<typeof rootArgsSpec>;
+
+export const run = async () => {
   await warnIfUpdateAvailable();
 
-  if (globalArgs["--version"]) {
+  const rootArgs = arg(rootArgsSpec, {
+    argv: process.argv.slice(2),
+    permissive: true,
+    stopAtPositional: false,
+  });
+
+  if (rootArgs["--debug"] ?? parseBoolean(process.env["DEBUG"])) {
+    debug.enable("ggt:*");
+  }
+
+  if (rootArgs["--version"]) {
     println(config.version);
     process.exit(0);
   }
 
-  const command = globalArgs._.shift();
+  const command = rootArgs._.shift();
   if (_.isNil(command)) {
     println(usage);
     process.exit(0);
@@ -57,14 +79,14 @@ export const run = async (globalArgs: GlobalArgs) => {
 
   const cmd: Command = await import(`./${command}.js`);
 
-  if (globalArgs["--help"]) {
+  if (rootArgs["--help"]) {
     println(cmd.usage);
     process.exit(0);
   }
 
   try {
-    await cmd.init?.(globalArgs);
-    await cmd.run(globalArgs);
+    await cmd.init?.(rootArgs);
+    await cmd.run(rootArgs);
   } catch (cause) {
     const error = CLIError.from(cause);
     println(error.render());

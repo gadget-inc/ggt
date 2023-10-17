@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { z } from "zod";
 import { config } from "./config.js";
-import { http, loadCookie, swallowUnauthorized } from "./http.js";
+import { http, loadCookie } from "./http.js";
 import type { User } from "./user.js";
 
 export const App = z.object({
@@ -22,17 +22,12 @@ export const getAvailableApps = async (user: User): Promise<App[]> => {
     return [];
   }
 
-  try {
-    const json = await http({
-      url: `https://${config.domains.services}/auth/api/apps`,
-      headers: { cookie },
-      responseType: "json",
-      resolveBodyOnly: true,
-    });
+  const json = await http({
+    url: `https://${config.domains.services}/auth/api/apps`,
+    headers: { cookie },
+    responseType: "json",
+    resolveBodyOnly: true,
+  });
 
-    return _.map(z.array(App).parse(json), (app) => ({ ...app, user }));
-  } catch (error) {
-    swallowUnauthorized(error);
-    return [];
-  }
+  return _.map(z.array(App).parse(json), (app) => ({ ...app, user }));
 };

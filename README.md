@@ -64,7 +64,7 @@ USAGE
 FLAGS
   -h, --help     Print command's usage
   -v, --version  Print version
-  -d, --debug    Print debug output
+      --debug    Print debug output
 
 COMMANDS
   sync    Sync your Gadget application's source code to and
@@ -115,10 +115,10 @@ COMMANDS
       to the one used by Git (https://git-scm.com/docs/gitignore).
 
       The following files and directories are always ignored:
+        • .DS_Store
         • .gadget
         • .git
         • node_modules
-        • .DS_STORE
 
       Note:
         • If you have separate development and production environments,

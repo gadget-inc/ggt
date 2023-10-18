@@ -64,7 +64,7 @@
         "@types/inquirer": "^9.0.4",
         "@types/lodash": "^4.14.200",
         "@types/ms": "^0.7.33",
-        "@types/node": "^20.8.6",
+        "@types/node": "^20.8.7",
         "@types/node-notifier": "^8.0.4",
         "@types/normalize-path": "^3.0.1",
         "@types/pluralize": "^0.0.31",
@@ -4768,9 +4768,9 @@
       "dev": true
     },
     "node_modules/@types/node": {
-      "version": "20.8.6",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-20.8.6.tgz",
-      "integrity": "sha512-eWO4K2Ji70QzKUqRy6oyJWUeB7+g2cRagT3T/nxYibYcT4y2BDL8lqolRXjTHmkZCdJfIPaY73KbJAZmcryxTQ==",
+      "version": "20.8.7",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-20.8.7.tgz",
+      "integrity": "sha512-21TKHHh3eUHIi2MloeptJWALuCu5H7HQTdTrWIFReA8ad+aggoX+lRes3ex7/FtpC+sVUpFMQ+QTfYr74mruiQ==",
       "dev": true,
       "dependencies": {
         "undici-types": "~5.25.1"
@@ -19024,9 +19024,9 @@
       "dev": true
     },
     "@types/node": {
-      "version": "20.8.6",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-20.8.6.tgz",
-      "integrity": "sha512-eWO4K2Ji70QzKUqRy6oyJWUeB7+g2cRagT3T/nxYibYcT4y2BDL8lqolRXjTHmkZCdJfIPaY73KbJAZmcryxTQ==",
+      "version": "20.8.7",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-20.8.7.tgz",
+      "integrity": "sha512-21TKHHh3eUHIi2MloeptJWALuCu5H7HQTdTrWIFReA8ad+aggoX+lRes3ex7/FtpC+sVUpFMQ+QTfYr74mruiQ==",
       "dev": true,
       "requires": {
         "undici-types": "~5.25.1"

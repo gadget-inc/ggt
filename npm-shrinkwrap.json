@@ -63,7 +63,7 @@
         "@types/fs-extra": "^11.0.2",
         "@types/inquirer": "^9.0.4",
         "@types/lodash": "^4.14.199",
-        "@types/ms": "^0.7.32",
+        "@types/ms": "^0.7.33",
         "@types/node": "^20.8.6",
         "@types/node-notifier": "^8.0.4",
         "@types/normalize-path": "^3.0.0",
@@ -4762,9 +4762,9 @@
       "dev": true
     },
     "node_modules/@types/ms": {
-      "version": "0.7.32",
-      "resolved": "https://registry.npmjs.org/@types/ms/-/ms-0.7.32.tgz",
-      "integrity": "sha512-xPSg0jm4mqgEkNhowKgZFBNtwoEwF6gJ4Dhww+GFpm3IgtNseHQZ5IqdNwnquZEoANxyDAKDRAdVo4Z72VvD/g==",
+      "version": "0.7.33",
+      "resolved": "https://registry.npmjs.org/@types/ms/-/ms-0.7.33.tgz",
+      "integrity": "sha512-AuHIyzR5Hea7ij0P9q7vx7xu4z0C28ucwjAZC0ja7JhINyCnOw8/DnvAPQQ9TfOlCtZAmCERKQX9+o1mgQhuOQ==",
       "dev": true
     },
     "node_modules/@types/node": {
@@ -19017,9 +19017,9 @@
       "dev": true
     },
     "@types/ms": {
-      "version": "0.7.32",
-      "resolved": "https://registry.npmjs.org/@types/ms/-/ms-0.7.32.tgz",
-      "integrity": "sha512-xPSg0jm4mqgEkNhowKgZFBNtwoEwF6gJ4Dhww+GFpm3IgtNseHQZ5IqdNwnquZEoANxyDAKDRAdVo4Z72VvD/g==",
+      "version": "0.7.33",
+      "resolved": "https://registry.npmjs.org/@types/ms/-/ms-0.7.33.tgz",
+      "integrity": "sha512-AuHIyzR5Hea7ij0P9q7vx7xu4z0C28ucwjAZC0ja7JhINyCnOw8/DnvAPQQ9TfOlCtZAmCERKQX9+o1mgQhuOQ==",
       "dev": true
     },
     "@types/node": {

@@ -66,7 +66,7 @@
         "@types/ms": "^0.7.32",
         "@types/node": "^20.8.6",
         "@types/node-notifier": "^8.0.4",
-        "@types/normalize-path": "^3.0.0",
+        "@types/normalize-path": "^3.0.1",
         "@types/pluralize": "^0.0.31",
         "@types/which": "^3.0.0",
         "@types/ws": "^8.5.8",
@@ -4791,9 +4791,10 @@
       "license": "MIT"
     },
     "node_modules/@types/normalize-path": {
-      "version": "3.0.0",
-      "dev": true,
-      "license": "MIT"
+      "version": "3.0.1",
+      "resolved": "https://registry.npmjs.org/@types/normalize-path/-/normalize-path-3.0.1.tgz",
+      "integrity": "sha512-zELDXIlrZySwjFjU6HMUfvt0GqQPKSwBOyWgae9Tcsc/hFCkvYavZDXruVHyVasN2pCxnluh2S4rA0iuer7Z2g==",
+      "dev": true
     },
     "node_modules/@types/pluralize": {
       "version": "0.0.31",
@@ -19045,7 +19046,9 @@
       "dev": true
     },
     "@types/normalize-path": {
-      "version": "3.0.0",
+      "version": "3.0.1",
+      "resolved": "https://registry.npmjs.org/@types/normalize-path/-/normalize-path-3.0.1.tgz",
+      "integrity": "sha512-zELDXIlrZySwjFjU6HMUfvt0GqQPKSwBOyWgae9Tcsc/hFCkvYavZDXruVHyVasN2pCxnluh2S4rA0iuer7Z2g==",
       "dev": true
     },
     "@types/pluralize": {

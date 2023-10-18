@@ -90,7 +90,7 @@
     "@types/ms": "^0.7.32",
     "@types/node": "^20.8.6",
     "@types/node-notifier": "^8.0.4",
-    "@types/normalize-path": "^3.0.0",
+    "@types/normalize-path": "^3.0.1",
     "@types/pluralize": "^0.0.31",
     "@types/which": "^3.0.0",
     "@types/ws": "^8.5.8",

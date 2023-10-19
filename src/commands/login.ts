@@ -6,7 +6,7 @@ import { breadcrumb } from "../services/breadcrumbs.js";
 import { config } from "../services/config.js";
 import { println, sprint } from "../services/output.js";
 import { writeSession } from "../services/session.js";
-import { loadUser } from "../services/user.js";
+import { getUser } from "../services/user.js";
 
 export const usage = sprint`
     Log in to your account.
@@ -40,7 +40,7 @@ export const run = async () => {
 
           writeSession(session);
 
-          const user = await loadUser();
+          const user = await getUser();
           assert(user, "missing user after successful login");
 
           if (user.name) {

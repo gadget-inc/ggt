@@ -7,37 +7,29 @@ import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import inquirer from "inquirer";
 import _ from "lodash";
-import normalizePath from "normalize-path";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
 import pluralize from "pluralize";
-import { dedent } from "ts-dedent";
 import FSWatcher from "watcher";
 import which from "which";
-import {
-  FileSyncEncoding,
-  type FileSyncChangedEventInput,
-  type FileSyncDeletedEventInput,
-  type PublishFileSyncEventsMutation,
-  type PublishFileSyncEventsMutationVariables,
-  type RemoteFileSyncEventsSubscription,
-  type RemoteFileSyncEventsSubscriptionVariables,
-  type RemoteFilesVersionQuery,
-  type RemoteFilesVersionQueryVariables,
-} from "../__generated__/graphql.js";
-import type { App } from "../services/app.js";
-import { getAvailableApps } from "../services/app.js";
+import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
 import { breadcrumb } from "../services/breadcrumbs.js";
-import { Client, type Query } from "../services/client.js";
+import { Client } from "../services/client.js";
 import { config } from "../services/config.js";
-import { ArgError, InvalidSyncFileError, YarnNotFoundError } from "../services/errors.js";
-import { FSIgnorer, ignoreEnoent, isEmptyDir, walkDir } from "../services/fs-utils.js";
+import { YarnNotFoundError } from "../services/errors.js";
+import {
+  FileSync,
+  PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+  REMOTE_FILES_VERSION_QUERY,
+  REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+} from "../services/filesync.js";
+import { swallowEnoent } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";
-import { println, sortByLevenshtein, sprint } from "../services/output.js";
+import { println, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
-import { loadUserOrLogin } from "../services/user.js";
+import { getUserOrLogin } from "../services/user.js";
 import { type RootArgs } from "./root.js";
 
 export const usage = sprint`
@@ -119,121 +111,6 @@ export const usage = sprint`
     Goodbye!
 `;
 
-/**
- * Holds information about the state of the local filesystem. It's persisted to `.gadget/sync.json`.
- */
-export class SyncState {
-  private _inner: {
-    app: string;
-    filesVersion: string;
-    mtime: number;
-  };
-
-  /**
-   * Saves the current state of the filesystem to `.gadget/sync.json`.
-   */
-  #save = _.debounce(() => {
-    fs.outputJSONSync(path.join(this._rootDir, ".gadget/sync.json"), this._inner, { spaces: 2 });
-    breadcrumb({
-      type: "info",
-      category: "sync",
-      message: "Saved sync state",
-      data: { state: this._inner },
-    });
-  }, 100);
-
-  private constructor(
-    private _rootDir: string,
-    inner: { app: string; filesVersion: string; mtime: number },
-  ) {
-    this._inner = inner;
-  }
-
-  /**
-   * The app this filesystem is synced to.
-   */
-  get app(): string {
-    return this._inner.app;
-  }
-
-  /**
-   * The last filesVersion that was successfully written to the filesystem. This is used to determine if the remote
-   * filesystem is ahead of the local one.
-   */
-  get filesVersion(): bigint {
-    return BigInt(this._inner.filesVersion);
-  }
-
-  set filesVersion(value: bigint | string) {
-    this._inner.filesVersion = String(value);
-    this.#save();
-  }
-
-  /**
-   * The largest mtime that was seen on the local filesystem before `ggt sync` stopped. This is used to determine if
-   * the local filesystem has changed since the last sync.
-   *
-   * Note: This does not include the mtime of files that are ignored.
-   */
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  get mtime(): number {
-    return this._inner.mtime;
-  }
-
-  set mtime(value: number) {
-    this._inner.mtime = value;
-    this.#save();
-  }
-
-  /**
-   * Creates a new SyncFile instance and saves it to the filesystem.
-   *
-   * @param rootDir The root directory of the app.
-   * @param app The app slug.
-   * @returns A new SyncFile instance.
-   */
-  static create(rootDir: string, opts: { app: string; filesVersion?: string; mtime?: number }): SyncState {
-    const state = new SyncState(rootDir, { filesVersion: "0", mtime: 0, ...opts });
-    state.#save();
-    state.flush();
-    return state;
-  }
-
-  /**
-   * Loads a SyncFile instance from the filesystem.
-   *
-   * @param rootDir The root directory of the app.
-   * @returns The SyncFile instance.
-   */
-  static load(rootDir: string): SyncState {
-    const state = fs.readJsonSync(path.join(rootDir, ".gadget/sync.json"));
-
-    assert(_.isString(state.app), "missing or invalid app");
-    assert(_.isString(state.filesVersion), "missing or invalid filesVersion");
-    assert(_.isNumber(state.mtime), "missing or invalid mtime");
-
-    return new SyncState(rootDir, {
-      app: state.app,
-      filesVersion: state.filesVersion,
-      mtime: state.mtime,
-    });
-  }
-
-  /**
-   * Flushes any pending writes to the filesystem.
-   */
-  flush(): void {
-    this.#save.flush();
-  }
-
-  /**
-   * @returns The JSON representation of this instance.
-   */
-  toJSON() {
-    return this._inner;
-  }
-}
-
 export enum SyncStatus {
   STARTING,
   RUNNING,
@@ -246,37 +123,6 @@ export enum Action {
   MERGE = "Merge local files with remote ones",
   RESET = "Reset local files to remote ones",
 }
-
-export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
-  subscription RemoteFileSyncEvents($localFilesVersion: String!) {
-    remoteFileSyncEvents(localFilesVersion: $localFilesVersion, encoding: base64) {
-      remoteFilesVersion
-      changed {
-        path
-        mode
-        content
-        encoding
-      }
-      deleted {
-        path
-      }
-    }
-  }
-`) as Query<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
-
-export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
-  query RemoteFilesVersion {
-    remoteFilesVersion
-  }
-`) as Query<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables>;
-
-export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
-  mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
-    publishFileSyncEvents(input: $input) {
-      remoteFilesVersion
-    }
-  }
-`) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
 
 const argSpec = {
   "-a": "--app",
@@ -298,16 +144,6 @@ export class Sync {
   status = SyncStatus.STARTING;
 
   /**
-   * The absolute path to the directory to sync files to.
-   */
-  dir!: string;
-
-  /**
-   * The app this filesystem is synced to.
-   */
-  app!: App;
-
-  /**
    * A list of filepaths that have changed because of a remote file-sync event. This is used to avoid sending files that
    * we recently received from a remote file-sync event.
    */
@@ -324,11 +160,6 @@ export class Sync {
   client!: Client;
 
   /**
-   * Loads the .ignore file and provides methods for checking if a file should be ignored.
-   */
-  ignorer!: FSIgnorer;
-
-  /**
    * Watches the local filesystem for changes.
    */
   watcher!: FSWatcher;
@@ -336,7 +167,7 @@ export class Sync {
   /**
    * The state of the local filesystem.
    */
-  state!: SyncState;
+  filesync!: FileSync;
 
   /**
    * A debounced function that enqueue's local file changes to be sent to Gadget.
@@ -347,47 +178,6 @@ export class Sync {
    * Gracefully stops the sync.
    */
   stop!: (error?: unknown) => Promise<void>;
-
-  /**
-   * Turns an absolute filepath into a relative one from {@linkcode dir}.
-   */
-  relative(to: string): string {
-    return path.relative(this.dir, to);
-  }
-
-  /**
-   * Combines path segments into an absolute filepath that starts at {@linkcode dir}.
-   */
-  absolute(...pathSegments: string[]): string {
-    return path.resolve(this.dir, ...pathSegments);
-  }
-
-  /**
-   * Similar to {@linkcode relative} in that it turns a filepath into a relative one from {@linkcode dir}. However, it
-   * also changes any slashes to be posix/unix-like forward slashes, condenses repeated slashes into a single slash, and
-   * adds a trailing slash if the filepath is a directory.
-   *
-   * This is used when sending file-sync events to Gadget to ensure that the paths are consistent across platforms.
-   *
-   * @see https://www.npmjs.com/package/normalize-path
-   */
-  normalize(filepath: string, isDirectory: boolean): string {
-    return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath) + (isDirectory ? "/" : "");
-  }
-
-  /**
-   * Instead of deleting files, we move them to .gadget/backup so that users can recover them if something goes wrong.
-   */
-  async softDelete(normalizedPath: string): Promise<void> {
-    try {
-      await fs.move(this.absolute(normalizedPath), this.absolute(".gadget/backup", normalizedPath), {
-        overwrite: true,
-      });
-    } catch (error) {
-      // replicate the behavior of `rm -rf` and ignore ENOENT
-      ignoreEnoent(error);
-    }
-  }
 
   /**
    * Pretty-prints changed and deleted filepaths to the console.
@@ -429,8 +219,6 @@ export class Sync {
    * - Prompts the user how to resolve conflicts if the local filesystem has changed since the last sync.
    */
   async init(rootArgs: RootArgs): Promise<void> {
-    const user = await loadUserOrLogin();
-
     this.args = _.defaults(arg(argSpec, { argv: rootArgs._ }), {
       "--file-push-delay": 100,
       "--file-watch-debounce": 300,
@@ -439,139 +227,29 @@ export class Sync {
       "--file-watch-rename-timeout": 1_250,
     });
 
-    this.dir =
-      config.windows && this.args._[0] && _.startsWith(this.args._[0], "~/")
-        ? path.join(config.homeDir, this.args._[0].slice(2))
-        : path.resolve(this.args._[0] || ".");
-
-    const getApp = async (): Promise<string> => {
-      if (this.args["--app"]) {
-        return this.args["--app"];
-      }
-
-      // this.state can be undefined if the user is running `ggt sync` for the first time
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (this.state?.app) {
-        return this.state.app;
-      }
-
-      const selected = await inquirer.prompt<{ app: string }>({
-        type: "list",
-        name: "app",
-        message: "Please select the app to sync to.",
-        choices: await getAvailableApps(user).then((apps) => _.map(apps, "slug")),
-      });
-
-      return selected.app;
-    };
-
-    if (await isEmptyDir(this.dir)) {
-      const app = await getApp();
-      this.state = SyncState.create(this.dir, { app });
-      breadcrumb({
-        type: "info",
-        category: "sync",
-        message: "Created sync state",
-        data: { state: this.state },
-      });
-    } else {
-      try {
-        this.state = SyncState.load(this.dir);
-        breadcrumb({
-          type: "info",
-          category: "sync",
-          message: "Loaded sync state",
-          data: { state: this.state },
-        });
-      } catch (error) {
-        if (!this.args["--force"]) {
-          throw new InvalidSyncFileError(error, this.dir, this.args["--app"]);
-        }
-        const app = await getApp();
-        this.state = SyncState.create(this.dir, { app });
-        breadcrumb({
-          type: "info",
-          category: "sync",
-          message: "Created sync state (forced)",
-          data: { state: this.state },
-        });
-      }
-    }
-
-    if (this.args["--app"] && this.args["--app"] !== this.state.app && !this.args["--force"]) {
-      throw new ArgError(sprint`
-          You were about to sync the following app to the following directory:
-
-            {dim ${this.args["--app"]}} → {dim ${this.dir}}
-
-          However, that directory has already been synced with this app:
-
-            {dim ${this.state.app}}
-
-          If you're sure that you want to sync:
-
-            {dim ${this.args["--app"]}} → {dim ${this.dir}}
-
-          Then run {dim ggt sync} again with the {dim --force} flag:
-
-            $ ggt sync ${rootArgs._.join(" ")} --force
-      `);
-    }
-
-    const availableApps = await getAvailableApps(user);
-    const app = _.find(availableApps, (a) => a.slug == this.state.app);
-
-    if (!app) {
-      if (availableApps.length == 0) {
-        throw new ArgError(
-          sprint`
-              Unknown application:
-
-                ${this.state.app}
-
-              It doesn't look like you have any applications.
-
-              Visit https://gadget.new to create one!
-          `,
-        );
-      }
-
-      const sorted = sortByLevenshtein(this.state.app, _.map(availableApps, "slug")).slice(0, 5);
-      let message = sprint`
-        Unknown application:
-
-          ${this.state.app}
-
-        Did you mean one of these?
-
-      `;
-      for (const slug of sorted) {
-        message += `\n  • ${slug}`;
-      }
-      throw new ArgError(message);
-    }
-
-    this.app = app;
-    this.client = new Client(this.app);
-
-    // local files/folders that should never be published
-    this.ignorer = new FSIgnorer(this.dir, ["node_modules", ".gadget", ".git", ".DS_Store"]);
-
     if (!which.sync("yarn", { nothrow: true })) {
       throw new YarnNotFoundError();
     }
 
-    await fs.ensureDir(this.dir);
+    const user = await getUserOrLogin();
+
+    this.filesync = await FileSync.init(user, {
+      dir: rootArgs._[0],
+      app: this.args["--app"],
+      force: this.args["--force"],
+      extraIgnorePaths: [".gadget"],
+    });
+
+    this.client = new Client(this.filesync.app);
 
     const { remoteFilesVersion } = await this.client.queryUnwrap({ query: REMOTE_FILES_VERSION_QUERY });
-    const hasRemoteChanges = BigInt(remoteFilesVersion) > BigInt(this.state.filesVersion);
+    const hasRemoteChanges = BigInt(remoteFilesVersion) > this.filesync.filesVersion;
 
     const getChangedFiles = async (): Promise<Map<string, Stats>> => {
       const files = new Map();
-      for await (const absolutePath of walkDir(this.dir, { ignorer: this.ignorer })) {
-        const stats = await fs.stat(absolutePath);
-        if (stats.mtime.getTime() > this.state.mtime) {
-          files.set(this.normalize(absolutePath, stats.isDirectory()), stats);
+      for await (const [absolutePath, stats] of this.filesync.walkDir()) {
+        if (stats.mtime.getTime() > this.filesync.mtime) {
+          files.set(this.filesync.normalize(absolutePath, stats.isDirectory()), stats);
         }
       }
 
@@ -594,7 +272,7 @@ export class Sync {
       category: "sync",
       message: "Initializing",
       data: {
-        state: this.state,
+        state: this.filesync.state,
         remoteFilesVersion,
         hasRemoteChanges,
         hasLocalChanges,
@@ -622,7 +300,7 @@ export class Sync {
           category: "sync",
           message: "Merging local changes",
           data: {
-            state: this.state,
+            state: this.filesync.state,
             remoteFilesVersion,
             changed: Array.from(changedFiles.keys()),
           },
@@ -637,14 +315,14 @@ export class Sync {
             input: {
               expectedRemoteFilesVersion: remoteFilesVersion,
               changed: await pMap(changedFiles, async ([normalizedPath, stats]) => {
-                if (stats.mtime.getTime() > this.state.mtime) {
-                  this.state.mtime = stats.mtime.getTime();
+                if (stats.mtime.getTime() > this.filesync.mtime) {
+                  this.filesync.mtime = stats.mtime.getTime();
                 }
 
                 return {
                   path: normalizedPath,
                   mode: stats.mode,
-                  content: stats.isDirectory() ? "" : await fs.readFile(this.absolute(normalizedPath), "base64"),
+                  content: stats.isDirectory() ? "" : await fs.readFile(this.filesync.absolute(normalizedPath), "base64"),
                   encoding: FileSyncEncoding.Base64,
                 };
               }),
@@ -660,7 +338,7 @@ export class Sync {
           category: "sync",
           message: "Resetting local changes",
           data: {
-            state: this.state,
+            state: this.filesync.state,
             remoteFilesVersion,
             changed: Array.from(changedFiles.keys()),
           },
@@ -668,8 +346,8 @@ export class Sync {
 
         // delete all the local files that have changed since the last sync and set the files version to 0 so we receive
         // all the remote files again, including any files that we just deleted that still exist
-        await pMap(changedFiles.keys(), (normalizedPath) => this.softDelete(normalizedPath));
-        this.state.filesVersion = 0n;
+        await pMap(changedFiles.keys(), (normalizedPath) => this.filesync.softDelete(normalizedPath));
+        this.filesync.filesVersion = 0n;
         break;
       }
       case Action.CANCEL: {
@@ -682,7 +360,7 @@ export class Sync {
       category: "sync",
       message: "Initialized",
       data: {
-        state: this.state,
+        state: this.filesync.state,
       },
     });
   }
@@ -706,7 +384,7 @@ export class Sync {
         message: "Stopping",
         level: error ? "error" : undefined,
         data: {
-          state: this.state,
+          state: this.filesync.state,
           error,
         },
       });
@@ -717,7 +395,7 @@ export class Sync {
         this.publish.flush();
         await this.queue.onIdle();
       } finally {
-        this.state.flush();
+        this.filesync.flush();
         await Promise.allSettled([this.watcher.close(), this.client.dispose()]);
 
         this.status = SyncStatus.STOPPED;
@@ -728,7 +406,7 @@ export class Sync {
           category: "sync",
           message: "Stopped",
           data: {
-            state: this.state,
+            state: this.filesync.state,
           },
         });
       }
@@ -755,7 +433,7 @@ export class Sync {
     const unsubscribe = this.client.subscribeUnwrap(
       {
         query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-        variables: () => ({ localFilesVersion: String(this.state.filesVersion) }),
+        variables: () => ({ localFilesVersion: String(this.filesync.filesVersion) }),
       },
       {
         error: (error) => void this.stop(error),
@@ -765,7 +443,7 @@ export class Sync {
             category: "sync",
             message: "Received file sync events",
             data: {
-              state: this.state,
+              state: this.filesync.state,
               remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
               changed: _.map(remoteFileSyncEvents.changed, "path"),
               deleted: _.map(remoteFileSyncEvents.deleted, "path"),
@@ -775,7 +453,7 @@ export class Sync {
           const remoteFilesVersion = remoteFileSyncEvents.remoteFilesVersion;
 
           // we always ignore .gadget/ files so that we don't publish them (they're managed by gadget), but we still want to receive them
-          const filter = (event: { path: string }) => _.startsWith(event.path, ".gadget/") || !this.ignorer.ignores(event.path);
+          const filter = (event: { path: string }) => _.startsWith(event.path, ".gadget/") || !this.filesync.ignores(event.path);
           const changed = _.filter(remoteFileSyncEvents.changed, filter);
           const deleted = _.filter(remoteFileSyncEvents.deleted, filter);
 
@@ -785,7 +463,7 @@ export class Sync {
               category: "sync",
               message: "Processing received file sync events",
               data: {
-                state: this.state,
+                state: this.filesync.state,
                 remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
                 changed: _.map(remoteFileSyncEvents.changed, "path"),
                 deleted: _.map(remoteFileSyncEvents.deleted, "path"),
@@ -793,15 +471,15 @@ export class Sync {
             });
 
             if (!changed.length && !deleted.length) {
-              if (BigInt(remoteFilesVersion) > this.state.filesVersion) {
+              if (BigInt(remoteFilesVersion) > this.filesync.filesVersion) {
                 // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
-                this.state.filesVersion = remoteFilesVersion;
+                this.filesync.filesVersion = remoteFilesVersion;
                 breadcrumb({
                   type: "info",
                   category: "sync",
                   message: "Received empty file sync events",
                   data: {
-                    state: this.state,
+                    state: this.filesync.state,
                     remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
                   },
                 });
@@ -816,13 +494,13 @@ export class Sync {
             // into it. if processed out of order the new file will be deleted as well
             await pMap(deleted, async (file) => {
               this.recentRemoteChanges.add(file.path);
-              await this.softDelete(file.path);
+              await this.filesync.softDelete(file.path);
             });
 
             await pMap(changed, async (file) => {
               this.recentRemoteChanges.add(file.path);
 
-              const absolutePath = this.absolute(file.path);
+              const absolutePath = this.filesync.absolute(file.path);
               if (_.endsWith(file.path, "/")) {
                 await fs.ensureDir(absolutePath, { mode: 0o755 });
                 return;
@@ -836,34 +514,34 @@ export class Sync {
               await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
               await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
-              if (absolutePath == this.absolute("yarn.lock")) {
-                await execa("yarn", ["install"], { cwd: this.dir }).catch((error) => {
+              if (absolutePath == this.filesync.absolute("yarn.lock")) {
+                await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch((error) => {
                   breadcrumb({
                     type: "error",
                     category: "sync",
                     message: "Yarn install failed",
                     level: "error",
                     data: {
-                      state: this.state,
+                      state: this.filesync.state,
                       error,
                     },
                   });
                 });
               }
 
-              if (absolutePath == this.ignorer.filepath) {
-                this.ignorer.reload();
+              if (absolutePath == this.filesync.absolute(".ignore")) {
+                this.filesync.reloadIgnorePaths();
               }
             });
 
-            this.state.filesVersion = remoteFilesVersion;
+            this.filesync.filesVersion = remoteFilesVersion;
 
             // always remove the root directory from recentRemoteChanges
             this.recentRemoteChanges.delete("./");
 
             // remove any files in recentRemoteChanges that are ignored (e.g. .gadget/ files)
             for (const filepath of this.recentRemoteChanges) {
-              if (this.ignorer.ignores(filepath)) {
+              if (this.filesync.ignores(filepath)) {
                 this.recentRemoteChanges.delete(filepath);
               }
             }
@@ -873,7 +551,7 @@ export class Sync {
               category: "sync",
               message: "Processed received file sync events",
               data: {
-                state: this.state,
+                state: this.filesync.state,
                 remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
                 changed: _.map(remoteFileSyncEvents.changed, "path"),
                 deleted: _.map(remoteFileSyncEvents.deleted, "path"),
@@ -902,7 +580,7 @@ export class Sync {
           category: "sync",
           message: "Publishing file sync events",
           data: {
-            state: this.state,
+            state: this.filesync.state,
             localFiles: Array.from(localFiles.keys()),
           },
         });
@@ -921,13 +599,13 @@ export class Sync {
               path: normalizedPath,
               oldPath: "oldPath" in file ? file.oldPath : undefined,
               mode: file.mode,
-              content: file.isDirectory ? "" : await fs.readFile(this.absolute(normalizedPath), FileSyncEncoding.Base64),
+              content: file.isDirectory ? "" : await fs.readFile(this.filesync.absolute(normalizedPath), FileSyncEncoding.Base64),
               encoding: FileSyncEncoding.Base64,
             });
           } catch (error) {
             // A file could have been changed and then deleted before we process the change event, so the readFile
             // above will raise an ENOENT. This is normal operation, so just ignore this event.
-            ignoreEnoent(error);
+            swallowEnoent(error);
           }
         });
 
@@ -937,11 +615,11 @@ export class Sync {
 
         const { publishFileSyncEvents } = await this.client.queryUnwrap({
           query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-          variables: { input: { expectedRemoteFilesVersion: String(this.state.filesVersion), changed, deleted } },
+          variables: { input: { expectedRemoteFilesVersion: String(this.filesync.filesVersion), changed, deleted } },
         });
 
-        if (BigInt(publishFileSyncEvents.remoteFilesVersion) > this.state.filesVersion) {
-          this.state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
+        if (BigInt(publishFileSyncEvents.remoteFilesVersion) > this.filesync.filesVersion) {
+          this.filesync.filesVersion = publishFileSyncEvents.remoteFilesVersion;
         }
 
         breadcrumb({
@@ -949,7 +627,7 @@ export class Sync {
           type: "info",
           message: "Published file sync events",
           data: {
-            state: this.state,
+            state: this.filesync.state,
             remoteFilesVersion: publishFileSyncEvents.remoteFilesVersion,
             changed: _.map(changed, "path"),
             deleted: _.map(deleted, "path"),
@@ -961,7 +639,7 @@ export class Sync {
       });
     }, this.args["--file-push-delay"]);
 
-    this.watcher = new FSWatcher(this.dir, {
+    this.watcher = new FSWatcher(this.filesync.dir, {
       // paths that we never want to publish
       ignore: /(\.gadget|\.git|node_modules|\.DS_Store)/,
       // don't emit an event for every watched file on boot
@@ -979,11 +657,11 @@ export class Sync {
     this.watcher.on("all", (event: string, absolutePath: string, renamedPath: string) => {
       const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
       const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
-      const normalizedPath = this.normalize(filepath, isDirectory);
+      const normalizedPath = this.filesync.normalize(filepath, isDirectory);
 
-      if (filepath == this.ignorer.filepath) {
-        this.ignorer.reload();
-      } else if (this.ignorer.ignores(filepath)) {
+      if (filepath == this.filesync.absolute(".ignore")) {
+        this.filesync.reloadIgnorePaths();
+      } else if (this.filesync.ignores(filepath)) {
         breadcrumb({
           type: "debug",
           category: "sync",
@@ -1000,14 +678,14 @@ export class Sync {
       try {
         stats = fs.statSync(filepath);
       } catch (error) {
-        ignoreEnoent(error);
+        swallowEnoent(error);
       }
 
       // we only update the mtime if the file is not ignored, because if we restart and the mtime is set to an ignored
       // file, then it could be greater than the mtime of all non ignored files and we'll think that local files have
       // changed when only an ignored one has
-      if (stats && stats.mtime.getTime() > this.state.mtime) {
-        this.state.mtime = stats.mtime.getTime();
+      if (stats && stats.mtime.getTime() > this.filesync.mtime) {
+        this.filesync.mtime = stats.mtime.getTime();
       }
 
       if (this.recentRemoteChanges.delete(normalizedPath)) {
@@ -1051,7 +729,7 @@ export class Sync {
         case "renameDir":
           assert(stats, "missing stats on rename/renameDir event");
           localFilesBuffer.set(normalizedPath, {
-            oldPath: this.normalize(absolutePath, isDirectory),
+            oldPath: this.filesync.normalize(absolutePath, isDirectory),
             newPath: normalizedPath,
             isDirectory: event === "renameDir",
             mode: stats.mode,
@@ -1068,18 +746,18 @@ export class Sync {
     println`
       {bold ggt v${config.version}}
 
-      App         ${this.app.slug}
-      Editor      https://${this.app.slug}.gadget.app/edit
-      Playground  https://${this.app.slug}.gadget.app/api/graphql/playground
-      Docs        https://docs.gadget.dev/api/${this.app.slug}
+      App         ${this.filesync.app.slug}
+      Editor      https://${this.filesync.app.slug}.gadget.app/edit
+      Playground  https://${this.filesync.app.slug}.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/${this.filesync.app.slug}
 
       {underline Endpoints} ${
-        this.app.hasSplitEnvironments
+        this.filesync.app.hasSplitEnvironments
           ? `
-        • https://${this.app.primaryDomain}
-        • https://${this.app.slug}--development.gadget.app`
+        • https://${this.filesync.app.primaryDomain}
+        • https://${this.filesync.app.slug}--development.gadget.app`
           : `
-        • https://${this.app.primaryDomain}`
+        • https://${this.filesync.app.primaryDomain}`
       }
 
       Watching for file changes... {gray Press Ctrl+C to stop}

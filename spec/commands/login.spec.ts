@@ -26,7 +26,7 @@ describe("login", () => {
 
   it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
     writeSession(undefined);
-    vi.spyOn(user, "loadUser").mockResolvedValue(testUser);
+    vi.spyOn(user, "getUser").mockResolvedValue(testUser);
 
     void run();
 
@@ -49,7 +49,7 @@ describe("login", () => {
 
     // we should be at `await receiveSession`
     expect(readSession()).toBeUndefined();
-    expect(user.loadUser).not.toHaveBeenCalled();
+    expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(null as any);
     req.url = `?session=test`;
@@ -62,7 +62,7 @@ describe("login", () => {
 
     await sleepUntil(() => server.close.mock.calls.length > 0);
     expect(readSession()).toBe("test");
-    expect(user.loadUser).toHaveBeenCalled();
+    expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "We've opened Gadget's login page using your default browser.
 
@@ -79,7 +79,7 @@ describe("login", () => {
 
   it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
     writeSession(undefined);
-    vi.spyOn(user, "loadUser").mockRejectedValue(new Error("boom"));
+    vi.spyOn(user, "getUser").mockRejectedValue(new Error("boom"));
 
     void run().catch(_.noop);
 
@@ -102,7 +102,7 @@ describe("login", () => {
 
     // we should be at `await receiveSession`
     expect(readSession()).toBeUndefined();
-    expect(user.loadUser).not.toHaveBeenCalled();
+    expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(null as any);
     req.url = `?session=test`;
@@ -115,7 +115,7 @@ describe("login", () => {
 
     await sleepUntil(() => server.close.mock.calls.length > 0);
     expect(readSession()).toBeUndefined();
-    expect(user.loadUser).toHaveBeenCalled();
+    expect(user.getUser).toHaveBeenCalled();
     expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=false` });
     expect(res.end).toHaveBeenCalled();
     expect(server.close).toHaveBeenCalled();

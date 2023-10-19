@@ -69,7 +69,7 @@ describe("InvalidSyncFileError", () => {
     const dir = "~/gadget/test";
     const app = "test";
 
-    const error = new InvalidSyncFileError(new Error(), dir, app);
+    const error = new InvalidSyncFileError(dir, app);
     expect(error.render()).toMatchSnapshot();
   });
 });

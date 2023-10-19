@@ -1,7 +1,7 @@
 import _ from "lodash";
-import { getAvailableApps } from "../services/app.js";
+import { getApps } from "../services/app.js";
 import { println, sprint } from "../services/output.js";
-import { loadUserOrLogin } from "../services/user.js";
+import { getUserOrLogin } from "../services/user.js";
 
 export const usage = sprint`
     List the apps available to the currently logged in user.
@@ -19,9 +19,9 @@ export const usage = sprint`
 `;
 
 export const run = async () => {
-  const user = await loadUserOrLogin();
+  const user = await getUserOrLogin();
 
-  const apps = await getAvailableApps(user);
+  const apps = await getApps(user);
   if (!apps.length) {
     println`
         It doesn't look like you have any applications.

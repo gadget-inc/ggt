@@ -281,11 +281,11 @@ export class InvalidSyncFileError extends CLIError {
   isBug = IsBug.MAYBE;
 
   constructor(
-    override readonly cause: unknown,
     readonly dir: string,
     readonly app: string | undefined,
   ) {
     super("GGT_CLI_INVALID_SYNC_FILE", "The .gadget/sync.json file was invalid or not found");
+    this.app ??= "<name of app>";
   }
 
   protected body(): string {
@@ -296,7 +296,7 @@ export class InvalidSyncFileError extends CLIError {
 
       If you're running \`ggt sync\` for the first time, we recommend using an empty directory such as:
 
-        ~/gadget/${this.app ?? "<name of app>"}
+        ~/gadget/${this.app}
 
       Otherwise, if you're sure you want to sync the contents of that directory to Gadget, run \`ggt sync\` again with the \`--force\` flag:
 

@@ -1,5 +1,5 @@
 import { println, sprint } from "../services/output.js";
-import { loadUser } from "../services/user.js";
+import { getUser } from "../services/user.js";
 
 export const usage = sprint`
     Show the name and email address of the currently logged in user.
@@ -13,7 +13,7 @@ export const usage = sprint`
 `;
 
 export const run = async () => {
-  const user = await loadUser();
+  const user = await getUser();
   if (!user) {
     println`You are not logged in`;
     return;

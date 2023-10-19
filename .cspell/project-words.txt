@@ -4,6 +4,7 @@ commandsstop
 direnv
 ENOENT
 execa
+filesync
 gadgetinc
 getsentry
 HOMEDRIVE

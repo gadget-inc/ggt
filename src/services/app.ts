@@ -16,7 +16,7 @@ export type App = z.infer<typeof App> & { user: User };
 /**
  * @returns The list of Gadget applications the current user has access to.
  */
-export const getAvailableApps = async (user: User): Promise<App[]> => {
+export const getApps = async (user: User): Promise<App[]> => {
   const cookie = loadCookie();
   if (!cookie) {
     return [];

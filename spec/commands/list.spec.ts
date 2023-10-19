@@ -6,15 +6,15 @@ import { expectStdout, testUser } from "../util.js";
 
 describe("list", () => {
   it("lists apps", async () => {
-    vi.spyOn(user, "loadUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    vi.spyOn(app, "getAvailableApps").mockResolvedValue([
+    vi.spyOn(user, "getUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    vi.spyOn(app, "getApps").mockResolvedValue([
       { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true, user: testUser },
       { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, user: testUser },
     ]);
 
     await run();
 
-    expect(user.loadUserOrLogin).toHaveBeenCalled();
+    expect(user.getUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "Slug  Domain
       ───── ─────────────────
@@ -25,12 +25,12 @@ describe("list", () => {
   });
 
   it("lists no apps if the user doesn't have any", async () => {
-    vi.spyOn(user, "loadUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    vi.spyOn(app, "getAvailableApps").mockResolvedValue([]);
+    vi.spyOn(user, "getUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    vi.spyOn(app, "getApps").mockResolvedValue([]);
 
     await run();
 
-    expect(user.loadUserOrLogin).toHaveBeenCalled();
+    expect(user.getUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "It doesn't look like you have any applications.
 

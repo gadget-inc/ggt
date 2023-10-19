@@ -17,23 +17,19 @@ import {
   type MutationPublishFileSyncEventsArgs,
 } from "../../src/__generated__/graphql.js";
 import type { RootArgs } from "../../src/commands/root.js";
+import { Action, Sync, SyncStatus } from "../../src/commands/sync.js";
+import * as app from "../../src/services/app.js";
+import { ClientError, YarnNotFoundError } from "../../src/services/errors.js";
 import {
-  Action,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-  Sync,
-  SyncState,
-  SyncStatus,
-} from "../../src/commands/sync.js";
-import * as app from "../../src/services/app.js";
-import { ArgError, ClientError, InvalidSyncFileError, YarnNotFoundError } from "../../src/services/errors.js";
-import { walkDirSync } from "../../src/services/fs-utils.js";
+} from "../../src/services/filesync.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
 import * as user from "../../src/services/user.js";
 import type { PartialExcept } from "../types.js";
 import type { MockClient } from "../util.js";
-import { expectError, mockClient, testApp, testDirPath, testUser } from "../util.js";
+import { mockClient, testApp, testDirPath, testUser } from "../util.js";
 
 describe("Sync", () => {
   let rootArgs: RootArgs;
@@ -66,8 +62,8 @@ describe("Sync", () => {
 
     client = mockClient();
 
-    vi.spyOn(user, "loadUserOrLogin").mockResolvedValue(testUser);
-    vi.spyOn(app, "getAvailableApps").mockResolvedValue([
+    vi.spyOn(user, "getUserOrLogin").mockResolvedValue(testUser);
+    vi.spyOn(app, "getApps").mockResolvedValue([
       testApp,
       { id: 2, slug: "not-test", primaryDomain: "not-test.gadget.app", hasSplitEnvironments: false, user: testUser },
     ]);
@@ -92,138 +88,8 @@ describe("Sync", () => {
       await expect(init).resolves.toBeUndefined();
     });
 
-    it("ensures `dir` exists", async () => {
-      expect(fs.existsSync(dir)).toBe(false);
-
-      const init = sync.init(rootArgs);
-
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
-
-      await init;
-      expect(fs.existsSync(dir)).toBe(true);
-    });
-
-    it("loads state from .gadget/sync.json", async () => {
-      const state = SyncState.create(dir, { app: testApp.slug, filesVersion: "77", mtime: 1658153625236 });
-
-      void sync.init(rootArgs);
-
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      expect(sync.state).toEqual(state);
-    });
-
-    it("uses default state if .gadget/sync.json does not exist and `dir` is empty", async () => {
-      void sync.init(rootArgs);
-
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      expect(sync.state).toEqual({ _rootDir: dir, _inner: { app: "test", filesVersion: "0", mtime: 0 } });
-    });
-
-    it("throws InvalidSyncFileError if .gadget/sync.json does not exist and `dir` is not empty", async () => {
-      writeDir(dir, {
-        "foo.js": "foo",
-      });
-
-      await expect(sync.init(rootArgs)).rejects.toThrow(InvalidSyncFileError);
-    });
-
-    it("throws InvalidSyncFileError if .gadget/sync.json is invalid and `dir` is not empty", async () => {
-      writeDir(dir, {
-        ".gadget": {
-          // has trailing comma
-          "sync.json": '{"app":"test","filesVersion":"77","mtime":1658153625236,}',
-        },
-      });
-
-      await expect(sync.init(rootArgs)).rejects.toThrow(InvalidSyncFileError);
-    });
-
-    it("does not throw InvalidSyncFileError if .gadget/sync.json is invalid, `dir` is not empty, and `--force` is passed", async () => {
-      writeDir(dir, {
-        ".gadget": {
-          // has trailing comma
-          "sync.json": '{"app":"test","filesVersion":"77","mtime":1658153625236,}',
-        },
-      });
-
-      rootArgs._.push("--force");
-      const init = sync.init(rootArgs);
-
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
-
-      await expect(init).resolves.toBeUndefined();
-    });
-
-    it("throws ArgError if the `--app` flag is passed an app name that does not exist within the user's available apps", async () => {
-      rootArgs._ = [dir, "--app", "nope"];
-
-      const error = await expectError(() => sync.init(rootArgs));
-      expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toMatchInlineSnapshot(`
-        "Unknown application:
-
-          nope
-
-        Did you mean one of these?
-
-          • test
-          • not-test"
-      `);
-    });
-
-    it("throws ArgError if the user doesn't have any available apps", async () => {
-      vi.spyOn(app, "getAvailableApps").mockResolvedValue([]);
-      rootArgs._ = [dir, "--app", "nope"];
-
-      const error = await expectError(() => sync.init(rootArgs));
-      expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toMatchInlineSnapshot(`
-        "Unknown application:
-
-          nope
-
-        It doesn't look like you have any applications.
-
-        Visit https://gadget.new to create one!"
-      `);
-    });
-
-    it("throws ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json", async () => {
-      writeDir(dir, {
-        ".gadget": {
-          "sync.json": prettyJson({ app: "not-test", filesVersion: "77", mtime: 1658153625236 }),
-        },
-      });
-
-      const error = await expectError(() => sync.init(rootArgs));
-
-      expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toMatch(/^You were about to sync the following app to the following directory:/);
-    });
-
-    it("does not throw ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json and `--force` is passed", async () => {
-      writeDir(dir, {
-        ".gadget": {
-          "sync.json": prettyJson({ app: "not-test", filesVersion: "77", mtime: 1658153625236 }),
-        },
-      });
-
-      rootArgs._.push("--force");
-      const init = sync.init(rootArgs);
-
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
-
-      await expect(init).resolves.toBeUndefined();
-    });
-
     it("asks how to proceed if both local and remote files changed", async () => {
-      writeDir(dir, {
+      await writeDir(dir, {
         ".gadget": {
           "sync.json": prettyJson({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
         },
@@ -253,7 +119,7 @@ describe("Sync", () => {
     });
 
     it("asks how to proceed if only local files changed", async () => {
-      writeDir(dir, {
+      await writeDir(dir, {
         ".gadget": {
           "sync.json": prettyJson({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
         },
@@ -282,7 +148,7 @@ describe("Sync", () => {
     });
 
     it("does not ask how to proceed if only ignored files changed", async () => {
-      writeDir(dir, {
+      await writeDir(dir, {
         ".ignore": "bar.js",
         "foo.js": "foo",
       });
@@ -307,7 +173,7 @@ describe("Sync", () => {
     });
 
     it("does not ask how to proceed if only remote files changed", async () => {
-      writeDir(dir, {
+      await writeDir(dir, {
         "foo.js": "foo",
       });
 
@@ -325,7 +191,7 @@ describe("Sync", () => {
     });
 
     it("does not ask how to proceed if neither local nor remote files changed", async () => {
-      writeDir(dir, {
+      await writeDir(dir, {
         "foo.js": "foo",
       });
 
@@ -345,7 +211,7 @@ describe("Sync", () => {
     it("publishes changed events when told to merge", async () => {
       inquirer.prompt.mockResolvedValue({ action: Action.MERGE });
 
-      writeDir(dir, {
+      await writeDir(dir, {
         "foo.js": "foo",
         "bar.js": "bar",
       });
@@ -374,7 +240,7 @@ describe("Sync", () => {
       // foo.js didn't change, so it should not be included
       expectPublishToEqual(client, {
         input: {
-          expectedRemoteFilesVersion: String(sync.state.filesVersion),
+          expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
           changed: [fileChangedEvent({ path: "bar.js", content: "bar2" }), fileChangedEvent({ path: "baz.js", content: "baz" })],
           deleted: [],
         },
@@ -384,7 +250,7 @@ describe("Sync", () => {
     it("deletes local file changes and sets `state.filesVersion` to 0 when told to reset", async () => {
       inquirer.prompt.mockResolvedValue({ action: Action.RESET });
 
-      writeDir(dir, {
+      await writeDir(dir, {
         "foo.js": "foo",
         "bar.js": "bar",
       });
@@ -410,7 +276,7 @@ describe("Sync", () => {
       await init;
 
       // foo.js didn't change, so it should still exist
-      expectDir(sync, {
+      await expectDir(sync, {
         ".gadget": {
           "sync.json": stateFile(sync),
           backup: {
@@ -421,7 +287,7 @@ describe("Sync", () => {
         "foo.js": "foo",
       });
 
-      expect(sync.state.filesVersion).toBe(0n);
+      expect(sync.filesync.filesVersion).toBe(0n);
     });
   });
 
@@ -456,7 +322,7 @@ describe("Sync", () => {
         if (client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION)) {
           client
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
-            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: String(sync.state.filesVersion) } } });
+            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: String(sync.filesync.filesVersion) } } });
         }
       }
 
@@ -479,9 +345,9 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.state.filesVersion === 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
-        expectDir(sync, {
+        await expectDir(sync, {
           ".gadget": {
             "sync.json": stateFile(sync),
           },
@@ -507,9 +373,9 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.state.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
-        expectDir(sync, {
+        await expectDir(sync, {
           ".gadget": {
             "sync.json": stateFile(sync),
           },
@@ -518,7 +384,7 @@ describe("Sync", () => {
       });
 
       it("deletes deleted files", async () => {
-        writeDir(dir, {
+        await writeDir(dir, {
           "file.js": "foo",
           some: {
             deeply: {
@@ -539,9 +405,9 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.state.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
-        expectDir(sync, {
+        await expectDir(sync, {
           ".gadget": {
             "sync.json": stateFile(sync),
             backup: {
@@ -564,7 +430,7 @@ describe("Sync", () => {
       });
 
       it("updates `state.filesVersion` even if nothing changed", async () => {
-        expect(sync.state.filesVersion).toBe(0n);
+        expect(sync.filesync.filesVersion).toBe(0n);
 
         client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
@@ -576,9 +442,9 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.state.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
-        expect(sync.state.filesVersion).toBe(1n);
+        expect(sync.filesync.filesVersion).toBe(1n);
       });
 
       it("adds changed and deleted files to recentWrites", async () => {
@@ -592,7 +458,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.state.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
         expect(sync.recentRemoteChanges.has("foo.js")).toBe(true);
         expect(sync.recentRemoteChanges.has("bar.js")).toBe(true);
@@ -632,25 +498,20 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
 
         // wait for the first batch to complete
-        await sleepUntil(() => sync.state.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
         // the first batch should be complete
-        expectDir(sync, {
-          ".gadget": {
-            "sync.json": stateFile(sync),
-          },
-          "foo.js": "foo",
-        });
+        expect(fs.readFileSync(path.join(dir, "foo.js"), "utf-8")).toBe("foo");
 
         // the second batch should now be in progress
         expect(sync.queue.size).toBe(0);
         expect(sync.queue.pending).toBe(1);
 
         // wait for the second batch to complete
-        await sleepUntil(() => sync.state.filesVersion == 2n);
+        await sleepUntil(() => sync.filesync.filesVersion == 2n);
 
         // the second batch should be complete
-        expectDir(sync, {
+        await expectDir(sync, {
           ".gadget": {
             "sync.json": stateFile(sync),
           },
@@ -671,7 +532,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.state.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
         expect(sync.status).toBe(SyncStatus.RUNNING);
       });
@@ -689,7 +550,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.state.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
         expect(execa.mock.lastCall).toEqual(["yarn", ["install"], { cwd: dir }]);
       });
@@ -705,13 +566,13 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.state.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
         expect(execa).not.toHaveBeenCalled();
       });
 
       it("writes deletes before changes", async () => {
-        writeDir(dir, {
+        await writeDir(dir, {
           foo: {},
         });
 
@@ -726,10 +587,10 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.state.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
         // the directory should be deleted, but the file should still exist because it was changed after the delete
-        expectDir(sync, {
+        await expectDir(sync, {
           ".gadget": {
             "sync.json": stateFile(sync),
             backup: {
@@ -744,7 +605,7 @@ describe("Sync", () => {
 
       describe("with an ignore file", () => {
         beforeEach(async () => {
-          writeDir(dir, {
+          await writeDir(dir, {
             ".ignore": "file2.js",
             "file1.js": "one",
             "file3.js": "three",
@@ -757,7 +618,7 @@ describe("Sync", () => {
 
           expectPublishToEqual(client, {
             input: {
-              expectedRemoteFilesVersion: String(sync.state.filesVersion),
+              expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [
                 fileChangedEvent({ path: ".ignore", content: "file2.js" }),
                 fileChangedEvent({ path: "file1.js", content: "one" }),
@@ -785,9 +646,9 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.state.filesVersion == 2n);
+          await sleepUntil(() => sync.filesync.filesVersion == 2n);
 
-          expectDir(sync, {
+          await expectDir(sync, {
             ".gadget": {
               "sync.json": stateFile(sync),
             },
@@ -806,7 +667,7 @@ describe("Sync", () => {
 
           expectPublishToEqual(client, {
             input: {
-              expectedRemoteFilesVersion: String(sync.state.filesVersion),
+              expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [fileChangedEvent({ path: "file2.js", content: "two2" })],
               deleted: [],
             },
@@ -824,10 +685,10 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.state.filesVersion == 2n);
+          await sleepUntil(() => sync.filesync.filesVersion == 2n);
 
           // no changes
-          expectDir(sync, {
+          await expectDir(sync, {
             ".gadget": {
               "sync.json": stateFile(sync),
             },
@@ -849,10 +710,10 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.state.filesVersion == 3n);
+          await sleepUntil(() => sync.filesync.filesVersion == 3n);
 
           // no changes
-          expectDir(sync, {
+          await expectDir(sync, {
             ".gadget": {
               "sync.json": stateFile(sync),
             },
@@ -877,9 +738,9 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.state.filesVersion == 2n);
+          await sleepUntil(() => sync.filesync.filesVersion == 2n);
 
-          expectDir(sync, {
+          await expectDir(sync, {
             ".gadget": {
               "sync.json": stateFile(sync),
               client: {
@@ -899,7 +760,7 @@ describe("Sync", () => {
 
     describe("publishing", () => {
       it("publishes changed events on add/change events", async () => {
-        writeDir(dir, {
+        await writeDir(dir, {
           "file.js": "foo",
           some: {
             deeply: {
@@ -915,7 +776,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
               fileChangedEvent({ path: "file.js", content: "foo" }),
               dirChangedEvent({ path: "some/" }),
@@ -930,7 +791,7 @@ describe("Sync", () => {
 
       it("publishes changed events on rename events", async () => {
         // setup the initial directory structure
-        writeDir(dir, {
+        await writeDir(dir, {
           bar: {
             "bar1.js": "bar1",
             "bar2.js": "bar2",
@@ -945,7 +806,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
               dirChangedEvent({ path: "bar/" }),
               fileChangedEvent({ path: "bar/bar1.js", content: "bar1" }),
@@ -965,7 +826,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
               dirChangedEvent({ path: "foo/", oldPath: "bar/" }),
               fileChangedEvent({ path: "foo/bar1.js", oldPath: "bar/bar1.js", content: "bar1" }),
@@ -978,7 +839,7 @@ describe("Sync", () => {
 
       it("publishes deleted events on unlink events", async () => {
         // setup the initial directory structure
-        writeDir(dir, {
+        await writeDir(dir, {
           "file.js": "foo",
           some: {
             deeply: {
@@ -997,7 +858,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
               fileChangedEvent({ path: "file.js", content: "foo" }),
               dirChangedEvent({ path: "some/" }),
@@ -1020,7 +881,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [],
             deleted: [{ path: "file.js" }, { path: "some/deeply/nested/file.js" }],
           },
@@ -1039,7 +900,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
               fileChangedEvent({ path: "foo.js", content: "foo" }),
               fileChangedEvent({ path: "bar.js", content: "bar" }),
@@ -1051,7 +912,7 @@ describe("Sync", () => {
       });
 
       it("publishes changed events on addDir events", async () => {
-        writeDir(dir, {
+        await writeDir(dir, {
           some: {
             deeply: {
               nested: {},
@@ -1064,7 +925,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
               dirChangedEvent({ path: "some/" }),
               dirChangedEvent({ path: "some/deeply/" }),
@@ -1076,7 +937,7 @@ describe("Sync", () => {
       });
 
       it("publishes deleted events on unlinkDir events", async () => {
-        writeDir(dir, {
+        await writeDir(dir, {
           some: {
             deeply: {
               nested: {},
@@ -1092,7 +953,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
               dirChangedEvent({ path: "some/" }),
               dirChangedEvent({ path: "some/deeply/" }),
@@ -1112,7 +973,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [],
             deleted: [{ path: "some/deeply/nested/" }],
           },
@@ -1120,7 +981,7 @@ describe("Sync", () => {
       });
 
       it("does not publish changed events from files that were deleted after the change event but before publish", async () => {
-        writeDir(dir, {
+        await writeDir(dir, {
           "another.js": "another",
           "delete_me.js": "delete_me",
         });
@@ -1139,7 +1000,7 @@ describe("Sync", () => {
 
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "another.js", content: "another" })],
             deleted: [],
           },
@@ -1175,7 +1036,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "foo.js", content: "foo" })],
             deleted: [],
           },
@@ -1192,7 +1053,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "foo.js", content: "foo" })],
             deleted: [],
           },
@@ -1212,7 +1073,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "bar.js", content: "bar" }), fileChangedEvent({ path: "baz.js", content: "baz" })],
             deleted: [],
           },
@@ -1222,11 +1083,11 @@ describe("Sync", () => {
         client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
         // wait for the second publish to complete
-        await sleepUntil(() => sync.state.filesVersion == 2n);
+        await sleepUntil(() => sync.filesync.filesVersion == 2n);
       });
 
       it("does not publish multiple events affecting the same file", async () => {
-        writeDir(dir, {
+        await writeDir(dir, {
           "file.js": "foo",
         });
 
@@ -1246,7 +1107,7 @@ describe("Sync", () => {
         // only one event should be published
         expectPublishToEqual(client, {
           input: {
-            expectedRemoteFilesVersion: String(sync.state.filesVersion),
+            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "file.js", content: "foo3" })],
             deleted: [],
           },
@@ -1272,7 +1133,7 @@ describe("Sync", () => {
 
           expectPublishToEqual(client, {
             input: {
-              expectedRemoteFilesVersion: String(sync.state.filesVersion),
+              expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [fileChangedEvent({ path: ".ignore", content: ignoreContent })],
               deleted: [],
             },
@@ -1298,7 +1159,7 @@ describe("Sync", () => {
 
           expectPublishToEqual(client, {
             input: {
-              expectedRemoteFilesVersion: String(sync.state.filesVersion),
+              expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [
                 dirChangedEvent({ path: "another/" }),
                 dirChangedEvent({ path: "some/" }),
@@ -1333,7 +1194,7 @@ describe("Sync", () => {
           // the ignore file should be reloaded and published
           expectPublishToEqual(client, {
             input: {
-              expectedRemoteFilesVersion: String(sync.state.filesVersion),
+              expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [fileChangedEvent({ path: ".ignore", content: "# watch it all" })],
               deleted: [],
             },
@@ -1352,7 +1213,7 @@ describe("Sync", () => {
 
           expectPublishToEqual(client, {
             input: {
-              expectedRemoteFilesVersion: String(sync.state.filesVersion),
+              expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [fileChangedEvent({ path: "file.js", content: "foo2" })],
               deleted: [],
             },
@@ -1446,7 +1307,7 @@ describe("Sync", () => {
       expect(sync.queue.pending).toBe(0);
       expect(sync.queue.size).toBe(0);
 
-      expectDir(sync, {
+      await expectDir(sync, {
         ".gadget": {
           "sync.json": stateFile(sync),
         },
@@ -1458,7 +1319,7 @@ describe("Sync", () => {
     it("saves state to .gadget/sync.json", async () => {
       await sync.stop();
 
-      expectDir(sync, {
+      await expectDir(sync, {
         ".gadget": {
           "sync.json": stateFile(sync),
         },
@@ -1528,10 +1389,8 @@ const defaultDirMode = os.platform() == "win32" ? 0o40666 : 0o40755;
 
 function stateFile(sync: Sync): string {
   // make sure the state is flushed
-  sync.state.flush();
-
-  // @ts-expect-error _inner is private
-  return prettyJson(sync.state._inner) + "\n";
+  sync.filesync.flush();
+  return prettyJson(sync.filesync.state) + "\n";
 }
 
 function prettyJson(obj: any): string {
@@ -1574,24 +1433,23 @@ interface FileTree {
   [path: string]: FileTree | string;
 }
 
-function expectDir(sync: Sync, expected: FileTree): void {
+async function expectDir(sync: Sync, expected: FileTree): Promise<void> {
   const actual: FileTree = {};
-  for (const filepath of walkDirSync(sync.dir)) {
-    const isDirectory = fs.lstatSync(filepath).isDirectory();
-    const pathSegments = _.split(sync.relative(filepath), path.sep);
-    _.set(actual, pathSegments, isDirectory ? {} : fs.readFileSync(filepath, "utf-8"));
+  for await (const [filepath, stats] of sync.filesync.walkDir({ skipIgnored: false })) {
+    const pathSegments = _.split(sync.filesync.relative(filepath), path.sep);
+    _.set(actual, pathSegments, stats.isDirectory() ? {} : fs.readFileSync(filepath, "utf-8"));
   }
   expect(actual).toEqual(expected);
 }
 
-function writeDir(dir: string, tree: FileTree): void {
+async function writeDir(dir: string, tree: FileTree): Promise<void> {
   for (const [filepath, content] of Object.entries(tree)) {
     if (_.isString(content)) {
       fs.outputFileSync(path.join(dir, filepath), content);
     } else {
       const subDir = path.join(dir, filepath);
       fs.ensureDirSync(subDir);
-      writeDir(subDir, content);
+      await writeDir(subDir, content);
     }
   }
 }

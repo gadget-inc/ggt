@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import path from "node:path";
 import { breadcrumb } from "./breadcrumbs.js";
 import { config } from "./config.js";
-import { ignoreEnoent as swallowEnoent } from "./fs-utils.js";
+import { swallowEnoent } from "./fs-utils.js";
 
 export const readSession = (): string | undefined => {
   breadcrumb({

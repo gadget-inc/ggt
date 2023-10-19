@@ -18,7 +18,7 @@ export type User = z.infer<typeof User>;
 /**
  * @returns The current user.
  */
-export const loadUser = async (): Promise<User | undefined> => {
+export const getUser = async (): Promise<User | undefined> => {
   const cookie = loadCookie();
   if (!cookie) {
     return undefined;
@@ -55,8 +55,8 @@ export const loadUser = async (): Promise<User | undefined> => {
   }
 };
 
-export const loadUserOrLogin = async (message = "You must be logged in to use this command. Would you like to log in?"): Promise<User> => {
-  let user = await loadUser();
+export const getUserOrLogin = async (message = "You must be logged in to use this command. Would you like to log in?"): Promise<User> => {
+  let user = await getUser();
   if (user) {
     return user;
   }
@@ -79,7 +79,7 @@ export const loadUserOrLogin = async (message = "You must be logged in to use th
 
   await login();
 
-  user = await loadUser();
+  user = await getUser();
   assert(user, "missing user after successful login");
 
   return user;

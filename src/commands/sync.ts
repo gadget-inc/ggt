@@ -1,6 +1,5 @@
 import arg from "arg";
 import assert from "assert";
-import chalkTemplate from "chalk-template";
 import { format as formatDate } from "date-fns";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
@@ -10,7 +9,6 @@ import _ from "lodash";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
-import pluralize from "pluralize";
 import FSWatcher from "watcher";
 import which from "which";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../__generated__/graphql.js";
@@ -24,6 +22,7 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+  printPaths,
 } from "../services/filesync.js";
 import { swallowEnoent } from "../services/fs-utils.js";
 import { notify } from "../services/notifications.js";
@@ -180,37 +179,6 @@ export class Sync {
   stop!: (error?: unknown) => Promise<void>;
 
   /**
-   * Pretty-prints changed and deleted filepaths to the console.
-   *
-   * @param prefix The prefix to print before each line.
-   * @param changed The normalized paths that have changed.
-   * @param deleted The normalized paths that have been deleted.
-   * @param options.limit The maximum number of lines to print. Defaults to 10.
-   */
-  outputPaths(prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}): void {
-    const lines = _.sortBy(
-      [
-        ..._.map(changed, (normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
-        ..._.map(deleted, (normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
-      ],
-      (line) => line.slice(line.indexOf(" ") + 1),
-    );
-
-    let logged = 0;
-    for (const line of lines) {
-      println(line);
-      if (++logged == limit) break;
-    }
-
-    if (lines.length > logged) {
-      println`{gray … ${lines.length - logged} more}`;
-    }
-
-    println`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`;
-    println();
-  }
-
-  /**
    * Initializes the sync process.
    * - Ensures the directory exists.
    * - Ensures the directory is empty or contains a `.gadget/sync.json` file.
@@ -263,7 +231,7 @@ export class Sync {
     const hasLocalChanges = changedFiles.size > 0;
     if (hasLocalChanges) {
       println("Local files have changed since you last synced");
-      this.outputPaths("-", Array.from(changedFiles.keys()), [], { limit: changedFiles.size });
+      printPaths("-", Array.from(changedFiles.keys()), [], { limit: changedFiles.size });
       println();
     }
 
@@ -346,7 +314,7 @@ export class Sync {
 
         // delete all the local files that have changed since the last sync and set the files version to 0 so we receive
         // all the remote files again, including any files that we just deleted that still exist
-        await pMap(changedFiles.keys(), (normalizedPath) => this.filesync.softDelete(normalizedPath));
+        await this.filesync.write(0n, [], changedFiles.keys());
         this.filesync.filesVersion = 0n;
         break;
       }
@@ -458,106 +426,25 @@ export class Sync {
           const deleted = _.filter(remoteFileSyncEvents.deleted, filter);
 
           this._enqueue(async () => {
-            breadcrumb({
-              type: "info",
-              category: "sync",
-              message: "Processing received file sync events",
-              data: {
-                state: this.filesync.state,
-                remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
-                changed: _.map(remoteFileSyncEvents.changed, "path"),
-                deleted: _.map(remoteFileSyncEvents.deleted, "path"),
-              },
-            });
-
-            if (!changed.length && !deleted.length) {
-              if (BigInt(remoteFilesVersion) > this.filesync.filesVersion) {
-                // we still need to update filesVersion, otherwise our expectedFilesVersion will be behind the next time we publish
-                this.filesync.filesVersion = remoteFilesVersion;
-                breadcrumb({
-                  type: "info",
-                  category: "sync",
-                  message: "Received empty file sync events",
-                  data: {
-                    state: this.filesync.state,
-                    remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
-                  },
-                });
-              }
-              return;
-            }
-
-            println`Received {gray ${formatDate(new Date(), "pp")}}`;
-            this.outputPaths("←", _.map(changed, "path"), _.map(deleted, "path"));
-
-            // we need to processed deleted files first as we may delete an empty directory after a file has been put
-            // into it. if processed out of order the new file will be deleted as well
-            await pMap(deleted, async (file) => {
+            // add all the files and directories we're about to touch to
+            // recentRemoteChanges so that we don't send them back
+            for (const file of [...changed, ...deleted]) {
               this.recentRemoteChanges.add(file.path);
-              await this.filesync.softDelete(file.path);
-            });
-
-            await pMap(changed, async (file) => {
-              this.recentRemoteChanges.add(file.path);
-
-              const absolutePath = this.filesync.absolute(file.path);
-              if (_.endsWith(file.path, "/")) {
-                await fs.ensureDir(absolutePath, { mode: 0o755 });
-                return;
-              }
-
-              // we need to add all parent directories to recentRemoteChanges so that we don't re-publish them
               for (const dir of _.split(path.dirname(file.path), "/")) {
                 this.recentRemoteChanges.add(dir + "/");
               }
-
-              await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
-              await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
-
-              if (absolutePath == this.filesync.absolute("yarn.lock")) {
-                await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch((error) => {
-                  breadcrumb({
-                    type: "error",
-                    category: "sync",
-                    message: "Yarn install failed",
-                    level: "error",
-                    data: {
-                      state: this.filesync.state,
-                      error,
-                    },
-                  });
-                });
-              }
-
-              if (absolutePath == this.filesync.absolute(".ignore")) {
-                this.filesync.reloadIgnorePaths();
-              }
-            });
-
-            this.filesync.filesVersion = remoteFilesVersion;
-
-            // always remove the root directory from recentRemoteChanges
-            this.recentRemoteChanges.delete("./");
-
-            // remove any files in recentRemoteChanges that are ignored (e.g. .gadget/ files)
-            for (const filepath of this.recentRemoteChanges) {
-              if (this.filesync.ignores(filepath)) {
-                this.recentRemoteChanges.delete(filepath);
-              }
             }
 
-            breadcrumb({
-              type: "info",
-              category: "sync",
-              message: "Processed received file sync events",
-              data: {
-                state: this.filesync.state,
-                remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
-                changed: _.map(remoteFileSyncEvents.changed, "path"),
-                deleted: _.map(remoteFileSyncEvents.deleted, "path"),
-                recentRemoteChanges: Array.from(this.recentRemoteChanges.keys()),
-              },
-            });
+            if (changed.length || deleted.length) {
+              println`Received {gray ${formatDate(new Date(), "pp")}}`;
+              printPaths("←", _.map(changed, "path"), _.map(deleted, "path"));
+            }
+
+            await this.filesync.write(remoteFilesVersion, changed, _.map(deleted, "path"));
+
+            if (_.some(changed, ["path", "yarn.lock"])) {
+              await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(_.noop);
+            }
           });
         },
       },
@@ -635,7 +522,7 @@ export class Sync {
         });
 
         println`Sent {gray ${formatDate(new Date(), "pp")}}`;
-        this.outputPaths("→", _.map(changed, "path"), _.map(deleted, "path"));
+        printPaths("→", _.map(changed, "path"), _.map(deleted, "path"));
       });
     }, this.args["--file-push-delay"]);
 

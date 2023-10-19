@@ -1,3 +1,4 @@
+import chalkTemplate from "chalk-template";
 import { findUp } from "find-up";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
@@ -9,6 +10,8 @@ import ms from "ms";
 import path from "node:path";
 import process from "node:process";
 import normalizePath from "normalize-path";
+import pMap from "p-map";
+import pluralize from "pluralize";
 import { dedent } from "ts-dedent";
 import { z } from "zod";
 import type {
@@ -26,8 +29,15 @@ import type { Query } from "./client.js";
 import { config } from "./config.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyDir, swallowEnoent } from "./fs-utils.js";
-import { sortByLevenshtein, sprint } from "./output.js";
+import { println, sortByLevenshtein, sprint } from "./output.js";
 import type { User } from "./user.js";
+
+interface File {
+  path: string;
+  mode: number;
+  content: string;
+  encoding: "utf8" | "base64";
+}
 
 export class FileSync {
   /**
@@ -38,7 +48,7 @@ export class FileSync {
    * changed for 100ms.
    */
   private _save = _.debounce(() => {
-    fs.outputJSONSync(path.join(this.dir, ".gadget/sync.json"), this._state, { spaces: 2 });
+    fs.outputJSONSync(this.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
     breadcrumb({
       type: "info",
       category: "sync",
@@ -358,23 +368,75 @@ export class FileSync {
     }
   }
 
-  /**
-   * Rather than `rm -rf`ing files, we move them to `.gadget/backup/` so
-   * that users can recover them if something goes wrong.
-   */
-  async softDelete(filepath: string): Promise<void> {
-    try {
-      const relative = this.relative(filepath);
-      const absolute = this.absolute(filepath);
-      await fs.move(absolute, this.absolute(".gadget/backup", relative), {
-        overwrite: true,
-      });
-    } catch (error) {
-      // replicate the behavior of `rm -rf` and ignore ENOENT
-      swallowEnoent(error);
+  async write(filesVersion: bigint | string, changed: Iterable<File>, deleted: Iterable<string>): Promise<void> {
+    filesVersion = BigInt(filesVersion);
+
+    await pMap(deleted, async (filepath) => {
+      // rather than `rm -rf`ing files, we move them to
+      // `.gadget/backup/` so that users can recover them if something
+      // goes wrong.
+      try {
+        const relative = this.relative(filepath);
+        const absolute = this.absolute(filepath);
+        await fs.move(absolute, this.absolute(".gadget/backup", relative), { overwrite: true });
+      } catch (error) {
+        // replicate the behavior of `rm -rf` and ignore ENOENT
+        swallowEnoent(error);
+      }
+    });
+
+    await pMap(changed, async (file) => {
+      const absolutePath = this.absolute(file.path);
+      if (_.endsWith(file.path, "/")) {
+        await fs.ensureDir(absolutePath, { mode: 0o755 });
+        return;
+      }
+
+      await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
+      await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
+
+      if (absolutePath == this.absolute(".ignore")) {
+        this.reloadIgnorePaths();
+      }
+    });
+
+    this.mtime = Date.now();
+    if (filesVersion > this.filesVersion) {
+      this.filesVersion = filesVersion;
     }
   }
 }
+
+/**
+ * Pretty-prints changed and deleted filepaths to the console.
+ *
+ * @param prefix The prefix to print before each line.
+ * @param changed The normalized paths that have changed.
+ * @param deleted The normalized paths that have been deleted.
+ * @param options.limit The maximum number of lines to print. Defaults to 10.
+ */
+export const printPaths = (prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}) => {
+  const lines = _.sortBy(
+    [
+      ..._.map(changed, (normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
+      ..._.map(deleted, (normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
+    ],
+    (line) => line.slice(line.indexOf(" ") + 1),
+  );
+
+  let logged = 0;
+  for (const line of lines) {
+    println(line);
+    if (++logged == limit) break;
+  }
+
+  if (lines.length > logged) {
+    println`{gray … ${lines.length - logged} more}`;
+  }
+
+  println`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`;
+  println();
+};
 
 export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
   subscription RemoteFileSyncEvents($localFilesVersion: String!) {

@@ -223,10 +223,10 @@ describe("Sync", () => {
       await sleep(10);
 
       // modify a file
-      fs.writeFileSync(path.join(dir, "bar.js"), "bar2", "utf-8");
+      fs.writeFileSync(path.join(dir, "bar.js"), "bar2", "utf8");
 
       // add a new file
-      fs.writeFileSync(path.join(dir, "baz.js"), "baz", "utf-8");
+      fs.writeFileSync(path.join(dir, "baz.js"), "baz", "utf8");
 
       void sync.init(rootArgs);
 
@@ -262,10 +262,10 @@ describe("Sync", () => {
       await sleep(10);
 
       // modify a file
-      fs.writeFileSync(path.join(dir, "bar.js"), "bar2", "utf-8");
+      fs.writeFileSync(path.join(dir, "bar.js"), "bar2", "utf8");
 
       // add a new file
-      fs.writeFileSync(path.join(dir, "baz.js"), "baz", "utf-8");
+      fs.writeFileSync(path.join(dir, "baz.js"), "baz", "utf8");
 
       const init = sync.init(rootArgs);
 
@@ -501,7 +501,7 @@ describe("Sync", () => {
         await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
         // the first batch should be complete
-        expect(fs.readFileSync(path.join(dir, "foo.js"), "utf-8")).toBe("foo");
+        expect(fs.readFileSync(path.join(dir, "foo.js"), "utf8")).toBe("foo");
 
         // the second batch should now be in progress
         expect(sync.queue.size).toBe(0);
@@ -1388,9 +1388,8 @@ const defaultFileMode = os.platform() == "win32" ? 0o100666 : 0o100644;
 const defaultDirMode = os.platform() == "win32" ? 0o40666 : 0o40755;
 
 function stateFile(sync: Sync): string {
-  // make sure the state is flushed
-  sync.filesync.flush();
-  return prettyJson(sync.filesync.state) + "\n";
+  // @ts-expect-error _state is private
+  return prettyJson(sync.filesync._state) + "\n";
 }
 
 function prettyJson(obj: any): string {
@@ -1437,7 +1436,7 @@ async function expectDir(sync: Sync, expected: FileTree): Promise<void> {
   const actual: FileTree = {};
   for await (const [filepath, stats] of sync.filesync.walkDir({ skipIgnored: false })) {
     const pathSegments = _.split(sync.filesync.relative(filepath), path.sep);
-    _.set(actual, pathSegments, stats.isDirectory() ? {} : fs.readFileSync(filepath, "utf-8"));
+    _.set(actual, pathSegments, stats.isDirectory() ? {} : fs.readFileSync(filepath, "utf8"));
   }
   expect(actual).toEqual(expected);
 }

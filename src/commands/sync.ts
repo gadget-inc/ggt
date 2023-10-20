@@ -13,7 +13,6 @@ import FSWatcher from "watcher";
 import which from "which";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
-import { breadcrumb } from "../services/breadcrumbs.js";
 import { Client } from "../services/client.js";
 import { config } from "../services/config.js";
 import { YarnNotFoundError } from "../services/errors.js";
@@ -235,19 +234,6 @@ export class Sync {
       println();
     }
 
-    breadcrumb({
-      type: "info",
-      category: "sync",
-      message: "Initializing",
-      data: {
-        state: this.filesync.state,
-        remoteFilesVersion,
-        hasRemoteChanges,
-        hasLocalChanges,
-        changed: Array.from(changedFiles.keys()),
-      },
-    });
-
     let action: Action | undefined;
     if (hasLocalChanges) {
       ({ action } = await inquirer.prompt({
@@ -263,17 +249,6 @@ export class Sync {
 
     switch (action) {
       case Action.MERGE: {
-        breadcrumb({
-          type: "info",
-          category: "sync",
-          message: "Merging local changes",
-          data: {
-            state: this.filesync.state,
-            remoteFilesVersion,
-            changed: Array.from(changedFiles.keys()),
-          },
-        });
-
         // We purposefully don't set the returned remoteFilesVersion here because we haven't received the remote changes
         // yet. This will cause us to receive the local files that we just published + the remote files that were
         // changed since the last sync.
@@ -282,18 +257,12 @@ export class Sync {
           variables: {
             input: {
               expectedRemoteFilesVersion: remoteFilesVersion,
-              changed: await pMap(changedFiles, async ([normalizedPath, stats]) => {
-                if (stats.mtime.getTime() > this.filesync.mtime) {
-                  this.filesync.mtime = stats.mtime.getTime();
-                }
-
-                return {
-                  path: normalizedPath,
-                  mode: stats.mode,
-                  content: stats.isDirectory() ? "" : await fs.readFile(this.filesync.absolute(normalizedPath), "base64"),
-                  encoding: FileSyncEncoding.Base64,
-                };
-              }),
+              changed: await pMap(changedFiles, async ([normalizedPath, stats]) => ({
+                path: normalizedPath,
+                mode: stats.mode,
+                content: stats.isDirectory() ? "" : await fs.readFile(this.filesync.absolute(normalizedPath), "base64"),
+                encoding: FileSyncEncoding.Base64,
+              })),
               deleted: [],
             },
           },
@@ -301,36 +270,17 @@ export class Sync {
         break;
       }
       case Action.RESET: {
-        breadcrumb({
-          type: "info",
-          category: "sync",
-          message: "Resetting local changes",
-          data: {
-            state: this.filesync.state,
-            remoteFilesVersion,
-            changed: Array.from(changedFiles.keys()),
-          },
-        });
-
-        // delete all the local files that have changed since the last sync and set the files version to 0 so we receive
-        // all the remote files again, including any files that we just deleted that still exist
-        await this.filesync.write(0n, [], changedFiles.keys());
-        this.filesync.filesVersion = 0n;
+        // delete all the local files that have changed since the last
+        // sync and set the files version to 0 so we receive all the
+        // remote files again, including any files that we just deleted
+        // that still exist
+        await this.filesync.write(0n, [], changedFiles.keys(), true);
         break;
       }
       case Action.CANCEL: {
         process.exit(0);
       }
     }
-
-    breadcrumb({
-      type: "info",
-      category: "sync",
-      message: "Initialized",
-      data: {
-        state: this.filesync.state,
-      },
-    });
   }
 
   /**
@@ -346,37 +296,16 @@ export class Sync {
       this.status = SyncStatus.STOPPING;
       error = e;
 
-      breadcrumb({
-        type: "info",
-        category: "sync",
-        message: "Stopping",
-        level: error ? "error" : undefined,
-        data: {
-          state: this.filesync.state,
-          error,
-        },
-      });
-
       try {
         unsubscribe();
         this.watcher.removeAllListeners();
         this.publish.flush();
         await this.queue.onIdle();
       } finally {
-        this.filesync.flush();
         await Promise.allSettled([this.watcher.close(), this.client.dispose()]);
 
         this.status = SyncStatus.STOPPED;
         stopped.resolve();
-
-        breadcrumb({
-          type: "info",
-          category: "sync",
-          message: "Stopped",
-          data: {
-            state: this.filesync.state,
-          },
-        });
       }
     };
 
@@ -406,18 +335,6 @@ export class Sync {
       {
         error: (error) => void this.stop(error),
         next: ({ remoteFileSyncEvents }) => {
-          breadcrumb({
-            type: "info",
-            category: "sync",
-            message: "Received file sync events",
-            data: {
-              state: this.filesync.state,
-              remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
-              changed: _.map(remoteFileSyncEvents.changed, "path"),
-              deleted: _.map(remoteFileSyncEvents.deleted, "path"),
-            },
-          });
-
           const remoteFilesVersion = remoteFileSyncEvents.remoteFilesVersion;
 
           // we always ignore .gadget/ files so that we don't publish them (they're managed by gadget), but we still want to receive them
@@ -462,16 +379,6 @@ export class Sync {
       localFilesBuffer.clear();
 
       this._enqueue(async () => {
-        breadcrumb({
-          type: "info",
-          category: "sync",
-          message: "Publishing file sync events",
-          data: {
-            state: this.filesync.state,
-            localFiles: Array.from(localFiles.keys()),
-          },
-        });
-
         const changed: FileSyncChangedEventInput[] = [];
         const deleted: FileSyncDeletedEventInput[] = [];
 
@@ -505,21 +412,7 @@ export class Sync {
           variables: { input: { expectedRemoteFilesVersion: String(this.filesync.filesVersion), changed, deleted } },
         });
 
-        if (BigInt(publishFileSyncEvents.remoteFilesVersion) > this.filesync.filesVersion) {
-          this.filesync.filesVersion = publishFileSyncEvents.remoteFilesVersion;
-        }
-
-        breadcrumb({
-          category: "sync",
-          type: "info",
-          message: "Published file sync events",
-          data: {
-            state: this.filesync.state,
-            remoteFilesVersion: publishFileSyncEvents.remoteFilesVersion,
-            changed: _.map(changed, "path"),
-            deleted: _.map(deleted, "path"),
-          },
-        });
+        await this.filesync.write(publishFileSyncEvents.remoteFilesVersion, [], []);
 
         println`Sent {gray ${formatDate(new Date(), "pp")}}`;
         printPaths("→", _.map(changed, "path"), _.map(deleted, "path"));
@@ -549,15 +442,6 @@ export class Sync {
       if (filepath == this.filesync.absolute(".ignore")) {
         this.filesync.reloadIgnorePaths();
       } else if (this.filesync.ignores(filepath)) {
-        breadcrumb({
-          type: "debug",
-          category: "sync",
-          message: "Skipping event caused by ignored file",
-          data: {
-            event,
-            normalizedPath,
-          },
-        });
         return;
       }
 
@@ -568,35 +452,9 @@ export class Sync {
         swallowEnoent(error);
       }
 
-      // we only update the mtime if the file is not ignored, because if we restart and the mtime is set to an ignored
-      // file, then it could be greater than the mtime of all non ignored files and we'll think that local files have
-      // changed when only an ignored one has
-      if (stats && stats.mtime.getTime() > this.filesync.mtime) {
-        this.filesync.mtime = stats.mtime.getTime();
-      }
-
       if (this.recentRemoteChanges.delete(normalizedPath)) {
-        breadcrumb({
-          type: "debug",
-          category: "sync",
-          message: "Skipping event caused by recent write",
-          data: {
-            event,
-            normalizedPath,
-          },
-        });
         return;
       }
-
-      breadcrumb({
-        type: "debug",
-        category: "sync",
-        message: "Received file system event",
-        data: {
-          event,
-          normalizedPath,
-        },
-      });
 
       switch (event) {
         case "add":

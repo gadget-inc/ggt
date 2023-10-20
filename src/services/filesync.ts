@@ -368,6 +368,12 @@ export class FileSync {
     }
   }
 
+  /**
+   * Writes the {@linkcode changed} and {@linkcode deleted} files to the filesystem.
+   * @param filesVersion The files version associated with the files that are being written.
+   * @param changed The files that have changed.
+   * @param deleted The paths that have been deleted.
+   */
   async write(filesVersion: bigint | string, changed: Iterable<File>, deleted: Iterable<string>): Promise<void> {
     filesVersion = BigInt(filesVersion);
 

@@ -1,4 +1,4 @@
-import got, { HTTPError, type OptionsInit } from "got";
+import { got, HTTPError, type OptionsInit } from "got";
 import { breadcrumb } from "./breadcrumbs.js";
 import { config } from "./config.js";
 import { readSession, writeSession } from "./session.js";

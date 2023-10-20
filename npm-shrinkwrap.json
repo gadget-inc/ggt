@@ -78,6 +78,7 @@
         "cspell": "^7.3.8",
         "eslint": "^8.51.0",
         "eslint-config-prettier": "^9.0.0",
+        "eslint-import-resolver-typescript": "^3.6.1",
         "eslint-plugin-import": "^2.28.1",
         "eslint-plugin-lodash": "^7.4.0",
         "nock": "^13.3.6",
@@ -7731,6 +7732,19 @@
         "once": "^1.4.0"
       }
     },
+    "node_modules/enhanced-resolve": {
+      "version": "5.15.0",
+      "resolved": "https://registry.npmjs.org/enhanced-resolve/-/enhanced-resolve-5.15.0.tgz",
+      "integrity": "sha512-LXYT42KJ7lpIKECr2mAXIaMldcNCh/7E0KBKOu4KSfkHmP+mZmSs+8V5gBAqisWBy0OO4W5Oyys0GO1Y8KtdKg==",
+      "dev": true,
+      "dependencies": {
+        "graceful-fs": "^4.2.4",
+        "tapable": "^2.2.0"
+      },
+      "engines": {
+        "node": ">=10.13.0"
+      }
+    },
     "node_modules/enquirer": {
       "version": "2.3.6",
       "resolved": "https://registry.npmjs.org/enquirer/-/enquirer-2.3.6.tgz",
@@ -7983,6 +7997,31 @@
       "dev": true,
       "dependencies": {
         "ms": "^2.1.1"
+      }
+    },
+    "node_modules/eslint-import-resolver-typescript": {
+      "version": "3.6.1",
+      "resolved": "https://registry.npmjs.org/eslint-import-resolver-typescript/-/eslint-import-resolver-typescript-3.6.1.tgz",
+      "integrity": "sha512-xgdptdoi5W3niYeuQxKmzVDTATvLYqhpwmykwsh7f6HIOStGWEIL9iqZgQDF9u9OEzrRwR8no5q2VT+bjAujTg==",
+      "dev": true,
+      "dependencies": {
+        "debug": "^4.3.4",
+        "enhanced-resolve": "^5.12.0",
+        "eslint-module-utils": "^2.7.4",
+        "fast-glob": "^3.3.1",
+        "get-tsconfig": "^4.5.0",
+        "is-core-module": "^2.11.0",
+        "is-glob": "^4.0.3"
+      },
+      "engines": {
+        "node": "^14.18.0 || >=16.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/unts/projects/eslint-import-resolver-ts"
+      },
+      "peerDependencies": {
+        "eslint": "*",
+        "eslint-plugin-import": "*"
       }
     },
     "node_modules/eslint-module-utils": {
@@ -8973,6 +9012,18 @@
       },
       "funding": {
         "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/get-tsconfig": {
+      "version": "4.7.2",
+      "resolved": "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.2.tgz",
+      "integrity": "sha512-wuMsz4leaj5hbGgg4IvDU0bqJagpftG5l5cXIAvo8uZrqn0NJqwtfupTN00VnkQJPcIRrxYrm1Ue24btpCha2A==",
+      "dev": true,
+      "dependencies": {
+        "resolve-pkg-maps": "^1.0.0"
+      },
+      "funding": {
+        "url": "https://github.com/privatenumber/get-tsconfig?sponsor=1"
       }
     },
     "node_modules/git-hooks-list": {
@@ -13131,6 +13182,15 @@
         "node": ">=8"
       }
     },
+    "node_modules/resolve-pkg-maps": {
+      "version": "1.0.0",
+      "resolved": "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz",
+      "integrity": "sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==",
+      "dev": true,
+      "funding": {
+        "url": "https://github.com/privatenumber/resolve-pkg-maps?sponsor=1"
+      }
+    },
     "node_modules/responselike": {
       "version": "3.0.0",
       "resolved": "https://registry.npmjs.org/responselike/-/responselike-3.0.0.tgz",
@@ -14274,6 +14334,15 @@
       },
       "funding": {
         "url": "https://opencollective.com/unts"
+      }
+    },
+    "node_modules/tapable": {
+      "version": "2.2.1",
+      "resolved": "https://registry.npmjs.org/tapable/-/tapable-2.2.1.tgz",
+      "integrity": "sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==",
+      "dev": true,
+      "engines": {
+        "node": ">=6"
       }
     },
     "node_modules/term-size": {
@@ -21184,6 +21253,16 @@
         "once": "^1.4.0"
       }
     },
+    "enhanced-resolve": {
+      "version": "5.15.0",
+      "resolved": "https://registry.npmjs.org/enhanced-resolve/-/enhanced-resolve-5.15.0.tgz",
+      "integrity": "sha512-LXYT42KJ7lpIKECr2mAXIaMldcNCh/7E0KBKOu4KSfkHmP+mZmSs+8V5gBAqisWBy0OO4W5Oyys0GO1Y8KtdKg==",
+      "dev": true,
+      "requires": {
+        "graceful-fs": "^4.2.4",
+        "tapable": "^2.2.0"
+      }
+    },
     "enquirer": {
       "version": "2.3.6",
       "resolved": "https://registry.npmjs.org/enquirer/-/enquirer-2.3.6.tgz",
@@ -21453,6 +21532,21 @@
             "ms": "^2.1.1"
           }
         }
+      }
+    },
+    "eslint-import-resolver-typescript": {
+      "version": "3.6.1",
+      "resolved": "https://registry.npmjs.org/eslint-import-resolver-typescript/-/eslint-import-resolver-typescript-3.6.1.tgz",
+      "integrity": "sha512-xgdptdoi5W3niYeuQxKmzVDTATvLYqhpwmykwsh7f6HIOStGWEIL9iqZgQDF9u9OEzrRwR8no5q2VT+bjAujTg==",
+      "dev": true,
+      "requires": {
+        "debug": "^4.3.4",
+        "enhanced-resolve": "^5.12.0",
+        "eslint-module-utils": "^2.7.4",
+        "fast-glob": "^3.3.1",
+        "get-tsconfig": "^4.5.0",
+        "is-core-module": "^2.11.0",
+        "is-glob": "^4.0.3"
       }
     },
     "eslint-module-utils": {
@@ -22069,6 +22163,15 @@
       "requires": {
         "call-bind": "^1.0.2",
         "get-intrinsic": "^1.1.1"
+      }
+    },
+    "get-tsconfig": {
+      "version": "4.7.2",
+      "resolved": "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.7.2.tgz",
+      "integrity": "sha512-wuMsz4leaj5hbGgg4IvDU0bqJagpftG5l5cXIAvo8uZrqn0NJqwtfupTN00VnkQJPcIRrxYrm1Ue24btpCha2A==",
+      "dev": true,
+      "requires": {
+        "resolve-pkg-maps": "^1.0.0"
       }
     },
     "git-hooks-list": {
@@ -24873,6 +24976,12 @@
       "integrity": "sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw==",
       "dev": true
     },
+    "resolve-pkg-maps": {
+      "version": "1.0.0",
+      "resolved": "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz",
+      "integrity": "sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==",
+      "dev": true
+    },
     "responselike": {
       "version": "3.0.0",
       "resolved": "https://registry.npmjs.org/responselike/-/responselike-3.0.0.tgz",
@@ -25706,6 +25815,12 @@
         "@pkgr/utils": "^2.3.1",
         "tslib": "^2.5.0"
       }
+    },
+    "tapable": {
+      "version": "2.2.1",
+      "resolved": "https://registry.npmjs.org/tapable/-/tapable-2.2.1.tgz",
+      "integrity": "sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==",
+      "dev": true
     },
     "term-size": {
       "version": "2.2.1",

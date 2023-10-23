@@ -40,12 +40,13 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - if: steps.changesets.outputs.published == 'true'
+        continue-on-error: true
         name: Publish to @gadgetinc/ggt
         run: |
-          jq '.name = "@gadgetinc/ggt"' package.json >package.json.tmp
+          jq '.name = "@gadgetinc/ggt"' package.json > package.json.tmp
           mv package.json.tmp package.json
           npm install --package-lock-only
-          npm run publish
+          npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

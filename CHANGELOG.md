@@ -1,5 +1,21 @@
 # @gadgetinc/ggt
 
+## 0.3.0
+
+### Minor Changes
+
+- b22ca48: Remove Oclif
+
+### Patch Changes
+
+- 585833f: Bump @sentry/node from 7.74.0 to 7.74.1
+- bf3699d: Bump graphql-ws from 5.14.1 to 5.14.2
+- d3d70be: Bump @sentry/node from 7.73.0 to 7.74.0
+- 6534b3e: Fix errors when moving files to `.gadget/backup`
+- 01db3a9: Bump normalize-package-data from 5.0.0 to 6.0.0
+- 8ac8018: Bump is-wsl from 2.2.0 to 3.1.0
+- a366005: Prevent `ggt sync` from sending back directories that it just received.
+
 ## 0.2.4
 
 ### Patch Changes

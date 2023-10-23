@@ -1,10 +1,11 @@
 import arg from "arg";
-import { format as formatDate } from "date-fns";
+import { format as formatDate, isAfter } from "date-fns";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import inquirer from "inquirer";
 import _ from "lodash";
+import ms from "ms";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import path from "path";
@@ -146,7 +147,7 @@ export class Sync {
    * event. This is used to avoid sending files that we recently
    * received from a remote file-sync event.
    */
-  recentRemoteChanges = new Set<string>();
+  recentRemoteChanges = new Map<string, number>();
 
   /**
    * A FIFO async callback queue that ensures we process file-sync events in the order they occurred.
@@ -325,6 +326,15 @@ export class Sync {
     let error: unknown;
     const stopped = new PromiseSignal();
 
+    const recentRemoteChangesInterval = setInterval(() => {
+      for (const [path, timestamp] of this.recentRemoteChanges) {
+        if (isAfter(Date.now(), timestamp + ms("5s"))) {
+          // this change should have been seen by now, so remove it
+          this.recentRemoteChanges.delete(path);
+        }
+      }
+    }, ms("1s")).unref();
+
     this.stop = async (e?: unknown) => {
       if (this.status != SyncStatus.RUNNING) return;
       this.status = SyncStatus.STOPPING;
@@ -333,6 +343,7 @@ export class Sync {
       this.log.info("stopping", { error });
 
       try {
+        clearInterval(recentRemoteChangesInterval);
         unsubscribe();
         this.watcher.removeAllListeners();
         this.publish.flush();
@@ -386,14 +397,15 @@ export class Sync {
           });
 
           this._enqueue(async () => {
-            // add all the files and directories we're about to touch to
-            // recentRemoteChanges so that we don't send them back
-            for (const file of [...changed, ...deleted]) {
-              this.recentRemoteChanges.add(file.path);
+            // add all the non-ignored files and directories we're about
+            // to touch to recentRemoteChanges so that we don't send
+            // them back
+            for (const file of _.filter([...changed, ...deleted], (file) => !this.filesync.ignores(file.path))) {
+              this.recentRemoteChanges.set(file.path, Date.now());
 
               let dir = path.dirname(file.path);
               while (dir !== ".") {
-                this.recentRemoteChanges.add(dir + "/");
+                this.recentRemoteChanges.set(dir + "/", Date.now());
                 dir = path.dirname(dir);
               }
             }
@@ -489,7 +501,7 @@ export class Sync {
         event,
         path: normalizedPath,
         isDirectory,
-        recentRemoteChanges: Array.from(this.recentRemoteChanges),
+        recentRemoteChanges: Array.from(this.recentRemoteChanges.keys()),
       });
 
       if (filepath === this.filesync.absolute(".ignore")) {

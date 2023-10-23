@@ -460,7 +460,7 @@ describe("Sync", () => {
 
         await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
-        expect(Array.from(sync.recentRemoteChanges)).toMatchInlineSnapshot(`
+        expect(Array.from(sync.recentRemoteChanges.keys())).toMatchInlineSnapshot(`
           [
             "some/deeply/nested/file.js",
             "some/deeply/nested/",
@@ -997,7 +997,7 @@ describe("Sync", () => {
         await sleepUntil(() => sync.publish.mock.calls.length == 2);
 
         // add the file we're about to delete to recentWrites so that it doesn't get published
-        sync.recentRemoteChanges.add("delete_me.js");
+        sync.recentRemoteChanges.set("delete_me.js", Date.now());
 
         // delete the file
         fs.removeSync(path.join(dir, "delete_me.js"));
@@ -1016,8 +1016,8 @@ describe("Sync", () => {
 
       it("does not publish events from files contained in recentRemoteChanges", () => {
         // add files to recentRemoteChanges
-        sync.recentRemoteChanges.add("foo.js");
-        sync.recentRemoteChanges.add("bar.js");
+        sync.recentRemoteChanges.set("foo.js", Date.now());
+        sync.recentRemoteChanges.set("bar.js", Date.now());
 
         // write the files to the filesystem
         fs.outputFileSync(path.join(dir, "foo.js"), "foo");

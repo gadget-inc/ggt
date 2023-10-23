@@ -1,5 +1,4 @@
 import arg from "arg";
-import assert from "assert";
 import { format as formatDate } from "date-fns";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
@@ -143,8 +142,9 @@ export class Sync {
   status = SyncStatus.STARTING;
 
   /**
-   * A list of filepaths that have changed because of a remote file-sync event. This is used to avoid sending files that
-   * we recently received from a remote file-sync event.
+   * A list of filepaths that have changed because of a remote file-sync
+   * event. This is used to avoid sending files that we recently
+   * received from a remote file-sync event.
    */
   recentRemoteChanges = new Set<string>();
 
@@ -164,7 +164,7 @@ export class Sync {
   watcher!: FSWatcher;
 
   /**
-   * The state of the local filesystem.
+   * Handles writing files to the local filesystem.
    */
   filesync!: FileSync;
 
@@ -178,6 +178,9 @@ export class Sync {
    */
   stop!: (error?: unknown) => Promise<void>;
 
+  /**
+   * A logger for the sync command.
+   */
   log = createLogger("sync", () => {
     return {
       app: this.filesync.app.slug,
@@ -387,8 +390,11 @@ export class Sync {
             // recentRemoteChanges so that we don't send them back
             for (const file of [...changed, ...deleted]) {
               this.recentRemoteChanges.add(file.path);
-              for (const dir of _.split(path.dirname(file.path), "/")) {
+
+              let dir = path.dirname(file.path);
+              while (dir !== ".") {
                 this.recentRemoteChanges.add(dir + "/");
+                dir = path.dirname(dir);
               }
             }
 
@@ -479,17 +485,17 @@ export class Sync {
       const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
       const normalizedPath = this.filesync.normalize(filepath, isDirectory);
 
-      if (filepath == this.filesync.absolute(".ignore")) {
+      this.log.debug("file event", {
+        event,
+        path: normalizedPath,
+        isDirectory,
+        recentRemoteChanges: Array.from(this.recentRemoteChanges),
+      });
+
+      if (filepath === this.filesync.absolute(".ignore")) {
         this.filesync.reloadIgnorePaths();
       } else if (this.filesync.ignores(filepath)) {
         return;
-      }
-
-      let stats: Stats | undefined;
-      try {
-        stats = fs.statSync(filepath);
-      } catch (error) {
-        swallowEnoent(error);
       }
 
       if (this.recentRemoteChanges.delete(normalizedPath)) {
@@ -498,28 +504,28 @@ export class Sync {
 
       switch (event) {
         case "add":
-        case "change":
-          assert(stats, "missing stats on add/change event");
-          localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: false });
-          break;
         case "addDir":
-          assert(stats, "missing stats on addDir event");
-          localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory: true });
+        case "change": {
+          const stats = fs.statSync(filepath);
+          localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory });
           break;
-        case "unlinkDir":
+        }
         case "unlink":
-          localFilesBuffer.set(normalizedPath, { isDeleted: true, isDirectory: event === "unlinkDir" });
+        case "unlinkDir": {
+          localFilesBuffer.set(normalizedPath, { isDeleted: true, isDirectory });
           break;
+        }
         case "rename":
-        case "renameDir":
-          assert(stats, "missing stats on rename/renameDir event");
+        case "renameDir": {
+          const stats = fs.statSync(filepath);
           localFilesBuffer.set(normalizedPath, {
             oldPath: this.filesync.normalize(absolutePath, isDirectory),
             newPath: normalizedPath,
-            isDirectory: event === "renameDir",
+            isDirectory,
             mode: stats.mode,
           });
           break;
+        }
       }
 
       this.publish();

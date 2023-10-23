@@ -6,10 +6,12 @@ import type { Ignore } from "ignore";
 import ignore from "ignore";
 import inquirer from "inquirer";
 import _ from "lodash";
+import ms from "ms";
 import path from "node:path";
 import process from "node:process";
 import normalizePath from "normalize-path";
 import pMap from "p-map";
+import pRetry from "p-retry";
 import pluralize from "pluralize";
 import { dedent } from "ts-dedent";
 import { z } from "zod";
@@ -336,20 +338,33 @@ export class FileSync {
     filesVersion = BigInt(filesVersion);
 
     await pMap(deleted, async (filepath) => {
+      const currentPath = this.absolute(filepath);
+      const backupPath = this.absolute(".gadget/backup", this.relative(filepath));
+
       // rather than `rm -rf`ing files, we move them to
       // `.gadget/backup/` so that users can recover them if something
-      // goes wrong.
-      try {
-        const current = this.absolute(filepath);
-        const backup = this.absolute(".gadget/backup", this.relative(filepath));
-        // remove the backup file if it exists
-        await fs.remove(backup);
-        // move the current file to the backup location
-        await fs.move(current, backup, { overwrite: true });
-      } catch (error) {
-        // replicate the behavior of `rm -rf` and ignore ENOENT
-        swallowEnoent(error);
-      }
+      // goes wrong. We've seen a lot of EBUSY/EINVAL errors when moving
+      // files so we retry a few times.
+      await pRetry(
+        async () => {
+          try {
+            // remove the current backup file in case it exists and is a
+            // different type (file vs directory)
+            await fs.remove(backupPath);
+            await fs.move(currentPath, backupPath);
+          } catch (error) {
+            // replicate the behavior of `rm -rf` and ignore ENOENT
+            swallowEnoent(error);
+          }
+        },
+        {
+          retries: 2,
+          minTimeout: ms("100ms"),
+          onFailedAttempt: (error) => {
+            log.warn("failed to move file to backup", { error });
+          },
+        },
+      );
     });
 
     await pMap(changed, async (file) => {

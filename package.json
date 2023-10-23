@@ -4,13 +4,16 @@
   "description": "The command-line interface for Gadget",
   "homepage": "https://github.com/gadget-inc/ggt",
   "bugs": "https://github.com/gadget-inc/ggt/issues",
-  "repository": "gadget-inc/ggt",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gadget-inc/ggt.git"
+  },
   "license": "MIT",
   "author": "Gadget Authors",
   "type": "module",
   "main": "lib/main.js",
   "bin": {
-    "ggt": "./bin/run.js"
+    "ggt": "bin/run.js"
   },
   "files": [
     "/assets",

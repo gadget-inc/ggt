@@ -28,14 +28,14 @@ import {
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
 import * as user from "../../src/services/user.js";
 import type { PartialExcept } from "../types.js";
-import type { MockClient } from "../util.js";
-import { mockClient, testApp, testDirPath, testUser } from "../util.js";
+import type { MockEditGraphQL } from "../util.js";
+import { mockEditGraphQL, testApp, testDirPath, testUser } from "../util.js";
 
 describe("Sync", () => {
   let rootArgs: RootArgs;
   let dir: string;
   let sync: Sync;
-  let client: MockClient;
+  let graphql: MockEditGraphQL;
 
   beforeEach(() => {
     dir = path.join(testDirPath(), "app");
@@ -60,7 +60,7 @@ describe("Sync", () => {
 
     sync = new Sync();
 
-    client = mockClient();
+    graphql = mockEditGraphQL();
 
     vi.spyOn(user, "getUserOrLogin").mockResolvedValue(testUser);
     vi.spyOn(app, "getApps").mockResolvedValue([
@@ -81,9 +81,9 @@ describe("Sync", () => {
 
       const init = sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await expect(init).resolves.toBeUndefined();
     });
@@ -99,9 +99,9 @@ describe("Sync", () => {
 
       void sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "2" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "2" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await sleepUntil(() => inquirer.prompt.mock.calls.length > 0);
       expect(inquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
@@ -128,9 +128,9 @@ describe("Sync", () => {
 
       void sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await sleepUntil(() => inquirer.prompt.mock.calls.length > 0);
       expect(inquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
@@ -164,9 +164,9 @@ describe("Sync", () => {
 
       const init = sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
       expect(inquirer.prompt).not.toHaveBeenCalled();
@@ -182,9 +182,9 @@ describe("Sync", () => {
 
       const init = sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "2" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "2" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
       expect(inquirer.prompt).not.toHaveBeenCalled();
@@ -200,9 +200,9 @@ describe("Sync", () => {
 
       const init = sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
       expect(inquirer.prompt).not.toHaveBeenCalled();
@@ -230,15 +230,15 @@ describe("Sync", () => {
 
       void sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
-      await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-      client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+      await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+      graphql._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
       // foo.js didn't change, so it should not be included
-      expectPublishToEqual(client, {
+      expectPublishToEqual(graphql, {
         input: {
           expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
           changed: [fileChangedEvent({ path: "bar.js", content: "bar2" }), fileChangedEvent({ path: "baz.js", content: "baz" })],
@@ -269,9 +269,9 @@ describe("Sync", () => {
 
       const init = sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
 
@@ -297,9 +297,9 @@ describe("Sync", () => {
     beforeEach(async () => {
       const init = sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
 
@@ -319,8 +319,8 @@ describe("Sync", () => {
         // the test failed... make sure sync.stop() isn't going to be blocked by a pending publish
         sync.publish.flush();
         await sleep(1);
-        if (client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION)) {
-          client
+        if (graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION)) {
+          graphql
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: String(sync.filesync.filesVersion) } } });
         }
@@ -332,7 +332,7 @@ describe("Sync", () => {
 
     describe("writing", () => {
       it("writes changed files", async () => {
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -363,7 +363,7 @@ describe("Sync", () => {
       });
 
       it("writes empty directories", async () => {
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -395,7 +395,7 @@ describe("Sync", () => {
           },
         });
 
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -432,7 +432,7 @@ describe("Sync", () => {
       it("updates `state.filesVersion` even if nothing changed", async () => {
         expect(sync.filesync.filesVersion).toBe(0n);
 
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -448,7 +448,7 @@ describe("Sync", () => {
       });
 
       it("adds changed and deleted files to recentRemoteChanges", async () => {
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -473,7 +473,7 @@ describe("Sync", () => {
 
       it("does not write multiple batches of events at the same time", async () => {
         // emit the first batch of events
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -488,7 +488,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
 
         // emit another batch of events while the first batch is in progress
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "2",
@@ -529,7 +529,7 @@ describe("Sync", () => {
       });
 
       it("does not throw ENOENT errors when deleting files", async () => {
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -545,7 +545,7 @@ describe("Sync", () => {
       });
 
       it("runs `yarn install` when yarn.lock changes", async () => {
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -563,7 +563,7 @@ describe("Sync", () => {
       });
 
       it("does not run `yarn install` when yarn.lock is deleted", async () => {
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -584,7 +584,7 @@ describe("Sync", () => {
         });
 
         // emit an event that both deletes a directory and changes a file in that directory
-        client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
@@ -618,12 +618,12 @@ describe("Sync", () => {
             "file3.js": "three",
           });
 
-          await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-          client
+          await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          graphql
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-          expectPublishToEqual(client, {
+          expectPublishToEqual(graphql, {
             input: {
               expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [
@@ -636,14 +636,14 @@ describe("Sync", () => {
           });
 
           // delete the subscription so that we can wait for the next publish
-          client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+          graphql._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
           // make expect(sync.publish).not.toHaveBeenCalled() work
           sync.publish.mockClear();
         });
 
         it("reloads the ignore file when it changes", async () => {
-          client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+          graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
             data: {
               remoteFileSyncEvents: {
                 remoteFilesVersion: "2",
@@ -666,13 +666,13 @@ describe("Sync", () => {
 
           fs.outputFileSync(path.join(dir, "file2.js"), "two2");
 
-          await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
-          client
+          graphql
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "3" } } });
 
-          expectPublishToEqual(client, {
+          expectPublishToEqual(graphql, {
             input: {
               expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [fileChangedEvent({ path: "file2.js", content: "two2" })],
@@ -682,7 +682,7 @@ describe("Sync", () => {
         });
 
         it("does not write changes to ignored files", async () => {
-          client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+          graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
             data: {
               remoteFileSyncEvents: {
                 remoteFilesVersion: "2",
@@ -707,7 +707,7 @@ describe("Sync", () => {
           // manually write the file to make sure it doesn't get deleted
           fs.outputFileSync(path.join(dir, "file2.js"), "two");
 
-          client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+          graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
             data: {
               remoteFileSyncEvents: {
                 remoteFilesVersion: "3",
@@ -732,7 +732,7 @@ describe("Sync", () => {
         });
 
         it("does write changes to .gadget files even though they are always ignored", async () => {
-          client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+          graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
             data: {
               remoteFileSyncEvents: {
                 remoteFilesVersion: "2",
@@ -778,10 +778,12 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
@@ -806,12 +808,14 @@ describe("Sync", () => {
         });
 
         // wait for the initial publish
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
         // let the first publish complete
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
@@ -824,14 +828,16 @@ describe("Sync", () => {
         });
 
         // delete the subscription so that we can wait for the next publish
-        client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+        graphql._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
         fs.renameSync(path.join(dir, "bar/"), path.join(dir, "foo/"));
 
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
@@ -858,12 +864,14 @@ describe("Sync", () => {
         });
 
         // wait for the initial publish
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
         // let the first publish complete
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
@@ -878,15 +886,17 @@ describe("Sync", () => {
         });
 
         // delete the subscription so that we can wait for the next publish
-        client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+        graphql._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
         fs.rmSync(path.join(dir, "file.js"));
         fs.rmSync(path.join(dir, "some/deeply/nested/file.js"));
 
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [],
@@ -902,10 +912,12 @@ describe("Sync", () => {
         await sleep(10);
         fs.outputFileSync(path.join(dir, "baz.js"), "baz");
 
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
@@ -927,10 +939,12 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
@@ -953,12 +967,14 @@ describe("Sync", () => {
         });
 
         // wait for the initial publish
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
         // let the first publish complete
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [
@@ -971,14 +987,16 @@ describe("Sync", () => {
         });
 
         // delete the subscription so that we can wait for the next publish
-        client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+        graphql._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
         fs.removeSync(path.join(dir, "some/deeply/nested/"));
 
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [],
@@ -1002,10 +1020,12 @@ describe("Sync", () => {
         // delete the file
         fs.removeSync(path.join(dir, "delete_me.js"));
 
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "another.js", content: "another" })],
@@ -1036,12 +1056,12 @@ describe("Sync", () => {
         fs.outputFileSync(path.join(dir, "foo.js"), "foo");
 
         // wait for the first file to be queued
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
         // the first publish should be in progress
         expect(sync.queue.size).toBe(0);
         expect(sync.queue.pending).toBe(1);
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "foo.js", content: "foo" })],
@@ -1058,7 +1078,7 @@ describe("Sync", () => {
 
         // the first publish should still be in progress
         expect(sync.queue.pending).toBe(1);
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "foo.js", content: "foo" })],
@@ -1067,18 +1087,20 @@ describe("Sync", () => {
         });
 
         // let the first publish complete
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
         // delete the subscription so that we can wait for the second publish to be start
-        client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+        graphql._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
         // wait for the second publish to start
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
 
         // the second publish should be in progress
         expect(sync.queue.size).toBe(0);
         expect(sync.queue.pending).toBe(1);
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "bar.js", content: "bar" }), fileChangedEvent({ path: "baz.js", content: "baz" })],
@@ -1087,7 +1109,9 @@ describe("Sync", () => {
         });
 
         // let the second publish complete
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
         // wait for the second publish to complete
         await sleepUntil(() => sync.filesync.filesVersion == 2n);
@@ -1108,11 +1132,13 @@ describe("Sync", () => {
         fs.outputFileSync(path.join(dir, "file.js"), "foo3");
 
         // wait for the publish to be queued
-        await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-        client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
         // only one event should be published
-        expectPublishToEqual(client, {
+        expectPublishToEqual(graphql, {
           input: {
             expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
             changed: [fileChangedEvent({ path: "file.js", content: "foo3" })],
@@ -1133,12 +1159,12 @@ describe("Sync", () => {
 
           fs.outputFileSync(path.join(dir, ".ignore"), ignoreContent);
 
-          await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-          client
+          await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          graphql
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-          expectPublishToEqual(client, {
+          expectPublishToEqual(graphql, {
             input: {
               expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [fileChangedEvent({ path: ".ignore", content: ignoreContent })],
@@ -1147,7 +1173,7 @@ describe("Sync", () => {
           });
 
           // delete the subscription so that we can wait for the next publish
-          client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+          graphql._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
           // make expect(sync.publish).not.toHaveBeenCalled() work
           sync.publish.mockClear();
@@ -1159,12 +1185,12 @@ describe("Sync", () => {
           fs.outputFileSync(path.join(dir, "some/deeply/nested/file.js"), "not bar");
           fs.outputFileSync(path.join(dir, "watch/me/file.js"), "bar2");
 
-          await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-          client
+          await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          graphql
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
-          expectPublishToEqual(client, {
+          expectPublishToEqual(graphql, {
             input: {
               expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [
@@ -1193,13 +1219,13 @@ describe("Sync", () => {
           // update the ignore file
           fs.writeFileSync(path.join(dir, ".ignore"), "# watch it all");
 
-          await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-          client
+          await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          graphql
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
           // the ignore file should be reloaded and published
-          expectPublishToEqual(client, {
+          expectPublishToEqual(graphql, {
             input: {
               expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [fileChangedEvent({ path: ".ignore", content: "# watch it all" })],
@@ -1208,17 +1234,17 @@ describe("Sync", () => {
           });
 
           // delete the subscription so that we can wait for the next publish
-          client._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
+          graphql._subscriptions.delete(PUBLISH_FILE_SYNC_EVENTS_MUTATION);
 
           // update the previously ignored file
           fs.writeFileSync(path.join(dir, "file.js"), "foo2");
 
-          await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-          client
+          await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          graphql
             ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
             .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "3" } } });
 
-          expectPublishToEqual(client, {
+          expectPublishToEqual(graphql, {
             input: {
               expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
               changed: [fileChangedEvent({ path: "file.js", content: "foo2" })],
@@ -1238,9 +1264,9 @@ describe("Sync", () => {
 
       const init = sync.init(rootArgs);
 
-      await sleepUntil(() => client._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
-      client._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
+      await sleepUntil(() => graphql._subscriptions.has(REMOTE_FILES_VERSION_QUERY));
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "0" } });
+      graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
 
@@ -1282,7 +1308,7 @@ describe("Sync", () => {
       expect(sync.queue.pending + sync.queue.size).toBe(0);
 
       // emit a remote change event
-      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+      graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
         data: {
           remoteFileSyncEvents: {
             remoteFilesVersion: "1",
@@ -1299,8 +1325,8 @@ describe("Sync", () => {
       expect(sync.queue.pending).toBe(1);
       expect(sync.queue.size).toBe(1);
 
-      await sleepUntil(() => client._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-      client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+      await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+      graphql._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
       // publishing foo.js should be done and writing bar.js should be pending (running)
       expect(sync.queue.pending).toBe(1);
@@ -1334,9 +1360,9 @@ describe("Sync", () => {
     });
 
     it("notifies the user when an error occurs", async () => {
-      expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
+      expect(graphql._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
 
-      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
+      graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
 
       await expect(run).rejects.toThrow(ClientError);
       expect(notifier.notify).toHaveBeenCalledWith(
@@ -1354,39 +1380,39 @@ describe("Sync", () => {
     });
 
     it("closes all resources when subscription emits error", async () => {
-      expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
+      expect(graphql._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
 
-      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
+      graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.error(new ClientError({} as any, "test"));
 
       await expect(run).rejects.toThrow(ClientError);
-      expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
+      expect(graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);
-      expect(sync.client.dispose).toHaveBeenCalledTimes(1);
+      expect(sync.graphql.dispose).toHaveBeenCalledTimes(1);
     });
 
     it("closes all resources when subscription emits response with errors", async () => {
-      expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
+      expect(graphql._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
 
-      client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({ errors: [new GraphQLError("boom")] });
+      graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({ errors: [new GraphQLError("boom")] });
 
       await expect(run).rejects.toThrow(ClientError);
-      expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(2);
+      expect(graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(2);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);
-      expect(sync.client.dispose).toHaveBeenCalledTimes(1);
+      expect(sync.graphql.dispose).toHaveBeenCalledTimes(1);
     });
 
     it("closes all resources when watcher emits error", async () => {
-      expect(client._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
+      expect(graphql._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
 
       sync.watcher.error(new Error(expect.getState().currentTestName));
 
       await expect(run).rejects.toThrow(expect.getState().currentTestName);
-      expect(client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
+      expect(graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
       expect(sync.watcher.close).toHaveBeenCalledTimes(1);
-      expect(sync.client.dispose).toHaveBeenCalledTimes(1);
+      expect(sync.graphql.dispose).toHaveBeenCalledTimes(1);
     });
   });
 });
@@ -1424,7 +1450,7 @@ export function dirChangedEvent(
   return fileChangedEvent({ content: "", mode: defaultDirMode, ...options });
 }
 
-function expectPublishToEqual(client: MockClient, expected: MutationPublishFileSyncEventsArgs): void {
+function expectPublishToEqual(client: MockEditGraphQL, expected: MutationPublishFileSyncEventsArgs): void {
   const actual = client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables;
   assert(actual && typeof actual == "object");
 

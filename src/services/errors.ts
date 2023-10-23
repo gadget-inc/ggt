@@ -12,8 +12,8 @@ import type { SetOptional } from "type-fest";
 import { inspect } from "util";
 import type { CloseEvent, ErrorEvent } from "ws";
 import type { App } from "./app.js";
-import type { Payload } from "./client.js";
 import { config, env } from "./config.js";
+import type { Payload } from "./edit-graphql.js";
 import type { User } from "./user.js";
 
 let app: App | undefined;

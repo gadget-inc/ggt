@@ -25,8 +25,8 @@ import type {
 } from "../__generated__/graphql.js";
 import type { App } from "./app.js";
 import { getApps } from "./app.js";
-import type { Query } from "./client.js";
 import { config } from "./config.js";
+import type { Query } from "./edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyDir, swallowEnoent } from "./fs-utils.js";
 import { createLogger } from "./log.js";

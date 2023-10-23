@@ -13,8 +13,8 @@ import FSWatcher from "watcher";
 import which from "which";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
-import { Client } from "../services/client.js";
 import { config } from "../services/config.js";
+import { EditGraphQL } from "../services/edit-graphql.js";
 import { YarnNotFoundError } from "../services/errors.js";
 import {
   FileSync,
@@ -157,7 +157,7 @@ export class Sync {
   /**
    * A GraphQL client connected to the app's /edit/api/graphql-ws endpoint
    */
-  client!: Client;
+  graphql!: EditGraphQL;
 
   /**
    * Watches the local filesystem for changes.
@@ -220,9 +220,9 @@ export class Sync {
       extraIgnorePaths: [".gadget"],
     });
 
-    this.client = new Client(this.filesync.app);
+    this.graphql = new EditGraphQL(this.filesync.app);
 
-    const { remoteFilesVersion } = await this.client.queryUnwrap({ query: REMOTE_FILES_VERSION_QUERY });
+    const { remoteFilesVersion } = await this.graphql.query({ query: REMOTE_FILES_VERSION_QUERY });
     const hasRemoteChanges = BigInt(remoteFilesVersion) > this.filesync.filesVersion;
 
     const getChangedFiles = async (): Promise<Map<string, Stats>> => {
@@ -281,7 +281,7 @@ export class Sync {
         // will cause us to receive the remote files that have changed
         // since the last sync (+ the local files that we just
         // published)
-        await this.client.queryUnwrap({
+        await this.graphql.query({
           query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
           variables: {
             input: {
@@ -349,7 +349,7 @@ export class Sync {
         this.publish.flush();
         await this.queue.onIdle();
       } finally {
-        await Promise.allSettled([this.watcher.close(), this.client.dispose()]);
+        await Promise.allSettled([this.watcher.close(), this.graphql.dispose()]);
 
         this.status = SyncStatus.STOPPED;
         stopped.resolve();
@@ -375,7 +375,7 @@ export class Sync {
       });
     }
 
-    const unsubscribe = this.client.subscribeUnwrap(
+    const unsubscribe = this.graphql.subscribe(
       {
         query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
         variables: () => ({ localFilesVersion: String(this.filesync.filesVersion) }),
@@ -465,7 +465,7 @@ export class Sync {
           return;
         }
 
-        const { publishFileSyncEvents } = await this.client.queryUnwrap({
+        const { publishFileSyncEvents } = await this.graphql.query({
           query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
           variables: { input: { expectedRemoteFilesVersion: String(this.filesync.filesVersion), changed, deleted } },
         });

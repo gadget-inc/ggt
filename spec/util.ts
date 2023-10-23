@@ -4,9 +4,9 @@ import path from "path";
 import type { JsonObject } from "type-fest";
 import { assert, expect, vi } from "vitest";
 import type { App } from "../src/services/app.js";
-import type { Payload, Query, Sink } from "../src/services/client.js";
-import { Client } from "../src/services/client.js";
 import { config } from "../src/services/config.js";
+import type { Payload, Query, Sink } from "../src/services/edit-graphql.js";
+import { EditGraphQL } from "../src/services/edit-graphql.js";
 import { loadCookie } from "../src/services/http.js";
 import { writeSession } from "../src/services/session.js";
 import type { User } from "../src/services/user.js";
@@ -82,16 +82,16 @@ export interface MockSubscription<Data extends JsonObject, Variables extends Jso
   unsubscribe: () => void;
 }
 
-export interface MockClient extends Client {
+export interface MockEditGraphQL extends EditGraphQL {
   _subscriptions: Map<string, MockSubscription<JsonObject, JsonObject, JsonObject>>;
   _subscription<Data extends JsonObject, Variables extends JsonObject>(
     query: Query<Data, Variables>,
   ): MockSubscription<Data, Variables, JsonObject>;
 }
 
-export function mockClient(): MockClient {
+export function mockEditGraphQL(): MockEditGraphQL {
   const mock = {
-    ...Client.prototype,
+    ...EditGraphQL.prototype,
     _subscriptions: new Map(),
     _subscription: <Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject>(
       query: Query<Data, Variables, Extensions>,
@@ -103,8 +103,8 @@ export function mockClient(): MockClient {
     },
   };
 
-  vi.spyOn(Client.prototype, "dispose");
-  vi.spyOn(Client.prototype, "subscribe").mockImplementation((payload, sink) => {
+  vi.spyOn(EditGraphQL.prototype, "dispose");
+  vi.spyOn(EditGraphQL.prototype, "_subscribe").mockImplementation((payload, sink) => {
     if (!sink.complete) sink.complete = _.noop;
 
     const unsubscribe = vi.fn();
@@ -115,5 +115,5 @@ export function mockClient(): MockClient {
     return unsubscribe;
   });
 
-  return mock as MockClient;
+  return mock as MockEditGraphQL;
 }

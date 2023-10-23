@@ -19,15 +19,12 @@ enum ConnectionStatus {
   RECONNECTING,
 }
 
-const log = createLogger("client");
+const log = createLogger("edit-graphql");
 
 /**
- * Client is a GraphQL client connected to a Gadget application's /edit/api/graphql-ws endpoint.
- *
- * NOTE: In order to use the Client, the user must be logged in and an app must have been selected (`context.app` and
- * `context.session` must be set).
+ * EditGraphQL is a GraphQL client connected to a Gadget application's /edit/api/graphql-ws endpoint.
  */
-export class Client {
+export class EditGraphQL {
   // assume the client is going to connect
   status = ConnectionStatus.CONNECTED;
 
@@ -101,7 +98,68 @@ export class Client {
     });
   }
 
-  subscribe<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
+  /**
+   * Subscribe to a GraphQL query.
+   *
+   * This method is typically used to subscribe to a GraphQL
+   * subscription. If you want to execute a GraphQL query or mutation,
+   * use {@link EditGraphQL.query} instead.
+   *
+   * @param payload The query and variables to send to the server.
+   * @param sink The callbacks to invoke when the server responds.
+   * @returns A function to unsubscribe from the subscription.
+   */
+  subscribe<Data extends JsonObject, Variables extends JsonObject>(
+    payload: Payload<Data, Variables>,
+    sink: { next: (data: Data) => void; error: (error: ClientError) => void },
+  ): () => void {
+    const unsubscribe = this._subscribe(payload, {
+      ...sink,
+      next: (result) => {
+        if (result.errors) {
+          unsubscribe();
+          sink.error(new ClientError(payload, result.errors));
+          return;
+        }
+
+        if (!result.data) {
+          sink.error(new ClientError(payload, "Received a GraphQL response without errors or data"));
+          unsubscribe();
+          return;
+        }
+
+        sink.next(result.data);
+      },
+    });
+
+    return unsubscribe;
+  }
+
+  /**
+   * Execute a GraphQL query or mutation.
+   * @param payload The query and variables to send to the server.
+   * @returns The data returned by the server.
+   */
+  async query<Data extends JsonObject, Variables extends JsonObject>(payload: Payload<Data, Variables>): Promise<Data> {
+    const result = await this._query(payload);
+    if (result.errors) throw new ClientError(payload, result.errors);
+    if (!result.data) throw new ClientError(payload, "We received a response without data");
+    return result.data;
+  }
+
+  /**
+   * Close the connection to the server.
+   */
+  async dispose(): Promise<void> {
+    await this._client.dispose();
+  }
+
+  /**
+   * Internal method to subscribe to a GraphQL query.
+   *
+   * This method shouldn't be used directly. It's exposed for testing.
+   */
+  _subscribe<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
     payload: Payload<Data, Variables>,
     sink: SetOptional<Sink<Data, Extensions>, "complete">,
   ): () => void {
@@ -144,49 +202,12 @@ export class Client {
     };
   }
 
-  subscribeUnwrap<Data extends JsonObject, Variables extends JsonObject>(
-    payload: Payload<Data, Variables>,
-    sink: { next: (data: Data) => void; error: (error: ClientError) => void },
-  ): () => void {
-    const unsubscribe = this.subscribe(payload, {
-      ...sink,
-      next: (result) => {
-        if (result.errors) {
-          unsubscribe();
-          sink.error(new ClientError(payload, result.errors));
-          return;
-        }
-
-        if (!result.data) {
-          sink.error(new ClientError(payload, "We received a response without data"));
-          unsubscribe();
-          return;
-        }
-
-        sink.next(result.data);
-      },
-    });
-
-    return unsubscribe;
-  }
-
-  query<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
+  private _query<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
     payload: Payload<Data, Variables>,
   ): Promise<ExecutionResult<Data, Extensions>> {
     return new Promise((resolve, reject) => {
-      this.subscribe<Data, Variables, Extensions>(payload, { next: resolve, error: reject });
+      this._subscribe<Data, Variables, Extensions>(payload, { next: resolve, error: reject });
     });
-  }
-
-  async queryUnwrap<Data extends JsonObject, Variables extends JsonObject>(payload: Payload<Data, Variables>): Promise<Data> {
-    const result = await this.query(payload);
-    if (result.errors) throw new ClientError(payload, result.errors);
-    if (!result.data) throw new ClientError(payload, "We received a response without data");
-    return result.data;
-  }
-
-  async dispose(): Promise<void> {
-    await this._client.dispose();
   }
 }
 

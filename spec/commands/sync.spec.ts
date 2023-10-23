@@ -1403,7 +1403,7 @@ function prettyJson(obj: any): string {
   return JSON.stringify(obj, null, 2);
 }
 
-function fileChangedEvent(
+export function fileChangedEvent(
   options: PartialExcept<FileSyncChangedEventInput, "path" | "content">,
 ): FileSyncChangedEventInput & FileSyncChangedEvent {
   const event = _.defaults(options, {
@@ -1417,7 +1417,9 @@ function fileChangedEvent(
   return event as FileSyncChangedEventInput & FileSyncChangedEvent;
 }
 
-function dirChangedEvent(options: PartialExcept<FileSyncChangedEventInput, "path">): FileSyncChangedEventInput & FileSyncChangedEvent {
+export function dirChangedEvent(
+  options: PartialExcept<FileSyncChangedEventInput, "path">,
+): FileSyncChangedEventInput & FileSyncChangedEvent {
   assert(_.endsWith(options.path, "/"));
   return fileChangedEvent({ content: "", mode: defaultDirMode, ...options });
 }

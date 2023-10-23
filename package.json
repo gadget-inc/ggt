@@ -64,6 +64,7 @@
     "open": "^9.1.0",
     "p-map": "^6.0.0",
     "p-queue": "^7.4.1",
+    "p-retry": "^6.1.0",
     "pluralize": "^8.0.0",
     "semver": "^7.5.4",
     "serialize-error": "^11.0.2",

@@ -114,4 +114,26 @@ describe("filesync", () => {
       expect(filesync._state).toEqual({ app: testApp.slug, filesVersion: "0", mtime: 0 });
     });
   });
+
+  describe("write", () => {
+    it("removes old backup files before moving new files into place", async () => {
+      const filesync = await FileSync.init(testUser, { dir, app: testApp.slug });
+
+      // create a file named `foo.js`
+      await fs.outputFile(filesync.absolute("foo.js"), "// foo");
+
+      // create a directory named `.gadget/backup/foo.js`
+      await fs.mkdirp(filesync.absolute(".gadget/backup/foo.js"));
+
+      // tell filesync to delete foo.js, which should move it to .gadget/backup/foo.js
+      // if the backup file is not removed first, this will fail with "Error: Cannot overwrite directory"
+      await filesync.write(1n, [], ["foo.js"]);
+
+      // foo.js should be gone
+      await expect(fs.exists(filesync.absolute("foo.js"))).resolves.toBe(false);
+
+      // .gadget/backup/foo.js should be the foo.js file that was deleted
+      await expect(fs.readFile(filesync.absolute(".gadget/backup/foo.js"), "utf8")).resolves.toBe("// foo");
+    });
+  });
 });

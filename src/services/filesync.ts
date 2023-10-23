@@ -340,9 +340,12 @@ export class FileSync {
       // `.gadget/backup/` so that users can recover them if something
       // goes wrong.
       try {
-        const relative = this.relative(filepath);
-        const absolute = this.absolute(filepath);
-        await fs.move(absolute, this.absolute(".gadget/backup", relative), { overwrite: true });
+        const current = this.absolute(filepath);
+        const backup = this.absolute(".gadget/backup", this.relative(filepath));
+        // remove the backup file if it exists
+        await fs.remove(backup);
+        // move the current file to the backup location
+        await fs.move(current, backup, { overwrite: true });
       } catch (error) {
         // replicate the behavior of `rm -rf` and ignore ENOENT
         swallowEnoent(error);

@@ -447,12 +447,12 @@ describe("Sync", () => {
         expect(sync.filesync.filesVersion).toBe(1n);
       });
 
-      it("adds changed and deleted files to recentWrites", async () => {
+      it("adds changed and deleted files to recentRemoteChanges", async () => {
         client._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
               remoteFilesVersion: "1",
-              changed: [fileChangedEvent({ path: "foo.js", content: "foo" })],
+              changed: [fileChangedEvent({ path: "some/deeply/nested/file.js", content: "foo" })],
               deleted: [{ path: "bar.js" }],
             },
           },
@@ -460,8 +460,15 @@ describe("Sync", () => {
 
         await sleepUntil(() => sync.filesync.filesVersion == 1n);
 
-        expect(sync.recentRemoteChanges.has("foo.js")).toBe(true);
-        expect(sync.recentRemoteChanges.has("bar.js")).toBe(true);
+        expect(Array.from(sync.recentRemoteChanges.keys())).toMatchInlineSnapshot(`
+          [
+            "some/deeply/nested/file.js",
+            "some/deeply/nested/",
+            "some/deeply/",
+            "some/",
+            "bar.js",
+          ]
+        `);
       });
 
       it("does not write multiple batches of events at the same time", async () => {
@@ -990,7 +997,7 @@ describe("Sync", () => {
         await sleepUntil(() => sync.publish.mock.calls.length == 2);
 
         // add the file we're about to delete to recentWrites so that it doesn't get published
-        sync.recentRemoteChanges.add("delete_me.js");
+        sync.recentRemoteChanges.set("delete_me.js", Date.now());
 
         // delete the file
         fs.removeSync(path.join(dir, "delete_me.js"));
@@ -1009,8 +1016,8 @@ describe("Sync", () => {
 
       it("does not publish events from files contained in recentRemoteChanges", () => {
         // add files to recentRemoteChanges
-        sync.recentRemoteChanges.add("foo.js");
-        sync.recentRemoteChanges.add("bar.js");
+        sync.recentRemoteChanges.set("foo.js", Date.now());
+        sync.recentRemoteChanges.set("bar.js", Date.now());
 
         // write the files to the filesystem
         fs.outputFileSync(path.join(dir, "foo.js"), "foo");
@@ -1019,7 +1026,7 @@ describe("Sync", () => {
         // expect no events to have been published
         expect(sync.publish).not.toHaveBeenCalled();
 
-        // the files in recentWrites should be removed so that subsequent events affecting them can be published
+        // the files in recentRemoteChanges should be removed so that subsequent events affecting them can be published
         expect(sync.recentRemoteChanges.has(path.join(dir, "foo.js"))).toBe(false);
         expect(sync.recentRemoteChanges.has(path.join(dir, "bar.js"))).toBe(false);
       });

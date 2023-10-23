@@ -1,5 +1,0 @@
----
-"ggt": minor
----
-
-Remove Oclif

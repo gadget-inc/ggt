@@ -6,7 +6,6 @@ import type { Ignore } from "ignore";
 import ignore from "ignore";
 import inquirer from "inquirer";
 import _ from "lodash";
-import ms from "ms";
 import path from "node:path";
 import process from "node:process";
 import normalizePath from "normalize-path";
@@ -24,13 +23,15 @@ import type {
 } from "../__generated__/graphql.js";
 import type { App } from "./app.js";
 import { getApps } from "./app.js";
-import { breadcrumb } from "./breadcrumbs.js";
 import type { Query } from "./client.js";
 import { config } from "./config.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyDir, swallowEnoent } from "./fs-utils.js";
+import { createLogger } from "./log.js";
 import { println, sortByLevenshtein, sprint } from "./output.js";
 import type { User } from "./user.js";
+
+const log = createLogger("filesync");
 
 interface File {
   path: string;
@@ -40,23 +41,6 @@ interface File {
 }
 
 export class FileSync {
-  /**
-   * Writes {@linkcode _state} to `.gadget/sync.json`.
-   *
-   * This is debounced so that it can be called every time the state
-   * changes, but only actually writes to the filesystem once it hasn't
-   * changed for 100ms.
-   */
-  private _save = _.debounce(() => {
-    fs.outputJSONSync(this.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
-    breadcrumb({
-      type: "info",
-      category: "sync",
-      message: "Saved sync state",
-      data: { state: this._state },
-    });
-  }, ms("100ms"));
-
   /**
    * The {@linkcode Ignore} instance that is used to determine if a file
    * should be ignored.
@@ -89,7 +73,6 @@ export class FileSync {
     private _state: { app: string; filesVersion: string; mtime: number },
   ) {
     this._save();
-    this.flush();
     this.reloadIgnorePaths();
   }
 
@@ -99,13 +82,8 @@ export class FileSync {
    * This determines if the filesystem in Gadget is ahead of the
    * filesystem on the local machine.
    */
-  get filesVersion(): bigint {
+  get filesVersion() {
     return BigInt(this._state.filesVersion);
-  }
-
-  set filesVersion(value: bigint | string) {
-    this._state.filesVersion = String(value);
-    this._save();
   }
 
   /**
@@ -114,22 +92,8 @@ export class FileSync {
    * This is used to determine if any files have changed since the last
    * sync. This does not include the mtime of files that are ignored.
    */
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  get mtime(): number {
+  get mtime() {
     return this._state.mtime;
-  }
-
-  set mtime(value: number) {
-    this._state.mtime = value;
-    this._save();
-  }
-
-  /**
-   * The state of the filesystem.
-   */
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  get state() {
-    return Object.freeze({ ...this._state });
   }
 
   /**
@@ -261,13 +225,6 @@ export class FileSync {
   }
 
   /**
-   * Flushes any debounced {@linkcode _save}s to the filesystem.
-   */
-  flush(): void {
-    this._save.flush();
-  }
-
-  /**
    * Converts an absolute path into a relative one from {@linkcode dir}.
    */
   relative(to: string): string {
@@ -312,7 +269,7 @@ export class FileSync {
     try {
       const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");
       this._ignorer.add(content);
-      breadcrumb({ type: "debug", category: "sync", message: "Reloaded ignore rules" });
+      log.info("reloaded ignore rules");
     } catch (error) {
       swallowEnoent(error);
     }
@@ -373,8 +330,9 @@ export class FileSync {
    * @param filesVersion The files version associated with the files that are being written.
    * @param changed The files that have changed.
    * @param deleted The paths that have been deleted.
+   * @param force If `true`, the files version will be updated even if it's less than the current files version.
    */
-  async write(filesVersion: bigint | string, changed: Iterable<File>, deleted: Iterable<string>): Promise<void> {
+  async write(filesVersion: bigint | string, changed: Iterable<File>, deleted: Iterable<string>, force = false): Promise<void> {
     filesVersion = BigInt(filesVersion);
 
     await pMap(deleted, async (filepath) => {
@@ -406,10 +364,25 @@ export class FileSync {
       }
     });
 
-    this.mtime = Date.now();
-    if (filesVersion > this.filesVersion) {
-      this.filesVersion = filesVersion;
+    this._state.mtime = Date.now();
+    if (filesVersion > BigInt(this._state.filesVersion) || force) {
+      this._state.filesVersion = String(filesVersion);
     }
+
+    this._save();
+
+    log.info("wrote", {
+      ...this._state,
+      changed: _.map(Array.from(changed), "path"),
+      deleted: Array.from(deleted),
+    });
+  }
+
+  /**
+   * Synchronously writes {@linkcode _state} to `.gadget/sync.json`.
+   */
+  private _save() {
+    fs.outputJSONSync(this.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
   }
 }
 

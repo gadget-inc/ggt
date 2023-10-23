@@ -5,8 +5,11 @@ import type NotificationCenter from "node-notifier/notifiers/notificationcenter.
 import type NotifySend from "node-notifier/notifiers/notifysend.js";
 import type WindowsToaster from "node-notifier/notifiers/toaster.js";
 import path from "node:path";
-import { breadcrumb } from "./breadcrumbs.js";
+import type { Jsonifiable } from "type-fest";
 import { workspaceRoot } from "./config.js";
+import { createLogger } from "./log.js";
+
+const log = createLogger("notify");
 
 /**
  * Sends a native OS notification to the user.
@@ -22,14 +25,7 @@ export const notify = (
     | WindowsBalloon.Notification
     | Growl.Notification,
 ) => {
-  breadcrumb({
-    type: "debug",
-    category: "notification",
-    message: "Notifying user",
-    data: {
-      notification,
-    },
-  });
+  log.info("notifying user", { notification: notification as Jsonifiable });
 
   notifier.notify(
     {
@@ -42,14 +38,7 @@ export const notify = (
     },
     (error) => {
       if (error) {
-        breadcrumb({
-          type: "error",
-          category: "notification",
-          message: "Error notifying user",
-          data: {
-            error,
-          },
-        });
+        log.warn("error notifying user", { notification: notification as Jsonifiable });
       }
     },
   );

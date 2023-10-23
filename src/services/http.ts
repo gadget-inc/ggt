@@ -1,36 +1,28 @@
 import { got, HTTPError, type OptionsInit } from "got";
-import { breadcrumb } from "./breadcrumbs.js";
 import { config } from "./config.js";
+import { createLogger } from "./log.js";
 import { readSession, writeSession } from "./session.js";
+
+const log = createLogger("http");
 
 export const http = got.extend({
   hooks: {
     beforeRequest: [
       (options) => {
         options.headers["user-agent"] = config.versionFull;
-        breadcrumb({
-          type: "debug",
-          category: "http",
-          message: "HTTP request",
-          data: {
-            method: options.method,
-            url: options.url,
-          },
+        log.info("http request", {
+          method: options.method,
+          url: options.url?.toString(),
         });
       },
     ],
     afterResponse: [
       (response) => {
-        breadcrumb({
-          type: "debug",
-          category: "http",
-          message: "HTTP response",
-          data: {
-            method: response.method,
-            url: response.url,
-            statusCode: response.statusCode,
-            traceId: response.headers["x-trace-id"],
-          },
+        log.info("http response", {
+          method: response.request.options.method,
+          url: response.request.options.url?.toString(),
+          statusCode: response.statusCode,
+          traceId: response.headers["x-trace-id"],
         });
 
         if (response.statusCode === 401 && isGadgetRequest(response.request.options)) {
@@ -48,12 +40,7 @@ export const isUnauthorized = (error: unknown): boolean => {
 
 export const swallowUnauthorized = (error: unknown): void => {
   if (isUnauthorized(error)) {
-    breadcrumb({
-      type: "debug",
-      category: "http",
-      message: "Swallowing unauthorized error",
-      data: { error },
-    });
+    log.warn("swallowing unauthorized error", { error });
     return;
   }
   throw error;

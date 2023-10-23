@@ -2,8 +2,8 @@ import getPort from "get-port";
 import assert from "node:assert";
 import http, { type Server } from "node:http";
 import open from "open";
-import { breadcrumb } from "../services/breadcrumbs.js";
 import { config } from "../services/config.js";
+import { createLogger } from "../services/log.js";
 import { println, sprint } from "../services/output.js";
 import { writeSession } from "../services/session.js";
 import { getUser } from "../services/user.js";
@@ -22,6 +22,8 @@ export const usage = sprint`
 
       Hello, Jane Doe (jane@example.com)
 `;
+
+const log = createLogger("login");
 
 export const run = async () => {
   let server: Server | undefined;
@@ -62,13 +64,7 @@ export const run = async () => {
         }
       });
 
-      breadcrumb({
-        type: "info",
-        category: "user",
-        message: "Starting login server",
-        data: { port },
-      });
-
+      log.info("starting login server", { port });
       server.listen(port);
     });
 

@@ -6,10 +6,12 @@ import assert from "node:assert";
 import path from "node:path";
 import semver from "semver";
 import { z } from "zod";
-import { breadcrumb } from "./breadcrumbs.js";
 import { config } from "./config.js";
 import { http } from "./http.js";
+import { createLogger } from "./log.js";
 import { println, sprint } from "./output.js";
+
+const log = createLogger("version");
 
 const UPDATE_CHECK_FREQUENCY = ms("12 hours");
 
@@ -58,16 +60,7 @@ export const warnIfUpdateAvailable = async () => {
     const tags = await getDistTags();
 
     if (semver.lt(config.version, tags.latest)) {
-      breadcrumb({
-        type: "info",
-        category: "version",
-        message: "Update available",
-        data: {
-          current: config.version,
-          latest: tags.latest,
-        },
-      });
-
+      log.info("update available", { current: config.version, latest: tags.latest });
       println(
         boxen(
           sprint`
@@ -84,11 +77,6 @@ export const warnIfUpdateAvailable = async () => {
       );
     }
   } catch (error) {
-    breadcrumb({
-      type: "error",
-      category: "version",
-      message: "Failed to check for updates",
-      data: { error },
-    });
+    log.error("failed to check for updates", { error });
   }
 };

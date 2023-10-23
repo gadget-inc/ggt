@@ -1,15 +1,13 @@
 import fs from "fs-extra";
 import path from "node:path";
-import { breadcrumb } from "./breadcrumbs.js";
 import { config } from "./config.js";
 import { swallowEnoent } from "./fs-utils.js";
+import { createLogger } from "./log.js";
+
+const log = createLogger("session");
 
 export const readSession = (): string | undefined => {
-  breadcrumb({
-    type: "debug",
-    category: "session",
-    message: "Reading session from disk",
-  });
+  log.debug("reading session from disk");
 
   try {
     return fs.readFileSync(path.join(config.configDir, "session.txt"), "utf-8");
@@ -20,12 +18,7 @@ export const readSession = (): string | undefined => {
 };
 
 export const writeSession = (session: string | undefined) => {
-  breadcrumb({
-    type: "debug",
-    category: "session",
-    message: "Writing session to disk",
-    data: { session: Boolean(session) },
-  });
+  log.debug("writing session to disk", { session: Boolean(session) });
 
   if (session) {
     fs.outputFileSync(path.join(config.configDir, "session.txt"), session);

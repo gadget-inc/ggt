@@ -24,7 +24,8 @@ import {
   printPaths,
 } from "../services/filesync.js";
 import { swallowEnoent } from "../services/fs-utils.js";
-import { notify } from "../services/notifications.js";
+import { createLogger } from "../services/log.js";
+import { notify } from "../services/notify.js";
 import { println, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
 import { getUserOrLogin } from "../services/user.js";
@@ -177,6 +178,14 @@ export class Sync {
    */
   stop!: (error?: unknown) => Promise<void>;
 
+  log = createLogger("sync", () => {
+    return {
+      app: this.filesync.app.slug,
+      filesVersion: String(this.filesync.filesVersion),
+      mtime: this.filesync.mtime,
+    };
+  });
+
   /**
    * Initializes the sync process.
    * - Ensures the directory exists.
@@ -229,6 +238,13 @@ export class Sync {
     let changedFiles = await getChangedFiles();
     const hasLocalChanges = changedFiles.size > 0;
     if (hasLocalChanges) {
+      this.log.info("local files have changed", {
+        remoteFilesVersion,
+        hasRemoteChanges,
+        hasLocalChanges,
+        changed: Array.from(changedFiles.keys()),
+      });
+
       println("Local files have changed since you last synced");
       printPaths("-", Array.from(changedFiles.keys()), [], { limit: changedFiles.size });
       println();
@@ -249,9 +265,18 @@ export class Sync {
 
     switch (action) {
       case Action.MERGE: {
-        // We purposefully don't set the returned remoteFilesVersion here because we haven't received the remote changes
-        // yet. This will cause us to receive the local files that we just published + the remote files that were
-        // changed since the last sync.
+        this.log.info("merging local changes", {
+          remoteFilesVersion,
+          hasRemoteChanges,
+          hasLocalChanges,
+          changed: Array.from(changedFiles.keys()),
+        });
+
+        // We purposefully don't write the returned files version here
+        // because we haven't received its associated files yet. This
+        // will cause us to receive the remote files that have changed
+        // since the last sync (+ the local files that we just
+        // published)
         await this.client.queryUnwrap({
           query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
           variables: {
@@ -270,6 +295,13 @@ export class Sync {
         break;
       }
       case Action.RESET: {
+        this.log.info("resetting local changes", {
+          remoteFilesVersion,
+          hasRemoteChanges,
+          hasLocalChanges,
+          changed: Array.from(changedFiles.keys()),
+        });
+
         // delete all the local files that have changed since the last
         // sync and set the files version to 0 so we receive all the
         // remote files again, including any files that we just deleted
@@ -292,9 +324,10 @@ export class Sync {
 
     this.stop = async (e?: unknown) => {
       if (this.status != SyncStatus.RUNNING) return;
-
       this.status = SyncStatus.STOPPING;
       error = e;
+
+      this.log.info("stopping", { error });
 
       try {
         unsubscribe();
@@ -306,6 +339,7 @@ export class Sync {
 
         this.status = SyncStatus.STOPPED;
         stopped.resolve();
+        this.log.info("stopped");
       }
     };
 
@@ -341,6 +375,12 @@ export class Sync {
           const filter = (event: { path: string }) => _.startsWith(event.path, ".gadget/") || !this.filesync.ignores(event.path);
           const changed = _.filter(remoteFileSyncEvents.changed, filter);
           const deleted = _.filter(remoteFileSyncEvents.deleted, filter);
+
+          this.log.info("received files", {
+            remoteFilesVersion,
+            changed: _.map(changed, "path"),
+            deleted: _.map(deleted, "path"),
+          });
 
           this._enqueue(async () => {
             // add all the files and directories we're about to touch to

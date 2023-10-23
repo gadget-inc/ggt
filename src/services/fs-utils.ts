@@ -1,17 +1,12 @@
 import fs from "fs-extra";
 import path from "node:path";
-import { breadcrumb } from "./breadcrumbs.js";
+import { createLogger } from "./log.js";
+
+const log = createLogger("fs");
 
 export function swallowEnoent(error: any): void {
   if (error.code === "ENOENT") {
-    breadcrumb({
-      type: "debug",
-      category: "fs",
-      message: "Swallowing ENOENT error",
-      data: {
-        path: path.basename(error.path as string),
-      },
-    });
+    log.debug("swallowing enoent error", { path: path.basename(error.path as string) });
     return;
   }
   throw error;

@@ -8,16 +8,18 @@ import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
 import type { App } from "./app.js";
-import { breadcrumb } from "./breadcrumbs.js";
 import { config } from "./config.js";
 import { ClientError } from "./errors.js";
 import { loadCookie } from "./http.js";
+import { createLogger } from "./log.js";
 
 enum ConnectionStatus {
   CONNECTED,
   DISCONNECTED,
   RECONNECTING,
 }
+
+const log = createLogger("client");
 
 /**
  * Client is a GraphQL client connected to a Gadget application's /edit/api/graphql-ws endpoint.
@@ -56,21 +58,21 @@ export class Client {
           switch (this.status) {
             case ConnectionStatus.DISCONNECTED:
               this.status = ConnectionStatus.RECONNECTING;
-              breadcrumb({ type: "info", category: "client", message: "Reconnecting" });
+              log.info("reconnecting");
               break;
             case ConnectionStatus.RECONNECTING:
-              breadcrumb({ type: "info", category: "client", message: "Retrying" });
+              log.info("retrying");
               break;
             default:
-              breadcrumb({ type: "info", category: "client", message: "Connecting" });
+              log.info("connecting");
               break;
           }
         },
         connected: () => {
           if (this.status === ConnectionStatus.RECONNECTING) {
-            breadcrumb({ type: "info", category: "client", message: "Reconnected" });
+            log.info("reconnected");
           } else {
-            breadcrumb({ type: "info", category: "client", message: "Connected" });
+            log.info("connected");
           }
 
           // let the other on connected listeners see what status we're in
@@ -79,32 +81,20 @@ export class Client {
         closed: (e) => {
           const event = e as CloseEvent;
           if (event.wasClean) {
-            breadcrumb({ type: "info", category: "client", message: "Connection Closed" });
+            log.info("connection closed");
             return;
           }
 
           if (this.status === ConnectionStatus.CONNECTED) {
             this.status = ConnectionStatus.DISCONNECTED;
-            breadcrumb({ type: "info", category: "client", message: "Disconnected" });
+            log.info("disconnected");
           }
         },
         error: (error) => {
           if (this.status == ConnectionStatus.RECONNECTING) {
-            breadcrumb({
-              type: "error",
-              category: "client",
-              message: "Failed to reconnect",
-              level: "error",
-              data: { error },
-            });
+            log.error("failed to reconnect", { error });
           } else {
-            breadcrumb({
-              type: "error",
-              category: "client",
-              message: "Connection error",
-              level: "error",
-              data: { error },
-            });
+            log.error("connection error", { error });
           }
         },
       },
@@ -119,36 +109,22 @@ export class Client {
     let removeConnectedListener = _.noop.bind(_);
 
     if (_.isFunction(payload.variables)) {
-      // the caller wants us to re-evaluate the variables every time graphql-ws re-subscribes after reconnecting
+      // the caller wants us to re-evaluate the variables every time
+      // graphql-ws re-subscribes after reconnecting
       subscribePayload = { ...payload, variables: payload.variables() };
       removeConnectedListener = this._client.on("connected", () => {
         if (this.status == ConnectionStatus.RECONNECTING) {
-          // subscribePayload.variables is supposed to be readonly (it's not) and payload.variables may have been re-assigned (it won't)
           (subscribePayload as any).variables = (payload.variables as any)();
-          breadcrumb({
-            type: "info",
-            category: "client",
-            message: "Re-sending GraphQL query",
-            data: {
-              type: _.split(subscribePayload.query, " ", 1)[0],
-              query: subscribePayload.query,
-            },
-          });
+          const [type, operation] = _.split(subscribePayload.query, / |\(/, 2);
+          log.info("re-sending graphql query", { type, operation });
         }
       });
     } else {
       subscribePayload = payload as SubscribePayload;
     }
 
-    breadcrumb({
-      type: "info",
-      category: "client",
-      message: "Sending GraphQL query",
-      data: {
-        type: _.split(subscribePayload.query, " ", 1)[0],
-        query: subscribePayload.query,
-      },
-    });
+    const [type, operation] = _.split(subscribePayload.query, / |\(/, 2);
+    log.info("sending graphql query", { type, operation });
 
     const unsubscribe = this._client.subscribe(subscribePayload, {
       next: (result: ExecutionResult<Data, Extensions>) => {

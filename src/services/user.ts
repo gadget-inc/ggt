@@ -1,11 +1,14 @@
 import inquirer from "inquirer";
+import _ from "lodash";
 import assert from "node:assert";
 import z from "zod";
 import { run as login } from "../commands/login.js";
-import { breadcrumb } from "./breadcrumbs.js";
 import { config } from "./config.js";
 import { setUser } from "./errors.js";
 import { http, loadCookie, swallowUnauthorized } from "./http.js";
+import { createLogger } from "./log.js";
+
+const log = createLogger("user");
 
 const User = z.object({
   id: z.union([z.string(), z.number()]).transform(Number),
@@ -34,19 +37,7 @@ export const getUser = async (): Promise<User | undefined> => {
 
     const user = User.parse(json);
     setUser(user);
-
-    breadcrumb({
-      type: "info",
-      category: "user",
-      message: "Loaded current user",
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
-      },
-    });
+    log.info("loaded current user", { user: _.pick(user, ["id", "name", "email"]) });
 
     return user;
   } catch (error) {
@@ -61,12 +52,7 @@ export const getUserOrLogin = async (message = "You must be logged in to use thi
     return user;
   }
 
-  breadcrumb({
-    type: "info",
-    category: "user",
-    message: "Prompting user to log in",
-  });
-
+  log.info("prompting user to log in");
   const { yes } = await inquirer.prompt<{ yes: boolean }>({
     type: "confirm",
     name: "yes",

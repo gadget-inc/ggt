@@ -23,13 +23,15 @@ import type {
 } from "../__generated__/graphql.js";
 import type { App } from "./app.js";
 import { getApps } from "./app.js";
-import { breadcrumb } from "./breadcrumbs.js";
 import type { Query } from "./client.js";
 import { config } from "./config.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyDir, swallowEnoent } from "./fs-utils.js";
+import { createLogger } from "./log.js";
 import { println, sortByLevenshtein, sprint } from "./output.js";
 import type { User } from "./user.js";
+
+const log = createLogger("filesync");
 
 interface File {
   path: string;
@@ -267,7 +269,7 @@ export class FileSync {
     try {
       const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");
       this._ignorer.add(content);
-      breadcrumb({ type: "debug", category: "sync", message: "Reloaded ignore rules" });
+      log.info("reloaded ignore rules");
     } catch (error) {
       swallowEnoent(error);
     }
@@ -368,6 +370,12 @@ export class FileSync {
     }
 
     this._save();
+
+    log.info("wrote", {
+      ...this._state,
+      changed: _.map(Array.from(changed), "path"),
+      deleted: Array.from(deleted),
+    });
   }
 
   /**

@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 0.3.1
+
+### Patch Changes
+
+- fb77c47: Fix filesync directory parsing
+
 ## 0.3.0
 
 ### Minor Changes

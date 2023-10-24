@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 0.3.2
+
+### Patch Changes
+
+- f42c2cf: Print login url if open fails
+
 ## 0.3.1
 
 ### Patch Changes

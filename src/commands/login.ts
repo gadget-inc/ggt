@@ -73,13 +73,24 @@ export const run = async () => {
     // send the session to the server we just started.
     const url = new URL(`https://${config.domains.services}/auth/login`);
     url.searchParams.set("returnTo", `https://${config.domains.services}/auth/cli/callback?port=${port}`);
-    await open(url.toString());
 
-    println`
+    try {
+      await open(url.toString());
+      println`
         We've opened Gadget's login page using your default browser.
 
         Please log in and then return to this terminal.\n
     `;
+    } catch (error) {
+      log.error("failed to open browser", { error });
+      println`
+        Please open the following URL in your browser and log in:
+
+          {gray ${url.toString()}}
+
+        Once logged in, return to this terminal.\n
+      `;
+    }
 
     await receiveSession;
   } finally {

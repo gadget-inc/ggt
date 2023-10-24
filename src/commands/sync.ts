@@ -214,7 +214,7 @@ export class Sync {
     const user = await getUserOrLogin();
 
     this.filesync = await FileSync.init(user, {
-      dir: rootArgs._[0],
+      dir: this.args._[0],
       app: this.args["--app"],
       force: this.args["--force"],
       extraIgnorePaths: [".gadget"],

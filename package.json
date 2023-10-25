@@ -109,6 +109,7 @@
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-lodash": "^7.4.0",
+    "eslint-plugin-unicorn": "^48.0.1",
     "nock": "^13.3.6",
     "prettier": "^3.0.3",
     "prettier-plugin-organize-imports": "^3.2.3",

@@ -1,6 +1,6 @@
 import _ from "lodash";
 import nock from "nock";
-import path from "path";
+import path from "node:path";
 import type { JsonObject } from "type-fest";
 import { assert, expect, vi } from "vitest";
 import type { App } from "../src/services/app.js";

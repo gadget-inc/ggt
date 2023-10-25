@@ -1,15 +1,20 @@
 import fs from "fs-extra";
 import path from "node:path";
+import { z } from "zod";
 import { createLogger } from "./log.js";
 
 const log = createLogger("fs");
 
-export function swallowEnoent(error: any): void {
-  if (error.code === "ENOENT") {
-    log.debug("swallowing enoent error", { path: path.basename(error.path as string) });
+const enoentSchema = z.object({ code: z.literal("ENOENT"), path: z.string() });
+
+export function swallowEnoent(error: unknown): void {
+  try {
+    const enoent = enoentSchema.parse(error);
+    log.debug("swallowing enoent error", { path: path.basename(enoent.path) });
     return;
+  } catch {
+    throw error;
   }
-  throw error;
 }
 
 export async function isEmptyDir(dir: string, opts = { swallowEnoent: true }): Promise<boolean> {

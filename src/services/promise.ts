@@ -1,3 +1,5 @@
+import assert from "node:assert";
+
 /**
  * Long lived references to Promises stress the garbage collector in JS.
  *
@@ -7,7 +9,7 @@
  */
 export class PromiseWrapper<T> {
   resolution?: T;
-  rejection?: any;
+  rejection?: unknown;
   pendingPromise?: Promise<T>;
 
   constructor(promise: Promise<T>) {
@@ -30,10 +32,11 @@ export class PromiseWrapper<T> {
     if (this.resolution) {
       return this.resolution;
     } else if (this.rejection) {
+      // eslint-disable-next-line @typescript-eslint/no-throw-literal
       throw this.rejection;
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return await this.pendingPromise!;
+      assert(this.pendingPromise);
+      return await this.pendingPromise;
     }
   }
 }
@@ -56,7 +59,7 @@ export class PromiseSignal<T = void> implements Promise<T> {
   readonly [Symbol.toStringTag]!: string;
 
   resolve!: (value: T | PromiseLike<T>) => void;
-  reject!: (reason?: any) => void;
+  reject!: (reason?: unknown) => void;
 
   private _promise: PromiseWrapper<T>;
 
@@ -71,11 +74,14 @@ export class PromiseSignal<T = void> implements Promise<T> {
     this[Symbol.toStringTag] = String(this._promise.pendingPromise);
   }
 
-  then<R = T, E = never>(onfulfilled?: (value: T) => R | PromiseLike<R>, onrejected?: (reason: any) => E | PromiseLike<E>): Promise<R | E> {
+  then<R = T, E = never>(
+    onfulfilled?: (value: T) => R | PromiseLike<R>,
+    onrejected?: (reason: unknown) => E | PromiseLike<E>,
+  ): Promise<R | E> {
     return this._promise.unwrap().then(onfulfilled, onrejected);
   }
 
-  catch<E = never>(onrejected?: (reason: any) => E | PromiseLike<E>): Promise<T | E> {
+  catch<E = never>(onrejected?: (reason: unknown) => E | PromiseLike<E>): Promise<T | E> {
     return this._promise.unwrap().catch(onrejected);
   }
 

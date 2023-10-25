@@ -1,16 +1,17 @@
 import * as Sentry from "@sentry/node";
 import arg from "arg";
 import cleanStack from "clean-stack";
-import { randomUUID } from "crypto";
 import { RequestError } from "got";
 import type { GraphQLError } from "graphql";
 import _ from "lodash";
-import os from "os";
-import { serializeError as baseSerializeError } from "serialize-error";
+import { randomUUID } from "node:crypto";
+import os from "node:os";
+import { inspect } from "node:util";
+import { serializeError as baseSerializeError, type ErrorObject } from "serialize-error";
 import { dedent } from "ts-dedent";
-import type { SetOptional } from "type-fest";
-import { inspect } from "util";
+import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
+import { z } from "zod";
 import type { App } from "./app.js";
 import { config, env } from "./config.js";
 import type { Payload } from "./edit-graphql.js";
@@ -45,7 +46,7 @@ export abstract class CLIError extends Error {
   /**
    * The underlying *thing* that caused this error.
    */
-  cause?: any;
+  cause?: unknown;
 
   /**
    * Assume the stack trace exists.
@@ -138,9 +139,11 @@ export abstract class CLIError extends Error {
 
 /**
  * Universal Error object to json blob serializer.
- * Wraps `serialize-error` with some handy stuff, like special support for Got HTTP errors
+ *
+ * Wraps `serialize-error` with some handy stuff, like special support
+ * for Got HTTP errors
  */
-export function serializeError(error: unknown): Record<string, any> {
+export function serializeError(error: unknown): ErrorObject {
   let serialized = baseSerializeError(_.isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };
@@ -188,25 +191,27 @@ export class ClientError extends CLIError {
   isBug = IsBug.MAYBE;
 
   constructor(
-    readonly payload: Payload<any, any>,
+    readonly payload: Payload<JsonObject, JsonObject>,
     override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent,
   ) {
     super("GGT_CLI_CLIENT_ERROR", "An error occurred while communicating with Gadget");
 
-    // ErrorEvent and CloseEvent aren't serializable, so we reconstruct them into an object. We discard the `target` property because it's large and not that useful
+    // ErrorEvent and CloseEvent aren't serializable, so we reconstruct
+    // them into an object. We discard the `target` property because
+    // it's large and not that useful
     if (isErrorEvent(cause)) {
       this.cause = {
         type: cause.type,
         message: cause.message,
         error: serializeError(cause.error),
-      } as any;
+      } as ErrorEvent;
     } else if (isCloseEvent(cause)) {
       this.cause = {
         type: cause.type,
         code: cause.code,
         reason: cause.reason,
         wasClean: cause.wasClean,
-      } as any;
+      } as CloseEvent;
     }
   }
 
@@ -307,14 +312,14 @@ export class InvalidSyncFileError extends CLIError {
   }
 }
 
-function isCloseEvent(e: any): e is SetOptional<CloseEvent, "target"> {
-  return !_.isNil(e) && _.isString(e.type) && _.isNumber(e.code) && _.isString(e.reason) && _.isBoolean(e.wasClean);
+function isCloseEvent(e: unknown): e is SetOptional<CloseEvent, "target"> {
+  return z.object({ type: z.string(), code: z.number(), reason: z.string(), wasClean: z.boolean() }).safeParse(e).success;
 }
 
-function isErrorEvent(e: any): e is SetOptional<ErrorEvent, "target"> {
-  return !_.isNil(e) && _.isString(e.type) && _.isString(e.message) && !_.isNil(e.error);
+function isErrorEvent(e: unknown): e is SetOptional<ErrorEvent, "target"> {
+  return z.object({ type: z.string(), message: z.string(), error: z.any() }).safeParse(e).success;
 }
 
-function isGraphQLErrors(e: any): e is readonly GraphQLError[] {
-  return _.isArray(e) && _.every(e, (e) => !_.isNil(e) && _.isString(e.message) && _.isArray(e.locations ?? []) && _.isArray(e.path ?? []));
+function isGraphQLErrors(e: unknown): e is readonly GraphQLError[] {
+  return z.array(z.object({ message: z.string() })).safeParse(e).success;
 }

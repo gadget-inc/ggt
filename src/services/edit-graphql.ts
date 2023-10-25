@@ -1,9 +1,9 @@
 import type { GraphQLError } from "graphql";
 import type { ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
-import type { ClientRequestArgs } from "http";
 import _ from "lodash";
 import assert from "node:assert";
+import type { ClientRequestArgs } from "node:http";
 import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
@@ -163,7 +163,7 @@ export class EditGraphQL {
     payload: Payload<Data, Variables>,
     sink: SetOptional<Sink<Data, Extensions>, "complete">,
   ): () => void {
-    let subscribePayload: SubscribePayload;
+    let subscribePayload: Payload<Data, Variables>;
     let removeConnectedListener = _.noop.bind(_);
 
     if (_.isFunction(payload.variables)) {
@@ -172,19 +172,20 @@ export class EditGraphQL {
       subscribePayload = { ...payload, variables: payload.variables() };
       removeConnectedListener = this._client.on("connected", () => {
         if (this.status == ConnectionStatus.RECONNECTING) {
-          (subscribePayload as any).variables = (payload.variables as any)();
+          assert(_.isFunction(payload.variables));
+          subscribePayload = { ...payload, variables: payload.variables() };
           const [type, operation] = _.split(subscribePayload.query, / |\(/, 2);
           log.info("re-sending graphql query", { type, operation });
         }
       });
     } else {
-      subscribePayload = payload as SubscribePayload;
+      subscribePayload = payload;
     }
 
     const [type, operation] = _.split(subscribePayload.query, / |\(/, 2);
     log.info("sending graphql query", { type, operation });
 
-    const unsubscribe = this._client.subscribe(subscribePayload, {
+    const unsubscribe = this._client.subscribe(subscribePayload as SubscribePayload, {
       next: (result: ExecutionResult<Data, Extensions>) => {
         sink.next(result);
       },

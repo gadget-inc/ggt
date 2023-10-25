@@ -32,12 +32,12 @@ export class Stream {
     return process[this.channel].write(data);
   }
 
-  public on(event: string, listener: (...args: any[]) => void): this {
+  public on(event: string, listener: (...args: unknown[]) => void): this {
     process[this.channel].on(event, listener);
     return this;
   }
 
-  public once(event: string, listener: (...args: any[]) => void): this {
+  public once(event: string, listener: (...args: unknown[]) => void): this {
     process[this.channel].once(event, listener);
     return this;
   }

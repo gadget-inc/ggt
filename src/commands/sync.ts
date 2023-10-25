@@ -1,5 +1,5 @@
 import arg from "arg";
-import { format as formatDate, isAfter } from "date-fns";
+import dayjs from "dayjs";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
@@ -331,7 +331,7 @@ export class Sync {
 
     const recentRemoteChangesInterval = setInterval(() => {
       for (const [path, timestamp] of this.recentRemoteChanges) {
-        if (isAfter(Date.now(), timestamp + ms("5s"))) {
+        if (dayjs().isAfter(timestamp + ms("5s"))) {
           // this change should have been seen by now, so remove it
           this.recentRemoteChanges.delete(path);
         }
@@ -419,7 +419,7 @@ export class Sync {
             }
 
             if (changed.length > 0 || deleted.length > 0) {
-              println`Received {gray ${formatDate(new Date(), "pp")}}`;
+              println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
               printPaths(
                 "←",
                 changed.map((x) => x.path),
@@ -488,7 +488,7 @@ export class Sync {
 
         await this.filesync.write(publishFileSyncEvents.remoteFilesVersion, [], []);
 
-        println`Sent {gray ${formatDate(new Date(), "pp")}}`;
+        println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
         printPaths(
           "→",
           changed.map((x) => x.path),

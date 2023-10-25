@@ -28,6 +28,7 @@
     "lodash/import-scope": ["warn", "member"],
     "unicorn/explicit-length-check": ["warn"],
     "unicorn/filename-case": ["warn", { "case": "kebabCase" }],
+    "unicorn/no-null": ["warn"],
     "unicorn/prefer-node-protocol": ["warn"]
   },
   "overrides": [

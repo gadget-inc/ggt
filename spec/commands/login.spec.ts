@@ -52,7 +52,7 @@ describe("login", () => {
     expect(readSession()).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
-    const req = new http.IncomingMessage(null as any);
+    const req = new http.IncomingMessage(undefined as any);
     req.url = `?session=test`;
 
     const res = new http.ServerResponse(req);
@@ -108,7 +108,7 @@ describe("login", () => {
     expect(readSession()).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
-    const req = new http.IncomingMessage(null as any);
+    const req = new http.IncomingMessage(undefined as any);
     req.url = `?session=test`;
 
     const res = new http.ServerResponse(req);
@@ -163,7 +163,7 @@ describe("login", () => {
     expect(readSession()).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
-    const req = new http.IncomingMessage(null as any);
+    const req = new http.IncomingMessage(undefined as any);
     req.url = `?session=test`;
 
     const res = new http.ServerResponse(req);

@@ -71,7 +71,7 @@ describe("Sync", () => {
 
   describe("init", () => {
     it("throws YarnNotFoundError if yarn is not found", async () => {
-      which.sync.mockReturnValue(null);
+      which.sync.mockReturnValue(undefined);
 
       await expect(sync.init(rootArgs)).rejects.toThrow(YarnNotFoundError);
     });
@@ -1426,7 +1426,7 @@ function stateFile(sync: Sync): string {
 }
 
 function prettyJson(obj: any): string {
-  return JSON.stringify(obj, null, 2);
+  return JSON.stringify(obj, undefined, 2);
 }
 
 export function fileChangedEvent(

@@ -22,6 +22,7 @@ let user: User | undefined;
 
 export const setUser = (newUser: User | undefined): void => {
   user = newUser;
+  // eslint-disable-next-line unicorn/no-null
   Sentry.setUser(newUser ?? null);
 };
 

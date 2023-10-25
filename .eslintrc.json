@@ -29,6 +29,7 @@
     "unicorn/explicit-length-check": ["warn"],
     "unicorn/filename-case": ["warn", { "case": "kebabCase" }],
     "unicorn/no-null": ["warn"],
+    "unicorn/no-object-as-default-parameter": ["warn"],
     "unicorn/prefer-node-protocol": ["warn"]
   },
   "overrides": [

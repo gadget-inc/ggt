@@ -28,7 +28,7 @@ import { getApps } from "./app.js";
 import { config } from "./config.js";
 import type { Query } from "./edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
-import { isEmptyDir, swallowEnoent } from "./fs-utils.js";
+import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs-utils.js";
 import { createLogger } from "./log.js";
 import { println, sortByLevenshtein, sprint } from "./output.js";
 import type { User } from "./user.js";
@@ -188,7 +188,7 @@ export class FileSync {
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
-      if ((await isEmptyDir(dir)) || options.force) {
+      if ((await isEmptyOrNonExistentDir(dir)) || options.force) {
         // the directory is empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
         return new FileSync(dir, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });

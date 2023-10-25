@@ -17,17 +17,14 @@ export function swallowEnoent(error: unknown): void {
   }
 }
 
-export async function isEmptyDir(dir: string, opts = { swallowEnoent: true }): Promise<boolean> {
+export async function isEmptyOrNonExistentDir(dir: string): Promise<boolean> {
   try {
     for await (const _ of await fs.opendir(dir, { bufferSize: 1 })) {
       return false;
     }
     return true;
   } catch (error) {
-    if (opts.swallowEnoent) {
-      swallowEnoent(error);
-      return true;
-    }
-    throw error;
+    swallowEnoent(error);
+    return true;
   }
 }

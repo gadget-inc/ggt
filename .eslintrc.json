@@ -20,6 +20,7 @@
   "rules": {
     "curly": ["warn", "all"],
     "eqeqeq": ["warn", "smart"],
+    "func-style": ["error", "expression"],
 
     "lodash/import-scope": ["warn", "member"],
 

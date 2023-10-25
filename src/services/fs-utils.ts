@@ -7,7 +7,7 @@ const log = createLogger("fs");
 
 const enoentSchema = z.object({ code: z.literal("ENOENT"), path: z.string() });
 
-export function swallowEnoent(error: unknown): void {
+export const swallowEnoent = (error: unknown): void => {
   try {
     const enoent = enoentSchema.parse(error);
     log.debug("swallowing enoent error", { path: path.basename(enoent.path) });
@@ -15,9 +15,9 @@ export function swallowEnoent(error: unknown): void {
   } catch {
     throw error;
   }
-}
+};
 
-export async function isEmptyOrNonExistentDir(dir: string): Promise<boolean> {
+export const isEmptyOrNonExistentDir = async (dir: string): Promise<boolean> => {
   try {
     for await (const _ of await fs.opendir(dir, { bufferSize: 1 })) {
       return false;
@@ -27,4 +27,4 @@ export async function isEmptyOrNonExistentDir(dir: string): Promise<boolean> {
     swallowEnoent(error);
     return true;
   }
-}
+};

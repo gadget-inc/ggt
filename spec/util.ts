@@ -11,7 +11,7 @@ import { loadCookie } from "../src/services/http.js";
 import { writeSession } from "../src/services/session.js";
 import type { User } from "../src/services/user.js";
 
-export function testDirPath(): string {
+export const testDirPath = (): string => {
   const name = expect.getState().currentTestName;
   assert(name, "Expected test name to be defined");
 
@@ -22,7 +22,7 @@ export function testDirPath(): string {
   assert(testFile && testName);
 
   return path.join(__dirname, "../tmp/", testFile, describes.join("/"), replace(testName, /[^\s\w-]/g, ""));
-}
+};
 
 export const testUser: User = {
   id: 1,
@@ -65,14 +65,14 @@ export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode
   }
 };
 
-export async function expectError(fnThatThrows: () => unknown): Promise<any> {
+export const expectError = async (fnThatThrows: () => unknown): Promise<any> => {
   try {
     await fnThatThrows();
     expect.fail("Expected error to be thrown");
   } catch (error) {
     return error;
   }
-}
+};
 
 export interface MockSubscription<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject> {
   sink: Sink<Data, Extensions>;
@@ -87,7 +87,7 @@ export interface MockEditGraphQL extends EditGraphQL {
   ): MockSubscription<Data, Variables, JsonObject>;
 }
 
-export function mockEditGraphQL(): MockEditGraphQL {
+export const mockEditGraphQL = (): MockEditGraphQL => {
   const mock = {
     ...EditGraphQL.prototype,
     _subscriptions: new Map(),
@@ -116,4 +116,4 @@ export function mockEditGraphQL(): MockEditGraphQL {
   });
 
   return mock as MockEditGraphQL;
-}
+};

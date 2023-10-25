@@ -1420,18 +1420,18 @@ describe("Sync", () => {
 const defaultFileMode = os.platform() === "win32" ? 0o100666 : 0o100644;
 const defaultDirMode = os.platform() === "win32" ? 0o40666 : 0o40755;
 
-function stateFile(sync: Sync): string {
+const stateFile = (sync: Sync): string => {
   // @ts-expect-error _state is private
   return prettyJson(sync.filesync._state) + "\n";
-}
+};
 
-function prettyJson(obj: any): string {
+const prettyJson = (obj: any): string => {
   return JSON.stringify(obj, undefined, 2);
-}
+};
 
-export function fileChangedEvent(
+export const fileChangedEvent = (
   options: PartialExcept<FileSyncChangedEventInput, "path" | "content">,
-): FileSyncChangedEventInput & FileSyncChangedEvent {
+): FileSyncChangedEventInput & FileSyncChangedEvent => {
   const event = defaults(options, {
     mode: defaultFileMode,
     encoding: FileSyncEncoding.Base64,
@@ -1441,16 +1441,16 @@ export function fileChangedEvent(
   event.content = Buffer.from(event.content).toString(event.encoding);
 
   return event as FileSyncChangedEventInput & FileSyncChangedEvent;
-}
+};
 
-export function dirChangedEvent(
+export const dirChangedEvent = (
   options: PartialExcept<FileSyncChangedEventInput, "path">,
-): FileSyncChangedEventInput & FileSyncChangedEvent {
+): FileSyncChangedEventInput & FileSyncChangedEvent => {
   assert(endsWith(options.path, "/"));
   return fileChangedEvent({ content: "", mode: defaultDirMode, ...options });
-}
+};
 
-function expectPublishToEqual(client: MockEditGraphQL, expected: MutationPublishFileSyncEventsArgs): void {
+const expectPublishToEqual = (client: MockEditGraphQL, expected: MutationPublishFileSyncEventsArgs): void => {
   const actual = client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables;
   assert(!isNil(actual) && !isFunction(actual));
 
@@ -1461,22 +1461,22 @@ function expectPublishToEqual(client: MockEditGraphQL, expected: MutationPublish
   expected.input.deleted = sortBy(expected.input.deleted, "path");
 
   expect(actual).toEqual(expected);
-}
+};
 
 interface FileTree {
   [path: string]: FileTree | string;
 }
 
-async function expectDir(sync: Sync, expected: FileTree): Promise<void> {
+const expectDir = async (sync: Sync, expected: FileTree): Promise<void> => {
   const actual: FileTree = {};
   for await (const [filepath, stats] of sync.filesync.walkDir({ skipIgnored: false })) {
     const pathSegments = split(sync.filesync.relative(filepath), path.sep);
     set(actual, pathSegments, stats.isDirectory() ? {} : fs.readFileSync(filepath, "utf8"));
   }
   expect(actual).toEqual(expected);
-}
+};
 
-async function writeDir(dir: string, tree: FileTree): Promise<void> {
+const writeDir = async (dir: string, tree: FileTree): Promise<void> => {
   for (const [filepath, content] of Object.entries(tree)) {
     if (isString(content)) {
       fs.outputFileSync(path.join(dir, filepath), content);
@@ -1486,4 +1486,4 @@ async function writeDir(dir: string, tree: FileTree): Promise<void> {
       await writeDir(subDir, content);
     }
   }
-}
+};

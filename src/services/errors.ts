@@ -152,7 +152,7 @@ export abstract class CLIError extends Error {
  * Wraps `serialize-error` with some handy stuff, like special support
  * for Got HTTP errors
  */
-export function serializeError(error: unknown): ErrorObject {
+export const serializeError = (error: unknown): ErrorObject => {
   let serialized = baseSerializeError(isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };
@@ -168,7 +168,7 @@ export function serializeError(error: unknown): ErrorObject {
   }
 
   return serialized;
-}
+};
 
 export enum IsBug {
   YES = "yes",
@@ -321,14 +321,14 @@ export class InvalidSyncFileError extends CLIError {
   }
 }
 
-function isCloseEvent(e: unknown): e is SetOptional<CloseEvent, "target"> {
+export const isCloseEvent = (e: unknown): e is SetOptional<CloseEvent, "target"> => {
   return z.object({ type: z.string(), code: z.number(), reason: z.string(), wasClean: z.boolean() }).safeParse(e).success;
-}
+};
 
-function isErrorEvent(e: unknown): e is SetOptional<ErrorEvent, "target"> {
+const isErrorEvent = (e: unknown): e is SetOptional<ErrorEvent, "target"> => {
   return z.object({ type: z.string(), message: z.string(), error: z.any() }).safeParse(e).success;
-}
+};
 
-function isGraphQLErrors(e: unknown): e is readonly GraphQLError[] {
+const isGraphQLErrors = (e: unknown): e is readonly GraphQLError[] => {
   return z.array(z.object({ message: z.string() })).safeParse(e).success;
-}
+};

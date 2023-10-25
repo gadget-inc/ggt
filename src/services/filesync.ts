@@ -27,7 +27,7 @@ import { getApps } from "./app.js";
 import { config } from "./config.js";
 import type { Query } from "./edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
-import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs-utils.js";
+import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
 import { createLogger } from "./log.js";
 import { noop } from "./noop.js";
 import { println, sortByLevenshtein, sprint } from "./output.js";

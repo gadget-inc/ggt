@@ -25,7 +25,7 @@ import {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
   printPaths,
 } from "../services/filesync.js";
-import { swallowEnoent } from "../services/fs-utils.js";
+import { swallowEnoent } from "../services/fs.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";
 import { notify } from "../services/notify.js";

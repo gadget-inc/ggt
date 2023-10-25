@@ -1,4 +1,5 @@
 import getPort from "get-port";
+import { noop } from "lodash";
 import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";

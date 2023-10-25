@@ -2,6 +2,7 @@ import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import inquirer from "inquirer";
+import { defaults, endsWith, find, isString, noop, set, sortBy, split } from "lodash";
 import notifier from "node-notifier";
 import os from "node:os";
 import path from "node:path";

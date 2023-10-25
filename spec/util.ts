@@ -1,3 +1,4 @@
+import { noop, replace, split } from "lodash";
 import nock from "nock";
 import path from "node:path";
 import type { JsonObject } from "type-fest";
@@ -46,9 +47,7 @@ export const loginTestUser = () => {
 
 export const testStdout: string[] = [];
 
-export const expectStdout = () => {
-  return expect(testStdout.join(""));
-};
+export const expectStdout = () => expect(testStdout.join(""));
 
 export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode = 0) => {
   const exitError = new Error("process.exit() was called") as Error & { code?: number };

@@ -5,7 +5,7 @@ import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import inquirer from "inquirer";
-import { endsWith, find, map, sortBy, startsWith } from "lodash";
+import { endsWith, find, map, noop, sortBy, startsWith } from "lodash";
 import ms from "ms";
 import path from "node:path";
 import process from "node:process";
@@ -141,14 +141,16 @@ export class FileSync {
     // try to load the .gadget/sync.json file
     const state = await fs
       .readJson(path.join(dir, ".gadget/sync.json"))
-      .then(
-        z.object({
-          app: z.string(),
-          filesVersion: z.string(),
-          mtime: z.number(),
-        }).parse,
+      .then((json) =>
+        z
+          .object({
+            app: z.string(),
+            filesVersion: z.string(),
+            mtime: z.number(),
+          })
+          .parse(json),
       )
-      .catch(() => undefined);
+      .catch(noop);
 
     let appSlug = options.app || state?.app;
     if (!appSlug) {

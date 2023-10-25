@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 import { execa } from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
-import inquirer from "inquirer";
 import ms from "ms";
 import path from "node:path";
 import pMap from "p-map";
@@ -31,6 +30,7 @@ import { noop } from "../services/noop.js";
 import { notify } from "../services/notify.js";
 import { println, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
+import { select } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
 import { type RootArgs } from "./root.js";
 
@@ -259,12 +259,10 @@ export class Sync {
 
     let action: Action | undefined;
     if (hasLocalChanges) {
-      ({ action } = await inquirer.prompt<{ action: Action }>({
-        type: "list",
-        name: "action",
-        choices: [Action.CANCEL, Action.MERGE, Action.RESET],
+      action = await select({
         message: hasRemoteChanges ? "Remote files have also changed. How would you like to proceed?" : "How would you like to proceed?",
-      }));
+        choices: [Action.CANCEL, Action.MERGE, Action.RESET],
+      });
     }
 
     // get all the changed files again in case more changed

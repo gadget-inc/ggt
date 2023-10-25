@@ -4,7 +4,6 @@ import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
-import inquirer from "inquirer";
 import ms from "ms";
 import path from "node:path";
 import process from "node:process";
@@ -31,6 +30,7 @@ import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
 import { createLogger } from "./log.js";
 import { noop } from "./noop.js";
 import { println, sortByLevenshtein, sprint } from "./output.js";
+import { select } from "./prompt.js";
 import type { User } from "./user.js";
 
 const log = createLogger("filesync");
@@ -155,12 +155,10 @@ export class FileSync {
     let appSlug = options.app || state?.app;
     if (!appSlug) {
       // the user didn't specify an app, suggest some apps that they can sync to
-      ({ appSlug } = await inquirer.prompt<{ appSlug: string }>({
-        type: "list",
-        name: "appSlug",
+      appSlug = await select({
         message: "Please select the app to sync to.",
         choices: apps.map((x) => x.slug),
-      }));
+      });
     }
 
     // try to find the appSlug in their list of apps

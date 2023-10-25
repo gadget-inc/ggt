@@ -1,4 +1,4 @@
-import inquirer from "inquirer";
+import enquirer from "enquirer";
 import nock from "nock";
 import process from "node:process";
 import { describe, expect, it, vi } from "vitest";
@@ -60,7 +60,7 @@ describe("user", () => {
     });
 
     it("prompts the user to log in if the session is not set", async () => {
-      inquirer.prompt.mockResolvedValue({ yes: true });
+      enquirer.prompt.mockResolvedValue({ result: true });
       vi.spyOn(process, "exit");
 
       vi.spyOn(login, "run").mockImplementation(() => {
@@ -72,14 +72,14 @@ describe("user", () => {
 
       const returnedUser = await getUserOrLogin();
 
-      expect(inquirer.prompt).toHaveBeenCalled();
+      expect(enquirer.prompt).toHaveBeenCalled();
       expect(process.exit).not.toHaveBeenCalled();
       expect(login.run).toHaveBeenCalled();
       expect(returnedUser).toEqual(testUser);
     });
 
     it("prompts the user to log in if the session is invalid or expired", async () => {
-      inquirer.prompt.mockResolvedValue({ yes: true });
+      enquirer.prompt.mockResolvedValue({ result: true });
       vi.spyOn(process, "exit");
       vi.spyOn(login, "run").mockImplementation(() => {
         loginTestUser();
@@ -92,18 +92,18 @@ describe("user", () => {
       await expect(getUserOrLogin()).resolves.toEqual(testUser);
 
       expect(nock.isDone()).toBe(true);
-      expect(inquirer.prompt).toHaveBeenCalled();
+      expect(enquirer.prompt).toHaveBeenCalled();
       expect(process.exit).not.toHaveBeenCalled();
       expect(login.run).toHaveBeenCalled();
     });
 
     it("calls process.exit if the user declines to log in", async () => {
       writeSession(undefined);
-      inquirer.prompt.mockResolvedValue({ yes: false });
+      enquirer.prompt.mockResolvedValue({ result: false });
 
       await expectProcessExit(() => getUserOrLogin());
 
-      expect(inquirer.prompt).toHaveBeenCalled();
+      expect(enquirer.prompt).toHaveBeenCalled();
       expect(login.run).not.toHaveBeenCalled();
       expect(process.exit).toHaveBeenCalledWith(0);
     });

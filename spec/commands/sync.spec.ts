@@ -1,7 +1,7 @@
+import enquirer from "enquirer";
 import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
-import inquirer from "inquirer";
 import notifier from "node-notifier";
 import os from "node:os";
 import path from "node:path";
@@ -105,8 +105,8 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "2" } });
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
-      await sleepUntil(() => inquirer.prompt.mock.calls.length > 0);
-      expect(inquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
+      await sleepUntil(() => enquirer.prompt.mock.calls.length > 0);
+      expect(enquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         {
           "choices": [
             "Cancel (Ctrl+C)",
@@ -114,8 +114,9 @@ describe("Sync", () => {
             "Reset local files to remote ones",
           ],
           "message": "Remote files have also changed. How would you like to proceed?",
-          "name": "action",
-          "type": "list",
+          "name": "result",
+          "onCancel": [Function],
+          "type": "select",
         }
       `);
     });
@@ -134,8 +135,8 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
-      await sleepUntil(() => inquirer.prompt.mock.calls.length > 0);
-      expect(inquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
+      await sleepUntil(() => enquirer.prompt.mock.calls.length > 0);
+      expect(enquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         {
           "choices": [
             "Cancel (Ctrl+C)",
@@ -143,8 +144,9 @@ describe("Sync", () => {
             "Reset local files to remote ones",
           ],
           "message": "How would you like to proceed?",
-          "name": "action",
-          "type": "list",
+          "name": "result",
+          "onCancel": [Function],
+          "type": "select",
         }
       `);
     });
@@ -171,7 +173,7 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
-      expect(inquirer.prompt).not.toHaveBeenCalled();
+      expect(enquirer.prompt).not.toHaveBeenCalled();
     });
 
     it("does not ask how to proceed if only remote files changed", async () => {
@@ -189,7 +191,7 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
-      expect(inquirer.prompt).not.toHaveBeenCalled();
+      expect(enquirer.prompt).not.toHaveBeenCalled();
     });
 
     it("does not ask how to proceed if neither local nor remote files changed", async () => {
@@ -207,11 +209,11 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
-      expect(inquirer.prompt).not.toHaveBeenCalled();
+      expect(enquirer.prompt).not.toHaveBeenCalled();
     });
 
     it("publishes changed events when told to merge", async () => {
-      inquirer.prompt.mockResolvedValue({ action: Action.MERGE });
+      enquirer.prompt.mockResolvedValue({ result: Action.MERGE });
 
       await writeDir(dir, {
         "foo.js": "foo",
@@ -250,7 +252,7 @@ describe("Sync", () => {
     });
 
     it("deletes local file changes and sets `state.filesVersion` to 0 when told to reset", async () => {
-      inquirer.prompt.mockResolvedValue({ action: Action.RESET });
+      enquirer.prompt.mockResolvedValue({ result: Action.RESET });
 
       await writeDir(dir, {
         "foo.js": "foo",

@@ -22,7 +22,7 @@ export const run = async () => {
   const user = await getUserOrLogin();
 
   const apps = await getApps(user);
-  if (!apps.length) {
+  if (apps.length === 0) {
     println`
         It doesn't look like you have any applications.
 

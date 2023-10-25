@@ -410,7 +410,7 @@ export class Sync {
               }
             }
 
-            if (changed.length || deleted.length) {
+            if (changed.length > 0 || deleted.length > 0) {
               println`Received {gray ${formatDate(new Date(), "pp")}}`;
               printPaths("←", map(changed, "path"), map(deleted, "path"));
             }
@@ -461,7 +461,7 @@ export class Sync {
           }
         });
 
-        if (!changed.length && !deleted.length) {
+        if (changed.length === 0 && deleted.length === 0) {
           return;
         }
 

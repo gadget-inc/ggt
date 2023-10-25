@@ -1,10 +1,10 @@
 import getPort from "get-port";
-import { noop } from "lodash";
 import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { run } from "../../src/commands/login.js";
 import { config } from "../../src/services/config.js";
+import { noop } from "../../src/services/noop.js";
 import { readSession, writeSession } from "../../src/services/session.js";
 import { sleepUntil } from "../../src/services/sleep.js";
 import * as user from "../../src/services/user.js";

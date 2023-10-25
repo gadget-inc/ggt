@@ -29,7 +29,6 @@
         "ignore": "^5.2.4",
         "inquirer": "^9.2.11",
         "is-wsl": "^3.1.0",
-        "lodash": "^4.17.21",
         "ms": "^2.1.3",
         "node-notifier": "^10.0.1",
         "normalize-package-data": "^6.0.0",
@@ -64,7 +63,6 @@
         "@types/fast-levenshtein": "^0.0.3",
         "@types/fs-extra": "^11.0.3",
         "@types/inquirer": "^9.0.6",
-        "@types/lodash": "^4.14.200",
         "@types/ms": "^0.7.33",
         "@types/node": "^20.8.8",
         "@types/node-notifier": "^8.0.4",
@@ -4737,12 +4735,6 @@
       "dependencies": {
         "@types/node": "*"
       }
-    },
-    "node_modules/@types/lodash": {
-      "version": "4.14.200",
-      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.200.tgz",
-      "integrity": "sha512-YI/M/4HRImtNf3pJgbF+W6FrXovqj+T+/HpENLTooK9PnkacBsDpeP3IpHab40CClUfhNmdM2WTNP2sa2dni5Q==",
-      "dev": true
     },
     "node_modules/@types/mdast": {
       "version": "4.0.1",
@@ -19309,12 +19301,6 @@
       "requires": {
         "@types/node": "*"
       }
-    },
-    "@types/lodash": {
-      "version": "4.14.200",
-      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.200.tgz",
-      "integrity": "sha512-YI/M/4HRImtNf3pJgbF+W6FrXovqj+T+/HpENLTooK9PnkacBsDpeP3IpHab40CClUfhNmdM2WTNP2sa2dni5Q==",
-      "dev": true
     },
     "@types/mdast": {
       "version": "4.0.1",

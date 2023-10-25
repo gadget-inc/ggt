@@ -2,7 +2,6 @@
 
 import { $ } from "execa";
 import fs from "fs-extra";
-import { replace } from "lodash";
 import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkToc from "remark-toc";
@@ -12,8 +11,7 @@ import { usage } from "../src/commands/root.js";
 
 let readme = await fs.readFile("README.md", "utf-8");
 
-readme = replace(
-  readme,
+readme = readme.replace(
   /^## Usage.*?(^## )/ms,
   dedent`
     ## Usage
@@ -40,8 +38,7 @@ for (const name of availableCommands) {
   `);
 }
 
-readme = replace(
-  readme,
+readme = readme.replace(
   /## Commands.*$/s,
   dedent`
     ## Commands

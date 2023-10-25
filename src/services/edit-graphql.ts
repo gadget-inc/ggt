@@ -1,7 +1,6 @@
 import type { GraphQLError } from "graphql";
 import type { ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
-import { constant, isFunction, noop, split } from "lodash";
 import assert from "node:assert";
 import type { ClientRequestArgs } from "node:http";
 import type { JsonObject, SetOptional } from "type-fest";
@@ -11,7 +10,9 @@ import type { App } from "./app.js";
 import { config } from "./config.js";
 import { ClientError } from "./errors.js";
 import { loadCookie } from "./http.js";
+import { isFunction } from "./is.js";
 import { createLogger } from "./log.js";
+import { noop } from "./noop.js";
 
 enum ConnectionStatus {
   CONNECTED,
@@ -33,7 +34,7 @@ export class EditGraphQL {
   constructor(app: App) {
     this._client = createClient({
       url: `wss://${app.slug}.${config.domains.app}/edit/api/graphql-ws`,
-      shouldRetry: constant(true),
+      shouldRetry: () => true,
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
           // this cookie should be available since we were given an app which requires a cookie to load
@@ -178,7 +179,7 @@ export class EditGraphQL {
         if (this.status === ConnectionStatus.RECONNECTING) {
           assert(isFunction(payload.variables));
           subscribePayload = { ...payload, variables: payload.variables() };
-          const [type, operation] = split(subscribePayload.query, / |\(/, 2);
+          const [type, operation] = subscribePayload.query.split(/ |\(/, 2);
           log.info("re-sending graphql query", { type, operation });
         }
       });
@@ -186,7 +187,7 @@ export class EditGraphQL {
       subscribePayload = payload;
     }
 
-    const [type, operation] = split(subscribePayload.query, / |\(/, 2);
+    const [type, operation] = subscribePayload.query.split(/ |\(/, 2);
     log.info("sending graphql query", { type, operation });
 
     const unsubscribe = this._client.subscribe(subscribePayload as SubscribePayload, {

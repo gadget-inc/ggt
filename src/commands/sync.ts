@@ -4,16 +4,18 @@ import { execa } from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import inquirer from "inquirer";
-import { debounce, defaults, filter, map, noop, some, startsWith, type DebouncedFunc } from "lodash";
 import ms from "ms";
 import path from "node:path";
 import pMap from "p-map";
 import PQueue from "p-queue";
+import type { SetRequired } from "type-fest";
 import FSWatcher from "watcher";
 import which from "which";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
 import { config } from "../services/config.js";
+import { debounce, type DebouncedFunc } from "../services/debounce.js";
+import { defaults } from "../services/defaults.js";
 import { EditGraphQL } from "../services/edit-graphql.js";
 import { YarnNotFoundError } from "../services/errors.js";
 import {
@@ -25,6 +27,7 @@ import {
 } from "../services/filesync.js";
 import { swallowEnoent } from "../services/fs-utils.js";
 import { createLogger } from "../services/log.js";
+import { noop } from "../services/noop.js";
 import { notify } from "../services/notify.js";
 import { println, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
@@ -135,7 +138,7 @@ const argSpec = {
 };
 
 export class Sync {
-  args!: arg.Result<typeof argSpec>;
+  args!: SetRequired<arg.Result<typeof argSpec>, "--file-push-delay">;
 
   /**
    * The current status of the sync process.
@@ -391,21 +394,21 @@ export class Sync {
           const remoteFilesVersion = remoteFileSyncEvents.remoteFilesVersion;
 
           // we always ignore .gadget/ files so that we don't publish them (they're managed by gadget), but we still want to receive them
-          const filterIgnored = (event: { path: string }) => startsWith(event.path, ".gadget/") || !this.filesync.ignores(event.path);
-          const changed = filter(remoteFileSyncEvents.changed, filterIgnored);
-          const deleted = filter(remoteFileSyncEvents.deleted, filterIgnored);
+          const filterIgnored = (event: { path: string }) => event.path.startsWith(".gadget/") || !this.filesync.ignores(event.path);
+          const changed = remoteFileSyncEvents.changed.filter(filterIgnored);
+          const deleted = remoteFileSyncEvents.deleted.filter(filterIgnored);
 
           this.log.info("received files", {
             remoteFilesVersion,
-            changed: map(changed, "path"),
-            deleted: map(deleted, "path"),
+            changed: changed.map((x) => x.path),
+            deleted: deleted.map((x) => x.path),
           });
 
           this._enqueue(async () => {
             // add all the non-ignored files and directories we're about
             // to touch to recentRemoteChanges so that we don't send
             // them back
-            for (const file of filter([...changed, ...deleted], (file) => !this.filesync.ignores(file.path))) {
+            for (const file of [...changed, ...deleted].filter((file) => !this.filesync.ignores(file.path))) {
               this.recentRemoteChanges.set(file.path, Date.now());
 
               let dir = path.dirname(file.path);
@@ -417,12 +420,20 @@ export class Sync {
 
             if (changed.length > 0 || deleted.length > 0) {
               println`Received {gray ${formatDate(new Date(), "pp")}}`;
-              printPaths("←", map(changed, "path"), map(deleted, "path"));
+              printPaths(
+                "←",
+                changed.map((x) => x.path),
+                deleted.map((x) => x.path),
+              );
             }
 
-            await this.filesync.write(remoteFilesVersion, changed, map(deleted, "path"));
+            await this.filesync.write(
+              remoteFilesVersion,
+              changed,
+              deleted.map((x) => x.path),
+            );
 
-            if (some(changed, ["path", "yarn.lock"])) {
+            if (changed.some((x) => x.path === "yarn.lock")) {
               await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(noop);
             }
           });
@@ -437,7 +448,7 @@ export class Sync {
       | { mode: number; oldPath: string; newPath: string; isDirectory: boolean }
     >();
 
-    this.publish = debounce(() => {
+    this.publish = debounce(this.args["--file-push-delay"], () => {
       const localFiles = new Map(localFilesBuffer.entries());
       localFilesBuffer.clear();
 
@@ -478,9 +489,13 @@ export class Sync {
         await this.filesync.write(publishFileSyncEvents.remoteFilesVersion, [], []);
 
         println`Sent {gray ${formatDate(new Date(), "pp")}}`;
-        printPaths("→", map(changed, "path"), map(deleted, "path"));
+        printPaths(
+          "→",
+          changed.map((x) => x.path),
+          deleted.map((x) => x.path),
+        );
       });
-    }, this.args["--file-push-delay"]);
+    });
 
     this.watcher = new FSWatcher(this.filesync.dir, {
       // paths that we never want to publish

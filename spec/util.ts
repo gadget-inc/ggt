@@ -1,4 +1,3 @@
-import { noop, replace, split } from "lodash";
 import nock from "nock";
 import path from "node:path";
 import type { JsonObject } from "type-fest";
@@ -8,6 +7,7 @@ import { config } from "../src/services/config.js";
 import type { Payload, Query, Sink } from "../src/services/edit-graphql.js";
 import { EditGraphQL } from "../src/services/edit-graphql.js";
 import { loadCookie } from "../src/services/http.js";
+import { noop } from "../src/services/noop.js";
 import { writeSession } from "../src/services/session.js";
 import type { User } from "../src/services/user.js";
 
@@ -15,13 +15,13 @@ export const testDirPath = (): string => {
   const name = expect.getState().currentTestName;
   assert(name, "Expected test name to be defined");
 
-  const [testFile, ...rest] = split(name, " > ");
+  const [testFile, ...rest] = name.split(" > ");
   const describes = rest.length > 1 ? rest.slice(0, -1) : [];
   const testName = rest.at(-1);
 
   assert(testFile && testName);
 
-  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), replace(testName, /[^\s\w-]/g, ""));
+  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), testName.replace(/[^\s\w-]/g, ""));
 };
 
 export const testUser: User = {

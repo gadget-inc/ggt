@@ -5,7 +5,6 @@ import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import inquirer from "inquirer";
-import { endsWith, find, map, noop, sortBy, startsWith } from "lodash";
 import ms from "ms";
 import path from "node:path";
 import process from "node:process";
@@ -30,6 +29,7 @@ import type { Query } from "./edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs-utils.js";
 import { createLogger } from "./log.js";
+import { noop } from "./noop.js";
 import { println, sortByLevenshtein, sprint } from "./output.js";
 import type { User } from "./user.js";
 
@@ -130,7 +130,7 @@ export class FileSync {
       }
     }
 
-    if (config.windows && startsWith(dir, "~/")) {
+    if (config.windows && dir.startsWith("~/")) {
       // `~` doesn't expand to the home directory on Windows
       dir = path.join(config.homeDir, dir.slice(2));
     }
@@ -159,18 +159,22 @@ export class FileSync {
         type: "list",
         name: "appSlug",
         message: "Please select the app to sync to.",
-        choices: map(apps, "slug"),
+        choices: apps.map((x) => x.slug),
       }));
     }
 
     // try to find the appSlug in their list of apps
-    const app = find(apps, ["slug", appSlug]);
+    const app = apps.find((app) => app.slug === appSlug);
     if (!app) {
       // the specified appSlug doesn't exist in their list of apps,
       // either they misspelled it or they don't have access to it
       // anymore, suggest some apps that are similar to the one they
       // specified
-      const similarAppSlugs = sortByLevenshtein(appSlug, map(apps, "slug")).slice(0, 5);
+      const similarAppSlugs = sortByLevenshtein(
+        appSlug,
+        apps.map((app) => app.slug),
+      ).slice(0, 5);
+
       throw new ArgError(
         sprint`
         Unknown application:
@@ -289,7 +293,7 @@ export class FileSync {
       return false;
     }
 
-    if (startsWith(relative, "..")) {
+    if (relative.startsWith("..")) {
       // anything above the root dir is ignored
       return true;
     }
@@ -371,7 +375,7 @@ export class FileSync {
 
     await pMap(changed, async (file) => {
       const absolutePath = this.absolute(file.path);
-      if (endsWith(file.path, "/")) {
+      if (file.path.endsWith("/")) {
         await fs.ensureDir(absolutePath, { mode: 0o755 });
         return;
       }
@@ -393,7 +397,7 @@ export class FileSync {
 
     log.info("wrote", {
       ...this._state,
-      changed: map(Array.from(changed), "path"),
+      changed: Array.from(changed).map((x) => x.path),
       deleted: Array.from(deleted),
     });
   }
@@ -415,13 +419,10 @@ export class FileSync {
  * @param options.limit The maximum number of lines to print. Defaults to 10.
  */
 export const printPaths = (prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}) => {
-  const lines = sortBy(
-    [
-      ...map(changed, (normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
-      ...map(deleted, (normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
-    ],
-    (line) => line.slice(line.indexOf(" ") + 1),
-  );
+  const lines = [
+    ...changed.map((normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
+    ...deleted.map((normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
+  ].sort((a, b) => a.slice(a.indexOf(" ") + 1).localeCompare(b.slice(b.indexOf(" ") + 1)));
 
   let logged = 0;
   for (const line of lines) {

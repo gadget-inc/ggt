@@ -3,18 +3,18 @@ import arg from "arg";
 import cleanStack from "clean-stack";
 import { RequestError } from "got";
 import type { GraphQLError } from "graphql";
-import { compact, map, uniq } from "lodash";
 import { randomUUID } from "node:crypto";
 import os from "node:os";
-import { inspect, isArray, isError } from "node:util";
+import { inspect } from "node:util";
 import { serializeError as baseSerializeError, type ErrorObject } from "serialize-error";
 import { dedent } from "ts-dedent";
-import type { JsonObject, SetOptional } from "type-fest";
+import type { JsonObject } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
-import { z } from "zod";
 import type { App } from "./app.js";
+import { compact, uniq } from "./collections.js";
 import { config, env } from "./config.js";
 import type { Payload } from "./edit-graphql.js";
+import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors } from "./is.js";
 import { sprintln2 } from "./output.js";
 import type { User } from "./user.js";
 
@@ -154,7 +154,7 @@ export abstract class CLIError extends Error {
  * for Got HTTP errors
  */
 export const serializeError = (error: unknown): ErrorObject => {
-  let serialized = baseSerializeError(isArray(error) ? new AggregateError(error) : error);
+  let serialized = baseSerializeError(Array.isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };
   }
@@ -227,7 +227,7 @@ export class ClientError extends CLIError {
 
   override body(): string {
     if (isGraphQLErrors(this.cause)) {
-      const errors = uniq(map(this.cause, "message"));
+      const errors = uniq(this.cause.map((x) => x.message));
       if (errors.length > 1) {
         let n = 1;
         return sprintln2("Gadget responded with multiple errors:").concat(`  ${n++}. ${errors.join(`\n  ${n++}. `)}`);
@@ -235,7 +235,7 @@ export class ClientError extends CLIError {
         return dedent`
           Gadget responded with the following error:
 
-            ${this.cause[0]?.message}
+            ${errors[0]}
         `;
       }
     }
@@ -316,15 +316,3 @@ export class InvalidSyncFileError extends CLIError {
     `;
   }
 }
-
-export const isCloseEvent = (e: unknown): e is SetOptional<CloseEvent, "target"> => {
-  return z.object({ type: z.string(), code: z.number(), reason: z.string(), wasClean: z.boolean() }).safeParse(e).success;
-};
-
-const isErrorEvent = (e: unknown): e is SetOptional<ErrorEvent, "target"> => {
-  return z.object({ type: z.string(), message: z.string(), error: z.any() }).safeParse(e).success;
-};
-
-const isGraphQLErrors = (e: unknown): e is readonly GraphQLError[] => {
-  return z.array(z.object({ message: z.string() })).safeParse(e).success;
-};

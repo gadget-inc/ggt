@@ -1,8 +1,8 @@
 import inquirer from "inquirer";
-import { pick } from "lodash";
 import assert from "node:assert";
 import z from "zod";
 import { run as login } from "../commands/login.js";
+import { pick } from "./collections.js";
 import { config } from "./config.js";
 import { setUser } from "./errors.js";
 import { http, loadCookie, swallowUnauthorized } from "./http.js";

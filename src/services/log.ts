@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-confusing-void-expression */
 import { addBreadcrumb as addSentryBreadcrumb } from "@sentry/node";
 import Debug from "debug";
-import { isEmpty, isFunction, padEnd, repeat } from "lodash";
 import type { Jsonifiable } from "type-fest";
 import { serializeError } from "./errors.js";
+import { isFunction } from "./is.js";
 
 type JsonifiableObject = { [Key in string]?: Jsonifiable } | { toJSON: () => Jsonifiable } | { error?: unknown };
 
@@ -24,10 +24,10 @@ export const createLogger = (name: string, fields: JsonifiableObject | (() => Js
         fields.error = serializeError(fields.error);
       }
 
-      if (isEmpty(fields)) {
-        debug("%s%s", repeat(" ", longestName - name.length), padEnd(msg, longestMessage));
+      if (Object.keys(fields).length === 0) {
+        debug("%s%s", " ".repeat(longestName - name.length), msg.padEnd(longestMessage));
       } else {
-        debug("%s%s %o", repeat(" ", longestName - name.length), padEnd(msg, longestMessage), fields);
+        debug("%s%s %o", " ".repeat(longestName - name.length), msg.padEnd(longestMessage), fields);
       }
 
       if (level === "debug") {

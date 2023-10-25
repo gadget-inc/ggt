@@ -1,9 +1,9 @@
 import chalkTemplate from "chalk-template";
 import levenshtein from "fast-levenshtein";
-import { isObject, isString, sortBy } from "lodash";
 import assert from "node:assert";
 import process from "node:process";
 import { dedent } from "ts-dedent";
+import { isObject, isString } from "./is.js";
 
 /**
  * A wrapper around process.stdout and process.stderr that allows us to mock out the streams for testing.
@@ -77,7 +77,8 @@ export const println2 = (template?: TemplateStringsArray | string, ...values: un
   stdout.write("\n\n");
 };
 
-export const sortByLevenshtein = (input: string, options: readonly string[]): [closest: string, ...sorted: string[]] => {
-  assert(options.length > 0, "options must not be empty");
-  return sortBy(options, (opt) => levenshtein.get(opt, input)) as [string, ...string[]];
+export const sortByLevenshtein = (input: string, options: Iterable<string>): [closest: string, ...sorted: string[]] => {
+  const strings = Array.from(options);
+  assert(strings.length > 0, "options must not be empty");
+  return strings.sort((a, b) => levenshtein.get(a, input) - levenshtein.get(b, input)) as [string, ...string[]];
 };

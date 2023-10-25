@@ -1,6 +1,6 @@
-import { isFunction } from "lodash";
 import { beforeAll, describe, expect, it } from "vitest";
 import { availableCommands, type Command } from "../../src/commands/index.js";
+import { isFunction } from "../../src/services/is.js";
 
 describe.each(availableCommands)("%s", (name) => {
   let command: Command;

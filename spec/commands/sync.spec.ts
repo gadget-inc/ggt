@@ -2,7 +2,6 @@ import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import inquirer from "inquirer";
-import { defaults, endsWith, find, isFunction, isNil, isString, noop, set, sortBy, split } from "lodash";
 import notifier from "node-notifier";
 import os from "node:os";
 import path from "node:path";
@@ -19,12 +18,15 @@ import {
 import type { RootArgs } from "../../src/commands/root.js";
 import { Action, Sync, SyncStatus } from "../../src/commands/sync.js";
 import * as app from "../../src/services/app.js";
+import { defaults } from "../../src/services/defaults.js";
 import { ClientError, YarnNotFoundError } from "../../src/services/errors.js";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/filesync.js";
+import { isFunction, isNil, isString } from "../../src/services/is.js";
+import { noop } from "../../src/services/noop.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
 import * as user from "../../src/services/user.js";
 import type { PartialExcept } from "../types.js";
@@ -1282,7 +1284,7 @@ describe("Sync", () => {
     it.each(["SIGINT", "SIGTERM"])("stops on %s", (signal) => {
       vi.spyOn(sync, "stop");
 
-      const [, stop] = find(process.on.mock.calls, ([name]) => name === signal) ?? [];
+      const [, stop] = process.on.mock.calls.find(([name]) => name === signal) ?? [];
       expect(stop).toBeTruthy();
       expect(sync.status).toBe(SyncStatus.RUNNING);
 
@@ -1446,7 +1448,7 @@ export const fileChangedEvent = (
 export const dirChangedEvent = (
   options: PartialExcept<FileSyncChangedEventInput, "path">,
 ): FileSyncChangedEventInput & FileSyncChangedEvent => {
-  assert(endsWith(options.path, "/"));
+  assert(options.path.endsWith("/"));
   return fileChangedEvent({ content: "", mode: defaultDirMode, ...options });
 };
 
@@ -1455,10 +1457,10 @@ const expectPublishToEqual = (client: MockEditGraphQL, expected: MutationPublish
   assert(!isNil(actual) && !isFunction(actual));
 
   // sort the events by path so that toEqual() doesn't complain about the order
-  actual.input.changed = sortBy(actual.input.changed, "path");
-  actual.input.deleted = sortBy(actual.input.deleted, "path");
-  expected.input.changed = sortBy(expected.input.changed, "path");
-  expected.input.deleted = sortBy(expected.input.deleted, "path");
+  actual.input.changed = actual.input.changed.sort((a, b) => a.path.localeCompare(b.path));
+  actual.input.deleted = actual.input.deleted.sort((a, b) => a.path.localeCompare(b.path));
+  expected.input.changed = expected.input.changed.sort((a, b) => a.path.localeCompare(b.path));
+  expected.input.deleted = expected.input.deleted.sort((a, b) => a.path.localeCompare(b.path));
 
   expect(actual).toEqual(expected);
 };
@@ -1467,10 +1469,27 @@ interface FileTree {
   [path: string]: FileTree | string;
 }
 
+const set = (obj: any, path: string | string[], value: unknown) => {
+  // Regex explained: https://regexr.com/58j0k
+  const pathArray = Array.isArray(path) ? path : path.match(/([^[.\]])+/g);
+  assert(pathArray);
+
+  pathArray.reduce((acc, key, i) => {
+    if (acc[key] === undefined) {
+      acc[key] = {};
+    }
+    if (i === pathArray.length - 1) {
+      acc[key] = value;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return acc[key];
+  }, obj);
+};
+
 const expectDir = async (sync: Sync, expected: FileTree): Promise<void> => {
   const actual: FileTree = {};
   for await (const [filepath, stats] of sync.filesync.walkDir({ skipIgnored: false })) {
-    const pathSegments = split(sync.filesync.relative(filepath), path.sep);
+    const pathSegments = sync.filesync.relative(filepath).split(path.sep);
     set(actual, pathSegments, stats.isDirectory() ? {} : fs.readFileSync(filepath, "utf8"));
   }
   expect(actual).toEqual(expected);

@@ -1,0 +1,5 @@
+---
+"ggt": patch
+---
+
+Reduce bundle

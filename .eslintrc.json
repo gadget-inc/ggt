@@ -27,6 +27,7 @@
     "@typescript-eslint/prefer-nullish-coalescing": ["warn", { "ignorePrimitives": { "string": true } }],
     "lodash/import-scope": ["warn", "member"],
     "unicorn/explicit-length-check": ["warn"],
+    "unicorn/filename-case": ["warn", { "case": "kebabCase" }],
     "unicorn/prefer-node-protocol": ["warn"]
   },
   "overrides": [

@@ -4,7 +4,7 @@ import { execa } from "execa";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import inquirer from "inquirer";
-import _ from "lodash";
+import { debounce, defaults, filter, map, noop, some, startsWith, type DebouncedFunc } from "lodash";
 import ms from "ms";
 import path from "node:path";
 import pMap from "p-map";
@@ -172,7 +172,7 @@ export class Sync {
   /**
    * A debounced function that enqueue's local file changes to be sent to Gadget.
    */
-  publish!: _.DebouncedFunc<() => void>;
+  publish!: DebouncedFunc<() => void>;
 
   /**
    * Gracefully stops the sync.
@@ -199,7 +199,7 @@ export class Sync {
    * - Prompts the user how to resolve conflicts if the local filesystem has changed since the last sync.
    */
   async init(rootArgs: RootArgs): Promise<void> {
-    this.args = _.defaults(arg(argSpec, { argv: rootArgs._ }), {
+    this.args = defaults(arg(argSpec, { argv: rootArgs._ }), {
       "--file-push-delay": 100,
       "--file-watch-debounce": 300,
       "--file-watch-poll-interval": 3_000,
@@ -386,21 +386,21 @@ export class Sync {
           const remoteFilesVersion = remoteFileSyncEvents.remoteFilesVersion;
 
           // we always ignore .gadget/ files so that we don't publish them (they're managed by gadget), but we still want to receive them
-          const filter = (event: { path: string }) => _.startsWith(event.path, ".gadget/") || !this.filesync.ignores(event.path);
-          const changed = _.filter(remoteFileSyncEvents.changed, filter);
-          const deleted = _.filter(remoteFileSyncEvents.deleted, filter);
+          const filterIgnored = (event: { path: string }) => startsWith(event.path, ".gadget/") || !this.filesync.ignores(event.path);
+          const changed = filter(remoteFileSyncEvents.changed, filterIgnored);
+          const deleted = filter(remoteFileSyncEvents.deleted, filterIgnored);
 
           this.log.info("received files", {
             remoteFilesVersion,
-            changed: _.map(changed, "path"),
-            deleted: _.map(deleted, "path"),
+            changed: map(changed, "path"),
+            deleted: map(deleted, "path"),
           });
 
           this._enqueue(async () => {
             // add all the non-ignored files and directories we're about
             // to touch to recentRemoteChanges so that we don't send
             // them back
-            for (const file of _.filter([...changed, ...deleted], (file) => !this.filesync.ignores(file.path))) {
+            for (const file of filter([...changed, ...deleted], (file) => !this.filesync.ignores(file.path))) {
               this.recentRemoteChanges.set(file.path, Date.now());
 
               let dir = path.dirname(file.path);
@@ -412,13 +412,13 @@ export class Sync {
 
             if (changed.length || deleted.length) {
               println`Received {gray ${formatDate(new Date(), "pp")}}`;
-              printPaths("←", _.map(changed, "path"), _.map(deleted, "path"));
+              printPaths("←", map(changed, "path"), map(deleted, "path"));
             }
 
-            await this.filesync.write(remoteFilesVersion, changed, _.map(deleted, "path"));
+            await this.filesync.write(remoteFilesVersion, changed, map(deleted, "path"));
 
-            if (_.some(changed, ["path", "yarn.lock"])) {
-              await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(_.noop);
+            if (some(changed, ["path", "yarn.lock"])) {
+              await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(noop);
             }
           });
         },
@@ -432,7 +432,7 @@ export class Sync {
       | { mode: number; oldPath: string; newPath: string; isDirectory: boolean }
     >();
 
-    this.publish = _.debounce(() => {
+    this.publish = debounce(() => {
       const localFiles = new Map(localFilesBuffer.entries());
       localFilesBuffer.clear();
 
@@ -473,7 +473,7 @@ export class Sync {
         await this.filesync.write(publishFileSyncEvents.remoteFilesVersion, [], []);
 
         println`Sent {gray ${formatDate(new Date(), "pp")}}`;
-        printPaths("→", _.map(changed, "path"), _.map(deleted, "path"));
+        printPaths("→", map(changed, "path"), map(deleted, "path"));
       });
     }, this.args["--file-push-delay"]);
 

@@ -3,10 +3,10 @@ import arg from "arg";
 import cleanStack from "clean-stack";
 import { RequestError } from "got";
 import type { GraphQLError } from "graphql";
-import _ from "lodash";
+import { compact, uniqBy } from "lodash";
 import { randomUUID } from "node:crypto";
 import os from "node:os";
-import { inspect } from "node:util";
+import { inspect, isArray, isError } from "node:util";
 import { serializeError as baseSerializeError, type ErrorObject } from "serialize-error";
 import { dedent } from "ts-dedent";
 import type { JsonObject, SetOptional } from "type-fest";
@@ -117,7 +117,7 @@ export abstract class CLIError extends Error {
    * what an error should look like can be found here: {@link https://clig.dev/#errors}
    */
   render(): string {
-    return _.compact([this.header(), this.body(), this.footer()]).join("\n\n");
+    return compact([this.header(), this.body(), this.footer()]).join("\n\n");
   }
 
   protected header(): string {
@@ -144,7 +144,7 @@ export abstract class CLIError extends Error {
  * for Got HTTP errors
  */
 export function serializeError(error: unknown): ErrorObject {
-  let serialized = baseSerializeError(_.isArray(error) ? new AggregateError(error) : error);
+  let serialized = baseSerializeError(isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };
   }
@@ -180,7 +180,7 @@ export class UnexpectedError extends CLIError {
   }
 
   protected body(): string {
-    if (_.isError(this.cause)) {
+    if (isError(this.cause)) {
       return cleanStack(this.cause.stack ?? this.stack);
     }
     return this.stack;
@@ -218,7 +218,7 @@ export class ClientError extends CLIError {
   override body(): string {
     if (isGraphQLErrors(this.cause)) {
       if (this.cause.length > 1) {
-        const errors = _.uniqBy(this.cause, "message");
+        const errors = uniqBy(this.cause, "message");
 
         let output = "Gadget responded with multiple errors:\n";
         for (let i = 0; i < errors.length; i++) {
@@ -239,7 +239,7 @@ export class ClientError extends CLIError {
       return "The connection to Gadget closed unexpectedly.";
     }
 
-    if (isErrorEvent(this.cause) || _.isError(this.cause)) {
+    if (isErrorEvent(this.cause) || isError(this.cause)) {
       return this.cause.message;
     }
 

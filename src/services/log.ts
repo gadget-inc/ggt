@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-confusing-void-expression */
 import { addBreadcrumb as addSentryBreadcrumb } from "@sentry/node";
 import Debug from "debug";
-import _ from "lodash";
+import { isEmpty, isFunction, padEnd, repeat } from "lodash";
 import type { Jsonifiable } from "type-fest";
 import { serializeError } from "./errors.js";
 
@@ -12,7 +12,7 @@ let longestMessage = 0;
 
 export const createLogger = (name: string, fields: JsonifiableObject | (() => JsonifiableObject) = {}) => {
   longestName = Math.max(longestName, name.length);
-  const baseFields = _.isFunction(fields) ? fields : () => fields;
+  const baseFields = isFunction(fields) ? fields : () => fields;
 
   const createLog = (level: "debug" | "info" | "warn" | "error") => {
     const debug = Debug(`ggt:${name}`);
@@ -24,10 +24,10 @@ export const createLogger = (name: string, fields: JsonifiableObject | (() => Js
         fields.error = serializeError(fields.error);
       }
 
-      if (_.isEmpty(fields)) {
-        debug("%s%s", _.repeat(" ", longestName - name.length), _.padEnd(msg, longestMessage));
+      if (isEmpty(fields)) {
+        debug("%s%s", repeat(" ", longestName - name.length), padEnd(msg, longestMessage));
       } else {
-        debug("%s%s %o", _.repeat(" ", longestName - name.length), _.padEnd(msg, longestMessage), fields);
+        debug("%s%s %o", repeat(" ", longestName - name.length), padEnd(msg, longestMessage), fields);
       }
 
       if (level === "debug") {

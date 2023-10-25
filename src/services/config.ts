@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import isWsl from "is-wsl";
-import _ from "lodash";
+import { split, startsWith } from "lodash";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -31,11 +31,11 @@ export const env = {
   },
 
   get developmentLike(): boolean {
-    return _.startsWith(this.value, "development");
+    return startsWith(this.value, "development");
   },
 
   get testLike(): boolean {
-    return _.startsWith(this.value, "test");
+    return startsWith(this.value, "test");
   },
 
   get developmentOrTestLike(): boolean {
@@ -76,12 +76,12 @@ export const config = {
   },
 
   get shell(): string | undefined {
-    const SHELL = process.env["SHELL"] ?? _.split(os.userInfo().shell, path.sep).pop();
+    const SHELL = process.env["SHELL"] ?? split(os.userInfo().shell, path.sep).pop();
     if (SHELL) {
-      return _.split(SHELL, "/").at(-1);
+      return split(SHELL, "/").at(-1);
     }
     if (this.windows && process.env["COMSPEC"]) {
-      return _.split(process.env["COMSPEC"], /\\|\//).at(-1);
+      return split(process.env["COMSPEC"], /\\|\//).at(-1);
     }
     return "unknown";
   },

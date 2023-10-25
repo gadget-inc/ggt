@@ -1,7 +1,7 @@
 import type { GraphQLError } from "graphql";
 import type { ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
-import _ from "lodash";
+import { constant, isFunction, noop, split } from "lodash";
 import assert from "node:assert";
 import type { ClientRequestArgs } from "node:http";
 import type { JsonObject, SetOptional } from "type-fest";
@@ -33,7 +33,7 @@ export class EditGraphQL {
   constructor(app: App) {
     this._client = createClient({
       url: `wss://${app.slug}.${config.domains.app}/edit/api/graphql-ws`,
-      shouldRetry: _.constant(true),
+      shouldRetry: constant(true),
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
           // this cookie should be available since we were given an app which requires a cookie to load
@@ -164,17 +164,17 @@ export class EditGraphQL {
     sink: SetOptional<Sink<Data, Extensions>, "complete">,
   ): () => void {
     let subscribePayload: Payload<Data, Variables>;
-    let removeConnectedListener = _.noop.bind(_);
+    let removeConnectedListener = noop;
 
-    if (_.isFunction(payload.variables)) {
+    if (isFunction(payload.variables)) {
       // the caller wants us to re-evaluate the variables every time
       // graphql-ws re-subscribes after reconnecting
       subscribePayload = { ...payload, variables: payload.variables() };
       removeConnectedListener = this._client.on("connected", () => {
         if (this.status == ConnectionStatus.RECONNECTING) {
-          assert(_.isFunction(payload.variables));
+          assert(isFunction(payload.variables));
           subscribePayload = { ...payload, variables: payload.variables() };
-          const [type, operation] = _.split(subscribePayload.query, / |\(/, 2);
+          const [type, operation] = split(subscribePayload.query, / |\(/, 2);
           log.info("re-sending graphql query", { type, operation });
         }
       });
@@ -182,7 +182,7 @@ export class EditGraphQL {
       subscribePayload = payload;
     }
 
-    const [type, operation] = _.split(subscribePayload.query, / |\(/, 2);
+    const [type, operation] = split(subscribePayload.query, / |\(/, 2);
     log.info("sending graphql query", { type, operation });
 
     const unsubscribe = this._client.subscribe(subscribePayload as SubscribePayload, {

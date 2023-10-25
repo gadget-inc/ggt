@@ -2,7 +2,6 @@ import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import inquirer from "inquirer";
-import _ from "lodash";
 import notifier from "node-notifier";
 import os from "node:os";
 import path from "node:path";
@@ -1260,7 +1259,7 @@ describe("Sync", () => {
     let run: Promise<void>;
 
     beforeEach(async () => {
-      vi.spyOn(process, "on").mockImplementation(_.noop as any);
+      vi.spyOn(process, "on").mockImplementation(noop as any);
 
       const init = sync.init(rootArgs);
 
@@ -1282,7 +1281,7 @@ describe("Sync", () => {
     it.each(["SIGINT", "SIGTERM"])("stops on %s", (signal) => {
       vi.spyOn(sync, "stop");
 
-      const [, stop] = _.find(process.on.mock.calls, ([name]) => name === signal) ?? [];
+      const [, stop] = find(process.on.mock.calls, ([name]) => name === signal) ?? [];
       expect(stop).toBeTruthy();
       expect(sync.status).toBe(SyncStatus.RUNNING);
 
@@ -1432,7 +1431,7 @@ function prettyJson(obj: any): string {
 export function fileChangedEvent(
   options: PartialExcept<FileSyncChangedEventInput, "path" | "content">,
 ): FileSyncChangedEventInput & FileSyncChangedEvent {
-  const event = _.defaults(options, {
+  const event = defaults(options, {
     mode: defaultFileMode,
     encoding: FileSyncEncoding.Base64,
   } as FileSyncChangedEventInput);
@@ -1446,7 +1445,7 @@ export function fileChangedEvent(
 export function dirChangedEvent(
   options: PartialExcept<FileSyncChangedEventInput, "path">,
 ): FileSyncChangedEventInput & FileSyncChangedEvent {
-  assert(_.endsWith(options.path, "/"));
+  assert(endsWith(options.path, "/"));
   return fileChangedEvent({ content: "", mode: defaultDirMode, ...options });
 }
 
@@ -1455,10 +1454,10 @@ function expectPublishToEqual(client: MockEditGraphQL, expected: MutationPublish
   assert(actual && typeof actual == "object");
 
   // sort the events by path so that toEqual() doesn't complain about the order
-  actual.input.changed = _.sortBy(actual.input.changed, "path");
-  actual.input.deleted = _.sortBy(actual.input.deleted, "path");
-  expected.input.changed = _.sortBy(expected.input.changed, "path");
-  expected.input.deleted = _.sortBy(expected.input.deleted, "path");
+  actual.input.changed = sortBy(actual.input.changed, "path");
+  actual.input.deleted = sortBy(actual.input.deleted, "path");
+  expected.input.changed = sortBy(expected.input.changed, "path");
+  expected.input.deleted = sortBy(expected.input.deleted, "path");
 
   expect(actual).toEqual(expected);
 }
@@ -1470,15 +1469,15 @@ interface FileTree {
 async function expectDir(sync: Sync, expected: FileTree): Promise<void> {
   const actual: FileTree = {};
   for await (const [filepath, stats] of sync.filesync.walkDir({ skipIgnored: false })) {
-    const pathSegments = _.split(sync.filesync.relative(filepath), path.sep);
-    _.set(actual, pathSegments, stats.isDirectory() ? {} : fs.readFileSync(filepath, "utf8"));
+    const pathSegments = split(sync.filesync.relative(filepath), path.sep);
+    set(actual, pathSegments, stats.isDirectory() ? {} : fs.readFileSync(filepath, "utf8"));
   }
   expect(actual).toEqual(expected);
 }
 
 async function writeDir(dir: string, tree: FileTree): Promise<void> {
   for (const [filepath, content] of Object.entries(tree)) {
-    if (_.isString(content)) {
+    if (isString(content)) {
       fs.outputFileSync(path.join(dir, filepath), content);
     } else {
       const subDir = path.join(dir, filepath);

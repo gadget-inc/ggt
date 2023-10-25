@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { isFunction } from "lodash";
 import { beforeAll, describe, expect, it } from "vitest";
 import { availableCommands, type Command } from "../../src/commands/index.js";
 
@@ -16,12 +16,12 @@ describe.each(availableCommands)("%s", (name) => {
 
   it("has a run function", () => {
     expect(command.run).toBeDefined();
-    expect(_.isFunction(command.run)).toBe(true);
+    expect(isFunction(command.run)).toBe(true);
   });
 
   it("may have an init function", () => {
     if (command.init) {
-      expect(_.isFunction(command.init)).toBe(true);
+      expect(isFunction(command.init)).toBe(true);
     } else {
       expect(command.init).toBeUndefined();
     }

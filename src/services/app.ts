@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { map } from "lodash";
 import { z } from "zod";
 import { config } from "./config.js";
 import { http, loadCookie } from "./http.js";
@@ -29,5 +29,5 @@ export const getApps = async (user: User): Promise<App[]> => {
     resolveBodyOnly: true,
   });
 
-  return _.map(z.array(App).parse(json), (app) => ({ ...app, user }));
+  return map(z.array(App).parse(json), (app) => ({ ...app, user }));
 };

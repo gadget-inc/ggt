@@ -1,9 +1,9 @@
-import _ from "lodash";
+import { includes, toLower, trim } from "lodash";
 import { ArgError } from "./errors.js";
 import { sprint } from "./output.js";
 
 export const parseBoolean = (value: string | null | undefined) => {
-  return _.includes(["true", "1"], _.toLower(_.trim(value ?? "")));
+  return includes(["true", "1"], toLower(trim(value ?? "")));
 };
 
 export const AppArg = (value: string, name: string) => {

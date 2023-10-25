@@ -5,7 +5,7 @@ import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import inquirer from "inquirer";
-import _ from "lodash";
+import { endsWith, find, map, sortBy, startsWith } from "lodash";
 import ms from "ms";
 import path from "node:path";
 import process from "node:process";
@@ -130,7 +130,7 @@ export class FileSync {
       }
     }
 
-    if (config.windows && _.startsWith(dir, "~/")) {
+    if (config.windows && startsWith(dir, "~/")) {
       // `~` doesn't expand to the home directory on Windows
       dir = path.join(config.homeDir, dir.slice(2));
     }
@@ -157,18 +157,18 @@ export class FileSync {
         type: "list",
         name: "appSlug",
         message: "Please select the app to sync to.",
-        choices: _.map(apps, "slug"),
+        choices: map(apps, "slug"),
       }));
     }
 
     // try to find the appSlug in their list of apps
-    const app = _.find(apps, ["slug", appSlug]);
+    const app = find(apps, ["slug", appSlug]);
     if (!app) {
       // the specified appSlug doesn't exist in their list of apps,
       // either they misspelled it or they don't have access to it
       // anymore, suggest some apps that are similar to the one they
       // specified
-      const similarAppSlugs = sortByLevenshtein(appSlug, _.map(apps, "slug")).slice(0, 5);
+      const similarAppSlugs = sortByLevenshtein(appSlug, map(apps, "slug")).slice(0, 5);
       throw new ArgError(
         sprint`
         Unknown application:
@@ -287,7 +287,7 @@ export class FileSync {
       return false;
     }
 
-    if (_.startsWith(relative, "..")) {
+    if (startsWith(relative, "..")) {
       // anything above the root dir is ignored
       return true;
     }
@@ -369,7 +369,7 @@ export class FileSync {
 
     await pMap(changed, async (file) => {
       const absolutePath = this.absolute(file.path);
-      if (_.endsWith(file.path, "/")) {
+      if (endsWith(file.path, "/")) {
         await fs.ensureDir(absolutePath, { mode: 0o755 });
         return;
       }
@@ -391,7 +391,7 @@ export class FileSync {
 
     log.info("wrote", {
       ...this._state,
-      changed: _.map(Array.from(changed), "path"),
+      changed: map(Array.from(changed), "path"),
       deleted: Array.from(deleted),
     });
   }
@@ -413,10 +413,10 @@ export class FileSync {
  * @param options.limit The maximum number of lines to print. Defaults to 10.
  */
 export const printPaths = (prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}) => {
-  const lines = _.sortBy(
+  const lines = sortBy(
     [
-      ..._.map(changed, (normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
-      ..._.map(deleted, (normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
+      ...map(changed, (normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
+      ...map(deleted, (normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
     ],
     (line) => line.slice(line.indexOf(" ") + 1),
   );

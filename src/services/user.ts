@@ -1,5 +1,5 @@
 import inquirer from "inquirer";
-import _ from "lodash";
+import { pick } from "lodash";
 import assert from "node:assert";
 import z from "zod";
 import { run as login } from "../commands/login.js";
@@ -37,7 +37,7 @@ export const getUser = async (): Promise<User | undefined> => {
 
     const user = User.parse(json);
     setUser(user);
-    log.info("loaded current user", { user: _.pick(user, ["id", "name", "email"]) });
+    log.info("loaded current user", { user: pick(user, ["id", "name", "email"]) });
 
     return user;
   } catch (error) {

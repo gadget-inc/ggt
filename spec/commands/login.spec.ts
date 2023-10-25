@@ -1,5 +1,4 @@
 import getPort from "get-port";
-import _ from "lodash";
 import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -140,7 +139,7 @@ describe("login", () => {
     writeSession(undefined);
     vi.spyOn(user, "getUser").mockRejectedValue(new Error("boom"));
 
-    void run().catch(_.noop);
+    void run().catch(noop);
 
     await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();

@@ -1,6 +1,6 @@
 import arg from "arg";
 import debug from "debug";
-import _ from "lodash";
+import { includes, isNil } from "lodash";
 import { parseBoolean } from "../services/args.js";
 import { config } from "../services/config.js";
 import { CLIError } from "../services/errors.js";
@@ -60,12 +60,12 @@ export const run = async () => {
   }
 
   const command = rootArgs._.shift();
-  if (_.isNil(command)) {
+  if (isNil(command)) {
     println(usage);
     process.exit(0);
   }
 
-  if (!_.includes(availableCommands, command)) {
+  if (!includes(availableCommands, command)) {
     const [closest] = sortByLevenshtein(command, availableCommands);
     println`
       Unknown command {yellow ${command}}

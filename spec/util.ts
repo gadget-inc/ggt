@@ -1,4 +1,3 @@
-import _ from "lodash";
 import nock from "nock";
 import path from "node:path";
 import type { JsonObject } from "type-fest";
@@ -15,13 +14,13 @@ export function testDirPath(): string {
   const name = expect.getState().currentTestName;
   assert(name, "Expected test name to be defined");
 
-  const [testFile, ...rest] = _.split(name, " > ");
+  const [testFile, ...rest] = split(name, " > ");
   const describes = rest.length > 1 ? rest.slice(0, -1) : [];
   const testName = rest.at(-1);
 
   assert(testFile && testName);
 
-  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), _.replace(testName, /[^\s\w-]/g, ""));
+  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), replace(testName, /[^\s\w-]/g, ""));
 }
 
 export const testUser: User = {
@@ -105,7 +104,7 @@ export function mockEditGraphQL(): MockEditGraphQL {
 
   vi.spyOn(EditGraphQL.prototype, "dispose");
   vi.spyOn(EditGraphQL.prototype, "_subscribe").mockImplementation((payload, sink) => {
-    if (!sink.complete) sink.complete = _.noop;
+    if (!sink.complete) sink.complete = noop;
 
     const unsubscribe = vi.fn();
     vi.spyOn(sink, "next");

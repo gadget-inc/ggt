@@ -51,6 +51,14 @@ export const sprint = (template: TemplateStringsArray | string, ...values: unkno
   return dedent(content);
 };
 
+export const sprintln = (template: TemplateStringsArray | string, ...values: unknown[]) => {
+  return sprint(template, ...values) + "\n";
+};
+
+export const sprintln2 = (template: TemplateStringsArray | string, ...values: unknown[]) => {
+  return sprint(template, ...values) + "\n\n";
+};
+
 export const print = (template: TemplateStringsArray | string, ...values: unknown[]) => {
   stdout.write(sprint(template, ...values));
 };
@@ -60,6 +68,13 @@ export const println = (template?: TemplateStringsArray | string, ...values: unk
     stdout.write(sprint(template, ...values));
   }
   stdout.write("\n");
+};
+
+export const println2 = (template?: TemplateStringsArray | string, ...values: unknown[]) => {
+  if (template) {
+    stdout.write(sprint(template, ...values));
+  }
+  stdout.write("\n\n");
 };
 
 export const sortByLevenshtein = (input: string, options: readonly string[]): [closest: string, ...sorted: string[]] => {

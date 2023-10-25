@@ -3,7 +3,7 @@ import arg from "arg";
 import cleanStack from "clean-stack";
 import { RequestError } from "got";
 import type { GraphQLError } from "graphql";
-import { compact, uniqBy } from "lodash";
+import { compact, map, uniq } from "lodash";
 import { randomUUID } from "node:crypto";
 import os from "node:os";
 import { inspect, isArray, isError } from "node:util";
@@ -15,6 +15,7 @@ import { z } from "zod";
 import type { App } from "./app.js";
 import { config, env } from "./config.js";
 import type { Payload } from "./edit-graphql.js";
+import { sprintln2 } from "./output.js";
 import type { User } from "./user.js";
 
 let app: App | undefined;
@@ -226,15 +227,10 @@ export class ClientError extends CLIError {
 
   override body(): string {
     if (isGraphQLErrors(this.cause)) {
-      if (this.cause.length > 1) {
-        const errors = uniqBy(this.cause, "message");
-
-        let output = "Gadget responded with multiple errors:\n";
-        for (let i = 0; i < errors.length; i++) {
-          output += `\n  ${i + 1}. ${errors[i]?.message}`;
-        }
-
-        return output;
+      const errors = uniq(map(this.cause, "message"));
+      if (errors.length > 1) {
+        let n = 1;
+        return sprintln2("Gadget responded with multiple errors:").concat(`  ${n++}. ${errors.join(`\n  ${n++}. `)}`);
       } else {
         return dedent`
           Gadget responded with the following error:

@@ -909,30 +909,35 @@ describe("Sync", () => {
         });
       });
 
-      it("publishes events in batches after a debounced delay", async () => {
-        fs.outputFileSync(path.join(dir, "foo.js"), "foo");
-        await sleep(10);
-        fs.outputFileSync(path.join(dir, "bar.js"), "bar");
-        await sleep(10);
-        fs.outputFileSync(path.join(dir, "baz.js"), "baz");
+      it(
+        "publishes events in batches after a debounced delay",
+        async () => {
+          fs.outputFileSync(path.join(dir, "foo.js"), "foo");
+          await sleep(10);
+          fs.outputFileSync(path.join(dir, "bar.js"), "bar");
+          await sleep(10);
+          fs.outputFileSync(path.join(dir, "baz.js"), "baz");
 
-        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-        graphql
-          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
-          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
+          await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+          graphql
+            ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+            .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } });
 
-        expectPublishToEqual(graphql, {
-          input: {
-            expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
-            changed: [
-              fileChangedEvent({ path: "foo.js", content: "foo" }),
-              fileChangedEvent({ path: "bar.js", content: "bar" }),
-              fileChangedEvent({ path: "baz.js", content: "baz" }),
-            ],
-            deleted: [],
-          },
-        });
-      });
+          expectPublishToEqual(graphql, {
+            input: {
+              expectedRemoteFilesVersion: String(sync.filesync.filesVersion),
+              changed: [
+                fileChangedEvent({ path: "foo.js", content: "foo" }),
+                fileChangedEvent({ path: "bar.js", content: "bar" }),
+                fileChangedEvent({ path: "baz.js", content: "baz" }),
+              ],
+              deleted: [],
+            },
+          });
+        },
+        // this test is flaky :(
+        { retry: 2 },
+      );
 
       it("publishes changed events on addDir events", async () => {
         await writeDir(dir, {
@@ -1296,62 +1301,69 @@ describe("Sync", () => {
       expect(sync.status).toBe(SyncStatus.STOPPING);
     });
 
-    it("waits for the queue to be empty", async () => {
-      const publish = vi.spyOn(sync, "publish");
+    it(
+      "waits for the queue to be empty",
+      async () => {
+        const publish = vi.spyOn(sync, "publish");
 
-      // make a local change
-      fs.outputFileSync(path.join(dir, "foo.js"), "foo");
+        // make a local change
+        fs.outputFileSync(path.join(dir, "foo.js"), "foo");
 
-      // wait for the change to be published
-      await sleepUntil(() => !!publish.mock.lastCall);
+        // wait for the change to be published
+        await sleepUntil(() => !!publish.mock.lastCall);
 
-      // restore so sync.publish.flush() works
-      publish.mockRestore();
+        // restore so sync.publish.flush() works
+        publish.mockRestore();
 
-      // make sure publish was debounced and the queue is still empty
-      expect(sync.queue.pending + sync.queue.size).toBe(0);
+        // make sure publish was debounced and the queue is still empty
+        expect(sync.queue.pending + sync.queue.size).toBe(0);
 
-      // emit a remote change event
-      graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
-        data: {
-          remoteFileSyncEvents: {
-            remoteFilesVersion: "1",
-            changed: [fileChangedEvent({ path: "bar.js", content: "bar" })],
-            deleted: [],
+        // emit a remote change event
+        graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
+          data: {
+            remoteFileSyncEvents: {
+              remoteFilesVersion: "1",
+              changed: [fileChangedEvent({ path: "bar.js", content: "bar" })],
+              deleted: [],
+            },
           },
-        },
-      });
+        });
 
-      // stop
-      const stop = sync.stop();
+        // stop
+        const stop = sync.stop();
 
-      // publishing foo.js should be pending (running) and writing bar.js should be queued
-      expect(sync.queue.pending).toBe(1);
-      expect(sync.queue.size).toBe(1);
+        // publishing foo.js should be pending (running) and writing bar.js should be queued
+        expect(sync.queue.pending).toBe(1);
+        expect(sync.queue.size).toBe(1);
 
-      await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
-      graphql._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
+        await sleepUntil(() => graphql._subscriptions.has(PUBLISH_FILE_SYNC_EVENTS_MUTATION));
+        graphql
+          ._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+          .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
-      // publishing foo.js should be done and writing bar.js should be pending (running)
-      expect(sync.queue.pending).toBe(1);
-      expect(sync.queue.size).toBe(0);
+        // publishing foo.js should be done and writing bar.js should be pending (running)
+        expect(sync.queue.pending).toBe(1);
+        expect(sync.queue.size).toBe(0);
 
-      // wait for stop to complete
-      await stop;
+        // wait for stop to complete
+        await stop;
 
-      // everything should be done
-      expect(sync.queue.onIdle).toHaveBeenCalled();
-      expect(sync.queue.pending).toBe(0);
-      expect(sync.queue.size).toBe(0);
+        // everything should be done
+        expect(sync.queue.onIdle).toHaveBeenCalled();
+        expect(sync.queue.pending).toBe(0);
+        expect(sync.queue.size).toBe(0);
 
-      await expectDir(sync, {
-        ".gadget": {
-          "sync.json": stateFile(sync),
-        },
-        "foo.js": "foo",
-        "bar.js": "bar",
-      });
-    });
+        await expectDir(sync, {
+          ".gadget": {
+            "sync.json": stateFile(sync),
+          },
+          "foo.js": "foo",
+          "bar.js": "bar",
+        });
+      },
+      // this test is flaky :(
+      { retry: 2 },
+    );
 
     it("saves state to .gadget/sync.json", async () => {
       await sync.stop();

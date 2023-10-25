@@ -26,11 +26,13 @@
     "@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }],
     "@typescript-eslint/prefer-nullish-coalescing": ["warn", { "ignorePrimitives": { "string": true } }],
     "lodash/import-scope": ["warn", "member"],
+    "unicorn/consistent-destructuring": ["warn"],
     "unicorn/explicit-length-check": ["warn"],
     "unicorn/filename-case": ["warn", { "case": "kebabCase" }],
     "unicorn/no-null": ["warn"],
     "unicorn/no-object-as-default-parameter": ["warn"],
-    "unicorn/prefer-node-protocol": ["warn"]
+    "unicorn/prefer-node-protocol": ["warn"],
+    "unicorn/template-indent": ["warn"]
   },
   "overrides": [
     {
@@ -43,7 +45,8 @@
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@typescript-eslint/no-unsafe-call": ["off"],
         "@typescript-eslint/no-unsafe-member-access": ["off"],
-        "@typescript-eslint/unbound-method": "off"
+        "@typescript-eslint/unbound-method": "off",
+        "unicorn/template-indent": ["off"]
       }
     }
   ],

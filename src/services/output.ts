@@ -12,8 +12,8 @@ import { dedent } from "ts-dedent";
  */
 export class Stream {
   public constructor(public channel: "stdout" | "stderr") {
-    process[this.channel].on("error", (err) => {
-      if (err.code === "EPIPE") {
+    process[this.channel].on("error", (err: unknown) => {
+      if (_.isObject(err) && "code" in err && err.code === "EPIPE") {
         return;
       }
       throw err;

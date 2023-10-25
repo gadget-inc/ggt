@@ -77,7 +77,7 @@ export const run = async () => {
     process.exit(1);
   }
 
-  const cmd: Command = await import(`./${command}.js`);
+  const cmd = (await import(`./${command}.js`)) as Command;
 
   if (rootArgs["--help"]) {
     println(cmd.usage);

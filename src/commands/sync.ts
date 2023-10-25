@@ -256,7 +256,7 @@ export class Sync {
 
     let action: Action | undefined;
     if (hasLocalChanges) {
-      ({ action } = await inquirer.prompt({
+      ({ action } = await inquirer.prompt<{ action: Action }>({
         type: "list",
         name: "action",
         choices: [Action.CANCEL, Action.MERGE, Action.RESET],

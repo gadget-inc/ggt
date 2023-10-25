@@ -30,7 +30,7 @@ readme = _.replace(
 
 const commands: string[] = [];
 for (const name of availableCommands) {
-  const command: Command = await import(`../src/commands/${name}.js`);
+  const command = (await import(`../src/commands/${name}.js`)) as Command;
   commands.push(dedent`
     ### \`ggt ${name}\`
 

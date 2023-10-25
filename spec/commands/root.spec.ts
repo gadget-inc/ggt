@@ -1,11 +1,11 @@
 import debug from "debug";
-import _ from "lodash";
 import { afterEach } from "node:test";
 import { dedent } from "ts-dedent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { availableCommands, type Command } from "../../src/commands/index.js";
 import { config } from "../../src/services/config.js";
 import { CLIError, IsBug } from "../../src/services/errors.js";
+import { noop } from "../../src/services/noop.js";
 import * as version from "../../src/services/version.js";
 import { expectProcessExit, expectStdout } from "../util.js";
 
@@ -29,7 +29,7 @@ describe("root", () => {
 
   it("enables debug when --debug is given", async () => {
     process.argv = ["node", "ggt", "--debug"];
-    vi.spyOn(debug, "enable").mockImplementation(_.noop);
+    vi.spyOn(debug, "enable").mockImplementation(noop);
 
     await expectProcessExit(run);
 
@@ -95,9 +95,9 @@ describe("root", () => {
 
     beforeEach(async () => {
       command = await vi.importActual(`../../src/commands/${name}.js`);
-      vi.spyOn(command, "run").mockImplementation(_.noop);
+      vi.spyOn(command, "run").mockImplementation(noop);
       if (command.init) {
-        vi.spyOn(command, "init").mockImplementation(_.noop);
+        vi.spyOn(command, "init").mockImplementation(noop);
       }
     });
 

@@ -4,48 +4,53 @@
   "parserOptions": {
     "project": true
   },
-  "plugins": ["@typescript-eslint", "import", "lodash"],
+  "plugins": ["@typescript-eslint", "import", "lodash", "unicorn"],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/strict-type-checked",
     "plugin:@typescript-eslint/stylistic-type-checked",
     "plugin:import/recommended",
     "plugin:import/typescript",
-    "plugin:lodash/recommended",
     "prettier"
   ],
   "env": {
     "node": true
   },
   "rules": {
-    "@typescript-eslint/consistent-type-imports": ["warn", { "prefer": "type-imports" }],
+    "curly": ["warn", "all"],
+    "eqeqeq": ["warn", "smart"],
+    "func-style": ["warn", "expression"],
+    "max-depth": ["warn", 2],
+
+    "unicorn/consistent-destructuring": ["warn"],
+    "unicorn/explicit-length-check": ["warn"],
+    "unicorn/filename-case": ["warn", { "case": "kebabCase" }],
+    "unicorn/no-null": ["warn"],
+    "unicorn/no-object-as-default-parameter": ["warn"],
+    "unicorn/prefer-node-protocol": ["warn"],
+    "unicorn/template-indent": ["warn"],
+
+    "@typescript-eslint/consistent-type-imports": ["warn", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
     "@typescript-eslint/member-ordering": ["warn"],
-    "@typescript-eslint/naming-convention": [
-      "warn",
-      {
-        "selector": "memberLike",
-        "modifiers": ["private"],
-        "format": ["camelCase"],
-        "leadingUnderscore": "require"
-      }
-    ],
-    "@typescript-eslint/no-dynamic-delete": ["off"],
-    "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-unsafe-assignment": "off",
-    "@typescript-eslint/no-unsafe-call": ["off"],
-    "@typescript-eslint/no-unsafe-member-access": ["off"],
+    // prettier-ignore
+    "@typescript-eslint/naming-convention": ["warn", { "selector": "memberLike", "modifiers": ["private"], "format": ["camelCase"], "leadingUnderscore": "require" }],
+    "@typescript-eslint/no-confusing-void-expression": ["warn", { "ignoreArrowShorthand": true }],
     "@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }],
-    "@typescript-eslint/prefer-nullish-coalescing": ["error", { "ignorePrimitives": { "string": true } }],
-    "@typescript-eslint/restrict-template-expressions": ["off"],
-    "@typescript-eslint/unbound-method": "off",
-    "lodash/import-scope": ["error", "full"]
+    "@typescript-eslint/prefer-nullish-coalescing": ["warn", { "ignorePrimitives": { "string": true } }]
   },
   "overrides": [
     {
       "files": "**/spec/**",
       "rules": {
+        "@typescript-eslint/no-dynamic-delete": "off",
+        "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/no-unsafe-argument": "off"
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": ["off"],
+        "@typescript-eslint/no-unsafe-member-access": ["off"],
+        "@typescript-eslint/unbound-method": "off",
+        "unicorn/template-indent": ["off"]
       }
     }
   ],

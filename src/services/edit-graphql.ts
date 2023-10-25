@@ -1,9 +1,8 @@
 import type { GraphQLError } from "graphql";
 import type { ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
-import type { ClientRequestArgs } from "http";
-import _ from "lodash";
 import assert from "node:assert";
+import type { ClientRequestArgs } from "node:http";
 import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
@@ -11,7 +10,9 @@ import type { App } from "./app.js";
 import { config } from "./config.js";
 import { ClientError } from "./errors.js";
 import { loadCookie } from "./http.js";
+import { isFunction } from "./is.js";
 import { createLogger } from "./log.js";
+import { noop } from "./noop.js";
 
 enum ConnectionStatus {
   CONNECTED,
@@ -33,7 +34,7 @@ export class EditGraphQL {
   constructor(app: App) {
     this._client = createClient({
       url: `wss://${app.slug}.${config.domains.app}/edit/api/graphql-ws`,
-      shouldRetry: _.constant(true),
+      shouldRetry: () => true,
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
           // this cookie should be available since we were given an app which requires a cookie to load
@@ -88,7 +89,7 @@ export class EditGraphQL {
           }
         },
         error: (error) => {
-          if (this.status == ConnectionStatus.RECONNECTING) {
+          if (this.status === ConnectionStatus.RECONNECTING) {
             log.error("failed to reconnect", { error });
           } else {
             log.error("connection error", { error });
@@ -142,8 +143,12 @@ export class EditGraphQL {
    */
   async query<Data extends JsonObject, Variables extends JsonObject>(payload: Payload<Data, Variables>): Promise<Data> {
     const result = await this._query(payload);
-    if (result.errors) throw new ClientError(payload, result.errors);
-    if (!result.data) throw new ClientError(payload, "We received a response without data");
+    if (result.errors) {
+      throw new ClientError(payload, result.errors);
+    }
+    if (!result.data) {
+      throw new ClientError(payload, "We received a response without data");
+    }
     return result.data;
   }
 
@@ -163,28 +168,29 @@ export class EditGraphQL {
     payload: Payload<Data, Variables>,
     sink: SetOptional<Sink<Data, Extensions>, "complete">,
   ): () => void {
-    let subscribePayload: SubscribePayload;
-    let removeConnectedListener = _.noop.bind(_);
+    let subscribePayload: Payload<Data, Variables>;
+    let removeConnectedListener = noop;
 
-    if (_.isFunction(payload.variables)) {
+    if (isFunction(payload.variables)) {
       // the caller wants us to re-evaluate the variables every time
       // graphql-ws re-subscribes after reconnecting
       subscribePayload = { ...payload, variables: payload.variables() };
       removeConnectedListener = this._client.on("connected", () => {
-        if (this.status == ConnectionStatus.RECONNECTING) {
-          (subscribePayload as any).variables = (payload.variables as any)();
-          const [type, operation] = _.split(subscribePayload.query, / |\(/, 2);
+        if (this.status === ConnectionStatus.RECONNECTING) {
+          assert(isFunction(payload.variables));
+          subscribePayload = { ...payload, variables: payload.variables() };
+          const [type, operation] = subscribePayload.query.split(/ |\(/, 2);
           log.info("re-sending graphql query", { type, operation });
         }
       });
     } else {
-      subscribePayload = payload as SubscribePayload;
+      subscribePayload = payload;
     }
 
-    const [type, operation] = _.split(subscribePayload.query, / |\(/, 2);
+    const [type, operation] = subscribePayload.query.split(/ |\(/, 2);
     log.info("sending graphql query", { type, operation });
 
-    const unsubscribe = this._client.subscribe(subscribePayload, {
+    const unsubscribe = this._client.subscribe(subscribePayload as SubscribePayload, {
       next: (result: ExecutionResult<Data, Extensions>) => {
         sink.next(result);
       },

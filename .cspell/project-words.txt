@@ -20,5 +20,6 @@ oclif
 packagejson
 postbuild
 sourcemaps
+sprintln
 typecheck
 usagestop

@@ -4,8 +4,6 @@ import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
-import inquirer from "inquirer";
-import _ from "lodash";
 import ms from "ms";
 import path from "node:path";
 import process from "node:process";
@@ -28,9 +26,11 @@ import { getApps } from "./app.js";
 import { config } from "./config.js";
 import type { Query } from "./edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
-import { isEmptyDir, swallowEnoent } from "./fs-utils.js";
+import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
 import { createLogger } from "./log.js";
+import { noop } from "./noop.js";
 import { println, sortByLevenshtein, sprint } from "./output.js";
+import { select } from "./prompt.js";
 import type { User } from "./user.js";
 
 const log = createLogger("filesync");
@@ -130,7 +130,7 @@ export class FileSync {
       }
     }
 
-    if (config.windows && _.startsWith(dir, "~/")) {
+    if (config.windows && dir.startsWith("~/")) {
       // `~` doesn't expand to the home directory on Windows
       dir = path.join(config.homeDir, dir.slice(2));
     }
@@ -141,34 +141,38 @@ export class FileSync {
     // try to load the .gadget/sync.json file
     const state = await fs
       .readJson(path.join(dir, ".gadget/sync.json"))
-      .then(
-        z.object({
-          app: z.string(),
-          filesVersion: z.string(),
-          mtime: z.number(),
-        }).parse,
+      .then((json) =>
+        z
+          .object({
+            app: z.string(),
+            filesVersion: z.string(),
+            mtime: z.number(),
+          })
+          .parse(json),
       )
-      .catch(() => undefined);
+      .catch(noop);
 
     let appSlug = options.app || state?.app;
     if (!appSlug) {
       // the user didn't specify an app, suggest some apps that they can sync to
-      ({ appSlug } = await inquirer.prompt<{ appSlug: string }>({
-        type: "list",
-        name: "appSlug",
+      appSlug = await select({
         message: "Please select the app to sync to.",
-        choices: _.map(apps, "slug"),
-      }));
+        choices: apps.map((x) => x.slug),
+      });
     }
 
     // try to find the appSlug in their list of apps
-    const app = _.find(apps, ["slug", appSlug]);
+    const app = apps.find((app) => app.slug === appSlug);
     if (!app) {
       // the specified appSlug doesn't exist in their list of apps,
       // either they misspelled it or they don't have access to it
       // anymore, suggest some apps that are similar to the one they
       // specified
-      const similarAppSlugs = sortByLevenshtein(appSlug, _.map(apps, "slug")).slice(0, 5);
+      const similarAppSlugs = sortByLevenshtein(
+        appSlug,
+        apps.map((app) => app.slug),
+      ).slice(0, 5);
+
       throw new ArgError(
         sprint`
         Unknown application:
@@ -186,7 +190,7 @@ export class FileSync {
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
-      if ((await isEmptyDir(dir)) || options.force) {
+      if ((await isEmptyOrNonExistentDir(dir)) || options.force) {
         // the directory is empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
         return new FileSync(dir, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
@@ -282,12 +286,12 @@ export class FileSync {
    */
   ignores(filepath: string): boolean {
     const relative = this.relative(filepath);
-    if (relative == "") {
+    if (relative === "") {
       // don't ignore the root dir
       return false;
     }
 
-    if (_.startsWith(relative, "..")) {
+    if (relative.startsWith("..")) {
       // anything above the root dir is ignored
       return true;
     }
@@ -369,7 +373,7 @@ export class FileSync {
 
     await pMap(changed, async (file) => {
       const absolutePath = this.absolute(file.path);
-      if (_.endsWith(file.path, "/")) {
+      if (file.path.endsWith("/")) {
         await fs.ensureDir(absolutePath, { mode: 0o755 });
         return;
       }
@@ -377,7 +381,7 @@ export class FileSync {
       await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
       await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
-      if (absolutePath == this.absolute(".ignore")) {
+      if (absolutePath === this.absolute(".ignore")) {
         this.reloadIgnorePaths();
       }
     });
@@ -391,7 +395,7 @@ export class FileSync {
 
     log.info("wrote", {
       ...this._state,
-      changed: _.map(Array.from(changed), "path"),
+      changed: Array.from(changed).map((x) => x.path),
       deleted: Array.from(deleted),
     });
   }
@@ -413,18 +417,17 @@ export class FileSync {
  * @param options.limit The maximum number of lines to print. Defaults to 10.
  */
 export const printPaths = (prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}) => {
-  const lines = _.sortBy(
-    [
-      ..._.map(changed, (normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
-      ..._.map(deleted, (normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
-    ],
-    (line) => line.slice(line.indexOf(" ") + 1),
-  );
+  const lines = [
+    ...changed.map((normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
+    ...deleted.map((normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
+  ].sort((a, b) => a.slice(a.indexOf(" ") + 1).localeCompare(b.slice(b.indexOf(" ") + 1)));
 
   let logged = 0;
   for (const line of lines) {
     println(line);
-    if (++logged == limit) break;
+    if (++logged === limit) {
+      break;
+    }
   }
 
   if (lines.length > logged) {

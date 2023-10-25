@@ -1,10 +1,10 @@
 import getPort from "get-port";
-import _ from "lodash";
 import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { run } from "../../src/commands/login.js";
 import { config } from "../../src/services/config.js";
+import { noop } from "../../src/services/noop.js";
 import { readSession, writeSession } from "../../src/services/session.js";
 import { sleepUntil } from "../../src/services/sleep.js";
 import * as user from "../../src/services/user.js";
@@ -52,7 +52,7 @@ describe("login", () => {
     expect(readSession()).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
-    const req = new http.IncomingMessage(null as any);
+    const req = new http.IncomingMessage(undefined as any);
     req.url = `?session=test`;
 
     const res = new http.ServerResponse(req);
@@ -108,7 +108,7 @@ describe("login", () => {
     expect(readSession()).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
-    const req = new http.IncomingMessage(null as any);
+    const req = new http.IncomingMessage(undefined as any);
     req.url = `?session=test`;
 
     const res = new http.ServerResponse(req);
@@ -140,7 +140,7 @@ describe("login", () => {
     writeSession(undefined);
     vi.spyOn(user, "getUser").mockRejectedValue(new Error("boom"));
 
-    void run().catch(_.noop);
+    void run().catch(noop);
 
     await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe("login", () => {
     expect(readSession()).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
-    const req = new http.IncomingMessage(null as any);
+    const req = new http.IncomingMessage(undefined as any);
     req.url = `?session=test`;
 
     const res = new http.ServerResponse(req);

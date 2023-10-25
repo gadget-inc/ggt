@@ -1,9 +1,9 @@
 import arg from "arg";
 import debug from "debug";
-import _ from "lodash";
 import { parseBoolean } from "../services/args.js";
 import { config } from "../services/config.js";
 import { CLIError } from "../services/errors.js";
+import { isNil } from "../services/is.js";
 import { println, sortByLevenshtein, sprint } from "../services/output.js";
 import { warnIfUpdateAvailable } from "../services/version.js";
 import { availableCommands, type Command } from "./index.js";
@@ -59,13 +59,13 @@ export const run = async () => {
     process.exit(0);
   }
 
-  const command = rootArgs._.shift();
-  if (_.isNil(command)) {
+  const command = rootArgs._.shift() as (typeof availableCommands)[number] | undefined;
+  if (isNil(command)) {
     println(usage);
     process.exit(0);
   }
 
-  if (!_.includes(availableCommands, command)) {
+  if (!availableCommands.includes(command)) {
     const [closest] = sortByLevenshtein(command, availableCommands);
     println`
       Unknown command {yellow ${command}}
@@ -77,7 +77,7 @@ export const run = async () => {
     process.exit(1);
   }
 
-  const cmd: Command = await import(`./${command}.js`);
+  const cmd = (await import(`./${command}.js`)) as Command;
 
   if (rootArgs["--help"]) {
     println(cmd.usage);

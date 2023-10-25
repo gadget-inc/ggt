@@ -1,12 +1,11 @@
+import enquirer from "enquirer";
 import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
-import inquirer from "inquirer";
-import _ from "lodash";
 import notifier from "node-notifier";
+import os from "node:os";
+import path from "node:path";
 import process from "node:process";
-import os from "os";
-import path from "path";
 import { dedent } from "ts-dedent";
 import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
@@ -19,12 +18,15 @@ import {
 import type { RootArgs } from "../../src/commands/root.js";
 import { Action, Sync, SyncStatus } from "../../src/commands/sync.js";
 import * as app from "../../src/services/app.js";
+import { defaults } from "../../src/services/defaults.js";
 import { ClientError, YarnNotFoundError } from "../../src/services/errors.js";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/filesync.js";
+import { isFunction, isNil, isString } from "../../src/services/is.js";
+import { noop } from "../../src/services/noop.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
 import * as user from "../../src/services/user.js";
 import type { PartialExcept } from "../types.js";
@@ -71,7 +73,7 @@ describe("Sync", () => {
 
   describe("init", () => {
     it("throws YarnNotFoundError if yarn is not found", async () => {
-      which.sync.mockReturnValue(null);
+      which.sync.mockReturnValue(undefined);
 
       await expect(sync.init(rootArgs)).rejects.toThrow(YarnNotFoundError);
     });
@@ -103,8 +105,8 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "2" } });
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
-      await sleepUntil(() => inquirer.prompt.mock.calls.length > 0);
-      expect(inquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
+      await sleepUntil(() => enquirer.prompt.mock.calls.length > 0);
+      expect(enquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         {
           "choices": [
             "Cancel (Ctrl+C)",
@@ -112,8 +114,9 @@ describe("Sync", () => {
             "Reset local files to remote ones",
           ],
           "message": "Remote files have also changed. How would you like to proceed?",
-          "name": "action",
-          "type": "list",
+          "name": "result",
+          "onCancel": [Function],
+          "type": "select",
         }
       `);
     });
@@ -132,8 +135,8 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.next({ data: { remoteFilesVersion: "1" } });
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
-      await sleepUntil(() => inquirer.prompt.mock.calls.length > 0);
-      expect(inquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
+      await sleepUntil(() => enquirer.prompt.mock.calls.length > 0);
+      expect(enquirer.prompt.mock.lastCall?.[0]).toMatchInlineSnapshot(`
         {
           "choices": [
             "Cancel (Ctrl+C)",
@@ -141,8 +144,9 @@ describe("Sync", () => {
             "Reset local files to remote ones",
           ],
           "message": "How would you like to proceed?",
-          "name": "action",
-          "type": "list",
+          "name": "result",
+          "onCancel": [Function],
+          "type": "select",
         }
       `);
     });
@@ -169,7 +173,7 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
-      expect(inquirer.prompt).not.toHaveBeenCalled();
+      expect(enquirer.prompt).not.toHaveBeenCalled();
     });
 
     it("does not ask how to proceed if only remote files changed", async () => {
@@ -187,7 +191,7 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
-      expect(inquirer.prompt).not.toHaveBeenCalled();
+      expect(enquirer.prompt).not.toHaveBeenCalled();
     });
 
     it("does not ask how to proceed if neither local nor remote files changed", async () => {
@@ -205,11 +209,11 @@ describe("Sync", () => {
       graphql._subscription(REMOTE_FILES_VERSION_QUERY).sink.complete();
 
       await init;
-      expect(inquirer.prompt).not.toHaveBeenCalled();
+      expect(enquirer.prompt).not.toHaveBeenCalled();
     });
 
     it("publishes changed events when told to merge", async () => {
-      inquirer.prompt.mockResolvedValue({ action: Action.MERGE });
+      enquirer.prompt.mockResolvedValue({ result: Action.MERGE });
 
       await writeDir(dir, {
         "foo.js": "foo",
@@ -248,7 +252,7 @@ describe("Sync", () => {
     });
 
     it("deletes local file changes and sets `state.filesVersion` to 0 when told to reset", async () => {
-      inquirer.prompt.mockResolvedValue({ action: Action.RESET });
+      enquirer.prompt.mockResolvedValue({ result: Action.RESET });
 
       await writeDir(dir, {
         "foo.js": "foo",
@@ -315,7 +319,7 @@ describe("Sync", () => {
       // restore so sync.publish.flush() doesn't throw
       sync.publish.mockRestore();
 
-      if (context.task.result?.state == "fail") {
+      if (context.task.result?.state === "fail") {
         // the test failed... make sure sync.stop() isn't going to be blocked by a pending publish
         sync.publish.flush();
         await sleep(1);
@@ -373,7 +377,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         await expectDir(sync, {
           ".gadget": {
@@ -405,7 +409,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         await expectDir(sync, {
           ".gadget": {
@@ -442,7 +446,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(sync.filesync.filesVersion).toBe(1n);
       });
@@ -458,7 +462,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(Array.from(sync.recentRemoteChanges.keys())).toMatchInlineSnapshot(`
           [
@@ -505,7 +509,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
 
         // wait for the first batch to complete
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         // the first batch should be complete
         expect(fs.readFileSync(path.join(dir, "foo.js"), "utf8")).toBe("foo");
@@ -515,7 +519,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
 
         // wait for the second batch to complete
-        await sleepUntil(() => sync.filesync.filesVersion == 2n);
+        await sleepUntil(() => sync.filesync.filesVersion === 2n);
 
         // the second batch should be complete
         await expectDir(sync, {
@@ -539,7 +543,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(sync.status).toBe(SyncStatus.RUNNING);
       });
@@ -557,7 +561,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(execa.mock.lastCall).toEqual(["yarn", ["install"], { cwd: dir }]);
       });
@@ -573,7 +577,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(execa).not.toHaveBeenCalled();
       });
@@ -594,7 +598,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         // the directory should be deleted, but the file should still exist because it was changed after the delete
         await expectDir(sync, {
@@ -653,7 +657,7 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.filesync.filesVersion == 2n);
+          await sleepUntil(() => sync.filesync.filesVersion === 2n);
 
           await expectDir(sync, {
             ".gadget": {
@@ -692,7 +696,7 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.filesync.filesVersion == 2n);
+          await sleepUntil(() => sync.filesync.filesVersion === 2n);
 
           // no changes
           await expectDir(sync, {
@@ -717,7 +721,7 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.filesync.filesVersion == 3n);
+          await sleepUntil(() => sync.filesync.filesVersion === 3n);
 
           // no changes
           await expectDir(sync, {
@@ -745,7 +749,7 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.filesync.filesVersion == 2n);
+          await sleepUntil(() => sync.filesync.filesVersion === 2n);
 
           await expectDir(sync, {
             ".gadget": {
@@ -1012,7 +1016,7 @@ describe("Sync", () => {
         });
 
         // wait until both files have been published
-        await sleepUntil(() => sync.publish.mock.calls.length == 2);
+        await sleepUntil(() => sync.publish.mock.calls.length === 2);
 
         // add the file we're about to delete to recentWrites so that it doesn't get published
         sync.recentRemoteChanges.set("delete_me.js", Date.now());
@@ -1074,7 +1078,7 @@ describe("Sync", () => {
         fs.outputFileSync(path.join(dir, "baz.js"), "baz");
 
         // wait for the second publish to be queued
-        await sleepUntil(() => sync.queue.size == 1);
+        await sleepUntil(() => sync.queue.size === 1);
 
         // the first publish should still be in progress
         expect(sync.queue.pending).toBe(1);
@@ -1114,7 +1118,7 @@ describe("Sync", () => {
           .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
         // wait for the second publish to complete
-        await sleepUntil(() => sync.filesync.filesVersion == 2n);
+        await sleepUntil(() => sync.filesync.filesVersion === 2n);
       });
 
       it("does not publish multiple events affecting the same file", async () => {
@@ -1260,7 +1264,7 @@ describe("Sync", () => {
     let run: Promise<void>;
 
     beforeEach(async () => {
-      vi.spyOn(process, "on").mockImplementation(_.noop as any);
+      vi.spyOn(process, "on").mockImplementation(noop as any);
 
       const init = sync.init(rootArgs);
 
@@ -1282,7 +1286,7 @@ describe("Sync", () => {
     it.each(["SIGINT", "SIGTERM"])("stops on %s", (signal) => {
       vi.spyOn(sync, "stop");
 
-      const [, stop] = _.find(process.on.mock.calls, ([name]) => name === signal) ?? [];
+      const [, stop] = process.on.mock.calls.find(([name]) => name === signal) ?? [];
       expect(stop).toBeTruthy();
       expect(sync.status).toBe(SyncStatus.RUNNING);
 
@@ -1417,22 +1421,22 @@ describe("Sync", () => {
   });
 });
 
-const defaultFileMode = os.platform() == "win32" ? 0o100666 : 0o100644;
-const defaultDirMode = os.platform() == "win32" ? 0o40666 : 0o40755;
+const defaultFileMode = os.platform() === "win32" ? 0o100666 : 0o100644;
+const defaultDirMode = os.platform() === "win32" ? 0o40666 : 0o40755;
 
-function stateFile(sync: Sync): string {
+const stateFile = (sync: Sync): string => {
   // @ts-expect-error _state is private
   return prettyJson(sync.filesync._state) + "\n";
-}
+};
 
-function prettyJson(obj: any): string {
-  return JSON.stringify(obj, null, 2);
-}
+const prettyJson = (obj: any): string => {
+  return JSON.stringify(obj, undefined, 2);
+};
 
-export function fileChangedEvent(
+export const fileChangedEvent = (
   options: PartialExcept<FileSyncChangedEventInput, "path" | "content">,
-): FileSyncChangedEventInput & FileSyncChangedEvent {
-  const event = _.defaults(options, {
+): FileSyncChangedEventInput & FileSyncChangedEvent => {
+  const event = defaults(options, {
     mode: defaultFileMode,
     encoding: FileSyncEncoding.Base64,
   } as FileSyncChangedEventInput);
@@ -1441,44 +1445,61 @@ export function fileChangedEvent(
   event.content = Buffer.from(event.content).toString(event.encoding);
 
   return event as FileSyncChangedEventInput & FileSyncChangedEvent;
-}
+};
 
-export function dirChangedEvent(
+export const dirChangedEvent = (
   options: PartialExcept<FileSyncChangedEventInput, "path">,
-): FileSyncChangedEventInput & FileSyncChangedEvent {
-  assert(_.endsWith(options.path, "/"));
+): FileSyncChangedEventInput & FileSyncChangedEvent => {
+  assert(options.path.endsWith("/"));
   return fileChangedEvent({ content: "", mode: defaultDirMode, ...options });
-}
+};
 
-function expectPublishToEqual(client: MockEditGraphQL, expected: MutationPublishFileSyncEventsArgs): void {
+const expectPublishToEqual = (client: MockEditGraphQL, expected: MutationPublishFileSyncEventsArgs): void => {
   const actual = client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables;
-  assert(actual && typeof actual == "object");
+  assert(!isNil(actual) && !isFunction(actual));
 
   // sort the events by path so that toEqual() doesn't complain about the order
-  actual.input.changed = _.sortBy(actual.input.changed, "path");
-  actual.input.deleted = _.sortBy(actual.input.deleted, "path");
-  expected.input.changed = _.sortBy(expected.input.changed, "path");
-  expected.input.deleted = _.sortBy(expected.input.deleted, "path");
+  actual.input.changed = actual.input.changed.sort((a, b) => a.path.localeCompare(b.path));
+  actual.input.deleted = actual.input.deleted.sort((a, b) => a.path.localeCompare(b.path));
+  expected.input.changed = expected.input.changed.sort((a, b) => a.path.localeCompare(b.path));
+  expected.input.deleted = expected.input.deleted.sort((a, b) => a.path.localeCompare(b.path));
 
   expect(actual).toEqual(expected);
-}
+};
 
 interface FileTree {
   [path: string]: FileTree | string;
 }
 
-async function expectDir(sync: Sync, expected: FileTree): Promise<void> {
+const set = (obj: any, path: string | string[], value: unknown) => {
+  // Regex explained: https://regexr.com/58j0k
+  const pathArray = Array.isArray(path) ? path : path.match(/([^[.\]])+/g);
+  assert(pathArray);
+
+  pathArray.reduce((acc, key, i) => {
+    if (acc[key] === undefined) {
+      acc[key] = {};
+    }
+    if (i === pathArray.length - 1) {
+      acc[key] = value;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return acc[key];
+  }, obj);
+};
+
+const expectDir = async (sync: Sync, expected: FileTree): Promise<void> => {
   const actual: FileTree = {};
   for await (const [filepath, stats] of sync.filesync.walkDir({ skipIgnored: false })) {
-    const pathSegments = _.split(sync.filesync.relative(filepath), path.sep);
-    _.set(actual, pathSegments, stats.isDirectory() ? {} : fs.readFileSync(filepath, "utf8"));
+    const pathSegments = sync.filesync.relative(filepath).split(path.sep);
+    set(actual, pathSegments, stats.isDirectory() ? {} : fs.readFileSync(filepath, "utf8"));
   }
   expect(actual).toEqual(expected);
-}
+};
 
-async function writeDir(dir: string, tree: FileTree): Promise<void> {
+const writeDir = async (dir: string, tree: FileTree): Promise<void> => {
   for (const [filepath, content] of Object.entries(tree)) {
-    if (_.isString(content)) {
+    if (isString(content)) {
       fs.outputFileSync(path.join(dir, filepath), content);
     } else {
       const subDir = path.join(dir, filepath);
@@ -1486,4 +1507,4 @@ async function writeDir(dir: string, tree: FileTree): Promise<void> {
       await writeDir(subDir, content);
     }
   }
-}
+};

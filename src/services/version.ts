@@ -1,5 +1,5 @@
 import boxen from "boxen";
-import { isAfter } from "date-fns";
+import dayjs from "dayjs";
 import fs from "fs-extra";
 import ms from "ms";
 import assert from "node:assert";
@@ -42,7 +42,7 @@ export const shouldCheckForUpdate = async () => {
   try {
     const lastCheck = Number(await fs.readFile(path.join(config.cacheDir, "last-update-check"), "utf-8"));
     assert(!Number.isNaN(lastCheck));
-    return isAfter(Date.now(), lastCheck + UPDATE_CHECK_FREQUENCY);
+    return dayjs().isAfter(lastCheck + UPDATE_CHECK_FREQUENCY);
   } catch (error) {
     return true;
   }

@@ -1,9 +1,9 @@
 import chalkTemplate from "chalk-template";
 import levenshtein from "fast-levenshtein";
-import _ from "lodash";
 import assert from "node:assert";
 import process from "node:process";
 import { dedent } from "ts-dedent";
+import { isObject, isString } from "./is.js";
 
 /**
  * A wrapper around process.stdout and process.stderr that allows us to mock out the streams for testing.
@@ -12,8 +12,8 @@ import { dedent } from "ts-dedent";
  */
 export class Stream {
   public constructor(public channel: "stdout" | "stderr") {
-    process[this.channel].on("error", (err) => {
-      if (err.code === "EPIPE") {
+    process[this.channel].on("error", (err: unknown) => {
+      if (isObject(err) && "code" in err && err.code === "EPIPE") {
         return;
       }
       throw err;
@@ -32,12 +32,12 @@ export class Stream {
     return process[this.channel].write(data);
   }
 
-  public on(event: string, listener: (...args: any[]) => void): this {
+  public on(event: string, listener: (...args: unknown[]) => void): this {
     process[this.channel].on(event, listener);
     return this;
   }
 
-  public once(event: string, listener: (...args: any[]) => void): this {
+  public once(event: string, listener: (...args: unknown[]) => void): this {
     process[this.channel].once(event, listener);
     return this;
   }
@@ -47,8 +47,16 @@ export const stdout = new Stream("stdout");
 export const stderr = new Stream("stderr");
 
 export const sprint = (template: TemplateStringsArray | string, ...values: unknown[]) => {
-  const content = _.isString(template) ? template : chalkTemplate(template, ...values);
+  const content = isString(template) ? template : chalkTemplate(template, ...values);
   return dedent(content);
+};
+
+export const sprintln = (template: TemplateStringsArray | string, ...values: unknown[]) => {
+  return sprint(template, ...values) + "\n";
+};
+
+export const sprintln2 = (template: TemplateStringsArray | string, ...values: unknown[]) => {
+  return sprint(template, ...values) + "\n\n";
 };
 
 export const print = (template: TemplateStringsArray | string, ...values: unknown[]) => {
@@ -56,11 +64,21 @@ export const print = (template: TemplateStringsArray | string, ...values: unknow
 };
 
 export const println = (template?: TemplateStringsArray | string, ...values: unknown[]) => {
-  if (template) stdout.write(sprint(template, ...values));
+  if (template) {
+    stdout.write(sprint(template, ...values));
+  }
   stdout.write("\n");
 };
 
-export const sortByLevenshtein = (input: string, options: readonly string[]): [closest: string, ...sorted: string[]] => {
-  assert(options.length > 0, "options must not be empty");
-  return _.sortBy(options, (opt) => levenshtein.get(opt, input)) as [string, ...string[]];
+export const println2 = (template?: TemplateStringsArray | string, ...values: unknown[]) => {
+  if (template) {
+    stdout.write(sprint(template, ...values));
+  }
+  stdout.write("\n\n");
+};
+
+export const sortByLevenshtein = (input: string, options: Iterable<string>): [closest: string, ...sorted: string[]] => {
+  const strings = Array.from(options);
+  assert(strings.length > 0, "options must not be empty");
+  return strings.sort((a, b) => levenshtein.get(a, input) - levenshtein.get(b, input)) as [string, ...string[]];
 };

@@ -1,19 +1,21 @@
 import * as Sentry from "@sentry/node";
 import arg from "arg";
 import cleanStack from "clean-stack";
-import { randomUUID } from "crypto";
 import { RequestError } from "got";
 import type { GraphQLError } from "graphql";
-import _ from "lodash";
-import os from "os";
-import { serializeError as baseSerializeError } from "serialize-error";
+import { randomUUID } from "node:crypto";
+import os from "node:os";
+import { inspect } from "node:util";
+import { serializeError as baseSerializeError, type ErrorObject } from "serialize-error";
 import { dedent } from "ts-dedent";
-import type { SetOptional } from "type-fest";
-import { inspect } from "util";
+import type { JsonObject } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import type { App } from "./app.js";
+import { compact, uniq } from "./collections.js";
 import { config, env } from "./config.js";
 import type { Payload } from "./edit-graphql.js";
+import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors } from "./is.js";
+import { sprintln2 } from "./output.js";
 import type { User } from "./user.js";
 
 let app: App | undefined;
@@ -21,6 +23,7 @@ let user: User | undefined;
 
 export const setUser = (newUser: User | undefined): void => {
   user = newUser;
+  // eslint-disable-next-line unicorn/no-null
   Sentry.setUser(newUser ?? null);
 };
 
@@ -45,7 +48,7 @@ export abstract class CLIError extends Error {
   /**
    * The underlying *thing* that caused this error.
    */
-  cause?: any;
+  cause?: unknown;
 
   /**
    * Assume the stack trace exists.
@@ -67,13 +70,19 @@ export abstract class CLIError extends Error {
    * Constructs a CLIError from a cause.
    */
   static from(cause: unknown): CLIError {
-    if (cause instanceof CLIError) return cause;
-    if (cause instanceof arg.ArgError) return new ArgError(cause.message);
+    if (cause instanceof CLIError) {
+      return cause;
+    }
+    if (cause instanceof arg.ArgError) {
+      return new ArgError(cause.message);
+    }
     return new UnexpectedError(cause);
   }
 
   async capture(): Promise<void> {
-    if (this.isBug == IsBug.NO) return;
+    if (this.isBug === IsBug.NO) {
+      return;
+    }
 
     Sentry.getCurrentHub().captureException(this, {
       event_id: this.sentryEventId,
@@ -116,7 +125,7 @@ export abstract class CLIError extends Error {
    * what an error should look like can be found here: {@link https://clig.dev/#errors}
    */
   render(): string {
-    return _.compact([this.header(), this.body(), this.footer()]).join("\n\n");
+    return compact([this.header(), this.body(), this.footer()]).join("\n\n");
   }
 
   protected header(): string {
@@ -124,10 +133,12 @@ export abstract class CLIError extends Error {
   }
 
   protected footer(): string {
-    if (this.isBug == IsBug.NO) return "";
+    if (this.isBug === IsBug.NO) {
+      return "";
+    }
 
     return dedent`
-      ${this.isBug == IsBug.YES ? "This is a bug" : "If you think this is a bug"}, please submit an issue using the link below.
+      ${this.isBug === IsBug.YES ? "This is a bug" : "If you think this is a bug"}, please submit an issue using the link below.
 
       https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.sentryEventId}
     `;
@@ -138,10 +149,12 @@ export abstract class CLIError extends Error {
 
 /**
  * Universal Error object to json blob serializer.
- * Wraps `serialize-error` with some handy stuff, like special support for Got HTTP errors
+ *
+ * Wraps `serialize-error` with some handy stuff, like special support
+ * for Got HTTP errors
  */
-export function serializeError(error: unknown): Record<string, any> {
-  let serialized = baseSerializeError(_.isArray(error) ? new AggregateError(error) : error);
+export const serializeError = (error: unknown): ErrorObject => {
+  let serialized = baseSerializeError(Array.isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };
   }
@@ -156,7 +169,7 @@ export function serializeError(error: unknown): Record<string, any> {
   }
 
   return serialized;
-}
+};
 
 export enum IsBug {
   YES = "yes",
@@ -177,7 +190,7 @@ export class UnexpectedError extends CLIError {
   }
 
   protected body(): string {
-    if (_.isError(this.cause)) {
+    if (isError(this.cause)) {
       return cleanStack(this.cause.stack ?? this.stack);
     }
     return this.stack;
@@ -188,44 +201,41 @@ export class ClientError extends CLIError {
   isBug = IsBug.MAYBE;
 
   constructor(
-    readonly payload: Payload<any, any>,
+    readonly payload: Payload<JsonObject, JsonObject>,
     override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent,
   ) {
     super("GGT_CLI_CLIENT_ERROR", "An error occurred while communicating with Gadget");
 
-    // ErrorEvent and CloseEvent aren't serializable, so we reconstruct them into an object. We discard the `target` property because it's large and not that useful
+    // ErrorEvent and CloseEvent aren't serializable, so we reconstruct
+    // them into an object. We discard the `target` property because
+    // it's large and not that useful
     if (isErrorEvent(cause)) {
       this.cause = {
         type: cause.type,
         message: cause.message,
         error: serializeError(cause.error),
-      } as any;
+      } as ErrorEvent;
     } else if (isCloseEvent(cause)) {
       this.cause = {
         type: cause.type,
         code: cause.code,
         reason: cause.reason,
         wasClean: cause.wasClean,
-      } as any;
+      } as CloseEvent;
     }
   }
 
   override body(): string {
     if (isGraphQLErrors(this.cause)) {
-      if (this.cause.length > 1) {
-        const errors = _.uniqBy(this.cause, "message");
-
-        let output = "Gadget responded with multiple errors:\n";
-        for (let i = 0; i < errors.length; i++) {
-          output += `\n  ${i + 1}. ${errors[i]?.message}`;
-        }
-
-        return output;
+      const errors = uniq(this.cause.map((x) => x.message));
+      if (errors.length > 1) {
+        let n = 1;
+        return sprintln2("Gadget responded with multiple errors:").concat(`  ${n++}. ${errors.join(`\n  ${n++}. `)}`);
       } else {
         return dedent`
           Gadget responded with the following error:
 
-            ${this.cause[0]?.message}
+            ${errors[0]}
         `;
       }
     }
@@ -234,7 +244,7 @@ export class ClientError extends CLIError {
       return "The connection to Gadget closed unexpectedly.";
     }
 
-    if (isErrorEvent(this.cause) || _.isError(this.cause)) {
+    if (isErrorEvent(this.cause) || isError(this.cause)) {
       return this.cause.message;
     }
 
@@ -305,16 +315,4 @@ export class InvalidSyncFileError extends CLIError {
       You will be prompted to either merge your local files with your remote ones or reset your local files to your remote ones.
     `;
   }
-}
-
-function isCloseEvent(e: any): e is SetOptional<CloseEvent, "target"> {
-  return !_.isNil(e) && _.isString(e.type) && _.isNumber(e.code) && _.isString(e.reason) && _.isBoolean(e.wasClean);
-}
-
-function isErrorEvent(e: any): e is SetOptional<ErrorEvent, "target"> {
-  return !_.isNil(e) && _.isString(e.type) && _.isString(e.message) && !_.isNil(e.error);
-}
-
-function isGraphQLErrors(e: any): e is readonly GraphQLError[] {
-  return _.isArray(e) && _.every(e, (e) => !_.isNil(e) && _.isString(e.message) && _.isArray(e.locations ?? []) && _.isArray(e.path ?? []));
 }

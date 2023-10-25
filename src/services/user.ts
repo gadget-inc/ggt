@@ -1,12 +1,12 @@
-import inquirer from "inquirer";
-import _ from "lodash";
 import assert from "node:assert";
 import z from "zod";
 import { run as login } from "../commands/login.js";
+import { pick } from "./collections.js";
 import { config } from "./config.js";
 import { setUser } from "./errors.js";
 import { http, loadCookie, swallowUnauthorized } from "./http.js";
 import { createLogger } from "./log.js";
+import { confirm } from "./prompt.js";
 
 const log = createLogger("user");
 
@@ -37,7 +37,7 @@ export const getUser = async (): Promise<User | undefined> => {
 
     const user = User.parse(json);
     setUser(user);
-    log.info("loaded current user", { user: _.pick(user, ["id", "name", "email"]) });
+    log.info("loaded current user", { user: pick(user, ["id", "name", "email"]) });
 
     return user;
   } catch (error) {
@@ -53,12 +53,7 @@ export const getUserOrLogin = async (message = "You must be logged in to use thi
   }
 
   log.info("prompting user to log in");
-  const { yes } = await inquirer.prompt<{ yes: boolean }>({
-    type: "confirm",
-    name: "yes",
-    message,
-  });
-
+  const yes = await confirm({ message });
   if (!yes) {
     process.exit(0);
   }

@@ -1,6 +1,5 @@
-import _ from "lodash";
 import nock from "nock";
-import path from "path";
+import path from "node:path";
 import type { JsonObject } from "type-fest";
 import { assert, expect, vi } from "vitest";
 import type { App } from "../src/services/app.js";
@@ -8,21 +7,22 @@ import { config } from "../src/services/config.js";
 import type { Payload, Query, Sink } from "../src/services/edit-graphql.js";
 import { EditGraphQL } from "../src/services/edit-graphql.js";
 import { loadCookie } from "../src/services/http.js";
+import { noop } from "../src/services/noop.js";
 import { writeSession } from "../src/services/session.js";
 import type { User } from "../src/services/user.js";
 
-export function testDirPath(): string {
+export const testDirPath = (): string => {
   const name = expect.getState().currentTestName;
   assert(name, "Expected test name to be defined");
 
-  const [testFile, ...rest] = _.split(name, " > ");
+  const [testFile, ...rest] = name.split(" > ");
   const describes = rest.length > 1 ? rest.slice(0, -1) : [];
   const testName = rest.at(-1);
 
   assert(testFile && testName);
 
-  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), _.replace(testName, /[^\s\w-]/g, ""));
-}
+  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), testName.replace(/[^\s\w-]/g, ""));
+};
 
 export const testUser: User = {
   id: 1,
@@ -47,9 +47,7 @@ export const loginTestUser = () => {
 
 export const testStdout: string[] = [];
 
-export const expectStdout = () => {
-  return expect(testStdout.join(""));
-};
+export const expectStdout = () => expect(testStdout.join(""));
 
 export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode = 0) => {
   const exitError = new Error("process.exit() was called") as Error & { code?: number };
@@ -67,14 +65,14 @@ export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode
   }
 };
 
-export async function expectError(fnThatThrows: () => unknown): Promise<any> {
+export const expectError = async (fnThatThrows: () => unknown): Promise<any> => {
   try {
     await fnThatThrows();
     expect.fail("Expected error to be thrown");
   } catch (error) {
     return error;
   }
-}
+};
 
 export interface MockSubscription<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject> {
   sink: Sink<Data, Extensions>;
@@ -89,7 +87,7 @@ export interface MockEditGraphQL extends EditGraphQL {
   ): MockSubscription<Data, Variables, JsonObject>;
 }
 
-export function mockEditGraphQL(): MockEditGraphQL {
+export const mockEditGraphQL = (): MockEditGraphQL => {
   const mock = {
     ...EditGraphQL.prototype,
     _subscriptions: new Map(),
@@ -105,7 +103,9 @@ export function mockEditGraphQL(): MockEditGraphQL {
 
   vi.spyOn(EditGraphQL.prototype, "dispose");
   vi.spyOn(EditGraphQL.prototype, "_subscribe").mockImplementation((payload, sink) => {
-    if (!sink.complete) sink.complete = _.noop;
+    if (!sink.complete) {
+      sink.complete = noop;
+    }
 
     const unsubscribe = vi.fn();
     vi.spyOn(sink, "next");
@@ -116,4 +116,4 @@ export function mockEditGraphQL(): MockEditGraphQL {
   });
 
   return mock as MockEditGraphQL;
-}
+};

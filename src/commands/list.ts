@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { getApps } from "../services/app.js";
 import { println, sprint } from "../services/output.js";
 import { getUserOrLogin } from "../services/user.js";
@@ -22,7 +21,7 @@ export const run = async () => {
   const user = await getUserOrLogin();
 
   const apps = await getApps(user);
-  if (!apps.length) {
+  if (apps.length === 0) {
     println`
         It doesn't look like you have any applications.
 
@@ -31,12 +30,17 @@ export const run = async () => {
     return;
   }
 
-  const longestSlug = _.maxBy(apps, "slug.length")?.slug.length ?? 0;
-  const longestDomain = _.maxBy(apps, "primaryDomain.length")?.primaryDomain.length ?? 0;
+  let longestSlug = 0;
+  let longestDomain = 0;
 
-  println`{bold Slug}${_.repeat(" ", longestSlug - 4)} {bold Domain}`;
-  println`${_.repeat("─", Math.max(longestSlug, 4))} ${_.repeat("─", Math.max(longestDomain, 6))}`;
-  for (const app of _.sortBy(apps, "slug")) {
-    println`${app.slug}${_.repeat(" ", longestSlug - app.slug.length)} ${app.primaryDomain}`;
+  for (const app of apps) {
+    longestSlug = Math.max(longestSlug, app.slug.length);
+    longestDomain = Math.max(longestDomain, app.primaryDomain.length);
+  }
+
+  println`{bold Slug}${" ".repeat(longestSlug - 4)} {bold Domain}`;
+  println`${"─".repeat(Math.max(longestSlug, 4))} ${"─".repeat(Math.max(longestDomain, 6))}`;
+  for (const app of apps.sort((a, b) => a.slug.localeCompare(b.slug))) {
+    println`${app.slug}${" ".repeat(longestSlug - app.slug.length)} ${app.primaryDomain}`;
   }
 };

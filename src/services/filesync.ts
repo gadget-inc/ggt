@@ -284,7 +284,7 @@ export class FileSync {
    */
   ignores(filepath: string): boolean {
     const relative = this.relative(filepath);
-    if (relative == "") {
+    if (relative === "") {
       // don't ignore the root dir
       return false;
     }
@@ -379,7 +379,7 @@ export class FileSync {
       await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
       await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
-      if (absolutePath == this.absolute(".ignore")) {
+      if (absolutePath === this.absolute(".ignore")) {
         this.reloadIgnorePaths();
       }
     });
@@ -426,7 +426,9 @@ export const printPaths = (prefix: string, changed: string[], deleted: string[],
   let logged = 0;
   for (const line of lines) {
     println(line);
-    if (++logged == limit) break;
+    if (++logged === limit) {
+      break;
+    }
   }
 
   if (lines.length > logged) {

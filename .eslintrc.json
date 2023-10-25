@@ -18,21 +18,26 @@
     "node": true
   },
   "rules": {
-    "@typescript-eslint/consistent-type-imports": ["warn", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
-    "@typescript-eslint/member-ordering": ["warn"],
-    // prettier-ignore
-    "@typescript-eslint/naming-convention": ["warn", { "selector": "memberLike", "modifiers": ["private"], "format": ["camelCase"], "leadingUnderscore": "require" }],
-    "@typescript-eslint/no-confusing-void-expression": ["warn", { "ignoreArrowShorthand": true }],
-    "@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }],
-    "@typescript-eslint/prefer-nullish-coalescing": ["warn", { "ignorePrimitives": { "string": true } }],
+    "curly": ["warn", "all"],
+    "eqeqeq": ["warn", "smart"],
+
     "lodash/import-scope": ["warn", "member"],
+
     "unicorn/consistent-destructuring": ["warn"],
     "unicorn/explicit-length-check": ["warn"],
     "unicorn/filename-case": ["warn", { "case": "kebabCase" }],
     "unicorn/no-null": ["warn"],
     "unicorn/no-object-as-default-parameter": ["warn"],
     "unicorn/prefer-node-protocol": ["warn"],
-    "unicorn/template-indent": ["warn"]
+    "unicorn/template-indent": ["warn"],
+
+    "@typescript-eslint/consistent-type-imports": ["warn", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
+    "@typescript-eslint/member-ordering": ["warn"],
+    // prettier-ignore
+    "@typescript-eslint/naming-convention": ["warn", { "selector": "memberLike", "modifiers": ["private"], "format": ["camelCase"], "leadingUnderscore": "require" }],
+    "@typescript-eslint/no-confusing-void-expression": ["warn", { "ignoreArrowShorthand": true }],
+    "@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/prefer-nullish-coalescing": ["warn", { "ignorePrimitives": { "string": true } }]
   },
   "overrides": [
     {

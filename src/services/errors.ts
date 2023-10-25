@@ -69,13 +69,19 @@ export abstract class CLIError extends Error {
    * Constructs a CLIError from a cause.
    */
   static from(cause: unknown): CLIError {
-    if (cause instanceof CLIError) return cause;
-    if (cause instanceof arg.ArgError) return new ArgError(cause.message);
+    if (cause instanceof CLIError) {
+      return cause;
+    }
+    if (cause instanceof arg.ArgError) {
+      return new ArgError(cause.message);
+    }
     return new UnexpectedError(cause);
   }
 
   async capture(): Promise<void> {
-    if (this.isBug == IsBug.NO) return;
+    if (this.isBug === IsBug.NO) {
+      return;
+    }
 
     Sentry.getCurrentHub().captureException(this, {
       event_id: this.sentryEventId,
@@ -126,10 +132,12 @@ export abstract class CLIError extends Error {
   }
 
   protected footer(): string {
-    if (this.isBug == IsBug.NO) return "";
+    if (this.isBug === IsBug.NO) {
+      return "";
+    }
 
     return dedent`
-      ${this.isBug == IsBug.YES ? "This is a bug" : "If you think this is a bug"}, please submit an issue using the link below.
+      ${this.isBug === IsBug.YES ? "This is a bug" : "If you think this is a bug"}, please submit an issue using the link below.
 
       https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.sentryEventId}
     `;

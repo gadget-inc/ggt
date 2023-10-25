@@ -88,7 +88,7 @@ export class EditGraphQL {
           }
         },
         error: (error) => {
-          if (this.status == ConnectionStatus.RECONNECTING) {
+          if (this.status === ConnectionStatus.RECONNECTING) {
             log.error("failed to reconnect", { error });
           } else {
             log.error("connection error", { error });
@@ -142,8 +142,12 @@ export class EditGraphQL {
    */
   async query<Data extends JsonObject, Variables extends JsonObject>(payload: Payload<Data, Variables>): Promise<Data> {
     const result = await this._query(payload);
-    if (result.errors) throw new ClientError(payload, result.errors);
-    if (!result.data) throw new ClientError(payload, "We received a response without data");
+    if (result.errors) {
+      throw new ClientError(payload, result.errors);
+    }
+    if (!result.data) {
+      throw new ClientError(payload, "We received a response without data");
+    }
     return result.data;
   }
 
@@ -171,7 +175,7 @@ export class EditGraphQL {
       // graphql-ws re-subscribes after reconnecting
       subscribePayload = { ...payload, variables: payload.variables() };
       removeConnectedListener = this._client.on("connected", () => {
-        if (this.status == ConnectionStatus.RECONNECTING) {
+        if (this.status === ConnectionStatus.RECONNECTING) {
           assert(isFunction(payload.variables));
           subscribePayload = { ...payload, variables: payload.variables() };
           const [type, operation] = split(subscribePayload.query, / |\(/, 2);

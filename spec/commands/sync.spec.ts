@@ -2,7 +2,7 @@ import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import inquirer from "inquirer";
-import { defaults, endsWith, find, isString, noop, set, sortBy, split } from "lodash";
+import { defaults, endsWith, find, isFunction, isNil, isString, noop, set, sortBy, split } from "lodash";
 import notifier from "node-notifier";
 import os from "node:os";
 import path from "node:path";
@@ -315,7 +315,7 @@ describe("Sync", () => {
       // restore so sync.publish.flush() doesn't throw
       sync.publish.mockRestore();
 
-      if (context.task.result?.state == "fail") {
+      if (context.task.result?.state === "fail") {
         // the test failed... make sure sync.stop() isn't going to be blocked by a pending publish
         sync.publish.flush();
         await sleep(1);
@@ -373,7 +373,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         await expectDir(sync, {
           ".gadget": {
@@ -405,7 +405,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         await expectDir(sync, {
           ".gadget": {
@@ -442,7 +442,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(sync.filesync.filesVersion).toBe(1n);
       });
@@ -458,7 +458,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(Array.from(sync.recentRemoteChanges.keys())).toMatchInlineSnapshot(`
           [
@@ -505,7 +505,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
 
         // wait for the first batch to complete
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         // the first batch should be complete
         expect(fs.readFileSync(path.join(dir, "foo.js"), "utf8")).toBe("foo");
@@ -515,7 +515,7 @@ describe("Sync", () => {
         expect(sync.queue.pending).toBe(1);
 
         // wait for the second batch to complete
-        await sleepUntil(() => sync.filesync.filesVersion == 2n);
+        await sleepUntil(() => sync.filesync.filesVersion === 2n);
 
         // the second batch should be complete
         await expectDir(sync, {
@@ -539,7 +539,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(sync.status).toBe(SyncStatus.RUNNING);
       });
@@ -557,7 +557,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(execa.mock.lastCall).toEqual(["yarn", ["install"], { cwd: dir }]);
       });
@@ -573,7 +573,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         expect(execa).not.toHaveBeenCalled();
       });
@@ -594,7 +594,7 @@ describe("Sync", () => {
           },
         });
 
-        await sleepUntil(() => sync.filesync.filesVersion == 1n);
+        await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
         // the directory should be deleted, but the file should still exist because it was changed after the delete
         await expectDir(sync, {
@@ -653,7 +653,7 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.filesync.filesVersion == 2n);
+          await sleepUntil(() => sync.filesync.filesVersion === 2n);
 
           await expectDir(sync, {
             ".gadget": {
@@ -692,7 +692,7 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.filesync.filesVersion == 2n);
+          await sleepUntil(() => sync.filesync.filesVersion === 2n);
 
           // no changes
           await expectDir(sync, {
@@ -717,7 +717,7 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.filesync.filesVersion == 3n);
+          await sleepUntil(() => sync.filesync.filesVersion === 3n);
 
           // no changes
           await expectDir(sync, {
@@ -745,7 +745,7 @@ describe("Sync", () => {
             },
           });
 
-          await sleepUntil(() => sync.filesync.filesVersion == 2n);
+          await sleepUntil(() => sync.filesync.filesVersion === 2n);
 
           await expectDir(sync, {
             ".gadget": {
@@ -1012,7 +1012,7 @@ describe("Sync", () => {
         });
 
         // wait until both files have been published
-        await sleepUntil(() => sync.publish.mock.calls.length == 2);
+        await sleepUntil(() => sync.publish.mock.calls.length === 2);
 
         // add the file we're about to delete to recentWrites so that it doesn't get published
         sync.recentRemoteChanges.set("delete_me.js", Date.now());
@@ -1074,7 +1074,7 @@ describe("Sync", () => {
         fs.outputFileSync(path.join(dir, "baz.js"), "baz");
 
         // wait for the second publish to be queued
-        await sleepUntil(() => sync.queue.size == 1);
+        await sleepUntil(() => sync.queue.size === 1);
 
         // the first publish should still be in progress
         expect(sync.queue.pending).toBe(1);
@@ -1114,7 +1114,7 @@ describe("Sync", () => {
           .sink.next({ data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } });
 
         // wait for the second publish to complete
-        await sleepUntil(() => sync.filesync.filesVersion == 2n);
+        await sleepUntil(() => sync.filesync.filesVersion === 2n);
       });
 
       it("does not publish multiple events affecting the same file", async () => {
@@ -1417,8 +1417,8 @@ describe("Sync", () => {
   });
 });
 
-const defaultFileMode = os.platform() == "win32" ? 0o100666 : 0o100644;
-const defaultDirMode = os.platform() == "win32" ? 0o40666 : 0o40755;
+const defaultFileMode = os.platform() === "win32" ? 0o100666 : 0o100644;
+const defaultDirMode = os.platform() === "win32" ? 0o40666 : 0o40755;
 
 function stateFile(sync: Sync): string {
   // @ts-expect-error _state is private
@@ -1452,7 +1452,7 @@ export function dirChangedEvent(
 
 function expectPublishToEqual(client: MockEditGraphQL, expected: MutationPublishFileSyncEventsArgs): void {
   const actual = client._subscription(PUBLISH_FILE_SYNC_EVENTS_MUTATION).payload.variables;
-  assert(actual && typeof actual == "object");
+  assert(!isNil(actual) && !isFunction(actual));
 
   // sort the events by path so that toEqual() doesn't complain about the order
   actual.input.changed = sortBy(actual.input.changed, "path");

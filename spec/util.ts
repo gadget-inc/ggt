@@ -103,7 +103,9 @@ export function mockEditGraphQL(): MockEditGraphQL {
 
   vi.spyOn(EditGraphQL.prototype, "dispose");
   vi.spyOn(EditGraphQL.prototype, "_subscribe").mockImplementation((payload, sink) => {
-    if (!sink.complete) sink.complete = noop;
+    if (!sink.complete) {
+      sink.complete = noop;
+    }
 
     const unsubscribe = vi.fn();
     vi.spyOn(sink, "next");

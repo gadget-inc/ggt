@@ -56,7 +56,9 @@ export const print = (template: TemplateStringsArray | string, ...values: unknow
 };
 
 export const println = (template?: TemplateStringsArray | string, ...values: unknown[]) => {
-  if (template) stdout.write(sprint(template, ...values));
+  if (template) {
+    stdout.write(sprint(template, ...values));
+  }
   stdout.write("\n");
 };
 

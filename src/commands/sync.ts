@@ -336,7 +336,10 @@ export class Sync {
     }, ms("1s")).unref();
 
     this.stop = async (e?: unknown) => {
-      if (this.status != SyncStatus.RUNNING) return;
+      if (this.status !== SyncStatus.RUNNING) {
+        return;
+      }
+
       this.status = SyncStatus.STOPPING;
       error = e;
 
@@ -359,7 +362,9 @@ export class Sync {
 
     for (const signal of ["SIGINT", "SIGTERM"] as const) {
       process.on(signal, () => {
-        if (this.status != SyncStatus.RUNNING) return;
+        if (this.status !== SyncStatus.RUNNING) {
+          return;
+        }
 
         println` Stopping... {gray (press Ctrl+C again to force)}`;
         void this.stop();

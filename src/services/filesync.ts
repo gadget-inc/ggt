@@ -35,6 +35,8 @@ import type { User } from "./user.js";
 
 const log = createLogger("filesync");
 
+export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
+
 interface File {
   path: string;
   mode: number;
@@ -270,7 +272,7 @@ export class FileSync {
    */
   reloadIgnorePaths(): void {
     this._ignorer = ignore.default();
-    this._ignorer.add([".DS_Store", "node_modules", ".git", ...this._extraIgnorePaths]);
+    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...this._extraIgnorePaths]);
 
     try {
       const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");

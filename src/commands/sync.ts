@@ -496,10 +496,9 @@ export class Sync {
     });
 
     this.watcher = new FSWatcher(this.filesync.dir, {
-      // paths that we never want to publish
-      ignore: /(\.gadget|\.git|node_modules|\.DS_Store)/,
       // don't emit an event for every watched file on boot
       ignoreInitial: true,
+      ignore: (path: string) => this.filesync.ignores(path),
       renameDetection: true,
       recursive: true,
       debounce: this.args["--file-watch-debounce"],

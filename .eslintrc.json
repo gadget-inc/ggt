@@ -61,5 +61,5 @@
       "typescript": true
     }
   },
-  "ignorePatterns": ["node_modules", "lib", "tmp", "__generated__", ".direnv", "bin/run.js"]
+  "ignorePatterns": ["node_modules", "lib", "tmp", "__fixtures__", "__generated__", ".direnv", "bin/run.js"]
 }

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/index.ts"],
+  "sourcesContent": ["/**\n* This is the Gadget API client library for:\n*\n*   _____         _   \n*  |_   _|__  ___| |_ \n*    | |/ _ \\/ __| __|\n*    | |  __/\\__ \\ |_ \n*    |_|\\___||___/\\__|\n*                     \n*\n* Built for environment \"Development\" at version 4\n* API docs: https://docs.gadget.dev/api/test\n* Edit this app here: https://test.gadget.app/edit\n*/\nexport {\n  BrowserSessionStorageType, GadgetClientError, GadgetConnection, GadgetInternalError, GadgetOperationError, GadgetRecord,\n  GadgetRecordList, GadgetValidationError, InvalidRecordError\n} from \"@gadgetinc/api-client-core\";\n\nexport type { AuthenticationModeOptions, BrowserSessionAuthenticationModeOptions, ClientOptions, InvalidFieldError, Select } from \"@gadgetinc/api-client-core\";\n\nexport * from \"./Client.js\";\nexport * from \"./types.js\";\n\ndeclare global {\n  interface Window {\n    gadgetConfig: {\n      apiKeys: {\n        shopify: string;\n      };\n      environment: string;\n      env: Record<string, any>;\n      authentication?: {\n        signInPath: string;\n        redirectOnSuccessfulSignInPath: string;\n      }\n    };\n  }\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAcA,6BAGO;AAIP,wBAAc,wBArBd;AAsBA,wBAAc,uBAtBd;",
+  "names": []
+}

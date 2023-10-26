@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/iife-export.ts"],
+  "sourcesContent": ["import { Client } from \".\"\n\ndeclare global {\n  interface Window { Gadget: typeof Client; }\n}\n\nconst previousValue = window.Gadget;\nwindow.Gadget = Client;\n(window.Gadget as any).previousValue = previousValue;"],
+  "mappings": "AAAA,SAAS,cAAc;AAMvB,MAAM,gBAAgB,OAAO;AAC7B,OAAO,SAAS;AACf,OAAO,OAAe,gBAAgB;",
+  "names": []
+}

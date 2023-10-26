@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "@fastify/request-context": "^3.0.0",
+    "@gadget-client-development/test": "link:../client",
+    "@gadgetinc/api-client-core": "0.15.11",
+    "@types/node": "^18.11.9",
+    "fastify": "^3.29.0"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./ai": "./dist/ai/index.js"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "gadget": {
+    "applicationName": "Test",
+    "environmentName": "Development",
+    "environmentVersion": "4"
+  },
+  "main": "dist/index.js",
+  "name": "gadget-server",
+  "private": true,
+  "scripts": {},
+  "types": "dist/index.d.ts",
+  "version": "1.4.0"
+}

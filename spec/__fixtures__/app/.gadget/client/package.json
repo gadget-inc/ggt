@@ -1,0 +1,35 @@
+{
+  "name": "@gadget-client-development/test",
+  "version": "1.4.0",
+  "files": [
+    "dist-*/",
+    "types",
+    "bin/"
+  ],
+  "source": "src/index.ts",
+  "types": "types/index.d.ts",
+  "main": "dist-cjs/index.js",
+  "module": "dist-esm/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist-esm/index.js",
+      "require": "./dist-cjs/index.js"
+    }
+  },
+  "private": true,
+  "dependencies": {
+    "@gadgetinc/api-client-core": "0.15.11"
+  },
+  "devDependencies": {
+    "typescript": "4.5.5",
+    "@types/node": "^18.11.9"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "gadget": {
+    "applicationName": "Test",
+    "environmentName": "Development",
+    "environmentVersion": "4"
+  }
+}

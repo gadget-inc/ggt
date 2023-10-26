@@ -24,6 +24,8 @@ export const testDirPath = (): string => {
   return path.join(__dirname, "../tmp/", testFile, describes.join("/"), testName.replace(/[^\s\w-]/g, ""));
 };
 
+export const fixturesDirPath = path.join(__dirname, "__fixtures__");
+
 export const testUser: User = {
   id: 1,
   email: "test@example.com",

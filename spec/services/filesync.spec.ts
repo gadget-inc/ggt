@@ -3,8 +3,8 @@ import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as app from "../../src/services/app.js";
 import { ArgError, InvalidSyncFileError } from "../../src/services/errors.js";
-import { FileSync } from "../../src/services/filesync.js";
-import { expectError, testApp, testDirPath, testUser } from "../util.js";
+import { FileSync, fileHashes } from "../../src/services/filesync.js";
+import { expectError, fixturesDirPath, testApp, testDirPath, testUser } from "../util.js";
 
 describe("filesync", () => {
   let dir: string;
@@ -134,6 +134,13 @@ describe("filesync", () => {
 
       // .gadget/backup/foo.js should be the foo.js file that was deleted
       await expect(fs.readFile(filesync.absolute(".gadget/backup/foo.js"), "utf8")).resolves.toBe("// foo");
+    });
+  });
+
+  describe("fileHashes", () => {
+    it("returns the expected hashes", async () => {
+      const filesync = await FileSync.init(testUser, { dir: path.join(fixturesDirPath, "app") });
+      await expect(fileHashes(filesync)).resolves.toMatchSnapshot();
     });
   });
 });

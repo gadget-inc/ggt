@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import ms from "ms";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import normalizePath from "normalize-path";
@@ -14,6 +15,10 @@ import pluralize from "pluralize";
 import { dedent } from "ts-dedent";
 import { z } from "zod";
 import type {
+  FileHashesQuery,
+  FileHashesQueryVariables,
+  FilesQuery,
+  FilesQueryVariables,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
   RemoteFileSyncEventsSubscription,
@@ -29,13 +34,13 @@ import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
 import { createLogger } from "./log.js";
 import { noop } from "./noop.js";
-import { println, sortByLevenshtein, sprint } from "./output.js";
+import { println, println2, sortByLevenshtein, sprint } from "./output.js";
 import { select } from "./prompt.js";
 import type { User } from "./user.js";
 
 const log = createLogger("filesync");
 
-export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
+const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
 
 interface File {
   path: string;
@@ -58,6 +63,11 @@ export class FileSync {
      * An absolute path to the directory that is being synced.
      */
     readonly dir: string,
+
+    /**
+     * Whether the directory was empty when it was initialized.
+     */
+    readonly wasEmpty: boolean,
 
     /**
      * The Gadget application this filesystem is synced to.
@@ -192,10 +202,11 @@ export class FileSync {
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
-      if ((await isEmptyOrNonExistentDir(dir)) || options.force) {
+      const isEmpty = await isEmptyOrNonExistentDir(dir);
+      if (isEmpty || options.force) {
         // the directory is empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
-        return new FileSync(dir, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
+        return new FileSync(dir, isEmpty, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
       }
 
       // the directory isn't empty and the user didn't pass --force
@@ -205,13 +216,13 @@ export class FileSync {
     // the .gadget/sync.json file exists
     if (state.app === app.slug) {
       // the .gadget/sync.json file is for the same app that the user specified
-      return new FileSync(dir, app, ignore, state);
+      return new FileSync(dir, false, app, ignore, state);
     }
 
     // the .gadget/sync.json file is for a different app
     if (options.force) {
       // the user passed --force, so use the app they specified and overwrite everything
-      return new FileSync(dir, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
+      return new FileSync(dir, false, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
     }
 
     // the user didn't pass --force, so throw an error
@@ -270,9 +281,9 @@ export class FileSync {
   /**
    * Reloads the ignore rules from the `.ignore` file.
    */
-  reloadIgnorePaths(): void {
+  reloadIgnorePaths(extraIgnorePaths: string[] = []): void {
     this._ignorer = ignore.default();
-    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...this._extraIgnorePaths]);
+    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...this._extraIgnorePaths, ...extraIgnorePaths]);
 
     try {
       const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");
@@ -410,6 +421,92 @@ export class FileSync {
   }
 }
 
+export const fileHashes = async (filesync: FileSync): Promise<Record<string, string>> => {
+  try {
+    // these ignore paths are allowed to be different between ggt and gadget
+    filesync.reloadIgnorePaths([".gadget/sync.json", ".gadget/backup"]);
+    const files = {} as Record<string, string>;
+
+    for await (const [absolutePath, stats] of filesync.walkDir()) {
+      const filepath = filesync.normalize(absolutePath, stats.isDirectory());
+      // eslint-disable-next-line max-depth
+      switch (true) {
+        case stats.isFile():
+          files[filepath] = await fileHash(absolutePath);
+          break;
+        case stats.isDirectory():
+          files[filepath] = "0";
+          break;
+      }
+    }
+
+    return files;
+  } finally {
+    filesync.reloadIgnorePaths();
+  }
+};
+
+const fileHash = (filepath: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const stream = fs.createReadStream(filepath).map((data: Uint8Array) => {
+        // windows uses CRLF line endings whereas unix uses LF line
+        // endings so we always strip out CR bytes (0x0d) when hashing
+        // files. this does make us blind to files that only differ by
+        // CR bytes, but that's a tradeoff we're willing to make.
+        return data.filter((byte) => byte !== 0x0d);
+      });
+
+      const hash = createHash("sha1");
+      stream.on("error", (err) => reject(err));
+      stream.on("end", () => resolve(hash.digest("hex")));
+      stream.pipe(hash, { end: false });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+/**
+ * changed: files that are in both a and b, but have different hashes
+ * added: files that are in b but not in a
+ * deleted: files that are in a but not in b
+ */
+export const diffFileHashes = (a: Record<string, string>, b: Record<string, string>) => {
+  const changed: string[] = [];
+  const added: string[] = [];
+  const deleted: string[] = [];
+
+  const bPaths = Object.keys(b);
+
+  for (const [aPath, aHash] of Object.entries(a)) {
+    const bHash = b[aPath];
+    if (!bHash) {
+      // eslint-disable-next-line max-depth
+      if (
+        // aPath is a file
+        !aPath.endsWith("/") ||
+        // aPath is a folder and b doesn't have any files inside of it
+        !bPaths.some((bPath) => bPath.startsWith(aPath))
+      ) {
+        deleted.push(aPath);
+      }
+    } else if (bHash !== aHash) {
+      // the file/folder exists in b, but has a different hash, so it's been changed
+      changed.push(aPath);
+    }
+  }
+
+  for (const path of bPaths) {
+    if (!a[path]) {
+      // the file/folder doesn't exist in a, so it's been added
+      added.push(path);
+    }
+  }
+
+  return { changed, added, deleted };
+};
+
 /**
  * Pretty-prints changed and deleted filepaths to the console.
  *
@@ -418,10 +515,16 @@ export class FileSync {
  * @param deleted The normalized paths that have been deleted.
  * @param options.limit The maximum number of lines to print. Defaults to 10.
  */
-export const printPaths = (prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}) => {
+export const printPaths = (prefix: string, added: string[], changed: string[], deleted: string[], { limit = 10 } = {}) => {
+  let longestPath = 0;
+  for (const path of [...added, ...changed, ...deleted]) {
+    longestPath = Math.max(longestPath, path.length);
+  }
+
   const lines = [
-    ...changed.map((normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
-    ...deleted.map((normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
+    ...added.map((filepath) => chalkTemplate`{green ${prefix}} ${filepath.padEnd(longestPath)} {gray added}`),
+    ...changed.map((filepath) => chalkTemplate`{yellow ${prefix}} ${filepath.padEnd(longestPath)} {gray changed}`),
+    ...deleted.map((filepath) => chalkTemplate`{red ${prefix}} ${filepath.padEnd(longestPath)} {gray deleted}`),
   ].sort((a, b) => a.slice(a.indexOf(" ") + 1).localeCompare(b.slice(b.indexOf(" ") + 1)));
 
   let logged = 0;
@@ -436,8 +539,9 @@ export const printPaths = (prefix: string, changed: string[], deleted: string[],
     println`{gray … ${lines.length - logged} more}`;
   }
 
-  println`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`;
-  println();
+  println2`
+    {gray ${pluralize("file", lines.length, true)} in total. ${added.length} added, ${changed.length} changed, ${deleted.length} deleted.}
+  `;
 };
 
 export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
@@ -470,3 +574,26 @@ export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
     }
   }
 `) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
+
+export const FILE_HASHES_QUERY = dedent(/* GraphQL */ `
+  query FileHashes {
+    fileHashes {
+      filesVersion
+      hashes
+    }
+  }
+`) as Query<FileHashesQuery, FileHashesQueryVariables>;
+
+export const FILES_QUERY = dedent(/* GraphQL */ `
+  query Files($paths: [String!]!, $filesVersion: String!, $encoding: FileSyncEncoding!) {
+    files(paths: $paths, filesVersion: $filesVersion, encoding: $encoding) {
+      filesVersion
+      files {
+        path
+        mode
+        content
+        encoding
+      }
+    }
+  }
+`) as Query<FilesQuery, FilesQueryVariables>;

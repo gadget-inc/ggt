@@ -253,7 +253,7 @@ export class Sync {
       });
 
       println("Local files have changed since you last synced");
-      printPaths("-", Array.from(changedFiles.keys()), [], { limit: changedFiles.size });
+      printPaths("•", [], Array.from(changedFiles.keys()), [], { limit: changedFiles.size });
       println();
     }
 
@@ -420,6 +420,7 @@ export class Sync {
               println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
               printPaths(
                 "←",
+                [],
                 changed.map((x) => x.path),
                 deleted.map((x) => x.path),
               );
@@ -489,6 +490,7 @@ export class Sync {
         println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
         printPaths(
           "→",
+          [],
           changed.map((x) => x.path),
           deleted.map((x) => x.path),
         );

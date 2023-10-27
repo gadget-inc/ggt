@@ -56,7 +56,7 @@ $ ggt
 The command-line interface for Gadget
 
 VERSION
-  ggt/0.3.2 linux-x64 node-v16.20.2
+  ggt/0.3.3 linux-x64 node-v16.20.2
 
 USAGE
   $ ggt [COMMAND]

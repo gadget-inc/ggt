@@ -1,5 +1,13 @@
 # @gadgetinc/ggt
 
+## 0.3.3
+
+### Patch Changes
+
+- 12c37d1: Bump @sentry/node from 7.74.1 to 7.75.0
+- 5af4580: Bump @sentry/node from 7.75.0 to 7.75.1
+- cb9b5cf: Reduce bundle size
+
 ## 0.3.2
 
 ### Patch Changes

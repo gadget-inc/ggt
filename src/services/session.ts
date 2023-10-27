@@ -7,9 +7,13 @@ import { createLogger } from "./log.js";
 const log = createLogger("session");
 
 export const readSession = (): string | undefined => {
-  log.debug("reading session from disk");
+  if (process.env["GGT_SESSION"]) {
+    log.debug("reading session from env");
+    return process.env["GGT_SESSION"];
+  }
 
   try {
+    log.debug("reading session from disk");
     return fs.readFileSync(path.join(config.configDir, "session.txt"), "utf-8");
   } catch (error) {
     swallowEnoent(error);

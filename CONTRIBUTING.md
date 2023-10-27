@@ -33,17 +33,23 @@ $ bin/dev.js --help
 The command-line interface for Gadget
 
 VERSION
-  ggt/0.2.3 darwin-arm64 node-v16.18.1
+  ggt/0.3.2 darwin-arm64 node-v16.18.1
 
 USAGE
   $ ggt [COMMAND]
 
+FLAGS
+  -h, --help     Print command's usage
+  -v, --version  Print version
+      --debug    Print debug output
+
 COMMANDS
-  sync    Sync your Gadget application's source code to and from your local filesystem.
-  list    List the apps available to the currently logged in user.
+  sync    Sync your Gadget application's source code to and
+          from your local filesystem.
+  list    List your apps.
   login   Log in to your account.
   logout  Log out of your account.
-  whoami  Show the name and email address of the currently logged in user.
+  whoami  Print the currently logged in account.
 ```
 
 Using `bin/dev.js` runs `ggt` using the source code in the `src` directory. This means you can make changes to the source code and see them reflected immediately every time you run `bin/dev.js`.
@@ -60,13 +66,45 @@ The other differences between `bin/dev.js` and `ggt` are:
    - `~/.config/ggt` -> `tmp/config`
    - `~/.data/ggt` -> `tmp/data`
 
+### Environment Variables
+
+`ggt` uses the following environment variables to configure its behavior:
+
+- `GGT_ENV`
+  - The environment to run `ggt` in.
+  - Defaults to `"production"`.
+  - If you're a Gadget staff member, you can set this to `"development"` to run against the development version of Gadget.
+- `GGT_SENTRY_ENABLED`
+  - Whether to enable Sentry error reporting.
+  - Defaults to `"true"`.
+- `GGT_SESSION`
+  - The session to use when sending requests to the Gadget API.
+  - Defaults to the contents of `GGT_CONFIG_DIR/session.txt`.
+- `GGT_CONFIG_DIR`
+  - The directory to store `ggt`'s configuration files in.
+  - Defaults:
+    - Unix: `~/.config/ggt`
+    - Windows: `%LOCALAPPDATA%\ggt`
+- `GGT_CACHE_DIR`
+  - The directory to store `ggt`'s cache files in.
+  - Defaults:
+    - macOS: `~/Library/Caches/ggt`
+    - Linux: `~/.config/ggt`
+    - Windows: `%LOCALAPPDATA%\ggt`
+- `GGT_DATA_DIR`
+  - The directory to store `ggt`'s data files in.
+  - Defaults:
+    - Unix: `~/.local/share/ggt`
+    - Windows: `%LOCALAPPDATA%\ggt`
+
 ### Tips
 
 - If you want more verbose output from `ggt`, you can pass the `--debug` flag:
 
   ```shell-session
   $ bin/dev.js whoami --debug
-    ggt:fs debug: Ignoring ENOENT error { path: 'session.txt' } +0ms
+    ggt:session reading session from disk +0ms
+    ggt:fs      swallowing enoent error   { path: 'session.txt' } +0ms
   You are not logged in
   ```
 
@@ -81,29 +119,35 @@ The other differences between `bin/dev.js` and `ggt` are:
 ```shell-session
 $ npm run test
 
-> ggt@0.2.3 test
-> cross-env NODE_OPTIONS="--no-warnings --loader ./node_modules/ts-node/esm.mjs" vitest
+> ggt@0.3.2 test
+> cross-env NODE_OPTIONS="--loader @swc-node/register/esm --no-warnings" vitest
 
+ RUN  v0.34.6 /Users/scott/Code/gadget/ggt
 
- RUN  v0.33.0 /Users/scott/Code/gadget/ggt
-
- ✓ spec/commands/sync.spec.ts (52) 36946ms
- ✓ spec/services/context.spec.ts (20)
+ ✓ spec/commands/sync.spec.ts (42) 11033ms
+ ✓ spec/commands/sync.spec.ts (42) 11033ms
+ ✓ spec/commands/root.spec.ts (25)
+ ✓ spec/services/user.spec.ts (8)
  ✓ spec/commands/index.spec.ts (15)
+ ✓ spec/services/version.spec.ts (6)
+ ✓ spec/services/filesync.spec.ts (11)
+ ✓ spec/commands/login.spec.ts (3)
+ ✓ spec/services/args.spec.ts (16)
+ ✓ spec/services/app.spec.ts (3)
+ ✓ spec/services/config.spec.ts (8)
  ✓ spec/services/errors.spec.ts (8)
- ✓ spec/commands/login.spec.ts (2)
- ✓ spec/services/args.spec.ts (8)
  ✓ spec/commands/logout.spec.ts (3)
- ✓ spec/commands/list.spec.ts (2)
+ ✓ spec/services/session.spec.ts (5)
  ✓ spec/commands/whoami.spec.ts (3)
+ ✓ spec/commands/list.spec.ts (2)
 
- Test Files  9 passed (9)
-      Tests  112 passed | 1 todo (113)
-   Start at  14:31:38
-   Duration  38.55s (transform 119ms, setup 565ms, collect 477ms, tests 37.06s, environment 0ms, prepare 75ms)
+ Test Files  15 passed (15)
+      Tests  155 passed | 3 skipped (158)
+   Start at  10:23:19
+   Duration  12.78s (transform 112ms, setup 645ms, collect 351ms, tests 11.32s, environment 0ms, prepare 55ms)
 ```
 
-Tests also make use of the `tmp` directory. Every test gets its own directory in `tmp/<spec-file>/<test-name>` to store temporary files. This means you can run tests in parallel without worrying about them interfering with each other.
+Tests also make use of the `tmp` directory. Every test gets its own directory in `tmp/spec/` to store temporary files. This means you can run tests in parallel without worrying about them interfering with each other.
 
 <!-- TODO -->
 

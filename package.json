@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "build": "npm run clean && swc src -d lib",
-    "clean": "rimraf lib tmp",
+    "clean": "rimraf lib tmp/spec",
     "generate:graphql": "graphql-codegen --config graphql-codegen.yml",
     "generate:readme": "FORCE_COLOR=0 node --loader @swc-node/register/esm --no-warnings ./scripts/generate-readme.ts",
     "lint": "concurrently --prefix none --group 'npm:lint:*(!fix)'",

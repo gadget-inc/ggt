@@ -7,16 +7,16 @@ import path from "node:path";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import type { SetRequired } from "type-fest";
-import FSWatcher from "watcher";
+import Watcher from "watcher";
 import which from "which";
-import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../__generated__/graphql.js";
+import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
+import { mapValues } from "../services/collections.js";
 import { config } from "../services/config.js";
 import { debounce, type DebouncedFunc } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
-import { EditGraphQL, PUBLISH_FILE_SYNC_EVENTS_MUTATION, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../services/edit-graphql.js";
 import { YarnNotFoundError } from "../services/errors.js";
-import { FileHashes, FileSync, remoteFileHashes } from "../services/filesync.js";
+import { FileSync, type File } from "../services/filesync.js";
 import { swallowEnoent } from "../services/fs.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";
@@ -25,6 +25,8 @@ import { println, println2, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
 import { select } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
+import { pull } from "./pull.js";
+import { push } from "./push.js";
 import { type RootArgs } from "./root.js";
 
 export const usage = sprint`
@@ -139,26 +141,22 @@ export class Sync {
   status = SyncStatus.STARTING;
 
   /**
-   * A list of filepaths that have changed because of a remote file-sync
-   * event. This is used to avoid sending files that we recently
-   * received from a remote file-sync event.
+   * A list of filepaths that have changed because we (this ggt process)
+   * modified them. This is used to avoid reacting to filesystem events
+   * that we caused, which would cause an infinite loop.
    */
-  recentRemoteChanges = new Map<string, number>();
+  recentWritesToLocalFilesystem = new Map<string, number>();
 
   /**
-   * A FIFO async callback queue that ensures we process file-sync events in the order they occurred.
+   * A FIFO async callback queue that ensures we process file-sync
+   * events in the order we receive them.
    */
   queue = new PQueue({ concurrency: 1 });
 
   /**
-   * A GraphQL client connected to the app's /edit/api/graphql-ws endpoint
-   */
-  graphql!: EditGraphQL;
-
-  /**
    * Watches the local filesystem for changes.
    */
-  watcher!: FSWatcher;
+  fileWatcher!: Watcher;
 
   /**
    * Handles writing files to the local filesystem.
@@ -216,30 +214,36 @@ export class Sync {
       extraIgnorePaths: [".gadget"],
     });
 
-    this.graphql = new EditGraphQL(this.filesync.app);
-
-    const fileHashes = await FileHashes.load(this.filesync, this.graphql);
-    const [, localRemoteFileHashes] = await remoteFileHashes(this.graphql, this.filesync.filesVersion);
-
-    let action: Action | undefined;
     if (!this.filesync.wasEmpty) {
-      println2`{bold The following files have changed }`;
+      const fileHashes = await this.filesync.fileHashes.unwrap();
 
-      action = await select({
+      if (fileHashes.localToLocalOriginChanges.length > 0) {
+        println2`{bold The following changes have been made to your local filesystem since the last sync}`;
+        fileHashes.localToLocalOriginChanges.printChangesMade();
+      }
+
+      if (this.filesync.filesVersion !== fileHashes.latestFilesVersionFromOrigin && fileHashes.latestOriginToLocalChanges.length > 0) {
+        println2`{bold The following changes have been made to your Gadget application since the last sync}`;
+        fileHashes.latestOriginToLocalChanges.printChangesMade();
+      }
+
+      const action = await select({
         message: "How do you want to resolve this?",
         choices: [Action.CANCEL, Action.PUSH, Action.PULL],
       });
-    }
 
-    switch (action) {
-      case Action.PUSH: {
-        break;
-      }
-      case Action.PULL: {
-        break;
-      }
-      case Action.CANCEL: {
-        process.exit(0);
+      switch (action) {
+        case Action.PUSH: {
+          await push(this.filesync, fileHashes);
+          break;
+        }
+        case Action.PULL: {
+          await pull(this.filesync, fileHashes);
+          break;
+        }
+        case Action.CANCEL: {
+          process.exit(0);
+        }
       }
     }
   }
@@ -251,11 +255,11 @@ export class Sync {
     let error: unknown;
     const stopped = new PromiseSignal();
 
-    const recentRemoteChangesInterval = setInterval(() => {
-      for (const [path, timestamp] of this.recentRemoteChanges) {
+    const clearRecentWritesInterval = setInterval(() => {
+      for (const [path, timestamp] of this.recentWritesToLocalFilesystem) {
         if (dayjs().isAfter(timestamp + ms("5s"))) {
-          // this change should have been seen by now, so remove it
-          this.recentRemoteChanges.delete(path);
+          // this change should have been seen by now
+          this.recentWritesToLocalFilesystem.delete(path);
         }
       }
     }, ms("1s")).unref();
@@ -271,14 +275,12 @@ export class Sync {
       this.log.info("stopping", { error });
 
       try {
-        clearInterval(recentRemoteChangesInterval);
-        unsubscribe();
-        this.watcher.removeAllListeners();
+        this.fileWatcher.close();
+        clearInterval(clearRecentWritesInterval);
         this.publish.flush();
+        stopReceivingChangesFromGadget();
         await this.queue.onIdle();
       } finally {
-        await Promise.allSettled([this.watcher.close(), this.graphql.dispose()]);
-
         this.status = SyncStatus.STOPPED;
         stopped.resolve();
         this.log.info("stopped");
@@ -294,93 +296,80 @@ export class Sync {
         println` Stopping... {gray (press Ctrl+C again to force)}`;
         void this.stop();
 
-        // When ggt is run via npx, and the user presses Ctrl+C, npx sends SIGINT twice in quick succession. In order to prevent the second
-        // SIGINT from triggering the force exit listener, we wait a bit before registering it. This is a bit of a hack, but it works.
+        // when ggt is run via npx, and the user presses ctrl+c, npx
+        // sends sigint twice in quick succession. in order to prevent
+        // the second sigint from triggering the force exit listener, we
+        // wait a bit before registering it
         setTimeout(() => {
           process.once(signal, () => {
             println(" Exiting immediately. Note that files may not have finished syncing.");
             process.exit(1);
           });
-        }, 100).unref();
+        }, ms("100ms")).unref();
       });
     }
 
-    const unsubscribe = this.graphql.subscribe(
-      {
-        query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-        variables: () => ({ localFilesVersion: String(this.filesync.filesVersion) }),
-      },
-      {
-        error: (error) => void this.stop(error),
-        next: ({ remoteFileSyncEvents }) => {
-          const remoteFilesVersion = remoteFileSyncEvents.remoteFilesVersion;
+    const stopReceivingChangesFromGadget = this.filesync.receiveChangesFromGadget({
+      onError: (error) => void this.stop(error),
+      onChanges: ({ filesVersion, changed, deleted }) => {
+        const receivedPathsFilter = (filepath: string) => {
+          // we always ignore .gadget/ files so that we don't send
+          // local changes to them back to Gadget (all .gadget/ files
+          // are managed by gadget), but we still want to receive
+          // changes from Gadget to them
+          return filepath.startsWith(".gadget/") || !this.filesync.ignores(filepath);
+        };
 
-          // we always ignore .gadget/ files so that we don't publish them (they're managed by gadget), but we still want to receive them
-          const filterIgnored = (event: { path: string }) => event.path.startsWith(".gadget/") || !this.filesync.ignores(event.path);
-          const changed = remoteFileSyncEvents.changed.filter(filterIgnored);
-          const deleted = remoteFileSyncEvents.deleted.filter(filterIgnored);
+        changed = changed.filter((file) => receivedPathsFilter(file.path));
+        deleted = deleted.filter(receivedPathsFilter);
 
-          this.log.info("received files", {
-            remoteFilesVersion,
-            changed: changed.map((x) => x.path),
-            deleted: deleted.map((x) => x.path),
+        this._enqueue(async () => {
+          // add all the non-ignored files and directories we're about
+          // to touch to recentRemoteChanges so that we don't send
+          // them back
+          for (const filepath of [...mapValues(changed, "path"), ...deleted]) {
+            if (this.filesync.ignores(filepath)) {
+              continue;
+            }
+
+            this.recentWritesToLocalFilesystem.set(filepath, Date.now());
+
+            let dir = path.dirname(filepath);
+            while (dir !== ".") {
+              this.recentWritesToLocalFilesystem.set(dir + "/", Date.now());
+              dir = path.dirname(dir);
+            }
+          }
+
+          const changes = await this.filesync.writeChangesToLocalFilesystem({
+            filesVersion,
+            write: changed,
+            delete: deleted,
           });
 
-          this._enqueue(async () => {
-            // add all the non-ignored files and directories we're about
-            // to touch to recentRemoteChanges so that we don't send
-            // them back
-            for (const file of [...changed, ...deleted].filter((file) => !this.filesync.ignores(file.path))) {
-              this.recentRemoteChanges.set(file.path, Date.now());
+          if (changes.length > 0) {
+            println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
+            changes.printChangesMade();
 
-              let dir = path.dirname(file.path);
-              while (dir !== ".") {
-                this.recentRemoteChanges.set(dir + "/", Date.now());
-                dir = path.dirname(dir);
-              }
-            }
-
-            if (changed.length > 0 || deleted.length > 0) {
-              println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
-              // printPaths(
-              //   [],
-              //   changed.map((x) => x.path),
-              //   deleted.map((x) => x.path),
-              // );
-            }
-
-            await this.filesync.write({
-              filesVersion: remoteFilesVersion,
-              write: changed,
-              delete: deleted.map((x) => x.path),
-            });
-
-            if (changed.some((x) => x.path === "yarn.lock")) {
+            if (changed.some((change) => change.path === "yarn.lock")) {
               await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(noop);
             }
-          });
-        },
+          }
+        });
       },
-    );
-
-    const localFilesBuffer = new Map<
-      string,
-      | { mode: number; isDirectory: boolean }
-      | { isDeleted: true; isDirectory: boolean }
-      | { mode: number; oldPath: string; newPath: string; isDirectory: boolean }
-    >();
+    });
 
     this.publish = debounce(this.args["--file-push-delay"], () => {
-      const localFiles = new Map(localFilesBuffer.entries());
-      localFilesBuffer.clear();
+      const localFiles = new Map(localFileEventsBuffer.entries());
+      localFileEventsBuffer.clear();
 
       this._enqueue(async () => {
-        const changed: FileSyncChangedEventInput[] = [];
-        const deleted: FileSyncDeletedEventInput[] = [];
+        const changed: File[] = [];
+        const deleted: string[] = [];
 
         await pMap(localFiles, async ([normalizedPath, file]) => {
           if ("isDeleted" in file) {
-            deleted.push({ path: normalizedPath });
+            deleted.push(normalizedPath);
             return;
           }
 
@@ -393,8 +382,10 @@ export class Sync {
               encoding: FileSyncEncoding.Base64,
             });
           } catch (error) {
-            // A file could have been changed and then deleted before we process the change event, so the readFile
-            // above will raise an ENOENT. This is normal operation, so just ignore this event.
+            // a file could have been changed and then deleted before we
+            // process the change event, so the readFile above will
+            // raise an enoent. This is normal operation, so just ignore
+            // this event.
             swallowEnoent(error);
           }
         });
@@ -403,29 +394,21 @@ export class Sync {
           return;
         }
 
-        const { publishFileSyncEvents } = await this.graphql.query({
-          query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-          variables: { input: { expectedRemoteFilesVersion: String(this.filesync.filesVersion), changed, deleted } },
-        });
-
-        await this.filesync.write({
-          filesVersion: publishFileSyncEvents.remoteFilesVersion,
-          write: [],
-          delete: [],
-        });
-
+        const changes = await this.filesync.sendChangesToGadget({ changed, deleted });
         println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
-        // printPaths(
-        //   [],
-        //   changed.map((x) => x.path),
-        //   deleted.map((x) => x.path),
-        // );
+        changes.printChangesMade();
       });
     });
 
-    this.watcher = new FSWatcher(this.filesync.dir, {
-      // don't emit an event for every watched file on boot
-      ignoreInitial: true,
+    const localFileEventsBuffer = new Map<
+      string,
+      | { mode: number; isDirectory: boolean }
+      | { isDeleted: true; isDirectory: boolean }
+      | { mode: number; oldPath: string; newPath: string; isDirectory: boolean }
+    >();
+
+    this.fileWatcher = new Watcher(this.filesync.dir, {
+      ignoreInitial: true, // don't emit an event for every watched file on boot
       ignore: (path: string) => this.filesync.ignores(path),
       renameDetection: true,
       recursive: true,
@@ -435,9 +418,9 @@ export class Sync {
       renameTimeout: this.args["--file-watch-rename-timeout"],
     });
 
-    this.watcher.once("error", (error) => void this.stop(error));
+    this.fileWatcher.once("error", (error) => void this.stop(error));
 
-    this.watcher.on("all", (event: string, absolutePath: string, renamedPath: string) => {
+    this.fileWatcher.on("all", (event: string, absolutePath: string, renamedPath: string) => {
       const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
       const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
       const normalizedPath = this.filesync.normalize(filepath, isDirectory);
@@ -446,7 +429,7 @@ export class Sync {
         event,
         path: normalizedPath,
         isDirectory,
-        recentRemoteChanges: Array.from(this.recentRemoteChanges.keys()),
+        recentRemoteChanges: Array.from(this.recentWritesToLocalFilesystem.keys()),
       });
 
       if (filepath === this.filesync.absolute(".ignore")) {
@@ -455,7 +438,7 @@ export class Sync {
         return;
       }
 
-      if (this.recentRemoteChanges.delete(normalizedPath)) {
+      if (this.recentWritesToLocalFilesystem.delete(normalizedPath)) {
         return;
       }
 
@@ -464,18 +447,18 @@ export class Sync {
         case "addDir":
         case "change": {
           const stats = fs.statSync(filepath);
-          localFilesBuffer.set(normalizedPath, { mode: stats.mode, isDirectory });
+          localFileEventsBuffer.set(normalizedPath, { mode: stats.mode, isDirectory });
           break;
         }
         case "unlink":
         case "unlinkDir": {
-          localFilesBuffer.set(normalizedPath, { isDeleted: true, isDirectory });
+          localFileEventsBuffer.set(normalizedPath, { isDeleted: true, isDirectory });
           break;
         }
         case "rename":
         case "renameDir": {
           const stats = fs.statSync(filepath);
-          localFilesBuffer.set(normalizedPath, {
+          localFileEventsBuffer.set(normalizedPath, {
             oldPath: this.filesync.normalize(absolutePath, isDirectory),
             newPath: normalizedPath,
             isDirectory,
@@ -491,7 +474,7 @@ export class Sync {
     this.status = SyncStatus.RUNNING;
 
     println();
-    println`
+    println2`
       {bold ggt v${config.version}}
 
       App         ${this.filesync.app.slug}
@@ -510,7 +493,6 @@ export class Sync {
 
       Watching for file changes... {gray Press Ctrl+C to stop}
     `;
-    println();
 
     await stopped;
 

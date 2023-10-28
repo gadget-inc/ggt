@@ -186,7 +186,7 @@ type Query {
   currentUser: User!
   environmentTreeChildKeys(path: String!): [String!]!
   environmentTreePath(hydrateChildrenGlobs: [String!], path: String!): JSON
-  fileHashes(filesVersion: String): FileHashes!
+  fileHashes(filesVersion: String, ignorePrefixes: [String!]): FileHashes!
   files(encoding: FileSyncEncoding, filesVersion: String, paths: [String!]!): Files!
   identifySupportConversation: IdentifySupportConversationResult
   listContributors: [ContributorResult!]!

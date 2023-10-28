@@ -19,12 +19,12 @@ import type { RootArgs } from "../../src/commands/root.js";
 import { Action, Sync, SyncStatus } from "../../src/commands/sync.js";
 import * as app from "../../src/services/app.js";
 import { defaults } from "../../src/services/defaults.js";
-import { ClientError, YarnNotFoundError } from "../../src/services/errors.js";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-} from "../../src/services/filesync.js";
+} from "../../src/services/edit-graphql.js";
+import { ClientError, YarnNotFoundError } from "../../src/services/errors.js";
 import { isFunction, isNil, isString } from "../../src/services/is.js";
 import { noop } from "../../src/services/noop.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
@@ -451,7 +451,7 @@ describe("Sync", () => {
         expect(sync.filesync.filesVersion).toBe(1n);
       });
 
-      it("adds changed and deleted files to recentRemoteChanges", async () => {
+      it("adds changed and deleted files to recentWritesToLocalFilesystem", async () => {
         graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).sink.next({
           data: {
             remoteFileSyncEvents: {
@@ -464,7 +464,7 @@ describe("Sync", () => {
 
         await sleepUntil(() => sync.filesync.filesVersion === 1n);
 
-        expect(Array.from(sync.recentRemoteChanges.keys())).toMatchInlineSnapshot(`
+        expect(Array.from(sync.recentWritesToLocalFilesystem.keys())).toMatchInlineSnapshot(`
           [
             "some/deeply/nested/file.js",
             "some/deeply/nested/",
@@ -1024,7 +1024,7 @@ describe("Sync", () => {
         await sleepUntil(() => sync.publish.mock.calls.length === 2);
 
         // add the file we're about to delete to recentWrites so that it doesn't get published
-        sync.recentRemoteChanges.set("delete_me.js", Date.now());
+        sync.recentWritesToLocalFilesystem.set("delete_me.js", Date.now());
 
         // delete the file
         fs.removeSync(path.join(dir, "delete_me.js"));
@@ -1043,10 +1043,10 @@ describe("Sync", () => {
         });
       });
 
-      it("does not publish events from files contained in recentRemoteChanges", () => {
-        // add files to recentRemoteChanges
-        sync.recentRemoteChanges.set("foo.js", Date.now());
-        sync.recentRemoteChanges.set("bar.js", Date.now());
+      it("does not publish events from files contained in recentWritesToLocalFilesystem", () => {
+        // add files to recentWritesToLocalFilesystem
+        sync.recentWritesToLocalFilesystem.set("foo.js", Date.now());
+        sync.recentWritesToLocalFilesystem.set("bar.js", Date.now());
 
         // write the files to the filesystem
         fs.outputFileSync(path.join(dir, "foo.js"), "foo");
@@ -1055,9 +1055,9 @@ describe("Sync", () => {
         // expect no events to have been published
         expect(sync.publish).not.toHaveBeenCalled();
 
-        // the files in recentRemoteChanges should be removed so that subsequent events affecting them can be published
-        expect(sync.recentRemoteChanges.has(path.join(dir, "foo.js"))).toBe(false);
-        expect(sync.recentRemoteChanges.has(path.join(dir, "bar.js"))).toBe(false);
+        // the files in recentWritesToLocalFilesystem should be removed so that subsequent events affecting them can be published
+        expect(sync.recentWritesToLocalFilesystem.has(path.join(dir, "foo.js"))).toBe(false);
+        expect(sync.recentWritesToLocalFilesystem.has(path.join(dir, "bar.js"))).toBe(false);
       });
 
       it("does not publish multiple batches of events at the same time", async () => {
@@ -1282,7 +1282,7 @@ describe("Sync", () => {
       run = sync.run();
 
       vi.spyOn(sync.queue, "onIdle");
-      vi.spyOn(sync.watcher, "close");
+      vi.spyOn(sync.fileWatcher, "close");
 
       // give the watcher some event loop ticks to finish setting up
       await sleep(10);
@@ -1403,7 +1403,7 @@ describe("Sync", () => {
       await expect(run).rejects.toThrow(ClientError);
       expect(graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
-      expect(sync.watcher.close).toHaveBeenCalledTimes(1);
+      expect(sync.fileWatcher.close).toHaveBeenCalledTimes(1);
       expect(sync.graphql.dispose).toHaveBeenCalledTimes(1);
     });
 
@@ -1415,19 +1415,19 @@ describe("Sync", () => {
       await expect(run).rejects.toThrow(ClientError);
       expect(graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(2);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
-      expect(sync.watcher.close).toHaveBeenCalledTimes(1);
+      expect(sync.fileWatcher.close).toHaveBeenCalledTimes(1);
       expect(sync.graphql.dispose).toHaveBeenCalledTimes(1);
     });
 
     it("closes all resources when watcher emits error", async () => {
       expect(graphql._subscriptions.has(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)).toBe(true);
 
-      sync.watcher.error(new Error(expect.getState().currentTestName));
+      sync.fileWatcher.error(new Error(expect.getState().currentTestName));
 
       await expect(run).rejects.toThrow(expect.getState().currentTestName);
       expect(graphql._subscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).unsubscribe).toHaveBeenCalledTimes(1);
       expect(sync.queue.onIdle).toHaveBeenCalledTimes(1);
-      expect(sync.watcher.close).toHaveBeenCalledTimes(1);
+      expect(sync.fileWatcher.close).toHaveBeenCalledTimes(1);
       expect(sync.graphql.dispose).toHaveBeenCalledTimes(1);
     });
   });

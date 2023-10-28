@@ -13,3 +13,13 @@ export const pick = <T extends Record<string, unknown>, K extends keyof T>(objec
   }
   return final;
 };
+
+export const mapValues = <O, const Key extends keyof O>(list: Iterable<O>, key: Key, take?: number): O[Key][] => {
+  return Array.from(list)
+    .slice(0, take)
+    .map((object) => object[key]);
+};
+
+export const mapRecords = <Value, const Key extends string>(list: Iterable<Value>, key: Key): Record<Key, Value>[] => {
+  return Array.from(list).map((value) => ({ [key]: value })) as Record<Key, Value>[];
+};

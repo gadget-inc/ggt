@@ -334,6 +334,7 @@ export type QueryEnvironmentTreePathArgs = {
 
 export type QueryFileHashesArgs = {
   filesVersion?: InputMaybe<Scalars['String']['input']>;
+  ignorePrefixes?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -502,6 +503,7 @@ export type PublishFileSyncEventsMutation = { __typename?: 'Mutation', publishFi
 
 export type FileHashesQueryVariables = Exact<{
   filesVersion?: InputMaybe<Scalars['String']['input']>;
+  ignorePrefixes?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
 }>;
 
 

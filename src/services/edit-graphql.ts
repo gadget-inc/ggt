@@ -283,8 +283,8 @@ export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
 `) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
 
 export const FILE_HASHES_QUERY = dedent(/* GraphQL */ `
-  query FileHashes($filesVersion: String) {
-    fileHashes(filesVersion: $filesVersion) {
+  query FileHashes($filesVersion: String, $ignorePrefixes: [String!]) {
+    fileHashes(filesVersion: $filesVersion, ignorePrefixes: $ignorePrefixes) {
       filesVersion
       hashes
     }

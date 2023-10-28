@@ -12,16 +12,24 @@ import pMap from "p-map";
 import pRetry from "p-retry";
 import pluralize from "pluralize";
 import { z } from "zod";
+import { FileSyncEncoding } from "../__generated__/graphql.js";
 import type { App } from "./app.js";
 import { getApps } from "./app.js";
+import { mapRecords, mapValues } from "./collections.js";
 import { config } from "./config.js";
-import type { EditGraphQL } from "./edit-graphql.js";
-import { FILE_HASHES_QUERY } from "./edit-graphql.js";
+import {
+  EditGraphQL,
+  FILES_QUERY,
+  FILE_HASHES_QUERY,
+  PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+  REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+} from "./edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
 import { createLogger } from "./log.js";
 import { noop } from "./noop.js";
 import { println, println2, sortByLevenshtein, sprint } from "./output.js";
+import { PromiseWrapper } from "./promise.js";
 import { select } from "./prompt.js";
 import type { User } from "./user.js";
 
@@ -29,14 +37,17 @@ const log = createLogger("filesync");
 
 const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
 
-interface File {
+export interface File {
   path: string;
+  oldPath?: string;
   mode: number;
   content: string;
-  encoding: "utf8" | "base64";
+  encoding: FileSyncEncoding;
 }
 
 export class FileSync {
+  public fileHashes: PromiseWrapper<FileHashes>;
+
   /**
    * The {@linkcode Ignore} instance that is used to determine if a file
    * should be ignored.
@@ -44,6 +55,8 @@ export class FileSync {
    * @see https://www.npmjs.com/package/ignore
    */
   private _ignorer!: Ignore;
+
+  private _editGraphQL: EditGraphQL;
 
   private constructor(
     /**
@@ -75,6 +88,14 @@ export class FileSync {
   ) {
     this._save();
     this.reloadIgnorePaths();
+    this._editGraphQL = new EditGraphQL(this.app);
+    this.fileHashes = new PromiseWrapper(
+      Promise.all([fileHashes(this), remoteFileHashes(this._editGraphQL, this.filesVersion), remoteFileHashes(this._editGraphQL)]).then(
+        ([localHashes, [, localHashesFromOrigin], [latestFileVersion, latestHashesFromOrigin]]) => {
+          return new FileHashes(latestFileVersion, localHashes, localHashesFromOrigin, latestHashesFromOrigin);
+        },
+      ),
+    );
   }
 
   /**
@@ -268,9 +289,9 @@ export class FileSync {
   /**
    * Reloads the ignore rules from the `.ignore` file.
    */
-  reloadIgnorePaths(extraIgnorePaths: string[] = []): void {
+  reloadIgnorePaths(overrideExtraIgnorePaths?: string[]): void {
     this._ignorer = ignore.default();
-    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...this._extraIgnorePaths, ...extraIgnorePaths]);
+    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...(overrideExtraIgnorePaths ?? this._extraIgnorePaths)]);
 
     try {
       const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");
@@ -331,17 +352,17 @@ export class FileSync {
     }
   }
 
-  async write(options: {
+  async writeChangesToLocalFilesystem(changes: {
     filesVersion: bigint | string;
     write: Iterable<File>;
     delete: Iterable<string>;
     force?: boolean;
   }): Promise<FileChanges> {
-    const filesVersion = BigInt(options.filesVersion);
+    const filesVersion = BigInt(changes.filesVersion);
     const added: string[] = [];
     const changed: string[] = [];
 
-    await pMap(options.delete, async (filepath) => {
+    await pMap(changes.delete, async (filepath) => {
       const currentPath = this.absolute(filepath);
       const backupPath = this.absolute(".gadget/backup", this.relative(filepath));
 
@@ -371,7 +392,7 @@ export class FileSync {
       );
     });
 
-    await pMap(options.write, async (file) => {
+    await pMap(changes.write, async (file) => {
       const absolutePath = this.absolute(file.path);
       if (await fs.pathExists(absolutePath)) {
         changed.push(file.path);
@@ -393,16 +414,92 @@ export class FileSync {
     });
 
     this._state.mtime = Date.now();
-    if (filesVersion > BigInt(this._state.filesVersion) || options.force) {
+    if (filesVersion > BigInt(this._state.filesVersion) || changes.force) {
       this._state.filesVersion = String(filesVersion);
     }
 
     this._save();
 
-    const paths = new FileChanges(added, changed, Array.from(options.delete));
+    const paths = new FileChanges(added, changed, Array.from(changes.delete));
     log.info("wrote", { ...this._state, paths });
 
     return paths;
+  }
+
+  async sendChangesToGadget(changes: { changed: Iterable<File>; deleted: Iterable<string> }): Promise<FileChanges> {
+    const { publishFileSyncEvents } = await this._editGraphQL.query({
+      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      variables: {
+        input: {
+          expectedRemoteFilesVersion: String(this.filesVersion),
+          changed: Array.from(changes.changed),
+          deleted: mapRecords(changes.deleted, "path"),
+        },
+      },
+    });
+
+    this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
+    this._save();
+
+    return new FileChanges([], mapValues(changes.changed, "path"), changes.deleted);
+  }
+
+  async getFilesFromGadget({
+    filesVersion,
+    paths,
+  }: {
+    filesVersion?: bigint;
+    paths: string[];
+  }): Promise<{ filesVersion: bigint; files: File[] }> {
+    const data = await this._editGraphQL.query({
+      query: FILES_QUERY,
+      variables: {
+        paths,
+        filesVersion: String(filesVersion ?? this.filesVersion),
+        encoding: FileSyncEncoding.Base64,
+      },
+    });
+
+    return {
+      filesVersion: BigInt(data.files.filesVersion),
+      files: data.files.files,
+    };
+  }
+
+  receiveChangesFromGadget({
+    onChanges,
+    onError,
+  }: {
+    onChanges: (changes: { filesVersion: bigint; changed: File[]; deleted: string[] }) => void;
+    onError: (error: unknown) => void;
+  }): () => void {
+    return this._editGraphQL.subscribe(
+      {
+        query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+        // the reason this is a function rather than a static value is
+        // so that it will be re-evaluated if the connection is lost and
+        // then re-established. this ensures that we send our current
+        // filesVersion rather than the one that was sent when the
+        // connection was first established.
+        variables: () => ({ localFilesVersion: String(this.filesVersion) }),
+      },
+      {
+        error: onError,
+        next: ({ remoteFileSyncEvents }) => {
+          log.info("received files", {
+            remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
+            changed: mapValues(remoteFileSyncEvents.changed, "path", 10),
+            deleted: mapValues(remoteFileSyncEvents.deleted, "path", 10),
+          });
+
+          onChanges({
+            filesVersion: BigInt(remoteFileSyncEvents.remoteFilesVersion),
+            changed: remoteFileSyncEvents.changed,
+            deleted: mapValues(remoteFileSyncEvents.deleted, "path"),
+          });
+        },
+      },
+    );
   }
 
   /**
@@ -414,11 +511,15 @@ export class FileSync {
 }
 
 export class FileChanges {
-  constructor(
-    readonly added: string[],
-    readonly changed: string[],
-    readonly deleted: string[],
-  ) {}
+  readonly added: string[];
+  readonly changed: string[];
+  readonly deleted: string[];
+
+  constructor(added: Iterable<string>, changed: Iterable<string>, deleted: Iterable<string>) {
+    this.added = Array.from(added);
+    this.changed = Array.from(changed);
+    this.deleted = Array.from(deleted);
+  }
 
   get length() {
     return this.added.length + this.changed.length + this.deleted.length;
@@ -429,15 +530,15 @@ export class FileChanges {
    * added: files that are in b but not in a
    * deleted: files that are in a but not in b
    */
-  static fromFileHashes(a: Hashes, b: Hashes): FileChanges {
+  static fromFileHashes({ source, target }: { source: Hashes; target: Hashes }): FileChanges {
     const changed: string[] = [];
     const added: string[] = [];
     const deleted: string[] = [];
 
-    const bPaths = Object.keys(b);
+    const bPaths = Object.keys(source);
 
-    for (const [aPath, aHash] of Object.entries(a)) {
-      const bHash = b[aPath];
+    for (const [aPath, aHash] of Object.entries(target)) {
+      const bHash = source[aPath];
       if (!bHash) {
         if (
           // aPath is a file
@@ -454,7 +555,7 @@ export class FileChanges {
     }
 
     for (const bPath of bPaths) {
-      if (!a[bPath]) {
+      if (!target[bPath]) {
         // the file/folder doesn't exist in a, so it's been added
         added.push(bPath);
       }
@@ -546,40 +647,64 @@ export class FileChanges {
 }
 
 const Hashes = z.record(z.string());
+
 export type Hashes = z.infer<typeof Hashes>;
 
 export class FileHashes {
-  readonly localChanges: FileChanges;
-  readonly remoteChanges: FileChanges;
+  /**
+   * The changes that need to be made to Gadget's filesystem at the same
+   * filesVersion as the local filesystem.
+   *
+   * In other words, the changes that have been made to the local
+   * filesystem since the last sync.
+   */
+  readonly localToLocalOriginChanges: FileChanges;
+
+  /**
+   * The changes that need to be made to make the latest Gadget
+   * filesystem match the local filesystem.
+   */
+  readonly localToLatestOriginChanges: FileChanges;
+
+  /**
+   * The changes that need to be made to make the local filesystem match
+   * the latest Gadget filesystem.
+   */
+  readonly latestOriginToLocalChanges: FileChanges;
 
   constructor(
-    readonly remoteFilesVersion: bigint,
+    readonly latestFilesVersionFromOrigin: bigint,
     readonly localHashes: Hashes,
-    readonly remoteHashes: Hashes,
+    readonly localHashesFromOrigin: Hashes,
+    readonly latestHashesFromOrigin: Hashes,
   ) {
-    this.localChanges = FileChanges.fromFileHashes(this.localHashes, this.remoteHashes);
-    this.remoteChanges = FileChanges.fromFileHashes(this.remoteHashes, this.localHashes);
-  }
-
-  static async load(filesync: FileSync, graphql: EditGraphQL): Promise<FileHashes> {
-    const [localHashes, [latestFileVersion, latestRemoteHashes]] = await Promise.all([fileHashes(filesync), remoteFileHashes(graphql)]);
-    return new FileHashes(latestFileVersion, localHashes, latestRemoteHashes);
+    this.localToLocalOriginChanges = FileChanges.fromFileHashes({ source: this.localHashes, target: this.localHashesFromOrigin });
+    this.localToLatestOriginChanges = FileChanges.fromFileHashes({ source: this.localHashes, target: this.latestHashesFromOrigin });
+    this.latestOriginToLocalChanges = FileChanges.fromFileHashes({ source: this.latestHashesFromOrigin, target: this.localHashes });
   }
 
   toJSON() {
     return {
-      filesVersion: String(this.remoteFilesVersion),
+      filesVersion: String(this.latestFilesVersionFromOrigin),
       local: this.localHashes,
-      remote: this.remoteHashes,
+      remote: this.latestHashesFromOrigin,
     };
   }
 }
 
-export const remoteFileHashes = async (graphql: EditGraphQL, filesVersion?: bigint | string): Promise<[bigint, Hashes]> => {
+export const remoteFileHashes = async (
+  graphql: EditGraphQL,
+  filesVersion?: bigint | string,
+  ignorePrefixes?: string[],
+): Promise<[bigint, Hashes]> => {
   const { fileHashes } = await graphql.query({
     query: FILE_HASHES_QUERY,
-    variables: { filesVersion: filesVersion ? String(filesVersion) : undefined },
+    variables: {
+      filesVersion: filesVersion ? String(filesVersion) : undefined,
+      ignorePrefixes,
+    },
   });
+
   return [BigInt(fileHashes.filesVersion), Hashes.parse(fileHashes.hashes)];
 };
 

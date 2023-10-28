@@ -20,7 +20,7 @@
     "curly": ["warn", "all"],
     "eqeqeq": ["warn", "smart"],
     "func-style": ["warn", "expression"],
-    "max-depth": ["warn", 2],
+    "max-depth": ["warn", 3],
 
     "unicorn/consistent-destructuring": ["warn"],
     "unicorn/explicit-length-check": ["warn"],

@@ -1,5 +1,5 @@
-export const compact = (array: unknown[]) => {
-  return array.filter((value) => Boolean(value));
+export const compact = <T>(array: T[]): NonNullable<T>[] => {
+  return array.filter((value): value is NonNullable<T> => Boolean(value));
 };
 
 export const uniq = <T>(array: T[]) => {

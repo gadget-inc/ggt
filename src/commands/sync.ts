@@ -1,7 +1,6 @@
 import arg from "arg";
 import dayjs from "dayjs";
 import { execa } from "execa";
-import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import ms from "ms";
 import path from "node:path";
@@ -15,20 +14,14 @@ import { AppArg } from "../services/args.js";
 import { config } from "../services/config.js";
 import { debounce, type DebouncedFunc } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
-import { EditGraphQL } from "../services/edit-graphql.js";
+import { EditGraphQL, PUBLISH_FILE_SYNC_EVENTS_MUTATION, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../services/edit-graphql.js";
 import { YarnNotFoundError } from "../services/errors.js";
-import {
-  FileSync,
-  PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-  REMOTE_FILES_VERSION_QUERY,
-  REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-  printPaths,
-} from "../services/filesync.js";
+import { FileHashes, FileSync, remoteFileHashes } from "../services/filesync.js";
 import { swallowEnoent } from "../services/fs.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";
 import { notify } from "../services/notify.js";
-import { println, sprint } from "../services/output.js";
+import { println, println2, sprint } from "../services/output.js";
 import { PromiseSignal } from "../services/promise.js";
 import { select } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
@@ -122,8 +115,8 @@ export enum SyncStatus {
 
 export enum Action {
   CANCEL = "Cancel (Ctrl+C)",
-  MERGE = "Merge local files with remote ones",
-  RESET = "Reset local files to remote ones",
+  PUSH = "Push local changes to Gadget",
+  PULL = "Pull remote changes from Gadget",
 }
 
 const argSpec = {
@@ -225,93 +218,24 @@ export class Sync {
 
     this.graphql = new EditGraphQL(this.filesync.app);
 
-    const { remoteFilesVersion } = await this.graphql.query({ query: REMOTE_FILES_VERSION_QUERY });
-    const hasRemoteChanges = BigInt(remoteFilesVersion) > this.filesync.filesVersion;
-
-    const getChangedFiles = async (): Promise<Map<string, Stats>> => {
-      const files = new Map();
-      for await (const [absolutePath, stats] of this.filesync.walkDir()) {
-        if (stats.mtime.getTime() > this.filesync.mtime) {
-          files.set(this.filesync.normalize(absolutePath, stats.isDirectory()), stats);
-        }
-      }
-
-      // never include the root directory
-      files.delete("/");
-
-      return files;
-    };
-
-    let changedFiles = await getChangedFiles();
-    const hasLocalChanges = changedFiles.size > 0;
-    if (hasLocalChanges) {
-      this.log.info("local files have changed", {
-        remoteFilesVersion,
-        hasRemoteChanges,
-        hasLocalChanges,
-        changed: Array.from(changedFiles.keys()),
-      });
-
-      println("Local files have changed since you last synced");
-      printPaths("-", Array.from(changedFiles.keys()), [], { limit: changedFiles.size });
-      println();
-    }
+    const fileHashes = await FileHashes.load(this.filesync, this.graphql);
+    const [, localRemoteFileHashes] = await remoteFileHashes(this.graphql, this.filesync.filesVersion);
 
     let action: Action | undefined;
-    if (hasLocalChanges) {
+    if (!this.filesync.wasEmpty) {
+      println2`{bold The following files have changed }`;
+
       action = await select({
-        message: hasRemoteChanges ? "Remote files have also changed. How would you like to proceed?" : "How would you like to proceed?",
-        choices: [Action.CANCEL, Action.MERGE, Action.RESET],
+        message: "How do you want to resolve this?",
+        choices: [Action.CANCEL, Action.PUSH, Action.PULL],
       });
     }
 
-    // get all the changed files again in case more changed
-    changedFiles = await getChangedFiles();
-
     switch (action) {
-      case Action.MERGE: {
-        this.log.info("merging local changes", {
-          remoteFilesVersion,
-          hasRemoteChanges,
-          hasLocalChanges,
-          changed: Array.from(changedFiles.keys()),
-        });
-
-        // We purposefully don't write the returned files version here
-        // because we haven't received its associated files yet. This
-        // will cause us to receive the remote files that have changed
-        // since the last sync (+ the local files that we just
-        // published)
-        await this.graphql.query({
-          query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-          variables: {
-            input: {
-              expectedRemoteFilesVersion: remoteFilesVersion,
-              changed: await pMap(changedFiles, async ([normalizedPath, stats]) => ({
-                path: normalizedPath,
-                mode: stats.mode,
-                content: stats.isDirectory() ? "" : await fs.readFile(this.filesync.absolute(normalizedPath), "base64"),
-                encoding: FileSyncEncoding.Base64,
-              })),
-              deleted: [],
-            },
-          },
-        });
+      case Action.PUSH: {
         break;
       }
-      case Action.RESET: {
-        this.log.info("resetting local changes", {
-          remoteFilesVersion,
-          hasRemoteChanges,
-          hasLocalChanges,
-          changed: Array.from(changedFiles.keys()),
-        });
-
-        // delete all the local files that have changed since the last
-        // sync and set the files version to 0 so we receive all the
-        // remote files again, including any files that we just deleted
-        // that still exist
-        await this.filesync.write(0n, [], changedFiles.keys(), true);
+      case Action.PULL: {
         break;
       }
       case Action.CANCEL: {
@@ -418,18 +342,18 @@ export class Sync {
 
             if (changed.length > 0 || deleted.length > 0) {
               println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
-              printPaths(
-                "←",
-                changed.map((x) => x.path),
-                deleted.map((x) => x.path),
-              );
+              // printPaths(
+              //   [],
+              //   changed.map((x) => x.path),
+              //   deleted.map((x) => x.path),
+              // );
             }
 
-            await this.filesync.write(
-              remoteFilesVersion,
-              changed,
-              deleted.map((x) => x.path),
-            );
+            await this.filesync.write({
+              filesVersion: remoteFilesVersion,
+              write: changed,
+              delete: deleted.map((x) => x.path),
+            });
 
             if (changed.some((x) => x.path === "yarn.lock")) {
               await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(noop);
@@ -484,14 +408,18 @@ export class Sync {
           variables: { input: { expectedRemoteFilesVersion: String(this.filesync.filesVersion), changed, deleted } },
         });
 
-        await this.filesync.write(publishFileSyncEvents.remoteFilesVersion, [], []);
+        await this.filesync.write({
+          filesVersion: publishFileSyncEvents.remoteFilesVersion,
+          write: [],
+          delete: [],
+        });
 
         println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
-        printPaths(
-          "→",
-          changed.map((x) => x.path),
-          deleted.map((x) => x.path),
-        );
+        // printPaths(
+        //   [],
+        //   changed.map((x) => x.path),
+        //   deleted.map((x) => x.path),
+        // );
       });
     });
 

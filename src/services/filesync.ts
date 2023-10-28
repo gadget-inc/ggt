@@ -1,41 +1,33 @@
-import chalkTemplate from "chalk-template";
 import { findUp } from "find-up";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import ms from "ms";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import normalizePath from "normalize-path";
 import pMap from "p-map";
 import pRetry from "p-retry";
 import pluralize from "pluralize";
-import { dedent } from "ts-dedent";
 import { z } from "zod";
-import type {
-  PublishFileSyncEventsMutation,
-  PublishFileSyncEventsMutationVariables,
-  RemoteFileSyncEventsSubscription,
-  RemoteFileSyncEventsSubscriptionVariables,
-  RemoteFilesVersionQuery,
-  RemoteFilesVersionQueryVariables,
-} from "../__generated__/graphql.js";
 import type { App } from "./app.js";
 import { getApps } from "./app.js";
 import { config } from "./config.js";
-import type { Query } from "./edit-graphql.js";
+import type { EditGraphQL } from "./edit-graphql.js";
+import { FILE_HASHES_QUERY } from "./edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
 import { createLogger } from "./log.js";
 import { noop } from "./noop.js";
-import { println, sortByLevenshtein, sprint } from "./output.js";
+import { println, println2, sortByLevenshtein, sprint } from "./output.js";
 import { select } from "./prompt.js";
 import type { User } from "./user.js";
 
 const log = createLogger("filesync");
 
-export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
+const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
 
 interface File {
   path: string;
@@ -58,6 +50,11 @@ export class FileSync {
      * An absolute path to the directory that is being synced.
      */
     readonly dir: string,
+
+    /**
+     * Whether the directory was empty when it was initialized.
+     */
+    readonly wasEmpty: boolean,
 
     /**
      * The Gadget application this filesystem is synced to.
@@ -192,10 +189,11 @@ export class FileSync {
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
-      if ((await isEmptyOrNonExistentDir(dir)) || options.force) {
+      const isEmpty = await isEmptyOrNonExistentDir(dir);
+      if (isEmpty || options.force) {
         // the directory is empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
-        return new FileSync(dir, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
+        return new FileSync(dir, isEmpty, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
       }
 
       // the directory isn't empty and the user didn't pass --force
@@ -205,13 +203,13 @@ export class FileSync {
     // the .gadget/sync.json file exists
     if (state.app === app.slug) {
       // the .gadget/sync.json file is for the same app that the user specified
-      return new FileSync(dir, app, ignore, state);
+      return new FileSync(dir, false, app, ignore, state);
     }
 
     // the .gadget/sync.json file is for a different app
     if (options.force) {
       // the user passed --force, so use the app they specified and overwrite everything
-      return new FileSync(dir, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
+      return new FileSync(dir, false, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
     }
 
     // the user didn't pass --force, so throw an error
@@ -270,9 +268,9 @@ export class FileSync {
   /**
    * Reloads the ignore rules from the `.ignore` file.
    */
-  reloadIgnorePaths(): void {
+  reloadIgnorePaths(extraIgnorePaths: string[] = []): void {
     this._ignorer = ignore.default();
-    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...this._extraIgnorePaths]);
+    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...this._extraIgnorePaths, ...extraIgnorePaths]);
 
     try {
       const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");
@@ -333,17 +331,17 @@ export class FileSync {
     }
   }
 
-  /**
-   * Writes the {@linkcode changed} and {@linkcode deleted} files to the filesystem.
-   * @param filesVersion The files version associated with the files that are being written.
-   * @param changed The files that have changed.
-   * @param deleted The paths that have been deleted.
-   * @param force If `true`, the files version will be updated even if it's less than the current files version.
-   */
-  async write(filesVersion: bigint | string, changed: Iterable<File>, deleted: Iterable<string>, force = false): Promise<void> {
-    filesVersion = BigInt(filesVersion);
+  async write(options: {
+    filesVersion: bigint | string;
+    write: Iterable<File>;
+    delete: Iterable<string>;
+    force?: boolean;
+  }): Promise<FileChanges> {
+    const filesVersion = BigInt(options.filesVersion);
+    const added: string[] = [];
+    const changed: string[] = [];
 
-    await pMap(deleted, async (filepath) => {
+    await pMap(options.delete, async (filepath) => {
       const currentPath = this.absolute(filepath);
       const backupPath = this.absolute(".gadget/backup", this.relative(filepath));
 
@@ -373,8 +371,14 @@ export class FileSync {
       );
     });
 
-    await pMap(changed, async (file) => {
+    await pMap(options.write, async (file) => {
       const absolutePath = this.absolute(file.path);
+      if (await fs.pathExists(absolutePath)) {
+        changed.push(file.path);
+      } else {
+        added.push(file.path);
+      }
+
       if (file.path.endsWith("/")) {
         await fs.ensureDir(absolutePath, { mode: 0o755 });
         return;
@@ -389,17 +393,16 @@ export class FileSync {
     });
 
     this._state.mtime = Date.now();
-    if (filesVersion > BigInt(this._state.filesVersion) || force) {
+    if (filesVersion > BigInt(this._state.filesVersion) || options.force) {
       this._state.filesVersion = String(filesVersion);
     }
 
     this._save();
 
-    log.info("wrote", {
-      ...this._state,
-      changed: Array.from(changed).map((x) => x.path),
-      deleted: Array.from(deleted),
-    });
+    const paths = new FileChanges(added, changed, Array.from(options.delete));
+    log.info("wrote", { ...this._state, paths });
+
+    return paths;
   }
 
   /**
@@ -410,63 +413,217 @@ export class FileSync {
   }
 }
 
-/**
- * Pretty-prints changed and deleted filepaths to the console.
- *
- * @param prefix The prefix to print before each line.
- * @param changed The normalized paths that have changed.
- * @param deleted The normalized paths that have been deleted.
- * @param options.limit The maximum number of lines to print. Defaults to 10.
- */
-export const printPaths = (prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}) => {
-  const lines = [
-    ...changed.map((normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
-    ...deleted.map((normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
-  ].sort((a, b) => a.slice(a.indexOf(" ") + 1).localeCompare(b.slice(b.indexOf(" ") + 1)));
+export class FileChanges {
+  constructor(
+    readonly added: string[],
+    readonly changed: string[],
+    readonly deleted: string[],
+  ) {}
 
-  let logged = 0;
-  for (const line of lines) {
-    println(line);
-    if (++logged === limit) {
-      break;
+  get length() {
+    return this.added.length + this.changed.length + this.deleted.length;
+  }
+
+  /**
+   * changed: files that are in both a and b, but have different hashes
+   * added: files that are in b but not in a
+   * deleted: files that are in a but not in b
+   */
+  static fromFileHashes(a: Hashes, b: Hashes): FileChanges {
+    const changed: string[] = [];
+    const added: string[] = [];
+    const deleted: string[] = [];
+
+    const bPaths = Object.keys(b);
+
+    for (const [aPath, aHash] of Object.entries(a)) {
+      const bHash = b[aPath];
+      if (!bHash) {
+        if (
+          // aPath is a file
+          !aPath.endsWith("/") ||
+          // aPath is a folder and b doesn't have any files inside of it
+          !bPaths.some((bPath) => bPath.startsWith(aPath))
+        ) {
+          deleted.push(aPath);
+        }
+      } else if (bHash !== aHash) {
+        // the file/folder exists in b, but has a different hash, so it's been changed
+        changed.push(aPath);
+      }
     }
+
+    for (const bPath of bPaths) {
+      if (!a[bPath]) {
+        // the file/folder doesn't exist in a, so it's been added
+        added.push(bPath);
+      }
+    }
+
+    return new FileChanges(added, changed, deleted);
   }
 
-  if (lines.length > logged) {
-    println`{gray … ${lines.length - logged} more}`;
+  longestFilePath() {
+    return Math.max(
+      ...this.added
+        .concat(this.changed)
+        .concat(this.deleted)
+        .map((path) => path.length),
+    );
   }
 
-  println`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`;
-  println();
+  sortedTypes() {
+    const paths: (readonly [string, "added" | "changed" | "deleted"])[] = [];
+    paths.push(...this.added.map((p) => [p, "added"] as const));
+    paths.push(...this.changed.map((p) => [p, "changed"] as const));
+    paths.push(...this.deleted.map((p) => [p, "deleted"] as const));
+    return paths.sort(([a], [b]) => a.localeCompare(b));
+  }
+
+  /**
+   * Prints the changes that will be made.
+   */
+  printChangesToMake() {
+    const longestFilePath = this.longestFilePath();
+
+    for (const [filepath, type] of this.sortedTypes()) {
+      switch (type) {
+        case "added":
+          println`{green +   ${filepath.padEnd(longestFilePath)}   add}`;
+          break;
+        case "changed":
+          println`{yellow +-  ${filepath.padEnd(longestFilePath)}   change}`;
+          break;
+        case "deleted":
+          println`{red -   ${filepath.padEnd(longestFilePath)}   delete}`;
+          break;
+      }
+    }
+
+    const nFiles = pluralize("file", this.length, true);
+
+    println();
+    println2`
+    {gray.underline ${nFiles} in total. ${this.added.length} to add, ${this.changed.length} to change, ${this.deleted.length} to delete.}
+  `;
+  }
+
+  /**
+   * Prints the changes that were made.
+   */
+  printChangesMade() {
+    const longestFilePath = this.longestFilePath();
+
+    for (const [filepath, type] of this.sortedTypes()) {
+      switch (type) {
+        case "added":
+          println`{green +   ${filepath.padEnd(longestFilePath)}   added}`;
+          break;
+        case "changed":
+          println`{yellow +-  ${filepath.padEnd(longestFilePath)}   changed}`;
+          break;
+        case "deleted":
+          println`{red -   ${filepath.padEnd(longestFilePath)}   deleted}`;
+          break;
+      }
+    }
+
+    const nFiles = pluralize("file", this.length, true);
+
+    println();
+    println2`
+    {gray.underline ${nFiles} in total. ${this.added.length} added, ${this.changed.length} changed, ${this.deleted.length} deleted.}
+  `;
+  }
+
+  toJSON() {
+    return {
+      added: this.added,
+      changed: this.changed,
+      deleted: this.deleted,
+    };
+  }
+}
+
+const Hashes = z.record(z.string());
+export type Hashes = z.infer<typeof Hashes>;
+
+export class FileHashes {
+  readonly localChanges: FileChanges;
+  readonly remoteChanges: FileChanges;
+
+  constructor(
+    readonly remoteFilesVersion: bigint,
+    readonly localHashes: Hashes,
+    readonly remoteHashes: Hashes,
+  ) {
+    this.localChanges = FileChanges.fromFileHashes(this.localHashes, this.remoteHashes);
+    this.remoteChanges = FileChanges.fromFileHashes(this.remoteHashes, this.localHashes);
+  }
+
+  static async load(filesync: FileSync, graphql: EditGraphQL): Promise<FileHashes> {
+    const [localHashes, [latestFileVersion, latestRemoteHashes]] = await Promise.all([fileHashes(filesync), remoteFileHashes(graphql)]);
+    return new FileHashes(latestFileVersion, localHashes, latestRemoteHashes);
+  }
+
+  toJSON() {
+    return {
+      filesVersion: String(this.remoteFilesVersion),
+      local: this.localHashes,
+      remote: this.remoteHashes,
+    };
+  }
+}
+
+export const remoteFileHashes = async (graphql: EditGraphQL, filesVersion?: bigint | string): Promise<[bigint, Hashes]> => {
+  const { fileHashes } = await graphql.query({
+    query: FILE_HASHES_QUERY,
+    variables: { filesVersion: filesVersion ? String(filesVersion) : undefined },
+  });
+  return [BigInt(fileHashes.filesVersion), Hashes.parse(fileHashes.hashes)];
 };
 
-export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
-  subscription RemoteFileSyncEvents($localFilesVersion: String!) {
-    remoteFileSyncEvents(localFilesVersion: $localFilesVersion, encoding: base64) {
-      remoteFilesVersion
-      changed {
-        path
-        mode
-        content
-        encoding
-      }
-      deleted {
-        path
+const fileHashes = async (filesync: FileSync): Promise<Hashes> => {
+  try {
+    // these ignore paths are allowed to be different between ggt and gadget
+    filesync.reloadIgnorePaths([".gadget/sync.json", ".gadget/backup"]);
+    const files = {} as Record<string, string>;
+
+    for await (const [absolutePath, stats] of filesync.walkDir()) {
+      const filepath = filesync.normalize(absolutePath, stats.isDirectory());
+      switch (true) {
+        case stats.isFile():
+          files[filepath] = await fileHash(absolutePath);
+          break;
+        case stats.isDirectory():
+          files[filepath] = "0";
+          break;
       }
     }
-  }
-`) as Query<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
 
-export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
-  query RemoteFilesVersion {
-    remoteFilesVersion
+    return files;
+  } finally {
+    filesync.reloadIgnorePaths();
   }
-`) as Query<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables>;
+};
 
-export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
-  mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
-    publishFileSyncEvents(input: $input) {
-      remoteFilesVersion
+const fileHash = (filepath: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const stream = fs.createReadStream(filepath).map((data: Uint8Array) => {
+        // windows uses CRLF line endings whereas unix uses LF line
+        // endings so we always strip out CR bytes (0x0d) when hashing
+        // files. this does make us blind to files that only differ by
+        // CR bytes, but that's a tradeoff we're willing to make.
+        return data.filter((byte) => byte !== 0x0d);
+      });
+
+      const hash = createHash("sha1");
+      stream.on("error", (err) => reject(err));
+      stream.on("end", () => resolve(hash.digest("hex")));
+      stream.pipe(hash, { end: false });
+    } catch (error) {
+      reject(error);
     }
-  }
-`) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
+  });
+};

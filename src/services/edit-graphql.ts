@@ -3,9 +3,22 @@ import type { ExecutionResult, SubscribePayload } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import assert from "node:assert";
 import type { ClientRequestArgs } from "node:http";
+import { dedent } from "ts-dedent";
 import type { JsonObject, SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
+import type {
+  FileHashesQuery,
+  FileHashesQueryVariables,
+  FilesQuery,
+  FilesQueryVariables,
+  PublishFileSyncEventsMutation,
+  PublishFileSyncEventsMutationVariables,
+  RemoteFileSyncEventsSubscription,
+  RemoteFileSyncEventsSubscriptionVariables,
+  RemoteFilesVersionQuery,
+  RemoteFilesVersionQueryVariables,
+} from "../__generated__/graphql.js";
 import type { App } from "./app.js";
 import { config } from "./config.js";
 import { ClientError } from "./errors.js";
@@ -237,3 +250,57 @@ export interface Sink<Data extends JsonObject, Extensions extends JsonObject> {
   error(error: ClientError): void;
   complete(): void;
 }
+
+export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
+  subscription RemoteFileSyncEvents($localFilesVersion: String!) {
+    remoteFileSyncEvents(localFilesVersion: $localFilesVersion, encoding: base64) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+      deleted {
+        path
+      }
+    }
+  }
+`) as Query<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
+
+export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
+  query RemoteFilesVersion {
+    remoteFilesVersion
+  }
+`) as Query<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables>;
+
+export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
+  mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
+    publishFileSyncEvents(input: $input) {
+      remoteFilesVersion
+    }
+  }
+`) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
+
+export const FILE_HASHES_QUERY = dedent(/* GraphQL */ `
+  query FileHashes($filesVersion: String) {
+    fileHashes(filesVersion: $filesVersion) {
+      filesVersion
+      hashes
+    }
+  }
+`) as Query<FileHashesQuery, FileHashesQueryVariables>;
+
+export const FILES_QUERY = dedent(/* GraphQL */ `
+  query Files($paths: [String!]!, $filesVersion: String!, $encoding: FileSyncEncoding!) {
+    files(paths: $paths, filesVersion: $filesVersion, encoding: $encoding) {
+      filesVersion
+      files {
+        path
+        mode
+        content
+        encoding
+      }
+    }
+  }
+`) as Query<FilesQuery, FilesQueryVariables>;

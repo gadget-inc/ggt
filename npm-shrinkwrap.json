@@ -16,6 +16,7 @@
         "chalk": "^5.3.0",
         "chalk-template": "^1.1.0",
         "clean-stack": "^5.2.0",
+        "cli-table3": "^0.6.3",
         "dayjs": "^1.11.10",
         "debug": "^4.3.4",
         "enquirer": "^2.4.1",
@@ -2144,6 +2145,15 @@
       "dev": true,
       "engines": {
         "node": ">= 4.0.0"
+      }
+    },
+    "node_modules/@colors/colors": {
+      "version": "1.5.0",
+      "resolved": "https://registry.npmjs.org/@colors/colors/-/colors-1.5.0.tgz",
+      "integrity": "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==",
+      "optional": true,
+      "engines": {
+        "node": ">=0.1.90"
       }
     },
     "node_modules/@cspell/cspell-bundled-dicts": {
@@ -6508,6 +6518,20 @@
       },
       "funding": {
         "url": "https://github.com/sponsors/sindresorhus"
+      }
+    },
+    "node_modules/cli-table3": {
+      "version": "0.6.3",
+      "resolved": "https://registry.npmjs.org/cli-table3/-/cli-table3-0.6.3.tgz",
+      "integrity": "sha512-w5Jac5SykAeZJKntOxJCrm63Eg5/4dhMWIcuTbo9rpE+brgaSZo0RuNJZeOyMgsUdhDeojvgyQLmjI+K50ZGyg==",
+      "dependencies": {
+        "string-width": "^4.2.0"
+      },
+      "engines": {
+        "node": "10.* || >= 12.*"
+      },
+      "optionalDependencies": {
+        "@colors/colors": "1.5.0"
       }
     },
     "node_modules/cli-truncate": {
@@ -17267,6 +17291,12 @@
         }
       }
     },
+    "@colors/colors": {
+      "version": "1.5.0",
+      "resolved": "https://registry.npmjs.org/@colors/colors/-/colors-1.5.0.tgz",
+      "integrity": "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==",
+      "optional": true
+    },
     "@cspell/cspell-bundled-dicts": {
       "version": "7.3.8",
       "resolved": "https://registry.npmjs.org/@cspell/cspell-bundled-dicts/-/cspell-bundled-dicts-7.3.8.tgz",
@@ -20449,6 +20479,15 @@
       "resolved": "https://registry.npmjs.org/cli-spinners/-/cli-spinners-2.7.0.tgz",
       "integrity": "sha512-qu3pN8Y3qHNgE2AFweciB1IfMnmZ/fsNTEE+NOFjmGB2F/7rLhnhzppvpCnN4FovtP26k8lHyy9ptEbNwWFLzw==",
       "dev": true
+    },
+    "cli-table3": {
+      "version": "0.6.3",
+      "resolved": "https://registry.npmjs.org/cli-table3/-/cli-table3-0.6.3.tgz",
+      "integrity": "sha512-w5Jac5SykAeZJKntOxJCrm63Eg5/4dhMWIcuTbo9rpE+brgaSZo0RuNJZeOyMgsUdhDeojvgyQLmjI+K50ZGyg==",
+      "requires": {
+        "@colors/colors": "1.5.0",
+        "string-width": "^4.2.0"
+      }
     },
     "cli-truncate": {
       "version": "2.1.0",

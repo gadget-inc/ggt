@@ -1,5 +1,5 @@
 import { ArgError } from "./errors.js";
-import { sprint } from "./output.js";
+import { sprint } from "./print.js";
 
 export const parseBoolean = (value: string | null | undefined) => {
   value ??= "";

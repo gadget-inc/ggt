@@ -1,5 +1,5 @@
 import { getApps } from "../services/app.js";
-import { println, sprint } from "../services/output.js";
+import { println, sprint } from "../services/print.js";
 import { getUserOrLogin } from "../services/user.js";
 
 export const usage = sprint`

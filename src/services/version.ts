@@ -9,7 +9,7 @@ import { z } from "zod";
 import { config } from "./config.js";
 import { http } from "./http.js";
 import { createLogger } from "./log.js";
-import { println, sprint } from "./output.js";
+import { println, sprint } from "./print.js";
 
 const log = createLogger("version");
 

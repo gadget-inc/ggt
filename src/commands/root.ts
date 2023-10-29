@@ -4,7 +4,7 @@ import { parseBoolean } from "../services/args.js";
 import { config } from "../services/config.js";
 import { CLIError } from "../services/errors.js";
 import { isNil } from "../services/is.js";
-import { println, sortByLevenshtein, sprint } from "../services/output.js";
+import { println, sortByLevenshtein, sprint } from "../services/print.js";
 import { warnIfUpdateAvailable } from "../services/version.js";
 import { availableCommands, type Command } from "./index.js";
 

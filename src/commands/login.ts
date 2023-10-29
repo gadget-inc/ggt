@@ -4,7 +4,7 @@ import http, { type Server } from "node:http";
 import open from "open";
 import { config } from "../services/config.js";
 import { createLogger } from "../services/log.js";
-import { println, sprint } from "../services/output.js";
+import { println, sprint } from "../services/print.js";
 import { writeSession } from "../services/session.js";
 import { getUser } from "../services/user.js";
 

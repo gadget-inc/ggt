@@ -1,3 +1,6 @@
+// prettier-ignore
+import "./services/bigint.js";
+
 import { init } from "@sentry/node";
 import { run } from "./commands/root.js";
 import { parseBoolean } from "./services/args.js";

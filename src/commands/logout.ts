@@ -1,4 +1,4 @@
-import { println, sprint } from "../services/output.js";
+import { println, sprint } from "../services/print.js";
 import { readSession, writeSession } from "../services/session.js";
 
 export const usage = sprint`

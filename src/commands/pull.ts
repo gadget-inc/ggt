@@ -2,7 +2,7 @@ import arg from "arg";
 import { AppArg } from "../services/args.js";
 import { FileSync, type FileHashes } from "../services/filesync.js";
 import { createLogger } from "../services/log.js";
-import { println, println2, sprint } from "../services/output.js";
+import { println, println2, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
 import type { RootArgs } from "./root.js";
@@ -34,18 +34,18 @@ export const run = async (rootArgs: RootArgs) => {
 
   log.info("file hashes", fileHashes);
 
-  if (fileHashes.localToLocalOriginChanges.length > 0 && !args["--force"]) {
+  if (fileHashes.localFromFilesVersion.length > 0 && !args["--force"]) {
     println2`{bold The following changes have been made to your local filesystem since the last sync}`;
-    fileHashes.localToLocalOriginChanges.printChangesMade();
+    fileHashes.localFromFilesVersion.printChangesMade();
 
     println`
       {bold You must either:}
 
-        1. Reset your local filesystem to the last time you ran file sync.
+        1. Discard your changes and reset your local filesystem back to the last sync
 
              {gray ggt reset}
 
-        2. Re-run this command again with the {bold --force} flag.
+        2. Run pull again with the {bold --force} flag to discard your local changes
 
             {gray ggt pull --force}
     `;
@@ -54,7 +54,7 @@ export const run = async (rootArgs: RootArgs) => {
     process.exit(1);
   }
 
-  if (fileHashes.latestOriginToLocalChanges.length === 0) {
+  if (fileHashes.gadgetFromLocal.length === 0) {
     println("Your local files are already up to date!");
     return;
   }
@@ -62,7 +62,7 @@ export const run = async (rootArgs: RootArgs) => {
   if (!filesync.wasEmpty) {
     // the directory wasn't empty, so we should confirm before pulling
     println2`{bold The following changes will be made to your local filesystem}`;
-    fileHashes.latestOriginToLocalChanges.printChangesToMake();
+    fileHashes.gadgetFromLocal.printChangesToMake();
 
     const yes = await confirm({ message: "Are you sure you want to make these changes?" });
     if (!yes) {
@@ -79,13 +79,13 @@ export const run = async (rootArgs: RootArgs) => {
 
 export const pull = async (filesync: FileSync, fileHashes: FileHashes) => {
   const { filesVersion, files } = await filesync.getFilesFromGadget({
-    filesVersion: fileHashes.latestFilesVersionFromOrigin,
-    paths: [...fileHashes.latestOriginToLocalChanges.changed, ...fileHashes.latestOriginToLocalChanges.added],
+    filesVersion: fileHashes.gadgetFilesVersion,
+    paths: [...fileHashes.gadgetFromLocal.changed, ...fileHashes.gadgetFromLocal.added],
   });
 
   await filesync.writeChangesToLocalFilesystem({
     filesVersion,
     write: files,
-    delete: fileHashes.latestOriginToLocalChanges.deleted,
+    delete: fileHashes.gadgetFromLocal.deleted,
   });
 };

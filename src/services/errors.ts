@@ -15,7 +15,7 @@ import { compact, uniq } from "./collections.js";
 import { config, env } from "./config.js";
 import type { Payload } from "./edit-graphql.js";
 import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors } from "./is.js";
-import { sprintln2 } from "./output.js";
+import { sprintln2 } from "./print.js";
 import type { User } from "./user.js";
 
 let app: App | undefined;

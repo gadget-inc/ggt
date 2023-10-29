@@ -15,7 +15,7 @@ import { compact, uniq } from "./collections.js";
 import { config, env } from "./config.js";
 import type { Payload } from "./edit-graphql.js";
 import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors } from "./is.js";
-import { sprintln2 } from "./print.js";
+import { sprintlns } from "./print.js";
 import type { User } from "./user.js";
 
 let app: App | undefined;
@@ -230,7 +230,7 @@ export class ClientError extends CLIError {
       const errors = uniq(this.cause.map((x) => x.message));
       if (errors.length > 1) {
         let n = 1;
-        return sprintln2("Gadget responded with multiple errors:").concat(`  ${n++}. ${errors.join(`\n  ${n++}. `)}`);
+        return sprintlns("Gadget responded with multiple errors:").concat(`  ${n++}. ${errors.join(`\n  ${n++}. `)}`);
       } else {
         return dedent`
           Gadget responded with the following error:

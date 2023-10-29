@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
 import ms from "ms";
+import assert from "node:assert";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
@@ -12,6 +13,7 @@ import normalizePath from "normalize-path";
 import pMap from "p-map";
 import pRetry from "p-retry";
 import pluralize from "pluralize";
+import type { Jsonifiable } from "type-fest";
 import { z } from "zod";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
 import type { App } from "./app.js";
@@ -29,7 +31,7 @@ import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
 import { createLogger } from "./log.js";
 import { noop } from "./noop.js";
-import { println, println2, sortByLevenshtein, sprint } from "./print.js";
+import { printTable, println, printlns, sortBySimilarity, sprint } from "./print.js";
 import { PromiseWrapper } from "./promise.js";
 import { select } from "./prompt.js";
 import type { User } from "./user.js";
@@ -105,7 +107,7 @@ export class FileSync {
    * This determines if the filesystem in Gadget is ahead of the
    * filesystem on the local machine.
    */
-  get filesVersion() {
+  get filesVersion(): bigint {
     return BigInt(this._state.filesVersion);
   }
 
@@ -115,7 +117,7 @@ export class FileSync {
    * This is used to determine if any files have changed since the last
    * sync. This does not include the mtime of files that are ignored.
    */
-  get mtime() {
+  get mtime(): number {
     return this._state.mtime;
   }
 
@@ -189,7 +191,7 @@ export class FileSync {
       // either they misspelled it or they don't have access to it
       // anymore, suggest some apps that are similar to the one they
       // specified
-      const similarAppSlugs = sortByLevenshtein(
+      const similarAppSlugs = sortBySimilarity(
         appSlug,
         apps.map((app) => app.slug),
       ).slice(0, 5);
@@ -284,7 +286,17 @@ export class FileSync {
    * @see https://www.npmjs.com/package/normalize-path
    */
   normalize(filepath: string, isDirectory: boolean): string {
-    return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath) + (isDirectory ? "/" : "");
+    if (path.isAbsolute(filepath)) {
+      filepath = this.relative(filepath);
+    }
+
+    filepath = normalizePath(filepath);
+
+    if (isDirectory) {
+      filepath += "/";
+    }
+
+    return filepath;
   }
 
   /**
@@ -329,8 +341,10 @@ export class FileSync {
    * directory will be yielded.
    */
   async *walkDir({ dir = this.dir, skipIgnored = true } = {}): AsyncGenerator<[absolutePath: string, entry: Stats]> {
-    // track whether the directory has any entries (ignored entries don't count)
-    let hasEntries = false;
+    const stats = await fs.stat(dir);
+    assert(stats.isDirectory(), `expected ${dir} to be a directory`);
+
+    yield [`${dir}/`, stats];
 
     for await (const entry of await fs.opendir(dir)) {
       const filepath = path.join(dir, entry.name);
@@ -338,18 +352,11 @@ export class FileSync {
         continue;
       }
 
-      hasEntries = true;
-
       if (entry.isDirectory()) {
         yield* this.walkDir({ dir: filepath, skipIgnored });
       } else if (entry.isFile()) {
         yield [filepath, await fs.stat(filepath)];
       }
-    }
-
-    if (!hasEntries) {
-      // if the directory is empty, or only contains ignored entries, yield it as a directory
-      yield [`${dir}/`, await fs.stat(dir)];
     }
   }
 
@@ -358,7 +365,7 @@ export class FileSync {
     write: Iterable<File>;
     delete: Iterable<string>;
     force?: boolean;
-  }): Promise<FileChanges> {
+  }): Promise<ChangedFiles> {
     const filesVersion = BigInt(changes.filesVersion);
     const added: string[] = [];
     const changed: string[] = [];
@@ -421,13 +428,13 @@ export class FileSync {
 
     this._save();
 
-    const paths = new FileChanges(added, changed, Array.from(changes.delete));
+    const paths = new ChangedFiles(added, changed, Array.from(changes.delete));
     log.info("wrote", { ...this._state, paths });
 
     return paths;
   }
 
-  async sendChangesToGadget(changes: { changed: Iterable<File>; deleted: Iterable<string> }): Promise<FileChanges> {
+  async sendChangesToGadget(changes: { changed: Iterable<File>; deleted: Iterable<string> }): Promise<ChangedFiles> {
     const { publishFileSyncEvents } = await this._editGraphQL.query({
       query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
@@ -442,7 +449,7 @@ export class FileSync {
     this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
     this._save();
 
-    return new FileChanges([], mapValues(changes.changed, "path"), changes.deleted);
+    return new ChangedFiles([], mapValues(changes.changed, "path"), changes.deleted);
   }
 
   async getFilesFromGadget({
@@ -506,12 +513,108 @@ export class FileSync {
   /**
    * Synchronously writes {@linkcode _state} to `.gadget/sync.json`.
    */
-  private _save() {
+  private _save(): void {
     fs.outputJSONSync(this.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
   }
 }
 
-export class FileChanges {
+export class FilesToChange {
+  readonly add: string[] = [];
+  readonly change: string[] = [];
+  readonly delete: string[] = [];
+
+  /**
+   * changed: files that are in both target and source, but have different hashes
+   * added: files that are in source but not in target
+   * deleted: files that are in target but not in source
+   */
+  constructor({ from, to }: { from: Hashes; to: Hashes }) {
+    const sourcePaths = Object.keys(from);
+
+    for (const [targetPath, targetHash] of Object.entries(to)) {
+      const sourceHash = from[targetPath];
+      if (!sourceHash) {
+        if (!targetPath.endsWith("/") || !sourcePaths.some((sourcePath) => sourcePath.startsWith(targetPath))) {
+          // targetPath is a file and it doesn't exist in source OR
+          // targetPath is a directory and source doesn't have any
+          // existing files inside it, therefor the targetPath has been
+          // deleted
+          this.delete.push(targetPath);
+        }
+      } else if (sourceHash !== targetHash) {
+        // the file/directory exists in target, but has a different
+        // hash, so it's been changed
+        this.change.push(targetPath);
+      }
+    }
+
+    for (const sourcePath of sourcePaths) {
+      if (!to[sourcePath]) {
+        // the source's file or directory doesn't exist in target, so
+        // it's been added
+        this.add.push(sourcePath);
+      }
+    }
+  }
+
+  get length(): number {
+    return this.add.length + this.change.length + this.delete.length;
+  }
+
+  longestFilePath(): number {
+    return Math.max(
+      ...this.add
+        .concat(this.change)
+        .concat(this.delete)
+        .map((path) => path.length),
+    );
+  }
+
+  sortedTypes(): (readonly [string, "added" | "changed" | "deleted"])[] {
+    const paths = [];
+    paths.push(...this.add.map((p) => [p, "added"] as const));
+    paths.push(...this.change.map((p) => [p, "changed"] as const));
+    paths.push(...this.delete.map((p) => [p, "deleted"] as const));
+    return paths.sort(([a], [b]) => a.localeCompare(b));
+  }
+
+  /**
+   * Prints the changes that will be made.
+   */
+  print(): void {
+    const longestFilePath = this.longestFilePath();
+
+    for (const [filepath, type] of this.sortedTypes()) {
+      switch (type) {
+        case "added":
+          println`{green +   ${filepath.padEnd(longestFilePath)}   add}`;
+          break;
+        case "changed":
+          println`{yellow +-  ${filepath.padEnd(longestFilePath)}   change}`;
+          break;
+        case "deleted":
+          println`{red -   ${filepath.padEnd(longestFilePath)}   delete}`;
+          break;
+      }
+    }
+
+    const nFiles = pluralize("file", this.length, true);
+
+    printlns`
+    {gray ${nFiles} in total. ${this.add.length} to add, ${this.change.length} to change, ${this.delete.length} to delete.}
+  `;
+  }
+
+  toJSON(): Jsonifiable {
+    return {
+      add: this.add,
+      change: this.change,
+      delete: this.delete,
+    };
+  }
+}
+
+export class ChangedFiles {
   readonly added: string[];
   readonly changed: string[];
   readonly deleted: string[];
@@ -522,7 +625,7 @@ export class FileChanges {
     this.deleted = Array.from(deleted);
   }
 
-  get length() {
+  get length(): number {
     return this.added.length + this.changed.length + this.deleted.length;
   }
 
@@ -532,18 +635,18 @@ export class FileChanges {
    * deleted: files that are in target but not in source
    */
   static fromFileHashes({
-    source,
-    target,
+    from: source,
+    to: target,
   }: {
     /**
      * The hashes of the files in the source filesystem.
      */
-    source: Hashes;
+    from: Hashes;
     /**
      * The hashes of the files in the target filesystem.
      */
-    target: Hashes;
-  }): FileChanges {
+    to: Hashes;
+  }): ChangedFiles {
     const changed: string[] = [];
     const added: string[] = [];
     const deleted: string[] = [];
@@ -575,10 +678,10 @@ export class FileChanges {
       }
     }
 
-    return new FileChanges(added, changed, deleted);
+    return new ChangedFiles(added, changed, deleted);
   }
 
-  longestFilePath() {
+  longestFilePath(): number {
     return Math.max(
       ...this.added
         .concat(this.changed)
@@ -587,8 +690,8 @@ export class FileChanges {
     );
   }
 
-  sortedTypes() {
-    const paths: (readonly [string, "added" | "changed" | "deleted"])[] = [];
+  sortedTypes(): (readonly [string, "added" | "changed" | "deleted"])[] {
+    const paths = [];
     paths.push(...this.added.map((p) => [p, "added"] as const));
     paths.push(...this.changed.map((p) => [p, "changed"] as const));
     paths.push(...this.deleted.map((p) => [p, "deleted"] as const));
@@ -598,7 +701,7 @@ export class FileChanges {
   /**
    * Prints the changes that will be made.
    */
-  printChangesToMake() {
+  print(): void {
     const longestFilePath = this.longestFilePath();
 
     for (const [filepath, type] of this.sortedTypes()) {
@@ -617,8 +720,7 @@ export class FileChanges {
 
     const nFiles = pluralize("file", this.length, true);
 
-    println();
-    println2`
+    printlns`
     {gray ${nFiles} in total. ${this.added.length} to add, ${this.changed.length} to change, ${this.deleted.length} to delete.}
   `;
   }
@@ -626,7 +728,7 @@ export class FileChanges {
   /**
    * Prints the changes that were made.
    */
-  printChangesMade() {
+  printChangesMade(): void {
     const longestFilePath = this.longestFilePath();
 
     for (const [filepath, type] of this.sortedTypes()) {
@@ -645,26 +747,25 @@ export class FileChanges {
 
     const nFiles = pluralize("file", this.length, true);
 
-    println();
-    println2`
+    printlns`
     {gray ${nFiles} in total. ${this.added.length} added, ${this.changed.length} changed, ${this.deleted.length} deleted.}
   `;
   }
 
-  conflictsWith(them: FileChanges): FileConflicts {
+  conflictsWith(them: ChangedFiles): FileConflicts {
     return new FileConflicts(this, them);
   }
 
-  toJSON() {
+  toJSON(): Jsonifiable {
     return {
-      added: this.added,
-      changed: this.changed,
-      deleted: this.deleted,
+      add: this.added,
+      change: this.changed,
+      delete: this.deleted,
     };
   }
 }
 
-class FileConflicts {
+export class FileConflicts {
   readonly youAddedTheyAdded: string[];
   readonly youAddedTheyChanged: string[];
   readonly youAddedTheyDeleted: string[];
@@ -677,8 +778,8 @@ class FileConflicts {
   readonly youDeletedTheyChanged: string[];
 
   constructor(
-    readonly you: FileChanges,
-    readonly they: FileChanges,
+    readonly you: ChangedFiles,
+    readonly they: ChangedFiles,
   ) {
     this.youAddedTheyAdded = you.added.filter((path) => they.added.includes(path));
     this.youAddedTheyChanged = you.added.filter((path) => they.changed.includes(path));
@@ -692,7 +793,7 @@ class FileConflicts {
     this.youDeletedTheyChanged = you.deleted.filter((path) => they.changed.includes(path));
   }
 
-  get length() {
+  get length(): number {
     return (
       this.youAddedTheyAdded.length +
       this.youAddedTheyChanged.length +
@@ -705,7 +806,7 @@ class FileConflicts {
     );
   }
 
-  longestFilePath() {
+  longestFilePath(): number {
     return Math.max(
       ...this.youAddedTheyAdded
         .concat(this.youAddedTheyChanged)
@@ -719,21 +820,20 @@ class FileConflicts {
     );
   }
 
-  sortedTypes() {
-    const paths: (readonly [
-      string,
-      (
-        | "youAddedTheyAdded"
-        | "youAddedTheyChanged"
-        | "youAddedTheyDeleted"
-        | "youChangedTheyAdded"
-        | "youChangedTheyChanged"
-        | "youChangedTheyDeleted"
-        | "youDeletedTheyAdded"
-        | "youDeletedTheyChanged"
-      ),
-    ])[] = [];
-
+  sortedTypes(): (readonly [
+    string,
+    (
+      | "youAddedTheyAdded"
+      | "youAddedTheyChanged"
+      | "youAddedTheyDeleted"
+      | "youChangedTheyAdded"
+      | "youChangedTheyChanged"
+      | "youChangedTheyDeleted"
+      | "youDeletedTheyAdded"
+      | "youDeletedTheyChanged"
+    ),
+  ])[] {
+    const paths = [];
     paths.push(...this.youAddedTheyAdded.map((p) => [p, "youAddedTheyAdded"] as const));
     paths.push(...this.youAddedTheyChanged.map((p) => [p, "youAddedTheyChanged"] as const));
     paths.push(...this.youAddedTheyDeleted.map((p) => [p, "youAddedTheyDeleted"] as const));
@@ -742,110 +842,39 @@ class FileConflicts {
     paths.push(...this.youChangedTheyDeleted.map((p) => [p, "youChangedTheyDeleted"] as const));
     paths.push(...this.youDeletedTheyAdded.map((p) => [p, "youDeletedTheyAdded"] as const));
     paths.push(...this.youDeletedTheyChanged.map((p) => [p, "youDeletedTheyChanged"] as const));
-
     return paths.sort(([a], [b]) => a.localeCompare(b));
   }
 
-  print() {
+  print(): void {
     const longestFilePath = this.longestFilePath();
-
-    // println2`{bold The following conflicts must be resolved before you can push your changes to Gadget}`;
-    // const table = new CliTable3({
-    //   head: ["Path", "You", "Gadget"],
-    //   style: { head: [], border: [] },
-    //   chars: {
-    //     "bottom-left": "",
-    //     "bottom-right": "",
-    //     "top-left": "",
-    //     "top-right": "",
-    //     middle: "",
-    //     right: "",
-    //     "bottom-mid": "",
-    //     "left-mid": "",
-    //     "mid-mid": "",
-    //     "right-mid": "",
-    //     "top-mid": "",
-    //     bottom: "",
-    //     left: "",
-    //     mid: "-",
-    //     top: "",
-    //   },
-    //   colWidths: [longestFilePath + 2, 10, 10],
-    // });
-
     const added = chalk.green("added");
     const changed = chalk.yellow("changed");
     const deleted = chalk.red("deleted");
 
-    println`${"Path".padEnd(longestFilePath)}  You          Gadget`;
-
-    // eslint-disable-next-line prefer-const
-    for (let [filepath, type] of this.sortedTypes()) {
-      filepath = filepath.padEnd(longestFilePath);
-
-      switch (type) {
-        case "youAddedTheyAdded":
-          println`${filepath}  ${added}        ${added}`;
-          break;
-        case "youAddedTheyChanged":
-          println`${filepath}  ${added}        ${changed}`;
-          break;
-        case "youAddedTheyDeleted":
-          println`${filepath}  ${added}        ${deleted}`;
-          break;
-        case "youChangedTheyAdded":
-          println`${filepath}  ${changed}      ${added}`;
-          break;
-        case "youChangedTheyChanged":
-          println`${filepath}  ${changed}      ${changed}`;
-          break;
-        case "youChangedTheyDeleted":
-          println`${filepath}  ${changed}       ${deleted}`;
-          break;
-        case "youDeletedTheyAdded":
-          println`${filepath}  ${deleted}      ${added}`;
-          break;
-        case "youDeletedTheyChanged":
-          println`${filepath}  ${deleted}      ${changed}`;
-          break;
-      }
-    }
-
-    for (const filepath of this.youAddedTheyAdded.map((path) => path.padEnd(longestFilePath))) {
-      // table.push([filepath, added, added]);
-    }
-
-    for (const filepath of this.youChangedTheyChanged.map((path) => path.padEnd(longestFilePath))) {
-      // println`${you} both changed ${filepath}`;
-      // table.push([filepath, changed, changed]);
-    }
-
-    for (const filepath of this.youAddedTheyChanged.map((path) => path.padEnd(longestFilePath))) {
-      // println`${you} added ${filepath} but ${they} changed it`;
-      // table.push([filepath, added, changed]);
-    }
-
-    for (const filepath of this.youAddedTheyDeleted.map((path) => path.padEnd(longestFilePath))) {
-      // println`${you} added ${filepath} but ${they} deleted it`;
-      // table.push([filepath, added, deleted]);
-    }
-
-    for (const filepath of this.youChangedTheyDeleted.map((path) => path.padEnd(longestFilePath))) {
-      // println`${you} changed ${filepath} but ${they} deleted it`;
-      // table.push([filepath, changed, deleted]);
-    }
-
-    for (const filepath of this.youDeletedTheyAdded.map((path) => path.padEnd(longestFilePath))) {
-      // println`${you} deleted ${filepath} but ${they} added it`;
-      // table.push([filepath, deleted, added]);
-    }
-
-    for (const filepath of this.youDeletedTheyChanged.map((path) => path.padEnd(longestFilePath))) {
-      // println`${you} deleted ${filepath} but ${they} changed it`;
-      // table.push([filepath, deleted, changed]);
-    }
-
-    // println2(table.toString());
+    printTable({
+      headers: ["", "  You", "Gadget"],
+      rows: this.sortedTypes().map(([filepath, type]) => {
+        filepath = filepath.padEnd(longestFilePath);
+        switch (type) {
+          case "youAddedTheyAdded":
+            return [filepath, added, added];
+          case "youAddedTheyChanged":
+            return [filepath, added, changed];
+          case "youAddedTheyDeleted":
+            return [filepath, added, deleted];
+          case "youChangedTheyAdded":
+            return [filepath, changed, added];
+          case "youChangedTheyChanged":
+            return [filepath, changed, changed];
+          case "youChangedTheyDeleted":
+            return [filepath, changed, deleted];
+          case "youDeletedTheyAdded":
+            return [filepath, deleted, added];
+          case "youDeletedTheyChanged":
+            return [filepath, deleted, changed];
+        }
+      }),
+    });
   }
 }
 
@@ -854,10 +883,8 @@ const Hashes = z.record(z.string());
 export type Hashes = z.infer<typeof Hashes>;
 
 export class FileHashes {
-  readonly localFromGadget: FileChanges;
-  readonly gadgetFromLocal: FileChanges;
-  readonly localFromFilesVersion: FileChanges;
-  readonly filesVersionFromGadget: FileChanges;
+  readonly gadgetToLocal: FilesToChange;
+  readonly localToGadget: FilesToChange;
 
   /**
    * The changes that were made to get to Gadget's filesystem from the
@@ -865,7 +892,8 @@ export class FileHashes {
    * words, the changes that have been made to Gadget since the last
    * time we synced.
    */
-  readonly gadgetFromFilesVersion: FileChanges;
+  readonly gadgetChanges: ChangedFiles;
+  readonly localChanges: ChangedFiles;
 
   constructor(
     readonly gadgetFilesVersion: bigint,
@@ -873,14 +901,14 @@ export class FileHashes {
     readonly filesVersionHashes: Hashes,
     readonly gadgetHashes: Hashes,
   ) {
-    this.localFromGadget = FileChanges.fromFileHashes({ source: this.localHashes, target: this.gadgetHashes });
-    this.gadgetFromLocal = FileChanges.fromFileHashes({ source: this.gadgetHashes, target: this.localHashes });
-    this.localFromFilesVersion = FileChanges.fromFileHashes({ source: this.localHashes, target: this.filesVersionHashes });
-    this.filesVersionFromGadget = FileChanges.fromFileHashes({ source: this.filesVersionHashes, target: this.gadgetHashes });
-    this.gadgetFromFilesVersion = FileChanges.fromFileHashes({ source: this.gadgetHashes, target: this.filesVersionHashes });
+    this.gadgetToLocal = new FilesToChange({ from: this.localHashes, to: this.gadgetHashes });
+    this.localToGadget = new FilesToChange({ from: this.gadgetHashes, to: this.localHashes });
+
+    this.localChanges = ChangedFiles.fromFileHashes({ from: this.localHashes, to: this.filesVersionHashes });
+    this.gadgetChanges = ChangedFiles.fromFileHashes({ from: this.gadgetHashes, to: this.filesVersionHashes });
   }
 
-  toJSON() {
+  toJSON(): Jsonifiable {
     return {
       ...this,
       gadgetFilesVersion: String(this.gadgetFilesVersion),
@@ -896,7 +924,7 @@ export const remoteFileHashes = async (
   const { fileHashes } = await graphql.query({
     query: FILE_HASHES_QUERY,
     variables: {
-      filesVersion: filesVersion ? String(filesVersion) : undefined,
+      filesVersion: filesVersion?.toString(),
       ignorePrefixes,
     },
   });

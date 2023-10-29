@@ -19,7 +19,9 @@ notifysend
 oclif
 packagejson
 postbuild
+printlns
 sourcemaps
 sprintln
+sprintlns
 typecheck
 usagestop

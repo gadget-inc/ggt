@@ -2,7 +2,7 @@ import arg from "arg";
 import { AppArg } from "../services/args.js";
 import { FileSync, type FileHashes } from "../services/filesync.js";
 import { createLogger } from "../services/log.js";
-import { println, println2, sprint } from "../services/print.js";
+import { println, printlns, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
 import type { RootArgs } from "./root.js";
@@ -34,9 +34,9 @@ export const run = async (rootArgs: RootArgs) => {
 
   log.info("file hashes", fileHashes);
 
-  if (fileHashes.localFromFilesVersion.length > 0 && !args["--force"]) {
-    println2`{bold The following changes have been made to your local filesystem since the last sync}`;
-    fileHashes.localFromFilesVersion.printChangesMade();
+  if (fileHashes.localChanges.length > 0 && !args["--force"]) {
+    printlns`{bold The following changes have been made to your local filesystem since the last sync}`;
+    fileHashes.localChanges.printChangesMade();
 
     println`
       {bold You must either:}
@@ -54,15 +54,15 @@ export const run = async (rootArgs: RootArgs) => {
     process.exit(1);
   }
 
-  if (fileHashes.gadgetFromLocal.length === 0) {
+  if (fileHashes.localToGadget.length === 0) {
     println("Your local files are already up to date!");
     return;
   }
 
   if (!filesync.wasEmpty) {
     // the directory wasn't empty, so we should confirm before pulling
-    println2`{bold The following changes will be made to your local filesystem}`;
-    fileHashes.gadgetFromLocal.printChangesToMake();
+    printlns`{bold The following changes will be made to your local filesystem}`;
+    fileHashes.localToGadget.print();
 
     const yes = await confirm({ message: "Are you sure you want to make these changes?" });
     if (!yes) {
@@ -80,12 +80,12 @@ export const run = async (rootArgs: RootArgs) => {
 export const pull = async (filesync: FileSync, fileHashes: FileHashes) => {
   const { filesVersion, files } = await filesync.getFilesFromGadget({
     filesVersion: fileHashes.gadgetFilesVersion,
-    paths: [...fileHashes.gadgetFromLocal.changed, ...fileHashes.gadgetFromLocal.added],
+    paths: [...fileHashes.localToGadget.change, ...fileHashes.localToGadget.add],
   });
 
   await filesync.writeChangesToLocalFilesystem({
     filesVersion,
     write: files,
-    delete: fileHashes.gadgetFromLocal.deleted,
+    delete: fileHashes.localToGadget.delete,
   });
 };

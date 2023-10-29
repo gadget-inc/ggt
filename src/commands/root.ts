@@ -4,7 +4,7 @@ import { parseBoolean } from "../services/args.js";
 import { config } from "../services/config.js";
 import { CLIError } from "../services/errors.js";
 import { isNil } from "../services/is.js";
-import { println, sortByLevenshtein, sprint } from "../services/print.js";
+import { println, sortBySimilarity, sprint } from "../services/print.js";
 import { warnIfUpdateAvailable } from "../services/version.js";
 import { availableCommands, type Command } from "./index.js";
 
@@ -66,7 +66,7 @@ export const run = async () => {
   }
 
   if (!availableCommands.includes(command)) {
-    const [closest] = sortByLevenshtein(command, availableCommands);
+    const [closest] = sortBySimilarity(command, availableCommands);
     println`
       Unknown command {yellow ${command}}
 

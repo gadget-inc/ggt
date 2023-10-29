@@ -21,7 +21,7 @@ import { swallowEnoent } from "../services/fs.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";
 import { notify } from "../services/notify.js";
-import { println, println2, sprint } from "../services/print.js";
+import { println, printlns, sprint } from "../services/print.js";
 import { PromiseSignal } from "../services/promise.js";
 import { select } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
@@ -217,14 +217,14 @@ export class Sync {
     if (!this.filesync.wasEmpty) {
       const fileHashes = await this.filesync.fileHashes.unwrap();
 
-      if (fileHashes.localFromFilesVersion.length > 0) {
-        println2`{bold The following changes have been made to your local filesystem since the last sync}`;
-        fileHashes.localFromFilesVersion.printChangesMade();
+      if (fileHashes.localChanges.length > 0) {
+        printlns`{bold The following changes have been made to your local filesystem since the last sync}`;
+        fileHashes.localChanges.printChangesMade();
       }
 
-      if (this.filesync.filesVersion !== fileHashes.gadgetFilesVersion && fileHashes.gadgetFromLocal.length > 0) {
-        println2`{bold The following changes have been made to your Gadget application since the last sync}`;
-        fileHashes.gadgetFromLocal.printChangesMade();
+      if (this.filesync.filesVersion !== fileHashes.gadgetFilesVersion && fileHashes.localToGadget.length > 0) {
+        printlns`{bold The following changes have been made to your Gadget application since the last sync}`;
+        fileHashes.localToGadget.printChangesMade();
       }
 
       const action = await select({
@@ -474,7 +474,7 @@ export class Sync {
     this.status = SyncStatus.RUNNING;
 
     println();
-    println2`
+    printlns`
       {bold ggt v${config.version}}
 
       App         ${this.filesync.app.slug}

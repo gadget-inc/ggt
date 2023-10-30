@@ -52,6 +52,17 @@ EXAMPLE
   TODO"
 `;
 
+exports[`push > has a usage string 1`] = `
+"TODO
+
+USAGE
+  $ ggt push
+
+EXAMPLE
+  $ ggt push
+  TODO"
+`;
+
 exports[`sync > has a usage string 1`] = `
 "Sync your Gadget application's source code to and from
 your local filesystem.

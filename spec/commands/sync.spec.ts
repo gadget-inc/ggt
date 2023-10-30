@@ -307,7 +307,7 @@ describe("Sync", () => {
 
       await init;
 
-      run = sync.run();
+      run = sync.command();
 
       vi.spyOn(sync, "publish");
 
@@ -1279,7 +1279,7 @@ describe("Sync", () => {
 
       await init;
 
-      run = sync.run();
+      run = sync.command();
 
       vi.spyOn(sync.queue, "onIdle");
       vi.spyOn(sync.fileWatcher, "close");

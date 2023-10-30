@@ -16,7 +16,7 @@ beforeEach(async () => {
   vi.spyOn(config, "dataDir", "get").mockReturnValue(path.join(testDir, "data"));
 
   // write to in-memory stdout/stderr instead of real stdout/stderr
-  const { Stream } = await import("../src/services/output.js");
+  const { Stream } = await import("../src/services/print.js");
   Stream.prototype.write = function (data) {
     testStdout.push(data);
     return true;

@@ -251,7 +251,7 @@ export class Sync {
   /**
    * Runs the sync process until it is stopped or an error occurs.
    */
-  async run(): Promise<void> {
+  async command(): Promise<void> {
     let error: unknown;
     const stopped = new PromiseSignal();
 
@@ -516,4 +516,4 @@ export class Sync {
 
 const sync = new Sync();
 export const init = sync.init.bind(sync);
-export const run = sync.run.bind(sync);
+export const command = sync.command.bind(sync);

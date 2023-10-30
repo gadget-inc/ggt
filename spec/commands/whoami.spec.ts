@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { run } from "../../src/commands/whoami.js";
+import { command } from "../../src/commands/whoami.js";
 import * as user from "../../src/services/user.js";
 import { expectStdout } from "../util.js";
 
@@ -7,7 +7,7 @@ describe("whoami", () => {
   it("outputs the current user", async () => {
     vi.spyOn(user, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
 
-    await run();
+    await command();
 
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
@@ -19,7 +19,7 @@ describe("whoami", () => {
   it("outputs only the email if the current user's name is missing", async () => {
     vi.spyOn(user, "getUser").mockResolvedValue({ id: 1, email: "test@example.com" });
 
-    await run();
+    await command();
 
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
@@ -31,7 +31,7 @@ describe("whoami", () => {
   it("outputs 'not logged in' if the current user is undefined", async () => {
     vi.spyOn(user, "getUser").mockResolvedValue(undefined);
 
-    await run();
+    await command();
 
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`

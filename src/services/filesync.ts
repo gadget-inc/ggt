@@ -514,13 +514,13 @@ export class FileSync {
      * The changes that have been made to the local filesystem since the
      * last time we synced.
      */
-    localChanges: ChangedFiles;
+    localChanges: ChangedHashes;
 
     /**
      * The changes that have been made to Gadget since the last time we
      * synced.
      */
-    gadgetChanges: ChangedFiles;
+    gadgetChanges: ChangedHashes;
 
     /**
      * The files that need to be changed on the local filesystem to match
@@ -542,8 +542,8 @@ export class FileSync {
 
     return {
       gadgetFilesVersion: BigInt(gadgetFilesVersion),
-      localChanges: new ChangedFiles({ from: localHashes, to: filesVersionHashes }),
-      gadgetChanges: new ChangedFiles({ from: gadgetHashes, to: filesVersionHashes }),
+      localChanges: new ChangedHashes({ from: localHashes, to: filesVersionHashes }),
+      gadgetChanges: new ChangedHashes({ from: gadgetHashes, to: filesVersionHashes }),
 
       localToGadget: new FilesToChange({ from: localHashes, to: gadgetHashes }),
       gadgetToLocal: new FilesToChange({ from: gadgetHashes, to: localHashes }),
@@ -654,44 +654,10 @@ export class ChangedFiles {
   readonly changed: string[];
   readonly deleted: string[];
 
-  constructor(options: { from: Hashes; to: Hashes } | { added: Iterable<string>; changed: Iterable<string>; deleted: Iterable<string> }) {
-    if ("added" in options) {
-      this.added = Array.from(options.added);
-      this.changed = Array.from(options.changed);
-      this.deleted = Array.from(options.deleted);
-      return;
-    }
-
-    this.changed = [];
-    this.added = [];
-    this.deleted = [];
-
-    const fromPaths = Object.keys(options.from);
-
-    for (const [toPath, toHash] of Object.entries(options.to)) {
-      const fromHash = options.from[toPath];
-      if (!fromHash) {
-        if (!toPath.endsWith("/") || !fromPaths.some((sourcePath) => sourcePath.startsWith(toPath))) {
-          // targetPath is a file and it doesn't exist in source OR
-          // targetPath is a directory and source doesn't have any
-          // existing files inside it, therefor the targetPath has been
-          // deleted
-          this.deleted.push(toPath);
-        }
-      } else if (fromHash !== toHash) {
-        // the file/directory exists in target, but has a different
-        // hash, so it's been changed
-        this.changed.push(toPath);
-      }
-    }
-
-    for (const sourcePath of fromPaths) {
-      if (!options.to[sourcePath]) {
-        // the source's file or directory doesn't exist in target, so
-        // it's been added
-        this.added.push(sourcePath);
-      }
-    }
+  constructor({ added, changed, deleted }: { added: Iterable<string>; changed: Iterable<string>; deleted: Iterable<string> }) {
+    this.added = Array.from(added);
+    this.changed = Array.from(changed);
+    this.deleted = Array.from(deleted);
   }
 
   get length(): number {
@@ -751,6 +717,48 @@ export class ChangedFiles {
   }
 }
 
+export class ChangedHashes extends ChangedFiles {
+  readonly from: Hashes;
+  readonly to: Hashes;
+
+  constructor({ from, to }: { from: Hashes; to: Hashes }) {
+    const changed = [];
+    const added = [];
+    const deleted = [];
+
+    const fromPaths = Object.keys(from);
+
+    for (const [toPath, toHash] of Object.entries(to)) {
+      const fromHash = from[toPath];
+      if (!fromHash) {
+        if (!toPath.endsWith("/") || !fromPaths.some((sourcePath) => sourcePath.startsWith(toPath))) {
+          // targetPath is a file and it doesn't exist in source OR
+          // targetPath is a directory and source doesn't have any
+          // existing files inside it, therefor the targetPath has been
+          // deleted
+          deleted.push(toPath);
+        }
+      } else if (fromHash !== toHash) {
+        // the file/directory exists in target, but has a different
+        // hash, so it's been changed
+        changed.push(toPath);
+      }
+    }
+
+    for (const sourcePath of fromPaths) {
+      if (!to[sourcePath]) {
+        // the source's file or directory doesn't exist in target, so
+        // it's been added
+        added.push(sourcePath);
+      }
+    }
+
+    super({ added, changed, deleted });
+    this.from = from;
+    this.to = to;
+  }
+}
+
 export class FileConflicts {
   readonly youAddedTheyAdded: string[];
   readonly youAddedTheyChanged: string[];
@@ -764,15 +772,17 @@ export class FileConflicts {
   readonly youDeletedTheyChanged: string[];
 
   constructor(
-    readonly you: ChangedFiles,
-    readonly they: ChangedFiles,
+    readonly you: ChangedHashes,
+    readonly they: ChangedHashes,
   ) {
-    this.youAddedTheyAdded = you.added.filter((path) => they.added.includes(path));
-    this.youAddedTheyChanged = you.added.filter((path) => they.changed.includes(path));
+    const hashesAreDifferent = (path: string): boolean => you.to[path] !== they.to[path];
+
+    this.youAddedTheyAdded = you.added.filter((path) => they.added.includes(path) && hashesAreDifferent(path));
+    this.youAddedTheyChanged = you.added.filter((path) => they.changed.includes(path) && hashesAreDifferent(path));
     this.youAddedTheyDeleted = you.added.filter((path) => they.deleted.includes(path));
 
-    this.youChangedTheyAdded = you.changed.filter((path) => they.added.includes(path));
-    this.youChangedTheyChanged = you.changed.filter((path) => they.changed.includes(path));
+    this.youChangedTheyAdded = you.changed.filter((path) => they.added.includes(path) && hashesAreDifferent(path));
+    this.youChangedTheyChanged = you.changed.filter((path) => they.changed.includes(path) && hashesAreDifferent(path));
     this.youChangedTheyDeleted = you.changed.filter((path) => they.deleted.includes(path));
 
     this.youDeletedTheyAdded = you.deleted.filter((path) => they.added.includes(path));

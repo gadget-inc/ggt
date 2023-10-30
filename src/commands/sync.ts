@@ -222,9 +222,9 @@ export class Sync {
         fileHashes.localChanges.printChangesMade();
       }
 
-      if (this.filesync.filesVersion !== fileHashes.gadgetFilesVersion && fileHashes.localToGadget.length > 0) {
+      if (this.filesync.filesVersion !== fileHashes.gadgetFilesVersion && fileHashes.gadgetToLocal.length > 0) {
         printlns`{bold The following changes have been made to your Gadget application since the last sync}`;
-        fileHashes.localToGadget.printChangesMade();
+        fileHashes.gadgetToLocal.printChangesMade();
       }
 
       const action = await select({
@@ -238,7 +238,7 @@ export class Sync {
           break;
         }
         case Action.PULL: {
-          await pull(this.filesync, fileHashes);
+          await pull({ filesync: this.filesync, gadgetToLocal: fileHashes });
           break;
         }
         case Action.CANCEL: {
@@ -341,15 +341,15 @@ export class Sync {
             }
           }
 
-          const changes = await this.filesync.writeChangesToLocalFilesystem({
+          const changes = await this.filesync.changeLocalFilesystem({
             filesVersion,
-            write: changed,
+            files: changed,
             delete: deleted,
           });
 
           if (changes.length > 0) {
             println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
-            changes.printChangesMade();
+            changes.print();
 
             if (changed.some((change) => change.path === "yarn.lock")) {
               await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(noop);
@@ -396,7 +396,7 @@ export class Sync {
 
         const changes = await this.filesync.sendChangesToGadget({ changed, deleted });
         println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
-        changes.printChangesMade();
+        changes.print();
       });
     });
 

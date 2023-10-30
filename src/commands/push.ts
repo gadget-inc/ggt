@@ -30,24 +30,33 @@ export const run: Run = async (rootArgs) => {
   const args = arg(argSpec, { argv: rootArgs._ });
   const user = await getUserOrLogin();
   const filesync = await FileSync.init(user, { dir: args._[0], app: args["--app"], force: args["--force"] });
-  const { gadgetFilesVersion, gadgetToLocal, gadgetChanges, localChanges, ...rest } = await filesync.fileHashes.unwrap();
-  fs.outputJsonSync("tmp/push.json", { gadgetToLocal, gadgetChanges, ...rest }, { spaces: 2 });
+  const { localChanges, gadgetChanges, localToGadget: gadgetToLocal } = await filesync.changes();
 
-  if (gadgetToLocal.length === 0) {
-    println("Your Gadget files are already up to date!");
+  if (localChanges.length === 0) {
+    println("You don't have any changes to push to Gadget.");
     return;
   }
 
-  if (filesync.filesVersion !== gadgetFilesVersion) {
-    // we don't have the latest changes from Gadget, so make sure the
-    // files that have been changed locally don't conflict with the
-    // changes that have been made on Gadget
-    const conflicts = new FileConflicts(localChanges, gadgetChanges);
-    if (conflicts.length > 0 && !args["--force"]) {
-      printlns`{bold You have conflicting changes with Gadget}`;
-      conflicts.print();
-      process.exit(1);
-    }
+  // make sure the files that have been changed locally don't conflict
+  // with the changes that have been made on Gadget
+  const conflicts = new FileConflicts(localChanges, gadgetChanges);
+  if (conflicts.length > 0 && !args["--force"]) {
+    printlns`{bold You have conflicting changes with Gadget}`;
+    conflicts.print();
+
+    printlns`
+      {bold You must either}
+
+        Pull the changes from Gadget and resolve the conflicts
+
+            {gray ggt pull}
+
+        Push again with the {bold --force} flag and overwrite Gadget's changes
+
+            {gray ggt push --force}
+    `;
+
+    process.exit(1);
   }
 
   printlns`{bold The following changes will be sent to Gadget}`;
@@ -58,17 +67,17 @@ export const run: Run = async (rootArgs) => {
     return;
   }
 
-  await push({ filesync, localFromGadget: gadgetToLocal });
+  await push({ filesync, gadgetToLocal });
 
   println`
     {green Done!} ✨
   `;
 };
 
-export const push = async ({ filesync, localFromGadget }: { filesync: FileSync; localFromGadget: FilesToChange }): Promise<void> => {
+export const push = async ({ filesync, gadgetToLocal }: { filesync: FileSync; gadgetToLocal: FilesToChange }): Promise<void> => {
   await filesync.sendChangesToGadget({
-    deleted: localFromGadget.delete,
-    changed: await pMap([...localFromGadget.add, ...localFromGadget.change], async (normalizedPath) => {
+    deleted: gadgetToLocal.delete,
+    changed: await pMap([...gadgetToLocal.add, ...gadgetToLocal.change], async (normalizedPath) => {
       const absolutePath = filesync.absolute(normalizedPath);
       const stats = await fs.stat(absolutePath);
 

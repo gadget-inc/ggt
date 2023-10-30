@@ -86,7 +86,7 @@ export const printTable = ({ headers, rows }: { headers: string[]; rows: string[
       border: [], // disable colors for the border
     },
     /**
-     * DEFAULTS:
+     * EXAMPLE:
      *    "top-left": "╔",    top: "═",    "top-mid": "╤",    "top-right": "╗",
      *    "left-mid": "╟",    mid: "─",    "mid-mid": "┼",    "right-mid": "╢",
      *          left: "║",                    middle: "│",          right: "║",
@@ -103,7 +103,7 @@ export const printTable = ({ headers, rows }: { headers: string[]; rows: string[
 
   table.push(...rows);
 
-  println(table.toString());
+  printlns(table.toString());
 };
 
 export const sortBySimilarity = (input: string, options: Iterable<string>): [closest: string, ...sorted: string[]] => {

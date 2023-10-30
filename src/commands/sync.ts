@@ -16,17 +16,14 @@ import { config } from "../services/config.js";
 import { debounce, type DebouncedFunc } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
 import { YarnNotFoundError } from "../services/errors.js";
-import { FileSync, type File } from "../services/filesync.js";
+import { FileConflicts, FileSync, type File } from "../services/filesync.js";
 import { swallowEnoent } from "../services/fs.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";
 import { notify } from "../services/notify.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { PromiseSignal } from "../services/promise.js";
-import { select } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
-import { pull } from "./pull.js";
-import { push } from "./push.js";
 import { type RootArgs } from "./root.js";
 
 export const usage = sprint`
@@ -214,38 +211,69 @@ export class Sync {
       extraIgnorePaths: [".gadget"],
     });
 
-    if (!this.filesync.wasEmpty) {
-      const { gadgetFilesVersion, localChanges } = await this.filesync.changes();
-
-      if (localChanges.length > 0) {
-        printlns`{bold The following changes have been made to your local filesystem since the last sync}`;
-        localChanges.print();
-      }
-
-      if (this.filesync.filesVersion !== gadgetFilesVersion && gadgetToLocal.length > 0) {
-        printlns`{bold The following changes have been made to your Gadget application since the last sync}`;
-        gadgetToLocal.printChangesMade();
-      }
-
-      const action = await select({
-        message: "How do you want to resolve this?",
-        choices: [Action.CANCEL, Action.PUSH, Action.PULL],
-      });
-
-      switch (action) {
-        case Action.PUSH: {
-          await push({ filesync: this.filesync, fileHashes });
-          break;
-        }
-        case Action.PULL: {
-          await pull({ filesync: this.filesync, gadgetToLocal: fileHashes });
-          break;
-        }
-        case Action.CANCEL: {
-          process.exit(0);
-        }
-      }
+    if (this.filesync.wasEmpty) {
+      // if the directory was empty, we don't need to check for changes
+      return;
     }
+
+    const { localChanges, gadgetChanges } = await this.filesync.changes();
+
+    if (localChanges.length === 0) {
+      // if there are no local changes, we don't need to check for changes
+      return;
+    }
+
+    const conflicts = new FileConflicts(localChanges, gadgetChanges);
+    if (conflicts.length > 0 && !this.args["--force"]) {
+      printlns`{bold You have conflicting changes with Gadget}`;
+      conflicts.print();
+      printlns`
+        {bold You must either}
+
+          1. Push with {bold --force} and overwrite Gadget's conflicting changes
+
+             {gray ggt push --force}
+
+          2. Pull with {bold --force} and overwrite your conflicting changes
+
+             {gray ggt pull --force}
+
+          3. Discard your local changes
+
+             {gray ggt reset}
+
+          4. Manually resolve these conflicts and sync again
+      `;
+
+      process.exit(1);
+    }
+
+    // printlns`{bold The following changes have been made to your local filesystem since the last sync}`;
+    // localChanges.print();
+
+    // if (this.filesync.filesVersion !== gadgetFilesVersion && gadgetToLocal.length > 0) {
+    //   printlns`{bold The following changes have been made to your Gadget application since the last sync}`;
+    //   gadgetToLocal.printChangesMade();
+    // }
+
+    // const action = await select({
+    //   message: "How do you want to resolve this?",
+    //   choices: [Action.CANCEL, Action.PUSH, Action.PULL],
+    // });
+
+    // switch (action) {
+    //   case Action.PUSH: {
+    //     await push({ filesync: this.filesync, fileHashes });
+    //     break;
+    //   }
+    //   case Action.PULL: {
+    //     await pull({ filesync: this.filesync, gadgetToLocal: fileHashes });
+    //     break;
+    //   }
+    //   case Action.CANCEL: {
+    //     process.exit(0);
+    //   }
+    // }
   }
 
   /**
@@ -312,7 +340,7 @@ export class Sync {
     const stopReceivingChangesFromGadget = this.filesync.receiveChangesFromGadget({
       onError: (error) => void this.stop(error),
       onChanges: ({ filesVersion, changed, deleted }) => {
-        const receivedPathsFilter = (filepath: string) => {
+        const receivedPathsFilter = (filepath: string): boolean => {
           // we always ignore .gadget/ files so that we don't send
           // local changes to them back to Gadget (all .gadget/ files
           // are managed by gadget), but we still want to receive
@@ -473,7 +501,6 @@ export class Sync {
 
     this.status = SyncStatus.RUNNING;
 
-    println();
     printlns`
       {bold ggt v${config.version}}
 

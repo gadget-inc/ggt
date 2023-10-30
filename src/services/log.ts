@@ -10,14 +10,24 @@ type JsonifiableObject = { [Key in string]?: Jsonifiable } | { toJSON: () => Jso
 let longestName = 0;
 let longestMessage = 0;
 
-export const createLogger = (name: string, fields: JsonifiableObject | (() => JsonifiableObject) = {}) => {
+type Log = (msg: Lowercase<string>, fields?: JsonifiableObject) => void;
+
+interface Logger {
+  dbg: <T>(t: T) => T;
+  debug: Log;
+  info: Log;
+  warn: Log;
+  error: Log;
+}
+
+export const createLogger = (name: string, fields: JsonifiableObject | (() => JsonifiableObject) = {}): Logger => {
   longestName = Math.max(longestName, name.length);
   const baseFields = isFunction(fields) ? fields : () => fields;
 
-  const createLog = (level: "debug" | "info" | "warn" | "error") => {
+  const createLog = (level: "debug" | "info" | "warn" | "error"): Log => {
     const debug = Debug(`ggt:${name}`);
 
-    return (msg: Lowercase<string>, fields?: JsonifiableObject) => {
+    return (msg, fields) => {
       longestMessage = Math.max(longestMessage, msg.length);
       fields = { ...baseFields(), ...fields };
       if ("error" in fields) {
@@ -48,5 +58,20 @@ export const createLogger = (name: string, fields: JsonifiableObject | (() => Js
     info: createLog("info"),
     warn: createLog("warn"),
     error: createLog("error"),
+    dbg(val) {
+      try {
+        // @ts-expect-error does not exist on BigInt
+        BigInt.toJSON = function () {
+          return String(this);
+        };
+
+        // @ts-expect-error not lowercase
+        this.debug("%O", val);
+        return val;
+      } finally {
+        // @ts-expect-error does not exist on BigInt
+        BigInt.toJSON = undefined;
+      }
+    },
   };
 };

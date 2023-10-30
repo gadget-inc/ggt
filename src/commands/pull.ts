@@ -30,30 +30,32 @@ export const command: Command = async (rootArgs) => {
   const { gadgetFilesVersion, gadgetChanges, localChanges } = await filesync.changes();
 
   if (gadgetChanges.length === 0) {
-    println("Your local files are already up to date!");
+    printlns("You already have the latest changes from Gadget.");
     return;
   }
 
   const conflicts = new FileConflicts(localChanges, gadgetChanges);
   if (conflicts.length > 0 && !args["--force"]) {
     printlns`{bold.underline You have conflicting changes with Gadget}`;
+
     conflicts.print();
+
     printlns`
       {bold.underline You must either}
 
-        1. Resolve the conflicts and pull again
-
-        2. Pull with {bold --force} and overwrite your conflicting changes
+        1. Pull with {bold --force} and overwrite your conflicting changes
 
            {gray ggt pull --force}
 
-        2. Reset your local changes and pull again
+        2. Discard your local changes and pull again
 
            {gray ggt reset}
            {gray ggt pull}
+
+        3. Manually resolve the conflicts and try again
     `;
 
-    // TODO: just return 1 here instead of exiting
+    // TODO: just return 1 or throw ExitCode
     process.exit(1);
   }
 

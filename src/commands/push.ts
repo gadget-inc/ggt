@@ -33,7 +33,7 @@ export const command: Command = async (rootArgs) => {
   const { localChanges, gadgetChanges, localToGadget } = await filesync.changes();
 
   if (localChanges.length === 0) {
-    println("You don't have any changes to push to Gadget.");
+    printlns("You don't have any changes to push to Gadget.");
     return;
   }
 
@@ -50,17 +50,17 @@ export const command: Command = async (rootArgs) => {
 
            {gray ggt push --force}
 
-        2. Pull Gadget's conflicting changes and overwrite yours
+        2. Pull with {bold --force} and overwrite your conflicting changes
 
            {gray ggt pull --force}
 
-        3. Manually resolve the conflicts and push again
+        3. Manually resolve the conflicts and try again
     `;
 
     process.exit(1);
   }
 
-  printlns`{bold The following changes will be sent to Gadget}`;
+  printlns`{bold.underline The following changes will be sent to Gadget}`;
   localToGadget.print();
 
   const yes = await confirm({ message: "Are you sure you want to make these changes?" });

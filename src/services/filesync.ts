@@ -542,9 +542,8 @@ export class FileSync {
 
     return {
       gadgetFilesVersion: BigInt(gadgetFilesVersion),
-      localChanges: new ChangedHashes({ from: localHashes, to: filesVersionHashes }),
-      gadgetChanges: new ChangedHashes({ from: gadgetHashes, to: filesVersionHashes }),
-
+      localChanges: new ChangedHashes({ from: filesVersionHashes, to: localHashes }),
+      gadgetChanges: new ChangedHashes({ from: filesVersionHashes, to: gadgetHashes }),
       localToGadget: new FilesToChange({ from: localHashes, to: gadgetHashes }),
       gadgetToLocal: new FilesToChange({ from: gadgetHashes, to: localHashes }),
     };
@@ -619,6 +618,7 @@ export class FilesToChange {
   print(): void {
     const longestFilePath = this.longestFilePath();
 
+    println("");
     for (const [filepath, type] of this.sortedTypes()) {
       switch (type) {
         case "added":
@@ -636,8 +636,8 @@ export class FilesToChange {
     const nFiles = pluralize("file", this.length, true);
 
     printlns`
-    {gray ${nFiles} in total. ${this.add.length} to add, ${this.change.length} to change, ${this.delete.length} to delete.}
-  `;
+      {gray ${nFiles} in total. ${this.add.length} to add, ${this.change.length} to change, ${this.delete.length} to delete.}
+    `;
   }
 
   toJSON(): Jsonifiable {
@@ -721,15 +721,15 @@ export class ChangedHashes extends ChangedFiles {
   readonly from: Hashes;
   readonly to: Hashes;
 
-  constructor({ from, to }: { from: Hashes; to: Hashes }) {
+  constructor({ to, from }: { from: Hashes; to: Hashes }) {
     const changed = [];
     const added = [];
     const deleted = [];
 
-    const fromPaths = Object.keys(from);
+    const fromPaths = Object.keys(to);
 
-    for (const [toPath, toHash] of Object.entries(to)) {
-      const fromHash = from[toPath];
+    for (const [toPath, toHash] of Object.entries(from)) {
+      const fromHash = to[toPath];
       if (!fromHash) {
         if (!toPath.endsWith("/") || !fromPaths.some((sourcePath) => sourcePath.startsWith(toPath))) {
           // targetPath is a file and it doesn't exist in source OR
@@ -746,7 +746,7 @@ export class ChangedHashes extends ChangedFiles {
     }
 
     for (const sourcePath of fromPaths) {
-      if (!to[sourcePath]) {
+      if (!from[sourcePath]) {
         // the source's file or directory doesn't exist in target, so
         // it's been added
         added.push(sourcePath);
@@ -833,7 +833,7 @@ export class FileConflicts {
     const deleted = chalk.red("deleted");
 
     printTable({
-      headers: ["", " You", "Gadget"],
+      headers: ["", "You", "Gadget"],
       rows: this.sortedTypes().map(([filepath, type]) => {
         switch (type) {
           case "youAddedTheyAdded":

@@ -75,7 +75,7 @@ export const println = (template: TemplateStringsArray | string, ...values: unkn
 export const printlns = (template: TemplateStringsArray | string, ...values: unknown[]): void => {
   stdout.write("\n");
   println(template, ...values);
-  stdout.write("\n");
+  // stdout.write("\n");
 };
 
 export const printTable = ({ headers, rows }: { headers: string[]; rows: string[][] }): void => {
@@ -94,9 +94,9 @@ export const printTable = ({ headers, rows }: { headers: string[]; rows: string[
      */
     // prettier-ignore
     chars: {
-    "top-left": "",   top: "",     "top-mid": "",    "top-right": "",
+    "top-left": "",   top: "",     "top-mid": " ",    "top-right": "",
     "left-mid": "",   mid: "",     "mid-mid": "",    "right-mid": "",
-          left: "",                   middle: "  ",          right: "",
+          left: "",                   middle: " ",          right: "",
  "bottom-left": "", bottom: "", "bottom-mid": "", "bottom-right": "",
       },
   });

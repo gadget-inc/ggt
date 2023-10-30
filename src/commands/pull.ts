@@ -35,33 +35,33 @@ export const command: Command = async (rootArgs) => {
   }
 
   const conflicts = new FileConflicts(localChanges, gadgetChanges);
-  if (conflicts.length > 0 && !args["--force"]) {
-    printlns`{bold.underline You have conflicting changes with Gadget}`;
-
+  if (conflicts.length > 0) {
+    printlns`{bold.yellow You have conflicting changes with Gadget}`;
     conflicts.print();
 
-    printlns`
-      {bold.underline You must either}
+    if (!args["--force"]) {
+      printlns`
+        {bold.underline You must either}
 
-        1. Pull with {bold --force} and overwrite your conflicting changes
+          1. Pull with {bold --force} and overwrite your conflicting changes
 
-           {gray ggt pull --force}
+            {gray ggt pull --force}
 
-        2. Discard your local changes and pull again
+          2. Discard your local changes
 
-           {gray ggt reset}
-           {gray ggt pull}
+            {gray ggt reset}
 
-        3. Manually resolve the conflicts and try again
+          3. Manually resolve the conflicts and try again
     `;
 
-    // TODO: just return 1 or throw ExitCode
-    process.exit(1);
+      // TODO: just return 1 or throw ExitCode
+      process.exit(1);
+    }
   }
 
   if (!filesync.wasEmpty) {
     printlns`{bold The following changes will be made to your local filesystem}`;
-    gadgetChanges.print();
+    gadgetChanges.printChanges();
 
     const yes = await confirm({ message: "Are you sure you want to make these changes?" });
     if (!yes) {
@@ -71,9 +71,7 @@ export const command: Command = async (rootArgs) => {
 
   await pull({ filesync, gadgetChanges, gadgetFilesVersion });
 
-  println`
-    {green Done!} ✨
-  `;
+  println`{green Done!} ✨`;
 };
 
 export const pull = async ({

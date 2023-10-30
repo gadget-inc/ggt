@@ -226,7 +226,9 @@ export class Sync {
     const conflicts = new FileConflicts(localChanges, gadgetChanges);
     if (conflicts.length > 0 && !this.args["--force"]) {
       printlns`{bold You have conflicting changes with Gadget}`;
+
       conflicts.print();
+
       printlns`
         {bold You must either}
 
@@ -369,15 +371,10 @@ export class Sync {
             }
           }
 
-          const changes = await this.filesync.changeLocalFilesystem({
-            filesVersion,
-            files: changed,
-            delete: deleted,
-          });
-
+          const changes = await this.filesync.changeLocalFilesystem({ filesVersion, files: changed, delete: deleted });
           if (changes.length > 0) {
             println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
-            changes.print();
+            changes.printChanged();
 
             if (changed.some((change) => change.path === "yarn.lock")) {
               await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(noop);
@@ -424,7 +421,7 @@ export class Sync {
 
         const changes = await this.filesync.sendChangesToGadget({ changed, deleted });
         println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
-        changes.print();
+        changes.printChanged();
       });
     });
 

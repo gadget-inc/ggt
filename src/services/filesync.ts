@@ -625,7 +625,7 @@ export class FilesToChange {
           println`{green +   ${filepath.padEnd(longestFilePath)}   add}`;
           break;
         case "changed":
-          println`{yellow +-  ${filepath.padEnd(longestFilePath)}   change}`;
+          println`{blue +-  ${filepath.padEnd(longestFilePath)}   change}`;
           break;
         case "deleted":
           println`{red -   ${filepath.padEnd(longestFilePath)}   delete}`;
@@ -649,6 +649,14 @@ export class FilesToChange {
   }
 }
 
+const chalkAdd = chalk.greenBright("add");
+const chalkChange = chalk.blueBright("change");
+const chalkDelete = chalk.redBright("delete");
+
+const chalkAdded = chalk.greenBright("added");
+const chalkChanged = chalk.blueBright("changed");
+const chalkDeleted = chalk.redBright("deleted");
+
 export class ChangedFiles {
   readonly added: string[];
   readonly changed: string[];
@@ -664,42 +672,23 @@ export class ChangedFiles {
     return this.added.length + this.changed.length + this.deleted.length;
   }
 
-  longestFilePath(): number {
-    return Math.max(
-      ...this.added
-        .concat(this.changed)
-        .concat(this.deleted)
-        .map((path) => path.length),
-    );
-  }
-
-  sortedTypes(): (readonly [string, "added" | "changed" | "deleted"])[] {
-    const paths = [];
-    paths.push(...this.added.map((p) => [p, "added"] as const));
-    paths.push(...this.changed.map((p) => [p, "changed"] as const));
-    paths.push(...this.deleted.map((p) => [p, "deleted"] as const));
-    return paths.sort(([a], [b]) => a.localeCompare(b));
-  }
-
   /**
    * Prints the changes that were made.
    */
-  print(): void {
-    const longestFilePath = this.longestFilePath();
-
-    for (const [filepath, type] of this.sortedTypes()) {
-      switch (type) {
-        case "added":
-          println`{green +   ${filepath.padEnd(longestFilePath)}   added}`;
-          break;
-        case "changed":
-          println`{yellow +-  ${filepath.padEnd(longestFilePath)}   changed}`;
-          break;
-        case "deleted":
-          println`{red -   ${filepath.padEnd(longestFilePath)}   deleted}`;
-          break;
-      }
-    }
+  printChanged(): void {
+    printTable({
+      headers: [],
+      rows: this._sortedTypes().map(([filepath, type]) => {
+        switch (type) {
+          case "added":
+            return [filepath, chalkAdded];
+          case "changed":
+            return [filepath, chalkChanged];
+          case "deleted":
+            return [filepath, chalkDeleted];
+        }
+      }),
+    });
 
     const nFiles = pluralize("file", this.length, true);
 
@@ -714,6 +703,14 @@ export class ChangedFiles {
       change: this.changed,
       delete: this.deleted,
     };
+  }
+
+  protected _sortedTypes(): (readonly [string, "added" | "changed" | "deleted"])[] {
+    const paths = [];
+    paths.push(...this.added.map((p) => [p, "added"] as const));
+    paths.push(...this.changed.map((p) => [p, "changed"] as const));
+    paths.push(...this.deleted.map((p) => [p, "deleted"] as const));
+    return paths.sort(([a], [b]) => a.localeCompare(b));
   }
 }
 
@@ -756,6 +753,28 @@ export class ChangedHashes extends ChangedFiles {
     super({ added, changed, deleted });
     this.from = from;
     this.to = to;
+  }
+
+  printChanges(): void {
+    printTable({
+      headers: [],
+      rows: this._sortedTypes().map(([filepath, type]) => {
+        switch (type) {
+          case "added":
+            return [filepath, chalkAdd];
+          case "changed":
+            return [filepath, chalkChange];
+          case "deleted":
+            return [filepath, chalkDelete];
+        }
+      }),
+    });
+
+    const nFiles = pluralize("file", this.length, true);
+
+    printlns`
+      {gray ${nFiles} in total. ${this.added.length} added, ${this.changed.length} changed, ${this.deleted.length} deleted.}
+    `;
   }
 }
 
@@ -828,30 +847,26 @@ export class FileConflicts {
   }
 
   print(): void {
-    const added = chalk.green("added");
-    const changed = chalk.yellow("changed");
-    const deleted = chalk.red("deleted");
-
     printTable({
       headers: ["", "You", "Gadget"],
       rows: this.sortedTypes().map(([filepath, type]) => {
         switch (type) {
           case "youAddedTheyAdded":
-            return [filepath, added, added];
+            return [filepath, chalkAdded, chalkAdded];
           case "youAddedTheyChanged":
-            return [filepath, added, changed];
+            return [filepath, chalkAdded, chalkChanged];
           case "youAddedTheyDeleted":
-            return [filepath, added, deleted];
+            return [filepath, chalkAdded, chalkDeleted];
           case "youChangedTheyAdded":
-            return [filepath, changed, added];
+            return [filepath, chalkChanged, chalkAdded];
           case "youChangedTheyChanged":
-            return [filepath, changed, changed];
+            return [filepath, chalkChanged, chalkChanged];
           case "youChangedTheyDeleted":
-            return [filepath, changed, deleted];
+            return [filepath, chalkChanged, chalkDeleted];
           case "youDeletedTheyAdded":
-            return [filepath, deleted, added];
+            return [filepath, chalkDeleted, chalkAdded];
           case "youDeletedTheyChanged":
-            return [filepath, deleted, changed];
+            return [filepath, chalkDeleted, chalkChanged];
         }
       }),
     });

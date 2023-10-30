@@ -1,4 +1,5 @@
 import enquirer from "enquirer";
+import { println } from "./print.js";
 
 interface Prompt {
   message: string;
@@ -21,6 +22,8 @@ export const select = async <T extends string>(prompt: SelectPrompt<T>): Promise
 };
 
 export const confirm = async (prompt: Prompt): Promise<boolean> => {
+  println("");
+
   const { result } = await enquirer.prompt<{ result: boolean }>({
     type: "confirm",
     name: "result",

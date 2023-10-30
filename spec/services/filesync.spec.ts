@@ -127,7 +127,7 @@ describe("filesync", () => {
 
       // tell filesync to delete foo.js, which should move it to .gadget/backup/foo.js
       // if the backup file is not removed first, this will fail with "Error: Cannot overwrite directory"
-      await filesync.write(1n, [], ["foo.js"]);
+      await filesync.changeLocalFilesystem({ filesVersion: 1n, files: [], delete: ["foo.js"] });
 
       // foo.js should be gone
       await expect(fs.exists(filesync.absolute("foo.js"))).resolves.toBe(false);

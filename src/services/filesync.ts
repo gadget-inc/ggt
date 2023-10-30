@@ -868,7 +868,7 @@ export const gadgetFileHashes = async (
   return [BigInt(fileHashes.filesVersion), Hashes.parse(fileHashes.hashes)];
 };
 
-const fileHashes = async (filesync: FileSync): Promise<Hashes> => {
+export const fileHashes = async (filesync: FileSync): Promise<Hashes> => {
   try {
     // these ignore paths are allowed to be different between ggt and gadget
     filesync.reloadIgnorePaths([".gadget/sync.json", ".gadget/backup"]);

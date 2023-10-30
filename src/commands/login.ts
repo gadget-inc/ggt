@@ -4,7 +4,7 @@ import http, { type Server } from "node:http";
 import open from "open";
 import { config } from "../services/config.js";
 import { createLogger } from "../services/log.js";
-import { println, printlns, sprint } from "../services/print.js";
+import { printlns, sprint } from "../services/print.js";
 import { writeSession } from "../services/session.js";
 import { getUser } from "../services/user.js";
 import type { Command } from "./index.js";
@@ -76,19 +76,19 @@ export const command: Command = async () => {
 
     try {
       await open(url.toString());
-      println`
+      printlns`
         We've opened Gadget's login page using your default browser.
 
-        Please log in and then return to this terminal.\n
+        Please log in and then return to this terminal.
     `;
     } catch (error) {
       log.error("failed to open browser", { error });
-      println`
+      printlns`
         Please open the following URL in your browser and log in:
 
           {gray ${url.toString()}}
 
-        Once logged in, return to this terminal.\n
+        Once logged in, return to this terminal.
       `;
     }
 

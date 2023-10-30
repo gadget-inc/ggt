@@ -2,7 +2,7 @@ import getPort from "get-port";
 import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { run } from "../../src/commands/login.js";
+import { command } from "../../src/commands/login.js";
 import { config } from "../../src/services/config.js";
 import { noop } from "../../src/services/noop.js";
 import { readSession, writeSession } from "../../src/services/session.js";
@@ -11,6 +11,7 @@ import * as user from "../../src/services/user.js";
 import { expectStdout, testUser } from "../util.js";
 
 describe("login", () => {
+  const rootArgs = { _: [] };
   let port: number;
   let server: http.Server;
   let requestListener: http.RequestListener;
@@ -29,7 +30,7 @@ describe("login", () => {
     writeSession(undefined);
     vi.spyOn(user, "getUser").mockResolvedValue(testUser);
 
-    void run();
+    void command(rootArgs);
 
     await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
@@ -41,7 +42,8 @@ describe("login", () => {
       )}`,
     );
     expectStdout().toMatchInlineSnapshot(`
-      "We've opened Gadget's login page using your default browser.
+      "
+      We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
 
@@ -65,9 +67,11 @@ describe("login", () => {
     expect(readSession()).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
-      "We've opened Gadget's login page using your default browser.
+      "
+      We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
+
 
       Hello, Jane Doe (test@example.com)
 
@@ -83,7 +87,7 @@ describe("login", () => {
     vi.spyOn(user, "getUser").mockResolvedValue(testUser);
     open.mockRejectedValue(new Error("boom"));
 
-    void run();
+    void command(rootArgs);
 
     await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
@@ -95,7 +99,8 @@ describe("login", () => {
       )}`,
     );
     expectStdout().toMatchInlineSnapshot(`
-      "Please open the following URL in your browser and log in:
+      "
+      Please open the following URL in your browser and log in:
 
         https://app.ggt.dev/auth/login?returnTo=https%3A%2F%2Fapp.ggt.dev%2Fauth%2Fcli%2Fcallback%3Fport%3D1234
 
@@ -121,11 +126,13 @@ describe("login", () => {
     expect(readSession()).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
-      "Please open the following URL in your browser and log in:
+      "
+      Please open the following URL in your browser and log in:
 
         https://app.ggt.dev/auth/login?returnTo=https%3A%2F%2Fapp.ggt.dev%2Fauth%2Fcli%2Fcallback%3Fport%3D1234
 
       Once logged in, return to this terminal.
+
 
       Hello, Jane Doe (test@example.com)
 
@@ -140,7 +147,7 @@ describe("login", () => {
     writeSession(undefined);
     vi.spyOn(user, "getUser").mockRejectedValue(new Error("boom"));
 
-    void run().catch(noop);
+    void Promise.resolve(command(rootArgs)).catch(noop);
 
     await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
@@ -152,7 +159,8 @@ describe("login", () => {
       )}`,
     );
     expectStdout().toMatchInlineSnapshot(`
-      "We've opened Gadget's login page using your default browser.
+      "
+      We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
 

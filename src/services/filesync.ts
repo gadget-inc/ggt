@@ -544,6 +544,7 @@ export class FileSync {
       gadgetFilesVersion: BigInt(gadgetFilesVersion),
       localChanges: new ChangedFiles({ from: localHashes, to: filesVersionHashes }),
       gadgetChanges: new ChangedFiles({ from: gadgetHashes, to: filesVersionHashes }),
+
       localToGadget: new FilesToChange({ from: localHashes, to: gadgetHashes }),
       gadgetToLocal: new FilesToChange({ from: gadgetHashes, to: localHashes }),
     };
@@ -741,10 +742,6 @@ export class ChangedFiles {
   `;
   }
 
-  conflictsWith(them: ChangedFiles): FileConflicts {
-    return new FileConflicts(this, them);
-  }
-
   toJSON(): Jsonifiable {
     return {
       add: this.added,
@@ -826,7 +823,7 @@ export class FileConflicts {
     const deleted = chalk.red("deleted");
 
     printTable({
-      headers: ["", "  You", "Gadget"],
+      headers: ["", " You", "Gadget"],
       rows: this.sortedTypes().map(([filepath, type]) => {
         switch (type) {
           case "youAddedTheyAdded":

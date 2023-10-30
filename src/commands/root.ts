@@ -6,7 +6,7 @@ import { CLIError } from "../services/errors.js";
 import { isNil } from "../services/is.js";
 import { println, sortBySimilarity, sprint } from "../services/print.js";
 import { warnIfUpdateAvailable } from "../services/version.js";
-import { availableCommands, type Command } from "./index.js";
+import { availableCommands, type CommandModule } from "./index.js";
 
 export const usage = sprint`
     The command-line interface for Gadget
@@ -41,7 +41,7 @@ export const rootArgsSpec = {
 
 export type RootArgs = arg.Result<typeof rootArgsSpec>;
 
-export const run = async () => {
+export const command = async (): Promise<void> => {
   await warnIfUpdateAvailable();
 
   const rootArgs = arg(rootArgsSpec, {
@@ -77,16 +77,16 @@ export const run = async () => {
     process.exit(1);
   }
 
-  const cmd = (await import(`./${command}.js`)) as Command;
+  const mod = (await import(`./${command}.js`)) as CommandModule;
 
   if (rootArgs["--help"]) {
-    println(cmd.usage);
+    println(mod.usage);
     process.exit(0);
   }
 
   try {
-    await cmd.init?.(rootArgs);
-    await cmd.run(rootArgs);
+    await mod.init?.(rootArgs);
+    await mod.command(rootArgs);
   } catch (cause) {
     const error = CLIError.from(cause);
     println(error.render());

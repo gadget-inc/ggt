@@ -1,6 +1,7 @@
 import { getApps } from "../services/app.js";
 import { println, sprint } from "../services/print.js";
 import { getUserOrLogin } from "../services/user.js";
+import type { Command } from "./index.js";
 
 export const usage = sprint`
     List the apps available to the currently logged in user.
@@ -17,7 +18,7 @@ export const usage = sprint`
       test    test.gadget.app
 `;
 
-export const run = async () => {
+export const command: Command = async () => {
   const user = await getUserOrLogin();
 
   const apps = await getApps(user);

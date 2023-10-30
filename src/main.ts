@@ -1,5 +1,5 @@
 import { init } from "@sentry/node";
-import { run } from "./commands/root.js";
+import { command } from "./commands/root.js";
 import { parseBoolean } from "./services/args.js";
 import { config, env } from "./services/config.js";
 
@@ -9,4 +9,4 @@ init({
   enabled: env.productionLike && parseBoolean(process.env["GGT_SENTRY_ENABLED"] ?? "true"),
 });
 
-await run();
+await command();

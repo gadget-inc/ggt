@@ -1,29 +1,29 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { availableCommands, type Command } from "../../src/commands/index.js";
+import { availableCommands, type CommandModule } from "../../src/commands/index.js";
 import { isFunction } from "../../src/services/is.js";
 
 describe.each(availableCommands)("%s", (name) => {
-  let command: Command;
+  let mod: CommandModule;
 
   beforeAll(async () => {
-    command = await import(`../../src/commands/${name}.ts`);
+    mod = await import(`../../src/commands/${name}.ts`);
   });
 
   it("has a usage string", () => {
-    expect(command.usage).toBeDefined();
-    expect(command.usage).toMatchSnapshot();
+    expect(mod.usage).toBeDefined();
+    expect(mod.usage).toMatchSnapshot();
   });
 
-  it("has a run function", () => {
-    expect(command.run).toBeDefined();
-    expect(isFunction(command.run)).toBe(true);
+  it("has a command function", () => {
+    expect(mod.command).toBeDefined();
+    expect(isFunction(mod.command)).toBe(true);
   });
 
   it("may have an init function", () => {
-    if (command.init) {
-      expect(isFunction(command.init)).toBe(true);
+    if (mod.init) {
+      expect(isFunction(mod.init)).toBe(true);
     } else {
-      expect(command.init).toBeUndefined();
+      expect(mod.init).toBeUndefined();
     }
   });
 });

@@ -215,16 +215,16 @@ export class Sync {
     });
 
     if (!this.filesync.wasEmpty) {
-      const fileHashes = await this.filesync.fileHashes.unwrap();
+      const { gadgetFilesVersion, localChanges } = await this.filesync.changes();
 
-      if (fileHashes.localChanges.length > 0) {
+      if (localChanges.length > 0) {
         printlns`{bold The following changes have been made to your local filesystem since the last sync}`;
-        fileHashes.localChanges.printChangesMade();
+        localChanges.print();
       }
 
-      if (this.filesync.filesVersion !== fileHashes.gadgetFilesVersion && fileHashes.gadgetToLocal.length > 0) {
+      if (this.filesync.filesVersion !== gadgetFilesVersion && gadgetToLocal.length > 0) {
         printlns`{bold The following changes have been made to your Gadget application since the last sync}`;
-        fileHashes.gadgetToLocal.printChangesMade();
+        gadgetToLocal.printChangesMade();
       }
 
       const action = await select({

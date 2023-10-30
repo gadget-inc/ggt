@@ -7,7 +7,7 @@ import { FileConflicts, FileSync, type FilesToChange } from "../services/filesyn
 import { println, printlns, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
-import type { Run } from "./index.js";
+import type { Command } from "./index.js";
 
 export const usage = sprint`
     TODO
@@ -26,58 +26,59 @@ const argSpec = {
   "--force": Boolean,
 };
 
-export const run: Run = async (rootArgs) => {
+export const command: Command = async (rootArgs) => {
   const args = arg(argSpec, { argv: rootArgs._ });
   const user = await getUserOrLogin();
   const filesync = await FileSync.init(user, { dir: args._[0], app: args["--app"], force: args["--force"] });
-  const { localChanges, gadgetChanges, localToGadget: gadgetToLocal } = await filesync.changes();
+  const { localChanges, gadgetChanges, localToGadget } = await filesync.changes();
 
   if (localChanges.length === 0) {
     println("You don't have any changes to push to Gadget.");
     return;
   }
 
-  // make sure the files that have been changed locally don't conflict
-  // with the changes that have been made on Gadget
   const conflicts = new FileConflicts(localChanges, gadgetChanges);
   if (conflicts.length > 0 && !args["--force"]) {
-    printlns`{bold You have conflicting changes with Gadget}`;
+    printlns`{bold.underline You have conflicting changes with Gadget}`;
+
     conflicts.print();
 
     printlns`
-      {bold You must either}
+      {bold.underline You must either}
 
-        Pull the changes from Gadget and resolve the conflicts
+        1. Push with {bold --force} and overwrite Gadget's conflicting changes
 
-            {gray ggt pull}
+           {gray ggt push --force}
 
-        Push again with the {bold --force} flag and overwrite Gadget's changes
+        2. Pull Gadget's conflicting changes and overwrite yours
 
-            {gray ggt push --force}
+           {gray ggt pull --force}
+
+        3. Manually resolve the conflicts and push again
     `;
 
     process.exit(1);
   }
 
   printlns`{bold The following changes will be sent to Gadget}`;
-  gadgetToLocal.print();
+  localToGadget.print();
 
   const yes = await confirm({ message: "Are you sure you want to make these changes?" });
   if (!yes) {
     return;
   }
 
-  await push({ filesync, gadgetToLocal });
+  await push({ filesync, localToGadget });
 
   println`
     {green Done!} ✨
   `;
 };
 
-export const push = async ({ filesync, gadgetToLocal }: { filesync: FileSync; gadgetToLocal: FilesToChange }): Promise<void> => {
+export const push = async ({ filesync, localToGadget }: { filesync: FileSync; localToGadget: FilesToChange }): Promise<void> => {
   await filesync.sendChangesToGadget({
-    deleted: gadgetToLocal.delete,
-    changed: await pMap([...gadgetToLocal.add, ...gadgetToLocal.change], async (normalizedPath) => {
+    deleted: localToGadget.delete,
+    changed: await pMap([...localToGadget.add, ...localToGadget.change], async (normalizedPath) => {
       const absolutePath = filesync.absolute(normalizedPath);
       const stats = await fs.stat(absolutePath);
 

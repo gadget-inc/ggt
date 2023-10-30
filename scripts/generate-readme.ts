@@ -6,7 +6,7 @@ import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkToc from "remark-toc";
 import { dedent } from "ts-dedent";
-import { availableCommands, type Command } from "../src/commands/index.js";
+import { availableCommands, type CommandModule } from "../src/commands/index.js";
 import { usage } from "../src/commands/root.js";
 
 let readme = await fs.readFile("README.md", "utf-8");
@@ -28,7 +28,7 @@ readme = readme.replace(
 
 const commands: string[] = [];
 for (const name of availableCommands) {
-  const command = (await import(`../src/commands/${name}.js`)) as Command;
+  const command = (await import(`../src/commands/${name}.js`)) as CommandModule;
   commands.push(dedent`
     ### \`ggt ${name}\`
 

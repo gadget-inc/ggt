@@ -1,5 +1,6 @@
 import { println, sprint } from "../services/print.js";
 import { readSession, writeSession } from "../services/session.js";
+import type { Command } from "./index.js";
 
 export const usage = sprint`
     Log out of your account.
@@ -12,7 +13,7 @@ export const usage = sprint`
       Goodbye
 `;
 
-export const run = () => {
+export const command: Command = () => {
   const token = readSession();
   if (token) {
     writeSession(undefined);

@@ -4,9 +4,10 @@ import http, { type Server } from "node:http";
 import open from "open";
 import { config } from "../services/config.js";
 import { createLogger } from "../services/log.js";
-import { println, sprint } from "../services/print.js";
+import { println, printlns, sprint } from "../services/print.js";
 import { writeSession } from "../services/session.js";
 import { getUser } from "../services/user.js";
+import type { Command } from "./index.js";
 
 export const usage = sprint`
     Log in to your account.
@@ -25,7 +26,7 @@ export const usage = sprint`
 
 const log = createLogger("login");
 
-export const run = async () => {
+export const command: Command = async () => {
   let server: Server | undefined;
 
   try {
@@ -46,11 +47,10 @@ export const run = async () => {
           assert(user, "missing user after successful login");
 
           if (user.name) {
-            println`Hello, ${user.name} {gray (${user.email})}`;
+            printlns`Hello, ${user.name} {gray (${user.email})}`;
           } else {
-            println`Hello, ${user.email}`;
+            printlns`Hello, ${user.email}`;
           }
-          println();
 
           landingPage.searchParams.set("success", "true");
           resolve();

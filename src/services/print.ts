@@ -94,16 +94,16 @@ export const printTable = ({ headers, rows }: { headers: string[]; rows: string[
      */
     // prettier-ignore
     chars: {
-    "top-left": "",   top: "",     "top-mid": "",      "top-right": "",
-    "left-mid": "",   mid: "─",   "mid-mid": "",      "right-mid": "",
-          left: "",                   middle: "",           right: "",
+    "top-left": "",   top: "",     "top-mid": "",    "top-right": "",
+    "left-mid": "",   mid: "",     "mid-mid": "",    "right-mid": "",
+          left: "",                   middle: "  ",          right: "",
  "bottom-left": "", bottom: "", "bottom-mid": "", "bottom-right": "",
       },
   });
 
   table.push(...rows);
 
-  printlns(table.toString());
+  println(table.toString());
 };
 
 export const sortBySimilarity = (input: string, options: Iterable<string>): [closest: string, ...sorted: string[]] => {

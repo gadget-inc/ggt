@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { run } from "../../src/commands/list.js";
+import { command } from "../../src/commands/list.js";
 import * as app from "../../src/services/app.js";
 import * as user from "../../src/services/user.js";
 import { expectStdout, testUser } from "../util.js";
 
 describe("list", () => {
+  const rootArgs = { _: [] };
+
   it("lists apps", async () => {
     vi.spyOn(user, "getUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
     vi.spyOn(app, "getApps").mockResolvedValue([
@@ -12,7 +14,7 @@ describe("list", () => {
       { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, user: testUser },
     ]);
 
-    await run();
+    await command(rootArgs);
 
     expect(user.getUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
@@ -28,7 +30,7 @@ describe("list", () => {
     vi.spyOn(user, "getUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
     vi.spyOn(app, "getApps").mockResolvedValue([]);
 
-    await run();
+    await command(rootArgs);
 
     expect(user.getUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`

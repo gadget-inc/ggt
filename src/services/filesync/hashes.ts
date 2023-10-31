@@ -38,6 +38,40 @@ export class DeleteHash extends Delete {
   }
 }
 
+export const getHashes = async ({
+  filesync,
+}: {
+  filesync: FileSync;
+}): Promise<{
+  /**
+   * The latest filesVersion in Gadget.
+   */
+  gadgetFilesVersion: bigint;
+  filesVersionHashes: Hashes;
+  localHashes: Hashes;
+  gadgetHashes: Hashes;
+}> => {
+  const [localHashes, filesVersionHashes, { gadgetFilesVersion, gadgetHashes }] = await Promise.all([
+    fileHashes(filesync),
+
+    filesync.editGraphQL
+      .query({ query: FILE_HASHES_QUERY, variables: { filesVersion: String(filesync.filesVersion) } })
+      .then((data) => Hashes.parse(data.fileHashes.hashes)),
+
+    filesync.editGraphQL.query({ query: FILE_HASHES_QUERY }).then((data) => ({
+      gadgetFilesVersion: BigInt(data.fileHashes.filesVersion),
+      gadgetHashes: Hashes.parse(data.fileHashes.hashes),
+    })),
+  ]);
+
+  return {
+    gadgetFilesVersion,
+    filesVersionHashes,
+    localHashes,
+    gadgetHashes,
+  };
+};
+
 export const getFileChanges = ({ from, to }: { from: Hashes; to: Hashes }): ChangeHash[] => {
   const added: CreateHash[] = [];
   const changed: UpdateHash[] = [];
@@ -86,38 +120,4 @@ export const getNecessaryFileChanges = ({ changes, existing }: { changes: Change
     }
     return true;
   });
-};
-
-export const hashes = async ({
-  filesync,
-}: {
-  filesync: FileSync;
-}): Promise<{
-  /**
-   * The latest filesVersion in Gadget.
-   */
-  gadgetFilesVersion: bigint;
-  filesVersionHashes: Hashes;
-  localHashes: Hashes;
-  gadgetHashes: Hashes;
-}> => {
-  const [localHashes, filesVersionHashes, { gadgetFilesVersion, gadgetHashes }] = await Promise.all([
-    fileHashes(filesync),
-
-    filesync.editGraphQL
-      .query({ query: FILE_HASHES_QUERY, variables: { filesVersion: String(filesync.filesVersion) } })
-      .then((data) => Hashes.parse(data.fileHashes.hashes)),
-
-    filesync.editGraphQL.query({ query: FILE_HASHES_QUERY }).then((data) => ({
-      gadgetFilesVersion: BigInt(data.fileHashes.filesVersion),
-      gadgetHashes: Hashes.parse(data.fileHashes.hashes),
-    })),
-  ]);
-
-  return {
-    gadgetFilesVersion,
-    filesVersionHashes,
-    localHashes,
-    gadgetHashes,
-  };
 };

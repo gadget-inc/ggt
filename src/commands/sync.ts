@@ -6,7 +6,7 @@ import ms from "ms";
 import path from "node:path";
 import pMap from "p-map";
 import PQueue from "p-queue";
-import { getFileChanges, hashes } from "src/services/filesync/hashes.js";
+import { getFileChanges, getHashes } from "src/services/filesync/hashes.js";
 import Watcher from "watcher";
 import which from "which";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
@@ -165,7 +165,7 @@ export const command: Command = async (rootArgs) => {
     return;
   }
 
-  const { filesVersionHashes, localHashes, gadgetHashes } = await hashes({ filesync });
+  const { filesVersionHashes, localHashes, gadgetHashes } = await getHashes({ filesync });
   const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
   if (localChanges.length === 0) {
     // if there are no local changes, we don't need to check for conflicts

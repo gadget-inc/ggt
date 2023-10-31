@@ -75,11 +75,7 @@ export const command: Command = async (rootArgs) => {
   if (!filesync.wasEmpty) {
     printlns`{bold The following changes will be made to your local filesystem}`;
     printFileChanges({ changes });
-
-    const yes = await confirm({ message: "Are you sure you want to make these changes?" });
-    if (!yes) {
-      return;
-    }
+    await confirm({ message: "Are you sure you want to make these changes?" });
   }
 
   await pull({ filesync, gadgetFilesVersion, changes });
@@ -101,7 +97,7 @@ export const pull = async ({
     paths: changes.filter((change) => change.type !== "delete").map((change) => change.path),
   });
 
-  await filesync.changeLocalFilesystem({
+  await filesync.writeToLocalFilesystem({
     filesVersion: gadgetFilesVersion,
     delete: changes.filter((change) => change.type === "delete").map((change) => change.path),
     files,

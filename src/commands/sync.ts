@@ -6,17 +6,16 @@ import ms from "ms";
 import path from "node:path";
 import pMap from "p-map";
 import PQueue from "p-queue";
-import type { SetRequired } from "type-fest";
 import Watcher from "watcher";
 import which from "which";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
 import { mapValues } from "../services/collections.js";
 import { config } from "../services/config.js";
-import { debounce, type DebouncedFunc } from "../services/debounce.js";
+import { debounce } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
 import { YarnNotFoundError } from "../services/errors.js";
-import { FileConflicts, FileSync, type File } from "../services/filesync.js";
+import { FileSync, getFileChanges, getFileConflicts, printFileChanges, printFileConflicts, type File } from "../services/filesync.js";
 import { swallowEnoent } from "../services/fs.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";
@@ -24,7 +23,7 @@ import { notify } from "../services/notify.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { PromiseSignal } from "../services/promise.js";
 import { getUserOrLogin } from "../services/user.js";
-import { type RootArgs } from "./root.js";
+import type { Command } from "./index.js";
 
 export const usage = sprint`
   Sync your Gadget application's source code to and from
@@ -105,19 +104,6 @@ export const usage = sprint`
     Goodbye!
 `;
 
-export enum SyncStatus {
-  STARTING,
-  RUNNING,
-  STOPPING,
-  STOPPED,
-}
-
-export enum Action {
-  CANCEL = "Cancel (Ctrl+C)",
-  PUSH = "Push local changes to Gadget",
-  PULL = "Pull remote changes from Gadget",
-}
-
 const argSpec = {
   "-a": "--app",
   "--app": AppArg,
@@ -129,107 +115,67 @@ const argSpec = {
   "--file-watch-rename-timeout": Number,
 };
 
-export class Sync {
-  args!: SetRequired<arg.Result<typeof argSpec>, "--file-push-delay">;
-
-  /**
-   * The current status of the sync process.
-   */
-  status = SyncStatus.STARTING;
-
-  /**
-   * A list of filepaths that have changed because we (this ggt process)
-   * modified them. This is used to avoid reacting to filesystem events
-   * that we caused, which would cause an infinite loop.
-   */
-  recentWritesToLocalFilesystem = new Map<string, number>();
-
+/**
+ * Runs the sync process until it is stopped or an error occurs.
+ */
+export const command: Command = async (rootArgs) => {
   /**
    * A FIFO async callback queue that ensures we process file-sync
    * events in the order we receive them.
    */
-  queue = new PQueue({ concurrency: 1 });
+  const queue = new PQueue({ concurrency: 1 });
 
-  /**
-   * Watches the local filesystem for changes.
-   */
-  fileWatcher!: Watcher;
+  const args = defaults(arg(argSpec, { argv: rootArgs._ }), {
+    "--file-push-delay": 100,
+    "--file-watch-debounce": 300,
+    "--file-watch-poll-interval": 3_000,
+    "--file-watch-poll-timeout": 20_000,
+    "--file-watch-rename-timeout": 1_250,
+  });
 
-  /**
-   * Handles writing files to the local filesystem.
-   */
-  filesync!: FileSync;
+  if (!which.sync("yarn", { nothrow: true })) {
+    throw new YarnNotFoundError();
+  }
 
-  /**
-   * A debounced function that enqueue's local file changes to be sent to Gadget.
-   */
-  publish!: DebouncedFunc<() => void>;
+  const user = await getUserOrLogin();
 
-  /**
-   * Gracefully stops the sync.
-   */
-  stop!: (error?: unknown) => Promise<void>;
+  const filesync = await FileSync.init(user, {
+    dir: args._[0],
+    app: args["--app"],
+    force: args["--force"],
+    extraIgnorePaths: [".gadget"],
+  });
 
   /**
    * A logger for the sync command.
    */
-  log = createLogger("sync", () => {
+  const log = createLogger("sync", () => {
     return {
-      app: this.filesync.app.slug,
-      filesVersion: String(this.filesync.filesVersion),
-      mtime: this.filesync.mtime,
+      app: filesync.app.slug,
+      filesVersion: String(filesync.filesVersion),
+      mtime: filesync.mtime,
     };
   });
 
-  /**
-   * Initializes the sync process.
-   * - Ensures the directory exists.
-   * - Ensures the directory is empty or contains a `.gadget/sync.json` file.
-   * - Ensures an app is selected and that it matches the app the directory was previously synced to.
-   * - Ensures yarn v1 is installed.
-   * - Prompts the user how to resolve conflicts if the local filesystem has changed since the last sync.
-   */
-  async init(rootArgs: RootArgs): Promise<void> {
-    this.args = defaults(arg(argSpec, { argv: rootArgs._ }), {
-      "--file-push-delay": 100,
-      "--file-watch-debounce": 300,
-      "--file-watch-poll-interval": 3_000,
-      "--file-watch-poll-timeout": 20_000,
-      "--file-watch-rename-timeout": 1_250,
-    });
+  if (filesync.wasEmpty) {
+    // if the directory was empty, we don't need to check for changes
+    return;
+  }
 
-    if (!which.sync("yarn", { nothrow: true })) {
-      throw new YarnNotFoundError();
-    }
+  const { filesVersionHashes, localHashes, gadgetHashes } = await filesync.hashes();
+  const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
+  if (localChanges.length === 0) {
+    // if there are no local changes, we don't need to check for conflicts
+    return;
+  }
 
-    const user = await getUserOrLogin();
+  const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
+  const conflicts = getFileConflicts({ localChanges, gadgetChanges });
+  if (conflicts.length > 0) {
+    printlns`{bold You have conflicting changes with Gadget}`;
+    printFileConflicts(conflicts);
 
-    this.filesync = await FileSync.init(user, {
-      dir: this.args._[0],
-      app: this.args["--app"],
-      force: this.args["--force"],
-      extraIgnorePaths: [".gadget"],
-    });
-
-    if (this.filesync.wasEmpty) {
-      // if the directory was empty, we don't need to check for changes
-      return;
-    }
-
-    const { localChanges, gadgetChanges } = await this.filesync.hashes();
-
-    if (localChanges.length === 0) {
-      // if there are no local changes, we don't need to check for changes
-      return;
-    }
-
-    const conflicts = new FileConflicts(localChanges, gadgetChanges);
-    if (conflicts.length > 0 && !this.args["--force"]) {
-      printlns`{bold You have conflicting changes with Gadget}`;
-
-      conflicts.print();
-
-      printlns`
+    printlns`
         {bold You must either}
 
           1. Push with {bold --force} and overwrite Gadget's conflicting changes
@@ -247,285 +193,7 @@ export class Sync {
           4. Manually resolve these conflicts and sync again
       `;
 
-      process.exit(1);
-    }
-
-    // printlns`{bold The following changes have been made to your local filesystem since the last sync}`;
-    // localChanges.print();
-
-    // if (this.filesync.filesVersion !== gadgetFilesVersion && gadgetToLocal.length > 0) {
-    //   printlns`{bold The following changes have been made to your Gadget application since the last sync}`;
-    //   gadgetToLocal.printChangesMade();
-    // }
-
-    // const action = await select({
-    //   message: "How do you want to resolve this?",
-    //   choices: [Action.CANCEL, Action.PUSH, Action.PULL],
-    // });
-
-    // switch (action) {
-    //   case Action.PUSH: {
-    //     await push({ filesync: this.filesync, fileHashes });
-    //     break;
-    //   }
-    //   case Action.PULL: {
-    //     await pull({ filesync: this.filesync, gadgetToLocal: fileHashes });
-    //     break;
-    //   }
-    //   case Action.CANCEL: {
-    //     process.exit(0);
-    //   }
-    // }
-  }
-
-  /**
-   * Runs the sync process until it is stopped or an error occurs.
-   */
-  async command(): Promise<void> {
-    let error: unknown;
-    const stopped = new PromiseSignal();
-
-    const clearRecentWritesInterval = setInterval(() => {
-      for (const [path, timestamp] of this.recentWritesToLocalFilesystem) {
-        if (dayjs().isAfter(timestamp + ms("5s"))) {
-          // this change should have been seen by now
-          this.recentWritesToLocalFilesystem.delete(path);
-        }
-      }
-    }, ms("1s")).unref();
-
-    this.stop = async (e?: unknown) => {
-      if (this.status !== SyncStatus.RUNNING) {
-        return;
-      }
-
-      this.status = SyncStatus.STOPPING;
-      error = e;
-
-      this.log.info("stopping", { error });
-
-      try {
-        this.fileWatcher.close();
-        clearInterval(clearRecentWritesInterval);
-        this.publish.flush();
-        stopReceivingChangesFromGadget();
-        await this.queue.onIdle();
-      } finally {
-        this.status = SyncStatus.STOPPED;
-        stopped.resolve();
-        this.log.info("stopped");
-      }
-    };
-
-    for (const signal of ["SIGINT", "SIGTERM"] as const) {
-      process.on(signal, () => {
-        if (this.status !== SyncStatus.RUNNING) {
-          return;
-        }
-
-        println` Stopping... {gray (press Ctrl+C again to force)}`;
-        void this.stop();
-
-        // when ggt is run via npx, and the user presses ctrl+c, npx
-        // sends sigint twice in quick succession. in order to prevent
-        // the second sigint from triggering the force exit listener, we
-        // wait a bit before registering it
-        setTimeout(() => {
-          process.once(signal, () => {
-            println(" Exiting immediately. Note that files may not have finished syncing.");
-            process.exit(1);
-          });
-        }, ms("100ms")).unref();
-      });
-    }
-
-    const stopReceivingChangesFromGadget = this.filesync.receiveChangesFromGadget({
-      onError: (error) => void this.stop(error),
-      onChanges: ({ filesVersion, changed, deleted }) => {
-        const receivedPathsFilter = (filepath: string): boolean => {
-          // we always ignore .gadget/ files so that we don't send
-          // local changes to them back to Gadget (all .gadget/ files
-          // are managed by gadget), but we still want to receive
-          // changes from Gadget to them
-          return filepath.startsWith(".gadget/") || !this.filesync.ignores(filepath);
-        };
-
-        changed = changed.filter((file) => receivedPathsFilter(file.path));
-        deleted = deleted.filter(receivedPathsFilter);
-
-        this._enqueue(async () => {
-          // add all the non-ignored files and directories we're about
-          // to touch to recentRemoteChanges so that we don't send
-          // them back
-          for (const filepath of [...mapValues(changed, "path"), ...deleted]) {
-            if (this.filesync.ignores(filepath)) {
-              continue;
-            }
-
-            this.recentWritesToLocalFilesystem.set(filepath, Date.now());
-
-            let dir = path.dirname(filepath);
-            while (dir !== ".") {
-              this.recentWritesToLocalFilesystem.set(dir + "/", Date.now());
-              dir = path.dirname(dir);
-            }
-          }
-
-          const changes = await this.filesync.changeLocalFilesystem({ filesVersion, files: changed, delete: deleted });
-          if (changes.length > 0) {
-            println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
-            changes.printChanged();
-
-            if (changed.some((change) => change.path === "yarn.lock")) {
-              await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(noop);
-            }
-          }
-        });
-      },
-    });
-
-    this.publish = debounce(this.args["--file-push-delay"], () => {
-      const localFiles = new Map(localFileEventsBuffer.entries());
-      localFileEventsBuffer.clear();
-
-      this._enqueue(async () => {
-        const changed: File[] = [];
-        const deleted: string[] = [];
-
-        await pMap(localFiles, async ([normalizedPath, file]) => {
-          if ("isDeleted" in file) {
-            deleted.push(normalizedPath);
-            return;
-          }
-
-          try {
-            changed.push({
-              path: normalizedPath,
-              oldPath: "oldPath" in file ? file.oldPath : undefined,
-              mode: file.mode,
-              content: file.isDirectory ? "" : await fs.readFile(this.filesync.absolute(normalizedPath), FileSyncEncoding.Base64),
-              encoding: FileSyncEncoding.Base64,
-            });
-          } catch (error) {
-            // a file could have been changed and then deleted before we
-            // process the change event, so the readFile above will
-            // raise an enoent. This is normal operation, so just ignore
-            // this event.
-            swallowEnoent(error);
-          }
-        });
-
-        if (changed.length === 0 && deleted.length === 0) {
-          return;
-        }
-
-        const changes = await this.filesync.sendChangesToGadget({ changed, deleted });
-        println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
-        changes.printChanged();
-      });
-    });
-
-    const localFileEventsBuffer = new Map<
-      string,
-      | { mode: number; isDirectory: boolean }
-      | { isDeleted: true; isDirectory: boolean }
-      | { mode: number; oldPath: string; newPath: string; isDirectory: boolean }
-    >();
-
-    this.fileWatcher = new Watcher(this.filesync.dir, {
-      ignoreInitial: true, // don't emit an event for every watched file on boot
-      ignore: (path: string) => this.filesync.ignores(path),
-      renameDetection: true,
-      recursive: true,
-      debounce: this.args["--file-watch-debounce"],
-      pollingInterval: this.args["--file-watch-poll-interval"],
-      pollingTimeout: this.args["--file-watch-poll-timeout"],
-      renameTimeout: this.args["--file-watch-rename-timeout"],
-    });
-
-    this.fileWatcher.once("error", (error) => void this.stop(error));
-
-    this.fileWatcher.on("all", (event: string, absolutePath: string, renamedPath: string) => {
-      const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
-      const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
-      const normalizedPath = this.filesync.normalize(filepath, isDirectory);
-
-      this.log.debug("file event", {
-        event,
-        path: normalizedPath,
-        isDirectory,
-        recentRemoteChanges: Array.from(this.recentWritesToLocalFilesystem.keys()),
-      });
-
-      if (filepath === this.filesync.absolute(".ignore")) {
-        this.filesync.reloadIgnorePaths();
-      } else if (this.filesync.ignores(filepath)) {
-        return;
-      }
-
-      if (this.recentWritesToLocalFilesystem.delete(normalizedPath)) {
-        return;
-      }
-
-      switch (event) {
-        case "add":
-        case "addDir":
-        case "change": {
-          const stats = fs.statSync(filepath);
-          localFileEventsBuffer.set(normalizedPath, { mode: stats.mode, isDirectory });
-          break;
-        }
-        case "unlink":
-        case "unlinkDir": {
-          localFileEventsBuffer.set(normalizedPath, { isDeleted: true, isDirectory });
-          break;
-        }
-        case "rename":
-        case "renameDir": {
-          const stats = fs.statSync(filepath);
-          localFileEventsBuffer.set(normalizedPath, {
-            oldPath: this.filesync.normalize(absolutePath, isDirectory),
-            newPath: normalizedPath,
-            isDirectory,
-            mode: stats.mode,
-          });
-          break;
-        }
-      }
-
-      this.publish();
-    });
-
-    this.status = SyncStatus.RUNNING;
-
-    printlns`
-      {bold ggt v${config.version}}
-
-      App         ${this.filesync.app.slug}
-      Editor      https://${this.filesync.app.slug}.gadget.app/edit
-      Playground  https://${this.filesync.app.slug}.gadget.app/api/graphql/playground
-      Docs        https://docs.gadget.dev/api/${this.filesync.app.slug}
-
-      {underline Endpoints} ${
-        this.filesync.app.hasSplitEnvironments
-          ? `
-        • https://${this.filesync.app.primaryDomain}
-        • https://${this.filesync.app.slug}--development.gadget.app`
-          : `
-        • https://${this.filesync.app.primaryDomain}`
-      }
-
-      Watching for file changes... {gray Press Ctrl+C to stop}
-    `;
-
-    await stopped;
-
-    if (error) {
-      notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
-      throw error as Error;
-    } else {
-      println("Goodbye!");
-    }
+    process.exit(1);
   }
 
   /**
@@ -533,11 +201,266 @@ export class Sync {
    *
    * @param fn The function to enqueue.
    */
-  private _enqueue(fn: () => Promise<unknown>): void {
-    void this.queue.add(fn).catch(this.stop);
-  }
-}
+  const enqueue = (fn: () => Promise<unknown>): void => {
+    void queue.add(fn).catch(stop);
+  };
 
-const sync = new Sync();
-export const init = sync.init.bind(sync);
-export const command = sync.command.bind(sync);
+  const stopReceivingChangesFromGadget = filesync.receiveChangesFromGadget({
+    onError: (error) => void stop(error),
+    onChange: ({ filesVersion, changed, deleted }) => {
+      const receivedPathsFilter = (filepath: string): boolean => {
+        // filesync.ignores() always ignores .gadget/ files so that we
+        // don't send any changes to them back to Gadget (all .gadget/
+        // files are managed by gadget), but we still want to receive
+        // changes from Gadget to .gadget/ files
+        return filepath.startsWith(".gadget/") || !filesync.ignores(filepath);
+      };
+
+      changed = changed.filter((file) => receivedPathsFilter(file.path));
+      deleted = deleted.filter(receivedPathsFilter);
+
+      enqueue(async () => {
+        // add all the non-ignored files and directories we're about to
+        // touch to recentWritesToLocalFilesystem so that we don't send
+        // them back
+        for (const filepath of [...mapValues(changed, "path"), ...deleted]) {
+          if (filesync.ignores(filepath)) {
+            continue;
+          }
+
+          recentWritesToLocalFilesystem.set(filepath, Date.now());
+
+          let dir = path.dirname(filepath);
+          while (dir !== ".") {
+            recentWritesToLocalFilesystem.set(dir + "/", Date.now());
+            dir = path.dirname(dir);
+          }
+        }
+
+        const changes = await filesync.writeToLocalFilesystem({ filesVersion, files: changed, delete: deleted });
+        if (changes.length > 0) {
+          println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
+          printFileChanges({ changes });
+
+          if (changed.some((change) => change.path === "yarn.lock")) {
+            await execa("yarn", ["install"], { cwd: filesync.dir }).catch(noop);
+          }
+        }
+      });
+    },
+  });
+
+  /**
+   * A debounced function that enqueue's local file changes to be sent to Gadget.
+   */
+  const publish = debounce(args["--file-push-delay"], () => {
+    const localFiles = new Map(localFileEventsBuffer.entries());
+    localFileEventsBuffer.clear();
+
+    enqueue(async () => {
+      const changed: File[] = [];
+      const deleted: string[] = [];
+
+      await pMap(localFiles, async ([normalizedPath, file]) => {
+        if ("isDeleted" in file) {
+          deleted.push(normalizedPath);
+          return;
+        }
+
+        try {
+          changed.push({
+            path: normalizedPath,
+            oldPath: "oldPath" in file ? file.oldPath : undefined,
+            mode: file.mode,
+            content: file.isDirectory ? "" : await fs.readFile(filesync.absolute(normalizedPath), FileSyncEncoding.Base64),
+            encoding: FileSyncEncoding.Base64,
+          });
+        } catch (error) {
+          // a file could have been changed and then deleted before we
+          // process the change event, so the readFile above will
+          // raise an enoent. This is normal operation, so just ignore
+          // this event.
+          swallowEnoent(error);
+        }
+      });
+
+      if (changed.length === 0 && deleted.length === 0) {
+        return;
+      }
+
+      const changes = await filesync.sendToGadget({ changed, deleted });
+      println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
+      printFileChanges({ changes, tense: "past" });
+    });
+  });
+
+  const localFileEventsBuffer = new Map<
+    string,
+    | { mode: number; isDirectory: boolean }
+    | { isDeleted: true; isDirectory: boolean }
+    | { mode: number; oldPath: string; newPath: string; isDirectory: boolean }
+  >();
+
+  /**
+   * Watches the local filesystem for changes.
+   */
+  const fileWatcher = new Watcher(filesync.dir, {
+    ignoreInitial: true, // don't emit an event for every watched file on boot
+    ignore: (path: string) => filesync.ignores(path),
+    renameDetection: true,
+    recursive: true,
+    debounce: args["--file-watch-debounce"],
+    pollingInterval: args["--file-watch-poll-interval"],
+    pollingTimeout: args["--file-watch-poll-timeout"],
+    renameTimeout: args["--file-watch-rename-timeout"],
+  });
+
+  fileWatcher.once("error", (error) => void stop(error));
+
+  fileWatcher.on("all", (event: string, absolutePath: string, renamedPath: string) => {
+    const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
+    const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
+    const normalizedPath = filesync.normalize(filepath, isDirectory);
+
+    log.debug("file event", {
+      event,
+      path: normalizedPath,
+      isDirectory,
+      recentRemoteChanges: Array.from(recentWritesToLocalFilesystem.keys()),
+    });
+
+    if (filepath === filesync.absolute(".ignore")) {
+      filesync.reloadIgnorePaths();
+    } else if (filesync.ignores(filepath)) {
+      return;
+    }
+
+    if (recentWritesToLocalFilesystem.delete(normalizedPath)) {
+      return;
+    }
+
+    switch (event) {
+      case "add":
+      case "addDir":
+      case "change": {
+        const stats = fs.statSync(filepath);
+        localFileEventsBuffer.set(normalizedPath, { mode: stats.mode, isDirectory });
+        break;
+      }
+      case "unlink":
+      case "unlinkDir": {
+        localFileEventsBuffer.set(normalizedPath, { isDeleted: true, isDirectory });
+        break;
+      }
+      case "rename":
+      case "renameDir": {
+        const stats = fs.statSync(filepath);
+        localFileEventsBuffer.set(normalizedPath, {
+          oldPath: filesync.normalize(absolutePath, isDirectory),
+          newPath: normalizedPath,
+          isDirectory,
+          mode: stats.mode,
+        });
+        break;
+      }
+    }
+
+    publish();
+  });
+
+  /**
+   * A list of filepaths that have changed because we (this ggt process)
+   * modified them. This is used to avoid reacting to filesystem events
+   * that we caused, which would cause an infinite loop.
+   */
+  const recentWritesToLocalFilesystem = new Map<string, number>();
+
+  const clearRecentWritesInterval = setInterval(() => {
+    for (const [path, timestamp] of recentWritesToLocalFilesystem) {
+      if (dayjs().isAfter(timestamp + ms("5s"))) {
+        // this change should have been seen by now
+        recentWritesToLocalFilesystem.delete(path);
+      }
+    }
+  }, ms("1s")).unref();
+
+  let error: unknown;
+  const stopped = new PromiseSignal();
+  let stopping = false;
+
+  /**
+   * Gracefully stops the sync.
+   */
+  const stop = async (e?: unknown): Promise<void> => {
+    if (stopping) {
+      return;
+    }
+
+    stopping = true;
+    error = e;
+
+    log.info("stopping", { error });
+
+    try {
+      fileWatcher.close();
+      clearInterval(clearRecentWritesInterval);
+      publish.flush();
+      stopReceivingChangesFromGadget();
+      await queue.onIdle();
+    } finally {
+      stopped.resolve();
+      log.info("stopped");
+    }
+  };
+
+  for (const signal of ["SIGINT", "SIGTERM"] as const) {
+    process.on(signal, () => {
+      if (stopping) {
+        return;
+      }
+
+      println` Stopping... {gray (press Ctrl+C again to force)}`;
+      void stop();
+
+      // when ggt is run via npx, and the user presses ctrl+c, npx
+      // sends sigint twice in quick succession. in order to prevent
+      // the second sigint from triggering the force exit listener, we
+      // wait a bit before registering it
+      setTimeout(() => {
+        process.once(signal, () => {
+          println(" Exiting immediately. Note that files may not have finished syncing.");
+          process.exit(1);
+        });
+      }, ms("100ms")).unref();
+    });
+  }
+
+  printlns`
+      {bold ggt v${config.version}}
+
+      App         ${filesync.app.slug}
+      Editor      https://${filesync.app.slug}.gadget.app/edit
+      Playground  https://${filesync.app.slug}.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/${filesync.app.slug}
+
+      {underline Endpoints} ${
+        filesync.app.hasSplitEnvironments
+          ? `
+        • https://${filesync.app.primaryDomain}
+        • https://${filesync.app.slug}--development.gadget.app`
+          : `
+        • https://${filesync.app.primaryDomain}`
+      }
+
+      Watching for file changes... {gray Press Ctrl+C to stop}
+    `;
+
+  await stopped;
+
+  if (error) {
+    notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
+    throw error as Error;
+  } else {
+    println("Goodbye!");
+  }
+};

@@ -348,7 +348,7 @@ export class FileSync {
     }
   }
 
-  async changeLocalFilesystem(options: {
+  async writeToLocalFilesystem(options: {
     filesVersion: bigint | string;
     files: Iterable<File>;
     delete: Iterable<string>;
@@ -427,7 +427,7 @@ export class FileSync {
     return changes;
   }
 
-  async sendChangesToGadget(changes: { changed: Iterable<File>; deleted: Iterable<string> }): Promise<FileChange[]> {
+  async sendToGadget(changes: { changed: Iterable<File>; deleted: Iterable<string> }): Promise<FileChange[]> {
     const { publishFileSyncEvents } = await this._editGraphQL.query({
       query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
@@ -471,10 +471,10 @@ export class FileSync {
   }
 
   receiveChangesFromGadget({
-    onChanges,
+    onChange,
     onError,
   }: {
-    onChanges: (changes: { filesVersion: bigint; changed: File[]; deleted: string[] }) => void;
+    onChange: (changes: { filesVersion: bigint; changed: File[]; deleted: string[] }) => void;
     onError: (error: unknown) => void;
   }): () => void {
     return this._editGraphQL.subscribe(
@@ -496,7 +496,7 @@ export class FileSync {
             deleted: mapValues(remoteFileSyncEvents.deleted, "path", 10),
           });
 
-          onChanges({
+          onChange({
             filesVersion: BigInt(remoteFileSyncEvents.remoteFilesVersion),
             changed: remoteFileSyncEvents.changed,
             deleted: mapValues(remoteFileSyncEvents.deleted, "path"),

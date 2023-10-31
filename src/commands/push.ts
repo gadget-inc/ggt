@@ -82,7 +82,7 @@ export const command: Command = async (rootArgs) => {
 };
 
 export const push = async ({ filesync, changes }: { filesync: FileSync; changes: FileChange[] }): Promise<void> => {
-  await filesync.sendChangesToGadget({
+  await filesync.sendToGadget({
     deleted: changes.filter((change) => change.type === "delete").map((change) => change.path),
     changed: await pMap(
       changes.filter((change) => change.type !== "delete"),

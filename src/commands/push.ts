@@ -10,7 +10,6 @@ import {
   getNecessaryFileChanges,
   printFileChanges,
   printFileConflicts,
-  type FileChange,
 } from "../services/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
@@ -38,7 +37,7 @@ export const command: Command = async (rootArgs) => {
   const args = arg(argSpec, { argv: rootArgs._ });
   const user = await getUserOrLogin();
   const filesync = await FileSync.init(user, { dir: args._[0], app: args["--app"], force: args["--force"] });
-  const { gadgetFilesVersion, filesVersionHashes, gadgetHashes, localHashes } = await filesync.hashes();
+  const { filesVersionHashes, localHashes, gadgetHashes } = await filesync.hashes();
 
   const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
   if (localChanges.length === 0) {
@@ -74,14 +73,8 @@ export const command: Command = async (rootArgs) => {
   const changes = getNecessaryFileChanges({ changes: localChanges, existing: gadgetHashes });
   printlns`{bold The following changes will be sent to Gadget}`;
   printFileChanges({ changes });
-
   await confirm({ message: "Are you sure you want to make these changes?" });
-  await push({ filesync, changes });
 
-  println`{green Done!} ✨`;
-};
-
-export const push = async ({ filesync, changes }: { filesync: FileSync; changes: FileChange[] }): Promise<void> => {
   await filesync.sendToGadget({
     deleted: changes.filter((change) => change.type === "delete").map((change) => change.path),
     changed: await pMap(
@@ -104,4 +97,6 @@ export const push = async ({ filesync, changes }: { filesync: FileSync; changes:
       },
     ),
   });
+
+  println`{green Done!} ✨`;
 };

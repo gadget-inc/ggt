@@ -778,6 +778,24 @@ export const getNecessaryFileChanges = ({
   });
 };
 
+export const reverseLocalConflicts = (conflicts: FileConflict[]): FileChange[] => {
+  return conflicts.map((conflict) => {
+    switch (conflict.type) {
+      case "youAddedTheyAdded":
+      case "youChangedTheyAdded":
+      case "youDeletedTheyAdded":
+        return new Add(conflict.path);
+      case "youAddedTheyChanged":
+      case "youChangedTheyChanged":
+      case "youDeletedTheyChanged":
+        return new Change(conflict.path);
+      case "youAddedTheyDeleted":
+      case "youChangedTheyDeleted":
+        return new Delete(conflict.path);
+    }
+  });
+};
+
 export type FileChange = Add | Change | Delete;
 type FileChangeWithHash = AddWithHash | ChangeWithHash | DeleteWithHash;
 type FileConflict =

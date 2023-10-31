@@ -7,7 +7,6 @@ import {
   getNecessaryFileChanges,
   printFileChanges,
   printFileConflicts,
-  type FileChange,
 } from "../services/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
@@ -35,7 +34,7 @@ export const command: Command = async (rootArgs) => {
   const args = arg(argSpec, { argv: rootArgs._ });
   const user = await getUserOrLogin();
   const filesync = await FileSync.init(user, { dir: args._[0], app: args["--app"], force: args["--force"] });
-  const { gadgetFilesVersion, filesVersionHashes, gadgetHashes, localHashes } = await filesync.hashes();
+  const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await filesync.hashes();
 
   const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
   if (gadgetChanges.length === 0) {
@@ -44,7 +43,7 @@ export const command: Command = async (rootArgs) => {
   }
 
   const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
-  const conflicts = getFileConflicts({ localChanges: localChanges, gadgetChanges: gadgetChanges });
+  const conflicts = getFileConflicts({ localChanges, gadgetChanges });
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
 
@@ -78,20 +77,6 @@ export const command: Command = async (rootArgs) => {
     await confirm({ message: "Are you sure you want to make these changes?" });
   }
 
-  await pull({ filesync, gadgetFilesVersion, changes });
-
-  println`{green Done!} ✨`;
-};
-
-export const pull = async ({
-  filesync,
-  gadgetFilesVersion,
-  changes,
-}: {
-  filesync: FileSync;
-  changes: FileChange[];
-  gadgetFilesVersion: bigint;
-}): Promise<void> => {
   const { files } = await filesync.getFilesFromGadget({
     filesVersion: gadgetFilesVersion,
     paths: changes.filter((change) => change.type !== "delete").map((change) => change.path),
@@ -102,4 +87,6 @@ export const pull = async ({
     delete: changes.filter((change) => change.type === "delete").map((change) => change.path),
     files,
   });
+
+  println`{green Done!} ✨`;
 };

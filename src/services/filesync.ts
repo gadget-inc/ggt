@@ -663,7 +663,7 @@ export const printFileChanges = ({ changes, tense = "present" }: { changes: File
   const deleted = tense === "past" ? chalkDeleted : chalkDelete;
 
   printTable({
-    colAligns: ["left", "left", "center"],
+    colAligns: ["left", "left", "left"],
     head: ["", "", ""],
     rows: changes.map((change) => {
       switch (change.type) {
@@ -730,27 +730,28 @@ export const getFileConflicts = ({
 
 export const printFileConflicts = (conflicts: FileConflict[]): void => {
   printTable({
+    colAligns: ["left", "left", "center", "center"],
+    colWidths: [4],
     chars: { "top-mid": " " },
-    colAligns: ["left", "center", "center"],
-    head: ["Path", "You", "Gadget"],
+    head: ["", "", "You", "Gadget"],
     rows: conflicts.map((conflict) => {
       switch (conflict.type) {
         case "youAddedTheyAdded":
-          return [conflict.path, chalkAdded, chalkAdded];
+          return [">", conflict.path, chalkAdded, chalkAdded];
         case "youAddedTheyChanged":
-          return [conflict.path, chalkAdded, chalkChanged];
+          return [">", conflict.path, chalkAdded, chalkChanged];
         case "youAddedTheyDeleted":
-          return [conflict.path, chalkAdded, chalkDeleted];
+          return [">", conflict.path, chalkAdded, chalkDeleted];
         case "youChangedTheyAdded":
-          return [conflict.path, chalkChanged, chalkAdded];
+          return [">", conflict.path, chalkChanged, chalkAdded];
         case "youChangedTheyChanged":
-          return [conflict.path, chalkChanged, chalkChanged];
+          return [">", conflict.path, chalkChanged, chalkChanged];
         case "youChangedTheyDeleted":
-          return [conflict.path, chalkChanged, chalkDeleted];
+          return [">", conflict.path, chalkChanged, chalkDeleted];
         case "youDeletedTheyAdded":
-          return [conflict.path, chalkDeleted, chalkAdded];
+          return [">", conflict.path, chalkDeleted, chalkAdded];
         case "youDeletedTheyChanged":
-          return [conflict.path, chalkDeleted, chalkChanged];
+          return [">", conflict.path, chalkDeleted, chalkChanged];
       }
     }),
   });

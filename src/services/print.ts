@@ -80,8 +80,8 @@ export const printlns = (template: TemplateStringsArray | string, ...values: unk
 /**
  * EXAMPLE:
  *    "top-left": "╔",    top: "═",    "top-mid": "╤",    "top-right": "╗",
- *    "left-mid": "╟",    mid: "─",    "mid-mid": "┼",    "right-mid": "╢",
  *          left: "║",                    middle: "│",          right: "║",
+ *    "left-mid": "╟",    mid: "─",    "mid-mid": "┼",    "right-mid": "╢",
  * "bottom-left": "╚", bottom: "═", "bottom-mid": "╧", "bottom-right": "╝",
  */
 export const printTable = ({

@@ -47,7 +47,7 @@ export const command: Command = async (rootArgs) => {
   }
 
   const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
-  const conflicts = getFileConflicts({ localChanges: localChanges, gadgetChanges: gadgetChanges });
+  const conflicts = getFileConflicts({ localChanges, gadgetChanges });
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
 

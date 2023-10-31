@@ -74,12 +74,15 @@ The other differences between `bin/dev.js` and `ggt` are:
   - The environment to run `ggt` in.
   - Defaults to `"production"`.
   - If you're a Gadget staff member, you can set this to `"development"` to run against the development version of Gadget.
-- `GGT_SENTRY_ENABLED`
-  - Whether to enable Sentry error reporting.
-  - Defaults to `"true"`.
 - `GGT_SESSION`
   - The session to use when sending requests to the Gadget API.
   - Defaults to the contents of `GGT_CONFIG_DIR/session.txt`.
+- `GGT_GADGET_APP_DOMAIN`
+  - The domain to use when sending requests to the Gadget API.
+  - Defaults to `gadget.app` in production and `ggt.pub` in development.
+- `GGT_GADGET_SERVICES_DOMAIN`
+  - THe domain to use when sending requests to the Gadget Services API.
+  - Defaults to `app.gadget.dev` in production and `app.ggt.dev` in development.
 - `GGT_CONFIG_DIR`
   - The directory to store `ggt`'s configuration files in.
   - Defaults:
@@ -96,6 +99,9 @@ The other differences between `bin/dev.js` and `ggt` are:
   - Defaults:
     - Unix: `~/.local/share/ggt`
     - Windows: `%LOCALAPPDATA%\ggt`
+- `GGT_SENTRY_ENABLED`
+  - Whether to enable Sentry error reporting.
+  - Defaults to `"true"`.
 
 ### Tips
 

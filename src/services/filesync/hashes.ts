@@ -2,7 +2,6 @@ import assert from "node:assert";
 import { z } from "zod";
 import { FILE_HASHES_QUERY, type EditGraphQL } from "../edit-graphql.js";
 import { Create, Delete, Update } from "./changes.js";
-import type { ChangeHash, Hashes } from "./hashes.js";
 
 export const Hashes = z.record(z.string());
 
@@ -88,6 +87,7 @@ export const getFileChanges = ({ from, to }: { from: Hashes; to: Hashes }): Chan
 
   return [...added, ...changed, ...deleted].sort((a, b) => a.path.localeCompare(b.path));
 };
+
 export const getNecessaryFileChanges = ({ changes, existing }: { changes: ChangeHash[]; existing: Hashes }): ChangeHash[] => {
   return changes.filter((change) => {
     const hash = existing[change.path];

@@ -17,7 +17,7 @@ import { debounce } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
 import { YarnNotFoundError } from "../services/errors.js";
 import { printChanges } from "../services/filesync/changes.js";
-import { getFileConflicts, printConflicts } from "../services/filesync/conflicts.js";
+import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync, type File } from "../services/filesync/shared.js";
 import { swallowEnoent } from "../services/fs.js";
 import { createLogger } from "../services/log.js";
@@ -173,7 +173,7 @@ export const command: Command = async (rootArgs) => {
   }
 
   const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
-  const conflicts = getFileConflicts({ localChanges, gadgetChanges });
+  const conflicts = getConflicts({ localChanges, gadgetChanges });
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
     printConflicts(conflicts);

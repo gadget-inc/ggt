@@ -2,7 +2,7 @@ import arg from "arg";
 import { getFileChanges, getHashes, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import { AppArg } from "../services/args.js";
 import { printChanges } from "../services/filesync/changes.js";
-import { getFileConflicts, printConflicts } from "../services/filesync/conflicts.js";
+import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/shared.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
@@ -39,7 +39,7 @@ export const command: Command = async (rootArgs) => {
   }
 
   const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
-  const conflicts = getFileConflicts({ localChanges, gadgetChanges });
+  const conflicts = getConflicts({ localChanges, gadgetChanges });
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
 

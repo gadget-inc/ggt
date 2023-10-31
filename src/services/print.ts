@@ -1,5 +1,5 @@
 import chalkTemplate from "chalk-template";
-import CliTable3 from "cli-table3";
+import CliTable3, { type TableConstructorOptions } from "cli-table3";
 import levenshtein from "fast-levenshtein";
 import assert from "node:assert";
 import process from "node:process";
@@ -75,30 +75,32 @@ export const println = (template: TemplateStringsArray | string, ...values: unkn
 export const printlns = (template: TemplateStringsArray | string, ...values: unknown[]): void => {
   stdout.write("\n");
   println(template, ...values);
-  // stdout.write("\n");
 };
 
-export const printTable = ({ headers, rows }: { headers: string[]; rows: string[][] }): void => {
+/**
+ * EXAMPLE:
+ *    "top-left": "╔",    top: "═",    "top-mid": "╤",    "top-right": "╗",
+ *    "left-mid": "╟",    mid: "─",    "mid-mid": "┼",    "right-mid": "╢",
+ *          left: "║",                    middle: "│",          right: "║",
+ * "bottom-left": "╚", bottom: "═", "bottom-mid": "╧", "bottom-right": "╝",
+ */
+export const printTable = ({
+  rows,
+  ...options
+}: TableConstructorOptions & {
+  rows: string[][];
+}): void => {
   const table = new CliTable3({
-    head: headers,
-    style: {
-      head: [], // disable colors in header cells
-      border: [], // disable colors for the border
-    },
-    /**
-     * EXAMPLE:
-     *    "top-left": "╔",    top: "═",    "top-mid": "╤",    "top-right": "╗",
-     *    "left-mid": "╟",    mid: "─",    "mid-mid": "┼",    "right-mid": "╢",
-     *          left: "║",                    middle: "│",          right: "║",
-     * "bottom-left": "╚", bottom: "═", "bottom-mid": "╧", "bottom-right": "╝",
-     */
+    ...options,
+    style: { head: [], border: [], ...options.style },
     // prettier-ignore
     chars: {
-    "top-left": "",   top: "",     "top-mid": " ",    "top-right": "",
-    "left-mid": "",   mid: "",     "mid-mid": "",    "right-mid": "",
-          left: "",                   middle: " ",          right: "",
- "bottom-left": "", bottom: "", "bottom-mid": "", "bottom-right": "",
-      },
+      "top-left": "",    top: "",    "top-mid": "",    "top-right": "",
+      "left-mid": "",    mid: "",    "mid-mid": "",    "right-mid": "",
+            left: "",                   middle: "",          right: "",
+   "bottom-left": "", bottom: "", "bottom-mid": "", "bottom-right": "",
+      ...options.chars
+  },
   });
 
   table.push(...rows);

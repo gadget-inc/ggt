@@ -216,7 +216,7 @@ export class Sync {
       return;
     }
 
-    const { localChanges, gadgetChanges } = await this.filesync.changes();
+    const { localChanges, gadgetChanges } = await this.filesync.hashes();
 
     if (localChanges.length === 0) {
       // if there are no local changes, we don't need to check for changes

@@ -30,7 +30,7 @@ export const command: Command = async (rootArgs) => {
   const args = arg(argSpec, { argv: rootArgs._ });
   const user = await getUserOrLogin();
   const filesync = await FileSync.init(user, { dir: args._[0], app: args["--app"], force: args["--force"] });
-  const { localChanges, gadgetChanges, localToGadget } = await filesync.changes();
+  const { localChanges, gadgetChanges, localToGadget } = await filesync.hashes();
 
   if (localChanges.length === 0) {
     printlns("You don't have any changes to push to Gadget.");

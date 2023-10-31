@@ -33,6 +33,7 @@
     "unicorn/prefer-node-protocol": ["warn"],
     "unicorn/template-indent": ["warn"],
 
+    "@typescript-eslint/consistent-type-definitions": ["warn", "type"],
     "@typescript-eslint/consistent-type-imports": ["warn", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
     // prettier-ignore
     "@typescript-eslint/explicit-function-return-type": ["warn", { "allowExpressions": true, "allowTypedFunctionExpressions": true, "allowHigherOrderFunctions": true, "allowDirectConstAssertionInArrowFunctions": true, "allowConciseArrowFunctionExpressionsStartingWithVoid": true, "allowFunctionsWithoutTypeParameters": false, "allowedNames": [], "allowIIFEs": false }],

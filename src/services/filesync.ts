@@ -12,8 +12,6 @@ import process from "node:process";
 import normalizePath from "normalize-path";
 import pMap from "p-map";
 import pRetry from "p-retry";
-import pluralize from "pluralize";
-import type { Jsonifiable } from "type-fest";
 import { z } from "zod";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
 import type { App } from "./app.js";
@@ -31,7 +29,7 @@ import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
 import { createLogger } from "./log.js";
 import { noop } from "./noop.js";
-import { printTable, println, printlns, sortBySimilarity, sprint } from "./print.js";
+import { printTable, sortBySimilarity, sprint } from "./print.js";
 import { select } from "./prompt.js";
 import type { User } from "./user.js";
 
@@ -39,13 +37,13 @@ const log = createLogger("filesync");
 
 const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
 
-export interface File {
+export type File = {
   path: string;
   oldPath?: string;
   mode: number;
   content: string;
   encoding: FileSyncEncoding;
-}
+};
 
 export class FileSync {
   /**
@@ -355,7 +353,7 @@ export class FileSync {
     files: Iterable<File>;
     delete: Iterable<string>;
     force?: boolean;
-  }): Promise<ChangedFiles> {
+  }): Promise<FileChange[]> {
     const filesVersion = BigInt(options.filesVersion);
     const added: string[] = [];
     const changed: string[] = [];
@@ -418,13 +416,18 @@ export class FileSync {
 
     this._save();
 
-    const changes = new ChangedFiles({ added, changed, deleted: options.delete });
-    log.info("wrote", { ...this._state, changes });
+    const changes = [
+      ...added.map((path) => new Add(path)),
+      ...changed.map((path) => new Change(path)),
+      ...Array.from(options.delete).map((path) => new Delete(path)),
+    ];
+
+    // log.info("wrote", { ...this._state, changes });
 
     return changes;
   }
 
-  async sendChangesToGadget(changes: { changed: Iterable<File>; deleted: Iterable<string> }): Promise<ChangedFiles> {
+  async sendChangesToGadget(changes: { changed: Iterable<File>; deleted: Iterable<string> }): Promise<FileChange[]> {
     const { publishFileSyncEvents } = await this._editGraphQL.query({
       query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
@@ -439,11 +442,10 @@ export class FileSync {
     this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
     this._save();
 
-    return new ChangedFiles({
-      added: [],
-      changed: mapValues(changes.changed, "path"),
-      deleted: changes.deleted,
-    });
+    return [
+      ...mapValues(changes.changed, "path").map((path) => new Add(path)),
+      ...Array.from(changes.deleted).map((path) => new Delete(path)),
+    ].sort((a, b) => a.path.localeCompare(b.path));
   }
 
   async getFilesFromGadget({
@@ -504,35 +506,14 @@ export class FileSync {
     );
   }
 
-  async changes(): Promise<{
+  async hashes(): Promise<{
     /**
      * The latest filesVersion in Gadget.
      */
     gadgetFilesVersion: bigint;
-
-    /**
-     * The changes that have been made to the local filesystem since the
-     * last time we synced.
-     */
-    localChanges: ChangedHashes;
-
-    /**
-     * The changes that have been made to Gadget since the last time we
-     * synced.
-     */
-    gadgetChanges: ChangedHashes;
-
-    /**
-     * The files that need to be changed on the local filesystem to match
-     * Gadget.
-     */
-    localToGadget: FilesToChange;
-
-    /**
-     * The files that need to be changed in Gadget to match the local
-     * filesystem.
-     */
-    gadgetToLocal: FilesToChange;
+    filesVersionHashes: Hashes;
+    localHashes: Hashes;
+    gadgetHashes: Hashes;
   }> {
     const [localHashes, [, filesVersionHashes], [gadgetFilesVersion, gadgetHashes]] = await Promise.all([
       fileHashes(this),
@@ -542,11 +523,22 @@ export class FileSync {
 
     return {
       gadgetFilesVersion: BigInt(gadgetFilesVersion),
-      localChanges: new ChangedHashes({ from: filesVersionHashes, to: localHashes }),
-      gadgetChanges: new ChangedHashes({ from: filesVersionHashes, to: gadgetHashes }),
-      localToGadget: new FilesToChange({ from: localHashes, to: gadgetHashes }),
-      gadgetToLocal: new FilesToChange({ from: gadgetHashes, to: localHashes }),
+      filesVersionHashes,
+      localHashes,
+      gadgetHashes,
     };
+
+    //  The changes that have been made to the local filesystem since the last time we synced.
+    // localChanges: new ChangedHashes({ from: filesVersionHashes, to: localHashes }),
+
+    // The changes that have been made to Gadget since the last time we synced.
+    // gadgetChanges: new ChangedHashes({ from: filesVersionHashes, to: gadgetHashes }),
+
+    // The files that need to be changed on the local filesystem to match Gadget.
+    // localToGadget: new FilesToChange({ from: localHashes, to: gadgetHashes }),
+
+    // The files that need to be changed in Gadget to match the local filesystem.
+    // gadgetToLocal: new FilesToChange({ from: gadgetHashes, to: localHashes }),
   }
 
   /**
@@ -554,322 +546,6 @@ export class FileSync {
    */
   private _save(): void {
     fs.outputJSONSync(this.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
-  }
-}
-
-export class FilesToChange {
-  readonly add: string[] = [];
-  readonly change: string[] = [];
-  readonly delete: string[] = [];
-
-  constructor({ from, to }: { from: Hashes; to: Hashes }) {
-    const sourcePaths = Object.keys(from);
-
-    for (const [targetPath, targetHash] of Object.entries(to)) {
-      const sourceHash = from[targetPath];
-      if (!sourceHash) {
-        if (!targetPath.endsWith("/") || !sourcePaths.some((sourcePath) => sourcePath.startsWith(targetPath))) {
-          // targetPath is a file and it doesn't exist in source OR
-          // targetPath is a directory and source doesn't have any
-          // existing files inside it, therefor the targetPath has been
-          // deleted
-          this.delete.push(targetPath);
-        }
-      } else if (sourceHash !== targetHash) {
-        // the file/directory exists in target, but has a different
-        // hash, so it's been changed
-        this.change.push(targetPath);
-      }
-    }
-
-    for (const sourcePath of sourcePaths) {
-      if (!to[sourcePath]) {
-        // the source's file or directory doesn't exist in target, so
-        // it's been added
-        this.add.push(sourcePath);
-      }
-    }
-  }
-
-  get length(): number {
-    return this.add.length + this.change.length + this.delete.length;
-  }
-
-  longestFilePath(): number {
-    return Math.max(
-      ...this.add
-        .concat(this.change)
-        .concat(this.delete)
-        .map((path) => path.length),
-    );
-  }
-
-  sortedTypes(): (readonly [string, "added" | "changed" | "deleted"])[] {
-    const paths = [];
-    paths.push(...this.add.map((p) => [p, "added"] as const));
-    paths.push(...this.change.map((p) => [p, "changed"] as const));
-    paths.push(...this.delete.map((p) => [p, "deleted"] as const));
-    return paths.sort(([a], [b]) => a.localeCompare(b));
-  }
-
-  /**
-   * Prints the changes that will be made.
-   */
-  print(): void {
-    const longestFilePath = this.longestFilePath();
-
-    println("");
-    for (const [filepath, type] of this.sortedTypes()) {
-      switch (type) {
-        case "added":
-          println`{green +   ${filepath.padEnd(longestFilePath)}   add}`;
-          break;
-        case "changed":
-          println`{blue +-  ${filepath.padEnd(longestFilePath)}   change}`;
-          break;
-        case "deleted":
-          println`{red -   ${filepath.padEnd(longestFilePath)}   delete}`;
-          break;
-      }
-    }
-
-    const nFiles = pluralize("file", this.length, true);
-
-    printlns`
-      {gray ${nFiles} in total. ${this.add.length} to add, ${this.change.length} to change, ${this.delete.length} to delete.}
-    `;
-  }
-
-  toJSON(): Jsonifiable {
-    return {
-      add: this.add,
-      change: this.change,
-      delete: this.delete,
-    };
-  }
-}
-
-const chalkAdd = chalk.greenBright("add");
-const chalkChange = chalk.blueBright("change");
-const chalkDelete = chalk.redBright("delete");
-
-const chalkAdded = chalk.greenBright("added");
-const chalkChanged = chalk.blueBright("changed");
-const chalkDeleted = chalk.redBright("deleted");
-
-export class ChangedFiles {
-  readonly added: string[];
-  readonly changed: string[];
-  readonly deleted: string[];
-
-  constructor({ added, changed, deleted }: { added: Iterable<string>; changed: Iterable<string>; deleted: Iterable<string> }) {
-    this.added = Array.from(added);
-    this.changed = Array.from(changed);
-    this.deleted = Array.from(deleted);
-  }
-
-  get length(): number {
-    return this.added.length + this.changed.length + this.deleted.length;
-  }
-
-  /**
-   * Prints the changes that were made.
-   */
-  printChanged(): void {
-    printTable({
-      headers: [],
-      rows: this._sortedTypes().map(([filepath, type]) => {
-        switch (type) {
-          case "added":
-            return [filepath, chalkAdded];
-          case "changed":
-            return [filepath, chalkChanged];
-          case "deleted":
-            return [filepath, chalkDeleted];
-        }
-      }),
-    });
-
-    const nFiles = pluralize("file", this.length, true);
-
-    printlns`
-    {gray ${nFiles} in total. ${this.added.length} added, ${this.changed.length} changed, ${this.deleted.length} deleted.}
-  `;
-  }
-
-  toJSON(): Jsonifiable {
-    return {
-      add: this.added,
-      change: this.changed,
-      delete: this.deleted,
-    };
-  }
-
-  protected _sortedTypes(): (readonly [string, "added" | "changed" | "deleted"])[] {
-    const paths = [];
-    paths.push(...this.added.map((p) => [p, "added"] as const));
-    paths.push(...this.changed.map((p) => [p, "changed"] as const));
-    paths.push(...this.deleted.map((p) => [p, "deleted"] as const));
-    return paths.sort(([a], [b]) => a.localeCompare(b));
-  }
-}
-
-export class ChangedHashes extends ChangedFiles {
-  readonly from: Hashes;
-  readonly to: Hashes;
-
-  constructor({ to, from }: { from: Hashes; to: Hashes }) {
-    const changed = [];
-    const added = [];
-    const deleted = [];
-
-    const fromPaths = Object.keys(to);
-
-    for (const [toPath, toHash] of Object.entries(from)) {
-      const fromHash = to[toPath];
-      if (!fromHash) {
-        if (!toPath.endsWith("/") || !fromPaths.some((sourcePath) => sourcePath.startsWith(toPath))) {
-          // targetPath is a file and it doesn't exist in source OR
-          // targetPath is a directory and source doesn't have any
-          // existing files inside it, therefor the targetPath has been
-          // deleted
-          deleted.push(toPath);
-        }
-      } else if (fromHash !== toHash) {
-        // the file/directory exists in target, but has a different
-        // hash, so it's been changed
-        changed.push(toPath);
-      }
-    }
-
-    for (const sourcePath of fromPaths) {
-      if (!from[sourcePath]) {
-        // the source's file or directory doesn't exist in target, so
-        // it's been added
-        added.push(sourcePath);
-      }
-    }
-
-    super({ added, changed, deleted });
-    this.from = from;
-    this.to = to;
-  }
-
-  printChanges(): void {
-    printTable({
-      headers: [],
-      rows: this._sortedTypes().map(([filepath, type]) => {
-        switch (type) {
-          case "added":
-            return [filepath, chalkAdd];
-          case "changed":
-            return [filepath, chalkChange];
-          case "deleted":
-            return [filepath, chalkDelete];
-        }
-      }),
-    });
-
-    const nFiles = pluralize("file", this.length, true);
-
-    printlns`
-      {gray ${nFiles} in total. ${this.added.length} added, ${this.changed.length} changed, ${this.deleted.length} deleted.}
-    `;
-  }
-}
-
-export class FileConflicts {
-  readonly youAddedTheyAdded: string[];
-  readonly youAddedTheyChanged: string[];
-  readonly youAddedTheyDeleted: string[];
-
-  readonly youChangedTheyAdded: string[];
-  readonly youChangedTheyChanged: string[];
-  readonly youChangedTheyDeleted: string[];
-
-  readonly youDeletedTheyAdded: string[];
-  readonly youDeletedTheyChanged: string[];
-
-  constructor(
-    readonly you: ChangedHashes,
-    readonly they: ChangedHashes,
-  ) {
-    const hashesAreDifferent = (path: string): boolean => you.to[path] !== they.to[path];
-
-    this.youAddedTheyAdded = you.added.filter((path) => they.added.includes(path) && hashesAreDifferent(path));
-    this.youAddedTheyChanged = you.added.filter((path) => they.changed.includes(path) && hashesAreDifferent(path));
-    this.youAddedTheyDeleted = you.added.filter((path) => they.deleted.includes(path));
-
-    this.youChangedTheyAdded = you.changed.filter((path) => they.added.includes(path) && hashesAreDifferent(path));
-    this.youChangedTheyChanged = you.changed.filter((path) => they.changed.includes(path) && hashesAreDifferent(path));
-    this.youChangedTheyDeleted = you.changed.filter((path) => they.deleted.includes(path));
-
-    this.youDeletedTheyAdded = you.deleted.filter((path) => they.added.includes(path));
-    this.youDeletedTheyChanged = you.deleted.filter((path) => they.changed.includes(path));
-  }
-
-  get length(): number {
-    return (
-      this.youAddedTheyAdded.length +
-      this.youAddedTheyChanged.length +
-      this.youAddedTheyDeleted.length +
-      this.youChangedTheyAdded.length +
-      this.youChangedTheyChanged.length +
-      this.youChangedTheyDeleted.length +
-      this.youDeletedTheyAdded.length +
-      this.youDeletedTheyChanged.length
-    );
-  }
-
-  sortedTypes(): (readonly [
-    string,
-    (
-      | "youAddedTheyAdded"
-      | "youAddedTheyChanged"
-      | "youAddedTheyDeleted"
-      | "youChangedTheyAdded"
-      | "youChangedTheyChanged"
-      | "youChangedTheyDeleted"
-      | "youDeletedTheyAdded"
-      | "youDeletedTheyChanged"
-    ),
-  ])[] {
-    const paths = [];
-    paths.push(...this.youAddedTheyAdded.map((p) => [p, "youAddedTheyAdded"] as const));
-    paths.push(...this.youAddedTheyChanged.map((p) => [p, "youAddedTheyChanged"] as const));
-    paths.push(...this.youAddedTheyDeleted.map((p) => [p, "youAddedTheyDeleted"] as const));
-    paths.push(...this.youChangedTheyAdded.map((p) => [p, "youChangedTheyAdded"] as const));
-    paths.push(...this.youChangedTheyChanged.map((p) => [p, "youChangedTheyChanged"] as const));
-    paths.push(...this.youChangedTheyDeleted.map((p) => [p, "youChangedTheyDeleted"] as const));
-    paths.push(...this.youDeletedTheyAdded.map((p) => [p, "youDeletedTheyAdded"] as const));
-    paths.push(...this.youDeletedTheyChanged.map((p) => [p, "youDeletedTheyChanged"] as const));
-    return paths.sort(([a], [b]) => a.localeCompare(b));
-  }
-
-  print(): void {
-    printTable({
-      headers: ["", "You", "Gadget"],
-      rows: this.sortedTypes().map(([filepath, type]) => {
-        switch (type) {
-          case "youAddedTheyAdded":
-            return [filepath, chalkAdded, chalkAdded];
-          case "youAddedTheyChanged":
-            return [filepath, chalkAdded, chalkChanged];
-          case "youAddedTheyDeleted":
-            return [filepath, chalkAdded, chalkDeleted];
-          case "youChangedTheyAdded":
-            return [filepath, chalkChanged, chalkAdded];
-          case "youChangedTheyChanged":
-            return [filepath, chalkChanged, chalkChanged];
-          case "youChangedTheyDeleted":
-            return [filepath, chalkChanged, chalkDeleted];
-          case "youDeletedTheyAdded":
-            return [filepath, chalkDeleted, chalkAdded];
-          case "youDeletedTheyChanged":
-            return [filepath, chalkDeleted, chalkChanged];
-        }
-      }),
-    });
   }
 }
 
@@ -937,3 +613,255 @@ const fileHash = (filepath: string): Promise<string> => {
     }
   });
 };
+
+const chalkAdd = chalk.greenBright("add");
+const chalkChange = chalk.blueBright("change");
+const chalkDelete = chalk.redBright("delete");
+
+const chalkAdded = chalk.greenBright("added");
+const chalkChanged = chalk.blueBright("changed");
+const chalkDeleted = chalk.redBright("deleted");
+
+export const getChanges = ({ from, to }: { from: Hashes; to: Hashes }): FileChangeWithHash[] => {
+  const added: AddWithHash[] = [];
+  const changed: ChangeWithHash[] = [];
+  const deleted: DeleteWithHash[] = [];
+
+  const toPaths = Object.keys(to);
+
+  for (const [fromPath, fromHash] of Object.entries(from)) {
+    const toHash = to[fromPath];
+    if (!toHash) {
+      if (!fromPath.endsWith("/") || !toPaths.some((toPath) => toPath.startsWith(fromPath))) {
+        // fromPath is a file and it doesn't exist in to OR fromPath
+        // is a directory and to doesn't have any existing files
+        // inside it, therefor the fromPath has been deleted
+        deleted.push(new DeleteWithHash(fromPath, fromHash));
+      }
+    } else if (toHash !== fromHash) {
+      // the file or directory exists in to, but has a different
+      // hash, so it's been changed
+      changed.push(new ChangeWithHash(fromPath, fromHash, toHash));
+    }
+  }
+
+  for (const toPath of toPaths) {
+    if (!from[toPath]) {
+      // the toPath doesn't exist in from, so it's been added
+      const toHash = to[toPath];
+      assert(toHash);
+      added.push(new AddWithHash(toPath, toHash));
+    }
+  }
+
+  return [...added, ...changed, ...deleted].sort((a, b) => a.path.localeCompare(b.path));
+};
+
+export const printChanges = ({ changes, tense = "present" }: { changes: FileChange[]; tense?: "past" | "present" }): void => {
+  const added = tense === "past" ? chalkAdded : chalkAdd;
+  const changed = tense === "past" ? chalkChanged : chalkChange;
+  const deleted = tense === "past" ? chalkDeleted : chalkDelete;
+
+  printTable({
+    colAligns: ["left", "left", "center"],
+    head: ["", "", ""],
+    rows: changes.map((change) => {
+      switch (change.type) {
+        case "add":
+          return [chalk.greenBright("+"), chalk.greenBright(change.path), added];
+        case "change":
+          return [chalk.blueBright("+-"), chalk.blueBright(change.path), changed];
+        case "delete":
+          return [chalk.redBright("-"), chalk.redBright(change.path), deleted];
+      }
+    }),
+  });
+};
+
+export const getConflicts = ({
+  yourChanges,
+  theirChanges,
+}: {
+  yourChanges: FileChangeWithHash[];
+  theirChanges: FileChangeWithHash[];
+}): FileConflict[] => {
+  const conflicts = [];
+
+  for (const yourChange of yourChanges) {
+    const theirChange = theirChanges.find((theirChange) => theirChange.path === yourChange.path);
+    if (!theirChange) {
+      continue;
+    }
+
+    if ("toHash" in yourChange && "toHash" in theirChange && yourChange.toHash === theirChange.toHash) {
+      continue;
+    }
+
+    switch (true) {
+      case yourChange.type === "add" && theirChange.type === "add":
+        conflicts.push(new YouAddedTheyAdded(yourChange.path));
+        break;
+      case yourChange.type === "add" && theirChange.type === "change":
+        conflicts.push(new YouAddedTheyChanged(yourChange.path));
+        break;
+      case yourChange.type === "add" && theirChange.type === "delete":
+        conflicts.push(new YouAddedTheyDeleted(yourChange.path));
+        break;
+      case yourChange.type === "change" && theirChange.type === "add":
+        conflicts.push(new YouChangedTheyAdded(yourChange.path));
+        break;
+      case yourChange.type === "change" && theirChange.type === "change":
+        conflicts.push(new YouChangedTheyChanged(yourChange.path));
+        break;
+      case yourChange.type === "change" && theirChange.type === "delete":
+        conflicts.push(new YouChangedTheyDeleted(yourChange.path));
+        break;
+      case yourChange.type === "delete" && theirChange.type === "add":
+        conflicts.push(new YouDeletedTheyAdded(yourChange.path));
+        break;
+      case yourChange.type === "delete" && theirChange.type === "change":
+        conflicts.push(new YouDeletedTheyChanged(yourChange.path));
+        break;
+    }
+  }
+
+  return conflicts;
+};
+
+export const printConflicts = (conflicts: FileConflict[]): void => {
+  printTable({
+    chars: { "top-mid": " " },
+    colAligns: ["left", "center", "center"],
+    head: ["Path", "You", "Gadget"],
+    rows: conflicts.map((conflict) => {
+      switch (conflict.type) {
+        case "youAddedTheyAdded":
+          return [conflict.path, chalkAdded, chalkAdded];
+        case "youAddedTheyChanged":
+          return [conflict.path, chalkAdded, chalkChanged];
+        case "youAddedTheyDeleted":
+          return [conflict.path, chalkAdded, chalkDeleted];
+        case "youChangedTheyAdded":
+          return [conflict.path, chalkChanged, chalkAdded];
+        case "youChangedTheyChanged":
+          return [conflict.path, chalkChanged, chalkChanged];
+        case "youChangedTheyDeleted":
+          return [conflict.path, chalkChanged, chalkDeleted];
+        case "youDeletedTheyAdded":
+          return [conflict.path, chalkDeleted, chalkAdded];
+        case "youDeletedTheyChanged":
+          return [conflict.path, chalkDeleted, chalkChanged];
+      }
+    }),
+  });
+};
+
+export const getNecessaryChanges = ({ changes, existing }: { changes: FileChangeWithHash[]; existing: Hashes }): FileChangeWithHash[] => {
+  return changes.filter((change) => {
+    const hash = existing[change.path];
+    if (change.type === "delete" && !hash) {
+      // already deleted
+      return false;
+    }
+    if ((change.type === "add" || change.type === "change") && change.toHash === hash) {
+      // already added or changed
+      return false;
+    }
+    return true;
+  });
+};
+
+export type FileChange = Add | Change | Delete;
+type FileChangeWithHash = AddWithHash | ChangeWithHash | DeleteWithHash;
+type FileConflict =
+  | YouAddedTheyAdded
+  | YouAddedTheyChanged
+  | YouAddedTheyDeleted
+  | YouChangedTheyAdded
+  | YouChangedTheyChanged
+  | YouChangedTheyDeleted
+  | YouDeletedTheyAdded
+  | YouDeletedTheyChanged;
+
+class Add {
+  type = "add" as const;
+  constructor(readonly path: string) {}
+}
+
+class AddWithHash extends Add {
+  constructor(
+    path: string,
+    readonly toHash: string,
+  ) {
+    super(path);
+  }
+}
+
+class Change {
+  type = "change" as const;
+  constructor(readonly path: string) {}
+}
+
+class ChangeWithHash extends Change {
+  constructor(
+    path: string,
+    readonly fromHash: string,
+    readonly toHash: string,
+  ) {
+    super(path);
+  }
+}
+
+class Delete {
+  type = "delete" as const;
+  constructor(readonly path: string) {}
+}
+
+class DeleteWithHash extends Delete {
+  constructor(
+    path: string,
+    readonly fromHash: string,
+  ) {
+    super(path);
+  }
+}
+
+class YouAddedTheyAdded {
+  type = "youAddedTheyAdded" as const;
+  constructor(readonly path: string) {}
+}
+
+class YouAddedTheyChanged {
+  type = "youAddedTheyChanged" as const;
+  constructor(readonly path: string) {}
+}
+
+class YouAddedTheyDeleted {
+  type = "youAddedTheyDeleted" as const;
+  constructor(readonly path: string) {}
+}
+
+class YouChangedTheyAdded {
+  type = "youChangedTheyAdded" as const;
+  constructor(readonly path: string) {}
+}
+
+class YouChangedTheyChanged {
+  type = "youChangedTheyChanged" as const;
+  constructor(readonly path: string) {}
+}
+
+class YouChangedTheyDeleted {
+  type = "youChangedTheyDeleted" as const;
+  constructor(readonly path: string) {}
+}
+
+class YouDeletedTheyAdded {
+  type = "youDeletedTheyAdded" as const;
+  constructor(readonly path: string) {}
+}
+
+class YouDeletedTheyChanged {
+  type = "youDeletedTheyChanged" as const;
+  constructor(readonly path: string) {}
+}

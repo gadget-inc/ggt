@@ -622,7 +622,7 @@ const chalkAdded = chalk.greenBright("added");
 const chalkChanged = chalk.blueBright("changed");
 const chalkDeleted = chalk.redBright("deleted");
 
-export const getChanges = ({ from, to }: { from: Hashes; to: Hashes }): FileChangeWithHash[] => {
+export const getFileChanges = ({ from, to }: { from: Hashes; to: Hashes }): FileChangeWithHash[] => {
   const added: AddWithHash[] = [];
   const changed: ChangeWithHash[] = [];
   const deleted: DeleteWithHash[] = [];
@@ -657,7 +657,7 @@ export const getChanges = ({ from, to }: { from: Hashes; to: Hashes }): FileChan
   return [...added, ...changed, ...deleted].sort((a, b) => a.path.localeCompare(b.path));
 };
 
-export const printChanges = ({ changes, tense = "present" }: { changes: FileChange[]; tense?: "past" | "present" }): void => {
+export const printFileChanges = ({ changes, tense = "present" }: { changes: FileChange[]; tense?: "past" | "present" }): void => {
   const added = tense === "past" ? chalkAdded : chalkAdd;
   const changed = tense === "past" ? chalkChanged : chalkChange;
   const deleted = tense === "past" ? chalkDeleted : chalkDelete;
@@ -678,49 +678,49 @@ export const printChanges = ({ changes, tense = "present" }: { changes: FileChan
   });
 };
 
-export const getConflicts = ({
-  yourChanges,
-  theirChanges,
+export const getFileConflicts = ({
+  localChanges,
+  gadgetChanges,
 }: {
-  yourChanges: FileChangeWithHash[];
-  theirChanges: FileChangeWithHash[];
+  localChanges: FileChangeWithHash[];
+  gadgetChanges: FileChangeWithHash[];
 }): FileConflict[] => {
   const conflicts = [];
 
-  for (const yourChange of yourChanges) {
-    const theirChange = theirChanges.find((theirChange) => theirChange.path === yourChange.path);
-    if (!theirChange) {
+  for (const localChange of localChanges) {
+    const gadgetChange = gadgetChanges.find((gadgetChange) => gadgetChange.path === localChange.path);
+    if (!gadgetChange) {
       continue;
     }
 
-    if ("toHash" in yourChange && "toHash" in theirChange && yourChange.toHash === theirChange.toHash) {
+    if ("toHash" in localChange && "toHash" in gadgetChange && localChange.toHash === gadgetChange.toHash) {
       continue;
     }
 
     switch (true) {
-      case yourChange.type === "add" && theirChange.type === "add":
-        conflicts.push(new YouAddedTheyAdded(yourChange.path));
+      case localChange.type === "add" && gadgetChange.type === "add":
+        conflicts.push(new YouAddedTheyAdded(localChange.path));
         break;
-      case yourChange.type === "add" && theirChange.type === "change":
-        conflicts.push(new YouAddedTheyChanged(yourChange.path));
+      case localChange.type === "add" && gadgetChange.type === "change":
+        conflicts.push(new YouAddedTheyChanged(localChange.path));
         break;
-      case yourChange.type === "add" && theirChange.type === "delete":
-        conflicts.push(new YouAddedTheyDeleted(yourChange.path));
+      case localChange.type === "add" && gadgetChange.type === "delete":
+        conflicts.push(new YouAddedTheyDeleted(localChange.path));
         break;
-      case yourChange.type === "change" && theirChange.type === "add":
-        conflicts.push(new YouChangedTheyAdded(yourChange.path));
+      case localChange.type === "change" && gadgetChange.type === "add":
+        conflicts.push(new YouChangedTheyAdded(localChange.path));
         break;
-      case yourChange.type === "change" && theirChange.type === "change":
-        conflicts.push(new YouChangedTheyChanged(yourChange.path));
+      case localChange.type === "change" && gadgetChange.type === "change":
+        conflicts.push(new YouChangedTheyChanged(localChange.path));
         break;
-      case yourChange.type === "change" && theirChange.type === "delete":
-        conflicts.push(new YouChangedTheyDeleted(yourChange.path));
+      case localChange.type === "change" && gadgetChange.type === "delete":
+        conflicts.push(new YouChangedTheyDeleted(localChange.path));
         break;
-      case yourChange.type === "delete" && theirChange.type === "add":
-        conflicts.push(new YouDeletedTheyAdded(yourChange.path));
+      case localChange.type === "delete" && gadgetChange.type === "add":
+        conflicts.push(new YouDeletedTheyAdded(localChange.path));
         break;
-      case yourChange.type === "delete" && theirChange.type === "change":
-        conflicts.push(new YouDeletedTheyChanged(yourChange.path));
+      case localChange.type === "delete" && gadgetChange.type === "change":
+        conflicts.push(new YouDeletedTheyChanged(localChange.path));
         break;
     }
   }
@@ -728,7 +728,7 @@ export const getConflicts = ({
   return conflicts;
 };
 
-export const printConflicts = (conflicts: FileConflict[]): void => {
+export const printFileConflicts = (conflicts: FileConflict[]): void => {
   printTable({
     chars: { "top-mid": " " },
     colAligns: ["left", "center", "center"],
@@ -756,7 +756,13 @@ export const printConflicts = (conflicts: FileConflict[]): void => {
   });
 };
 
-export const getNecessaryChanges = ({ changes, existing }: { changes: FileChangeWithHash[]; existing: Hashes }): FileChangeWithHash[] => {
+export const getNecessaryFileChanges = ({
+  changes,
+  existing,
+}: {
+  changes: FileChangeWithHash[];
+  existing: Hashes;
+}): FileChangeWithHash[] => {
   return changes.filter((change) => {
     const hash = existing[change.path];
     if (change.type === "delete" && !hash) {

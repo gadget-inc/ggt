@@ -2,11 +2,11 @@ import arg from "arg";
 import { AppArg } from "../services/args.js";
 import {
   FileSync,
-  getChanges,
-  getConflicts,
-  getNecessaryChanges,
-  printChanges,
-  printConflicts,
+  getFileChanges,
+  getFileConflicts,
+  getNecessaryFileChanges,
+  printFileChanges,
+  printFileConflicts,
   type FileChange,
 } from "../services/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
@@ -37,18 +37,18 @@ export const command: Command = async (rootArgs) => {
   const filesync = await FileSync.init(user, { dir: args._[0], app: args["--app"], force: args["--force"] });
   const { gadgetFilesVersion, filesVersionHashes, gadgetHashes, localHashes } = await filesync.hashes();
 
-  const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
+  const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
   if (gadgetChanges.length === 0) {
     printlns("You already have the latest changes from Gadget.");
     return;
   }
 
-  const localChanges = getChanges({ from: filesVersionHashes, to: localHashes });
-  const conflicts = getConflicts({ yourChanges: localChanges, theirChanges: gadgetChanges });
+  const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
+  const conflicts = getFileConflicts({ localChanges: localChanges, gadgetChanges: gadgetChanges });
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
 
-    printConflicts(conflicts);
+    printFileConflicts(conflicts);
 
     if (!args["--force"]) {
       printlns`
@@ -70,11 +70,11 @@ export const command: Command = async (rootArgs) => {
     }
   }
 
-  const changes = getNecessaryChanges({ changes: gadgetChanges, existing: localHashes });
+  const changes = getNecessaryFileChanges({ changes: gadgetChanges, existing: localHashes });
 
   if (!filesync.wasEmpty) {
     printlns`{bold The following changes will be made to your local filesystem}`;
-    printChanges({ changes });
+    printFileChanges({ changes });
 
     const yes = await confirm({ message: "Are you sure you want to make these changes?" });
     if (!yes) {

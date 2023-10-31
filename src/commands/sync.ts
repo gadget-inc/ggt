@@ -6,6 +6,7 @@ import ms from "ms";
 import path from "node:path";
 import pMap from "p-map";
 import PQueue from "p-queue";
+import { getFileChanges } from "src/services/filesync/hashes.js";
 import Watcher from "watcher";
 import which from "which";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
@@ -15,7 +16,9 @@ import { config } from "../services/config.js";
 import { debounce } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
 import { YarnNotFoundError } from "../services/errors.js";
-import { FileSync, getFileChanges, getFileConflicts, printFileChanges, printFileConflicts, type File } from "../services/filesync.js";
+import { printChanges } from "../services/filesync/changes.js";
+import { getFileConflicts, printConflicts } from "../services/filesync/conflicts.js";
+import { FileSync, type File } from "../services/filesync/shared.js";
 import { swallowEnoent } from "../services/fs.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";
@@ -173,7 +176,7 @@ export const command: Command = async (rootArgs) => {
   const conflicts = getFileConflicts({ localChanges, gadgetChanges });
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
-    printFileConflicts(conflicts);
+    printConflicts(conflicts);
 
     printlns`
         {bold You must either}
@@ -240,7 +243,7 @@ export const command: Command = async (rootArgs) => {
         const changes = await filesync.writeToLocalFilesystem({ filesVersion, files: changed, delete: deleted });
         if (changes.length > 0) {
           println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
-          printFileChanges({ changes });
+          printChanges({ changes });
 
           if (changed.some((change) => change.path === "yarn.lock")) {
             await execa("yarn", ["install"], { cwd: filesync.dir }).catch(noop);
@@ -290,7 +293,7 @@ export const command: Command = async (rootArgs) => {
 
       const changes = await filesync.sendToGadget({ changed, deleted });
       println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
-      printFileChanges({ changes, tense: "past" });
+      printChanges({ changes, tense: "past" });
     });
   });
 

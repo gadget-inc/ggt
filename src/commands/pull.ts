@@ -1,13 +1,9 @@
 import arg from "arg";
+import { getFileChanges } from "src/services/filesync/hashes.js";
 import { AppArg } from "../services/args.js";
-import {
-  FileSync,
-  getFileChanges,
-  getFileConflicts,
-  getNecessaryFileChanges,
-  printFileChanges,
-  printFileConflicts,
-} from "../services/filesync.js";
+import { printChanges } from "../services/filesync/changes.js";
+import { getFileConflicts, printConflicts } from "../services/filesync/conflicts.js";
+import { FileSync, getNecessaryFileChanges } from "../services/filesync/shared.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
@@ -47,7 +43,7 @@ export const command: Command = async (rootArgs) => {
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
 
-    printFileConflicts(conflicts);
+    printConflicts(conflicts);
 
     if (!args["--force"]) {
       printlns`
@@ -62,7 +58,7 @@ export const command: Command = async (rootArgs) => {
              {gray ggt reset --only-conflicts}
 
           3. Manually resolve the conflicts and try again
-    `;
+      `;
 
       // TODO: just return 1 or throw ExitCode
       process.exit(1);
@@ -73,7 +69,7 @@ export const command: Command = async (rootArgs) => {
 
   if (!filesync.wasEmpty) {
     printlns`{bold The following changes will be made to your local filesystem}`;
-    printFileChanges({ changes });
+    printChanges({ changes });
     await confirm({ message: "Are you sure you want to make these changes?" });
   }
 

@@ -50,7 +50,6 @@ export const command: Command = async (rootArgs) => {
   const conflicts = getFileConflicts({ localChanges, gadgetChanges });
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
-
     printFileConflicts(conflicts);
 
     if (!args["--force"]) {
@@ -84,9 +83,7 @@ export const command: Command = async (rootArgs) => {
 
   await push({ filesync, changes });
 
-  println`
-    {green Done!} ✨
-  `;
+  println`{green Done!} ✨`;
 };
 
 export const push = async ({ filesync, changes }: { filesync: FileSync; changes: FileChange[] }): Promise<void> => {

@@ -178,11 +178,11 @@ export const command: Command = async (rootArgs) => {
     printlns`
         {bold You must either}
 
-          1. Push with {bold --force} and overwrite Gadget's conflicting changes
+          1. Push with --force and overwrite Gadget's conflicting changes
 
              {gray ggt push --force}
 
-          2. Pull with {bold --force} and overwrite your conflicting changes
+          2. Pull with --force and overwrite your conflicting changes
 
              {gray ggt pull --force}
 
@@ -190,7 +190,7 @@ export const command: Command = async (rootArgs) => {
 
              {gray ggt reset}
 
-          4. Manually resolve these conflicts and sync again
+          4. Manually resolve the conflicts and try again
       `;
 
     process.exit(1);

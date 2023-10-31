@@ -26,7 +26,7 @@ export const usage = sprint`
 
 const log = createLogger("login");
 
-export const command: Command = async () => {
+export const login = async (): Promise<void> => {
   let server: Server | undefined;
 
   try {
@@ -97,3 +97,5 @@ export const command: Command = async () => {
     server?.close();
   }
 };
+
+export const command: Command = login;

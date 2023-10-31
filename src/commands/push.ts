@@ -72,15 +72,10 @@ export const command: Command = async (rootArgs) => {
   }
 
   const changes = getNecessaryFileChanges({ changes: localChanges, existing: gadgetHashes });
-
   printlns`{bold The following changes will be sent to Gadget}`;
   printFileChanges({ changes });
 
-  const yes = await confirm({ message: "Are you sure you want to make these changes?" });
-  if (!yes) {
-    return;
-  }
-
+  await confirm({ message: "Are you sure you want to make these changes?" });
   await push({ filesync, changes });
 
   println`{green Done!} ✨`;

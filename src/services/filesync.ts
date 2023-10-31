@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { findUp } from "find-up";
 import type { Stats } from "fs-extra";
 import fs from "fs-extra";
@@ -29,7 +28,7 @@ import { ArgError, InvalidSyncFileError } from "./errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
 import { createLogger } from "./log.js";
 import { noop } from "./noop.js";
-import { printTable, sortBySimilarity, sprint } from "./print.js";
+import { color, printTable, sortBySimilarity, sprint, symbol } from "./print.js";
 import { select } from "./prompt.js";
 import type { User } from "./user.js";
 
@@ -527,18 +526,6 @@ export class FileSync {
       localHashes,
       gadgetHashes,
     };
-
-    //  The changes that have been made to the local filesystem since the last time we synced.
-    // localChanges: new ChangedHashes({ from: filesVersionHashes, to: localHashes }),
-
-    // The changes that have been made to Gadget since the last time we synced.
-    // gadgetChanges: new ChangedHashes({ from: filesVersionHashes, to: gadgetHashes }),
-
-    // The files that need to be changed on the local filesystem to match Gadget.
-    // localToGadget: new FilesToChange({ from: localHashes, to: gadgetHashes }),
-
-    // The files that need to be changed in Gadget to match the local filesystem.
-    // gadgetToLocal: new FilesToChange({ from: gadgetHashes, to: localHashes }),
   }
 
   /**
@@ -614,13 +601,13 @@ const fileHash = (filepath: string): Promise<string> => {
   });
 };
 
-const chalkAdd = chalk.greenBright("add");
-const chalkChange = chalk.blueBright("change");
-const chalkDelete = chalk.redBright("delete");
+// const chalkAdd = chalk.greenBright("add");
+// const chalkChange = chalk.blueBright("change");
+// const chalkDelete = chalk.redBright("delete");
 
-const chalkAdded = chalk.greenBright("added");
-const chalkChanged = chalk.blueBright("changed");
-const chalkDeleted = chalk.redBright("deleted");
+// const chalkAdded = chalk.greenBright("added");
+// const chalkChanged = chalk.blueBright("changed");
+// const chalkDeleted = chalk.redBright("deleted");
 
 export const getFileChanges = ({ from, to }: { from: Hashes; to: Hashes }): FileChangeWithHash[] => {
   const added: AddWithHash[] = [];
@@ -658,9 +645,9 @@ export const getFileChanges = ({ from, to }: { from: Hashes; to: Hashes }): File
 };
 
 export const printFileChanges = ({ changes, tense = "present" }: { changes: FileChange[]; tense?: "past" | "present" }): void => {
-  const added = tense === "past" ? chalkAdded : chalkAdd;
-  const changed = tense === "past" ? chalkChanged : chalkChange;
-  const deleted = tense === "past" ? chalkDeleted : chalkDelete;
+  const added = color.greenBright(tense === "past" ? "added" : "add");
+  const changed = color.blueBright(tense === "past" ? "changed" : "change");
+  const deleted = color.redBright(tense === "past" ? "deleted" : "delete");
 
   printTable({
     colAligns: ["left", "left", "left"],
@@ -668,11 +655,11 @@ export const printFileChanges = ({ changes, tense = "present" }: { changes: File
     rows: changes.map((change) => {
       switch (change.type) {
         case "add":
-          return [chalk.greenBright("+"), chalk.greenBright(change.path), added];
+          return [color.greenBright("+"), color.greenBright(change.path), added];
         case "change":
-          return [chalk.blueBright("+-"), chalk.blueBright(change.path), changed];
+          return [color.blueBright(symbol.plusMinus), color.blueBright(change.path), changed];
         case "delete":
-          return [chalk.redBright("-"), chalk.redBright(change.path), deleted];
+          return [color.redBright("-"), color.redBright(change.path), deleted];
       }
     }),
   });
@@ -729,6 +716,10 @@ export const getFileConflicts = ({
 };
 
 export const printFileConflicts = (conflicts: FileConflict[]): void => {
+  const added = color.greenBright("added");
+  const changed = color.blueBright("changed");
+  const deleted = color.redBright("deleted");
+
   printTable({
     colAligns: ["left", "left", "center", "center"],
     colWidths: [4],
@@ -737,21 +728,21 @@ export const printFileConflicts = (conflicts: FileConflict[]): void => {
     rows: conflicts.map((conflict) => {
       switch (conflict.type) {
         case "youAddedTheyAdded":
-          return [">", conflict.path, chalkAdded, chalkAdded];
+          return [symbol.plusMinus, conflict.path, added, added];
         case "youAddedTheyChanged":
-          return [">", conflict.path, chalkAdded, chalkChanged];
+          return [symbol.plusMinus, conflict.path, added, changed];
         case "youAddedTheyDeleted":
-          return [">", conflict.path, chalkAdded, chalkDeleted];
+          return [symbol.plusMinus, conflict.path, added, deleted];
         case "youChangedTheyAdded":
-          return [">", conflict.path, chalkChanged, chalkAdded];
+          return [symbol.plusMinus, conflict.path, changed, added];
         case "youChangedTheyChanged":
-          return [">", conflict.path, chalkChanged, chalkChanged];
+          return [symbol.plusMinus, conflict.path, changed, changed];
         case "youChangedTheyDeleted":
-          return [">", conflict.path, chalkChanged, chalkDeleted];
+          return [symbol.plusMinus, conflict.path, changed, deleted];
         case "youDeletedTheyAdded":
-          return [">", conflict.path, chalkDeleted, chalkAdded];
+          return [symbol.plusMinus, conflict.path, deleted, added];
         case "youDeletedTheyChanged":
-          return [">", conflict.path, chalkDeleted, chalkChanged];
+          return [symbol.plusMinus, conflict.path, deleted, changed];
       }
     }),
   });

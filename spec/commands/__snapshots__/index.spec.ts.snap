@@ -63,6 +63,17 @@ EXAMPLE
   TODO"
 `;
 
+exports[`reset > has a usage string 1`] = `
+"TODO
+
+USAGE
+  $ ggt reset
+
+EXAMPLE
+  $ ggt reset
+  TODO"
+`;
+
 exports[`sync > has a usage string 1`] = `
 "Sync your Gadget application's source code to and from
 your local filesystem.

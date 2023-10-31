@@ -1,3 +1,4 @@
+import ansiColors from "ansi-colors";
 import chalkTemplate from "chalk-template";
 import CliTable3, { type TableConstructorOptions } from "cli-table3";
 import levenshtein from "fast-levenshtein";
@@ -5,6 +6,9 @@ import assert from "node:assert";
 import process from "node:process";
 import { dedent } from "ts-dedent";
 import { isObject, isString } from "./is.js";
+
+export const color = ansiColors;
+export const symbol = ansiColors.symbols;
 
 /**
  * A wrapper around process.stdout and process.stderr that allows us to mock out the streams for testing.

@@ -57,9 +57,9 @@ export const command: Command = async (rootArgs) => {
 
              {gray ggt pull --force}
 
-          2. Discard your local changes
+          2. Discard your conflicting changes
 
-             {gray ggt reset}
+             {gray ggt reset --only-conflicts}
 
           3. Manually resolve the conflicts and try again
     `;

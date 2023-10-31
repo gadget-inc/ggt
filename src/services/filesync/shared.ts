@@ -26,7 +26,7 @@ import { sortBySimilarity, sprint } from "../print.js";
 import { select } from "../prompt.js";
 import type { User } from "../user.js";
 import { Create, Delete, Update, type Change } from "./changes.js";
-import { gadgetFileHashes, type ChangeHash, type Hashes } from "./hashes.js";
+import { gadgetFileHashes, type Hashes } from "./hashes.js";
 
 const log = createLogger("filesync");
 
@@ -574,20 +574,5 @@ const fileHash = (filepath: string): Promise<string> => {
     } catch (error) {
       reject(error);
     }
-  });
-};
-
-export const getNecessaryFileChanges = ({ changes, existing }: { changes: ChangeHash[]; existing: Hashes }): ChangeHash[] => {
-  return changes.filter((change) => {
-    const hash = existing[change.path];
-    if (change.type === "delete" && !hash) {
-      // already deleted
-      return false;
-    }
-    if ((change.type === "create" || change.type === "update") && change.toHash === hash) {
-      // already created or updated
-      return false;
-    }
-    return true;
   });
 };

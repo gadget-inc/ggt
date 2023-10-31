@@ -1,12 +1,12 @@
 import arg from "arg";
 import fs from "fs-extra";
 import pMap from "p-map";
-import { getFileChanges } from "src/services/filesync/hashes.js";
+import { getFileChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
 import { printChanges } from "../services/filesync/changes.js";
 import { getFileConflicts, printConflicts } from "../services/filesync/conflicts.js";
-import { FileSync, getNecessaryFileChanges } from "../services/filesync/shared.js";
+import { FileSync } from "../services/filesync/shared.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";

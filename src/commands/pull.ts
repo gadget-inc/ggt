@@ -1,5 +1,5 @@
 import arg from "arg";
-import { getFileChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
+import { getFileChanges, getNecessaryFileChanges, hashes } from "src/services/filesync/hashes.js";
 import { AppArg } from "../services/args.js";
 import { printChanges } from "../services/filesync/changes.js";
 import { getFileConflicts, printConflicts } from "../services/filesync/conflicts.js";
@@ -30,7 +30,7 @@ export const command: Command = async (rootArgs) => {
   const args = arg(argSpec, { argv: rootArgs._ });
   const user = await getUserOrLogin();
   const filesync = await FileSync.init(user, { dir: args._[0], app: args["--app"], force: args["--force"] });
-  const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await filesync.hashes();
+  const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await hashes({ filesync });
 
   const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
   if (gadgetChanges.length === 0) {

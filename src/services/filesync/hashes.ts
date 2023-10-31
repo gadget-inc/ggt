@@ -1,27 +1,12 @@
 import assert from "node:assert";
 import { z } from "zod";
-import { FILE_HASHES_QUERY, type EditGraphQL } from "../edit-graphql.js";
+import { FILE_HASHES_QUERY } from "../edit-graphql.js";
 import { Create, Delete, Update } from "./changes.js";
+import { fileHashes, type FileSync } from "./shared.js";
 
 export const Hashes = z.record(z.string());
 
 export type Hashes = z.infer<typeof Hashes>;
-
-export const gadgetFileHashes = async (
-  graphql: EditGraphQL,
-  filesVersion?: bigint | string,
-  ignorePrefixes?: string[],
-): Promise<[bigint, Hashes]> => {
-  const { fileHashes } = await graphql.query({
-    query: FILE_HASHES_QUERY,
-    variables: {
-      filesVersion: filesVersion?.toString(),
-      ignorePrefixes,
-    },
-  });
-
-  return [BigInt(fileHashes.filesVersion), Hashes.parse(fileHashes.hashes)];
-};
 
 export type ChangeHash = CreateHash | UpdateHash | DeleteHash;
 
@@ -101,4 +86,38 @@ export const getNecessaryFileChanges = ({ changes, existing }: { changes: Change
     }
     return true;
   });
+};
+
+export const hashes = async ({
+  filesync,
+}: {
+  filesync: FileSync;
+}): Promise<{
+  /**
+   * The latest filesVersion in Gadget.
+   */
+  gadgetFilesVersion: bigint;
+  filesVersionHashes: Hashes;
+  localHashes: Hashes;
+  gadgetHashes: Hashes;
+}> => {
+  const [localHashes, filesVersionHashes, { gadgetFilesVersion, gadgetHashes }] = await Promise.all([
+    fileHashes(filesync),
+
+    filesync.editGraphQL
+      .query({ query: FILE_HASHES_QUERY, variables: { filesVersion: String(filesync.filesVersion) } })
+      .then((data) => Hashes.parse(data.fileHashes.hashes)),
+
+    filesync.editGraphQL.query({ query: FILE_HASHES_QUERY }).then((data) => ({
+      gadgetFilesVersion: BigInt(data.fileHashes.filesVersion),
+      gadgetHashes: Hashes.parse(data.fileHashes.hashes),
+    })),
+  ]);
+
+  return {
+    gadgetFilesVersion,
+    filesVersionHashes,
+    localHashes,
+    gadgetHashes,
+  };
 };

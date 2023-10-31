@@ -26,7 +26,7 @@ import { sortBySimilarity, sprint } from "../print.js";
 import { select } from "../prompt.js";
 import type { User } from "../user.js";
 import { Create, Delete, Update, type Change } from "./changes.js";
-import { gadgetFileHashes, type Hashes } from "./hashes.js";
+import { type Hashes } from "./hashes.js";
 
 const log = createLogger("filesync");
 
@@ -41,6 +41,8 @@ export type File = {
 };
 
 export class FileSync {
+  readonly editGraphQL: EditGraphQL;
+
   /**
    * The {@linkcode Ignore} instance that is used to determine if a file
    * should be ignored.
@@ -48,8 +50,6 @@ export class FileSync {
    * @see https://www.npmjs.com/package/ignore
    */
   private _ignorer!: Ignore;
-
-  private _editGraphQL: EditGraphQL;
 
   private constructor(
     /**
@@ -81,7 +81,7 @@ export class FileSync {
   ) {
     this._save();
     this.reloadIgnorePaths();
-    this._editGraphQL = new EditGraphQL(this.app);
+    this.editGraphQL = new EditGraphQL(this.app);
   }
 
   /**
@@ -423,7 +423,7 @@ export class FileSync {
   }
 
   async sendToGadget(changes: { changed: Iterable<File>; deleted: Iterable<string> }): Promise<Change[]> {
-    const { publishFileSyncEvents } = await this._editGraphQL.query({
+    const { publishFileSyncEvents } = await this.editGraphQL.query({
       query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
         input: {
@@ -450,7 +450,7 @@ export class FileSync {
     filesVersion?: bigint;
     paths: string[];
   }): Promise<{ filesVersion: bigint; files: File[] }> {
-    const data = await this._editGraphQL.query({
+    const data = await this.editGraphQL.query({
       query: FILES_QUERY,
       variables: {
         paths,
@@ -472,7 +472,7 @@ export class FileSync {
     onChange: (changes: { filesVersion: bigint; changed: File[]; deleted: string[] }) => void;
     onError: (error: unknown) => void;
   }): () => void {
-    return this._editGraphQL.subscribe(
+    return this.editGraphQL.subscribe(
       {
         query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
         // the reason this is a function rather than a static value is
@@ -499,29 +499,6 @@ export class FileSync {
         },
       },
     );
-  }
-
-  async hashes(): Promise<{
-    /**
-     * The latest filesVersion in Gadget.
-     */
-    gadgetFilesVersion: bigint;
-    filesVersionHashes: Hashes;
-    localHashes: Hashes;
-    gadgetHashes: Hashes;
-  }> {
-    const [localHashes, [, filesVersionHashes], [gadgetFilesVersion, gadgetHashes]] = await Promise.all([
-      fileHashes(this),
-      gadgetFileHashes(this._editGraphQL, this.filesVersion),
-      gadgetFileHashes(this._editGraphQL),
-    ]);
-
-    return {
-      gadgetFilesVersion: BigInt(gadgetFilesVersion),
-      filesVersionHashes,
-      localHashes,
-      gadgetHashes,
-    };
   }
 
   /**

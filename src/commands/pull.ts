@@ -52,7 +52,7 @@ export const command: Command = async (rootArgs) => {
 
     if (!args["--force"]) {
       printlns`
-        {bold You must either:}
+        {bold You must either}
 
           1. Pull with {bold --force} and overwrite your conflicting changes
 

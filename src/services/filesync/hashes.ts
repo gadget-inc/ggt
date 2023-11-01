@@ -36,39 +36,40 @@ export class DeleteHash extends Delete {
   }
 }
 
-export const getFileChanges = ({ from, to }: { from: Hashes; to: Hashes }): ChangeHash[] => {
-  const added: CreateHash[] = [];
-  const changed: UpdateHash[] = [];
+export const getFileChanges = ({ from: source, to: target }: { from: Hashes; to: Hashes }): ChangeHash[] => {
+  const created: CreateHash[] = [];
+  const updated: UpdateHash[] = [];
   const deleted: DeleteHash[] = [];
 
-  const toPaths = Object.keys(to);
+  const targetPaths = Object.keys(target);
 
-  for (const [fromPath, fromHash] of Object.entries(from)) {
-    const toHash = to[fromPath];
-    if (!toHash) {
-      if (!fromPath.endsWith("/") || !toPaths.some((toPath) => toPath.startsWith(fromPath))) {
-        // fromPath is a file and it doesn't exist in to OR fromPath
-        // is a directory and to doesn't have any existing files
-        // inside it, therefor the fromPath has been deleted
-        deleted.push(new DeleteHash(fromPath, fromHash));
+  for (const [sourcePath, sourceHash] of Object.entries(source)) {
+    const targetHash = target[sourcePath];
+    if (!targetHash) {
+      if (!sourcePath.endsWith("/") || !targetPaths.some((targetPath) => targetPath.startsWith(sourcePath))) {
+        // sourcePath is a file and it doesn't exist in target OR
+        // sourcePath is a directory and target doesn't have any
+        // existing files inside it, therefor the sourcePath has been
+        // deleted
+        deleted.push(new DeleteHash(sourcePath, sourceHash));
       }
-    } else if (toHash !== fromHash) {
-      // the file or directory exists in to, but has a different
+    } else if (targetHash !== sourceHash) {
+      // the file or directory exists in target, but has a different
       // hash, so it's been changed
-      changed.push(new UpdateHash(fromPath, fromHash, toHash));
+      updated.push(new UpdateHash(sourcePath, sourceHash, targetHash));
     }
   }
 
-  for (const toPath of toPaths) {
-    if (!from[toPath]) {
-      // the toPath doesn't exist in from, so it's been added
-      const toHash = to[toPath];
-      assert(toHash);
-      added.push(new CreateHash(toPath, toHash));
+  for (const targetPath of targetPaths) {
+    if (!source[targetPath]) {
+      // the targetPath doesn't exist in source, so it's been created
+      const targetHash = target[targetPath];
+      assert(targetHash);
+      created.push(new CreateHash(targetPath, targetHash));
     }
   }
 
-  return [...added, ...changed, ...deleted].sort((a, b) => a.path.localeCompare(b.path));
+  return [...created, ...updated, ...deleted].sort((a, b) => a.path.localeCompare(b.path));
 };
 
 export const getNecessaryFileChanges = ({ changes, existing }: { changes: ChangeHash[]; existing: Hashes }): ChangeHash[] => {

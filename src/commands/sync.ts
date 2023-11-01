@@ -25,6 +25,7 @@ import { noop } from "../services/noop.js";
 import { notify } from "../services/notify.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { PromiseSignal } from "../services/promise.js";
+import { confirm, select } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";
 import type { Command } from "./index.js";
 
@@ -155,39 +156,7 @@ export const command: Command = async (rootArgs) => {
   }));
 
   if (!filesync.directory.wasEmpty) {
-    const { filesVersionHashes, localHashes, gadgetHashes } = await filesync.getHashes();
-    const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
-    if (localChanges.length === 0) {
-      // if there are no local changes, we don't need to check for conflicts
-      return;
-    }
-
-    const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
-    const conflicts = getConflicts({ localChanges, gadgetChanges });
-    if (conflicts.length > 0) {
-      printlns`{bold You have conflicting changes with Gadget}`;
-      printConflicts(conflicts);
-
-      printlns`
-        {bold You must either}
-
-          1. Push with --force and overwrite Gadget's conflicting changes
-
-             {gray ggt push --force}
-
-          2. Pull with --force and overwrite your conflicting changes
-
-             {gray ggt pull --force}
-
-          3. Discard your local changes
-
-             {gray ggt reset}
-
-          4. Manually resolve the conflicts and try again
-      `;
-
-      process.exit(1);
-    }
+    await handleConflicts(filesync);
   }
 
   /**
@@ -451,5 +420,53 @@ export const command: Command = async (rootArgs) => {
     throw error as Error;
   } else {
     println("Goodbye!");
+  }
+};
+
+export const handleConflicts = async (filesync: FileSync): Promise<void> => {
+  const { filesVersionHashes, localHashes, gadgetHashes } = await filesync.getHashes();
+  const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
+  if (localChanges.length === 0) {
+    // if there are no local changes, then there can't be any conflicts
+    return;
+  }
+
+  const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
+  const conflicts = getConflicts({ localChanges, gadgetChanges });
+  if (conflicts.length === 0) {
+    // if there are no conflicts, then there's nothing to do
+    return;
+  }
+
+  printlns`{bold You have conflicting changes with Gadget}`;
+  printConflicts(conflicts);
+
+  const action = await select({
+    message: "How would you like to resolve these conflicts?",
+    choices: Object.values(Action),
+  });
+
+  switch (action) {
+    case Action.CANCEL: {
+      process.exit(0);
+      break;
+    }
+    case Action.MERGE: {
+      break;
+    }
+    case Action.PUSH: {
+      const changes = getFileChanges({ from: localHashes, to: gadgetHashes });
+      printlns`{bold The following changes will sent to Gadget}`;
+      printChanges({ changes });
+      await confirm({ message: "Are you sure you want to make these changes?" });
+      break;
+    }
+    case Action.RESET: {
+      const changes = getFileChanges({ from: localHashes, to: filesVersionHashes });
+      printlns`{bold The following changes will be made to your local filesystem}`;
+      printChanges({ changes });
+      await confirm({ message: "Are you sure you want to make these changes?" });
+      break;
+    }
   }
 };

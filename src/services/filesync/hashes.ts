@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { z } from "zod";
 import { FILE_HASHES_QUERY } from "../edit-graphql.js";
 import { Create, Delete, Update } from "./changes.js";
-import { type FileSync } from "./shared.js";
+import { type FileSync } from "./filesync.js";
 
 export const Hashes = z.record(z.string());
 

@@ -18,7 +18,7 @@ import { defaults } from "../services/defaults.js";
 import { YarnNotFoundError } from "../services/errors.js";
 import { printChanges } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
-import { FileSync, type File } from "../services/filesync/shared.js";
+import { FileSync, type File } from "../services/filesync/filesync.js";
 import { swallowEnoent } from "../services/fs.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";

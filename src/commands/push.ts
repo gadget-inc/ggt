@@ -6,7 +6,7 @@ import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
 import { printChanges, sendToGadget } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
-import { FileSync } from "../services/filesync/shared.js";
+import { FileSync } from "../services/filesync/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";

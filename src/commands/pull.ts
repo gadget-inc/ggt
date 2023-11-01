@@ -3,7 +3,7 @@ import { getFileChanges, getHashes, getNecessaryFileChanges } from "src/services
 import { AppArg } from "../services/args.js";
 import { printChanges } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
-import { FileSync } from "../services/filesync/shared.js";
+import { FileSync } from "../services/filesync/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { confirm } from "../services/prompt.js";
 import { getUserOrLogin } from "../services/user.js";

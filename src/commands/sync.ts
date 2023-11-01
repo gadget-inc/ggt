@@ -6,7 +6,7 @@ import ms from "ms";
 import path from "node:path";
 import pMap from "p-map";
 import PQueue from "p-queue";
-import { getFileChanges } from "src/services/filesync/hashes.js";
+import { getChanges, getChangesToMake } from "src/services/filesync/hashes.js";
 import Watcher from "watcher";
 import which from "which";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
@@ -16,7 +16,7 @@ import { config } from "../services/config.js";
 import { debounce } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
 import { YarnNotFoundError } from "../services/errors.js";
-import { printChanges } from "../services/filesync/changes.js";
+import { printChanges, printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync, type File } from "../services/filesync/filesync.js";
 import { swallowEnoent } from "../services/fs.js";
@@ -195,7 +195,7 @@ export const command: Command = async (rootArgs) => {
         const changes = await filesync.writeToLocalFilesystem({ filesVersion, files: changed, delete: deleted });
         if (changes.length > 0) {
           println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
-          printChanges({ changes });
+          printChangesToMake({ changes });
 
           if (changed.some((change) => change.path === "yarn.lock")) {
             await execa("yarn", ["install"], { cwd: filesync.directory.path }).catch(noop);
@@ -246,7 +246,7 @@ export const command: Command = async (rootArgs) => {
 
       const changes = await filesync.sendToGadget({ changed, deleted });
       println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
-      printChanges({ changes, tense: "past" });
+      printChanges({ changes });
     });
   });
 
@@ -425,13 +425,13 @@ export const command: Command = async (rootArgs) => {
 
 export const handleConflicts = async (filesync: FileSync): Promise<void> => {
   const { filesVersionHashes, localHashes, gadgetHashes } = await filesync.getHashes();
-  const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
+  const localChanges = getChanges({ from: filesVersionHashes, to: localHashes });
   if (localChanges.length === 0) {
     // if there are no local changes, then there can't be any conflicts
     return;
   }
 
-  const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
+  const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
   const conflicts = getConflicts({ localChanges, gadgetChanges });
   if (conflicts.length === 0) {
     // if there are no conflicts, then there's nothing to do
@@ -455,16 +455,16 @@ export const handleConflicts = async (filesync: FileSync): Promise<void> => {
       break;
     }
     case Action.PUSH: {
-      const changes = getFileChanges({ from: localHashes, to: gadgetHashes });
-      printlns`{bold The following changes will sent to Gadget}`;
-      printChanges({ changes });
+      const changes = getChangesToMake({ from: localHashes, to: gadgetHashes });
+      printlns`{bold The following changes will be sent to Gadget}`;
+      printChangesToMake({ changes });
       await confirm({ message: "Are you sure you want to make these changes?" });
       break;
     }
     case Action.RESET: {
-      const changes = getFileChanges({ from: localHashes, to: filesVersionHashes });
+      const changes = getChanges({ from: localHashes, to: filesVersionHashes });
       printlns`{bold The following changes will be made to your local filesystem}`;
-      printChanges({ changes });
+      printChangesToMake({ changes });
       await confirm({ message: "Are you sure you want to make these changes?" });
       break;
     }

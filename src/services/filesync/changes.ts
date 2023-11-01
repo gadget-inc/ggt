@@ -26,10 +26,30 @@ export type File = {
   encoding: FileSyncEncoding;
 };
 
-export const printChanges = ({ changes, tense = "present" }: { changes: Change[]; tense?: "past" | "present" }): void => {
-  const created = color.greenBright(tense === "past" ? "created" : "create");
-  const updated = color.blueBright(tense === "past" ? "updated" : "update");
-  const deleted = color.redBright(tense === "past" ? "deleted" : "delete");
+export const printChangesToMake = ({ changes }: { changes: Change[] }): void => {
+  const create = color.greenBright("create");
+  const update = color.blueBright("update");
+  const del = color.redBright("delete");
+
+  printTable({
+    head: ["", "", ""],
+    rows: changes.map((change) => {
+      switch (change.type) {
+        case "create":
+          return [color.greenBright("+"), color.greenBright(change.path), create];
+        case "update":
+          return [color.blueBright(symbol.plusMinus), color.blueBright(change.path), update];
+        case "delete":
+          return [color.redBright("-"), color.redBright(change.path), del];
+      }
+    }),
+  });
+};
+
+export const printChanges = ({ changes }: { changes: Change[] }): void => {
+  const created = color.greenBright("created");
+  const updated = color.blueBright("updated");
+  const deleted = color.redBright("deleted");
 
   printTable({
     head: ["", "", ""],

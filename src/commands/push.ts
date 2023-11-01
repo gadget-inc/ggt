@@ -1,10 +1,10 @@
 import arg from "arg";
 import fs from "fs-extra";
 import pMap from "p-map";
-import { getFileChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
+import { getChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
-import { printChanges } from "../services/filesync/changes.js";
+import { printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
@@ -41,13 +41,13 @@ export const command: Command = async (rootArgs) => {
 
   const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await filesync.getHashes();
 
-  const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
+  const localChanges = getChanges({ from: filesVersionHashes, to: localHashes });
   if (localChanges.length === 0) {
     printlns("You don't have any changes to push to Gadget.");
     return;
   }
 
-  const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
+  const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
   const conflicts = getConflicts({ localChanges, gadgetChanges });
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
@@ -74,7 +74,7 @@ export const command: Command = async (rootArgs) => {
 
   const changes = getNecessaryFileChanges({ changes: localChanges, existing: gadgetHashes });
   printlns`{bold The following changes will be sent to Gadget}`;
-  printChanges({ changes });
+  printChangesToMake({ changes });
   await confirm({ message: "Are you sure you want to make these changes?" });
 
   await filesync.sendToGadget({

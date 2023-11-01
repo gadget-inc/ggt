@@ -1,7 +1,7 @@
 import arg from "arg";
-import { getFileChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
+import { getChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import { AppArg } from "../services/args.js";
-import { printChanges } from "../services/filesync/changes.js";
+import { printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
@@ -38,13 +38,13 @@ export const command: Command = async (rootArgs) => {
 
   const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await filesync.getHashes();
 
-  const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
+  const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
   if (gadgetChanges.length === 0) {
     printlns("You already have the latest changes from Gadget.");
     return;
   }
 
-  const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
+  const localChanges = getChanges({ from: filesVersionHashes, to: localHashes });
   const conflicts = getConflicts({ localChanges, gadgetChanges });
   if (conflicts.length > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
@@ -71,7 +71,7 @@ export const command: Command = async (rootArgs) => {
 
   if (!filesync.directory.wasEmpty) {
     printlns`{bold The following changes will be made to your local filesystem}`;
-    printChanges({ changes });
+    printChangesToMake({ changes });
     await confirm({ message: "Are you sure you want to make these changes?" });
   }
 

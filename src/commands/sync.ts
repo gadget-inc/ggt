@@ -467,6 +467,11 @@ export const handleConflicts = async (filesync: FileSync): Promise<void> => {
         printlns`{bold The following changes will be sent to Gadget}`;
         printChangesToMake({ changes });
         await confirm({ message: "Are you sure you want to send these changes?" });
+      } else {
+        const changes = getNecessaryFileChanges({ changes: gadgetChanges, existing: localHashes });
+        printlns`{bold The following changes will be made to your local filesystem}`;
+        printChangesToMake({ changes });
+        await confirm({ message: "Are you sure you want to make these changes?" });
       }
       break;
     }

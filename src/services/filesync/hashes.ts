@@ -119,6 +119,11 @@ export const getChangesToMake = ({ from: source, to: target }: { from: Hashes; t
   return [...create, ...update, ...del].sort((a, b) => a.path.localeCompare(b.path));
 };
 
+/**
+ *
+ * @param param0 what
+ * @returns
+ */
 export const getNecessaryFileChanges = ({ changes, existing }: { changes: ChangeHash[]; existing: Hashes }): ChangeHash[] => {
   return changes.filter((change) => {
     const hash = existing[change.path];

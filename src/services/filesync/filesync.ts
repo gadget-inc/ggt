@@ -25,7 +25,7 @@ import { noop } from "../noop.js";
 import { sortBySimilarity, sprint } from "../print.js";
 import { select } from "../prompt.js";
 import type { User } from "../user.js";
-import { Create, Delete, Update, type Change } from "./changes.js";
+import { Changes, Create, Delete, Update } from "./changes.js";
 import { Directory } from "./directory.js";
 import { Hashes } from "./hashes.js";
 
@@ -222,10 +222,10 @@ export class FileSync {
     files: Iterable<File>;
     delete: Iterable<string>;
     force?: boolean;
-  }): Promise<Change[]> {
+  }): Promise<Changes> {
     const filesVersion = BigInt(options.filesVersion);
-    const added: string[] = [];
-    const changed: string[] = [];
+    const created: string[] = [];
+    const updated: string[] = [];
 
     await pMap(options.delete, async (filepath) => {
       const currentPath = this.directory.absolute(filepath);
@@ -260,9 +260,9 @@ export class FileSync {
     await pMap(options.files, async (file) => {
       const absolutePath = this.directory.absolute(file.path);
       if (await fs.pathExists(absolutePath)) {
-        changed.push(file.path);
+        updated.push(file.path);
       } else {
-        added.push(file.path);
+        created.push(file.path);
       }
 
       if (file.path.endsWith("/")) {
@@ -285,15 +285,11 @@ export class FileSync {
 
     this._save();
 
-    const changes = [
-      ...added.map((path) => new Create(path)),
-      ...changed.map((path) => new Update(path)),
-      ...Array.from(options.delete).map((path) => new Delete(path)),
-    ];
-
-    // log.info("wrote", { ...this._state, changes });
-
-    return changes;
+    return new Changes([
+      ...created.map((path) => [path, new Create()] as const),
+      ...updated.map((path) => [path, new Update()] as const),
+      ...Array.from(options.delete).map((path) => [path, new Delete()] as const),
+    ]);
   }
 
   async sendToGadget({
@@ -304,7 +300,7 @@ export class FileSync {
     expectedFilesVersion?: bigint;
     changed: Iterable<File>;
     deleted: Iterable<string>;
-  }): Promise<Change[]> {
+  }): Promise<Changes> {
     const { publishFileSyncEvents } = await this.editGraphQL.query({
       query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
@@ -319,9 +315,10 @@ export class FileSync {
     this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
     this._save();
 
-    return [...mapValues(changed, "path").map((path) => new Create(path)), ...Array.from(deleted).map((path) => new Delete(path))].sort(
-      (a, b) => a.path.localeCompare(b.path),
-    );
+    return new Changes([
+      ...mapValues(changed, "path").map((path) => [path, new Create()] as const),
+      ...Array.from(deleted).map((path) => [path, new Delete()] as const),
+    ]);
   }
 
   async getFilesFromGadget({

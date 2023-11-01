@@ -1,5 +1,3 @@
-import { isObject } from "./is.js";
-
 export const compact = <T>(array: T[]): NonNullable<T>[] => {
   return array.filter((value): value is NonNullable<T> => Boolean(value));
 };
@@ -24,13 +22,4 @@ export const pick = <T extends Record<string, unknown>, K extends keyof T>(objec
     final[key] = object[key];
   }
   return final;
-};
-
-export const get = <T, K extends PropertyKey, R = K extends keyof T ? T[K] : unknown>(object: T, property: K): R => {
-  if (isObject(object)) {
-    // @ts-expect-error property might not exist on object which is why
-    // we're using this function
-    return object[property] as R;
-  }
-  return undefined as R;
 };

@@ -11,41 +11,34 @@ export type Hashes = z.infer<typeof Hashes>;
 
 export type ChangeHash = CreateHash | UpdateHash | DeleteHash;
 
+export class ChangesHash extends Map<string, ChangeHash> {}
+
 export class CreateHash extends Create {
-  constructor(
-    path: string,
-    readonly targetHash: string,
-  ) {
-    super(path);
+  constructor(readonly targetHash: string) {
+    super();
   }
 }
 
 export class UpdateHash extends Update {
   constructor(
-    path: string,
     readonly sourceHash: string,
     readonly targetHash: string,
   ) {
-    super(path);
+    super();
   }
 }
 
 export class DeleteHash extends Delete {
-  constructor(
-    path: string,
-    readonly sourceHash: string,
-  ) {
-    super(path);
+  constructor(readonly sourceHash: string) {
+    super();
   }
 }
 
 /**
  * @returns The changes that were made to `from` to make it match `to`.
  */
-export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes; to: Hashes; ignore?: string[] }): ChangeHash[] => {
-  const created: CreateHash[] = [];
-  const updated: UpdateHash[] = [];
-  const deleted: DeleteHash[] = [];
+export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes; to: Hashes; ignore?: string[] }): ChangesHash => {
+  const changes = new ChangesHash();
 
   const targetPaths = Object.keys(target);
 
@@ -61,13 +54,13 @@ export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes;
         // sourcePath is a directory and target doesn't have any
         // existing files inside it, therefor the sourcePath has been
         // deleted
-        deleted.push(new DeleteHash(sourcePath, sourceHash));
+        changes.set(sourcePath, new DeleteHash(sourceHash));
         log.debug("deleted", { sourcePath, sourceHash });
       }
     } else if (targetHash !== sourceHash) {
       // the file or directory exists in target, but has a different
       // hash, so it's been changed
-      updated.push(new UpdateHash(sourcePath, sourceHash, targetHash));
+      changes.set(sourcePath, new UpdateHash(sourceHash, targetHash));
     }
   }
 
@@ -80,21 +73,18 @@ export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes;
       // the targetPath doesn't exist in source, so it's been created
       const targetHash = target[targetPath];
       assert(targetHash);
-      created.push(new CreateHash(targetPath, targetHash));
+      changes.set(targetPath, new CreateHash(targetHash));
     }
   }
 
-  return [...created, ...updated, ...deleted].sort((a, b) => a.path.localeCompare(b.path));
+  return changes;
 };
 
 /**
  * @returns the changes that need to be made to `to` to make it match `from`.
  */
-export const getChangesToMake = ({ from: source, to: target, ignore }: { from: Hashes; to: Hashes; ignore?: string[] }): ChangeHash[] => {
-  const create: CreateHash[] = [];
-  const update: UpdateHash[] = [];
-  const del: DeleteHash[] = [];
-
+export const getChangesToMake = ({ from: source, to: target, ignore }: { from: Hashes; to: Hashes; ignore?: string[] }): ChangesHash => {
+  const changes = new ChangesHash();
   const targetPaths = Object.keys(target);
 
   for (const [sourcePath, sourceHash] of Object.entries(source)) {
@@ -109,12 +99,12 @@ export const getChangesToMake = ({ from: source, to: target, ignore }: { from: H
         // sourcePath is a directory and target doesn't have any
         // existing files inside it, therefor create we need to create
         // it
-        create.push(new CreateHash(sourcePath, sourceHash));
+        changes.set(sourcePath, new CreateHash(sourceHash));
       }
     } else if (targetHash !== sourceHash) {
       // the file or directory exists in target, but has a different
       // hash, so it needs to be updated
-      update.push(new UpdateHash(sourcePath, sourceHash, targetHash));
+      changes.set(sourcePath, new UpdateHash(sourceHash, targetHash));
     }
   }
 
@@ -128,27 +118,34 @@ export const getChangesToMake = ({ from: source, to: target, ignore }: { from: H
       // deleted
       const targetHash = target[targetPath];
       assert(targetHash);
-      del.push(new DeleteHash(targetPath, targetHash));
+      changes.set(targetPath, new DeleteHash(targetHash));
     }
   }
 
-  return [...create, ...update, ...del].sort((a, b) => a.path.localeCompare(b.path));
+  return changes;
 };
 
 /**
  * @returns
  */
-export const getNecessaryFileChanges = ({ changes, existing }: { changes: ChangeHash[]; existing: Hashes }): ChangeHash[] => {
-  return changes.filter((change) => {
-    const existingHash = existing[change.path];
-    if (change.type === "delete" && !existingHash) {
+export const getNecessaryFileChanges = ({ changes, existing }: { changes: ChangesHash; existing: Hashes }): ChangesHash => {
+  const necessaryChanges = new ChangesHash();
+
+  for (const [path, change] of changes) {
+    const existingHash = existing[path];
+    if (change instanceof Delete && !existingHash) {
       // already deleted
-      return false;
+      continue;
     }
-    if ((change.type === "create" || change.type === "update") && change.targetHash === existingHash) {
+
+    if ((change instanceof Create || change instanceof Update) && change.targetHash === existingHash) {
       // already created or updated
-      return false;
+      continue;
     }
-    return true;
-  });
+
+    // we need to make this change
+    necessaryChanges.set(path, change);
+  }
+
+  return necessaryChanges;
 };

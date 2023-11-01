@@ -121,14 +121,14 @@ const argSpec = {
 
 export enum Action {
   CANCEL = "Cancel (Ctrl+C)",
-  MERGE = "Merge local changes with Gadget changes",
-  PUSH = "Push local changes to Gadget",
-  RESET = "Discard local changes",
+  MERGE = "Merge my changes with Gadget's changes",
+  DISCARD_LOCAL = "Discard my changes",
+  REPLACE_GADGET = "Discard Gadget's changes",
 }
 
 export enum Preference {
-  LOCAL = "Local changes",
-  GADGET = "Gadget changes",
+  LOCAL = "Keep my changes",
+  GADGET = "Keep Gadget's changes",
 }
 
 /**
@@ -198,7 +198,7 @@ export const command: Command = async (rootArgs) => {
         }
 
         const changes = await filesync.writeToLocalFilesystem({ filesVersion, files: changed, delete: deleted });
-        if (changes.length > 0) {
+        if (changes.size > 0) {
           println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
           printChangesToMake({ changes });
 
@@ -438,7 +438,7 @@ export const catchUp = async (filesync: FileSync): Promise<void> => {
   const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
   const conflicts = getConflicts({ localChanges, gadgetChanges });
 
-  if (conflicts.length > 0) {
+  if (conflicts.size > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
     printConflicts(conflicts);
 
@@ -477,7 +477,7 @@ export const catchUp = async (filesync: FileSync): Promise<void> => {
         }
         break;
       }
-      case Action.PUSH: {
+      case Action.REPLACE_GADGET: {
         const changes = getChangesToMake({ from: localHashes, to: gadgetHashes, ignore: [".gadget/"] });
         printlns`{bold The following changes will be sent to Gadget}`;
         printChangesToMake({ changes });
@@ -487,7 +487,7 @@ export const catchUp = async (filesync: FileSync): Promise<void> => {
         // re-run this function
         break;
       }
-      case Action.RESET: {
+      case Action.DISCARD_LOCAL: {
         const changes = getChanges({ from: localHashes, to: filesVersionHashes });
         printlns`{bold The following changes will be made to your local filesystem}`;
         printChangesToMake({ changes });

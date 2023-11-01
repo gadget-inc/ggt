@@ -4,7 +4,7 @@ import pMap from "p-map";
 import { getChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
-import { printChangesToMake } from "../services/filesync/changes.js";
+import { Delete, printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
@@ -42,14 +42,14 @@ export const command: Command = async (rootArgs) => {
   const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await filesync.getHashes();
 
   const localChanges = getChanges({ from: filesVersionHashes, to: localHashes });
-  if (localChanges.length === 0) {
+  if (localChanges.size === 0) {
     printlns("You don't have any changes to push to Gadget.");
     return;
   }
 
   const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
   const conflicts = getConflicts({ localChanges, gadgetChanges });
-  if (conflicts.length > 0) {
+  if (conflicts.size > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
     printConflicts(conflicts);
 
@@ -77,28 +77,36 @@ export const command: Command = async (rootArgs) => {
   printChangesToMake({ changes });
   await confirm({ message: "Are you sure you want to make these changes?" });
 
+  const changed = [];
+  const deleted = [];
+
+  for (const [path, change] of changes) {
+    if (change instanceof Delete) {
+      deleted.push(path);
+    } else {
+      changed.push(path);
+    }
+  }
+
   await filesync.sendToGadget({
     expectedFilesVersion: gadgetFilesVersion,
-    deleted: changes.filter((change) => change.type === "delete").map((change) => change.path),
-    changed: await pMap(
-      changes.filter((change) => change.type !== "delete"),
-      async (change) => {
-        const absolutePath = filesync.directory.absolute(change.path);
-        const stats = await fs.stat(absolutePath);
+    deleted,
+    changed: await pMap(changed, async (path) => {
+      const absolutePath = filesync.directory.absolute(path);
+      const stats = await fs.stat(absolutePath);
 
-        let content = "";
-        if (stats.isFile()) {
-          content = await fs.readFile(absolutePath, FileSyncEncoding.Base64);
-        }
+      let content = "";
+      if (stats.isFile()) {
+        content = await fs.readFile(absolutePath, FileSyncEncoding.Base64);
+      }
 
-        return {
-          content,
-          path: change.path,
-          mode: stats.mode,
-          encoding: FileSyncEncoding.Base64,
-        };
-      },
-    ),
+      return {
+        path,
+        content,
+        mode: stats.mode,
+        encoding: FileSyncEncoding.Base64,
+      };
+    }),
   });
 
   println`{green Done!} ✨`;

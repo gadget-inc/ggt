@@ -12,42 +12,42 @@ export type Conflict =
   | LocalDeletedGadgetUpdated;
 
 export class LocalCreatedGadgetCreated {
-  type = "local_created_gadget_created" as const;
+  readonly type = "local_created_gadget_created";
   constructor(readonly path: string) {}
 }
 
 export class LocalCreatedGadgetUpdated {
-  type = "local_created_gadget_updated" as const;
+  readonly type = "local_created_gadget_updated";
   constructor(readonly path: string) {}
 }
 
 export class LocalCreatedGadgetDeleted {
-  type = "local_created_gadget_deleted" as const;
+  readonly type = "local_created_gadget_deleted";
   constructor(readonly path: string) {}
 }
 
 export class LocalUpdatedGadgetCreated {
-  type = "local_updated_gadget_created" as const;
+  readonly type = "local_updated_gadget_created";
   constructor(readonly path: string) {}
 }
 
 export class LocalUpdatedGadgetUpdated {
-  type = "local_updated_gadget_updated" as const;
+  readonly type = "local_updated_gadget_updated";
   constructor(readonly path: string) {}
 }
 
 export class LocalUpdatedGadgetDeleted {
-  type = "local_updated_gadget_deleted" as const;
+  readonly type = "local_updated_gadget_deleted";
   constructor(readonly path: string) {}
 }
 
 export class LocalDeletedGadgetCreated {
-  type = "local_deleted_gadget_created" as const;
+  readonly type = "local_deleted_gadget_created";
   constructor(readonly path: string) {}
 }
 
 export class LocalDeletedGadgetUpdated {
-  type = "local_deleted_gadget_updated" as const;
+  readonly type = "local_deleted_gadget_updated";
   constructor(readonly path: string) {}
 }
 

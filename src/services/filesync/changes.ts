@@ -1,30 +1,21 @@
-import type { FileSyncEncoding } from "../../__generated__/graphql.js";
 import { color, printTable, symbol } from "../print.js";
 
 export type Change = Create | Update | Delete;
 
 export class Create {
-  type = "create" as const;
+  readonly type = "create";
   constructor(readonly path: string) {}
 }
 
 export class Update {
-  type = "update" as const;
+  readonly type = "update";
   constructor(readonly path: string) {}
 }
 
 export class Delete {
-  type = "delete" as const;
+  readonly type = "delete";
   constructor(readonly path: string) {}
 }
-
-export type File = {
-  path: string;
-  oldPath?: string;
-  mode: number;
-  content: string;
-  encoding: FileSyncEncoding;
-};
 
 export const printChangesToMake = ({ changes }: { changes: Change[] }): void => {
   const create = color.greenBright("create");

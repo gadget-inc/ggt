@@ -53,11 +53,7 @@ export const command: Command = async (rootArgs) => {
 
              {gray ggt pull --force}
 
-          2. Discard your conflicting changes
-
-             {gray ggt reset --only-conflicts}
-
-          3. Manually resolve the conflicts and try again
+          2. Manually resolve the conflicts and try again
       `;
 
       // TODO: just return 1 or throw ExitCode
@@ -67,7 +63,7 @@ export const command: Command = async (rootArgs) => {
 
   const changes = getNecessaryFileChanges({ changes: gadgetChanges, existing: localHashes });
 
-  if (!filesync.wasEmpty) {
+  if (!filesync.directory.wasEmpty) {
     printlns`{bold The following changes will be made to your local filesystem}`;
     printChanges({ changes });
     await confirm({ message: "Are you sure you want to make these changes?" });

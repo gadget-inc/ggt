@@ -289,14 +289,22 @@ export class FileSync {
     return changes;
   }
 
-  async sendToGadget(changes: { changed: Iterable<File>; deleted: Iterable<string> }): Promise<Change[]> {
+  async sendToGadget({
+    expectedFilesVersion,
+    changed,
+    deleted,
+  }: {
+    expectedFilesVersion?: bigint;
+    changed: Iterable<File>;
+    deleted: Iterable<string>;
+  }): Promise<Change[]> {
     const { publishFileSyncEvents } = await this.editGraphQL.query({
       query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
         input: {
-          expectedRemoteFilesVersion: String(this.filesVersion),
-          changed: Array.from(changes.changed),
-          deleted: mapRecords(changes.deleted, "path"),
+          expectedRemoteFilesVersion: String(expectedFilesVersion ?? this.filesVersion),
+          changed: Array.from(changed),
+          deleted: mapRecords(deleted, "path"),
         },
       },
     });
@@ -304,10 +312,9 @@ export class FileSync {
     this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
     this._save();
 
-    return [
-      ...mapValues(changes.changed, "path").map((path) => new Create(path)),
-      ...Array.from(changes.deleted).map((path) => new Delete(path)),
-    ].sort((a, b) => a.path.localeCompare(b.path));
+    return [...mapValues(changed, "path").map((path) => new Create(path)), ...Array.from(deleted).map((path) => new Delete(path))].sort(
+      (a, b) => a.path.localeCompare(b.path),
+    );
   }
 
   async getFilesFromGadget({

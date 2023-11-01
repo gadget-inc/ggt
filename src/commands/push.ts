@@ -4,7 +4,7 @@ import pMap from "p-map";
 import { getFileChanges, getHashes, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
-import { printChanges, sendToGadget } from "../services/filesync/changes.js";
+import { printChanges } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
@@ -71,8 +71,7 @@ export const command: Command = async (rootArgs) => {
   printChanges({ changes });
   await confirm({ message: "Are you sure you want to make these changes?" });
 
-  await sendToGadget({
-    editGraphQL: filesync.editGraphQL,
+  await filesync.sendToGadget({
     expectedFilesVersion: gadgetFilesVersion,
     deleted: changes.filter((change) => change.type === "delete").map((change) => change.path),
     changed: await pMap(

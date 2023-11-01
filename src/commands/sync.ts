@@ -6,7 +6,7 @@ import ms from "ms";
 import path from "node:path";
 import pMap from "p-map";
 import PQueue from "p-queue";
-import { getChanges, getChangesToMake } from "src/services/filesync/hashes.js";
+import { getChanges, getChangesToMake, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import Watcher from "watcher";
 import which from "which";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
@@ -124,6 +124,11 @@ export enum Action {
   MERGE = "Merge local changes with Gadget changes",
   PUSH = "Push local changes to Gadget",
   RESET = "Discard local changes",
+}
+
+export enum Preference {
+  LOCAL = "Local changes",
+  GADGET = "Gadget changes",
 }
 
 /**
@@ -452,13 +457,24 @@ export const handleConflicts = async (filesync: FileSync): Promise<void> => {
       break;
     }
     case Action.MERGE: {
+      const preference = await select({
+        message: "Which conflicting changes would you like to keep?",
+        choices: [Preference.LOCAL, Preference.GADGET],
+      });
+
+      if (preference === Preference.LOCAL) {
+        const changes = getNecessaryFileChanges({ changes: localChanges, existing: gadgetHashes });
+        printlns`{bold The following changes will be sent to Gadget}`;
+        printChangesToMake({ changes });
+        await confirm({ message: "Are you sure you want to send these changes?" });
+      }
       break;
     }
     case Action.PUSH: {
       const changes = getChangesToMake({ from: localHashes, to: gadgetHashes });
       printlns`{bold The following changes will be sent to Gadget}`;
       printChangesToMake({ changes });
-      await confirm({ message: "Are you sure you want to make these changes?" });
+      await confirm({ message: "Are you sure you want to send these changes?" });
       break;
     }
     case Action.RESET: {

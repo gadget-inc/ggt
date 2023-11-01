@@ -14,7 +14,7 @@ export type ChangeHash = CreateHash | UpdateHash | DeleteHash;
 export class CreateHash extends Create {
   constructor(
     path: string,
-    readonly toHash: string,
+    readonly targetHash: string,
   ) {
     super(path);
   }
@@ -23,8 +23,8 @@ export class CreateHash extends Create {
 export class UpdateHash extends Update {
   constructor(
     path: string,
-    readonly fromHash: string,
-    readonly toHash: string,
+    readonly sourceHash: string,
+    readonly targetHash: string,
   ) {
     super(path);
   }
@@ -33,7 +33,7 @@ export class UpdateHash extends Update {
 export class DeleteHash extends Delete {
   constructor(
     path: string,
-    readonly fromHash: string,
+    readonly sourceHash: string,
   ) {
     super(path);
   }
@@ -42,7 +42,7 @@ export class DeleteHash extends Delete {
 /**
  * @returns The changes that were made to `from` to make it match `to`.
  */
-export const getChanges = ({ from: source, to: target }: { from: Hashes; to: Hashes }): ChangeHash[] => {
+export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes; to: Hashes; ignore?: string[] }): ChangeHash[] => {
   const created: CreateHash[] = [];
   const updated: UpdateHash[] = [];
   const deleted: DeleteHash[] = [];
@@ -50,6 +50,10 @@ export const getChanges = ({ from: source, to: target }: { from: Hashes; to: Has
   const targetPaths = Object.keys(target);
 
   for (const [sourcePath, sourceHash] of Object.entries(source)) {
+    if (ignore?.some((ignored) => sourcePath.startsWith(ignored))) {
+      continue;
+    }
+
     const targetHash = target[sourcePath];
     if (!targetHash) {
       if (!sourcePath.endsWith("/") || !targetPaths.some((targetPath) => targetPath.startsWith(sourcePath))) {
@@ -68,6 +72,10 @@ export const getChanges = ({ from: source, to: target }: { from: Hashes; to: Has
   }
 
   for (const targetPath of targetPaths) {
+    if (ignore?.some((ignored) => targetPath.startsWith(ignored))) {
+      continue;
+    }
+
     if (!source[targetPath]) {
       // the targetPath doesn't exist in source, so it's been created
       const targetHash = target[targetPath];
@@ -82,7 +90,7 @@ export const getChanges = ({ from: source, to: target }: { from: Hashes; to: Has
 /**
  * @returns the changes that need to be made to `to` to make it match `from`.
  */
-export const getChangesToMake = ({ from: source, to: target }: { from: Hashes; to: Hashes }): ChangeHash[] => {
+export const getChangesToMake = ({ from: source, to: target, ignore }: { from: Hashes; to: Hashes; ignore?: string[] }): ChangeHash[] => {
   const create: CreateHash[] = [];
   const update: UpdateHash[] = [];
   const del: DeleteHash[] = [];
@@ -90,6 +98,10 @@ export const getChangesToMake = ({ from: source, to: target }: { from: Hashes; t
   const targetPaths = Object.keys(target);
 
   for (const [sourcePath, sourceHash] of Object.entries(source)) {
+    if (ignore?.some((ignored) => sourcePath.startsWith(ignored))) {
+      continue;
+    }
+
     const targetHash = target[sourcePath];
     if (!targetHash) {
       if (!sourcePath.endsWith("/") || !targetPaths.some((targetPath) => targetPath.startsWith(sourcePath))) {
@@ -108,6 +120,10 @@ export const getChangesToMake = ({ from: source, to: target }: { from: Hashes; t
 
   for (const targetPath of targetPaths) {
     if (!source[targetPath]) {
+      if (ignore?.some((ignored) => targetPath.startsWith(ignored))) {
+        continue;
+      }
+
       // the targetPath doesn't exist in source, so it needs to be
       // deleted
       const targetHash = target[targetPath];
@@ -120,18 +136,16 @@ export const getChangesToMake = ({ from: source, to: target }: { from: Hashes; t
 };
 
 /**
- *
- * @param param0 what
  * @returns
  */
 export const getNecessaryFileChanges = ({ changes, existing }: { changes: ChangeHash[]; existing: Hashes }): ChangeHash[] => {
   return changes.filter((change) => {
-    const hash = existing[change.path];
-    if (change.type === "delete" && !hash) {
+    const existingHash = existing[change.path];
+    if (change.type === "delete" && !existingHash) {
       // already deleted
       return false;
     }
-    if ((change.type === "create" || change.type === "update") && change.toHash === hash) {
+    if ((change.type === "create" || change.type === "update") && change.targetHash === existingHash) {
       // already created or updated
       return false;
     }

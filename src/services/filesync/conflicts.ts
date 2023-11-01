@@ -60,7 +60,7 @@ export const getConflicts = ({ localChanges, gadgetChanges }: { localChanges: Ch
       continue;
     }
 
-    if ("toHash" in localChange && "toHash" in gadgetChange && localChange.toHash === gadgetChange.toHash) {
+    if ("toHash" in localChange && "toHash" in gadgetChange && localChange.targetHash === gadgetChange.targetHash) {
       continue;
     }
 

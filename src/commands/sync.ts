@@ -161,7 +161,7 @@ export const command: Command = async (rootArgs) => {
   }));
 
   if (!filesync.directory.wasEmpty) {
-    await handleConflicts(filesync);
+    await catchUp(filesync);
   }
 
   /**
@@ -428,66 +428,76 @@ export const command: Command = async (rootArgs) => {
   }
 };
 
-export const handleConflicts = async (filesync: FileSync): Promise<void> => {
+/**
+ * When this function returns, the state of the local filesystem matches
+ * the state of Gadget
+ */
+export const catchUp = async (filesync: FileSync): Promise<void> => {
   const { filesVersionHashes, localHashes, gadgetHashes } = await filesync.getHashes();
-  const localChanges = getChanges({ from: filesVersionHashes, to: localHashes });
-  if (localChanges.length === 0) {
-    // if there are no local changes, then there can't be any conflicts
-    return;
-  }
-
+  const localChanges = getChanges({ from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
   const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
   const conflicts = getConflicts({ localChanges, gadgetChanges });
-  if (conflicts.length === 0) {
-    // if there are no conflicts, then there's nothing to do
-    return;
-  }
 
-  printlns`{bold You have conflicting changes with Gadget}`;
-  printConflicts(conflicts);
+  if (conflicts.length > 0) {
+    printlns`{bold You have conflicting changes with Gadget}`;
+    printConflicts(conflicts);
 
-  const action = await select({
-    message: "How would you like to resolve these conflicts?",
-    choices: Object.values(Action),
-  });
+    const action = await select({
+      message: "How would you like to resolve these conflicts?",
+      choices: Object.values(Action),
+    });
 
-  switch (action) {
-    case Action.CANCEL: {
-      process.exit(0);
-      break;
-    }
-    case Action.MERGE: {
-      const preference = await select({
-        message: "Which conflicting changes would you like to keep?",
-        choices: [Preference.LOCAL, Preference.GADGET],
-      });
+    switch (action) {
+      case Action.CANCEL: {
+        process.exit(0);
+        break;
+      }
+      case Action.MERGE: {
+        const preference = await select({
+          message: "Which conflicting changes would you like to keep?",
+          choices: [Preference.LOCAL, Preference.GADGET],
+        });
 
-      if (preference === Preference.LOCAL) {
-        const changes = getNecessaryFileChanges({ changes: localChanges, existing: gadgetHashes });
+        if (preference === Preference.LOCAL) {
+          const changes = getNecessaryFileChanges({ changes: localChanges, existing: gadgetHashes });
+          printlns`{bold The following changes will be sent to Gadget}`;
+          printChangesToMake({ changes });
+          await confirm({ message: "Are you sure you want to send these changes?" });
+          // send changes to gadget
+          // receive new files version
+          // re-run this function
+        } else {
+          const changes = getNecessaryFileChanges({ changes: gadgetChanges, existing: localHashes });
+          printlns`{bold The following changes will be made to your local filesystem}`;
+          printChangesToMake({ changes });
+          await confirm({ message: "Are you sure you want to make these changes?" });
+          // write changes to local filesystem
+          // set files version to gadget's files version
+          // re-run this function
+        }
+        break;
+      }
+      case Action.PUSH: {
+        const changes = getChangesToMake({ from: localHashes, to: gadgetHashes, ignore: [".gadget/"] });
         printlns`{bold The following changes will be sent to Gadget}`;
         printChangesToMake({ changes });
         await confirm({ message: "Are you sure you want to send these changes?" });
-      } else {
-        const changes = getNecessaryFileChanges({ changes: gadgetChanges, existing: localHashes });
+        // send changes to gadget
+        // receive new files version
+        // re-run this function
+        break;
+      }
+      case Action.RESET: {
+        const changes = getChanges({ from: localHashes, to: filesVersionHashes });
         printlns`{bold The following changes will be made to your local filesystem}`;
         printChangesToMake({ changes });
         await confirm({ message: "Are you sure you want to make these changes?" });
+        // reset local filesystem
+        // re-run this function
+        break;
       }
-      break;
-    }
-    case Action.PUSH: {
-      const changes = getChangesToMake({ from: localHashes, to: gadgetHashes });
-      printlns`{bold The following changes will be sent to Gadget}`;
-      printChangesToMake({ changes });
-      await confirm({ message: "Are you sure you want to send these changes?" });
-      break;
-    }
-    case Action.RESET: {
-      const changes = getChanges({ from: localHashes, to: filesVersionHashes });
-      printlns`{bold The following changes will be made to your local filesystem}`;
-      printChangesToMake({ changes });
-      await confirm({ message: "Are you sure you want to make these changes?" });
-      break;
     }
   }
+
+  // make the local filesystem match the current files version
 };

@@ -122,12 +122,6 @@ const argSpec = {
  * Runs the sync process until it is stopped or an error occurs.
  */
 export const command: Command = async (rootArgs) => {
-  /**
-   * A FIFO async callback queue that ensures we process file-sync
-   * events in the order we receive them.
-   */
-  const queue = new PQueue({ concurrency: 1 });
-
   const args = defaults(arg(argSpec, { argv: rootArgs._ }), {
     "--file-push-delay": 100,
     "--file-watch-debounce": 300,
@@ -199,7 +193,13 @@ export const command: Command = async (rootArgs) => {
   }
 
   /**
-   * Enqueues a function that handles file-sync events onto the {@linkcode queue}.
+   * A FIFO async callback queue that ensures we process filesync events
+   * in the order we receive them.
+   */
+  const queue = new PQueue({ concurrency: 1 });
+
+  /**
+   * Enqueues a function that handles filesync events onto the {@linkcode queue}.
    *
    * @param fn The function to enqueue.
    */

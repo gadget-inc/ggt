@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { z } from "zod";
 import { FILE_HASHES_QUERY } from "../edit-graphql.js";
 import { Create, Delete, Update } from "./changes.js";
-import { fileHashes, type FileSync } from "./shared.js";
+import { type FileSync } from "./shared.js";
 
 export const Hashes = z.record(z.string());
 
@@ -43,16 +43,13 @@ export const getHashes = async ({
 }: {
   filesync: FileSync;
 }): Promise<{
-  /**
-   * The latest filesVersion in Gadget.
-   */
   gadgetFilesVersion: bigint;
   filesVersionHashes: Hashes;
   localHashes: Hashes;
   gadgetHashes: Hashes;
 }> => {
   const [localHashes, filesVersionHashes, { gadgetFilesVersion, gadgetHashes }] = await Promise.all([
-    fileHashes(filesync),
+    filesync.directory.hashes(),
 
     filesync.editGraphQL
       .query({ query: FILE_HASHES_QUERY, variables: { filesVersion: String(filesync.filesVersion) } })

@@ -160,7 +160,7 @@ export const command: Command = async (rootArgs) => {
     };
   });
 
-  if (filesync.wasEmpty) {
+  if (filesync.directory.wasEmpty) {
     // if the directory was empty, we don't need to check for changes
     return;
   }
@@ -212,11 +212,11 @@ export const command: Command = async (rootArgs) => {
     onError: (error) => void stop(error),
     onChange: ({ filesVersion, changed, deleted }) => {
       const receivedPathsFilter = (filepath: string): boolean => {
-        // filesync.ignores() always ignores .gadget/ files so that we
-        // don't send any changes to them back to Gadget (all .gadget/
-        // files are managed by gadget), but we still want to receive
-        // changes from Gadget to .gadget/ files
-        return filepath.startsWith(".gadget/") || !filesync.ignores(filepath);
+        // the directory always ignores .gadget/ files so that we don't
+        // send any changes to them back to Gadget (all .gadget/ files
+        // are managed by gadget), but we still want to receive changes
+        // from Gadget to .gadget/ files
+        return filepath.startsWith(".gadget/") || !filesync.directory.ignores(filepath);
       };
 
       changed = changed.filter((file) => receivedPathsFilter(file.path));
@@ -227,7 +227,7 @@ export const command: Command = async (rootArgs) => {
         // touch to recentWritesToLocalFilesystem so that we don't send
         // them back
         for (const filepath of [...mapValues(changed, "path"), ...deleted]) {
-          if (filesync.ignores(filepath)) {
+          if (filesync.directory.ignores(filepath)) {
             continue;
           }
 
@@ -246,7 +246,7 @@ export const command: Command = async (rootArgs) => {
           printChanges({ changes });
 
           if (changed.some((change) => change.path === "yarn.lock")) {
-            await execa("yarn", ["install"], { cwd: filesync.dir }).catch(noop);
+            await execa("yarn", ["install"], { cwd: filesync.directory.path }).catch(noop);
           }
         }
       });
@@ -275,7 +275,7 @@ export const command: Command = async (rootArgs) => {
             path: normalizedPath,
             oldPath: "oldPath" in file ? file.oldPath : undefined,
             mode: file.mode,
-            content: file.isDirectory ? "" : await fs.readFile(filesync.absolute(normalizedPath), FileSyncEncoding.Base64),
+            content: file.isDirectory ? "" : await fs.readFile(filesync.directory.absolute(normalizedPath), FileSyncEncoding.Base64),
             encoding: FileSyncEncoding.Base64,
           });
         } catch (error) {
@@ -307,9 +307,9 @@ export const command: Command = async (rootArgs) => {
   /**
    * Watches the local filesystem for changes.
    */
-  const fileWatcher = new Watcher(filesync.dir, {
+  const fileWatcher = new Watcher(filesync.directory.path, {
     ignoreInitial: true, // don't emit an event for every watched file on boot
-    ignore: (path: string) => filesync.ignores(path),
+    ignore: (path: string) => filesync.directory.ignores(path),
     renameDetection: true,
     recursive: true,
     debounce: args["--file-watch-debounce"],
@@ -323,7 +323,7 @@ export const command: Command = async (rootArgs) => {
   fileWatcher.on("all", (event: string, absolutePath: string, renamedPath: string) => {
     const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
     const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
-    const normalizedPath = filesync.normalize(filepath, isDirectory);
+    const normalizedPath = filesync.directory.normalize(filepath, isDirectory);
 
     log.debug("file event", {
       event,
@@ -332,9 +332,9 @@ export const command: Command = async (rootArgs) => {
       recentRemoteChanges: Array.from(recentWritesToLocalFilesystem.keys()),
     });
 
-    if (filepath === filesync.absolute(".ignore")) {
-      filesync.reloadIgnorePaths();
-    } else if (filesync.ignores(filepath)) {
+    if (filepath === filesync.directory.absolute(".ignore")) {
+      filesync.directory.reloadIgnorePaths();
+    } else if (filesync.directory.ignores(filepath)) {
       return;
     }
 
@@ -359,7 +359,7 @@ export const command: Command = async (rootArgs) => {
       case "renameDir": {
         const stats = fs.statSync(filepath);
         localFileEventsBuffer.set(normalizedPath, {
-          oldPath: filesync.normalize(absolutePath, isDirectory),
+          oldPath: filesync.directory.normalize(absolutePath, isDirectory),
           newPath: normalizedPath,
           isDirectory,
           mode: stats.mode,

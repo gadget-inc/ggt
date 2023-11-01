@@ -1,14 +1,8 @@
 import { findUp } from "find-up";
-import type { Stats } from "fs-extra";
 import fs from "fs-extra";
-import type { Ignore } from "ignore";
-import ignore from "ignore";
 import ms from "ms";
-import assert from "node:assert";
-import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
-import normalizePath from "normalize-path";
 import pMap from "p-map";
 import pRetry from "p-retry";
 import { z } from "zod";
@@ -26,11 +20,9 @@ import { sortBySimilarity, sprint } from "../print.js";
 import { select } from "../prompt.js";
 import type { User } from "../user.js";
 import { Create, Delete, Update, type Change } from "./changes.js";
-import { type Hashes } from "./hashes.js";
+import { Directory } from "./directory.js";
 
 const log = createLogger("filesync");
-
-const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
 
 export type File = {
   path: string;
@@ -43,24 +35,11 @@ export type File = {
 export class FileSync {
   readonly editGraphQL: EditGraphQL;
 
-  /**
-   * The {@linkcode Ignore} instance that is used to determine if a file
-   * should be ignored.
-   *
-   * @see https://www.npmjs.com/package/ignore
-   */
-  private _ignorer!: Ignore;
-
   private constructor(
     /**
-     * An absolute path to the directory that is being synced.
+     * The directory that is being synced.
      */
-    readonly dir: string,
-
-    /**
-     * Whether the directory was empty when it was initialized.
-     */
-    readonly wasEmpty: boolean,
+    readonly directory: Directory,
 
     /**
      * The Gadget application this filesystem is synced to.
@@ -68,19 +47,13 @@ export class FileSync {
     readonly app: App,
 
     /**
-     * Additional paths to ignore when syncing the filesystem.
-     */
-    private _extraIgnorePaths: string[],
-
-    /**
      * The state of the filesystem.
      *
-     * This is persisted to `.gadget/sync.json`.
+     * This is persisted to `.gadget/sync.json` within the {@linkcode directory}.
      */
     private _state: { app: string; filesVersion: string; mtime: number },
   ) {
     this._save();
-    this.reloadIgnorePaths();
     this.editGraphQL = new EditGraphQL(this.app);
   }
 
@@ -192,15 +165,15 @@ export class FileSync {
       );
     }
 
-    const ignore = options.extraIgnorePaths ?? [];
+    // the .gadget/sync.json file didn't exist or contained invalid json
+    const isEmpty = await isEmptyOrNonExistentDir(dir);
+    const directory = new Directory(dir, isEmpty, options.extraIgnorePaths);
 
     if (!state) {
-      // the .gadget/sync.json file didn't exist or contained invalid json
-      const isEmpty = await isEmptyOrNonExistentDir(dir);
       if (isEmpty || options.force) {
         // the directory is empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
-        return new FileSync(dir, isEmpty, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
+        return new FileSync(directory, app, { app: app.slug, filesVersion: "0", mtime: 0 });
       }
 
       // the directory isn't empty and the user didn't pass --force
@@ -210,13 +183,13 @@ export class FileSync {
     // the .gadget/sync.json file exists
     if (state.app === app.slug) {
       // the .gadget/sync.json file is for the same app that the user specified
-      return new FileSync(dir, false, app, ignore, state);
+      return new FileSync(directory, app, state);
     }
 
     // the .gadget/sync.json file is for a different app
     if (options.force) {
       // the user passed --force, so use the app they specified and overwrite everything
-      return new FileSync(dir, false, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
+      return new FileSync(directory, app, { app: app.slug, filesVersion: "0", mtime: 0 });
     }
 
     // the user didn't pass --force, so throw an error
@@ -237,112 +210,6 @@ export class FileSync {
       `);
   }
 
-  /**
-   * Converts an absolute path into a relative one from {@linkcode dir}.
-   */
-  relative(to: string): string {
-    if (!path.isAbsolute(to)) {
-      // the filepath is already relative
-      return to;
-    }
-
-    return path.relative(this.dir, to);
-  }
-
-  /**
-   * Converts a relative path into an absolute one from {@linkcode dir}.
-   */
-  absolute(...pathSegments: string[]): string {
-    return path.resolve(this.dir, ...pathSegments);
-  }
-
-  /**
-   * Similar to {@linkcode relative} in that it converts an absolute
-   * path into a relative one from {@linkcode dir}. However, it also
-   * changes any slashes to be posix/unix-like forward slashes,
-   * condenses repeated slashes into a single slash, and adds a trailing
-   * slash if the path is a directory.
-   *
-   * This is used when sending file-sync events to Gadget to ensure that
-   * the paths are consistent across platforms.
-   *
-   * @see https://www.npmjs.com/package/normalize-path
-   */
-  normalize(filepath: string, isDirectory: boolean): string {
-    if (path.isAbsolute(filepath)) {
-      filepath = this.relative(filepath);
-    }
-
-    filepath = normalizePath(filepath);
-
-    if (isDirectory) {
-      filepath += "/";
-    }
-
-    return filepath;
-  }
-
-  /**
-   * Reloads the ignore rules from the `.ignore` file.
-   */
-  reloadIgnorePaths(overrideExtraIgnorePaths?: string[]): void {
-    this._ignorer = ignore.default();
-    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...(overrideExtraIgnorePaths ?? this._extraIgnorePaths)]);
-
-    try {
-      const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");
-      this._ignorer.add(content);
-      log.info("reloaded ignore rules");
-    } catch (error) {
-      swallowEnoent(error);
-    }
-  }
-
-  /**
-   * Returns `true` if the {@linkcode filepath} should be ignored.
-   */
-  ignores(filepath: string): boolean {
-    const relative = this.relative(filepath);
-    if (relative === "") {
-      // don't ignore the root dir
-      return false;
-    }
-
-    if (relative.startsWith("..")) {
-      // anything above the root dir is ignored
-      return true;
-    }
-
-    return this._ignorer.ignores(relative);
-  }
-
-  /**
-   * Walks the directory and yields each file and directory.
-   *
-   * If a directory is empty, or only contains ignored entries, it will
-   * be yielded as a directory. Otherwise, each file within the
-   * directory will be yielded.
-   */
-  async *walkDir({ dir = this.dir, skipIgnored = true } = {}): AsyncGenerator<[absolutePath: string, entry: Stats]> {
-    const stats = await fs.stat(dir);
-    assert(stats.isDirectory(), `expected ${dir} to be a directory`);
-
-    yield [`${dir}/`, stats];
-
-    for await (const entry of await fs.opendir(dir)) {
-      const filepath = path.join(dir, entry.name);
-      if (skipIgnored && this.ignores(filepath)) {
-        continue;
-      }
-
-      if (entry.isDirectory()) {
-        yield* this.walkDir({ dir: filepath, skipIgnored });
-      } else if (entry.isFile()) {
-        yield [filepath, await fs.stat(filepath)];
-      }
-    }
-  }
-
   async writeToLocalFilesystem(options: {
     filesVersion: bigint | string;
     files: Iterable<File>;
@@ -354,8 +221,8 @@ export class FileSync {
     const changed: string[] = [];
 
     await pMap(options.delete, async (filepath) => {
-      const currentPath = this.absolute(filepath);
-      const backupPath = this.absolute(".gadget/backup", this.relative(filepath));
+      const currentPath = this.directory.absolute(filepath);
+      const backupPath = this.directory.absolute(".gadget/backup", this.directory.relative(filepath));
 
       // rather than `rm -rf`ing files, we move them to
       // `.gadget/backup/` so that users can recover them if something
@@ -384,7 +251,7 @@ export class FileSync {
     });
 
     await pMap(options.files, async (file) => {
-      const absolutePath = this.absolute(file.path);
+      const absolutePath = this.directory.absolute(file.path);
       if (await fs.pathExists(absolutePath)) {
         changed.push(file.path);
       } else {
@@ -399,8 +266,8 @@ export class FileSync {
       await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
       await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
-      if (absolutePath === this.absolute(".ignore")) {
-        this.reloadIgnorePaths();
+      if (absolutePath === this.directory.absolute(".ignore")) {
+        this.directory.reloadIgnorePaths();
       }
     });
 
@@ -505,51 +372,6 @@ export class FileSync {
    * Synchronously writes {@linkcode _state} to `.gadget/sync.json`.
    */
   private _save(): void {
-    fs.outputJSONSync(this.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
+    fs.outputJSONSync(this.directory.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
   }
 }
-
-export const fileHashes = async (filesync: FileSync): Promise<Hashes> => {
-  try {
-    // these ignore paths are allowed to be different between ggt and gadget
-    filesync.reloadIgnorePaths([".gadget/sync.json", ".gadget/backup"]);
-    const files = {} as Record<string, string>;
-
-    for await (const [absolutePath, stats] of filesync.walkDir()) {
-      const filepath = filesync.normalize(absolutePath, stats.isDirectory());
-      switch (true) {
-        case stats.isFile():
-          files[filepath] = await fileHash(absolutePath);
-          break;
-        case stats.isDirectory():
-          files[filepath] = "0";
-          break;
-      }
-    }
-
-    return files;
-  } finally {
-    filesync.reloadIgnorePaths();
-  }
-};
-
-const fileHash = (filepath: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    try {
-      const stream = fs.createReadStream(filepath).map((data: Uint8Array) => {
-        // windows uses CRLF line endings whereas unix uses LF line
-        // endings so we always strip out CR bytes (0x0d) when hashing
-        // files. this does make us blind to files that only differ by
-        // CR bytes, but that's a tradeoff we're willing to make.
-        return data.filter((byte) => byte !== 0x0d);
-      });
-
-      const hash = createHash("sha1");
-      stream.on("error", (err) => reject(err));
-      stream.on("end", () => resolve(hash.digest("hex")));
-      stream.pipe(hash, { end: false });
-    } catch (error) {
-      reject(error);
-    }
-  });
-};

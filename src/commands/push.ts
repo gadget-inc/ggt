@@ -4,7 +4,7 @@ import pMap from "p-map";
 import { getFileChanges, getHashes, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
-import { printChanges } from "../services/filesync/changes.js";
+import { printChanges, sendToGadget } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/shared.js";
 import { println, printlns, sprint } from "../services/print.js";
@@ -33,7 +33,7 @@ export const command: Command = async (rootArgs) => {
   const args = arg(argSpec, { argv: rootArgs._ });
   const user = await getUserOrLogin();
   const filesync = await FileSync.init(user, { dir: args._[0], app: args["--app"], force: args["--force"] });
-  const { filesVersionHashes, localHashes, gadgetHashes } = await getHashes({ filesync });
+  const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await getHashes({ filesync });
 
   const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
   if (localChanges.length === 0) {
@@ -71,12 +71,14 @@ export const command: Command = async (rootArgs) => {
   printChanges({ changes });
   await confirm({ message: "Are you sure you want to make these changes?" });
 
-  await filesync.sendToGadget({
+  await sendToGadget({
+    editGraphQL: filesync.editGraphQL,
+    expectedFilesVersion: gadgetFilesVersion,
     deleted: changes.filter((change) => change.type === "delete").map((change) => change.path),
     changed: await pMap(
       changes.filter((change) => change.type !== "delete"),
       async (change) => {
-        const absolutePath = filesync.absolute(change.path);
+        const absolutePath = filesync.directory.absolute(change.path);
         const stats = await fs.stat(absolutePath);
 
         let content = "";

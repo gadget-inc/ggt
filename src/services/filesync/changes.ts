@@ -1,3 +1,6 @@
+import type { FileSyncEncoding } from "../../__generated__/graphql.js";
+import { mapRecords } from "../collections.js";
+import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, type EditGraphQL } from "../edit-graphql.js";
 import { color, printTable, symbol } from "../print.js";
 
 export type Change = Create | Update | Delete;
@@ -16,6 +19,42 @@ export class Delete {
   type = "delete" as const;
   constructor(readonly path: string) {}
 }
+
+export type File = {
+  path: string;
+  oldPath?: string;
+  mode: number;
+  content: string;
+  encoding: FileSyncEncoding;
+};
+
+export const sendToGadget = async ({
+  editGraphQL,
+  expectedFilesVersion,
+  changed,
+  deleted,
+}: {
+  editGraphQL: EditGraphQL;
+  expectedFilesVersion: bigint;
+  changed: Iterable<File>;
+  deleted: Iterable<string>;
+}): Promise<bigint> => {
+  const { publishFileSyncEvents } = await editGraphQL.query({
+    query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+    variables: {
+      input: {
+        expectedRemoteFilesVersion: String(expectedFilesVersion),
+        changed: Array.from(changed),
+        deleted: mapRecords(deleted, "path"),
+      },
+    },
+  });
+
+  // this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
+  // this._save();
+
+  return BigInt(publishFileSyncEvents.remoteFilesVersion);
+};
 
 export const printChanges = ({ changes, tense = "present" }: { changes: Change[]; tense?: "past" | "present" }): void => {
   const created = color.greenBright(tense === "past" ? "created" : "create");

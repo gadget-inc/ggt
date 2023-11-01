@@ -37,12 +37,12 @@ export class FileSync {
 
   private constructor(
     /**
-     * The directory that is being synced.
+     * The directory that is being synced to.
      */
     readonly directory: Directory,
 
     /**
-     * The Gadget application this filesystem is synced to.
+     * The Gadget application that is being synced to.
      */
     readonly app: App,
 
@@ -165,11 +165,11 @@ export class FileSync {
       );
     }
 
-    // the .gadget/sync.json file didn't exist or contained invalid json
     const isEmpty = await isEmptyOrNonExistentDir(dir);
     const directory = new Directory(dir, isEmpty, options.extraIgnorePaths);
 
     if (!state) {
+      // the .gadget/sync.json file didn't exist or contained invalid json
       if (isEmpty || options.force) {
         // the directory is empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file

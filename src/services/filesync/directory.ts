@@ -7,7 +7,17 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import normalizePath from "normalize-path";
 
+/**
+ * Paths that are always ignored, regardless of the contents of the `.ignore` file.
+ */
 const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
+
+/**
+ * Paths that are ignored when hashing the directory.
+ *
+ * NOTE: This is the _only_ thing that is allowed to be different between gadget and ggt.
+ */
+const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/backup"] as const;
 
 export class Directory {
   /**
@@ -17,6 +27,11 @@ export class Directory {
    * @see https://www.npmjs.com/package/ignore
    */
   private _ignorer!: Ignore;
+
+  /**
+   * Whether the directory is currently being hashed.
+   */
+  private _isHashing = false;
 
   constructor(
     /**
@@ -28,13 +43,8 @@ export class Directory {
      * Whether the directory was empty when it was initialized.
      */
     readonly wasEmpty: boolean,
-
-    /**
-     * Additional paths to ignore when syncing the filesystem.
-     */
-    private _extraIgnorePaths: string[] = [],
   ) {
-    this.reloadIgnorePaths();
+    this.loadIgnoreFile();
   }
 
   /**
@@ -85,9 +95,9 @@ export class Directory {
   /**
    * Reloads the ignore rules from the `.ignore` file.
    */
-  reloadIgnorePaths(overrideExtraIgnorePaths?: string[]): void {
+  loadIgnoreFile(): void {
     this._ignorer = ignore.default();
-    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...(overrideExtraIgnorePaths ?? this._extraIgnorePaths)]);
+    this._ignorer.add(ALWAYS_IGNORE_PATHS);
 
     try {
       const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");
@@ -114,36 +124,47 @@ export class Directory {
       return true;
     }
 
+    if (this._isHashing && HASHING_IGNORE_PATHS.some((ignored) => relative.startsWith(ignored))) {
+      // special case for hashing
+      return true;
+    }
+
     return this._ignorer.ignores(relative);
   }
 
   /**
    * Walks this directory and yields each file and directory within it.
    */
-  async *walk({ dir = this.path, skipIgnored = true } = {}): AsyncGenerator<{ normalizedPath: string; stats: Stats }> {
+  async *walk({ dir = this.path } = {}): AsyncGenerator<{ normalizedPath: string; stats: Stats }> {
     const stats = await fs.stat(dir);
     assert(stats.isDirectory(), `expected ${dir} to be a directory`);
 
-    yield { normalizedPath: this.normalize(dir, true), stats };
+    yield {
+      normalizedPath: this.normalize(dir, true),
+      stats,
+    };
 
     for await (const entry of await fs.opendir(dir)) {
       const filepath = path.join(dir, entry.name);
-      if (skipIgnored && this.ignores(filepath)) {
+      if (this.ignores(filepath)) {
         continue;
       }
 
       if (entry.isDirectory()) {
-        yield* this.walk({ dir: filepath, skipIgnored });
+        yield* this.walk({ dir: filepath });
       } else if (entry.isFile()) {
-        yield { normalizedPath: this.normalize(filepath, false), stats: await fs.stat(filepath) };
+        yield {
+          normalizedPath: this.normalize(filepath, false),
+          stats: await fs.stat(filepath),
+        };
       }
     }
   }
 
   async hashes(): Promise<Hashes> {
+    this._isHashing = true;
+
     try {
-      // these ignore paths are allowed to be different between ggt and gadget
-      this.reloadIgnorePaths([".gadget/sync.json", ".gadget/backup"]);
       const files = {} as Hashes;
 
       for await (const { normalizedPath, stats } of this.walk()) {
@@ -160,7 +181,7 @@ export class Directory {
 
       return files;
     } finally {
-      this.reloadIgnorePaths();
+      this._isHashing = false;
     }
   }
 }

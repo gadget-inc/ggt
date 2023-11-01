@@ -2,52 +2,52 @@ import { color, printTable, symbol } from "../print.js";
 import { type ChangeHash } from "./hashes.js";
 
 export type Conflict =
-  | LocalAddedGadgetAdded
-  | LocalAddedGadgetChanged
-  | LocalAddedGadgetDeleted
-  | LocalChangedGadgetAdded
-  | LocalChangedGadgetChanged
-  | LocalChangedGadgetDeleted
-  | LocalDeletedGadgetAdded
-  | LocalDeletedGadgetChanged;
+  | LocalCreatedGadgetCreated
+  | LocalCreatedGadgetUpdated
+  | LocalCreatedGadgetDeleted
+  | LocalUpdatedGadgetCreated
+  | LocalUpdatedGadgetUpdated
+  | LocalUpdatedGadgetDeleted
+  | LocalDeletedGadgetCreated
+  | LocalDeletedGadgetUpdated;
 
-export class LocalAddedGadgetAdded {
-  type = "local_added_gadget_added" as const;
+export class LocalCreatedGadgetCreated {
+  type = "local_created_gadget_created" as const;
   constructor(readonly path: string) {}
 }
 
-export class LocalAddedGadgetChanged {
-  type = "local_added_gadget_changed" as const;
+export class LocalCreatedGadgetUpdated {
+  type = "local_created_gadget_updated" as const;
   constructor(readonly path: string) {}
 }
 
-export class LocalAddedGadgetDeleted {
-  type = "local_added_gadget_deleted" as const;
+export class LocalCreatedGadgetDeleted {
+  type = "local_created_gadget_deleted" as const;
   constructor(readonly path: string) {}
 }
 
-export class LocalChangedGadgetAdded {
-  type = "local_changed_gadget_added" as const;
+export class LocalUpdatedGadgetCreated {
+  type = "local_updated_gadget_created" as const;
   constructor(readonly path: string) {}
 }
 
-export class LocalChangedGadgetChanged {
-  type = "local_changed_gadget_changed" as const;
+export class LocalUpdatedGadgetUpdated {
+  type = "local_updated_gadget_updated" as const;
   constructor(readonly path: string) {}
 }
 
-export class LocalChangedGadgetDeleted {
-  type = "local_changed_gadget_deleted" as const;
+export class LocalUpdatedGadgetDeleted {
+  type = "local_updated_gadget_deleted" as const;
   constructor(readonly path: string) {}
 }
 
-export class LocalDeletedGadgetAdded {
-  type = "local_deleted_gadget_added" as const;
+export class LocalDeletedGadgetCreated {
+  type = "local_deleted_gadget_created" as const;
   constructor(readonly path: string) {}
 }
 
-export class LocalDeletedGadgetChanged {
-  type = "local_deleted_gadget_changed" as const;
+export class LocalDeletedGadgetUpdated {
+  type = "local_deleted_gadget_updated" as const;
   constructor(readonly path: string) {}
 }
 
@@ -66,28 +66,28 @@ export const getConflicts = ({ localChanges, gadgetChanges }: { localChanges: Ch
 
     switch (true) {
       case localChange.type === "create" && gadgetChange.type === "create":
-        conflicts.push(new LocalAddedGadgetAdded(localChange.path));
+        conflicts.push(new LocalCreatedGadgetCreated(localChange.path));
         break;
       case localChange.type === "create" && gadgetChange.type === "update":
-        conflicts.push(new LocalAddedGadgetChanged(localChange.path));
+        conflicts.push(new LocalCreatedGadgetUpdated(localChange.path));
         break;
       case localChange.type === "create" && gadgetChange.type === "delete":
-        conflicts.push(new LocalAddedGadgetDeleted(localChange.path));
+        conflicts.push(new LocalCreatedGadgetDeleted(localChange.path));
         break;
       case localChange.type === "update" && gadgetChange.type === "create":
-        conflicts.push(new LocalChangedGadgetAdded(localChange.path));
+        conflicts.push(new LocalUpdatedGadgetCreated(localChange.path));
         break;
       case localChange.type === "update" && gadgetChange.type === "update":
-        conflicts.push(new LocalChangedGadgetChanged(localChange.path));
+        conflicts.push(new LocalUpdatedGadgetUpdated(localChange.path));
         break;
       case localChange.type === "update" && gadgetChange.type === "delete":
-        conflicts.push(new LocalChangedGadgetDeleted(localChange.path));
+        conflicts.push(new LocalUpdatedGadgetDeleted(localChange.path));
         break;
       case localChange.type === "delete" && gadgetChange.type === "create":
-        conflicts.push(new LocalDeletedGadgetAdded(localChange.path));
+        conflicts.push(new LocalDeletedGadgetCreated(localChange.path));
         break;
       case localChange.type === "delete" && gadgetChange.type === "update":
-        conflicts.push(new LocalDeletedGadgetChanged(localChange.path));
+        conflicts.push(new LocalDeletedGadgetUpdated(localChange.path));
         break;
     }
   }
@@ -96,33 +96,33 @@ export const getConflicts = ({ localChanges, gadgetChanges }: { localChanges: Ch
 };
 
 export const printConflicts = (conflicts: Conflict[]): void => {
-  const added = color.greenBright("added");
-  const changed = color.blueBright("changed");
+  const created = color.greenBright("created");
+  const updated = color.blueBright("updated");
   const deleted = color.redBright("deleted");
 
   printTable({
     colAligns: ["left", "left", "center", "center"],
-    colWidths: [4],
+    colWidths: [3],
     chars: { "top-mid": " " },
     head: ["", "", "You", "Gadget"],
     rows: conflicts.map((conflict) => {
       switch (conflict.type) {
-        case "local_added_gadget_added":
-          return [symbol.plusMinus, conflict.path, added, added];
-        case "local_added_gadget_changed":
-          return [symbol.plusMinus, conflict.path, added, changed];
-        case "local_added_gadget_deleted":
-          return [symbol.plusMinus, conflict.path, added, deleted];
-        case "local_changed_gadget_added":
-          return [symbol.plusMinus, conflict.path, changed, added];
-        case "local_changed_gadget_changed":
-          return [symbol.plusMinus, conflict.path, changed, changed];
-        case "local_changed_gadget_deleted":
-          return [symbol.plusMinus, conflict.path, changed, deleted];
-        case "local_deleted_gadget_added":
-          return [symbol.plusMinus, conflict.path, deleted, added];
-        case "local_deleted_gadget_changed":
-          return [symbol.plusMinus, conflict.path, deleted, changed];
+        case "local_created_gadget_created":
+          return [symbol.plusMinus, conflict.path, created, created];
+        case "local_created_gadget_updated":
+          return [symbol.plusMinus, conflict.path, created, updated];
+        case "local_created_gadget_deleted":
+          return [symbol.plusMinus, conflict.path, created, deleted];
+        case "local_updated_gadget_created":
+          return [symbol.plusMinus, conflict.path, updated, created];
+        case "local_updated_gadget_updated":
+          return [symbol.plusMinus, conflict.path, updated, updated];
+        case "local_updated_gadget_deleted":
+          return [symbol.plusMinus, conflict.path, updated, deleted];
+        case "local_deleted_gadget_created":
+          return [symbol.plusMinus, conflict.path, deleted, created];
+        case "local_deleted_gadget_updated":
+          return [symbol.plusMinus, conflict.path, deleted, updated];
       }
     }),
   });

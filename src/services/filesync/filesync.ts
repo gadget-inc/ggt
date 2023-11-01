@@ -166,7 +166,7 @@ export class FileSync {
     }
 
     const isEmpty = await isEmptyOrNonExistentDir(dir);
-    const directory = new Directory(dir, isEmpty, options.extraIgnorePaths);
+    const directory = new Directory(dir, isEmpty);
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
@@ -267,7 +267,7 @@ export class FileSync {
       await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
       if (absolutePath === this.directory.absolute(".ignore")) {
-        this.directory.reloadIgnorePaths();
+        this.directory.loadIgnoreFile();
       }
     });
 

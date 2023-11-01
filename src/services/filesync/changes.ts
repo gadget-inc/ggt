@@ -62,7 +62,6 @@ export const printChanges = ({ changes, tense = "present" }: { changes: Change[]
   const deleted = color.redBright(tense === "past" ? "deleted" : "delete");
 
   printTable({
-    colAligns: ["left", "left", "left"],
     head: ["", "", ""],
     rows: changes.map((change) => {
       switch (change.type) {

@@ -146,7 +146,6 @@ export const command: Command = async (rootArgs) => {
     dir: args._[0],
     app: args["--app"],
     force: args["--force"],
-    extraIgnorePaths: [".gadget"],
   });
 
   /**
@@ -211,26 +210,14 @@ export const command: Command = async (rootArgs) => {
   const stopReceivingChangesFromGadget = filesync.receiveChangesFromGadget({
     onError: (error) => void stop(error),
     onChange: ({ filesVersion, changed, deleted }) => {
-      const receivedPathsFilter = (filepath: string): boolean => {
-        // the directory always ignores .gadget/ files so that we don't
-        // send any changes to them back to Gadget (all .gadget/ files
-        // are managed by gadget), but we still want to receive changes
-        // from Gadget to .gadget/ files
-        return filepath.startsWith(".gadget/") || !filesync.directory.ignores(filepath);
-      };
-
-      changed = changed.filter((file) => receivedPathsFilter(file.path));
-      deleted = deleted.filter(receivedPathsFilter);
+      changed = changed.filter((file) => !filesync.directory.ignores(file.path));
+      deleted = deleted.filter((filepath) => !filesync.directory.ignores(filepath));
 
       enqueue(async () => {
-        // add all the non-ignored files and directories we're about to
-        // touch to recentWritesToLocalFilesystem so that we don't send
-        // them back
+        // add all the files and directories we're about to touch to
+        // recentWritesToLocalFilesystem so that we don't send them back
+        // to Gadget
         for (const filepath of [...mapValues(changed, "path"), ...deleted]) {
-          if (filesync.directory.ignores(filepath)) {
-            continue;
-          }
-
           recentWritesToLocalFilesystem.set(filepath, Date.now());
 
           let dir = path.dirname(filepath);
@@ -309,7 +296,7 @@ export const command: Command = async (rootArgs) => {
    */
   const fileWatcher = new Watcher(filesync.directory.path, {
     ignoreInitial: true, // don't emit an event for every watched file on boot
-    ignore: (path: string) => filesync.directory.ignores(path),
+    ignore: (path: string) => path.startsWith(".gadget/") || filesync.directory.ignores(path),
     renameDetection: true,
     recursive: true,
     debounce: args["--file-watch-debounce"],
@@ -333,7 +320,7 @@ export const command: Command = async (rootArgs) => {
     });
 
     if (filepath === filesync.directory.absolute(".ignore")) {
-      filesync.directory.reloadIgnorePaths();
+      filesync.directory.loadIgnoreFile();
     } else if (filesync.directory.ignores(filepath)) {
       return;
     }

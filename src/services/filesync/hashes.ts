@@ -1,3 +1,4 @@
+import fs from "fs-extra";
 import assert from "node:assert";
 import { z } from "zod";
 import { FILE_HASHES_QUERY } from "../edit-graphql.js";
@@ -50,23 +51,25 @@ export const getHashes = async ({
 }> => {
   const [localHashes, filesVersionHashes, { gadgetFilesVersion, gadgetHashes }] = await Promise.all([
     filesync.directory.hashes(),
-
     filesync.editGraphQL
       .query({ query: FILE_HASHES_QUERY, variables: { filesVersion: String(filesync.filesVersion) } })
       .then((data) => Hashes.parse(data.fileHashes.hashes)),
-
     filesync.editGraphQL.query({ query: FILE_HASHES_QUERY }).then((data) => ({
       gadgetFilesVersion: BigInt(data.fileHashes.filesVersion),
       gadgetHashes: Hashes.parse(data.fileHashes.hashes),
     })),
   ]);
 
-  return {
+  const hashes = {
     gadgetFilesVersion,
     filesVersionHashes,
     localHashes,
     gadgetHashes,
   };
+
+  await fs.outputJSON("tmp/hashes.json", { ...hashes, gadgetFilesVersion: String(gadgetFilesVersion) }, { spaces: 2 });
+
+  return hashes;
 };
 
 export const getFileChanges = ({ from, to }: { from: Hashes; to: Hashes }): ChangeHash[] => {

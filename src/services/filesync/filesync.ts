@@ -84,12 +84,12 @@ export class FileSync {
    * - Ensures an app is specified (either via `options.app` or by prompting the user)
    * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
    */
-  static async init(user: User, options: { dir?: string; app?: string; force?: boolean; extraIgnorePaths?: string[] }): Promise<FileSync> {
-    const apps = await getApps(user);
+  static async init(options: { user: User; dir?: string; app?: string; force?: boolean; extraIgnorePaths?: string[] }): Promise<FileSync> {
+    const apps = await getApps(options.user);
     if (apps.length === 0) {
       throw new ArgError(
         sprint`
-          You (${user.email}) don't have have any Gadget applications.
+          You (${options.user.email}) don't have have any Gadget applications.
 
           Visit https://gadget.new to create one!
       `,

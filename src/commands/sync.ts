@@ -118,6 +118,13 @@ const argSpec = {
   "--file-watch-rename-timeout": Number,
 };
 
+export enum Action {
+  CANCEL = "Cancel (Ctrl+C)",
+  MERGE = "Merge local changes with Gadget changes",
+  PUSH = "Push local changes to Gadget",
+  RESET = "Discard local changes",
+}
+
 /**
  * Runs the sync process until it is stopped or an error occurs.
  */
@@ -134,9 +141,8 @@ export const command: Command = async (rootArgs) => {
     throw new YarnNotFoundError();
   }
 
-  const user = await getUserOrLogin();
-
-  const filesync = await FileSync.init(user, {
+  const filesync = await FileSync.init({
+    user: await getUserOrLogin(),
     dir: args._[0],
     app: args["--app"],
     force: args["--force"],

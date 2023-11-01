@@ -10,4 +10,4 @@ export type Init = (rootArgs: RootArgs) => void | Promise<void>;
 
 export type Command = (rootArgs: RootArgs) => void | Promise<void>;
 
-export const availableCommands = ["sync", "push", "pull", "reset", "list", "login", "logout", "whoami"] as const;
+export const availableCommands = ["sync", "list", "login", "logout", "whoami"] as const;

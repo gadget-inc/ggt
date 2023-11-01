@@ -28,8 +28,14 @@ const argSpec = {
 
 export const command: Command = async (rootArgs) => {
   const args = arg(argSpec, { argv: rootArgs._ });
-  const user = await getUserOrLogin();
-  const filesync = await FileSync.init(user, { dir: args._[0], app: args["--app"], force: args["--force"] });
+
+  const filesync = await FileSync.init({
+    user: await getUserOrLogin(),
+    dir: args._[0],
+    app: args["--app"],
+    force: args["--force"],
+  });
+
   const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await getHashes({ filesync });
 
   const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });

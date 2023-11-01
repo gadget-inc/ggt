@@ -1,7 +1,7 @@
 import arg from "arg";
 import fs from "fs-extra";
 import pMap from "p-map";
-import { getFileChanges, getHashes, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
+import { getFileChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
 import { printChanges } from "../services/filesync/changes.js";
@@ -39,7 +39,7 @@ export const command: Command = async (rootArgs) => {
     force: args["--force"],
   });
 
-  const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await getHashes({ filesync });
+  const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await filesync.getHashes();
 
   const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
   if (localChanges.length === 0) {

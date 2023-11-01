@@ -11,7 +11,13 @@ import type { App } from "../app.js";
 import { getApps } from "../app.js";
 import { mapRecords, mapValues } from "../collections.js";
 import { config } from "../config.js";
-import { EditGraphQL, FILES_QUERY, PUBLISH_FILE_SYNC_EVENTS_MUTATION, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../edit-graphql.js";
+import {
+  EditGraphQL,
+  FILES_QUERY,
+  FILE_HASHES_QUERY,
+  PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+  REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+} from "../edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "../errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "../fs.js";
 import { createLogger } from "../log.js";
@@ -21,6 +27,7 @@ import { select } from "../prompt.js";
 import type { User } from "../user.js";
 import { Create, Delete, Update, type Change } from "./changes.js";
 import { Directory } from "./directory.js";
+import { Hashes } from "./hashes.js";
 
 const log = createLogger("filesync");
 
@@ -352,8 +359,8 @@ export class FileSync {
         // the reason this is a function rather than a static value is
         // so that it will be re-evaluated if the connection is lost and
         // then re-established. this ensures that we send our current
-        // filesVersion rather than the one that was sent when the
-        // connection was first established.
+        // filesVersion rather than the one that was sent when we
+        // started
         variables: () => ({ localFilesVersion: String(this.filesVersion) }),
       },
       {
@@ -373,6 +380,32 @@ export class FileSync {
         },
       },
     );
+  }
+
+  async getHashes(): Promise<{
+    gadgetFilesVersion: bigint;
+    filesVersionHashes: Hashes;
+    localHashes: Hashes;
+    gadgetHashes: Hashes;
+  }> {
+    const [localHashes, filesVersionHashes, { gadgetFilesVersion, gadgetHashes }] = await Promise.all([
+      // get the hashes of our local files
+      this.directory.hashes(),
+      // get the hashes of the files at our current filesVersion
+      this.editGraphQL
+        .query({ query: FILE_HASHES_QUERY, variables: { filesVersion: String(this.filesVersion) } })
+        .then((data) => Hashes.parse(data.fileHashes.hashes)),
+      // get the hashes of the files at the latest filesVersion
+      this.editGraphQL.query({ query: FILE_HASHES_QUERY }).then((data) => ({
+        gadgetFilesVersion: BigInt(data.fileHashes.filesVersion),
+        gadgetHashes: Hashes.parse(data.fileHashes.hashes),
+      })),
+    ]);
+
+    const hashes = { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion };
+    // await fs.outputJSON("tmp/hashes.json", { ...hashes, gadgetFilesVersion: String(gadgetFilesVersion) }, { spaces: 2 });
+
+    return hashes;
   }
 
   /**

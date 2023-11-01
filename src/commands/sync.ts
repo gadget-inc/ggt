@@ -6,7 +6,7 @@ import ms from "ms";
 import path from "node:path";
 import pMap from "p-map";
 import PQueue from "p-queue";
-import { getFileChanges, getHashes } from "src/services/filesync/hashes.js";
+import { getFileChanges } from "src/services/filesync/hashes.js";
 import Watcher from "watcher";
 import which from "which";
 import { FileSyncEncoding } from "../__generated__/graphql.js";
@@ -129,6 +129,10 @@ export enum Action {
  * Runs the sync process until it is stopped or an error occurs.
  */
 export const command: Command = async (rootArgs) => {
+  if (!which.sync("yarn", { nothrow: true })) {
+    throw new YarnNotFoundError();
+  }
+
   const args = defaults(arg(argSpec, { argv: rootArgs._ }), {
     "--file-push-delay": 100,
     "--file-watch-debounce": 300,
@@ -137,10 +141,6 @@ export const command: Command = async (rootArgs) => {
     "--file-watch-rename-timeout": 1_250,
   });
 
-  if (!which.sync("yarn", { nothrow: true })) {
-    throw new YarnNotFoundError();
-  }
-
   const filesync = await FileSync.init({
     user: await getUserOrLogin(),
     dir: args._[0],
@@ -148,36 +148,27 @@ export const command: Command = async (rootArgs) => {
     force: args["--force"],
   });
 
-  /**
-   * A logger for the sync command.
-   */
-  const log = createLogger("sync", () => {
-    return {
-      app: filesync.app.slug,
-      filesVersion: String(filesync.filesVersion),
-      mtime: filesync.mtime,
-    };
-  });
+  const log = createLogger("sync", () => ({
+    app: filesync.app.slug,
+    filesVersion: String(filesync.filesVersion),
+    mtime: filesync.mtime,
+  }));
 
-  if (filesync.directory.wasEmpty) {
-    // if the directory was empty, we don't need to check for changes
-    return;
-  }
+  if (!filesync.directory.wasEmpty) {
+    const { filesVersionHashes, localHashes, gadgetHashes } = await filesync.getHashes();
+    const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
+    if (localChanges.length === 0) {
+      // if there are no local changes, we don't need to check for conflicts
+      return;
+    }
 
-  const { filesVersionHashes, localHashes, gadgetHashes } = await getHashes({ filesync });
-  const localChanges = getFileChanges({ from: filesVersionHashes, to: localHashes });
-  if (localChanges.length === 0) {
-    // if there are no local changes, we don't need to check for conflicts
-    return;
-  }
+    const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
+    const conflicts = getConflicts({ localChanges, gadgetChanges });
+    if (conflicts.length > 0) {
+      printlns`{bold You have conflicting changes with Gadget}`;
+      printConflicts(conflicts);
 
-  const gadgetChanges = getFileChanges({ from: filesVersionHashes, to: gadgetHashes });
-  const conflicts = getConflicts({ localChanges, gadgetChanges });
-  if (conflicts.length > 0) {
-    printlns`{bold You have conflicting changes with Gadget}`;
-    printConflicts(conflicts);
-
-    printlns`
+      printlns`
         {bold You must either}
 
           1. Push with --force and overwrite Gadget's conflicting changes
@@ -195,7 +186,8 @@ export const command: Command = async (rootArgs) => {
           4. Manually resolve the conflicts and try again
       `;
 
-    process.exit(1);
+      process.exit(1);
+    }
   }
 
   /**
@@ -206,8 +198,6 @@ export const command: Command = async (rootArgs) => {
 
   /**
    * Enqueues a function that handles filesync events onto the {@linkcode queue}.
-   *
-   * @param fn The function to enqueue.
    */
   const enqueue = (fn: () => Promise<unknown>): void => {
     void queue.add(fn).catch(stop);
@@ -247,9 +237,10 @@ export const command: Command = async (rootArgs) => {
   });
 
   /**
-   * A debounced function that enqueue's local file changes to be sent to Gadget.
+   * A debounced function that sends changes to the local filesystem to
+   * Gadget.
    */
-  const publish = debounce(args["--file-push-delay"], () => {
+  const sendChangesToGadget = debounce(args["--file-push-delay"], () => {
     const localFiles = new Map(localFileEventsBuffer.entries());
     localFileEventsBuffer.clear();
 
@@ -301,7 +292,9 @@ export const command: Command = async (rootArgs) => {
    * Watches the local filesystem for changes.
    */
   const fileWatcher = new Watcher(filesync.directory.path, {
-    ignoreInitial: true, // don't emit an event for every watched file on boot
+    // don't emit an event for every watched file on boot
+    ignoreInitial: true,
+    // don't emit changes to .gadget/ files because they're readonly (Gadget manages them)
     ignore: (path: string) => path.startsWith(".gadget/") || filesync.directory.ignores(path),
     renameDetection: true,
     recursive: true,
@@ -320,8 +313,8 @@ export const command: Command = async (rootArgs) => {
 
     log.debug("file event", {
       event,
-      path: normalizedPath,
       isDirectory,
+      path: normalizedPath,
       recentRemoteChanges: Array.from(recentWritesToLocalFilesystem.keys()),
     });
 
@@ -361,7 +354,7 @@ export const command: Command = async (rootArgs) => {
       }
     }
 
-    publish();
+    sendChangesToGadget();
   });
 
   /**
@@ -400,7 +393,7 @@ export const command: Command = async (rootArgs) => {
     try {
       fileWatcher.close();
       clearInterval(clearRecentWritesInterval);
-      publish.flush();
+      sendChangesToGadget.flush();
       stopReceivingChangesFromGadget();
       await queue.onIdle();
     } finally {

@@ -4,7 +4,7 @@ import { execa } from "execa";
 import ms from "ms";
 import path from "node:path";
 import PQueue from "p-queue";
-import { getChanges, getChangesToMake, getNecessaryChanges } from "src/services/filesync/hashes.js";
+import { getChanges, getNecessaryChanges } from "src/services/filesync/hashes.js";
 import Watcher from "watcher";
 import which from "which";
 import { AppArg } from "../services/args.js";
@@ -115,14 +115,8 @@ const argSpec = {
   "--file-watch-rename-timeout": Number,
 };
 
-export enum Action {
+export enum ConflictPreference {
   CANCEL = "Cancel (Ctrl+C)",
-  MERGE = "Merge my changes with Gadget's changes",
-  DISCARD_LOCAL = "Discard my changes",
-  REPLACE_GADGET = "Discard Gadget's changes",
-}
-
-export enum Preference {
   LOCAL = "Keep my changes",
   GADGET = "Keep Gadget's changes",
 }
@@ -198,7 +192,7 @@ export const command: Command = async (rootArgs) => {
           printlns`{underline Received Changes} {gray (${dayjs().format("hh:mm:ss A")})}`;
           printChanges({ changes });
 
-          if (changed.some((change) => change.path === "yarn.lock")) {
+          if (changes.has("yarn.lock")) {
             await execa("yarn", ["install"], { cwd: filesync.directory.path }).catch(noop);
           }
         }
@@ -401,74 +395,46 @@ export const catchUp = async (filesync: FileSync): Promise<void> => {
     printlns`{bold You have conflicting changes with Gadget}`;
     printConflicts(conflicts);
 
-    const action = await select({
+    const preference = await select({
       message: "How would you like to resolve these conflicts?",
-      choices: Object.values(Action),
+      choices: Object.values(ConflictPreference),
     });
 
-    switch (action) {
-      case Action.CANCEL: {
+    switch (preference) {
+      case ConflictPreference.CANCEL: {
         process.exit(0);
         break;
       }
-      case Action.MERGE: {
-        const preference = await select({
-          message: "Which conflicting changes would you like to keep?",
-          choices: [Preference.LOCAL, Preference.GADGET],
-        });
+      case ConflictPreference.LOCAL: {
+        const changes = getNecessaryChanges({ changes: localChanges, existing: gadgetHashes });
+        const safeGadgetChanges = withoutConflicts({ conflicts, changes: gadgetChanges });
 
-        if (preference === Preference.LOCAL) {
-          const changes = getNecessaryChanges({ changes: localChanges, existing: gadgetHashes });
-          const safeGadgetChanges = withoutConflicts({ conflicts, changes: gadgetChanges });
-
-          printlns`{bold The following changes will be made}`;
-          printlns`1. Send your changes to Gadget`;
-          printChangesToMake({ changes });
-          printlns`2. Receive Gadget's changes`;
-          printChangesToMake({ changes: safeGadgetChanges });
-          await confirm({ message: "Are you sure you want to send these changes?" });
-
-          // send changes to gadget
-          // receive new files version
-          // re-run this function
-        } else {
-          const changes = getNecessaryChanges({ changes: gadgetChanges, existing: localHashes });
-          const safeLocalChanges = withoutConflicts({ conflicts, changes: localChanges });
-
-          printlns`{bold The following changes will be made}`;
-          printlns`1. Send your non-conflicting changes to Gadget`;
-          printChangesToMake({ changes: safeLocalChanges });
-          printlns`2. Receive Gadget's changes`;
-          printChangesToMake({ changes });
-          await confirm({ message: "Are you sure you want to make these changes?" });
-
-          // write changes to local filesystem
-          // set files version to gadget's files version
-          // re-run this function
-        }
-        break;
-      }
-      case Action.REPLACE_GADGET: {
-        const changes = getChangesToMake({ from: localHashes, to: gadgetHashes, ignore: [".gadget/"] });
-        printlns`{bold The following changes will be sent to Gadget}`;
+        printlns`{bold Here's what will happen}`;
+        printlns`We're going to send all your changes to Gadget`;
         printChangesToMake({ changes });
-        await confirm({ message: "Are you sure you want to send these changes?" });
+        printlns`Then we're going to receive Gadget's non-conflicting changes`;
+        printChangesToMake({ changes: safeGadgetChanges });
+        await confirm({ message: "Are you sure you want to do this?" });
+
         // send changes to gadget
         // receive new files version
         // re-run this function
         break;
       }
-      case Action.DISCARD_LOCAL: {
-        const discardChanges = getChanges({ from: localHashes, to: filesVersionHashes });
-        printlns`{bold The following changes will be made to your local filesystem}`;
-        printlns`1. Discard your changes`;
-        printChangesToMake({ changes: discardChanges });
-        printlns`2. Apply Gadget's changes`;
-        printChangesToMake({ changes: gadgetChanges });
-        await confirm({ message: "Are you sure you want to make these changes?" });
-        // reset local filesystem
+      case ConflictPreference.GADGET: {
+        const changes = getNecessaryChanges({ changes: gadgetChanges, existing: localHashes });
+        const safeLocalChanges = withoutConflicts({ conflicts, changes: localChanges });
+
+        printlns`{bold Here's what will happen}`;
+        printlns`We're going to send your non-conflicting changes to Gadget`;
+        printChangesToMake({ changes: safeLocalChanges });
+        printlns`Then we're going to receive all of Gadget's changes`;
+        printChangesToMake({ changes });
+        await confirm({ message: "Are you sure you want to do this?" });
+
+        // write changes to local filesystem
+        // set files version to gadget's files version
         // re-run this function
-        break;
       }
     }
   }

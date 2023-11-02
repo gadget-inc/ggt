@@ -96,6 +96,13 @@ describe("Directory", () => {
 
       expect(true).toBe(true);
     });
+
+    it("doesn't ignore the root directory", () => {
+      const dir = testDirPath();
+      const directory = new Directory(dir, true);
+
+      expect(directory.ignores(dir)).toBe(false);
+    });
   });
 });
 

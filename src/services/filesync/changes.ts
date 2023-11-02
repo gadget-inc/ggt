@@ -37,7 +37,7 @@ export class Delete {
   readonly type = "delete";
 }
 
-export const printChanges = ({ changes, limit = Infinity }: { changes: Changes; limit?: number }): void => {
+export const printChanges = ({ changes, limit = 10 }: { changes: Changes; limit?: number }): void => {
   const created = color.greenBright("created");
   const updated = color.blueBright("updated");
   const deleted = color.redBright("deleted");
@@ -62,7 +62,7 @@ export const printChanges = ({ changes, limit = Infinity }: { changes: Changes; 
   });
 
   if (changes.size > limit) {
-    println`{gray … ${changes.size - limit} more}`;
+    println`{gray ${symbol.ellipsis}  ${changes.size - limit} more}`;
   }
 
   const nChanges = pluralize("change", changes.size, true);
@@ -70,7 +70,7 @@ export const printChanges = ({ changes, limit = Infinity }: { changes: Changes; 
   const updatedCount = changes.updated.length;
   const deletedCount = changes.deleted.length;
 
-  printlns`{gray ${nChanges} in total. ${createdCount} created, ${updatedCount} updated, ${deletedCount} deleted.}`;
+  printlns`{gray ${nChanges} in total. ${createdCount} ${created}, ${updatedCount} ${updated}, ${deletedCount} ${deleted}.}`;
 };
 
 export const printChangesToMake = ({ changes, limit = Infinity }: { changes: Changes; limit?: number }): void => {

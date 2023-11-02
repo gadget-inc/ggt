@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { color, printTable, symbol } from "../print.js";
+import { color, printTable } from "../print.js";
 import { Changes, Create, Delete, Update } from "./changes.js";
 import { ChangesWithHash, type ChangeWithHash } from "./hashes.js";
 
@@ -64,35 +64,34 @@ export const withoutConflicts = ({ conflicts, changes }: { conflicts: Conflicts;
 };
 
 export const printConflicts = (conflicts: Conflicts): void => {
-  const created = color.greenBright("created");
-  const updated = color.blueBright("updated");
-  const deleted = color.redBright("deleted");
+  const created = color.greenBright("+ created");
+  const updated = color.blueBright("± updated");
+  const deleted = color.redBright("- deleted");
 
   printTable({
-    colAligns: ["left", "left", "center", "center"],
-    colWidths: [3],
-    chars: { "top-mid": " " },
-    head: ["", "", "You", "Gadget"],
+    colAligns: ["left", "center", "center"],
+    // chars: { "top-mid": " ", middle: " ", "bottom-mid": " " },
+    head: ["", "You", "Gadget"],
     rows: Array.from(conflicts.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([path, { localChange, gadgetChange }]) => {
         switch (true) {
           case localChange instanceof Create && gadgetChange instanceof Create:
-            return [symbol.plusMinus, path, created, created];
+            return [path, created, created];
           case localChange instanceof Create && gadgetChange instanceof Update:
-            return [symbol.plusMinus, path, created, updated];
+            return [path, created, updated];
           case localChange instanceof Create && gadgetChange instanceof Delete:
-            return [symbol.plusMinus, path, created, deleted];
+            return [path, created, deleted];
           case localChange instanceof Update && gadgetChange instanceof Create:
-            return [symbol.plusMinus, path, updated, created];
+            return [path, updated, created];
           case localChange instanceof Update && gadgetChange instanceof Update:
-            return [symbol.plusMinus, path, updated, updated];
+            return [path, updated, updated];
           case localChange instanceof Update && gadgetChange instanceof Delete:
-            return [symbol.plusMinus, path, updated, deleted];
+            return [path, updated, deleted];
           case localChange instanceof Delete && gadgetChange instanceof Create:
-            return [symbol.plusMinus, path, deleted, created];
+            return [path, deleted, created];
           case localChange instanceof Delete && gadgetChange instanceof Update:
-            return [symbol.plusMinus, path, deleted, updated];
+            return [path, deleted, updated];
           default:
             assert(false, `unexpected conflict: ${localChange.type} vs ${gadgetChange.type}`);
         }

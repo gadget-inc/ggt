@@ -39,23 +39,23 @@ export class Delete {
 }
 
 export const printChanges = ({ changes, limit = 10 }: { changes: Changes; limit?: number }): void => {
-  const created = chalk.greenBright("created");
-  const updated = chalk.blueBright("updated");
-  const deleted = chalk.redBright("deleted");
+  const created = chalk.greenBright("+ created");
+  const updated = chalk.blueBright("± updated");
+  const deleted = chalk.redBright("- deleted");
 
   printTable({
-    head: ["", "", ""],
+    head: ["", ""],
     rows: Array.from(changes.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .slice(0, limit)
       .map(([path, change]) => {
         switch (true) {
           case change instanceof Create:
-            return [chalk.greenBright("+"), chalk.greenBright(path), created];
+            return [chalk.greenBright(path), created];
           case change instanceof Update:
-            return [chalk.blueBright(symbol.plusMinus), chalk.blueBright(path), updated];
+            return [chalk.blueBright(path), updated];
           case change instanceof Delete:
-            return [chalk.redBright("-"), chalk.redBright(path), deleted];
+            return [chalk.redBright(path), deleted];
           default:
             throw new Error(`Unknown change type: ${change.constructor.name}`);
         }
@@ -75,23 +75,23 @@ export const printChanges = ({ changes, limit = 10 }: { changes: Changes; limit?
 };
 
 export const printChangesToMake = ({ changes, limit = Infinity }: { changes: Changes; limit?: number }): void => {
-  const create = chalk.greenBright("create");
-  const update = chalk.blueBright("update");
-  const del = chalk.redBright("delete");
+  const create = chalk.greenBright("+ create");
+  const update = chalk.blueBright("± update");
+  const del = chalk.redBright("- delete");
 
   printTable({
-    head: ["", "", ""],
+    head: ["", ""],
     rows: Array.from(changes.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .slice(0, limit)
       .map(([path, change]) => {
         switch (true) {
           case change instanceof Create:
-            return [chalk.greenBright("+"), chalk.greenBright(path), create];
+            return [chalk.greenBright(path), create];
           case change instanceof Update:
-            return [chalk.blueBright(symbol.plusMinus), chalk.blueBright(path), update];
+            return [chalk.blueBright(path), update];
           case change instanceof Delete:
-            return [chalk.redBright("-"), chalk.redBright(path), del];
+            return [chalk.redBright(path), del];
           default:
             throw new Error(`Unknown change type: ${change.constructor.name}`);
         }

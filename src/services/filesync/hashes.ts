@@ -153,13 +153,13 @@ export const getNecessaryChanges = ({ changes, existing }: { changes: ChangesWit
       continue;
     }
 
-    if (change instanceof Update && !existingHash) {
-      // we need to create this file
-      necessaryChanges.set(path, new CreateWithHash(change.targetHash));
-    } else {
-      // we need to update or delete this file
-      necessaryChanges.set(path, change);
-    }
+    // if (change instanceof Update && !existingHash) {
+    //   // we need to create this file
+    //   necessaryChanges.set(path, new CreateWithHash(change.targetHash));
+    // } else {
+    // we need to update or delete this file
+    necessaryChanges.set(path, change);
+    // }
   }
 
   return necessaryChanges;

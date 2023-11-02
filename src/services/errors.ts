@@ -15,7 +15,7 @@ import { compact, uniq } from "./collections.js";
 import { config, env } from "./config.js";
 import type { Payload } from "./edit-graphql.js";
 import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors } from "./is.js";
-import { sprintlns } from "./print.js";
+import { sprintln } from "./print.js";
 import type { User } from "./user.js";
 
 let app: App | undefined;
@@ -121,8 +121,10 @@ export abstract class CLIError extends Error {
   }
 
   /**
-   * Turns this error into a user-friendly message that explains what went wrong and how to fix it. A good write up of
-   * what an error should look like can be found here: {@link https://clig.dev/#errors}
+   * Turns this error into a user-friendly message that explains what
+   * went wrong and how to fix it. A good write up of what an error
+   * should look like can be found here:
+   * {@link https://clig.dev/#errors}
    */
   render(): string {
     return compact([this.header(), this.body(), this.footer()]).join("\n\n");
@@ -230,7 +232,7 @@ export class ClientError extends CLIError {
       const errors = uniq(this.cause.map((x) => x.message));
       if (errors.length > 1) {
         let n = 1;
-        return sprintlns("Gadget responded with multiple errors:").concat(`  ${n++}. ${errors.join(`\n  ${n++}. `)}`);
+        return sprintln("Gadget responded with multiple errors:").concat(`\n  ${n++}. ${errors.join(`\n  ${n++}. `)}`);
       } else {
         return dedent`
           Gadget responded with the following error:

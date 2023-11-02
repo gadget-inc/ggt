@@ -24,7 +24,7 @@ export const notify = (
     | WindowsToaster.Notification
     | WindowsBalloon.Notification
     | Growl.Notification,
-) => {
+): void => {
   log.info("notifying user", { notification: notification as Jsonifiable });
 
   notifier.notify(

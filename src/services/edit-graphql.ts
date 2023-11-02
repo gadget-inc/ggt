@@ -240,16 +240,16 @@ export type Query<
   __TExtensions?: Extensions;
 };
 
-export interface Payload<Data extends JsonObject, Variables extends JsonObject> {
+export type Payload<Data extends JsonObject, Variables extends JsonObject> = {
   readonly query: Query<Data, Variables>;
   readonly variables?: Variables | (() => Variables) | null;
-}
+};
 
-export interface Sink<Data extends JsonObject, Extensions extends JsonObject> {
+export type Sink<Data extends JsonObject, Extensions extends JsonObject> = {
   next(value: ExecutionResult<Data, Extensions>): void;
   error(error: ClientError): void;
   complete(): void;
-}
+};
 
 export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
   subscription RemoteFileSyncEvents($localFilesVersion: String!) {

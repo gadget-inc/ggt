@@ -12,13 +12,13 @@ let longestMessage = 0;
 
 type Log = (msg: Lowercase<string>, fields?: JsonifiableObject) => void;
 
-interface Logger {
+type Logger = {
   dbg: <T>(t: T) => T;
   debug: Log;
   info: Log;
   warn: Log;
   error: Log;
-}
+};
 
 export const createLogger = (name: string, fields: JsonifiableObject | (() => JsonifiableObject) = {}): Logger => {
   longestName = Math.max(longestName, name.length);

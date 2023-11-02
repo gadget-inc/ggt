@@ -51,6 +51,6 @@ export const loadCookie = (): string | undefined => {
   return token && `session=${encodeURIComponent(token)};`;
 };
 
-const isGadgetRequest = (options: OptionsInit) => {
+const isGadgetRequest = (options: OptionsInit): boolean => {
   return options.url instanceof URL && options.url.host === config.domains.services;
 };

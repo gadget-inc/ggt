@@ -15,7 +15,16 @@ const log = createLogger("version");
 
 const UPDATE_CHECK_FREQUENCY = ms("12 hours");
 
-export const getDistTags = async () => {
+const Registry = z.object({
+  name: z.literal("ggt"),
+  "dist-tags": z.object({
+    latest: z.string(),
+  }),
+});
+
+type Registry = z.infer<typeof Registry>;
+
+export const getDistTags = async (): Promise<Registry["dist-tags"]> => {
   const json = await http({
     method: "GET",
     url: "https://registry.npmjs.org/ggt",
@@ -26,19 +35,10 @@ export const getDistTags = async () => {
     },
   });
 
-  const parsed = z
-    .object({
-      name: z.literal("ggt"),
-      "dist-tags": z.object({
-        latest: z.string(),
-      }),
-    })
-    .parse(json);
-
-  return parsed["dist-tags"];
+  return Registry.parse(json)["dist-tags"];
 };
 
-export const shouldCheckForUpdate = async () => {
+export const shouldCheckForUpdate = async (): Promise<boolean> => {
   try {
     const lastCheck = Number(await fs.readFile(path.join(config.cacheDir, "last-update-check"), "utf-8"));
     assert(!Number.isNaN(lastCheck));
@@ -48,7 +48,7 @@ export const shouldCheckForUpdate = async () => {
   }
 };
 
-export const warnIfUpdateAvailable = async () => {
+export const warnIfUpdateAvailable = async (): Promise<void> => {
   try {
     const shouldCheck = await shouldCheckForUpdate();
     if (!shouldCheck) {

@@ -1,12 +1,12 @@
 import { ArgError } from "./errors.js";
 import { sprint } from "./print.js";
 
-export const parseBoolean = (value: string | null | undefined) => {
+export const parseBoolean = (value: string | null | undefined): boolean => {
   value ??= "";
   return ["true", "1"].includes(value.trim().toLowerCase());
 };
 
-export const AppArg = (value: string, name: string) => {
+export const AppArg = (value: string, name: string): string => {
   const slug = /^(https:\/\/)?(?<slug>[\w-]+?)(--development)?(\..*)?$/.exec(value)?.groups?.["slug"];
   if (slug) {
     return slug;

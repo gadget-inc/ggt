@@ -21,7 +21,7 @@ export const readSession = (): string | undefined => {
   }
 };
 
-export const writeSession = (session: string | undefined) => {
+export const writeSession = (session: string | undefined): void => {
   log.debug("writing session to disk", { session: Boolean(session) });
 
   if (session) {

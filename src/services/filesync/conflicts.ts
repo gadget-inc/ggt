@@ -1,9 +1,25 @@
 import assert from "node:assert";
 import { color, printTable, symbol } from "../print.js";
-import { Create, Delete, Update } from "./changes.js";
-import { type ChangeWithHash, type ChangesWithHash } from "./hashes.js";
+import { Changes, Create, Delete, Update } from "./changes.js";
+import { ChangesWithHash, type ChangeWithHash } from "./hashes.js";
 
-export class Conflicts extends Map<string, { localChange: ChangeWithHash; gadgetChange: ChangeWithHash }> {}
+export class Conflicts extends Map<string, { localChange: ChangeWithHash; gadgetChange: ChangeWithHash }> {
+  localChanges(): ChangesWithHash {
+    const changes = new ChangesWithHash();
+    for (const [path, { localChange }] of this) {
+      changes.set(path, localChange);
+    }
+    return changes;
+  }
+
+  gadgetChanges(): ChangesWithHash {
+    const changes = new ChangesWithHash();
+    for (const [path, { gadgetChange }] of this) {
+      changes.set(path, gadgetChange);
+    }
+    return changes;
+  }
+}
 
 export const getConflicts = ({
   localChanges,
@@ -35,6 +51,16 @@ export const getConflicts = ({
   }
 
   return conflicts;
+};
+
+export const withoutConflicts = ({ conflicts, changes }: { conflicts: Conflicts; changes: Changes }): Changes => {
+  const changesWithoutConflicts = new Changes();
+  for (const [path, change] of changes) {
+    if (!conflicts.has(path)) {
+      changesWithoutConflicts.set(path, change);
+    }
+  }
+  return changesWithoutConflicts;
 };
 
 export const printConflicts = (conflicts: Conflicts): void => {

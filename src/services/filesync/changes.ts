@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
+import chalk from "chalk";
 import pluralize from "pluralize";
-import { color, printTable, println, printlns, symbol } from "../print.js";
+import { printTable, println, printlns, symbol } from "../print.js";
 
 export type Change = Create | Update | Delete;
 
@@ -38,9 +39,9 @@ export class Delete {
 }
 
 export const printChanges = ({ changes, limit = 10 }: { changes: Changes; limit?: number }): void => {
-  const created = color.greenBright("created");
-  const updated = color.blueBright("updated");
-  const deleted = color.redBright("deleted");
+  const created = chalk.greenBright("created");
+  const updated = chalk.blueBright("updated");
+  const deleted = chalk.redBright("deleted");
 
   printTable({
     head: ["", "", ""],
@@ -50,11 +51,11 @@ export const printChanges = ({ changes, limit = 10 }: { changes: Changes; limit?
       .map(([path, change]) => {
         switch (true) {
           case change instanceof Create:
-            return [color.greenBright("+"), color.greenBright(path), created];
+            return [chalk.greenBright("+"), chalk.greenBright(path), created];
           case change instanceof Update:
-            return [color.blueBright(symbol.plusMinus), color.blueBright(path), updated];
+            return [chalk.blueBright(symbol.plusMinus), chalk.blueBright(path), updated];
           case change instanceof Delete:
-            return [color.redBright("-"), color.redBright(path), deleted];
+            return [chalk.redBright("-"), chalk.redBright(path), deleted];
           default:
             throw new Error(`Unknown change type: ${change.constructor.name}`);
         }
@@ -74,9 +75,9 @@ export const printChanges = ({ changes, limit = 10 }: { changes: Changes; limit?
 };
 
 export const printChangesToMake = ({ changes, limit = Infinity }: { changes: Changes; limit?: number }): void => {
-  const create = color.greenBright("create");
-  const update = color.blueBright("update");
-  const del = color.redBright("delete");
+  const create = chalk.greenBright("create");
+  const update = chalk.blueBright("update");
+  const del = chalk.redBright("delete");
 
   printTable({
     head: ["", "", ""],
@@ -86,11 +87,11 @@ export const printChangesToMake = ({ changes, limit = Infinity }: { changes: Cha
       .map(([path, change]) => {
         switch (true) {
           case change instanceof Create:
-            return [color.greenBright("+"), color.greenBright(path), create];
+            return [chalk.greenBright("+"), chalk.greenBright(path), create];
           case change instanceof Update:
-            return [color.blueBright(symbol.plusMinus), color.blueBright(path), update];
+            return [chalk.blueBright(symbol.plusMinus), chalk.blueBright(path), update];
           case change instanceof Delete:
-            return [color.redBright("-"), color.redBright(path), del];
+            return [chalk.redBright("-"), chalk.redBright(path), del];
           default:
             throw new Error(`Unknown change type: ${change.constructor.name}`);
         }
@@ -102,9 +103,9 @@ export const printChangesToMake = ({ changes, limit = Infinity }: { changes: Cha
   }
 
   const nChanges = pluralize("change", changes.size, true);
-  const createdCount = changes.created.length;
-  const updatedCount = changes.updated.length;
-  const deletedCount = changes.deleted.length;
+  const createCount = changes.created.length;
+  const updateCount = changes.updated.length;
+  const deleteCount = changes.deleted.length;
 
-  printlns`{gray ${nChanges} in total. ${createdCount} created, ${updatedCount} updated, ${deletedCount} deleted.}`;
+  printlns`{gray ${nChanges} in total. ${createCount} to ${create}, ${updateCount} to ${update}, ${deleteCount} to ${del}.}`;
 };

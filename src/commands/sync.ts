@@ -4,7 +4,7 @@ import { execa } from "execa";
 import ms from "ms";
 import path from "node:path";
 import PQueue from "p-queue";
-import { getChanges, getChangesToMake, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
+import { getChanges, getChangesToMake, getNecessaryChanges } from "src/services/filesync/hashes.js";
 import Watcher from "watcher";
 import which from "which";
 import { AppArg } from "../services/args.js";
@@ -14,7 +14,7 @@ import { debounce } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
 import { YarnNotFoundError } from "../services/errors.js";
 import { Changes, Create, Delete, Update, printChanges, printChangesToMake } from "../services/filesync/changes.js";
-import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
+import { getConflicts, printConflicts, withoutConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";
@@ -418,18 +418,30 @@ export const catchUp = async (filesync: FileSync): Promise<void> => {
         });
 
         if (preference === Preference.LOCAL) {
-          const changes = getNecessaryFileChanges({ changes: localChanges, existing: gadgetHashes });
-          printlns`{bold The following changes will be sent to Gadget}`;
+          const changes = getNecessaryChanges({ changes: localChanges, existing: gadgetHashes });
+          const safeGadgetChanges = withoutConflicts({ conflicts, changes: gadgetChanges });
+
+          printlns`{bold The following changes will be made}`;
+          printlns`1. Send your changes to Gadget`;
           printChangesToMake({ changes });
+          printlns`2. Receive Gadget's changes`;
+          printChangesToMake({ changes: safeGadgetChanges });
           await confirm({ message: "Are you sure you want to send these changes?" });
+
           // send changes to gadget
           // receive new files version
           // re-run this function
         } else {
-          const changes = getNecessaryFileChanges({ changes: gadgetChanges, existing: localHashes });
-          printlns`{bold The following changes will be made to your local filesystem}`;
+          const changes = getNecessaryChanges({ changes: gadgetChanges, existing: localHashes });
+          const safeLocalChanges = withoutConflicts({ conflicts, changes: localChanges });
+
+          printlns`{bold The following changes will be made}`;
+          printlns`1. Send your non-conflicting changes to Gadget`;
+          printChangesToMake({ changes: safeLocalChanges });
+          printlns`2. Receive Gadget's changes`;
           printChangesToMake({ changes });
           await confirm({ message: "Are you sure you want to make these changes?" });
+
           // write changes to local filesystem
           // set files version to gadget's files version
           // re-run this function
@@ -447,9 +459,12 @@ export const catchUp = async (filesync: FileSync): Promise<void> => {
         break;
       }
       case Action.DISCARD_LOCAL: {
-        const changes = getChanges({ from: localHashes, to: filesVersionHashes });
+        const discardChanges = getChanges({ from: localHashes, to: filesVersionHashes });
         printlns`{bold The following changes will be made to your local filesystem}`;
-        printChangesToMake({ changes });
+        printlns`1. Discard your changes`;
+        printChangesToMake({ changes: discardChanges });
+        printlns`2. Apply Gadget's changes`;
+        printChangesToMake({ changes: gadgetChanges });
         await confirm({ message: "Are you sure you want to make these changes?" });
         // reset local filesystem
         // re-run this function

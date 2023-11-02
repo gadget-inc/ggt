@@ -136,9 +136,9 @@ export const getChangesToMake = ({
 };
 
 /**
- * @returns
+ * @returns the changes needed to apply `changes` to `existing`.
  */
-export const getNecessaryFileChanges = ({ changes, existing }: { changes: ChangesWithHash; existing: Hashes }): ChangesWithHash => {
+export const getNecessaryChanges = ({ changes, existing }: { changes: ChangesWithHash; existing: Hashes }): ChangesWithHash => {
   const necessaryChanges = new ChangesWithHash();
 
   for (const [path, change] of changes) {
@@ -153,8 +153,13 @@ export const getNecessaryFileChanges = ({ changes, existing }: { changes: Change
       continue;
     }
 
-    // we need to make this change
-    necessaryChanges.set(path, change);
+    if (change instanceof Update && !existingHash) {
+      // we need to create this file
+      necessaryChanges.set(path, new CreateWithHash(change.targetHash));
+    } else {
+      // we need to update or delete this file
+      necessaryChanges.set(path, change);
+    }
   }
 
   return necessaryChanges;

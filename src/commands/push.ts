@@ -1,5 +1,5 @@
 import arg from "arg";
-import { getChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
+import { getChanges, getNecessaryChanges } from "src/services/filesync/hashes.js";
 import { AppArg } from "../services/args.js";
 import { printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
@@ -69,7 +69,7 @@ export const command: Command = async (rootArgs) => {
     }
   }
 
-  const changes = getNecessaryFileChanges({ changes: localChanges, existing: gadgetHashes });
+  const changes = getNecessaryChanges({ changes: localChanges, existing: gadgetHashes });
   printlns`{bold The following changes will be sent to Gadget}`;
   printChangesToMake({ changes });
   await confirm({ message: "Are you sure you want to make these changes?" });

@@ -38,13 +38,16 @@ export class Delete {
   readonly type = "delete";
 }
 
-export const printChanges = ({ changes, limit = 10 }: { changes: Changes; limit?: number }): void => {
+export const printChanges = ({ changes, limit = 10, mt = 1 }: { changes: Changes; limit?: number; mt?: number }): void => {
   const created = chalk.greenBright("+ created");
   const updated = chalk.blueBright("± updated");
   const deleted = chalk.redBright("- deleted");
 
+  for (let i = 0; i < mt; i++) {
+    println("");
+  }
+
   printTable({
-    head: ["", ""],
     rows: Array.from(changes.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .slice(0, limit)
@@ -74,13 +77,16 @@ export const printChanges = ({ changes, limit = 10 }: { changes: Changes; limit?
   printlns`{gray ${nChanges} in total. ${createdCount} ${created}, ${updatedCount} ${updated}, ${deletedCount} ${deleted}.}`;
 };
 
-export const printChangesToMake = ({ changes, limit = Infinity }: { changes: Changes; limit?: number }): void => {
+export const printChangesToMake = ({ changes, limit = Infinity, mt = 1 }: { changes: Changes; limit?: number; mt?: number }): void => {
   const create = chalk.greenBright("+ create");
   const update = chalk.blueBright("± update");
   const del = chalk.redBright("- delete");
 
+  for (let i = 0; i < mt; i++) {
+    println("");
+  }
+
   printTable({
-    head: ["", ""],
     rows: Array.from(changes.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .slice(0, limit)

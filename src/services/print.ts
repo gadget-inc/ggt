@@ -109,7 +109,14 @@ export const printTable = ({
 
   table.push(...rows);
 
-  println(table.toString());
+  let output = table.toString();
+  if (!options.head || options.head.length === 0) {
+    // cli-table3 adds a single space to the first row when there are no
+    // headers, so we remove it here
+    output = output.slice(1);
+  }
+
+  println(output);
 };
 
 export const sortBySimilarity = (input: string, options: Iterable<string>): [closest: string, ...sorted: string[]] => {

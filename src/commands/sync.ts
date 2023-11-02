@@ -393,7 +393,7 @@ export const catchUp = async (filesync: FileSync): Promise<void> => {
 
   if (conflicts.size > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
-    printConflicts(conflicts);
+    printConflicts({ conflicts });
 
     const preference = await select({
       message: "How would you like to resolve these conflicts?",
@@ -410,7 +410,7 @@ export const catchUp = async (filesync: FileSync): Promise<void> => {
         const safeGadgetChanges = withoutConflicts({ conflicts, changes: gadgetChanges });
 
         printlns`{bold Here's what will happen}`;
-        printlns`We're going to send all your changes to Gadget`;
+        printlns`We're going to send your changes to Gadget`;
         printChangesToMake({ changes });
         printlns`Then we're going to receive Gadget's non-conflicting changes`;
         printChangesToMake({ changes: safeGadgetChanges });
@@ -428,7 +428,7 @@ export const catchUp = async (filesync: FileSync): Promise<void> => {
         printlns`{bold Here's what will happen}`;
         printlns`We're going to send your non-conflicting changes to Gadget`;
         printChangesToMake({ changes: safeLocalChanges });
-        printlns`Then we're going to receive all of Gadget's changes`;
+        printlns`Then we're going to receive Gadget's changes`;
         printChangesToMake({ changes });
         await confirm({ message: "Are you sure you want to do this?" });
 

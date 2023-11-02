@@ -1,5 +1,4 @@
-import assert from "node:assert";
-import { color, printTable } from "../print.js";
+import { color, printTable, println } from "../print.js";
 import { Changes, Create, Delete, Update } from "./changes.js";
 import { ChangesWithHash, type ChangeWithHash } from "./hashes.js";
 
@@ -63,14 +62,17 @@ export const withoutConflicts = ({ conflicts, changes }: { conflicts: Conflicts;
   return changesWithoutConflicts;
 };
 
-export const printConflicts = (conflicts: Conflicts): void => {
+export const printConflicts = ({ conflicts, mt = 1 }: { conflicts: Conflicts; mt?: number }): void => {
   const created = color.greenBright("+ created");
   const updated = color.blueBright("± updated");
   const deleted = color.redBright("- deleted");
 
+  for (let i = 0; i < mt; i++) {
+    println("");
+  }
+
   printTable({
     colAligns: ["left", "center", "center"],
-    // chars: { "top-mid": " ", middle: " ", "bottom-mid": " " },
     head: ["", "You", "Gadget"],
     rows: Array.from(conflicts.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
@@ -93,7 +95,7 @@ export const printConflicts = (conflicts: Conflicts): void => {
           case localChange instanceof Delete && gadgetChange instanceof Update:
             return [path, deleted, updated];
           default:
-            assert(false, `unexpected conflict: ${localChange.type} vs ${gadgetChange.type}`);
+            throw new Error(`Unexpected conflict: ${localChange.type} vs ${gadgetChange.type}`);
         }
       }),
   });

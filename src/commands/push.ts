@@ -48,7 +48,7 @@ export const command: Command = async (rootArgs) => {
   const conflicts = getConflicts({ localChanges, gadgetChanges });
   if (conflicts.size > 0) {
     printlns`{bold You have conflicting changes with Gadget}`;
-    printConflicts(conflicts);
+    printConflicts({ conflicts });
 
     if (!args["--force"]) {
       printlns`

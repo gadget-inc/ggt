@@ -6,19 +6,19 @@ import { printTable, println, printlns, symbol } from "../print.js";
 export type Change = Create | Update | Delete;
 
 export class Changes<C extends Change = Change> extends Map<string, C> {
-  get created(): string[] {
+  created(): string[] {
     return Array.from(this.entries())
       .filter(([, change]) => change instanceof Create)
       .map(([path]) => path);
   }
 
-  get updated(): string[] {
+  updated(): string[] {
     return Array.from(this.entries())
       .filter(([, change]) => change instanceof Update)
       .map(([path]) => path);
   }
 
-  get deleted(): string[] {
+  deleted(): string[] {
     return Array.from(this.entries())
       .filter(([, change]) => change instanceof Delete)
       .map(([path]) => path);

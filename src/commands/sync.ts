@@ -386,7 +386,7 @@ export const command: Command = async (rootArgs) => {
  * the state of Gadget
  */
 export const handleConflicts = async (filesync: FileSync): Promise<void> => {
-  const { filesVersionHashes, localHashes, gadgetHashes } = await filesync.getHashes();
+  const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await filesync.getHashes();
   const localChanges = getChanges({ from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
   const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
   const conflicts = getConflicts({ localChanges, gadgetChanges });
@@ -410,43 +410,79 @@ export const handleConflicts = async (filesync: FileSync): Promise<void> => {
       break;
     }
     case ConflictPreference.LOCAL: {
-      const changes = getNecessaryChanges({ changes: localChanges, existing: gadgetHashes });
-      const safeGadgetChanges = withoutConflicts({ conflicts, changes: gadgetChanges });
+      const allLocalChanges = getNecessaryChanges({ changes: localChanges, existing: gadgetHashes });
+      const nonConflictingGadgetChanges = withoutConflicts({ conflicts, changes: gadgetChanges });
 
       printlns`{bold Here's what will happen}`;
 
       printlns`We're going to send your changes to Gadget`;
-      printChangesToMake({ changes });
+      printChangesToMake({ changes: allLocalChanges });
 
       printlns`Then we're going to receive Gadget's non-conflicting changes`;
-      printChangesToMake({ changes: safeGadgetChanges });
+      printChangesToMake({ changes: nonConflictingGadgetChanges });
 
       await confirm({ message: "Are you sure you want to do this?" });
 
-      // send changes to gadget
-      // receive new files version
-      // re-run this function
+      // send changes to gadget and update files version
+      await filesync.sendChangesToGadget({
+        changes: allLocalChanges,
+        expectedFilesVersion: gadgetFilesVersion,
+      });
+
+      // receive gadget changes
+      const { files } = await filesync.getFilesFromGadget({
+        filesVersion: gadgetFilesVersion,
+        paths: [...nonConflictingGadgetChanges.created(), ...nonConflictingGadgetChanges.updated()],
+      });
+
+      // write gadget changes to local filesystem
+      await filesync.writeToLocalFilesystem({
+        files,
+        delete: nonConflictingGadgetChanges.deleted(),
+        filesVersion: gadgetFilesVersion,
+      });
+
+      println`{green Done!} ✨`;
+
       break;
     }
     case ConflictPreference.GADGET: {
-      const changes = getNecessaryChanges({ changes: gadgetChanges, existing: localHashes });
-      const safeLocalChanges = withoutConflicts({ conflicts, changes: localChanges });
+      const allGadgetChanges = getNecessaryChanges({ changes: gadgetChanges, existing: localHashes });
+      const nonConflictingLocalChanges = withoutConflicts({ conflicts, changes: localChanges });
 
       printlns`{bold Here's what will happen}`;
 
       printlns`We're going to send your non-conflicting changes to Gadget`;
-      printChangesToMake({ changes: safeLocalChanges });
+      printChangesToMake({ changes: nonConflictingLocalChanges });
 
       printlns`Then we're going to receive Gadget's changes`;
-      printChangesToMake({ changes });
+      printChangesToMake({ changes: allGadgetChanges });
 
       await confirm({ message: "Are you sure you want to do this?" });
 
-      // write changes to local filesystem
-      // set files version to gadget's files version
-      // re-run this function
+      // send non-conflicting changes to gadget and update files version
+      await filesync.sendChangesToGadget({
+        changes: nonConflictingLocalChanges,
+        expectedFilesVersion: gadgetFilesVersion,
+      });
+
+      // receive gadget changes
+      const { files } = await filesync.getFilesFromGadget({
+        filesVersion: gadgetFilesVersion,
+        paths: [...allGadgetChanges.created(), ...allGadgetChanges.updated()],
+      });
+
+      // write gadget changes to local filesystem
+      await filesync.writeToLocalFilesystem({
+        files,
+        delete: allGadgetChanges.deleted(),
+        filesVersion: gadgetFilesVersion,
+      });
+
+      println`{green Done!} ✨`;
     }
   }
 
-  // make the local filesystem match the current files version
+  // recursively call this function until there are no conflicts
+  return handleConflicts(filesync);
 };

@@ -467,16 +467,17 @@ export class FileSync {
     const conflicts = getConflicts({ localChanges, gadgetChanges });
 
     if (conflicts.size === 0) {
-      // no conflicts, but we still need to make sure our local files match gadget's
+      // we still need to make sure our local files match gadget's
       const changes = getChanges({ from: gadgetHashes, to: localHashes });
       if (changes.size === 0) {
-        // no changes, so we're done
+        // no changes, we're in sync
         return;
       }
 
       // our files are out of sync with gadget's, and at this point,
       // gadget's files are the source of truth, so make the necessary
       // changes
+      // TODO: is this true?
       await this.receiveChangesFromGadget({
         changes,
         filesVersion: gadgetFilesVersion,

@@ -269,7 +269,7 @@ export const command: Command = async (rootArgs) => {
     // don't emit an event for every watched file on boot
     ignoreInitial: true,
     // don't emit changes to .gadget/ files because they're readonly (Gadget manages them)
-    ignore: (path: string) => path.startsWith(".gadget/") || filesync.directory.ignores(path),
+    ignore: (path: string) => filesync.directory.relative(path).startsWith(".gadget") || filesync.directory.ignores(path),
     renameDetection: true,
     recursive: true,
     debounce: args["--file-watch-debounce"],

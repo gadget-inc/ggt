@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { omit } from "../../src/services/collections.js";
 import { ALWAYS_IGNORE_PATHS, Directory, HASHING_IGNORE_PATHS } from "../../src/services/filesync/directory.js";
 import { testDirPath, writeFiles, type Files } from "../util.js";
 
@@ -146,6 +147,9 @@ describe("Directory", () => {
 
   describe("walk", () => {
     it("yields each file and directory within it", async () => {
+      const dir = testDirPath();
+      const directory = new Directory(dir, false);
+
       const expected: Files = {
         "foo.txt": "foo",
         "bar.txt": "bar",
@@ -153,10 +157,37 @@ describe("Directory", () => {
         "baz/qux.txt": "qux",
       };
 
-      const dir = testDirPath();
-      const directory = new Directory(dir, false);
-
       await writeFiles(dir, expected);
+
+      const actual = {} as Files;
+      for await (const { normalizedPath, stats } of directory.walk()) {
+        const actualStats = await fs.stat(path.join(dir, normalizedPath));
+        expect(actualStats).toEqual(stats);
+
+        actual[normalizedPath] = "";
+        if (stats.isFile()) {
+          actual[normalizedPath] = await fs.readFile(path.join(dir, normalizedPath), "utf8");
+        }
+      }
+
+      expect(actual).toEqual(expected);
+    });
+
+    it("doesn't yield ignored files", async () => {
+      const dir = testDirPath();
+
+      const expected = omit(
+        await writeFiles(dir, {
+          "foo.txt": "foo",
+          "bar.txt": "bar",
+          ".ignore": "baz",
+          "baz/": "",
+          "baz/qux.txt": "qux",
+        }),
+        ["baz/", "baz/qux.txt"],
+      );
+
+      const directory = new Directory(dir, false);
 
       const actual = {} as Files;
       for await (const { normalizedPath, stats } of directory.walk()) {

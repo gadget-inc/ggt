@@ -23,3 +23,12 @@ export const pick = <T extends Record<string, unknown>, K extends keyof T>(objec
   }
   return final;
 };
+
+export const omit = <T extends Record<string, unknown>, K extends keyof T>(object: T, keys: K[]): Omit<T, K> => {
+  const final = { ...object };
+  for (const key of keys) {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete final[key];
+  }
+  return final;
+};

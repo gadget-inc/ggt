@@ -13,17 +13,16 @@ import { noop } from "../src/services/noop.js";
 import { writeSession } from "../src/services/session.js";
 import type { User } from "../src/services/user.js";
 
-export const testDirPath = (): string => {
+export const testDirPath = (...segments: string[]): string => {
   const name = expect.getState().currentTestName;
-  assert(name, "Expected test name to be defined");
+  assert(name, "expected currentTestName to be defined");
 
   const [testFile, ...rest] = name.split(" > ");
-  const describes = rest.length > 1 ? rest.slice(0, -1) : [];
-  const testName = rest.at(-1);
+  const describes = rest.length > 1 ? rest.slice(0, -1).join("/") : "";
+  const testName = rest.at(-1)?.replace(/[^\s\w-]/g, "");
+  assert(testFile && testName, "expected test file and test name to be defined");
 
-  assert(testFile && testName);
-
-  return path.join(__dirname, "../tmp/", testFile, describes.join("/"), testName.replace(/[^\s\w-]/g, ""));
+  return path.join(__dirname, "../tmp/", testFile, describes, testName, ...segments);
 };
 
 export const fixturesDirPath = path.join(__dirname, "__fixtures__");
@@ -156,7 +155,7 @@ export const readFiles = async (dir: string): Promise<Files> => {
   return files;
 };
 
-export const writeFiles = async (dir: string, files: Files): Promise<void> => {
+export const writeFiles = async (dir: string, files: Files): Promise<Files> => {
   await fs.ensureDir(dir);
 
   for (const [filepath, content] of Object.entries(files)) {
@@ -166,6 +165,8 @@ export const writeFiles = async (dir: string, files: Files): Promise<void> => {
       await fs.outputFile(path.join(dir, filepath), content);
     }
   }
+
+  return files;
 };
 
 export const expectFiles = async (dir: string, files: Files): Promise<void> => {

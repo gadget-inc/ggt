@@ -189,8 +189,8 @@ export const command: Command = async (rootArgs) => {
 
         const changes = await filesync.writeToLocalFilesystem({ filesVersion, files: changed, delete: deleted });
         if (changes.size > 0) {
-          printlns`{underline Received Changes} {gray (${dayjs().format("hh:mm:ss A")})}`;
-          printChanges({ changes });
+          printlns`← Received {gray (${dayjs().format("hh:mm:ss A")})}`;
+          printChanges({ changes, mt: 0 });
 
           if (changes.has("yarn.lock")) {
             await execa("yarn", ["install"], { cwd: filesync.directory.path }).catch(noop);
@@ -214,8 +214,8 @@ export const command: Command = async (rootArgs) => {
 
     enqueue(async () => {
       await filesync.sendChangesToGadget({ changes: changes });
-      printlns`{underline Sent Changes} {gray (${dayjs().format("hh:mm:ss A")})}`;
-      printChanges({ changes });
+      printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
+      printChanges({ changes, mt: 0 });
     });
   });
 

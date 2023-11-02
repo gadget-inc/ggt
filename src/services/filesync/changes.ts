@@ -1,9 +1,28 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
-import { color, printTable, symbol } from "../print.js";
+import pluralize from "pluralize";
+import { color, printTable, println, printlns, symbol } from "../print.js";
 
 export type Change = Create | Update | Delete;
 
-export class Changes extends Map<string, Change> {}
+export class Changes<C extends Change = Change> extends Map<string, C> {
+  get created(): string[] {
+    return Array.from(this.entries())
+      .filter(([, change]) => change instanceof Create)
+      .map(([path]) => path);
+  }
+
+  get updated(): string[] {
+    return Array.from(this.entries())
+      .filter(([, change]) => change instanceof Update)
+      .map(([path]) => path);
+  }
+
+  get deleted(): string[] {
+    return Array.from(this.entries())
+      .filter(([, change]) => change instanceof Delete)
+      .map(([path]) => path);
+  }
+}
 
 export class Create {
   readonly type = "create";
@@ -18,7 +37,7 @@ export class Delete {
   readonly type = "delete";
 }
 
-export const printChanges = ({ changes }: { changes: Changes }): void => {
+export const printChanges = ({ changes, limit = Infinity }: { changes: Changes; limit?: number }): void => {
   const created = color.greenBright("created");
   const updated = color.blueBright("updated");
   const deleted = color.redBright("deleted");
@@ -27,6 +46,7 @@ export const printChanges = ({ changes }: { changes: Changes }): void => {
     head: ["", "", ""],
     rows: Array.from(changes.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(0, limit)
       .map(([path, change]) => {
         switch (true) {
           case change instanceof Create:
@@ -40,9 +60,20 @@ export const printChanges = ({ changes }: { changes: Changes }): void => {
         }
       }),
   });
+
+  if (changes.size > limit) {
+    println`{gray … ${changes.size - limit} more}`;
+  }
+
+  const nChanges = pluralize("change", changes.size, true);
+  const createdCount = changes.created.length;
+  const updatedCount = changes.updated.length;
+  const deletedCount = changes.deleted.length;
+
+  printlns`{gray ${nChanges} in total. ${createdCount} created, ${updatedCount} updated, ${deletedCount} deleted.}`;
 };
 
-export const printChangesToMake = ({ changes }: { changes: Changes }): void => {
+export const printChangesToMake = ({ changes, limit = Infinity }: { changes: Changes; limit?: number }): void => {
   const create = color.greenBright("create");
   const update = color.blueBright("update");
   const del = color.redBright("delete");
@@ -51,6 +82,7 @@ export const printChangesToMake = ({ changes }: { changes: Changes }): void => {
     head: ["", "", ""],
     rows: Array.from(changes.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(0, limit)
       .map(([path, change]) => {
         switch (true) {
           case change instanceof Create:
@@ -64,4 +96,15 @@ export const printChangesToMake = ({ changes }: { changes: Changes }): void => {
         }
       }),
   });
+
+  if (changes.size > limit) {
+    println`{gray … ${changes.size - limit} more}`;
+  }
+
+  const nChanges = pluralize("change", changes.size, true);
+  const createdCount = changes.created.length;
+  const updatedCount = changes.updated.length;
+  const deletedCount = changes.deleted.length;
+
+  printlns`{gray ${nChanges} in total. ${createdCount} created, ${updatedCount} updated, ${deletedCount} deleted.}`;
 };

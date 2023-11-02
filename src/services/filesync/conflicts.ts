@@ -1,11 +1,17 @@
 import assert from "node:assert";
 import { color, printTable, symbol } from "../print.js";
 import { Create, Delete, Update } from "./changes.js";
-import { type ChangeHash, type ChangesHash } from "./hashes.js";
+import { type ChangeWithHash, type ChangesWithHash } from "./hashes.js";
 
-export class Conflicts extends Map<string, { localChange: ChangeHash; gadgetChange: ChangeHash }> {}
+export class Conflicts extends Map<string, { localChange: ChangeWithHash; gadgetChange: ChangeWithHash }> {}
 
-export const getConflicts = ({ localChanges, gadgetChanges }: { localChanges: ChangesHash; gadgetChanges: ChangesHash }): Conflicts => {
+export const getConflicts = ({
+  localChanges,
+  gadgetChanges,
+}: {
+  localChanges: ChangesWithHash;
+  gadgetChanges: ChangesWithHash;
+}): Conflicts => {
   const conflicts = new Conflicts();
 
   for (const [path, localChange] of localChanges) {

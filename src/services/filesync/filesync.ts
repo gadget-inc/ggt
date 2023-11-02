@@ -25,9 +25,9 @@ import { noop } from "../noop.js";
 import { sortBySimilarity, sprint } from "../print.js";
 import { select } from "../prompt.js";
 import type { User } from "../user.js";
-import { Changes, Create, Delete, Update } from "./changes.js";
+import { Changes, Create, Delete, Update, type Change } from "./changes.js";
 import { Directory } from "./directory.js";
-import { Hashes } from "./hashes.js";
+import { Hashes, type ChangesWithHash } from "./hashes.js";
 
 const log = createLogger("filesync");
 
@@ -285,7 +285,7 @@ export class FileSync {
 
     this._save();
 
-    return new Changes([
+    return new Changes<Change>([
       ...created.map((path) => [path, new Create()] as const),
       ...updated.map((path) => [path, new Update()] as const),
       ...Array.from(options.delete).map((path) => [path, new Delete()] as const),
@@ -297,7 +297,7 @@ export class FileSync {
     changes,
   }: {
     expectedFilesVersion?: bigint;
-    changes: Changes;
+    changes: Changes | ChangesWithHash;
   }): Promise<void> {
     const changed: FileSyncChangedEventInput[] = [];
     const deleted: FileSyncDeletedEventInput[] = [];

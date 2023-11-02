@@ -25,9 +25,8 @@ import { noop } from "../noop.js";
 import { sortBySimilarity, sprint } from "../print.js";
 import { select } from "../prompt.js";
 import type { User } from "../user.js";
-import { Changes, Create, Delete, Update, type Change } from "./changes.js";
+import { Changes, Create, Delete, Hashes, Update, type Change, type ChangesWithHash } from "./changes.js";
 import { Directory } from "./directory.js";
-import { Hashes, type ChangesWithHash } from "./hashes.js";
 
 const log = createLogger("filesync");
 

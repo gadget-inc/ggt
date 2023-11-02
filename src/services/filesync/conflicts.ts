@@ -1,6 +1,5 @@
 import { color, printTable, println } from "../print.js";
-import { Changes, Create, Delete, Update } from "./changes.js";
-import { ChangesWithHash, type ChangeWithHash } from "./hashes.js";
+import { Changes, ChangesWithHash, Create, Delete, Update, type ChangeWithHash } from "./changes.js";
 
 export class Conflicts extends Map<string, { localChange: ChangeWithHash; gadgetChange: ChangeWithHash }> {
   localChanges(): ChangesWithHash {

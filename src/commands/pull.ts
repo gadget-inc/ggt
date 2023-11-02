@@ -1,5 +1,5 @@
 import arg from "arg";
-import { getChanges, getNecessaryChanges } from "src/services/filesync/hashes.js";
+import { getChanges, getNecessaryChanges } from "src/services/filesync/changes.js";
 import { AppArg } from "../services/args.js";
 import { Delete, printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";

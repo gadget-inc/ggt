@@ -4,7 +4,16 @@ import { execa } from "execa";
 import ms from "ms";
 import path from "node:path";
 import PQueue from "p-queue";
-import { getChanges, getNecessaryChanges } from "src/services/filesync/hashes.js";
+import {
+  Changes,
+  Create,
+  Delete,
+  Update,
+  getChanges,
+  getNecessaryChanges,
+  printChanges,
+  printChangesToMake,
+} from "src/services/filesync/changes.js";
 import Watcher from "watcher";
 import which from "which";
 import { AppArg } from "../services/args.js";
@@ -13,7 +22,6 @@ import { config } from "../services/config.js";
 import { debounce } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
 import { YarnNotFoundError } from "../services/errors.js";
-import { Changes, Create, Delete, Update, printChanges, printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts, withoutConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { createLogger } from "../services/log.js";

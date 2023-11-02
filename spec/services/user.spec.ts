@@ -1,10 +1,10 @@
-import enquirer from "enquirer";
 import nock from "nock";
 import process from "node:process";
 import { describe, expect, it, vi } from "vitest";
 import * as login from "../../src/commands/login.js";
 import { config } from "../../src/services/config.js";
 import { loadCookie } from "../../src/services/http.js";
+import * as prompt from "../../src/services/prompt.js";
 import { readSession, writeSession } from "../../src/services/session.js";
 import { getUser, getUserOrLogin } from "../../src/services/user.js";
 import { expectProcessExit, loginTestUser, testUser } from "../util.js";
@@ -36,18 +36,6 @@ describe("user", () => {
       expect(user).toBeUndefined();
       expect(readSession()).toBeUndefined();
     });
-
-    it.skip("caches the user", async () => {
-      nock(`https://${config.domains.services}`).get("/auth/api/current-user").reply(200, testUser);
-      writeSession("test");
-
-      await expect(getUser()).resolves.toEqual(testUser);
-
-      for (let i = 0; i < 10; i++) {
-        expect(nock.isDone()).toBe(true);
-        await expect(getUser()).resolves.toEqual(testUser);
-      }
-    });
   });
 
   describe("getUserOrLogin", () => {
@@ -60,10 +48,10 @@ describe("user", () => {
     });
 
     it("prompts the user to log in if the session is not set", async () => {
-      enquirer.prompt.mockResolvedValue({ result: true });
+      vi.spyOn(prompt, "confirm").mockResolvedValue();
       vi.spyOn(process, "exit");
 
-      vi.spyOn(login, "run").mockImplementation(() => {
+      vi.spyOn(login, "login").mockImplementation(() => {
         loginTestUser();
         return Promise.resolve();
       });
@@ -72,16 +60,16 @@ describe("user", () => {
 
       const returnedUser = await getUserOrLogin();
 
-      expect(enquirer.prompt).toHaveBeenCalled();
+      expect(prompt.confirm).toHaveBeenCalled();
       expect(process.exit).not.toHaveBeenCalled();
-      expect(login.run).toHaveBeenCalled();
+      expect(login.login).toHaveBeenCalled();
       expect(returnedUser).toEqual(testUser);
     });
 
     it("prompts the user to log in if the session is invalid or expired", async () => {
-      enquirer.prompt.mockResolvedValue({ result: true });
+      vi.spyOn(prompt, "confirm").mockResolvedValue();
       vi.spyOn(process, "exit");
-      vi.spyOn(login, "run").mockImplementation(() => {
+      vi.spyOn(login, "login").mockImplementation(() => {
         loginTestUser();
         return Promise.resolve();
       });
@@ -92,19 +80,19 @@ describe("user", () => {
       await expect(getUserOrLogin()).resolves.toEqual(testUser);
 
       expect(nock.isDone()).toBe(true);
-      expect(enquirer.prompt).toHaveBeenCalled();
+      expect(prompt.confirm).toHaveBeenCalled();
       expect(process.exit).not.toHaveBeenCalled();
-      expect(login.run).toHaveBeenCalled();
+      expect(login.login).toHaveBeenCalled();
     });
 
     it("calls process.exit if the user declines to log in", async () => {
       writeSession(undefined);
-      enquirer.prompt.mockResolvedValue({ result: false });
+      prompt.confirm.mockImplementationOnce(() => process.exit(0));
 
       await expectProcessExit(() => getUserOrLogin());
 
-      expect(enquirer.prompt).toHaveBeenCalled();
-      expect(login.run).not.toHaveBeenCalled();
+      expect(prompt.confirm).toHaveBeenCalled();
+      expect(login.login).not.toHaveBeenCalled();
       expect(process.exit).toHaveBeenCalledWith(0);
     });
   });

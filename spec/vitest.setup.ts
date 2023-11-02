@@ -31,7 +31,6 @@ beforeEach(async () => {
 
 vi.mock("execa", () => ({ execa: vi.fn().mockName("execa").mockResolvedValue({}) }));
 vi.mock("get-port", () => ({ default: vi.fn().mockName("getPort").mockResolvedValue(1234) }));
-vi.mock("enquirer", () => ({ default: { prompt: vi.fn().mockName("prompt").mockResolvedValue({}) } }));
 vi.mock("node-notifier", () => ({ default: { notify: vi.fn().mockName("notify") } }));
 vi.mock("open", () => ({ default: vi.fn().mockName("open") }));
 vi.mock("which", () => ({ default: { sync: vi.fn().mockName("whichSync").mockReturnValue("/path/to/yarn") } }));

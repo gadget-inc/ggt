@@ -1,7 +1,7 @@
 import nock from "nock";
 import path from "node:path";
 import type { JsonObject } from "type-fest";
-import { assert, expect, vi } from "vitest";
+import { assert, expect, vi, type Assertion } from "vitest";
 import type { App } from "../src/services/app.js";
 import { config } from "../src/services/config.js";
 import type { Payload, Query, Sink } from "../src/services/edit-graphql.js";
@@ -40,7 +40,7 @@ export const testApp: App = {
   user: testUser,
 };
 
-export const loginTestUser = () => {
+export const loginTestUser = (): void => {
   writeSession("test");
   const cookie = loadCookie();
   expect(cookie, "Cookie to be set after writing session").toBeTruthy();
@@ -49,9 +49,9 @@ export const loginTestUser = () => {
 
 export const testStdout: string[] = [];
 
-export const expectStdout = () => expect(testStdout.join(""));
+export const expectStdout = (): Assertion<string> => expect(testStdout.join(""));
 
-export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode = 0) => {
+export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode = 0): Promise<void> => {
   const exitError = new Error("process.exit() was called") as Error & { code?: number };
   vi.spyOn(process, "exit").mockImplementationOnce((exitCode) => {
     exitError.code = exitCode;
@@ -76,18 +76,18 @@ export const expectError = async (fnThatThrows: () => unknown): Promise<any> => 
   }
 };
 
-export interface MockSubscription<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject> {
+export type MockSubscription<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject> = {
   sink: Sink<Data, Extensions>;
   payload: Payload<Data, Variables>;
   unsubscribe: () => void;
-}
+};
 
-export interface MockEditGraphQL extends EditGraphQL {
+export type MockEditGraphQL = {
   _subscriptions: Map<string, MockSubscription<JsonObject, JsonObject, JsonObject>>;
   _subscription<Data extends JsonObject, Variables extends JsonObject>(
     query: Query<Data, Variables>,
   ): MockSubscription<Data, Variables, JsonObject>;
-}
+} & EditGraphQL;
 
 export const mockEditGraphQL = (): MockEditGraphQL => {
   const mock = {

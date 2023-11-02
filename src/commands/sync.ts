@@ -412,13 +412,13 @@ export const handleConflicts = async (filesync: FileSync): Promise<void> => {
       const allLocalChanges = getNecessaryChanges({ changes: localChanges, existing: gadgetHashes });
       const nonConflictingGadgetChanges = withoutConflicts({ conflicts, changes: gadgetChanges });
 
-      printlns`{bold Here's what will happen}`;
-
       printlns`We're going to send your changes to Gadget`;
       printChanges({ changes: allLocalChanges, tense: "present" });
 
-      printlns`Then we're going to receive Gadget's non-conflicting changes`;
-      printChanges({ changes: nonConflictingGadgetChanges, tense: "present" });
+      if (nonConflictingGadgetChanges.size > 0) {
+        printlns`Then we're going to receive Gadget's non-conflicting changes`;
+        printChanges({ changes: nonConflictingGadgetChanges, tense: "present" });
+      }
 
       await confirm({ message: "Are you sure you want to do this?" });
 
@@ -428,42 +428,47 @@ export const handleConflicts = async (filesync: FileSync): Promise<void> => {
         expectedFilesVersion: gadgetFilesVersion,
       });
 
-      // receive gadget changes
-      const { files } = await filesync.getFilesFromGadget({
-        filesVersion: gadgetFilesVersion,
-        paths: [...nonConflictingGadgetChanges.created(), ...nonConflictingGadgetChanges.updated()],
-      });
+      if (nonConflictingGadgetChanges.size > 0) {
+        // receive gadget changes
+        const { files } = await filesync.getFilesFromGadget({
+          filesVersion: gadgetFilesVersion,
+          paths: [...nonConflictingGadgetChanges.created(), ...nonConflictingGadgetChanges.updated()],
+        });
 
-      // write gadget changes to local filesystem
-      await filesync.writeToLocalFilesystem({
-        files,
-        delete: nonConflictingGadgetChanges.deleted(),
-        filesVersion: gadgetFilesVersion,
-      });
+        // write gadget changes to local filesystem
+        await filesync.writeToLocalFilesystem({
+          files,
+          delete: nonConflictingGadgetChanges.deleted(),
+          filesVersion: gadgetFilesVersion,
+        });
+      }
 
       println`{green Done!} ✨`;
-
       break;
     }
     case ConflictPreference.GADGET: {
       const allGadgetChanges = getNecessaryChanges({ changes: gadgetChanges, existing: localHashes });
       const nonConflictingLocalChanges = withoutConflicts({ conflicts, changes: localChanges });
 
-      printlns`{bold Here's what will happen}`;
+      let were = "We're";
+      if (nonConflictingLocalChanges.size > 0) {
+        printlns`We're going to send your non-conflicting changes to Gadget`;
+        printChanges({ changes: nonConflictingLocalChanges, tense: "present" });
+        were = "Then we're";
+      }
 
-      printlns`We're going to send your non-conflicting changes to Gadget`;
-      printChanges({ changes: nonConflictingLocalChanges, tense: "present" });
-
-      printlns`Then we're going to receive Gadget's changes`;
+      printlns`${were} going to receive Gadget's changes`;
       printChanges({ changes: allGadgetChanges, tense: "present" });
 
       await confirm({ message: "Are you sure you want to do this?" });
 
-      // send non-conflicting changes to gadget and update files version
-      await filesync.sendChangesToGadget({
-        changes: nonConflictingLocalChanges,
-        expectedFilesVersion: gadgetFilesVersion,
-      });
+      if (nonConflictingLocalChanges.size > 0) {
+        // send non-conflicting changes to gadget and update files version
+        await filesync.sendChangesToGadget({
+          changes: nonConflictingLocalChanges,
+          expectedFilesVersion: gadgetFilesVersion,
+        });
+      }
 
       // receive gadget changes
       const { files } = await filesync.getFilesFromGadget({
@@ -479,6 +484,7 @@ export const handleConflicts = async (filesync: FileSync): Promise<void> => {
       });
 
       println`{green Done!} ✨`;
+      break;
     }
   }
 

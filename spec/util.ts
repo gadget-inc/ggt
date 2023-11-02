@@ -1,5 +1,7 @@
+import fs, { type Stats } from "fs-extra";
 import nock from "nock";
 import path from "node:path";
+import normalizePath from "normalize-path";
 import type { JsonObject } from "type-fest";
 import { assert, expect, vi, type Assertion } from "vitest";
 import type { App } from "../src/services/app.js";
@@ -46,6 +48,55 @@ export const loginTestUser = (): void => {
   expect(cookie, "Cookie to be set after writing session").toBeTruthy();
   nock(`https://${config.domains.services}`).get("/auth/api/current-user").matchHeader("cookie", cookie!).reply(200, testUser);
 };
+
+// eslint-disable-next-line func-style
+export async function* walkDir(dir: string): AsyncGenerator<{ absolutePath: string; stats: Stats }> {
+  const stats = await fs.stat(dir);
+  assert(stats.isDirectory(), `expected ${dir} to be a directory`);
+
+  yield { absolutePath: dir, stats };
+
+  for await (const entry of await fs.opendir(dir)) {
+    const absolutePath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      yield* walkDir(absolutePath);
+    } else if (entry.isFile()) {
+      yield { absolutePath, stats: await fs.stat(absolutePath) };
+    }
+  }
+}
+
+export const readDir = async (dir: string): Promise<Record<string, { stats: Stats; content: string }>> => {
+  const files = {} as Record<string, { stats: Stats; content: string }>;
+
+  for await (const { absolutePath, stats } of walkDir(dir)) {
+    const filepath = normalizePath(path.relative(dir, absolutePath));
+    if (stats.isDirectory()) {
+      files[filepath + "/"] = { stats, content: "" };
+    } else if (stats.isFile()) {
+      files[filepath] = { stats, content: await fs.readFile(absolutePath, "base64") };
+    }
+  }
+
+  return files;
+};
+
+export const expectDir = async (dir: string, expected: Record<string, string>): Promise<void> => {
+  const actual = await readDir(dir);
+  expect(actual).toEqual(expected);
+};
+
+// const writeDir = async (dir: string, tree: FileTree): Promise<void> => {
+//   for (const [filepath, content] of Object.entries(tree)) {
+//     if (isString(content)) {
+//       fs.outputFileSync(path.join(dir, filepath), content);
+//     } else {
+//       const subDir = path.join(dir, filepath);
+//       fs.ensureDirSync(subDir);
+//       await writeDir(subDir, content);
+//     }
+//   }
+// };
 
 export const testStdout: string[] = [];
 

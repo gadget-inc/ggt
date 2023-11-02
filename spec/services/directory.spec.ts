@@ -96,12 +96,51 @@ describe("Directory", () => {
 
       expect(true).toBe(true);
     });
+  });
 
-    it("doesn't ignore the root directory", () => {
+  describe("ignores", () => {
+    it("returns false if given the root directory", () => {
       const dir = testDirPath();
       const directory = new Directory(dir, true);
 
       expect(directory.ignores(dir)).toBe(false);
+    });
+
+    it("return true if the path is above the root directory", () => {
+      const dir = testDirPath();
+      const directory = new Directory(dir, true);
+
+      expect(directory.ignores(path.join(dir, ".."))).toBe(true);
+    });
+
+    it("returns true for all paths in ALWAYS_IGNORE_PATHS", () => {
+      const dir = testDirPath();
+      const directory = new Directory(dir, true);
+
+      for (const path of ALWAYS_IGNORE_PATHS) {
+        expect(directory.ignores(path)).toBe(true);
+      }
+    });
+
+    it("returns true for all paths in HASHING_IGNORE_PATHS when hashing", () => {
+      const dir = testDirPath();
+      const directory = new Directory(dir, true);
+
+      // @ts-expect-error isHashing is private
+      directory._isHashing = true;
+
+      for (const path of HASHING_IGNORE_PATHS) {
+        expect(directory.ignores(path)).toBe(true);
+      }
+    });
+
+    it("returns false for all paths in HASHING_IGNORE_PATHS when not hashing", () => {
+      const dir = testDirPath();
+      const directory = new Directory(dir, true);
+
+      for (const path of HASHING_IGNORE_PATHS) {
+        expect(directory.ignores(path)).toBe(false);
+      }
     });
   });
 });

@@ -1,7 +1,6 @@
 import arg from "arg";
-import { getChanges, getNecessaryChanges } from "src/services/filesync/changes.js";
+import { getChanges, getNecessaryChanges, printChanges } from "src/services/filesync/changes.js";
 import { AppArg } from "../services/args.js";
-import { printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
@@ -71,7 +70,7 @@ export const command: Command = async (rootArgs) => {
 
   const changes = getNecessaryChanges({ changes: localChanges, existing: gadgetHashes });
   printlns`{bold The following changes will be sent to Gadget}`;
-  printChangesToMake({ changes });
+  printChanges({ changes, tense: "present" });
   await confirm({ message: "Are you sure you want to make these changes?" });
 
   await filesync.sendChangesToGadget({ expectedFilesVersion: gadgetFilesVersion, changes });

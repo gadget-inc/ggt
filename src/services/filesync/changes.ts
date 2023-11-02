@@ -197,10 +197,20 @@ export const getNecessaryChanges = ({ changes, existing }: { changes: ChangesWit
   return necessaryChanges;
 };
 
-export const printChanges = ({ changes, limit = 10, mt = 1 }: { changes: Changes; limit?: number; mt?: number }): void => {
-  const created = chalk.greenBright("+ created");
-  const updated = chalk.blueBright("± updated");
-  const deleted = chalk.redBright("- deleted");
+export const printChanges = ({
+  changes,
+  tense,
+  limit = Infinity,
+  mt = 1,
+}: {
+  changes: Changes;
+  tense: "past" | "present";
+  limit?: number;
+  mt?: number;
+}): void => {
+  const created = chalk.greenBright("+ " + (tense === "past" ? "created" : "create"));
+  const updated = chalk.blueBright("± " + (tense === "past" ? "updated" : "update"));
+  const deleted = chalk.redBright("- " + (tense === "past" ? "deleted" : "delete"));
 
   for (let i = 0; i < mt; i++) {
     println("");
@@ -225,52 +235,52 @@ export const printChanges = ({ changes, limit = 10, mt = 1 }: { changes: Changes
   });
 
   if (changes.size > limit) {
-    println`{gray ${symbol.ellipsis}  ${changes.size - limit} more}`;
+    println`{gray ${symbol.ellipsis} ${changes.size - limit} more}`;
   }
 
   const nChanges = pluralize("change", changes.size, true);
-  const createdCount = changes.created.length;
-  const updatedCount = changes.updated.length;
-  const deletedCount = changes.deleted.length;
+  const nCreates = pluralize("create", changes.created().length, true);
+  const nUpdates = pluralize("update", changes.updated().length, true);
+  const nDeletes = pluralize("delete", changes.deleted().length, true);
 
-  printlns`{gray ${nChanges} in total. ${createdCount} ${created}, ${updatedCount} ${updated}, ${deletedCount} ${deleted}.}`;
+  printlns`{gray ${nChanges} in total.} {greenBright ${nCreates}}, {blueBright ${nUpdates}}, {redBright ${nDeletes}}`;
 };
 
-export const printChangesToMake = ({ changes, limit = Infinity, mt = 1 }: { changes: Changes; limit?: number; mt?: number }): void => {
-  const create = chalk.greenBright("+ create");
-  const update = chalk.blueBright("± update");
-  const del = chalk.redBright("- delete");
+// export const printChangesToMake = ({ changes, limit = Infinity, mt = 1 }: { changes: Changes; limit?: number; mt?: number }): void => {
+//   const create = chalk.greenBright("+ create");
+//   const update = chalk.blueBright("± update");
+//   const del = chalk.redBright("- delete");
 
-  for (let i = 0; i < mt; i++) {
-    println("");
-  }
+//   for (let i = 0; i < mt; i++) {
+//     println("");
+//   }
 
-  printTable({
-    rows: Array.from(changes.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .slice(0, limit)
-      .map(([path, change]) => {
-        switch (true) {
-          case change instanceof Create:
-            return [chalk.greenBright(path), create];
-          case change instanceof Update:
-            return [chalk.blueBright(path), update];
-          case change instanceof Delete:
-            return [chalk.redBright(path), del];
-          default:
-            throw new Error(`Unknown change type: ${change.constructor.name}`);
-        }
-      }),
-  });
+//   printTable({
+//     rows: Array.from(changes.entries())
+//       .sort((a, b) => a[0].localeCompare(b[0]))
+//       .slice(0, limit)
+//       .map(([path, change]) => {
+//         switch (true) {
+//           case change instanceof Create:
+//             return [chalk.greenBright(path), create];
+//           case change instanceof Update:
+//             return [chalk.blueBright(path), update];
+//           case change instanceof Delete:
+//             return [chalk.redBright(path), del];
+//           default:
+//             throw new Error(`Unknown change type: ${change.constructor.name}`);
+//         }
+//       }),
+//   });
 
-  if (changes.size > limit) {
-    println`{gray … ${changes.size - limit} more}`;
-  }
+//   if (changes.size > limit) {
+//     println`{gray … ${changes.size - limit} more}`;
+//   }
 
-  const nChanges = pluralize("change", changes.size, true);
-  const createCount = changes.created.length;
-  const updateCount = changes.updated.length;
-  const deleteCount = changes.deleted.length;
+//   const nChanges = pluralize("change", changes.size, true);
+//   const nCreates = pluralize("create", changes.created().length, true);
+//   const nUpdates = pluralize("update", changes.updated().length, true);
+//   const nDeletes = pluralize("delete", changes.deleted().length, true);
 
-  printlns`{gray ${nChanges} in total. ${createCount} to ${create}, ${updateCount} to ${update}, ${deleteCount} to ${del}.}`;
-};
+//   printlns`{gray ${nChanges} in total.} {greenBright ${nCreates}}, {blueBright ${nUpdates}}, {redBright ${nDeletes}}`;
+// };

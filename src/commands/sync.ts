@@ -4,16 +4,7 @@ import { execa } from "execa";
 import ms from "ms";
 import path from "node:path";
 import PQueue from "p-queue";
-import {
-  Changes,
-  Create,
-  Delete,
-  Update,
-  getChanges,
-  getNecessaryChanges,
-  printChanges,
-  printChangesToMake,
-} from "src/services/filesync/changes.js";
+import { Changes, Create, Delete, Update, getChanges, getNecessaryChanges, printChanges } from "src/services/filesync/changes.js";
 import Watcher from "watcher";
 import which from "which";
 import { AppArg } from "../services/args.js";
@@ -198,7 +189,7 @@ export const command: Command = async (rootArgs) => {
         const changes = await filesync.writeToLocalFilesystem({ filesVersion, files: changed, delete: deleted });
         if (changes.size > 0) {
           printlns`← Received {gray (${dayjs().format("hh:mm:ss A")})}`;
-          printChanges({ changes, mt: 0 });
+          printChanges({ changes, tense: "present", mt: 0, limit: 10 });
 
           if (changes.has("yarn.lock")) {
             await execa("yarn", ["install"], { cwd: filesync.directory.path }).catch(noop);
@@ -223,7 +214,7 @@ export const command: Command = async (rootArgs) => {
     enqueue(async () => {
       await filesync.sendChangesToGadget({ changes: changes });
       printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
-      printChanges({ changes, mt: 0 });
+      printChanges({ changes, tense: "present", limit: 10, mt: 0 });
     });
   });
 
@@ -424,10 +415,10 @@ export const handleConflicts = async (filesync: FileSync): Promise<void> => {
       printlns`{bold Here's what will happen}`;
 
       printlns`We're going to send your changes to Gadget`;
-      printChangesToMake({ changes: allLocalChanges });
+      printChanges({ changes: allLocalChanges, tense: "present" });
 
       printlns`Then we're going to receive Gadget's non-conflicting changes`;
-      printChangesToMake({ changes: nonConflictingGadgetChanges });
+      printChanges({ changes: nonConflictingGadgetChanges, tense: "present" });
 
       await confirm({ message: "Are you sure you want to do this?" });
 
@@ -461,10 +452,10 @@ export const handleConflicts = async (filesync: FileSync): Promise<void> => {
       printlns`{bold Here's what will happen}`;
 
       printlns`We're going to send your non-conflicting changes to Gadget`;
-      printChangesToMake({ changes: nonConflictingLocalChanges });
+      printChanges({ changes: nonConflictingLocalChanges, tense: "present" });
 
       printlns`Then we're going to receive Gadget's changes`;
-      printChangesToMake({ changes: allGadgetChanges });
+      printChanges({ changes: allGadgetChanges, tense: "present" });
 
       await confirm({ message: "Are you sure you want to do this?" });
 

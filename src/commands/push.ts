@@ -1,10 +1,7 @@
 import arg from "arg";
-import fs from "fs-extra";
-import pMap from "p-map";
 import { getChanges, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
-import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
-import { Delete, printChangesToMake } from "../services/filesync/changes.js";
+import { printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { println, printlns, sprint } from "../services/print.js";
@@ -77,37 +74,6 @@ export const command: Command = async (rootArgs) => {
   printChangesToMake({ changes });
   await confirm({ message: "Are you sure you want to make these changes?" });
 
-  const changed = [];
-  const deleted = [];
-
-  for (const [path, change] of changes) {
-    if (change instanceof Delete) {
-      deleted.push(path);
-    } else {
-      changed.push(path);
-    }
-  }
-
-  await filesync.sendToGadget({
-    expectedFilesVersion: gadgetFilesVersion,
-    deleted,
-    changed: await pMap(changed, async (path) => {
-      const absolutePath = filesync.directory.absolute(path);
-      const stats = await fs.stat(absolutePath);
-
-      let content = "";
-      if (stats.isFile()) {
-        content = await fs.readFile(absolutePath, FileSyncEncoding.Base64);
-      }
-
-      return {
-        path,
-        content,
-        mode: stats.mode,
-        encoding: FileSyncEncoding.Base64,
-      };
-    }),
-  });
-
+  await filesync.sendChangesToGadget({ expectedFilesVersion: gadgetFilesVersion, changes });
   println`{green Done!} ✨`;
 };

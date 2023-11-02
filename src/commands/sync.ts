@@ -1,25 +1,21 @@
 import arg from "arg";
 import dayjs from "dayjs";
 import { execa } from "execa";
-import fs from "fs-extra";
 import ms from "ms";
 import path from "node:path";
-import pMap from "p-map";
 import PQueue from "p-queue";
 import { getChanges, getChangesToMake, getNecessaryFileChanges } from "src/services/filesync/hashes.js";
 import Watcher from "watcher";
 import which from "which";
-import { FileSyncEncoding } from "../__generated__/graphql.js";
 import { AppArg } from "../services/args.js";
 import { mapValues } from "../services/collections.js";
 import { config } from "../services/config.js";
 import { debounce } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
 import { YarnNotFoundError } from "../services/errors.js";
-import { printChanges, printChangesToMake } from "../services/filesync/changes.js";
+import { Changes, Create, Delete, Update, printChanges, printChangesToMake } from "../services/filesync/changes.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
-import { FileSync, type File } from "../services/filesync/filesync.js";
-import { swallowEnoent } from "../services/fs.js";
+import { FileSync } from "../services/filesync/filesync.js";
 import { createLogger } from "../services/log.js";
 import { noop } from "../services/noop.js";
 import { notify } from "../services/notify.js";
@@ -211,56 +207,23 @@ export const command: Command = async (rootArgs) => {
   });
 
   /**
-   * A debounced function that sends changes to the local filesystem to
-   * Gadget.
+   * A buffer of local file changes to send to Gadget.
+   */
+  const localChangesBuffer = new Changes();
+
+  /**
+   * A debounced function that sends the local file changes to Gadget.
    */
   const sendChangesToGadget = debounce(args["--file-push-delay"], () => {
-    const localFiles = new Map(localFileEventsBuffer.entries());
-    localFileEventsBuffer.clear();
+    const changes = new Changes(localChangesBuffer.entries());
+    localChangesBuffer.clear();
 
     enqueue(async () => {
-      const changed: File[] = [];
-      const deleted: string[] = [];
-
-      await pMap(localFiles, async ([normalizedPath, file]) => {
-        if ("isDeleted" in file) {
-          deleted.push(normalizedPath);
-          return;
-        }
-
-        try {
-          changed.push({
-            path: normalizedPath,
-            oldPath: "oldPath" in file ? file.oldPath : undefined,
-            mode: file.mode,
-            content: file.isDirectory ? "" : await fs.readFile(filesync.directory.absolute(normalizedPath), FileSyncEncoding.Base64),
-            encoding: FileSyncEncoding.Base64,
-          });
-        } catch (error) {
-          // a file could have been changed and then deleted before we
-          // process the change event, so the readFile above will
-          // raise an enoent. This is normal operation, so just ignore
-          // this event.
-          swallowEnoent(error);
-        }
-      });
-
-      if (changed.length === 0 && deleted.length === 0) {
-        return;
-      }
-
-      const changes = await filesync.sendToGadget({ changed, deleted });
+      await filesync.sendChangesToGadget({ changes: changes });
       println`Sent {gray ${dayjs().format("hh:mm:ss A")}}`;
       printChanges({ changes });
     });
   });
-
-  const localFileEventsBuffer = new Map<
-    string,
-    | { mode: number; isDirectory: boolean }
-    | { isDeleted: true; isDirectory: boolean }
-    | { mode: number; oldPath: string; newPath: string; isDirectory: boolean }
-  >();
 
   /**
    * Watches the local filesystem for changes.
@@ -305,25 +268,21 @@ export const command: Command = async (rootArgs) => {
     switch (event) {
       case "add":
       case "addDir":
+        localChangesBuffer.set(normalizedPath, new Create());
+        break;
+      case "rename":
+      case "renameDir": {
+        const oldNormalizedPath = filesync.directory.normalize(absolutePath, isDirectory);
+        localChangesBuffer.set(normalizedPath, new Create(oldNormalizedPath));
+        break;
+      }
       case "change": {
-        const stats = fs.statSync(filepath);
-        localFileEventsBuffer.set(normalizedPath, { mode: stats.mode, isDirectory });
+        localChangesBuffer.set(normalizedPath, new Update());
         break;
       }
       case "unlink":
       case "unlinkDir": {
-        localFileEventsBuffer.set(normalizedPath, { isDeleted: true, isDirectory });
-        break;
-      }
-      case "rename":
-      case "renameDir": {
-        const stats = fs.statSync(filepath);
-        localFileEventsBuffer.set(normalizedPath, {
-          oldPath: filesync.directory.normalize(absolutePath, isDirectory),
-          newPath: normalizedPath,
-          isDirectory,
-          mode: stats.mode,
-        });
+        localChangesBuffer.set(normalizedPath, new Delete());
         break;
       }
     }

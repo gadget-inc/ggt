@@ -5,9 +5,18 @@ export type Change = Create | Update | Delete;
 
 export class Changes extends Map<string, Change> {}
 
-export class Create {}
-export class Update {}
-export class Delete {}
+export class Create {
+  readonly type = "create";
+  constructor(readonly oldPath?: string) {}
+}
+
+export class Update {
+  readonly type = "update";
+}
+
+export class Delete {
+  readonly type = "delete";
+}
 
 export const printChanges = ({ changes }: { changes: Changes }): void => {
   const created = color.greenBright("created");

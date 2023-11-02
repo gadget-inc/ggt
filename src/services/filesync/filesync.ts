@@ -6,10 +6,10 @@ import process from "node:process";
 import pMap from "p-map";
 import pRetry from "p-retry";
 import { z } from "zod";
-import { FileSyncEncoding } from "../../__generated__/graphql.js";
+import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
 import type { App } from "../app.js";
 import { getApps } from "../app.js";
-import { mapRecords, mapValues } from "../collections.js";
+import { mapValues } from "../collections.js";
 import { config } from "../config.js";
 import {
   EditGraphQL,
@@ -292,55 +292,57 @@ export class FileSync {
     ]);
   }
 
-  async sendToGadget({
-    expectedFilesVersion,
-    changed,
-    deleted,
+  async sendChangesToGadget({
+    expectedFilesVersion = this.filesVersion,
+    changes,
   }: {
     expectedFilesVersion?: bigint;
-    changed: Iterable<File>;
-    deleted: Iterable<string>;
-  }): Promise<Changes> {
+    changes: Changes;
+  }): Promise<void> {
+    const changed: FileSyncChangedEventInput[] = [];
+    const deleted: FileSyncDeletedEventInput[] = [];
+
+    await pMap(changes, async ([normalizedPath, change]) => {
+      if (change instanceof Delete) {
+        deleted.push({ path: normalizedPath });
+        return;
+      }
+
+      const absolutePath = this.directory.absolute(normalizedPath);
+      const stats = await fs.stat(absolutePath);
+
+      let content = "";
+      if (stats.isFile()) {
+        content = await fs.readFile(absolutePath, FileSyncEncoding.Base64);
+      }
+
+      let oldPath;
+      if (change instanceof Create && change.oldPath) {
+        oldPath = change.oldPath;
+      }
+
+      changed.push({
+        content,
+        oldPath,
+        path: normalizedPath,
+        mode: stats.mode,
+        encoding: FileSyncEncoding.Base64,
+      });
+    });
+
     const { publishFileSyncEvents } = await this.editGraphQL.query({
       query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
         input: {
-          expectedRemoteFilesVersion: String(expectedFilesVersion ?? this.filesVersion),
-          changed: Array.from(changed),
-          deleted: mapRecords(deleted, "path"),
+          expectedRemoteFilesVersion: String(expectedFilesVersion),
+          changed,
+          deleted,
         },
       },
     });
 
     this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
     this._save();
-
-    return new Changes([
-      ...mapValues(changed, "path").map((path) => [path, new Create()] as const),
-      ...Array.from(deleted).map((path) => [path, new Delete()] as const),
-    ]);
-  }
-
-  async getFilesFromGadget({
-    filesVersion,
-    paths,
-  }: {
-    filesVersion?: bigint;
-    paths: string[];
-  }): Promise<{ filesVersion: bigint; files: File[] }> {
-    const data = await this.editGraphQL.query({
-      query: FILES_QUERY,
-      variables: {
-        paths,
-        filesVersion: String(filesVersion ?? this.filesVersion),
-        encoding: FileSyncEncoding.Base64,
-      },
-    });
-
-    return {
-      filesVersion: BigInt(data.files.filesVersion),
-      files: data.files.files,
-    };
   }
 
   receiveChangesFromGadget({
@@ -403,6 +405,28 @@ export class FileSync {
     // await fs.outputJSON("tmp/hashes.json", { ...hashes, gadgetFilesVersion: String(gadgetFilesVersion) }, { spaces: 2 });
 
     return hashes;
+  }
+
+  async getFilesFromGadget({
+    filesVersion,
+    paths,
+  }: {
+    filesVersion?: bigint;
+    paths: string[];
+  }): Promise<{ filesVersion: bigint; files: File[] }> {
+    const data = await this.editGraphQL.query({
+      query: FILES_QUERY,
+      variables: {
+        paths,
+        filesVersion: String(filesVersion ?? this.filesVersion),
+        encoding: FileSyncEncoding.Base64,
+      },
+    });
+
+    return {
+      filesVersion: BigInt(data.files.filesVersion),
+      files: data.files.files,
+    };
   }
 
   /**

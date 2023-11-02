@@ -139,10 +139,13 @@ export class Directory {
     const stats = await fs.stat(dir);
     assert(stats.isDirectory(), `expected ${dir} to be a directory`);
 
-    yield {
-      normalizedPath: this.normalize(dir, true),
-      stats,
-    };
+    if (dir !== this.path) {
+      // don't yield the root directory
+      yield {
+        normalizedPath: this.normalize(dir, true),
+        stats,
+      };
+    }
 
     for await (const entry of await fs.opendir(dir)) {
       const filepath = path.join(dir, entry.name);

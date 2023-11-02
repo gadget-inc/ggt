@@ -66,38 +66,6 @@ export async function* walkDir(dir: string): AsyncGenerator<{ absolutePath: stri
   }
 }
 
-export const readDir = async (dir: string): Promise<Record<string, { stats: Stats; content: string }>> => {
-  const files = {} as Record<string, { stats: Stats; content: string }>;
-
-  for await (const { absolutePath, stats } of walkDir(dir)) {
-    const filepath = normalizePath(path.relative(dir, absolutePath));
-    if (stats.isDirectory()) {
-      files[filepath + "/"] = { stats, content: "" };
-    } else if (stats.isFile()) {
-      files[filepath] = { stats, content: await fs.readFile(absolutePath, "base64") };
-    }
-  }
-
-  return files;
-};
-
-export const expectDir = async (dir: string, expected: Record<string, string>): Promise<void> => {
-  const actual = await readDir(dir);
-  expect(actual).toEqual(expected);
-};
-
-// const writeDir = async (dir: string, tree: FileTree): Promise<void> => {
-//   for (const [filepath, content] of Object.entries(tree)) {
-//     if (isString(content)) {
-//       fs.outputFileSync(path.join(dir, filepath), content);
-//     } else {
-//       const subDir = path.join(dir, filepath);
-//       fs.ensureDirSync(subDir);
-//       await writeDir(subDir, content);
-//     }
-//   }
-// };
-
 export const testStdout: string[] = [];
 
 export const expectStdout = (): Assertion<string> => expect(testStdout.join(""));
@@ -169,4 +137,46 @@ export const mockEditGraphQL = (): MockEditGraphQL => {
   });
 
   return mock as MockEditGraphQL;
+};
+
+export type Files = Record<string, string>;
+
+export const readFiles = async (dir: string): Promise<Files> => {
+  const files = {} as Files;
+
+  for await (const { absolutePath, stats } of walkDir(dir)) {
+    const filepath = normalizePath(path.relative(dir, absolutePath));
+    if (stats.isDirectory()) {
+      files[filepath + "/"] = "";
+    } else if (stats.isFile()) {
+      files[filepath] = await fs.readFile(absolutePath, { encoding: "base64" });
+    }
+  }
+
+  return files;
+};
+
+export const writeFiles = async (dir: string, files: Files): Promise<void> => {
+  await fs.ensureDir(dir);
+
+  for (const [filepath, content] of Object.entries(files)) {
+    if (filepath.endsWith("/")) {
+      await fs.ensureDir(path.join(dir, filepath));
+    } else {
+      await fs.outputFile(path.join(dir, filepath), content);
+    }
+  }
+};
+
+export const expectFiles = async (dir: string, files: Files): Promise<void> => {
+  const expected = {} as Files;
+  for (const [filepath, content] of Object.entries(files)) {
+    if (filepath.endsWith("/")) {
+      expected[filepath] = "";
+    }
+    expected[filepath] = Buffer.from(content).toString("base64");
+  }
+
+  const actual = await readFiles(dir);
+  expect(actual).toEqual(expected);
 };

@@ -10,14 +10,14 @@ import normalizePath from "normalize-path";
 /**
  * Paths that are always ignored, regardless of the contents of the `.ignore` file.
  */
-const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
+export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
 
 /**
  * Paths that are ignored when hashing the directory.
  *
  * NOTE: This is the _only_ thing that is allowed to be different between gadget and ggt.
  */
-const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/backup"] as const;
+export const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/backup"] as const;
 
 export class Directory {
   /**
@@ -48,7 +48,7 @@ export class Directory {
   }
 
   /**
-   * Converts an absolute path into a relative one from {@linkcode path}.
+   * Converts an absolute path into a relative one from {@linkcode Directory.path}.
    */
   relative(to: string): string {
     if (!path.isAbsolute(to)) {
@@ -79,11 +79,11 @@ export class Directory {
    * @see https://www.npmjs.com/package/normalize-path
    */
   normalize(filepath: string, isDirectory: boolean): string {
+    filepath = normalizePath(filepath);
+
     if (path.isAbsolute(filepath)) {
       filepath = this.relative(filepath);
     }
-
-    filepath = normalizePath(filepath);
 
     if (isDirectory) {
       filepath += "/";

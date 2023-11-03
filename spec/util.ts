@@ -2,7 +2,7 @@ import fs, { type Stats } from "fs-extra";
 import nock from "nock";
 import path from "node:path";
 import normalizePath from "normalize-path";
-import type { JsonObject } from "type-fest";
+import type { JsonObject, Jsonifiable } from "type-fest";
 import { assert, expect, vi, type Assertion } from "vitest";
 import type { App } from "../src/services/app.js";
 import { config } from "../src/services/config.js";
@@ -49,23 +49,6 @@ export const loginTestUser = (): void => {
   expect(cookie, "Cookie to be set after writing session").toBeTruthy();
   nock(`https://${config.domains.services}`).get("/auth/api/current-user").matchHeader("cookie", cookie!).reply(200, testUser);
 };
-
-// eslint-disable-next-line func-style
-export async function* walkDir(dir: string): AsyncGenerator<{ absolutePath: string; stats: Stats }> {
-  const stats = await fs.stat(dir);
-  assert(stats.isDirectory(), `expected ${dir} to be a directory`);
-
-  yield { absolutePath: dir, stats };
-
-  for await (const entry of await fs.opendir(dir)) {
-    const absolutePath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      yield* walkDir(absolutePath);
-    } else if (entry.isFile()) {
-      yield { absolutePath, stats: await fs.stat(absolutePath) };
-    }
-  }
-}
 
 export const testStdout: string[] = [];
 
@@ -140,6 +123,10 @@ export const mockEditGraphQL = (): MockEditGraphQL => {
   return mock as MockEditGraphQL;
 };
 
+export const prettyJSON = (json: Jsonifiable): string => {
+  return JSON.stringify(json, undefined, 2) + "\n";
+};
+
 export type Files = Record<string, string>;
 
 export const readFiles = async (dir: string): Promise<Files> => {
@@ -183,3 +170,20 @@ export const expectFiles = async (dir: string, files: Files): Promise<void> => {
   const actual = await readFiles(dir);
   expect(actual).toEqual(expected);
 };
+
+// eslint-disable-next-line func-style
+async function* walkDir(dir: string): AsyncGenerator<{ absolutePath: string; stats: Stats }> {
+  const stats = await fs.stat(dir);
+  assert(stats.isDirectory(), `expected ${dir} to be a directory`);
+
+  yield { absolutePath: dir, stats };
+
+  for await (const entry of await fs.opendir(dir)) {
+    const absolutePath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      yield* walkDir(absolutePath);
+    } else if (entry.isFile()) {
+      yield { absolutePath, stats: await fs.stat(absolutePath) };
+    }
+  }
+}

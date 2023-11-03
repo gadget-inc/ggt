@@ -3,15 +3,13 @@ import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as app from "../../src/services/app.js";
 import { ArgError, InvalidSyncFileError } from "../../src/services/errors.js";
+import { Directory } from "../../src/services/filesync/directory.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
-import { expectError, testApp, testDirPath, testUser } from "../util.js";
+import * as prompt from "../../src/services/prompt.js";
+import { expectError, prettyJSON, testApp, testDirPath, testUser, writeFiles, type Files } from "../util.js";
 
 describe("filesync", () => {
-  let dir: string;
-
   beforeEach(() => {
-    dir = path.join(testDirPath(), "app");
-
     vi.spyOn(app, "getApps").mockResolvedValue([
       testApp,
       { id: 2, slug: "not-test", primaryDomain: "not-test.gadget.app", hasSplitEnvironments: false, user: testUser },
@@ -19,6 +17,12 @@ describe("filesync", () => {
   });
 
   describe("init", () => {
+    let dir: string;
+
+    beforeEach(() => {
+      dir = testDirPath("app");
+    });
+
     it("ensures `dir` exists", async () => {
       expect(fs.existsSync(dir)).toBe(false);
 
@@ -28,7 +32,7 @@ describe("filesync", () => {
     });
 
     it("loads state from .gadget/sync.json", async () => {
-      const state = { app: testApp.slug, filesVersion: "77", mtime: 1658153625236 };
+      const state = { app: testApp.slug, filesVersion: "77" };
       await fs.outputJSON(path.join(dir, ".gadget/sync.json"), state);
 
       const filesync = await FileSync.init({ user: testUser, dir, app: testApp.slug });
@@ -41,7 +45,7 @@ describe("filesync", () => {
       const filesync = await FileSync.init({ user: testUser, dir, app: testApp.slug });
 
       // @ts-expect-error _state is private
-      expect(filesync._state).toEqual({ app: "test", filesVersion: "0", mtime: 0 });
+      expect(filesync._state).toEqual({ app: "test", filesVersion: "0" });
     });
 
     it("throws InvalidSyncFileError if .gadget/sync.json does not exist and `dir` is not empty", async () => {
@@ -52,19 +56,19 @@ describe("filesync", () => {
 
     it("throws InvalidSyncFileError if .gadget/sync.json is invalid", async () => {
       // has trailing comma
-      await fs.outputFile(path.join(dir, ".gadget/sync.json"), '{"app":"test","filesVersion":"77","mtime":1658153625236,}');
+      await fs.outputFile(path.join(dir, ".gadget/sync.json"), '{"app":"test","filesVersion":"77",}');
 
       await expect(FileSync.init({ user: testUser, dir, app: testApp.slug })).rejects.toThrow(InvalidSyncFileError);
     });
 
     it("does not throw InvalidSyncFileError if .gadget/sync.json is invalid and `--force` is passed", async () => {
       // has trailing comma
-      await fs.outputFile(path.join(dir, ".gadget/sync.json"), '{"app":"test","filesVersion":"77","mtime":1658153625236,}');
+      await fs.outputFile(path.join(dir, ".gadget/sync.json"), '{"app":"test","filesVersion":"77",}');
 
       const filesync = await FileSync.init({ user: testUser, dir, app: testApp.slug, force: true });
 
       // @ts-expect-error _state is private
-      expect(filesync._state).toEqual({ app: testApp.slug, filesVersion: "0", mtime: 0 });
+      expect(filesync._state).toEqual({ app: testApp.slug, filesVersion: "0" });
     });
 
     it("throws ArgError if the `--app` arg is passed a slug that does not exist within the user's available apps", async () => {
@@ -97,7 +101,7 @@ describe("filesync", () => {
     });
 
     it("throws ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json", async () => {
-      await fs.outputJson(path.join(dir, ".gadget/sync.json"), { app: "not-test", filesVersion: "77", mtime: 1658153625236 });
+      await fs.outputJson(path.join(dir, ".gadget/sync.json"), { app: "not-test", filesVersion: "77" });
 
       const error = await expectError(() => FileSync.init({ user: testUser, dir, app: testApp.slug }));
 
@@ -106,16 +110,22 @@ describe("filesync", () => {
     });
 
     it("does not throw ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json and `--force` is passed", async () => {
-      await fs.outputJson(path.join(dir, ".gadget/sync.json"), { app: "not-test", filesVersion: "77", mtime: 1658153625236 });
+      await fs.outputJson(path.join(dir, ".gadget/sync.json"), { app: "not-test", filesVersion: "77" });
 
       const filesync = await FileSync.init({ user: testUser, dir, app: testApp.slug, force: true });
 
       // @ts-expect-error _state is private
-      expect(filesync._state).toEqual({ app: testApp.slug, filesVersion: "0", mtime: 0 });
+      expect(filesync._state).toEqual({ app: testApp.slug, filesVersion: "0" });
     });
   });
 
-  describe("write", () => {
+  describe("writeToLocalFilesystem", () => {
+    let dir: string;
+
+    beforeEach(() => {
+      dir = testDirPath("app");
+    });
+
     it("removes old backup files before moving new files into place", async () => {
       const filesync = await FileSync.init({ user: testUser, dir, app: testApp.slug });
 
@@ -137,10 +147,77 @@ describe("filesync", () => {
     });
   });
 
-  // describe("fileHashes", () => {
-  //   it("returns the expected hashes", async () => {
-  //     const filesync = await FileSync.init({user: testUser,  dir: path.join(fixturesDirPath, "app") });
-  //     await expect(fileHashes(filesync)).resolves.toMatchSnapshot();
-  //   });
-  // });
+  describe("handleConflicts", () => {
+    // let graphql: MockEditGraphQL;
+
+    // beforeEach(() => {
+    //   graphql = mockEditGraphQL();
+    // });
+
+    const setup = async ({
+      gadgetFilesVersion,
+      filesVersionFiles,
+      localFiles,
+      gadgetFiles,
+    }: {
+      gadgetFilesVersion?: bigint;
+      filesVersionFiles: Files;
+      localFiles: Files;
+      gadgetFiles: Files;
+    }): Promise<{ gadgetFilesVersion: bigint; filesVersionDir: Directory; localDir: Directory; gadgetDir: Directory }> => {
+      const filesVersionDir = new Directory(testDirPath("filesVersion"), false);
+      const localDir = new Directory(testDirPath("local"), false);
+      const gadgetDir = new Directory(testDirPath("gadget"), false);
+
+      await writeFiles(filesVersionDir.path, {
+        // assume filesVersionDir has a .gadget/ dir
+        ".gadget/": "",
+        ...filesVersionFiles,
+      });
+
+      await writeFiles(gadgetDir.path, {
+        // same for the gadgetDir
+        ".gadget/": "",
+        ...gadgetFiles,
+      });
+
+      await writeFiles(localDir.path, {
+        ".gadget/sync.json": prettyJSON({ app: testApp.slug, filesVersion: "1" }),
+        ...localFiles,
+      });
+
+      gadgetFilesVersion ??= 1n;
+
+      vi.spyOn(FileSync.prototype, "getHashes").mockImplementation(async () => ({
+        gadgetFilesVersion: gadgetFilesVersion!,
+        filesVersionHashes: await filesVersionDir.hashes(),
+        localHashes: await localDir.hashes(),
+        gadgetHashes: await gadgetDir.hashes(),
+      }));
+
+      return { gadgetFilesVersion, filesVersionDir, localDir, gadgetDir };
+    };
+
+    it.only("does nothing if there aren't any changes", async () => {
+      const { localDir } = await setup({
+        filesVersionFiles: { "foo.js": "// foo" },
+        localFiles: { "foo.js": "// foo" },
+        gadgetFiles: { "foo.js": "// foo" },
+      });
+
+      const filesync = await FileSync.init({ user: testUser, dir: localDir.path });
+
+      vi.spyOn(prompt, "confirm");
+      vi.spyOn(prompt, "select");
+      vi.spyOn(filesync, "receiveChangesFromGadget");
+      vi.spyOn(filesync, "sendChangesToGadget");
+
+      await filesync.handleConflicts();
+
+      expect(prompt.confirm).not.toHaveBeenCalled();
+      expect(prompt.select).not.toHaveBeenCalled();
+      expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
+      expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
+    });
+  });
 });

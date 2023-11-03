@@ -70,7 +70,7 @@ export class FileSync {
      *
      * This is persisted to `.gadget/sync.json` within the {@linkcode directory}.
      */
-    private _state: { app: string; filesVersion: string; mtime: number },
+    private _state: { app: string; filesVersion: string },
   ) {
     this._save();
     this.editGraphQL = new EditGraphQL(this.app);
@@ -84,16 +84,6 @@ export class FileSync {
    */
   get filesVersion(): bigint {
     return BigInt(this._state.filesVersion);
-  }
-
-  /**
-   * The largest mtime that was seen on the filesystem.
-   *
-   * This is used to determine if any files have changed since the last
-   * sync. This does not include the mtime of files that are ignored.
-   */
-  get mtime(): number {
-    return this._state.mtime;
   }
 
   /**
@@ -144,7 +134,6 @@ export class FileSync {
           .object({
             app: z.string(),
             filesVersion: z.string(),
-            mtime: z.number(),
           })
           .parse(json),
       )
@@ -192,7 +181,7 @@ export class FileSync {
       if (isEmpty || options.force) {
         // the directory is empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
-        return new FileSync(directory, app, { app: app.slug, filesVersion: "0", mtime: 0 });
+        return new FileSync(directory, app, { app: app.slug, filesVersion: "0" });
       }
 
       // the directory isn't empty and the user didn't pass --force
@@ -208,7 +197,7 @@ export class FileSync {
     // the .gadget/sync.json file is for a different app
     if (options.force) {
       // the user passed --force, so use the app they specified and overwrite everything
-      return new FileSync(directory, app, { app: app.slug, filesVersion: "0", mtime: 0 });
+      return new FileSync(directory, app, { app: app.slug, filesVersion: "0" });
     }
 
     // the user didn't pass --force, so throw an error
@@ -290,7 +279,6 @@ export class FileSync {
       }
     });
 
-    this._state.mtime = Date.now();
     if (filesVersion > BigInt(this._state.filesVersion) || options.force) {
       this._state.filesVersion = String(filesVersion);
     }

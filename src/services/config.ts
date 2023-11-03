@@ -43,6 +43,8 @@ export const env = {
 };
 
 export const config = {
+  debug: false,
+
   get name(): string {
     return pkgJson.name;
   },

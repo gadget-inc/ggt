@@ -190,7 +190,7 @@ const hash = async (absolutePath: string): Promise<string> => {
     return sha1.digest("hex");
   }
 
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     try {
       const stream = fs.createReadStream(absolutePath).map((data: Uint8Array) => {
         // windows uses CRLF line endings whereas unix uses LF line

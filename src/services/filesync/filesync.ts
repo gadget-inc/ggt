@@ -1,5 +1,3 @@
-import dayjs from "dayjs";
-import { execa } from "execa";
 import { findUp } from "find-up";
 import fs from "fs-extra";
 import ms from "ms";
@@ -474,24 +472,27 @@ export class FileSync {
         return;
       }
 
+      console.log({ changes, filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
+      process.exit(1);
+
       // our files are out of sync with gadget's, and at this point,
       // gadget's files are the source of truth, so make the necessary
       // changes
       // TODO: is this true?
-      await this.receiveChangesFromGadget({
-        changes,
-        filesVersion: gadgetFilesVersion,
-      });
+      // await this.receiveChangesFromGadget({
+      //   changes,
+      //   filesVersion: gadgetFilesVersion,
+      // });
 
-      printlns`← Received {gray (${dayjs().format("hh:mm:ss A")})}`;
-      printChanges({ changes, tense: "present", mt: 0, limit: 10 });
+      // printlns`← Received {gray (${dayjs().format("hh:mm:ss A")})}`;
+      // printChanges({ changes, tense: "present", mt: 0, limit: 10 });
 
-      if (changes.has("yarn.lock")) {
-        await execa("yarn", ["install"], { cwd: this.directory.path }).catch(noop);
-      }
+      // if (changes.has("yarn.lock")) {
+      //   await execa("yarn", ["install"], { cwd: this.directory.path }).catch(noop);
+      // }
 
-      // we're now in sync with gadget
-      return;
+      // // we're now in sync with gadget
+      // return;
     }
 
     printlns`{bold You have conflicting changes with Gadget}`;

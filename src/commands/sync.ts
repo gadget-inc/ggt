@@ -210,7 +210,7 @@ export const command: Command = async (rootArgs) => {
     localChangesBuffer.clear();
 
     enqueue(async () => {
-      await filesync.sendChangesToGadget({ changes: changes });
+      await filesync.sendChangesToGadget({ changes });
       printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
       printChanges({ changes, tense: "present", limit: 10, mt: 0 });
     });

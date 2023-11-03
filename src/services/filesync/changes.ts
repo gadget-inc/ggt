@@ -2,6 +2,7 @@ import chalk from "chalk";
 import assert from "node:assert";
 import pluralize from "pluralize";
 import { z } from "zod";
+import { config } from "../config.js";
 import { printTable, println, printlns, symbol } from "../print.js";
 
 export const Hashes = z.record(z.string());
@@ -208,6 +209,11 @@ export const printChanges = ({
   limit?: number;
   mt?: number;
 }): void => {
+  if (config.debug) {
+    // always print all changes in debug mode
+    limit = Infinity;
+  }
+
   const created = chalk.greenBright("+ " + (tense === "past" ? "created" : "create"));
   const updated = chalk.blueBright("± " + (tense === "past" ? "updated" : "update"));
   const deleted = chalk.redBright("- " + (tense === "past" ? "deleted" : "delete"));

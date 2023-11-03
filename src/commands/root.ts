@@ -52,6 +52,7 @@ export const command = async (): Promise<void> => {
 
   if (rootArgs["--debug"] ?? parseBoolean(process.env["DEBUG"])) {
     debug.enable("ggt:*");
+    config.debug = true;
   }
 
   if (rootArgs["--version"]) {

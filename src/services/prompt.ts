@@ -19,7 +19,7 @@ export const confirm = async ({ message }: { message: string }): Promise<void> =
   println("");
 
   try {
-    const yes = await inqConfirm({ message });
+    const yes = await inqConfirm({ message, default: false });
     if (!yes) {
       process.exit(0);
     }

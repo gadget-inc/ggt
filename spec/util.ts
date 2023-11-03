@@ -25,7 +25,9 @@ export const testDirPath = (...segments: string[]): string => {
   return path.join(__dirname, "../tmp/", testFile, describes, testName, ...segments);
 };
 
-export const fixturesDirPath = path.join(__dirname, "__fixtures__");
+export const fixturesDirPath = (...segments: string[]): string => {
+  return path.join(__dirname, "__fixtures__", ...segments);
+};
 
 export const testUser: User = {
   id: 1,

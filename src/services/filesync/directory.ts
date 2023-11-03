@@ -1,4 +1,3 @@
-import type { Stats } from "fs-extra";
 import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
@@ -135,16 +134,13 @@ export class Directory {
   /**
    * Walks this directory and yields each file and directory within it.
    */
-  async *walk({ dir = this.path } = {}): AsyncGenerator<{ normalizedPath: string; stats: Stats }> {
+  async *walk({ dir = this.path } = {}): AsyncGenerator<string> {
     const stats = await fs.stat(dir);
     assert(stats.isDirectory(), `expected ${dir} to be a directory`);
 
     if (dir !== this.path) {
       // don't yield the root directory
-      yield {
-        normalizedPath: this.normalize(dir, true),
-        stats,
-      };
+      yield this.normalize(dir, true);
     }
 
     for await (const entry of await fs.opendir(dir)) {
@@ -156,30 +152,19 @@ export class Directory {
       if (entry.isDirectory()) {
         yield* this.walk({ dir: filepath });
       } else if (entry.isFile()) {
-        yield {
-          normalizedPath: this.normalize(filepath, false),
-          stats: await fs.stat(filepath),
-        };
+        yield this.normalize(filepath, false);
       }
     }
   }
 
   async hashes(): Promise<Hashes> {
-    this._isHashing = true;
-
     try {
+      this._isHashing = true;
       const files = {} as Hashes;
 
-      for await (const { normalizedPath, stats } of this.walk()) {
-        const filepath = this.absolute(normalizedPath);
-        switch (true) {
-          case stats.isFile():
-            files[normalizedPath] = await hash(filepath);
-            break;
-          case stats.isDirectory():
-            files[normalizedPath] = "0";
-            break;
-        }
+      for await (const normalizedPath of this.walk()) {
+        const absolutePath = this.absolute(normalizedPath);
+        files[normalizedPath] = await hash(absolutePath);
       }
 
       return files;
@@ -196,10 +181,18 @@ export class Directory {
  */
 export type Hashes = Record<string, string>;
 
-const hash = (filepath: string): Promise<string> => {
+const hash = async (absolutePath: string): Promise<string> => {
+  const sha1 = createHash("sha1");
+  sha1.update(path.basename(absolutePath));
+
+  const stats = await fs.stat(absolutePath);
+  if (stats.isDirectory()) {
+    return sha1.digest("hex");
+  }
+
   return new Promise((resolve, reject) => {
     try {
-      const stream = fs.createReadStream(filepath).map((data: Uint8Array) => {
+      const stream = fs.createReadStream(absolutePath).map((data: Uint8Array) => {
         // windows uses CRLF line endings whereas unix uses LF line
         // endings so we always strip out CR bytes (0x0d) when hashing
         // files. this does make us blind to files that only differ by
@@ -207,10 +200,9 @@ const hash = (filepath: string): Promise<string> => {
         return data.filter((byte) => byte !== 0x0d);
       });
 
-      const hash = createHash("sha1");
       stream.on("error", (err) => reject(err));
-      stream.on("end", () => resolve(hash.digest("hex")));
-      stream.pipe(hash, { end: false });
+      stream.on("end", () => resolve(sha1.digest("hex")));
+      stream.pipe(sha1, { end: false });
     } catch (error) {
       reject(error);
     }

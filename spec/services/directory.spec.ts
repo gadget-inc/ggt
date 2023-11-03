@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { omit } from "../../src/services/collections.js";
 import { ALWAYS_IGNORE_PATHS, Directory, HASHING_IGNORE_PATHS } from "../../src/services/filesync/directory.js";
-import { testDirPath, writeFiles, type Files } from "../util.js";
+import { fixturesDirPath, testDirPath, writeFiles, type Files } from "../util.js";
 
 describe("Directory", () => {
   describe("relative", () => {
@@ -77,12 +77,62 @@ describe("Directory", () => {
       const dir = testDirPath();
       const directory = new Directory(dir, true);
 
-      expect(directory.ignores("foo")).toBe(false);
+      // @ts-expect-error _ignorer and _rules are private
+      expect(directory._ignorer._rules).toMatchInlineSnapshot(`
+        [
+          IgnoreRule {
+            "negative": false,
+            "origin": ".DS_Store",
+            "pattern": ".DS_Store",
+            "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.DS_Store\\(\\?=\\$\\|\\\\/\\$\\)/i,
+          },
+          IgnoreRule {
+            "negative": false,
+            "origin": "node_modules",
+            "pattern": "node_modules",
+            "regex": /\\(\\?:\\^\\|\\\\/\\)node_modules\\(\\?=\\$\\|\\\\/\\$\\)/i,
+          },
+          IgnoreRule {
+            "negative": false,
+            "origin": ".git",
+            "pattern": ".git",
+            "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.git\\(\\?=\\$\\|\\\\/\\$\\)/i,
+          },
+        ]
+      `);
 
       await fs.outputFile(path.join(dir, ".ignore"), "foo");
       directory.loadIgnoreFile();
 
-      expect(directory.ignores("foo")).toBe(true);
+      // @ts-expect-error _ignorer and _rules are private
+      expect(directory._ignorer._rules).toMatchInlineSnapshot(`
+        [
+          IgnoreRule {
+            "negative": false,
+            "origin": ".DS_Store",
+            "pattern": ".DS_Store",
+            "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.DS_Store\\(\\?=\\$\\|\\\\/\\$\\)/i,
+          },
+          IgnoreRule {
+            "negative": false,
+            "origin": "node_modules",
+            "pattern": "node_modules",
+            "regex": /\\(\\?:\\^\\|\\\\/\\)node_modules\\(\\?=\\$\\|\\\\/\\$\\)/i,
+          },
+          IgnoreRule {
+            "negative": false,
+            "origin": ".git",
+            "pattern": ".git",
+            "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.git\\(\\?=\\$\\|\\\\/\\$\\)/i,
+          },
+          IgnoreRule {
+            "negative": false,
+            "origin": "foo",
+            "pattern": "foo",
+            "regex": /\\(\\?:\\^\\|\\\\/\\)foo\\(\\?=\\$\\|\\\\/\\$\\)/i,
+          },
+        ]
+      `);
     });
 
     it("doesn't throw if the file/directory doesn't exist", async () => {
@@ -100,6 +150,22 @@ describe("Directory", () => {
   });
 
   describe("ignores", () => {
+    it("returns true for all paths in the ignore file", async () => {
+      const dir = testDirPath();
+      const directory = new Directory(dir, true);
+
+      expect(directory.ignores("foo")).toBe(false);
+      expect(directory.ignores("bar")).toBe(false);
+      expect(directory.ignores("baz")).toBe(false);
+
+      await fs.outputFile(testDirPath(".ignore"), "foo\nbar\nbaz");
+      directory.loadIgnoreFile();
+
+      expect(directory.ignores("foo")).toBe(true);
+      expect(directory.ignores("bar")).toBe(true);
+      expect(directory.ignores("baz")).toBe(true);
+    });
+
     it("returns false if given the root directory", () => {
       const dir = testDirPath();
       const directory = new Directory(dir, true);
@@ -127,7 +193,7 @@ describe("Directory", () => {
       const dir = testDirPath();
       const directory = new Directory(dir, true);
 
-      // @ts-expect-error isHashing is private
+      // @ts-expect-error _isHashing is private
       directory._isHashing = true;
 
       for (const path of HASHING_IGNORE_PATHS) {
@@ -160,11 +226,10 @@ describe("Directory", () => {
       await writeFiles(dir, expected);
 
       const actual = {} as Files;
-      for await (const { normalizedPath, stats } of directory.walk()) {
-        const actualStats = await fs.stat(path.join(dir, normalizedPath));
-        expect(actualStats).toEqual(stats);
-
+      for await (const normalizedPath of directory.walk()) {
         actual[normalizedPath] = "";
+
+        const stats = await fs.stat(path.join(dir, normalizedPath));
         if (stats.isFile()) {
           actual[normalizedPath] = await fs.readFile(path.join(dir, normalizedPath), "utf8");
         }
@@ -178,9 +243,9 @@ describe("Directory", () => {
 
       const expected = omit(
         await writeFiles(dir, {
+          ".ignore": "baz",
           "foo.txt": "foo",
           "bar.txt": "bar",
-          ".ignore": "baz",
           "baz/": "",
           "baz/qux.txt": "qux",
         }),
@@ -190,17 +255,24 @@ describe("Directory", () => {
       const directory = new Directory(dir, false);
 
       const actual = {} as Files;
-      for await (const { normalizedPath, stats } of directory.walk()) {
-        const actualStats = await fs.stat(path.join(dir, normalizedPath));
-        expect(actualStats).toEqual(stats);
-
+      for await (const normalizedPath of directory.walk()) {
         actual[normalizedPath] = "";
+
+        const stats = await fs.stat(path.join(dir, normalizedPath));
         if (stats.isFile()) {
           actual[normalizedPath] = await fs.readFile(path.join(dir, normalizedPath), "utf8");
         }
       }
 
       expect(actual).toEqual(expected);
+    });
+  });
+
+  describe("hashes", () => {
+    it("produces the expected result", async () => {
+      const dir = fixturesDirPath("app");
+      const hashes = await new Directory(dir, false).hashes();
+      expect(hashes).toMatchSnapshot();
     });
   });
 });

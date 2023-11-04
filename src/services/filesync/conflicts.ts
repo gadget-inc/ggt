@@ -1,6 +1,10 @@
 import { color, printTable, println } from "../print.js";
 import { Changes, ChangesWithHash, Create, Delete, Update, type ChangeWithHash } from "./changes.js";
 
+/**
+ * A map of conflicting changes made between the user's local filesystem
+ * and Gadget's filesystem.
+ */
 export class Conflicts extends Map<string, { localChange: ChangeWithHash; gadgetChange: ChangeWithHash }> {
   localChanges(): ChangesWithHash {
     const changes = new ChangesWithHash();
@@ -19,6 +23,15 @@ export class Conflicts extends Map<string, { localChange: ChangeWithHash; gadget
   }
 }
 
+/**
+ * Returns a Conflicts object containing all conflicts between
+ * localChanges and gadgetChanges.
+ *
+ * @param options - The options object.
+ * @param options.localChanges - The local changes with hash.
+ * @param options.gadgetChanges - The gadget changes with hash.
+ * @returns - The conflicts object.
+ */
 export const getConflicts = ({
   localChanges,
   gadgetChanges,
@@ -51,6 +64,14 @@ export const getConflicts = ({
   return conflicts;
 };
 
+/**
+ * Returns a new `Changes` object that contains only the changes that do
+ * not have conflicts.
+ *
+ * @param conflicts - The conflicts to check against.
+ * @param changes - The changes to filter.
+ * @returns A new `Changes` object without conflicts.
+ */
 export const withoutConflicts = ({ conflicts, changes }: { conflicts: Conflicts; changes: Changes }): Changes => {
   const changesWithoutConflicts = new Changes();
   for (const [path, change] of changes) {
@@ -61,6 +82,13 @@ export const withoutConflicts = ({ conflicts, changes }: { conflicts: Conflicts;
   return changesWithoutConflicts;
 };
 
+/**
+ * Prints a table of conflicts between local changes and gadget changes.
+ *
+ * @param options - The options object.
+ * @param options.conflicts - The conflicts to print.
+ * @param [options.mt=1] - The number of empty lines to print before the table.
+ */
 export const printConflicts = ({ conflicts, mt = 1 }: { conflicts: Conflicts; mt?: number }): void => {
   const created = color.greenBright("+ created");
   const updated = color.blueBright("± updated");

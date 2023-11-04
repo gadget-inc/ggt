@@ -49,6 +49,14 @@ export class Directory {
     this.loadIgnoreFile();
   }
 
+  /**
+   * Initializes a directory.
+   *
+   * If the directory does not exist, it is created.
+   *
+   * @param dir - The directory to initialize.
+   * @returns A Promise that resolves to a Directory instance.
+   */
   static async init(dir: string): Promise<Directory> {
     try {
       const stats = await fs.stat(dir);
@@ -63,7 +71,10 @@ export class Directory {
   }
 
   /**
-   * Converts an absolute path into a relative one from {@linkcode Directory.path}.
+   * Returns the relative path from this directory to the specified path.
+   *
+   * @param to - The path to which the relative path is calculated.
+   * @returns The relative path from this directory to the specified path.
    */
   relative(to: string): string {
     if (!path.isAbsolute(to)) {
@@ -75,7 +86,11 @@ export class Directory {
   }
 
   /**
-   * Converts a relative path into an absolute one from {@linkcode path}.
+   * Returns the absolute path by resolving the given path segments
+   * relative to the directory path.
+   *
+   * @param pathSegments The path segments to resolve.
+   * @returns The absolute path.
    */
   absolute(...pathSegments: string[]): string {
     return path.resolve(this.path, ...pathSegments);
@@ -108,7 +123,8 @@ export class Directory {
   }
 
   /**
-   * Reloads the ignore rules from the `.ignore` file.
+   * Loads the ignore file from the `.ignore` file in the directory. If
+   * the file does not exist, it is silently ignored.
    */
   loadIgnoreFile(): void {
     this._ignorer = ignore.default();
@@ -123,7 +139,10 @@ export class Directory {
   }
 
   /**
-   * Returns `true` if the {@linkcode filepath} should be ignored.
+   * Determines if a file should be ignored based on its filepath.
+   *
+   * @param filepath - The filepath of the file to check.
+   * @returns True if the file should be ignored, false otherwise.
    */
   ignores(filepath: string): boolean {
     const relative = this.relative(filepath);
@@ -146,7 +165,10 @@ export class Directory {
   }
 
   /**
-   * Walks this directory and yields each file and directory within it.
+   * Recursively walks through the directory and yields all files and
+   * directories within it.
+   *
+   * @yields - The normalized path of each file and directory.
    */
   async *walk({ dir = this.path } = {}): AsyncGenerator<string> {
     const stats = await fs.stat(dir);
@@ -171,6 +193,13 @@ export class Directory {
     }
   }
 
+  /**
+   * Calculates the hash of each file and directory and returns an
+   * object containing the hashes keyed by the normalized file path.
+   *
+   * @returns A Promise that resolves to an object containing the hashes
+   * of each file.
+   */
   async hashes(): Promise<Hashes> {
     try {
       this._isHashing = true;
@@ -189,9 +218,8 @@ export class Directory {
 }
 
 /**
- * Key/value pairs where the key is the
- * {@linkcode Directory#normalizePath} path and the value is the result
- * of {@linkcode hash} for that path.
+ * Key/value pairs where the key is the normalized path and the value is
+ * the result of {@linkcode hash} for that path.
  */
 export type Hashes = Record<string, string>;
 
@@ -199,7 +227,7 @@ export type Hashes = Record<string, string>;
  * Calculates the SHA-1 hash of the file or directory at the specified
  * absolute path. If the path points to a directory, the hash is
  * calculated based on the directory name. If the path points to a file,
- * the hash is calculated based on the file contents.
+ * the hash is calculated based on the file's name and contents.
  *
  * @param absolutePath The absolute path to the file or directory.
  * @returns A Promise that resolves to the SHA-1 hash of the file or

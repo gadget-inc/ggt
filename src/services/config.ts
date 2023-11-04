@@ -54,6 +54,10 @@ export const config = {
   },
 
   /**
+   * Returns the full version string including name, version, platform,
+   * arch, and Node.js version. This is passed as the user agent for all
+   * outgoing http requests.
+   *
    * @example "ggt/1.2.3 darwin-arm64 node-v16.0.0"
    */
   get versionFull(): string {

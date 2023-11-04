@@ -6,6 +6,14 @@ export const uniq = <T>(array: T[]): T[] => {
   return [...new Set(array)];
 };
 
+export const map = <T, U>(list: Iterable<T>, fn: (value: T) => U): U[] => {
+  const mapped = [];
+  for (const value of list) {
+    mapped.push(fn(value));
+  }
+  return mapped;
+};
+
 export const mapValues = <O, const Key extends keyof O>(list: Iterable<O>, key: Key, take?: number): O[Key][] => {
   return Array.from(list)
     .slice(0, take)

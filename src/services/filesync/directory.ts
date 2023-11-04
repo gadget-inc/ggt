@@ -18,10 +18,12 @@ export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as cons
  */
 export const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/backup"] as const;
 
+/**
+ * Represents a directory that is being synced.
+ */
 export class Directory {
   /**
-   * The {@linkcode Ignore} instance that is used to determine if a file
-   * should be ignored.
+   * A gitignore-style file parser used to determine which files to ignore while syncing.
    *
    * @see https://www.npmjs.com/package/ignore
    */
@@ -32,6 +34,7 @@ export class Directory {
    */
   private _isHashing = false;
 
+  // TODO: make private
   constructor(
     /**
      * An absolute path to the directory that is being synced.
@@ -44,6 +47,19 @@ export class Directory {
     readonly wasEmpty: boolean,
   ) {
     this.loadIgnoreFile();
+  }
+
+  static async init(dir: string): Promise<Directory> {
+    try {
+      const stats = await fs.stat(dir);
+      assert(stats.isDirectory(), `expected ${dir} to be a directory`);
+
+      await fs.ensureDir(dir);
+      return new Directory(dir, false);
+    } catch (error) {
+      swallowEnoent(error);
+      return new Directory(dir, true);
+    }
   }
 
   /**
@@ -102,9 +118,7 @@ export class Directory {
       const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");
       this._ignorer.add(content);
     } catch (error) {
-      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
-        return;
-      }
+      swallowEnoent(error);
     }
   }
 
@@ -181,6 +195,16 @@ export class Directory {
  */
 export type Hashes = Record<string, string>;
 
+/**
+ * Calculates the SHA-1 hash of the file or directory at the specified
+ * absolute path. If the path points to a directory, the hash is
+ * calculated based on the directory name. If the path points to a file,
+ * the hash is calculated based on the file contents.
+ *
+ * @param absolutePath The absolute path to the file or directory.
+ * @returns A Promise that resolves to the SHA-1 hash of the file or
+ * directory.
+ */
 const hash = async (absolutePath: string): Promise<string> => {
   const sha1 = createHash("sha1");
   sha1.update(path.basename(absolutePath));
@@ -207,4 +231,35 @@ const hash = async (absolutePath: string): Promise<string> => {
       reject(error);
     }
   });
+};
+
+/**
+ * Swallows ENOENT errors and throws any other errors.
+ *
+ * @param error - The error to handle.
+ * @throws The original error if it is not an ENOENT error.
+ */
+export const swallowEnoent = (error: unknown): void => {
+  if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+    return;
+  }
+  throw error;
+};
+
+/**
+ * Checks if a directory is empty or non-existent.
+ *
+ * @param dir - The directory path to check.
+ * @returns A Promise that resolves to a boolean indicating whether the directory is empty or non-existent.
+ */
+export const isEmptyOrNonExistentDir = async (dir: string): Promise<boolean> => {
+  try {
+    for await (const _ of await fs.opendir(dir, { bufferSize: 1 })) {
+      return false;
+    }
+    return true;
+  } catch (error) {
+    swallowEnoent(error);
+    return true;
+  }
 };

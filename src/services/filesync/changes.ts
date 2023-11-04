@@ -36,14 +36,23 @@ export class ChangesWithHash extends Changes<ChangeWithHash> {}
 export class Create {
   readonly type = "create";
   constructor(readonly oldPath?: string) {}
+  toJSON(): typeof this {
+    return { ...this };
+  }
 }
 
 export class Update {
   readonly type = "update";
+  toJSON(): typeof this {
+    return { ...this };
+  }
 }
 
 export class Delete {
   readonly type = "delete";
+  toJSON(): typeof this {
+    return { ...this };
+  }
 }
 
 export class CreateWithHash extends Create {

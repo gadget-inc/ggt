@@ -1,12 +1,16 @@
 import fs from "fs-extra";
 import path from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import pMap from "p-map";
+import { assert, beforeEach, describe, expect, it, vi } from "vitest";
+import { FileSyncEncoding } from "../../src/__generated__/graphql.js";
+import { ConflictPreference } from "../../src/commands/sync.js";
 import * as app from "../../src/services/app.js";
 import { ArgError, InvalidSyncFileError } from "../../src/services/errors.js";
 import { Directory } from "../../src/services/filesync/directory.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
+import { isEmptyOrNonExistentDir } from "../../src/services/fs.js";
 import * as prompt from "../../src/services/prompt.js";
-import { expectError, prettyJSON, testApp, testDirPath, testUser, writeFiles, type Files } from "../util.js";
+import { expectError, expectProcessExit, prettyJSON, readFiles, testApp, testDirPath, testUser, writeFiles, type Files } from "../util.js";
 
 describe("filesync", () => {
   beforeEach(() => {
@@ -148,12 +152,6 @@ describe("filesync", () => {
   });
 
   describe("handleConflicts", () => {
-    // let graphql: MockEditGraphQL;
-
-    // beforeEach(() => {
-    //   graphql = mockEditGraphQL();
-    // });
-
     const setup = async ({
       gadgetFilesVersion,
       filesVersionFiles,
@@ -164,8 +162,18 @@ describe("filesync", () => {
       filesVersionFiles: Files;
       localFiles: Files;
       gadgetFiles: Files;
-    }): Promise<{ gadgetFilesVersion: bigint; filesVersionDir: Directory; localDir: Directory; gadgetDir: Directory }> => {
-      const filesVersionDir = new Directory(testDirPath("filesVersion"), false);
+    }): Promise<{
+      filesync: FileSync;
+      gadgetFilesVersion: bigint;
+      filesVersionDirs: Map<bigint, Directory>;
+      localDir: Directory;
+      gadgetDir: Directory;
+    }> => {
+      gadgetFilesVersion ??= 1n;
+      const filesVersionDir = new Directory(testDirPath(`fv-1`), false);
+      const filesVersionDirs = new Map([[1n, filesVersionDir]]);
+      filesVersionDirs.set(1n, filesVersionDir);
+
       const localDir = new Directory(testDirPath("local"), false);
       const gadgetDir = new Directory(testDirPath("gadget"), false);
 
@@ -186,38 +194,211 @@ describe("filesync", () => {
         ...localFiles,
       });
 
-      gadgetFilesVersion ??= 1n;
+      const filesync = await FileSync.init({ user: testUser, dir: localDir.path });
 
-      vi.spyOn(FileSync.prototype, "getHashes").mockImplementation(async () => ({
-        gadgetFilesVersion: gadgetFilesVersion!,
-        filesVersionHashes: await filesVersionDir.hashes(),
-        localHashes: await localDir.hashes(),
-        gadgetHashes: await gadgetDir.hashes(),
-      }));
+      vi.spyOn(filesync, "getHashes").mockImplementation(async () => {
+        const filesVersionDir = filesVersionDirs.get(filesync.filesVersion);
+        assert(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
 
-      return { gadgetFilesVersion, filesVersionDir, localDir, gadgetDir };
+        return {
+          gadgetFilesVersion: gadgetFilesVersion!,
+          filesVersionHashes: await filesVersionDir.hashes(),
+          localHashes: await localDir.hashes(),
+          gadgetHashes: await gadgetDir.hashes(),
+        };
+      });
+
+      vi.spyOn(filesync, "getFilesFromGadget").mockImplementation(async ({ paths, filesVersion }) => {
+        filesVersion ??= filesync.filesVersion;
+        assert(filesVersion === gadgetFilesVersion, "filesVersion should match gadgetFilesVersion");
+
+        return {
+          filesVersion: filesVersion,
+          files: await pMap(paths, async (filepath) => {
+            const stats = await fs.stat(gadgetDir.absolute(filepath));
+            return {
+              path: filepath,
+              mode: stats.mode,
+              content: stats.isDirectory() ? "" : await fs.readFile(gadgetDir.absolute(filepath), { encoding: FileSyncEncoding.Base64 }),
+              encoding: FileSyncEncoding.Base64,
+            };
+          }),
+        };
+      });
+
+      vi.spyOn(filesync, "sendChangesToGadget").mockImplementation(async ({ expectedFilesVersion, changes }) => {
+        expectedFilesVersion ??= filesync.filesVersion;
+        assert(expectedFilesVersion === gadgetFilesVersion, "expectedFilesVersion should match gadgetFilesVersion");
+
+        for (const [filepath, change] of changes) {
+          switch (change.type) {
+            case "create":
+            case "update":
+              if (filepath.endsWith("/")) {
+                await fs.ensureDir(gadgetDir.absolute(filepath));
+              } else {
+                await fs.copyFile(localDir.absolute(filepath), gadgetDir.absolute(filepath));
+              }
+              break;
+            case "delete":
+              if (filepath.endsWith("/")) {
+                // replicate dl and only delete the dir if it's empty
+                // eslint-disable-next-line max-depth
+                if (await isEmptyOrNonExistentDir(gadgetDir.absolute(filepath))) {
+                  await fs.remove(gadgetDir.absolute(filepath));
+                }
+              } else {
+                await fs.remove(gadgetDir.absolute(filepath));
+              }
+              break;
+          }
+        }
+
+        gadgetFilesVersion += 1n;
+
+        const filesVersionDir = await Directory.init(testDirPath(`fv-${gadgetFilesVersion}`));
+        await fs.copy(gadgetDir.path, filesVersionDir.path);
+        filesVersionDirs.set(gadgetFilesVersion, filesVersionDir);
+
+        // @ts-expect-error _state is private
+        filesync._state = { filesVersion: String(gadgetFilesVersion), app: testApp.slug };
+
+        // @ts-expect-error _save is private
+        filesync._save();
+      });
+
+      return { filesync, gadgetFilesVersion, filesVersionDirs, localDir, gadgetDir };
     };
 
-    it.only("does nothing if there aren't any changes", async () => {
-      const { localDir } = await setup({
+    it("does nothing if there aren't any changes", async () => {
+      const { filesync } = await setup({
         filesVersionFiles: { "foo.js": "// foo" },
         localFiles: { "foo.js": "// foo" },
         gadgetFiles: { "foo.js": "// foo" },
       });
 
-      const filesync = await FileSync.init({ user: testUser, dir: localDir.path });
-
-      vi.spyOn(prompt, "confirm");
       vi.spyOn(prompt, "select");
+      vi.spyOn(prompt, "confirm");
       vi.spyOn(filesync, "receiveChangesFromGadget");
       vi.spyOn(filesync, "sendChangesToGadget");
 
       await filesync.handleConflicts();
 
-      expect(prompt.confirm).not.toHaveBeenCalled();
       expect(prompt.select).not.toHaveBeenCalled();
+      expect(prompt.confirm).not.toHaveBeenCalled();
       expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
       expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
+    });
+
+    it("asks how to resolve conflicts if there are any and calls process.exit(0) if cancel is chosen", async () => {
+      const { filesync } = await setup({
+        filesVersionFiles: {
+          "foo.js": "// foo",
+        },
+        localFiles: {
+          "foo.js": "// local foo",
+        },
+        gadgetFiles: {
+          "foo.js": "// gadget foo",
+        },
+        gadgetFilesVersion: 2n,
+      });
+
+      vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.CANCEL);
+      vi.spyOn(prompt, "confirm");
+      vi.spyOn(filesync, "receiveChangesFromGadget");
+      vi.spyOn(filesync, "sendChangesToGadget");
+
+      await expectProcessExit(() => filesync.handleConflicts());
+
+      expect(prompt.select).toHaveBeenCalledWith({
+        message: "How would you like to resolve these conflicts?",
+        choices: Object.values(ConflictPreference),
+      });
+      expect(prompt.confirm).not.toHaveBeenCalled();
+      expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
+      expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
+    });
+
+    it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
+      const { filesync, filesVersionDirs, gadgetDir, localDir } = await setup({
+        filesVersionFiles: {
+          "foo.js": "// foo",
+        },
+        localFiles: {
+          "foo.js": "// local foo",
+        },
+        gadgetFiles: {
+          "foo.js": "// gadget foo",
+        },
+        gadgetFilesVersion: 2n,
+      });
+
+      vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
+      vi.spyOn(prompt, "confirm").mockResolvedValue();
+      vi.spyOn(filesync, "receiveChangesFromGadget");
+
+      await filesync.handleConflicts();
+
+      expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "choices": [
+              "Cancel (Ctrl+C)",
+              "Keep my changes",
+              "Keep Gadget's changes",
+            ],
+            "message": "How would you like to resolve these conflicts?",
+          },
+        ]
+      `);
+      expect(prompt.confirm).toHaveBeenCalled();
+      expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
+      expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "changes": Map {
+              "foo.js" => {
+                "sourceHash": "176554ae143b13243600c00508d90339f5008f3e",
+                "targetHash": "6eb9e95ecbb5a79840e1d6e854adf90205a1c02d",
+                "type": "update",
+              },
+            },
+            "expectedFilesVersion": 2n,
+          },
+        ]
+      `);
+
+      expect(filesVersionDirs.size).toBe(2);
+      await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
+        {
+          ".gadget/": "",
+          "foo.js": "// foo",
+        }
+      `);
+      await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
+        {
+          ".gadget/": "",
+          "foo.js": "// local foo",
+        }
+      `);
+      await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
+        {
+          ".gadget/": "",
+          ".gadget/sync.json": "{
+          \\"filesVersion\\": \\"3\\",
+          \\"app\\": \\"test\\"
+        }
+        ",
+          "foo.js": "// local foo",
+        }
+      `);
+      await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
+        {
+          ".gadget/": "",
+          "foo.js": "// local foo",
+        }
+      `);
     });
   });
 });

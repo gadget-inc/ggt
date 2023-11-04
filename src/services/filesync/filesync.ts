@@ -299,6 +299,7 @@ export class FileSync {
     expectedFilesVersion?: bigint;
     changes: Changes | ChangesWithHash;
   }): Promise<void> {
+    log.debug("sending changes to gadget", { expectedFilesVersion, changes });
     const changed: FileSyncChangedEventInput[] = [];
     const deleted: FileSyncDeletedEventInput[] = [];
 
@@ -460,8 +461,8 @@ export class FileSync {
         return;
       }
 
-      console.log({ changes, filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
-      process.exit(1);
+      // console.log({ changes, filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
+      // process.exit(1);
 
       // our files are out of sync with gadget's, and at this point,
       // gadget's files are the source of truth, so make the necessary

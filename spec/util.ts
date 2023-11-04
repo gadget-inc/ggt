@@ -137,7 +137,7 @@ export const readFiles = async (dir: string): Promise<Files> => {
     if (stats.isDirectory()) {
       files[filepath + "/"] = "";
     } else if (stats.isFile()) {
-      files[filepath] = await fs.readFile(absolutePath, { encoding: "base64" });
+      files[filepath] = await fs.readFile(absolutePath, { encoding: "utf8" });
     }
   }
 
@@ -172,16 +172,19 @@ export const expectFiles = async (dir: string, files: Files): Promise<void> => {
 };
 
 // eslint-disable-next-line func-style
-async function* walkDir(dir: string): AsyncGenerator<{ absolutePath: string; stats: Stats }> {
+async function* walkDir(dir: string, root = dir): AsyncGenerator<{ absolutePath: string; stats: Stats }> {
   const stats = await fs.stat(dir);
   assert(stats.isDirectory(), `expected ${dir} to be a directory`);
 
-  yield { absolutePath: dir, stats };
+  if (dir !== root) {
+    // don't yield the root directory
+    yield { absolutePath: dir, stats };
+  }
 
   for await (const entry of await fs.opendir(dir)) {
     const absolutePath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      yield* walkDir(absolutePath);
+      yield* walkDir(absolutePath, root);
     } else if (entry.isFile()) {
       yield { absolutePath, stats: await fs.stat(absolutePath) };
     }

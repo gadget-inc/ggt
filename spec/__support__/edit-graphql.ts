@@ -1,7 +1,7 @@
 import type { JsonObject } from "type-fest";
 import { expect, vi } from "vitest";
-import type { Payload, Query, Sink } from "../../src/services/edit-graphql.js";
-import { EditGraphQL } from "../../src/services/edit-graphql.js";
+import type { Payload, Query, Sink } from "../../src/services/app/edit-graphql.js";
+import { EditGraphQL } from "../../src/services/app/edit-graphql.js";
 import { noop } from "../../src/services/noop.js";
 
 export type MockSubscription<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject> = {

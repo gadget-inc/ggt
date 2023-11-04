@@ -1,6 +1,6 @@
 import nock from "nock";
 import { describe, expect, it } from "vitest";
-import { getApps } from "../../src/services/app.js";
+import { getApps } from "../../src/services/app/app.js";
 import { config } from "../../src/services/config.js";
 import { loadCookie } from "../../src/services/http.js";
 import { writeSession } from "../../src/services/session.js";

@@ -8,17 +8,17 @@ import pRetry from "p-retry";
 import { z } from "zod";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
 import { ConflictPreference } from "../../commands/sync.js";
-import type { App } from "../app.js";
-import { getApps } from "../app.js";
-import { mapValues } from "../collections.js";
-import { config } from "../config.js";
+import type { App } from "../app/app.js";
+import { getApps } from "../app/app.js";
 import {
   EditGraphQL,
   FILES_QUERY,
   FILE_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-} from "../edit-graphql.js";
+} from "../app/edit-graphql.js";
+import { mapValues } from "../collections.js";
+import { config } from "../config.js";
 import { ArgError, InvalidSyncFileError } from "../errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "../fs.js";
 import { createLogger } from "../log.js";

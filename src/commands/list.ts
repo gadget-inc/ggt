@@ -1,4 +1,4 @@
-import { getApps } from "../services/app.js";
+import { getApps } from "../services/app/app.js";
 import { println, sprint } from "../services/print.js";
 import { getUserOrLogin } from "../services/user.js";
 import type { Command } from "./index.js";

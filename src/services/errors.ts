@@ -10,10 +10,10 @@ import { serializeError as baseSerializeError, type ErrorObject } from "serializ
 import { dedent } from "ts-dedent";
 import type { JsonObject } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
-import type { App } from "./app.js";
+import type { App } from "./app/app.js";
+import type { Payload } from "./app/edit-graphql.js";
 import { compact, uniq } from "./collections.js";
 import { config, env } from "./config.js";
-import type { Payload } from "./edit-graphql.js";
 import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors } from "./is.js";
 import { sprintln } from "./print.js";
 import type { User } from "./user.js";

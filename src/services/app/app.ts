@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { config } from "./config.js";
-import { http, loadCookie } from "./http.js";
-import type { User } from "./user.js";
+import { config } from "../config.js";
+import { http, loadCookie } from "../http.js";
+import type { User } from "../user.js";
 
 export const App = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]),

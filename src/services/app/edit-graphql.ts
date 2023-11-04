@@ -18,14 +18,14 @@ import type {
   RemoteFileSyncEventsSubscriptionVariables,
   RemoteFilesVersionQuery,
   RemoteFilesVersionQueryVariables,
-} from "../__generated__/graphql.js";
+} from "../../__generated__/graphql.js";
+import { config } from "../config.js";
+import { ClientError } from "../errors.js";
+import { loadCookie } from "../http.js";
+import { isFunction } from "../is.js";
+import { createLogger } from "../log.js";
+import { noop } from "../noop.js";
 import type { App } from "./app.js";
-import { config } from "./config.js";
-import { ClientError } from "./errors.js";
-import { loadCookie } from "./http.js";
-import { isFunction } from "./is.js";
-import { createLogger } from "./log.js";
-import { noop } from "./noop.js";
 
 enum ConnectionStatus {
   CONNECTED,

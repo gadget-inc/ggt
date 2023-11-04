@@ -18,12 +18,12 @@ import {
 import type { RootArgs } from "../../src/commands/root.js";
 import { Action, Sync, SyncStatus } from "../../src/commands/sync.js";
 import * as app from "../../src/services/app.js";
-import { defaults } from "../../src/services/defaults.js";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-} from "../../src/services/edit-graphql.js";
+} from "../../src/services/app/edit-graphql.js";
+import { defaults } from "../../src/services/defaults.js";
 import { ClientError, YarnNotFoundError } from "../../src/services/errors.js";
 import { isFunction, isNil, isString } from "../../src/services/is.js";
 import { noop } from "../../src/services/noop.js";

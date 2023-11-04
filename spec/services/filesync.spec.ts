@@ -4,7 +4,7 @@ import pMap from "p-map";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../src/__generated__/graphql.js";
 import { ConflictPreference } from "../../src/commands/sync.js";
-import * as app from "../../src/services/app.js";
+import * as app from "../../src/services/app/app.js";
 import { ArgError, InvalidSyncFileError } from "../../src/services/errors.js";
 import { Directory } from "../../src/services/filesync/directory.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";

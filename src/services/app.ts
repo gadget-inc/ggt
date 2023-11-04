@@ -13,7 +13,11 @@ export const App = z.object({
 export type App = z.infer<typeof App> & { user: User };
 
 /**
- * @returns The list of Gadget applications the current user has access to.
+ * Retrieves a list of apps for the given user. If the user is not
+ * logged in, an empty array is returned instead.
+ *
+ * @param user The user for whom to retrieve the apps.
+ * @returns A promise that resolves to an array of App objects.
  */
 export const getApps = async (user: User): Promise<App[]> => {
   const cookie = loadCookie();

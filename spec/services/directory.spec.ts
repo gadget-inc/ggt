@@ -3,7 +3,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { omit } from "../../src/services/collections.js";
 import { ALWAYS_IGNORE_PATHS, Directory, HASHING_IGNORE_PATHS } from "../../src/services/filesync/directory.js";
-import { fixturesDirPath, testDirPath, writeFiles, type Files } from "../util.js";
+import { writeFiles, type Files } from "../__support__/files.js";
+import { appFixturePath, testDirPath } from "../__support__/paths.js";
 
 describe("Directory", () => {
   describe("relative", () => {
@@ -270,8 +271,7 @@ describe("Directory", () => {
 
   describe("hashes", () => {
     it("produces the expected result", async () => {
-      const dir = fixturesDirPath("app");
-      const hashes = await new Directory(dir, false).hashes();
+      const hashes = await new Directory(appFixturePath(), false).hashes();
       expect(hashes).toMatchSnapshot();
     });
   });

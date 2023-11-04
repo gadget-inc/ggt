@@ -29,9 +29,12 @@ import { isFunction, isNil, isString } from "../../src/services/is.js";
 import { noop } from "../../src/services/noop.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";
 import * as user from "../../src/services/user.js";
+import { testApp } from "../__support__/app.js";
+import type { MockEditGraphQL } from "../__support__/edit-graphql.js";
+import { mockEditGraphQL } from "../__support__/edit-graphql.js";
+import { testDirPath } from "../__support__/paths.js";
+import { testUser } from "../__support__/user.js";
 import type { PartialExcept } from "../types.js";
-import type { MockEditGraphQL } from "../util.js";
-import { mockEditGraphQL, testApp, testDirPath, testUser } from "../util.js";
 
 describe("Sync", () => {
   let rootArgs: RootArgs;

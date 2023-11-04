@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { command } from "../../src/commands/logout.js";
 import { readSession, writeSession } from "../../src/services/session.js";
-import { expectStdout } from "../util.js";
+import { expectStdout } from "../__support__/stdout.js";
 
 describe("logout", () => {
   const rootArgs = { _: [] };

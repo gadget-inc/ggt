@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { command } from "../../src/commands/whoami.js";
 import * as user from "../../src/services/user.js";
-import { expectStdout } from "../util.js";
+import { expectStdout } from "../__support__/stdout.js";
 
 describe("whoami", () => {
   it("outputs the current user", async () => {

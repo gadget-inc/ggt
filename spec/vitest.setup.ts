@@ -1,7 +1,8 @@
 import fs from "fs-extra";
 import { beforeEach, vi } from "vitest";
 import { config } from "../src/services/config.js";
-import { testDirPath, testStdout } from "./util.js";
+import { testDirPath } from "./__support__/paths.js";
+import { testStdout } from "./__support__/stdout.js";
 
 beforeEach(async () => {
   process.env["GGT_ENV"] = "test";

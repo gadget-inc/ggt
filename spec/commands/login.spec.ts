@@ -8,7 +8,8 @@ import { noop } from "../../src/services/noop.js";
 import { readSession, writeSession } from "../../src/services/session.js";
 import { sleepUntil } from "../../src/services/sleep.js";
 import * as user from "../../src/services/user.js";
-import { expectStdout, testUser } from "../util.js";
+import { expectStdout } from "../__support__/stdout.js";
+import { testUser } from "../__support__/user.js";
 
 describe("login", () => {
   const rootArgs = { _: [] };

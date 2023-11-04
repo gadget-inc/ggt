@@ -10,7 +10,13 @@ import { Directory } from "../../src/services/filesync/directory.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
 import { isEmptyOrNonExistentDir } from "../../src/services/fs.js";
 import * as prompt from "../../src/services/prompt.js";
-import { expectError, expectProcessExit, prettyJSON, readFiles, testApp, testDirPath, testUser, writeFiles, type Files } from "../util.js";
+import { testApp } from "../__support__/app.js";
+import { expectError } from "../__support__/error.js";
+import { readFiles, writeFiles, type Files } from "../__support__/files.js";
+import { prettyJSON } from "../__support__/json.js";
+import { testDirPath } from "../__support__/paths.js";
+import { expectProcessExit } from "../__support__/process.js";
+import { testUser } from "../__support__/user.js";
 
 describe("filesync", () => {
   beforeEach(() => {
@@ -170,36 +176,25 @@ describe("filesync", () => {
       gadgetDir: Directory;
     }> => {
       gadgetFilesVersion ??= 1n;
+      const localDir = new Directory(testDirPath("local"), false);
+      await writeFiles(localDir.path, { ".gadget/sync.json": prettyJSON({ app: testApp.slug, filesVersion: "1" }), ...localFiles });
+
+      const gadgetDir = new Directory(testDirPath("gadget"), false);
+      await writeFiles(gadgetDir.path, { ".gadget/": "", ...gadgetFiles });
+
       const filesVersionDir = new Directory(testDirPath(`fv-1`), false);
       const filesVersionDirs = new Map([[1n, filesVersionDir]]);
-      const localDir = new Directory(testDirPath("local"), false);
-      const gadgetDir = new Directory(testDirPath("gadget"), false);
-
-      await writeFiles(filesVersionDir.path, {
-        // assume filesVersionDir has a .gadget/ dir
-        ".gadget/": "",
-        ...filesVersionFiles,
-      });
-
-      await writeFiles(gadgetDir.path, {
-        // same for the gadgetDir
-        ".gadget/": "",
-        ...gadgetFiles,
-      });
-
-      await writeFiles(localDir.path, {
-        ".gadget/sync.json": prettyJSON({ app: testApp.slug, filesVersion: "1" }),
-        ...localFiles,
-      });
+      await writeFiles(filesVersionDir.path, { ".gadget/": "", ...filesVersionFiles });
 
       const filesync = await FileSync.init({ user: testUser, dir: localDir.path });
 
       vi.spyOn(filesync, "getHashes").mockImplementation(async () => {
         const filesVersionDir = filesVersionDirs.get(filesync.filesVersion);
         assert(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
+        assert(gadgetFilesVersion);
 
         return {
-          gadgetFilesVersion: gadgetFilesVersion!,
+          gadgetFilesVersion,
           filesVersionHashes: await filesVersionDir.hashes(),
           localHashes: await localDir.hashes(),
           gadgetHashes: await gadgetDir.hashes(),

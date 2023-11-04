@@ -1,8 +1,9 @@
+import { expectStdout } from "../__support__/stdout.js";
 import { describe, expect, it, vi } from "vitest";
 import { command } from "../../src/commands/list.js";
 import * as app from "../../src/services/app.js";
 import * as user from "../../src/services/user.js";
-import { expectStdout, testUser } from "../util.js";
+import { testUser } from "../__support__/user.js";
 
 describe("list", () => {
   const rootArgs = { _: [] };

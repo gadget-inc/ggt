@@ -5,7 +5,7 @@ import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { config } from "../../src/services/config.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../src/services/version.js";
-import { expectStdout } from "../util.js";
+import { expectStdout } from "../__support__/stdout.js";
 
 describe("version", () => {
   describe("getDistTags", () => {

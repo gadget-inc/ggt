@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AppArg, parseBoolean } from "../../src/services/args.js";
 import { ArgError } from "../../src/services/errors.js";
-import { expectError } from "../util.js";
+import { expectError } from "../__support__/error.js";
 
 describe("args", () => {
   describe("parseBoolean", () => {

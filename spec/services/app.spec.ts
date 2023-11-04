@@ -4,7 +4,8 @@ import { getApps } from "../../src/services/app.js";
 import { config } from "../../src/services/config.js";
 import { loadCookie } from "../../src/services/http.js";
 import { writeSession } from "../../src/services/session.js";
-import { testApp, testUser } from "../util.js";
+import { testApp } from "../__support__/app.js";
+import { testUser } from "../__support__/user.js";
 
 describe("app", () => {
   describe("getApps", () => {

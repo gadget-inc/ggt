@@ -7,7 +7,8 @@ import { config } from "../../src/services/config.js";
 import { CLIError, IsBug } from "../../src/services/errors.js";
 import { noop } from "../../src/services/noop.js";
 import * as version from "../../src/services/version.js";
-import { expectProcessExit, expectStdout } from "../util.js";
+import { expectProcessExit } from "../__support__/process.js";
+import { expectStdout } from "../__support__/stdout.js";
 
 describe("root", () => {
   let command: () => Promise<void>;

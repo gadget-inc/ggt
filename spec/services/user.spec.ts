@@ -7,7 +7,8 @@ import { loadCookie } from "../../src/services/http.js";
 import * as prompt from "../../src/services/prompt.js";
 import { readSession, writeSession } from "../../src/services/session.js";
 import { getUser, getUserOrLogin } from "../../src/services/user.js";
-import { expectProcessExit, loginTestUser, testUser } from "../util.js";
+import { expectProcessExit } from "../__support__/process.js";
+import { loginTestUser, testUser } from "../__support__/user.js";
 
 describe("user", () => {
   describe("loadUser", () => {

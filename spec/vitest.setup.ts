@@ -22,9 +22,6 @@ beforeEach(async () => {
 
   // clear testOutput so that we can `expect(testOutput).not.toContain("some output")` in tests where "some output" was output in another test
   testStdout.length = 0;
-
-  // clear all mocks so that we can `expect(someFunction).not.toHaveBeenCalled()` in tests where someFunction was called in another test
-  vi.clearAllMocks();
 });
 
 vi.mock("execa", () => ({ execa: vi.fn().mockName("execa").mockResolvedValue({}) }));

@@ -9,8 +9,9 @@ export default defineConfig({
     env: {
       NODE_ENV: "test",
       GGT_ENV: "test",
-      FORCE_COLOR: "0", // disable chalk so that we get predictable output in tests
+      FORCE_COLOR: "0", // so that we get predictable output in tests
     },
+    clearMocks: true, // so that we can `expect(someFunction).not.toHaveBeenCalled()` in tests where someFunction was called in another test
     watch: false,
     hideSkippedTests: true,
     testTimeout: timeoutMs("30s"),

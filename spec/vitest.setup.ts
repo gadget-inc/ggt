@@ -1,5 +1,4 @@
 import fs from "fs-extra";
-import path from "node:path";
 import { beforeEach, vi } from "vitest";
 import { config } from "../src/services/config.js";
 import { testDirPath, testStdout } from "./util.js";
@@ -7,13 +6,12 @@ import { testDirPath, testStdout } from "./util.js";
 beforeEach(async () => {
   process.env["GGT_ENV"] = "test";
 
-  const testDir = testDirPath();
-  await fs.remove(testDir);
+  await fs.emptyDir(testDirPath());
 
   // store files in the test's tmp directory
-  vi.spyOn(config, "configDir", "get").mockReturnValue(path.join(testDir, "config"));
-  vi.spyOn(config, "cacheDir", "get").mockReturnValue(path.join(testDir, "cache"));
-  vi.spyOn(config, "dataDir", "get").mockReturnValue(path.join(testDir, "data"));
+  vi.spyOn(config, "configDir", "get").mockReturnValue(testDirPath("config"));
+  vi.spyOn(config, "cacheDir", "get").mockReturnValue(testDirPath("cache"));
+  vi.spyOn(config, "dataDir", "get").mockReturnValue(testDirPath("data"));
 
   // write to in-memory stdout/stderr instead of real stdout/stderr
   const { Stream } = await import("../src/services/print.js");

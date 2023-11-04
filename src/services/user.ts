@@ -33,6 +33,7 @@ export const getUser = async (): Promise<User | undefined> => {
   try {
     const json = await http({
       url: `https://${config.domains.services}/auth/api/current-user`,
+      headers: { cookie },
       responseType: "json",
       resolveBodyOnly: true,
     });

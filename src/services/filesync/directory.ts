@@ -93,7 +93,9 @@ export class Directory {
    * @returns The absolute path.
    */
   absolute(...pathSegments: string[]): string {
-    return path.resolve(this.path, ...pathSegments);
+    const result = path.resolve(this.path, ...pathSegments);
+    assert(result.startsWith(this.path), `expected ${result} to be within ${this.path}`);
+    return result;
   }
 
   /**

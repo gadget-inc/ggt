@@ -172,8 +172,6 @@ describe("filesync", () => {
       gadgetFilesVersion ??= 1n;
       const filesVersionDir = new Directory(testDirPath(`fv-1`), false);
       const filesVersionDirs = new Map([[1n, filesVersionDir]]);
-      filesVersionDirs.set(1n, filesVersionDir);
-
       const localDir = new Directory(testDirPath("local"), false);
       const gadgetDir = new Directory(testDirPath("gadget"), false);
 
@@ -256,9 +254,9 @@ describe("filesync", () => {
 
         gadgetFilesVersion += 1n;
 
-        const filesVersionDir = await Directory.init(testDirPath(`fv-${gadgetFilesVersion}`));
-        await fs.copy(gadgetDir.path, filesVersionDir.path);
-        filesVersionDirs.set(gadgetFilesVersion, filesVersionDir);
+        const newFilesVersionDir = await Directory.init(testDirPath(`fv-${gadgetFilesVersion}`));
+        await fs.copy(gadgetDir.path, newFilesVersionDir.path);
+        filesVersionDirs.set(gadgetFilesVersion, newFilesVersionDir);
 
         // @ts-expect-error _state is private
         filesync._state = { filesVersion: String(gadgetFilesVersion), app: testApp.slug };
@@ -311,10 +309,18 @@ describe("filesync", () => {
 
       await expectProcessExit(() => filesync.handleConflicts());
 
-      expect(prompt.select).toHaveBeenCalledWith({
-        message: "How would you like to resolve these conflicts?",
-        choices: Object.values(ConflictPreference),
-      });
+      expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "choices": [
+              "Cancel (Ctrl+C)",
+              "Keep my changes",
+              "Keep Gadget's changes",
+            ],
+            "message": "How would you like to resolve these conflicts?",
+          },
+        ]
+      `);
       expect(prompt.confirm).not.toHaveBeenCalled();
       expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
       expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
@@ -352,7 +358,13 @@ describe("filesync", () => {
           },
         ]
       `);
-      expect(prompt.confirm).toHaveBeenCalled();
+      expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "message": "Are you sure you want to do this?",
+          },
+        ]
+      `);
       expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
       expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
         [

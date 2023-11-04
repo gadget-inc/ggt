@@ -80,7 +80,14 @@ export class DeleteWithHash extends Delete {
 }
 
 /**
- * @returns The changes that were made to `from` to make it match `to`.
+ * Calculates the changes that were made to `from` to make it end up as `to`.
+ *
+ * @param from - The source `Hashes` object to compare.
+ * @param to - The target `Hashes` object to compare.
+ * @param ignore - An optional array of path prefixes to ignore during
+ * the comparison.
+ * @returns A `ChangesWithHash` object representing the changes that
+ * need to be made to transform `from` into the `to` object.
  */
 export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes; to: Hashes; ignore?: string[] }): ChangesWithHash => {
   const changes = new ChangesWithHash();
@@ -125,60 +132,14 @@ export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes;
 };
 
 /**
- * @returns the changes that need to be made to `to` to make it match `from`.
- */
-export const getChangesToMake = ({
-  from: source,
-  to: target,
-  ignore,
-}: {
-  from: Hashes;
-  to: Hashes;
-  ignore?: string[];
-}): ChangesWithHash => {
-  const changes = new ChangesWithHash();
-  const targetPaths = Object.keys(target);
-
-  for (const [sourcePath, sourceHash] of Object.entries(source)) {
-    if (ignore?.some((ignored) => sourcePath.startsWith(ignored))) {
-      continue;
-    }
-
-    const targetHash = target[sourcePath];
-    if (!targetHash) {
-      if (!sourcePath.endsWith("/") || !targetPaths.some((targetPath) => targetPath.startsWith(sourcePath))) {
-        // sourcePath is a file and it doesn't exist in target OR
-        // sourcePath is a directory and target doesn't have any
-        // existing files inside it, therefor create we need to create
-        // it
-        changes.set(sourcePath, new CreateWithHash(sourceHash));
-      }
-    } else if (targetHash !== sourceHash) {
-      // the file or directory exists in target, but has a different
-      // hash, so it needs to be updated
-      changes.set(sourcePath, new UpdateWithHash(sourceHash, targetHash));
-    }
-  }
-
-  for (const targetPath of targetPaths) {
-    if (!source[targetPath]) {
-      if (ignore?.some((ignored) => targetPath.startsWith(ignored))) {
-        continue;
-      }
-
-      // the targetPath doesn't exist in source, so it needs to be
-      // deleted
-      const targetHash = target[targetPath];
-      assert(targetHash);
-      changes.set(targetPath, new DeleteWithHash(targetHash));
-    }
-  }
-
-  return changes;
-};
-
-/**
- * @returns the changes needed to apply `changes` to `existing`.
+ * Returns a new `ChangesWithHash` object containing only the necessary
+ * changes needed to be made to `existing` to apply all the `changes`.
+ *
+ * @param changes - The `ChangesWithHash` object containing the changes
+ * to be made.
+ * @param existing - The `Hashes` object containing the existing hashes.
+ * @returns A new `ChangesWithHash` object containing only the necessary
+ * changes to be made.
  */
 export const getNecessaryChanges = ({ changes, existing }: { changes: ChangesWithHash; existing: Hashes }): ChangesWithHash => {
   const necessaryChanges = new ChangesWithHash();
@@ -195,18 +156,24 @@ export const getNecessaryChanges = ({ changes, existing }: { changes: ChangesWit
       continue;
     }
 
-    // if (change instanceof Update && !existingHash) {
-    //   // we need to create this file
-    //   necessaryChanges.set(path, new CreateWithHash(change.targetHash));
-    // } else {
-    // we need to update or delete this file
+    // technically, if the change is an Update and the existingHash
+    // doesn't exist, then it we should change it to a Create, but
+    // changing the type makes the output look confusing and it doesn't
+    // really matter
     necessaryChanges.set(path, change);
-    // }
   }
 
   return necessaryChanges;
 };
 
+/**
+ * Prints the changes to the console.
+ *
+ * @param changes - The changes to print.
+ * @param tense - The tense to use for the change type.
+ * @param limit - The maximum number of changes to print.
+ * @param mt - The number of empty lines to print before the changes.
+ */
 export const printChanges = ({
   changes,
   tense,
@@ -260,42 +227,3 @@ export const printChanges = ({
 
   printlns`{gray ${nChanges} in total.} {greenBright ${nCreates}}, {blueBright ${nUpdates}}, {redBright ${nDeletes}}`;
 };
-
-// export const printChangesToMake = ({ changes, limit = Infinity, mt = 1 }: { changes: Changes; limit?: number; mt?: number }): void => {
-//   const create = chalk.greenBright("+ create");
-//   const update = chalk.blueBright("± update");
-//   const del = chalk.redBright("- delete");
-
-//   for (let i = 0; i < mt; i++) {
-//     println("");
-//   }
-
-//   printTable({
-//     rows: Array.from(changes.entries())
-//       .sort((a, b) => a[0].localeCompare(b[0]))
-//       .slice(0, limit)
-//       .map(([path, change]) => {
-//         switch (true) {
-//           case change instanceof Create:
-//             return [chalk.greenBright(path), create];
-//           case change instanceof Update:
-//             return [chalk.blueBright(path), update];
-//           case change instanceof Delete:
-//             return [chalk.redBright(path), del];
-//           default:
-//             throw new Error(`Unknown change type: ${change.constructor.name}`);
-//         }
-//       }),
-//   });
-
-//   if (changes.size > limit) {
-//     println`{gray … ${changes.size - limit} more}`;
-//   }
-
-//   const nChanges = pluralize("change", changes.size, true);
-//   const nCreates = pluralize("create", changes.created().length, true);
-//   const nUpdates = pluralize("update", changes.updated().length, true);
-//   const nDeletes = pluralize("delete", changes.deleted().length, true);
-
-//   printlns`{gray ${nChanges} in total.} {greenBright ${nCreates}}, {blueBright ${nUpdates}}, {redBright ${nDeletes}}`;
-// };

@@ -144,7 +144,6 @@ export const command: Command = async (rootArgs) => {
   const log = createLogger("sync", () => ({
     app: filesync.app.slug,
     filesVersion: String(filesync.filesVersion),
-    mtime: filesync.mtime,
   }));
 
   if (!filesync.directory.wasEmpty) {

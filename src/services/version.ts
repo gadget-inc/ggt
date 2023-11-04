@@ -48,6 +48,13 @@ export const shouldCheckForUpdate = async (): Promise<boolean> => {
   }
 };
 
+/**
+ * Checks for updates to the `ggt` npm package and logs a warning
+ * message if an update is available.
+ *
+ * @returns A Promise that resolves with void when the check is
+ * complete.
+ */
 export const warnIfUpdateAvailable = async (): Promise<void> => {
   try {
     const shouldCheck = await shouldCheckForUpdate();

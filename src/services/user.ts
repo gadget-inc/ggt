@@ -19,7 +19,10 @@ const User = z.object({
 export type User = z.infer<typeof User>;
 
 /**
- * @returns The current user.
+ * Retrieves the currently logged in user from Gadgets API.
+ *
+ * @returns A Promise that resolves to a User object representing the
+ * current user, or undefined if the user is not authenticated.
  */
 export const getUser = async (): Promise<User | undefined> => {
   const cookie = loadCookie();
@@ -30,7 +33,6 @@ export const getUser = async (): Promise<User | undefined> => {
   try {
     const json = await http({
       url: `https://${config.domains.services}/auth/api/current-user`,
-      headers: { cookie },
       responseType: "json",
       resolveBodyOnly: true,
     });
@@ -46,6 +48,13 @@ export const getUser = async (): Promise<User | undefined> => {
   }
 };
 
+/**
+ * Retrieves the current user or prompts the user to log in if not
+ * already logged in.
+ *
+ * @param message The message to display when prompting the user to log in.
+ * @returns A Promise that resolves to the current user.
+ */
 export const getUserOrLogin = async (message = "You must be logged in to use this command. Would you like to log in?"): Promise<User> => {
   let user = await getUser();
   if (user) {

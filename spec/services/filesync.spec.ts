@@ -173,6 +173,7 @@ describe("FileSync.handleConflicts", () => {
     filesVersionDirs: Map<bigint, Directory>;
     localDir: Directory;
     gadgetDir: Directory;
+    expectLocalAndGadgetHashesMatch: () => Promise<void>;
   }> => {
     const filesVersionDirs = new Map<bigint, Directory>();
 
@@ -271,11 +272,22 @@ describe("FileSync.handleConflicts", () => {
       filesync._save();
     });
 
-    return { filesync, gadgetFilesVersion, filesVersionDirs, localDir, gadgetDir };
+    return {
+      filesync,
+      gadgetFilesVersion,
+      filesVersionDirs,
+      localDir,
+      gadgetDir,
+      expectLocalAndGadgetHashesMatch: async () => {
+        const localHashes = await localDir.hashes();
+        const gadgetHashes = await gadgetDir.hashes();
+        expect(localHashes).toEqual(gadgetHashes);
+      },
+    };
   };
 
   it("does nothing if there aren't any changes", async () => {
-    const { filesync } = await setup({
+    const { filesync, expectLocalAndGadgetHashesMatch } = await setup({
       filesVersion1Files: { "foo.js": "// foo" },
       localFiles: { "foo.js": "// foo" },
       gadgetFiles: { "foo.js": "// foo" },
@@ -290,218 +302,11 @@ describe("FileSync.handleConflicts", () => {
     expect(prompt.confirm).not.toHaveBeenCalled();
     expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
     expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
+    await expectLocalAndGadgetHashesMatch();
   });
 
-  it("asks how to resolve conflicts if there are any and calls process.exit(0) if cancel is chosen", async () => {
-    const { filesync } = await setup({
-      filesVersion1Files: {
-        "foo.js": "// foo",
-      },
-      localFiles: {
-        "foo.js": "// local foo",
-      },
-      gadgetFiles: {
-        "foo.js": "// gadget foo",
-      },
-      gadgetFilesVersion: 2n,
-    });
-
-    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.CANCEL);
-    vi.spyOn(prompt, "confirm");
-
-    await expectProcessExit(() => filesync.handleConflicts());
-
-    expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "choices": [
-              "Cancel (Ctrl+C)",
-              "Keep my changes",
-              "Keep Gadget's changes",
-            ],
-            "message": "How would you like to resolve these conflicts?",
-          },
-        ]
-      `);
-    expect(prompt.confirm).not.toHaveBeenCalled();
-    expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
-    expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
-  });
-
-  it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir } = await setup({
-      filesVersion1Files: {
-        "foo.js": "// foo",
-      },
-      localFiles: {
-        "foo.js": "// local foo",
-      },
-      gadgetFilesVersion: 2n,
-      gadgetFiles: {
-        "foo.js": "// gadget foo",
-      },
-    });
-
-    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
-    vi.spyOn(prompt, "confirm").mockResolvedValue();
-
-    await filesync.handleConflicts();
-
-    expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "choices": [
-              "Cancel (Ctrl+C)",
-              "Keep my changes",
-              "Keep Gadget's changes",
-            ],
-            "message": "How would you like to resolve these conflicts?",
-          },
-        ]
-      `);
-    expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "message": "Are you sure you want to do this?",
-          },
-        ]
-      `);
-    expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
-    expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "changes": Map {
-              "foo.js" => {
-                "sourceHash": "176554ae143b13243600c00508d90339f5008f3e",
-                "targetHash": "6eb9e95ecbb5a79840e1d6e854adf90205a1c02d",
-                "type": "update",
-              },
-            },
-            "expectedFilesVersion": 2n,
-          },
-        ]
-      `);
-
-    expect(filesVersionDirs.size).toBe(3);
-    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-      }
-    `);
-    await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// local foo",
-      }
-    `);
-    await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        ".gadget/sync.json" => "{
-        \\"filesVersion\\": \\"3\\",
-        \\"app\\": \\"test\\"
-      }
-      ",
-        "foo.js" => "// local foo",
-      }
-    `);
-    await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// local foo",
-      }
-    `);
-  });
-
-  it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir } = await setup({
-      filesVersion1Files: {
-        "foo.js": "// foo",
-      },
-      localFiles: {
-        "foo.js": "// local foo",
-      },
-      gadgetFilesVersion: 2n,
-      gadgetFiles: {
-        "foo.js": "// gadget foo",
-      },
-    });
-
-    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.GADGET);
-    vi.spyOn(prompt, "confirm").mockResolvedValue();
-
-    await filesync.handleConflicts();
-
-    expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "choices": [
-              "Cancel (Ctrl+C)",
-              "Keep my changes",
-              "Keep Gadget's changes",
-            ],
-            "message": "How would you like to resolve these conflicts?",
-          },
-        ]
-      `);
-    expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "message": "Are you sure you want to do this?",
-          },
-        ]
-      `);
-    expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
-    expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "changes": Map {
-              "foo.js" => {
-                "sourceHash": "176554ae143b13243600c00508d90339f5008f3e",
-                "targetHash": "e41dc94c62c3fec361ed566c3790a24e3385d6bb",
-                "type": "update",
-              },
-            },
-            "filesVersion": 2n,
-          },
-        ]
-      `);
-
-    expect(filesVersionDirs.size).toBe(2);
-    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-      }
-    `);
-    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-      }
-    `);
-    await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        ".gadget/sync.json" => "{
-        \\"app\\": \\"test\\",
-        \\"filesVersion\\": \\"2\\"
-      }
-      ",
-        "foo.js" => "// gadget foo",
-      }
-    `);
-    await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// gadget foo",
-      }
-    `);
-  });
-
-  it("automatically merges non-conflicting changes if there are no conflicts", async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir } = await setup({
+  it("automatically merges non-conflicting changes if there are none", async () => {
+    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -611,5 +416,335 @@ describe("FileSync.handleConflicts", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it(`exits the process when "${ConflictPreference.CANCEL}" is chosen`, async () => {
+    const { filesync } = await setup({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        "foo.js": "// local foo",
+      },
+      gadgetFiles: {
+        "foo.js": "// gadget foo",
+      },
+      gadgetFilesVersion: 2n,
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.CANCEL);
+    vi.spyOn(prompt, "confirm");
+
+    await expectProcessExit(() => filesync.handleConflicts());
+
+    expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "choices": [
+              "Cancel (Ctrl+C)",
+              "Keep my changes",
+              "Keep Gadget's changes",
+            ],
+            "message": "How would you like to resolve these conflicts?",
+          },
+        ]
+      `);
+    expect(prompt.confirm).not.toHaveBeenCalled();
+    expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
+    expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
+  });
+
+  it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
+    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        "foo.js": "// local foo",
+      },
+      gadgetFilesVersion: 2n,
+      gadgetFiles: {
+        "foo.js": "// gadget foo",
+      },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
+    vi.spyOn(prompt, "confirm").mockResolvedValue();
+
+    await filesync.handleConflicts();
+
+    expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "choices": [
+              "Cancel (Ctrl+C)",
+              "Keep my changes",
+              "Keep Gadget's changes",
+            ],
+            "message": "How would you like to resolve these conflicts?",
+          },
+        ]
+      `);
+    expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "message": "Are you sure you want to do this?",
+          },
+        ]
+      `);
+    expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
+    expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "changes": Map {
+              "foo.js" => {
+                "sourceHash": "176554ae143b13243600c00508d90339f5008f3e",
+                "targetHash": "6eb9e95ecbb5a79840e1d6e854adf90205a1c02d",
+                "type": "update",
+              },
+            },
+            "expectedFilesVersion": 2n,
+          },
+        ]
+      `);
+
+    expect(filesVersionDirs.size).toBe(3);
+    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// foo",
+      }
+    `);
+    await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// local foo",
+      }
+    `);
+    await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        ".gadget/sync.json" => "{
+        \\"filesVersion\\": \\"3\\",
+        \\"app\\": \\"test\\"
+      }
+      ",
+        "foo.js" => "// local foo",
+      }
+    `);
+    await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// local foo",
+      }
+    `);
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
+    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        "foo.js": "// local foo",
+      },
+      gadgetFilesVersion: 2n,
+      gadgetFiles: {
+        "foo.js": "// gadget foo",
+      },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.GADGET);
+    vi.spyOn(prompt, "confirm").mockResolvedValue();
+
+    await filesync.handleConflicts();
+
+    expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "choices": [
+              "Cancel (Ctrl+C)",
+              "Keep my changes",
+              "Keep Gadget's changes",
+            ],
+            "message": "How would you like to resolve these conflicts?",
+          },
+        ]
+      `);
+    expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "message": "Are you sure you want to do this?",
+          },
+        ]
+      `);
+    expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
+    expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
+        [
+          {
+            "changes": Map {
+              "foo.js" => {
+                "sourceHash": "176554ae143b13243600c00508d90339f5008f3e",
+                "targetHash": "e41dc94c62c3fec361ed566c3790a24e3385d6bb",
+                "type": "update",
+              },
+            },
+            "filesVersion": 2n,
+          },
+        ]
+      `);
+
+    expect(filesVersionDirs.size).toBe(2);
+    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// foo",
+      }
+    `);
+    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// foo",
+      }
+    `);
+    await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        ".gadget/sync.json" => "{
+        \\"app\\": \\"test\\",
+        \\"filesVersion\\": \\"2\\"
+      }
+      ",
+        "foo.js" => "// gadget foo",
+      }
+    `);
+    await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// gadget foo",
+      }
+    `);
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("overwrites conflicting changes then merges non-conflicting changes", async () => {
+    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        "foo.js": "// foo local",
+        "local-file.js": "// local",
+      },
+      gadgetFilesVersion: 2n,
+      gadgetFiles: {
+        "foo.js": "// foo gadget",
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
+    vi.spyOn(prompt, "confirm").mockResolvedValue();
+
+    await filesync.handleConflicts();
+
+    expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        {
+          "choices": [
+            "Cancel (Ctrl+C)",
+            "Keep my changes",
+            "Keep Gadget's changes",
+          ],
+          "message": "How would you like to resolve these conflicts?",
+        },
+      ]
+    `);
+    expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        {
+          "message": "Are you sure you want to do this?",
+        },
+      ]
+    `);
+    expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        {
+          "changes": Map {
+            "foo.js" => {
+              "sourceHash": "176554ae143b13243600c00508d90339f5008f3e",
+              "targetHash": "b88c109594cd923b03ab1228bd1643c280061a51",
+              "type": "update",
+            },
+            "local-file.js" => {
+              "oldPath": undefined,
+              "targetHash": "569f07148d3870b4714cfd31efe35f6f7f58b574",
+              "type": "create",
+            },
+          },
+          "expectedFilesVersion": 2n,
+        },
+      ]
+    `);
+    expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        {
+          "changes": Map {
+            "gadget-file.js" => {
+              "oldPath": undefined,
+              "targetHash": "ce7c600e6cda6dca5fe2bc9cd524c54e471003ab",
+              "type": "create",
+            },
+          },
+          "filesVersion": 2n,
+        },
+      ]
+    `);
+
+    expect(filesVersionDirs.size).toBe(3);
+    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// foo",
+      }
+    `);
+    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// foo",
+      }
+    `);
+    await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// foo local",
+        "local-file.js" => "// local",
+        "gadget-file.js" => "// gadget",
+      }
+    `);
+    await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        ".gadget/sync.json" => "{
+        \\"filesVersion\\": \\"3\\",
+        \\"app\\": \\"test\\"
+      }
+      ",
+        "foo.js" => "// foo local",
+        "local-file.js" => "// local",
+        "gadget-file.js" => "// gadget",
+      }
+    `);
+    await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
+      Map {
+        ".gadget/" => "",
+        "foo.js" => "// foo local",
+        "local-file.js" => "// local",
+        "gadget-file.js" => "// gadget",
+      }
+    `);
+    await expectLocalAndGadgetHashesMatch();
   });
 });

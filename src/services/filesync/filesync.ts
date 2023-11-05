@@ -102,7 +102,7 @@ export class FileSync {
    *  - `dir`: The directory to sync to. If not specified, it will try
    *    to find a .gadget/sync.json file and use its parent directory.
    *    If not found, it will use the current directory.
-   *  - `app`: The app slug to sync. If not specified, it will prompt
+   *  - `app`: The app slug to sync to. If not specified, it will prompt
    *    the user to select an app from their list of apps.
    *  - `force`: A boolean indicating whether to overwrite the existing
    *    sync file. If not specified, it will throw an error if the
@@ -240,13 +240,25 @@ export class FileSync {
       `);
   }
 
+  /**
+   * Writes files to the local filesystem and returns the changes made.
+   * @param options - The options for writing to the local filesystem.
+   * @param options.filesVersion - The version of the files being written.
+   * @param options.files - An iterable of files to write.
+   * @param options.delete - An iterable of file paths to delete.
+   * @param options.force - Whether to force the write even if the files version is not greater than the current version.
+   * @returns A Promise that resolves to the changes made.
+   */
   async writeToLocalFilesystem(options: {
     filesVersion: bigint | string;
     files: Iterable<File>;
     delete: Iterable<string>;
-    force?: boolean;
   }): Promise<Changes> {
     const filesVersion = BigInt(options.filesVersion);
+    if (filesVersion < BigInt(this._state.filesVersion)) {
+      return new Changes([]);
+    }
+
     const created: string[] = [];
     const updated: string[] = [];
 
@@ -301,9 +313,7 @@ export class FileSync {
       }
     });
 
-    if (filesVersion > BigInt(this._state.filesVersion) || options.force) {
-      this._state.filesVersion = String(filesVersion);
-    }
+    this._state.filesVersion = String(filesVersion);
 
     this._save();
 
@@ -476,7 +486,14 @@ export class FileSync {
 
     if (localChanges.size === 0 && gadgetChanges.size === 0) {
       assert(conflicts.size === 0, "there shouldn't be any conflicts if there are no changes");
-      assert(localHashes.equalTo(gadgetHashes), "the hashes should be equal if there are no changes");
+
+      if (!localHashes.equalTo(gadgetHashes)) {
+        // TODO
+        // check which files are different.
+        // if all .gadget/ files, silently take them from gadget
+        // otherwise, prompt the user to resolve the conflicts
+      }
+
       this._state.filesVersion = String(gadgetFilesVersion);
       this._save();
       return;
@@ -517,16 +534,16 @@ export class FileSync {
       }
     }
 
-    if (localChanges.size > 0) {
-      await this.sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
-      printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
-      printChanges({ changes: localChanges, tense: "present" });
-    }
-
     if (gadgetChanges.size > 0) {
       await this.receiveChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
       printlns`← Received {gray (${dayjs().format("hh:mm:ss A")})}`;
       printChanges({ changes: gadgetChanges, tense: "present" });
+    }
+
+    if (localChanges.size > 0) {
+      await this.sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
+      printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
+      printChanges({ changes: localChanges, tense: "present" });
     }
 
     // recursively call this function until we're in sync

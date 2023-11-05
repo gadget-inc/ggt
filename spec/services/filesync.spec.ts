@@ -422,17 +422,17 @@ describe("FileSync.handleConflicts", () => {
     await expectProcessExit(() => filesync.sync());
 
     expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "choices": [
-              "Cancel (Ctrl+C)",
-              "Keep my changes",
-              "Keep Gadget's changes",
-            ],
-            "message": "How would you like to resolve these conflicts?",
-          },
-        ]
-      `);
+      [
+        {
+          "choices": [
+            "Cancel (Ctrl+C)",
+            "Keep my conflicting changes",
+            "Keep Gadget's conflicting changes",
+          ],
+          "message": "How would you like to resolve these conflicts?",
+        },
+      ]
+    `);
     expect(prompt.confirm).not.toHaveBeenCalled();
     expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
     expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
@@ -458,17 +458,17 @@ describe("FileSync.handleConflicts", () => {
     await filesync.sync();
 
     expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "choices": [
-              "Cancel (Ctrl+C)",
-              "Keep my changes",
-              "Keep Gadget's changes",
-            ],
-            "message": "How would you like to resolve these conflicts?",
-          },
-        ]
-      `);
+      [
+        {
+          "choices": [
+            "Cancel (Ctrl+C)",
+            "Keep my conflicting changes",
+            "Keep Gadget's conflicting changes",
+          ],
+          "message": "How would you like to resolve these conflicts?",
+        },
+      ]
+    `);
     expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
         [
           {
@@ -551,17 +551,17 @@ describe("FileSync.handleConflicts", () => {
     await filesync.sync();
 
     expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
-        [
-          {
-            "choices": [
-              "Cancel (Ctrl+C)",
-              "Keep my changes",
-              "Keep Gadget's changes",
-            ],
-            "message": "How would you like to resolve these conflicts?",
-          },
-        ]
-      `);
+      [
+        {
+          "choices": [
+            "Cancel (Ctrl+C)",
+            "Keep my conflicting changes",
+            "Keep Gadget's conflicting changes",
+          ],
+          "message": "How would you like to resolve these conflicts?",
+        },
+      ]
+    `);
     expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
         [
           {
@@ -644,8 +644,8 @@ describe("FileSync.handleConflicts", () => {
         {
           "choices": [
             "Cancel (Ctrl+C)",
-            "Keep my changes",
-            "Keep Gadget's changes",
+            "Keep my conflicting changes",
+            "Keep Gadget's conflicting changes",
           ],
           "message": "How would you like to resolve these conflicts?",
         },

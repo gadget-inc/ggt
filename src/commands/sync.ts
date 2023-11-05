@@ -11,11 +11,11 @@ import { mapValues } from "../services/collections.js";
 import { config } from "../services/config.js";
 import { debounce } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
-import { YarnNotFoundError } from "../services/errors.js";
+import { ClientError, YarnNotFoundError } from "../services/errors.js";
 import { Changes, Create, Delete, Update, printChanges } from "../services/filesync/changes.js";
 import { FileSync } from "../services/filesync/filesync.js";
+import { isGraphQLErrors } from "../services/is.js";
 import { createLogger } from "../services/log.js";
-import { notify } from "../services/notify.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { PromiseSignal } from "../services/promise.js";
 import { getUserOrLogin } from "../services/user.js";
@@ -113,8 +113,8 @@ const argSpec = {
 
 export enum ConflictPreference {
   CANCEL = "Cancel (Ctrl+C)",
-  LOCAL = "Keep my changes",
-  GADGET = "Keep Gadget's changes",
+  LOCAL = "Keep my conflicting changes",
+  GADGET = "Keep Gadget's conflicting changes",
 }
 
 /**
@@ -210,9 +210,18 @@ export const command: Command = async (rootArgs) => {
     localChangesBuffer.clear();
 
     enqueue(async () => {
-      await filesync.sendChangesToGadget({ changes });
-      printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
-      printChanges({ changes, tense: "present", limit: 10, mt: 0 });
+      try {
+        await filesync.sendChangesToGadget({ changes });
+        printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
+        printChanges({ changes, tense: "present", limit: 10, mt: 0 });
+      } catch (error) {
+        if (!isFilesVersionMismatchError(error)) {
+          throw error;
+        }
+        log.warn("files version mismatch", { error });
+        await filesync.sync();
+        log.info("synced");
+      }
     });
   });
 
@@ -371,9 +380,19 @@ export const command: Command = async (rootArgs) => {
   await stopped;
 
   if (error) {
-    notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
+    // FIXME: this is throwing an error when it shouldn't
+    // notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
     throw error as Error;
   } else {
     println("Goodbye!");
   }
+};
+
+const isFilesVersionMismatchError = (error: unknown): boolean => {
+  return Boolean(
+    error instanceof ClientError &&
+      isGraphQLErrors(error.cause) &&
+      error.cause.length === 1 &&
+      error.cause[0]?.message.startsWith("Files version mismatch"),
+  );
 };

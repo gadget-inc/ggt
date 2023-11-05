@@ -473,30 +473,40 @@ export class FileSync {
   }
 
   /**
-   * Synchronizes local changes with Gadget's changes.
-   * If there are conflicts, prompts the user to resolve them.
-   * Recursively calls itself until there are no changes to sync.
+   * Synchronizes local changes with Gadget's changes. If there are
+   * conflicts, prompts the user to resolve them. Recursively calls
+   * itself until there are no changes to sync.
+   *
    * @returns A Promise that resolves when the sync is complete.
    */
   async sync(): Promise<void> {
     const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await this.getHashes();
     let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
     let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
-    const conflicts = getConflicts({ localChanges, gadgetChanges });
+    let conflicts = getConflicts({ localChanges, gadgetChanges });
 
     if (localChanges.size === 0 && gadgetChanges.size === 0) {
       assert(conflicts.size === 0, "there shouldn't be any conflicts if there are no changes");
 
-      if (!localHashes.equalTo(gadgetHashes)) {
-        // TODO
-        // check which files are different.
-        // if all .gadget/ files, silently take them from gadget
-        // otherwise, prompt the user to resolve the conflicts
+      if (localHashes.equals(gadgetHashes)) {
+        this._state.filesVersion = String(gadgetFilesVersion);
+        this._save();
+        return;
       }
 
-      this._state.filesVersion = String(gadgetFilesVersion);
-      this._save();
-      return;
+      localChanges = getChanges({ from: localHashes, to: gadgetHashes, ignore: [".gadget/"] });
+      gadgetChanges = getChanges({ from: gadgetHashes, to: localHashes });
+      conflicts = getConflicts({ localChanges, gadgetChanges });
+      assert(localChanges.size === 0 || gadgetChanges.size === 0, "if the hashes are different, there should be changes");
+    }
+
+    // if there are any conflicts with .gadget/ files, ignore them
+    // because gadget is the source of truth
+    for (const filepath of conflicts.keys()) {
+      if (filepath.startsWith(".gadget/")) {
+        localChanges.delete(filepath);
+        conflicts.delete(filepath);
+      }
     }
 
     if (conflicts.size > 0) {

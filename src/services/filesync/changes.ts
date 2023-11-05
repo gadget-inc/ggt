@@ -9,7 +9,7 @@ export const Hashes = z.union([z.record(z.string(), z.string()), z.map(z.string(
   let hashes: Hashes;
 
   // eslint-disable-next-line func-style
-  function equalTo(this: Hashes, other: Hashes): boolean {
+  function equals(this: Hashes, other: Hashes): boolean {
     if (this.size !== other.size) {
       return false;
     }
@@ -24,15 +24,15 @@ export const Hashes = z.union([z.record(z.string(), z.string()), z.map(z.string(
   }
 
   if (files instanceof Map) {
-    hashes = Object.assign(files, { equalTo });
+    hashes = Object.assign(files, { equals });
   } else {
-    hashes = Object.assign(new Map(Object.entries(files)), { equalTo });
+    hashes = Object.assign(new Map(Object.entries(files)), { equals });
   }
 
   return hashes;
 });
 
-export type Hashes = Map<string, string> & { equalTo(other: Hashes): boolean };
+export type Hashes = Map<string, string> & { equals(other: Hashes): boolean };
 
 export type Change = Create | Update | Delete;
 export type ChangeWithHash = CreateWithHash | UpdateWithHash | DeleteWithHash;

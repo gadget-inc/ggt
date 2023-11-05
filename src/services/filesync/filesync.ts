@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { findUp } from "find-up";
 import fs from "fs-extra";
 import ms from "ms";
@@ -495,17 +496,15 @@ export class FileSync {
     }
 
     if (localChanges.size > 0) {
-      await this.sendChangesToGadget({
-        changes: localChanges,
-        expectedFilesVersion: gadgetFilesVersion,
-      });
+      await this.sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
+      printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
+      printChanges({ changes: localChanges, tense: "present" });
     }
 
     if (gadgetChanges.size > 0) {
-      await this.receiveChangesFromGadget({
-        changes: gadgetChanges,
-        filesVersion: gadgetFilesVersion,
-      });
+      await this.receiveChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
+      printlns`← Received {gray (${dayjs().format("hh:mm:ss A")})}`;
+      printChanges({ changes: gadgetChanges, tense: "present" });
     }
 
     // recursively call this function until we're in sync

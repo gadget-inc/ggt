@@ -477,56 +477,24 @@ export class FileSync {
           localChanges = withoutUnnecessaryChanges({ changes: localChanges, existing: gadgetHashes });
           gadgetChanges = withoutConflictingChanges({ conflicts, changes: gadgetChanges });
 
-          printlns`We're going to send your changes to Gadget`;
+          printlns`The following changes will be sent to Gadget`;
           printChanges({ changes: localChanges, tense: "present" });
-
-          if (gadgetChanges.size > 0) {
-            printlns`Then we're going to receive Gadget's non-conflicting changes`;
-            printChanges({ changes: gadgetChanges, tense: "present" });
-          }
-
           await confirm({ message: "Are you sure you want to do this?" });
-
           break;
         }
         case ConflictPreference.GADGET: {
           localChanges = withoutConflictingChanges({ conflicts, changes: localChanges });
           gadgetChanges = withoutUnnecessaryChanges({ changes: gadgetChanges, existing: localHashes });
 
-          let were = "We're";
-          if (localChanges.size > 0) {
-            printlns`We're going to send your non-conflicting changes to Gadget`;
-            printChanges({ changes: localChanges, tense: "present" });
-            were = "Then we're";
-          }
-
-          printlns`${were} going to receive Gadget's changes`;
+          printlns`The following changes will be made to your local filesystem`;
           printChanges({ changes: gadgetChanges, tense: "present" });
-
           await confirm({ message: "Are you sure you want to do this?" });
-
-          // if (nonConflictingLocalChanges.size > 0) {
-          //   // send non-conflicting changes to gadget and update files version
-          //   await this.sendChangesToGadget({
-          //     changes: nonConflictingLocalChanges,
-          //     expectedFilesVersion: gadgetFilesVersion,
-          //   });
-          // }
-
-          // // receive gadget changes
-          // await this.receiveChangesFromGadget({
-          //   changes: allGadgetChanges,
-          //   filesVersion: gadgetFilesVersion,
-          // });
-
-          // println`{green Done!} ✨`;
           break;
         }
       }
     }
 
     if (localChanges.size > 0) {
-      // send changes to gadget and update files version
       await this.sendChangesToGadget({
         changes: localChanges,
         expectedFilesVersion: gadgetFilesVersion,
@@ -534,7 +502,6 @@ export class FileSync {
     }
 
     if (gadgetChanges.size > 0) {
-      // receive gadget changes
       await this.receiveChangesFromGadget({
         changes: gadgetChanges,
         filesVersion: gadgetFilesVersion,

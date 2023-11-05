@@ -490,21 +490,6 @@ export class FileSync {
 
           await confirm({ message: "Are you sure you want to do this?" });
 
-          // send changes to gadget and update files version
-          // await this.sendChangesToGadget({
-          //   changes: allLocalChanges,
-          //   expectedFilesVersion: gadgetFilesVersion,
-          // });
-
-          // if (nonConflictingGadgetChanges.size > 0) {
-          //   // receive gadget changes
-          //   await this.receiveChangesFromGadget({
-          //     changes: nonConflictingGadgetChanges,
-          //     filesVersion: gadgetFilesVersion,
-          //   });
-          // }
-
-          // println`{green Done!} ✨`;
           break;
         }
         case ConflictPreference.GADGET: {
@@ -543,7 +528,11 @@ export class FileSync {
       }
     }
 
+    let somethingChanged = false;
+
     if (localChanges.size > 0) {
+      somethingChanged = true;
+
       // send changes to gadget and update files version
       await this.sendChangesToGadget({
         changes: localChanges,
@@ -552,11 +541,17 @@ export class FileSync {
     }
 
     if (gadgetChanges.size > 0) {
+      somethingChanged = true;
+
       // receive gadget changes
       await this.receiveChangesFromGadget({
         changes: gadgetChanges,
         filesVersion: gadgetFilesVersion,
       });
+    }
+
+    if (somethingChanged) {
+      printlns`{green Done!} ✨`;
     }
 
     // recursively call this function until we're in sync

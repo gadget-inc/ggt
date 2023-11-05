@@ -1,6 +1,7 @@
 import { findUp } from "find-up";
 import fs from "fs-extra";
 import ms from "ms";
+import assert from "node:assert";
 import path from "node:path";
 import process from "node:process";
 import pMap from "p-map";
@@ -23,7 +24,7 @@ import { ArgError, InvalidSyncFileError } from "../errors.js";
 import { isEmptyOrNonExistentDir, swallowEnoent } from "../fs.js";
 import { createLogger } from "../log.js";
 import { noop } from "../noop.js";
-import { println, printlns, sortBySimilarity, sprint } from "../print.js";
+import { printlns, sortBySimilarity, sprint } from "../print.js";
 import { confirm, select } from "../prompt.js";
 import type { User } from "../user.js";
 import {
@@ -33,12 +34,12 @@ import {
   Hashes,
   Update,
   getChanges,
-  getNecessaryChanges,
   printChanges,
+  withoutUnnecessaryChanges,
   type Change,
   type ChangesWithHash,
 } from "./changes.js";
-import { getConflicts, printConflicts, withoutConflicts } from "./conflicts.js";
+import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { Directory } from "./directory.js";
 
 const log = createLogger("filesync");
@@ -444,14 +445,22 @@ export class FileSync {
   }
 
   /**
-   * When this function returns, the state of the local filesystem
-   * matches the state of Gadget
+   * Synchronizes local changes with Gadget's changes.
+   * If there are conflicts, prompts the user to resolve them.
+   * Recursively calls itself until there are no conflicts.
    */
-  async handleConflicts(): Promise<void> {
+  async sync(): Promise<void> {
     const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await this.getHashes();
-    const localChanges = getChanges({ from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
-    const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
+    let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
+    let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
     const conflicts = getConflicts({ localChanges, gadgetChanges });
+
+    if (localChanges.size === 0 && gadgetChanges.size === 0) {
+      assert(conflicts.size === 0, "there shouldn't be any conflicts if there are no changes");
+      this._state.filesVersion = String(gadgetFilesVersion);
+      this._save();
+      return;
+    }
 
     if (conflicts.size > 0) {
       printlns`{bold You have conflicting changes with Gadget}`;
@@ -468,73 +477,70 @@ export class FileSync {
           break;
         }
         case ConflictPreference.LOCAL: {
-          const allLocalChanges = getNecessaryChanges({ changes: localChanges, existing: gadgetHashes });
-          const nonConflictingGadgetChanges = withoutConflicts({ conflicts, changes: gadgetChanges });
+          localChanges = withoutUnnecessaryChanges({ changes: localChanges, existing: gadgetHashes });
+          gadgetChanges = withoutConflictingChanges({ conflicts, changes: gadgetChanges });
 
           printlns`We're going to send your changes to Gadget`;
-          printChanges({ changes: allLocalChanges, tense: "present" });
+          printChanges({ changes: localChanges, tense: "present" });
 
-          if (nonConflictingGadgetChanges.size > 0) {
+          if (gadgetChanges.size > 0) {
             printlns`Then we're going to receive Gadget's non-conflicting changes`;
-            printChanges({ changes: nonConflictingGadgetChanges, tense: "present" });
+            printChanges({ changes: gadgetChanges, tense: "present" });
           }
 
           await confirm({ message: "Are you sure you want to do this?" });
 
           // send changes to gadget and update files version
-          await this.sendChangesToGadget({
-            changes: allLocalChanges,
-            expectedFilesVersion: gadgetFilesVersion,
-          });
+          // await this.sendChangesToGadget({
+          //   changes: allLocalChanges,
+          //   expectedFilesVersion: gadgetFilesVersion,
+          // });
 
-          if (nonConflictingGadgetChanges.size > 0) {
-            // receive gadget changes
-            await this.receiveChangesFromGadget({
-              changes: nonConflictingGadgetChanges,
-              filesVersion: gadgetFilesVersion,
-            });
-          }
+          // if (nonConflictingGadgetChanges.size > 0) {
+          //   // receive gadget changes
+          //   await this.receiveChangesFromGadget({
+          //     changes: nonConflictingGadgetChanges,
+          //     filesVersion: gadgetFilesVersion,
+          //   });
+          // }
 
-          println`{green Done!} ✨`;
+          // println`{green Done!} ✨`;
           break;
         }
         case ConflictPreference.GADGET: {
-          const allGadgetChanges = getNecessaryChanges({ changes: gadgetChanges, existing: localHashes });
-          const nonConflictingLocalChanges = withoutConflicts({ conflicts, changes: localChanges });
+          localChanges = withoutConflictingChanges({ conflicts, changes: localChanges });
+          gadgetChanges = withoutUnnecessaryChanges({ changes: gadgetChanges, existing: localHashes });
 
           let were = "We're";
-          if (nonConflictingLocalChanges.size > 0) {
+          if (localChanges.size > 0) {
             printlns`We're going to send your non-conflicting changes to Gadget`;
-            printChanges({ changes: nonConflictingLocalChanges, tense: "present" });
+            printChanges({ changes: localChanges, tense: "present" });
             were = "Then we're";
           }
 
           printlns`${were} going to receive Gadget's changes`;
-          printChanges({ changes: allGadgetChanges, tense: "present" });
+          printChanges({ changes: gadgetChanges, tense: "present" });
 
           await confirm({ message: "Are you sure you want to do this?" });
 
-          if (nonConflictingLocalChanges.size > 0) {
-            // send non-conflicting changes to gadget and update files version
-            await this.sendChangesToGadget({
-              changes: nonConflictingLocalChanges,
-              expectedFilesVersion: gadgetFilesVersion,
-            });
-          }
+          // if (nonConflictingLocalChanges.size > 0) {
+          //   // send non-conflicting changes to gadget and update files version
+          //   await this.sendChangesToGadget({
+          //     changes: nonConflictingLocalChanges,
+          //     expectedFilesVersion: gadgetFilesVersion,
+          //   });
+          // }
 
-          // receive gadget changes
-          await this.receiveChangesFromGadget({
-            changes: allGadgetChanges,
-            filesVersion: gadgetFilesVersion,
-          });
+          // // receive gadget changes
+          // await this.receiveChangesFromGadget({
+          //   changes: allGadgetChanges,
+          //   filesVersion: gadgetFilesVersion,
+          // });
 
-          println`{green Done!} ✨`;
+          // println`{green Done!} ✨`;
           break;
         }
       }
-
-      // recursively call this function until there are no conflicts
-      return this.handleConflicts();
     }
 
     if (localChanges.size > 0) {
@@ -552,6 +558,9 @@ export class FileSync {
         filesVersion: gadgetFilesVersion,
       });
     }
+
+    // recursively call this function until we're in sync
+    return this.sync();
   }
 
   /**

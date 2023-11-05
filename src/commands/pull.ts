@@ -1,5 +1,5 @@
 import arg from "arg";
-import { Delete, getChanges, getNecessaryChanges, printChanges } from "src/services/filesync/changes.js";
+import { Delete, getChanges, printChanges, withoutUnnecessaryChanges } from "src/services/filesync/changes.js";
 import { AppArg } from "../services/args.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { FileSync } from "../services/filesync/filesync.js";
@@ -66,7 +66,7 @@ export const command: Command = async (rootArgs) => {
     }
   }
 
-  const changes = getNecessaryChanges({ changes: gadgetChanges, existing: localHashes });
+  const changes = withoutUnnecessaryChanges({ changes: gadgetChanges, existing: localHashes });
 
   if (!filesync.directory.wasEmpty) {
     printlns`{bold The following changes will be made to your local filesystem}`;

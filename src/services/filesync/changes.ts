@@ -132,7 +132,7 @@ export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes;
 };
 
 /**
- * Returns a new `ChangesWithHash` object containing only the necessary
+ * Filters out changes that
  * changes needed to be made to `existing` to apply all the `changes`.
  *
  * @param changes - The `ChangesWithHash` object containing the changes
@@ -141,7 +141,7 @@ export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes;
  * @returns A new `ChangesWithHash` object containing only the necessary
  * changes to be made.
  */
-export const getNecessaryChanges = ({ changes, existing }: { changes: ChangesWithHash; existing: Hashes }): ChangesWithHash => {
+export const withoutUnnecessaryChanges = ({ changes, existing }: { changes: ChangesWithHash; existing: Hashes }): ChangesWithHash => {
   const necessaryChanges = new ChangesWithHash();
 
   for (const [path, change] of changes) {

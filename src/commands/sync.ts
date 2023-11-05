@@ -147,7 +147,7 @@ export const command: Command = async (rootArgs) => {
   }));
 
   if (!filesync.directory.wasEmpty) {
-    await filesync.handleConflicts();
+    await filesync.sync();
   }
 
   /**

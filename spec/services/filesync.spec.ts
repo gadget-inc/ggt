@@ -295,7 +295,7 @@ describe("FileSync.handleConflicts", () => {
     vi.spyOn(prompt, "select");
     vi.spyOn(prompt, "confirm");
 
-    await filesync.handleConflicts();
+    await filesync.sync();
 
     expect(prompt.select).not.toHaveBeenCalled();
     expect(prompt.confirm).not.toHaveBeenCalled();
@@ -323,7 +323,7 @@ describe("FileSync.handleConflicts", () => {
     vi.spyOn(prompt, "select");
     vi.spyOn(prompt, "confirm");
 
-    await filesync.handleConflicts();
+    await filesync.sync();
 
     expect(prompt.select).not.toHaveBeenCalled();
     expect(prompt.confirm).not.toHaveBeenCalled();
@@ -419,7 +419,7 @@ describe("FileSync.handleConflicts", () => {
     vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.CANCEL);
     vi.spyOn(prompt, "confirm");
 
-    await expectProcessExit(() => filesync.handleConflicts());
+    await expectProcessExit(() => filesync.sync());
 
     expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
         [
@@ -455,7 +455,7 @@ describe("FileSync.handleConflicts", () => {
     vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
     vi.spyOn(prompt, "confirm").mockResolvedValue();
 
-    await filesync.handleConflicts();
+    await filesync.sync();
 
     expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
         [
@@ -548,7 +548,7 @@ describe("FileSync.handleConflicts", () => {
     vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.GADGET);
     vi.spyOn(prompt, "confirm").mockResolvedValue();
 
-    await filesync.handleConflicts();
+    await filesync.sync();
 
     expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
         [
@@ -637,7 +637,7 @@ describe("FileSync.handleConflicts", () => {
     vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
     vi.spyOn(prompt, "confirm").mockResolvedValue();
 
-    await filesync.handleConflicts();
+    await filesync.sync();
 
     expect(prompt.select.mock.lastCall).toMatchInlineSnapshot(`
       [
@@ -737,4 +737,93 @@ describe("FileSync.handleConflicts", () => {
     `);
     await expectLocalAndGadgetHashesMatch();
   });
+
+  it.skip("", async () => {
+    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        ".gadget/sync.json": prettyJSON({ app: testApp.slug, filesVersion: "1" }),
+        "foo.js": "// foo local",
+        "local-file.js": "// local",
+      },
+      gadgetFilesVersion: 2n,
+      gadgetFiles: {
+        "foo.js": "// foo gadget",
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
+    vi.spyOn(prompt, "confirm").mockResolvedValue();
+
+    await filesync.sync();
+
+    expect(prompt.select.mock.lastCall).toMatchInlineSnapshot();
+
+    expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot();
+
+    expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot();
+
+    expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot();
+
+    expect(filesVersionDirs.size).toBe(3);
+
+    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot();
+
+    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot();
+
+    await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot();
+
+    await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot();
+
+    await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot();
+
+    await expectLocalAndGadgetHashesMatch();
+  });
 });
+
+// it("", async () => {
+//   const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+//     filesVersion1Files: {
+//       "foo.js": "// foo",
+//     },
+//     localFiles: {
+//       "foo.js": "// foo local",
+//       "local-file.js": "// local",
+//     },
+//     gadgetFilesVersion: 2n,
+//     gadgetFiles: {
+//       "foo.js": "// foo gadget",
+//       "gadget-file.js": "// gadget",
+//     },
+//   });
+
+//   vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
+//   vi.spyOn(prompt, "confirm").mockResolvedValue();
+
+//   await filesync.handleConflicts();
+
+//   expect(prompt.select.mock.lastCall).toMatchInlineSnapshot();
+
+//   expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot();
+
+//   expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot();
+
+//   expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot();
+
+//   expect(filesVersionDirs.size).toBe(3);
+
+//   await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot();
+
+//   await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot();
+
+//   await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot();
+
+//   await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot();
+
+//   await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot();
+
+//   await expectLocalAndGadgetHashesMatch();
+// });

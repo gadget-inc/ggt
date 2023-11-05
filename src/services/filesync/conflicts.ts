@@ -1,5 +1,5 @@
 import { color, printTable, println } from "../print.js";
-import { Changes, ChangesWithHash, Create, Delete, Update, type ChangeWithHash } from "./changes.js";
+import { ChangesWithHash, Create, Delete, Update, type ChangeWithHash, type Changes } from "./changes.js";
 
 /**
  * A map of conflicting changes made between the user's local filesystem
@@ -72,14 +72,13 @@ export const getConflicts = ({
  * @param changes - The changes to filter.
  * @returns A new `Changes` object without conflicts.
  */
-export const withoutConflicts = ({ conflicts, changes }: { conflicts: Conflicts; changes: Changes }): Changes => {
-  const changesWithoutConflicts = new Changes();
-  for (const [path, change] of changes) {
-    if (!conflicts.has(path)) {
-      changesWithoutConflicts.set(path, change);
+export const withoutConflictingChanges = <C extends Changes>({ conflicts, changes }: { conflicts: Conflicts; changes: C }): C => {
+  for (const [path] of changes) {
+    if (conflicts.has(path)) {
+      changes.delete(path);
     }
   }
-  return changesWithoutConflicts;
+  return changes;
 };
 
 /**

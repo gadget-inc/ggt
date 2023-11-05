@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "node:path";
 import { config } from "./config.js";
-import { swallowEnoent } from "./fs.js";
+import { swallowEnoent } from "./filesync/directory.js";
 import { createLogger } from "./log.js";
 
 const log = createLogger("session");

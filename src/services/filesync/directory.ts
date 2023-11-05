@@ -34,8 +34,7 @@ export class Directory {
    */
   private _isHashing = false;
 
-  // TODO: make private
-  constructor(
+  private constructor(
     /**
      * An absolute path to the directory that is being synced.
      */
@@ -58,16 +57,9 @@ export class Directory {
    * @returns A Promise that resolves to a Directory instance.
    */
   static async init(dir: string): Promise<Directory> {
-    try {
-      const stats = await fs.stat(dir);
-      assert(stats.isDirectory(), `expected ${dir} to be a directory`);
-
-      await fs.ensureDir(dir);
-      return new Directory(dir, false);
-    } catch (error) {
-      swallowEnoent(error);
-      return new Directory(dir, true);
-    }
+    const wasEmpty = await isEmptyOrNonExistentDir(dir);
+    await fs.ensureDir(dir);
+    return new Directory(dir, wasEmpty);
   }
 
   /**

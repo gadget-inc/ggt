@@ -7,9 +7,8 @@ import { ConflictPreference } from "../../src/commands/sync.js";
 import * as app from "../../src/services/app/app.js";
 import { ArgError, InvalidSyncFileError } from "../../src/services/errors.js";
 import { Hashes } from "../../src/services/filesync/changes.js";
-import { Directory } from "../../src/services/filesync/directory.js";
+import { Directory, isEmptyOrNonExistentDir } from "../../src/services/filesync/directory.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
-import { isEmptyOrNonExistentDir } from "../../src/services/fs.js";
 import * as prompt from "../../src/services/prompt.js";
 import { testApp } from "../__support__/app.js";
 import { expectError } from "../__support__/error.js";
@@ -178,15 +177,15 @@ describe("FileSync.handleConflicts", () => {
   }> => {
     await writeFiles(testDirPath(`fv-1`), { ".gadget/": "", ...filesVersion1Files });
     const filesVersionDirs = new Map<bigint, Directory>();
-    filesVersionDirs.set(1n, new Directory(testDirPath(`fv-1`), false));
+    filesVersionDirs.set(1n, await Directory.init(testDirPath(`fv-1`)));
 
-    const localDir = new Directory(testDirPath("local"), false);
+    const localDir = await Directory.init(testDirPath("local"));
     await writeFiles(localDir.path, {
       ".gadget/sync.json": prettyJSON({ app: testApp.slug, filesVersion: "1" }),
       ...localFiles,
     });
 
-    const gadgetDir = new Directory(testDirPath("gadget"), false);
+    const gadgetDir = await Directory.init(testDirPath("gadget"));
     await writeFiles(gadgetDir.path, { ".gadget/": "", ...gadgetFiles });
 
     gadgetFilesVersion ??= 1n;

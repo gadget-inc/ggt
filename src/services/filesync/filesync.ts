@@ -21,7 +21,6 @@ import {
 import { mapValues } from "../collections.js";
 import { config } from "../config.js";
 import { ArgError, InvalidSyncFileError } from "../errors.js";
-import { isEmptyOrNonExistentDir, swallowEnoent } from "../fs.js";
 import { createLogger } from "../log.js";
 import { noop } from "../noop.js";
 import { printlns, sortBySimilarity, sprint } from "../print.js";
@@ -40,7 +39,7 @@ import {
   type ChangesWithHash,
 } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
-import { Directory } from "./directory.js";
+import { Directory, swallowEnoent } from "./directory.js";
 
 const log = createLogger("filesync");
 
@@ -174,13 +173,12 @@ export class FileSync {
       );
     }
 
-    const isEmpty = await isEmptyOrNonExistentDir(dir);
-    const directory = new Directory(dir, isEmpty);
+    const directory = await Directory.init(dir);
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
-      if (isEmpty || options.force) {
-        // the directory is empty or the user passed --force
+      if (directory.wasEmpty || options.force) {
+        // the directory was empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
         return new FileSync(directory, app, { app: app.slug, filesVersion: "0" });
       }

@@ -80,12 +80,12 @@ export const pick = <T extends Record<string, unknown>, K extends keyof T>(objec
 /**
  * Returns a new object with the specified keys omitted.
  *
- * @param object The input object.
+ * @param record The input object.
  * @param keys The keys to omit.
  * @returns A new object with the specified keys omitted.
  */
-export const omit = <T extends Record<string, unknown>, K extends keyof T>(object: T, keys: K[]): Omit<T, K> => {
-  const final = { ...object };
+export const omit = <T extends Record<string, unknown>, K extends keyof T>(record: T, keys: K[]): Omit<T, K> => {
+  const final = { ...record };
   for (const key of keys) {
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete final[key];

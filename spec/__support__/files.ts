@@ -2,28 +2,38 @@ import fs, { type Stats } from "fs-extra";
 import path from "node:path";
 import normalizePath from "normalize-path";
 import { assert, expect } from "vitest";
+import { z } from "zod";
 
-export type Files = Record<string, string>;
+export const Files = z.union([z.record(z.string(), z.string()), z.map(z.string(), z.string())]).transform((files) => {
+  if (files instanceof Map) {
+    return files;
+  }
+  return new Map(Object.entries(files));
+});
+
+export type Files = z.infer<typeof Files>;
 
 export const readFiles = async (dir: string): Promise<Files> => {
-  const files = {} as Files;
+  const files = Files.parse({});
 
   for await (const { absolutePath, stats } of walkDir(dir)) {
     const filepath = normalizePath(path.relative(dir, absolutePath));
     if (stats.isDirectory()) {
-      files[filepath + "/"] = "";
+      files.set(filepath + "/", "");
     } else if (stats.isFile()) {
-      files[filepath] = await fs.readFile(absolutePath, { encoding: "utf8" });
+      files.set(filepath, await fs.readFile(absolutePath, { encoding: "utf8" }));
     }
   }
 
   return files;
 };
 
-export const writeFiles = async (dir: string, files: Files): Promise<Files> => {
+export const writeFiles = async (dir: string, files: Files | Record<string, string>): Promise<Files> => {
   await fs.ensureDir(dir);
 
-  for (const [filepath, content] of Object.entries(files)) {
+  files = Files.parse(files);
+
+  for (const [filepath, content] of files) {
     if (filepath.endsWith("/")) {
       await fs.ensureDir(path.join(dir, filepath));
     } else {
@@ -36,11 +46,11 @@ export const writeFiles = async (dir: string, files: Files): Promise<Files> => {
 
 export const expectFiles = async (dir: string, files: Files): Promise<void> => {
   const expected = {} as Files;
-  for (const [filepath, content] of Object.entries(files)) {
+  for (const [filepath, content] of files) {
     if (filepath.endsWith("/")) {
-      expected[filepath] = "";
+      expected.set(filepath, "");
     }
-    expected[filepath] = Buffer.from(content).toString("base64");
+    expected.set(filepath, Buffer.from(content).toString("base64"));
   }
 
   const actual = await readFiles(dir);

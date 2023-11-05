@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Directory > hashes > produces the expected result 1`] = `
+exports[`Directory.hashes > produces the expected result 1`] = `
 {
   ".gadget/": "291c523421f3b1068eab749a5fcba60fc772e159",
   ".gadget/client/": "d2a04d71301a8915217dd5faf81d12cffd6cd958",

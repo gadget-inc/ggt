@@ -356,7 +356,7 @@ export const command: Command = async (rootArgs) => {
       Playground  https://${filesync.app.slug}.gadget.app/api/graphql/playground
       Docs        https://docs.gadget.dev/api/${filesync.app.slug}
 
-      {underline Endpoints} ${
+      Endpoints ${
         filesync.app.hasSplitEnvironments
           ? `
         • https://${filesync.app.primaryDomain}

@@ -358,7 +358,7 @@ export class FileSync {
     });
   }
 
-  subscribeToChangesFromGadget({
+  subscribeToGadgetChanges({
     onChange,
     onError,
   }: {

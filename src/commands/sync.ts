@@ -15,7 +15,6 @@ import { YarnNotFoundError } from "../services/errors.js";
 import { Changes, Create, Delete, Update, printChanges } from "../services/filesync/changes.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { createLogger } from "../services/log.js";
-import { noop } from "../services/noop.js";
 import { notify } from "../services/notify.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { PromiseSignal } from "../services/promise.js";
@@ -163,7 +162,7 @@ export const command: Command = async (rootArgs) => {
     void queue.add(fn).catch(stop);
   };
 
-  const unsubscribeFromChangesFromGadget = filesync.subscribeToChangesFromGadget({
+  const unsubscribeFromGadgetChanges = filesync.subscribeToGadgetChanges({
     onError: (error) => void stop(error),
     onChange: ({ filesVersion, changed, deleted }) => {
       changed = changed.filter((file) => !filesync.directory.ignores(file.path));
@@ -189,7 +188,9 @@ export const command: Command = async (rootArgs) => {
           printChanges({ changes, tense: "present", mt: 0, limit: 10 });
 
           if (changes.has("yarn.lock")) {
-            await execa("yarn", ["install"], { cwd: filesync.directory.path }).catch(noop);
+            await execa("yarn", ["install", "--check-files"], { cwd: filesync.directory.path }).catch((error) => {
+              log.error("yarn install failed", { error });
+            });
           }
         }
       });
@@ -317,7 +318,7 @@ export const command: Command = async (rootArgs) => {
       fileWatcher.close();
       clearInterval(clearRecentWritesInterval);
       sendChangesToGadget.flush();
-      unsubscribeFromChangesFromGadget();
+      unsubscribeFromGadgetChanges();
       await queue.onIdle();
     } finally {
       stopped.resolve();

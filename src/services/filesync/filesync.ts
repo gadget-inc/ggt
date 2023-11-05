@@ -94,7 +94,29 @@ export class FileSync {
    * - Ensures an app is specified (either via `options.app` or by prompting the user)
    * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
    */
-  static async init(options: { user: User; dir?: string; app?: string; force?: boolean; extraIgnorePaths?: string[] }): Promise<FileSync> {
+  /**
+   * Initializes a new instance of the FileSync class.
+   *
+   * @param options An object containing the following properties:
+   *  - `user`: The user to sync as.
+   *  - `dir`: The directory to sync to. If not specified, it will try
+   *    to find a .gadget/sync.json file and use its parent directory.
+   *    If not found, it will use the current directory.
+   *  - `app`: The app slug to sync. If not specified, it will prompt
+   *    the user to select an app from their list of apps.
+   *  - `force`: A boolean indicating whether to overwrite the existing
+   *    sync file. If not specified, it will throw an error if the
+   *    directory has already been synced with a different app.
+   * @returns A Promise that resolves with a new instance of the
+   * FileSync class.
+   * @throws {ArgError} If the user doesn't have any Gadget
+   * applications, or if the specified app doesn't exist or is
+   * misspelled.
+   * @throws {InvalidSyncFileError} If the sync file is invalid.
+   * @throws {ArgError} If the directory has already been synced with a
+   * different app and the user didn't pass the --force flag.
+   */
+  static async init(options: { user: User; dir?: string; app?: string; force?: boolean }): Promise<FileSync> {
     const apps = await getApps(options.user);
     if (apps.length === 0) {
       throw new ArgError(

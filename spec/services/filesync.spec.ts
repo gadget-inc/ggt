@@ -415,7 +415,7 @@ describe("FileSync.handleConflicts", () => {
   });
 
   it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir, gadgetFilesVersion } = await setup({
+    const { filesync, filesVersionDirs, gadgetDir, localDir } = await setup({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -475,7 +475,7 @@ describe("FileSync.handleConflicts", () => {
         "foo.js" => "// foo",
       }
     `);
-    await expect(readFiles(filesVersionDirs.get(gadgetFilesVersion)!.path)).resolves.toMatchInlineSnapshot(`
+    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// foo",
@@ -501,7 +501,7 @@ describe("FileSync.handleConflicts", () => {
   });
 
   it("automatically merges non-conflicting changes if there are no conflicts", async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir, gadgetFilesVersion } = await setup({
+    const { filesync, filesVersionDirs, gadgetDir, localDir } = await setup({
       filesVersion1Files: {
         "foo.js": "// foo",
       },

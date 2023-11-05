@@ -193,7 +193,6 @@ describe("FileSync.handleConflicts", () => {
       const newFilesVersionDir = await Directory.init(testDirPath(`fv-${gadgetFilesVersion}`));
       await fs.copy(gadgetDir.path, newFilesVersionDir.path);
       filesVersionDirs.set(gadgetFilesVersion, newFilesVersionDir);
-      console.log("set files version dir", { gadgetFilesVersion, filesVersionDirs });
     }
 
     const filesync = await FileSync.init({ user: testUser, dir: localDir.path });
@@ -202,8 +201,6 @@ describe("FileSync.handleConflicts", () => {
       const filesVersionDir = filesVersionDirs.get(filesync.filesVersion);
       assert(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
       assert(gadgetFilesVersion);
-
-      console.log("getHashes", { filesVersionDir, filesVersion: filesync.filesVersion, filesVersionDirs });
 
       return {
         gadgetFilesVersion,

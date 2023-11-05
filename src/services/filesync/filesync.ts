@@ -280,7 +280,6 @@ export class FileSync {
     });
 
     if (filesVersion > BigInt(this._state.filesVersion) || options.force) {
-      console.log("updating files version", { filesVersion });
       this._state.filesVersion = String(filesVersion);
     }
 
@@ -453,8 +452,6 @@ export class FileSync {
     const localChanges = getChanges({ from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
     const gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
     const conflicts = getConflicts({ localChanges, gadgetChanges });
-
-    console.log({ filesVersionHashes, localChanges, gadgetChanges, conflicts, gadgetFilesVersion });
 
     if (conflicts.size > 0) {
       printlns`{bold You have conflicting changes with Gadget}`;

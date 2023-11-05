@@ -12,16 +12,25 @@ let longestMessage = 0;
 type Log = (msg: Lowercase<string>, fields?: JsonifiableObject) => void;
 
 type Logger = {
-  dbg: <T>(t: T) => T;
   debug: Log;
   info: Log;
   warn: Log;
   error: Log;
+  extend(name: string, fields?: Fields): Logger;
 };
 
-export const createLogger = (name: string, fields: JsonifiableObject | (() => JsonifiableObject) = {}): Logger => {
+type Fields = JsonifiableObject | (() => JsonifiableObject);
+
+const thunk = <T>(val: T | (() => T)): (() => T) => {
+  if (isFunction(val)) {
+    return val;
+  }
+  return () => val;
+};
+
+export const createLogger = (name: string, loggerFields: Fields = {}): Logger => {
   longestName = Math.max(longestName, name.length);
-  const baseFields = isFunction(fields) ? fields : () => fields;
+  const baseFields = thunk(loggerFields);
 
   const createLog = (level: "debug" | "info" | "warn" | "error"): Log => {
     const debug = Debug(`ggt:${name}`);
@@ -62,20 +71,6 @@ export const createLogger = (name: string, fields: JsonifiableObject | (() => Js
     info: createLog("info"),
     warn: createLog("warn"),
     error: createLog("error"),
-    dbg(val) {
-      try {
-        // @ts-expect-error does not exist on BigInt
-        BigInt.toJSON = function () {
-          return String(this);
-        };
-
-        // @ts-expect-error not lowercase
-        this.debug("%O", val);
-        return val;
-      } finally {
-        // @ts-expect-error does not exist on BigInt
-        BigInt.toJSON = undefined;
-      }
-    },
+    extend: (name, fields?: Fields) => createLogger(name, () => ({ ...baseFields(), ...thunk(fields)() })),
   };
 };

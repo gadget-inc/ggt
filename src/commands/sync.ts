@@ -15,7 +15,6 @@ import { ClientError, YarnNotFoundError } from "../services/errors.js";
 import { Changes, Create, Delete, Update, printChanges } from "../services/filesync/changes.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { isGraphQLErrors } from "../services/is.js";
-import { createLogger } from "../services/log.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { PromiseSignal } from "../services/promise.js";
 import { getUserOrLogin } from "../services/user.js";
@@ -140,14 +139,11 @@ export const command: Command = async (rootArgs) => {
     force: args["--force"],
   });
 
-  const log = createLogger("sync", () => ({
-    app: filesync.app.slug,
-    filesVersion: String(filesync.filesVersion),
-  }));
-
   if (!filesync.directory.wasEmpty) {
     await filesync.sync();
   }
+
+  const log = filesync.log.extend("sync");
 
   /**
    * A FIFO async callback queue that ensures we process filesync events

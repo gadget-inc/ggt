@@ -55,6 +55,11 @@ export type File = {
 export class FileSync {
   readonly editGraphQL: EditGraphQL;
 
+  readonly log = createLogger("filesync", () => ({
+    app: this.app.slug,
+    filesVersion: String(this.filesVersion),
+  }));
+
   private constructor(
     /**
      * The directory that is being synced to.
@@ -489,15 +494,20 @@ export class FileSync {
       assert(conflicts.size === 0, "there shouldn't be any conflicts if there are no changes");
 
       if (localHashes.equals(gadgetHashes)) {
+        this.log.info("filesystem is in sync", { filesVersion: this.filesVersion });
         this._state.filesVersion = String(gadgetFilesVersion);
         this._save();
         return;
       }
 
-      localChanges = getChanges({ from: localHashes, to: gadgetHashes, ignore: [".gadget/"] });
-      gadgetChanges = getChanges({ from: gadgetHashes, to: localHashes });
+      localChanges = getChanges({ from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
+      gadgetChanges = getChanges({ from: localHashes, to: gadgetHashes });
       conflicts = getConflicts({ localChanges, gadgetChanges });
       assert(localChanges.size === 0 || gadgetChanges.size === 0, "if the hashes are different, there should be changes");
+
+      // for (const filepath of conflicts.keys()) {
+
+      // }
     }
 
     // if there are any conflicts with .gadget/ files, ignore them

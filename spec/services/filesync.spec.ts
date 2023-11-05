@@ -282,6 +282,7 @@ describe("FileSync.handleConflicts", () => {
         const localHashes = await localDir.hashes();
         const gadgetHashes = await gadgetDir.hashes();
         expect(localHashes).toEqual(gadgetHashes);
+        expect(filesync.filesVersion).toBe(gadgetFilesVersion);
       },
     };
   };

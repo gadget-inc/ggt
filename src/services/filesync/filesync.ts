@@ -404,7 +404,7 @@ export class FileSync {
   }> {
     const [localHashes, filesVersionHashes, { gadgetFilesVersion, gadgetHashes }] = await Promise.all([
       // get the hashes of our local files
-      this.directory.hashes(),
+      this.directory.hashes().then((hashes) => Hashes.parse(hashes)),
       // get the hashes of the files at our current filesVersion
       this.editGraphQL
         .query({ query: FILE_HASHES_QUERY, variables: { filesVersion: String(this.filesVersion) } })
@@ -416,10 +416,7 @@ export class FileSync {
       })),
     ]);
 
-    const hashes = { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion };
-    // await fs.outputJSON("tmp/hashes.json", { ...hashes, gadgetFilesVersion: String(gadgetFilesVersion) }, { spaces: 2 });
-
-    return hashes;
+    return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion };
   }
 
   async getFilesFromGadget({
@@ -447,7 +444,8 @@ export class FileSync {
   /**
    * Synchronizes local changes with Gadget's changes.
    * If there are conflicts, prompts the user to resolve them.
-   * Recursively calls itself until there are no conflicts.
+   * Recursively calls itself until there are no changes to sync.
+   * @returns A Promise that resolves when the sync is complete.
    */
   async sync(): Promise<void> {
     const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await this.getHashes();
@@ -457,6 +455,7 @@ export class FileSync {
 
     if (localChanges.size === 0 && gadgetChanges.size === 0) {
       assert(conflicts.size === 0, "there shouldn't be any conflicts if there are no changes");
+      assert(localHashes.equalTo(gadgetHashes), "the hashes should be equal if there are no changes");
       this._state.filesVersion = String(gadgetFilesVersion);
       this._save();
       return;
@@ -528,11 +527,7 @@ export class FileSync {
       }
     }
 
-    let somethingChanged = false;
-
     if (localChanges.size > 0) {
-      somethingChanged = true;
-
       // send changes to gadget and update files version
       await this.sendChangesToGadget({
         changes: localChanges,
@@ -541,17 +536,11 @@ export class FileSync {
     }
 
     if (gadgetChanges.size > 0) {
-      somethingChanged = true;
-
       // receive gadget changes
       await this.receiveChangesFromGadget({
         changes: gadgetChanges,
         filesVersion: gadgetFilesVersion,
       });
-    }
-
-    if (somethingChanged) {
-      printlns`{green Done!} ✨`;
     }
 
     // recursively call this function until we're in sync

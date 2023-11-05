@@ -6,6 +6,7 @@ import { FileSyncEncoding } from "../../src/__generated__/graphql.js";
 import { ConflictPreference } from "../../src/commands/sync.js";
 import * as app from "../../src/services/app/app.js";
 import { ArgError, InvalidSyncFileError } from "../../src/services/errors.js";
+import { Hashes } from "../../src/services/filesync/changes.js";
 import { Directory } from "../../src/services/filesync/directory.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
 import { isEmptyOrNonExistentDir } from "../../src/services/fs.js";
@@ -204,9 +205,9 @@ describe("FileSync.handleConflicts", () => {
 
       return {
         gadgetFilesVersion,
-        filesVersionHashes: await filesVersionDir.hashes(),
-        localHashes: await localDir.hashes(),
-        gadgetHashes: await gadgetDir.hashes(),
+        filesVersionHashes: await filesVersionDir.hashes().then(Hashes.parse),
+        localHashes: await localDir.hashes().then(Hashes.parse),
+        gadgetHashes: await gadgetDir.hashes().then(Hashes.parse),
       };
     });
 

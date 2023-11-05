@@ -5,8 +5,34 @@ import { z } from "zod";
 import { config } from "../config.js";
 import { printTable, println, printlns, symbol } from "../print.js";
 
-export const Hashes = z.record(z.string());
-export type Hashes = z.infer<typeof Hashes>;
+export const Hashes = z.union([z.record(z.string(), z.string()), z.map(z.string(), z.string())]).transform((files) => {
+  let hashes: Hashes;
+
+  // eslint-disable-next-line func-style
+  function equalTo(this: Hashes, other: Hashes): boolean {
+    if (this.size !== other.size) {
+      return false;
+    }
+
+    for (const [path, hash] of this) {
+      if (other.get(path) !== hash) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  if (files instanceof Map) {
+    hashes = Object.assign(files, { equalTo });
+  } else {
+    hashes = Object.assign(new Map(Object.entries(files)), { equalTo });
+  }
+
+  return hashes;
+});
+
+export type Hashes = Map<string, string> & { equalTo(other: Hashes): boolean };
 
 export type Change = Create | Update | Delete;
 export type ChangeWithHash = CreateWithHash | UpdateWithHash | DeleteWithHash;
@@ -92,14 +118,14 @@ export class DeleteWithHash extends Delete {
 export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes; to: Hashes; ignore?: string[] }): ChangesWithHash => {
   const changes = new ChangesWithHash();
 
-  const targetPaths = Object.keys(target);
+  const targetPaths = Array.from(target.keys());
 
-  for (const [sourcePath, sourceHash] of Object.entries(source)) {
+  for (const [sourcePath, sourceHash] of source) {
     if (ignore?.some((ignored) => sourcePath.startsWith(ignored))) {
       continue;
     }
 
-    const targetHash = target[sourcePath];
+    const targetHash = target.get(sourcePath);
     if (!targetHash) {
       if (!sourcePath.endsWith("/") || !targetPaths.some((targetPath) => targetPath.startsWith(sourcePath))) {
         // sourcePath is a file and it doesn't exist in target OR
@@ -120,9 +146,9 @@ export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes;
       continue;
     }
 
-    if (!source[targetPath]) {
+    if (!source.has(targetPath)) {
       // the targetPath doesn't exist in source, so it's been created
-      const targetHash = target[targetPath];
+      const targetHash = target.get(targetPath);
       assert(targetHash);
       changes.set(targetPath, new CreateWithHash(targetHash));
     }
@@ -145,7 +171,7 @@ export const withoutUnnecessaryChanges = ({ changes, existing }: { changes: Chan
   const necessaryChanges = new ChangesWithHash();
 
   for (const [path, change] of changes) {
-    const existingHash = existing[path];
+    const existingHash = existing.get(path);
     if (change instanceof Delete && !existingHash) {
       // already deleted
       continue;

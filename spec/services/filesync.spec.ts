@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "node:path";
 import pMap from "p-map";
-import { assert, beforeEach, describe, expect, it, vi } from "vitest";
+import { assert, beforeEach, describe, expect, it, vi, type Assertion } from "vitest";
 import { FileSyncEncoding } from "../../src/__generated__/graphql.js";
 import { ConflictPreference } from "../../src/commands/sync.js";
 import * as app from "../../src/services/app/app.js";
@@ -169,10 +169,9 @@ describe("FileSync.sync", () => {
     gadgetFiles: Record<string, string>;
   }): Promise<{
     filesync: FileSync;
-    gadgetFilesVersion: bigint;
-    filesVersionDirs: Map<bigint, Directory>;
     localDir: Directory;
     gadgetDir: Directory;
+    expectFilesVersionDirs: (size: number) => Promise<Assertion>;
     expectLocalAndGadgetHashesMatch: () => Promise<void>;
   }> => {
     await writeFiles(testDirPath(`fv-1`), { ".gadget/": "", ...filesVersion1Files });
@@ -272,10 +271,16 @@ describe("FileSync.sync", () => {
 
     return {
       filesync,
-      gadgetFilesVersion,
-      filesVersionDirs,
       localDir,
       gadgetDir,
+      expectFilesVersionDirs: async (size: number): Promise<Assertion> => {
+        expect(filesVersionDirs.size).toBe(size);
+        const dirs = new Map();
+        for (const [filesVersion, dir] of filesVersionDirs) {
+          dirs.set(filesVersion, await readFiles(dir.path));
+        }
+        return expect(dirs);
+      },
       expectLocalAndGadgetHashesMatch: async () => {
         const localHashes = await localDir.hashes();
         const gadgetHashes = await gadgetDir.hashes();
@@ -286,7 +291,7 @@ describe("FileSync.sync", () => {
   };
 
   it("does nothing if there aren't any changes", async () => {
-    const { filesync, expectLocalAndGadgetHashesMatch } = await setup({
+    const { filesync, expectLocalAndGadgetHashesMatch, expectFilesVersionDirs } = await setup({
       filesVersion1Files: { "foo.js": "// foo" },
       localFiles: { "foo.js": "// foo" },
       gadgetFiles: { "foo.js": "// foo" },
@@ -302,10 +307,18 @@ describe("FileSync.sync", () => {
     expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
     expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
     await expectLocalAndGadgetHashesMatch();
+    (await expectFilesVersionDirs(1)).toMatchInlineSnapshot(`
+      Map {
+        1n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo",
+        },
+      }
+    `);
   });
 
   it("automatically merges non-conflicting changes if there are no conflicting changes", async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+    const { filesync, gadgetDir, localDir, expectLocalAndGadgetHashesMatch, expectFilesVersionDirs } = await setup({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -358,32 +371,6 @@ describe("FileSync.sync", () => {
       ]
     `);
 
-    expect(filesVersionDirs.size).toBe(3);
-
-    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-        "gadget-file.js" => "// gadget",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-        "local-file.js" => "// local",
-        "gadget-file.js" => "// gadget",
-      }
-    `);
-
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -408,6 +395,26 @@ describe("FileSync.sync", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+
+    (await expectFilesVersionDirs(3)).toMatchInlineSnapshot(`
+      Map {
+        1n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo",
+        },
+        2n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo",
+          "gadget-file.js" => "// gadget",
+        },
+        3n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo",
+          "local-file.js" => "// local",
+          "gadget-file.js" => "// gadget",
+        },
+      }
+    `);
   });
 
   it(`exits the process when "${ConflictPreference.CANCEL}" is chosen`, async () => {
@@ -448,7 +455,7 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+    const { filesync, gadgetDir, localDir, expectLocalAndGadgetHashesMatch, expectFilesVersionDirs } = await setup({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -504,29 +511,6 @@ describe("FileSync.sync", () => {
       ]
     `);
 
-    expect(filesVersionDirs.size).toBe(3);
-
-    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// gadget foo",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// local foo",
-      }
-    `);
-
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -547,10 +531,27 @@ describe("FileSync.sync", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+
+    (await expectFilesVersionDirs(3)).toMatchInlineSnapshot(`
+      Map {
+        1n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo",
+        },
+        2n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// gadget foo",
+        },
+        3n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// local foo",
+        },
+      }
+    `);
   });
 
   it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+    const { filesync, gadgetDir, localDir, expectLocalAndGadgetHashesMatch, expectFilesVersionDirs } = await setup({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -606,22 +607,6 @@ describe("FileSync.sync", () => {
       ]
     `);
 
-    expect(filesVersionDirs.size).toBe(2);
-
-    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// gadget foo",
-      }
-    `);
-
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -642,10 +627,23 @@ describe("FileSync.sync", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+
+    (await expectFilesVersionDirs(2)).toMatchInlineSnapshot(`
+      Map {
+        1n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo",
+        },
+        2n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// gadget foo",
+        },
+      }
+    `);
   });
 
   it(`uses local conflicting changes and merges non-conflicting gadget changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+    const { filesync, gadgetDir, localDir, expectLocalAndGadgetHashesMatch, expectFilesVersionDirs } = await setup({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -721,32 +719,6 @@ describe("FileSync.sync", () => {
       ]
     `);
 
-    expect(filesVersionDirs.size).toBe(3);
-
-    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo gadget",
-        "gadget-file.js" => "// gadget",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo local",
-        "local-file.js" => "// local",
-        "gadget-file.js" => "// gadget",
-      }
-    `);
-
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -771,10 +743,30 @@ describe("FileSync.sync", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+
+    (await expectFilesVersionDirs(3)).toMatchInlineSnapshot(`
+      Map {
+        1n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo",
+        },
+        2n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo gadget",
+          "gadget-file.js" => "// gadget",
+        },
+        3n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo local",
+          "local-file.js" => "// local",
+          "gadget-file.js" => "// gadget",
+        },
+      }
+    `);
   });
 
   it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+    const { filesync, gadgetDir, localDir, expectLocalAndGadgetHashesMatch, expectFilesVersionDirs } = await setup({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -850,32 +842,6 @@ describe("FileSync.sync", () => {
       ]
     `);
 
-    expect(filesVersionDirs.size).toBe(3);
-
-    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo gadget",
-        "gadget-file.js" => "// gadget",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        "foo.js" => "// foo gadget",
-        "local-file.js" => "// local",
-        "gadget-file.js" => "// gadget",
-      }
-    `);
-
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -900,10 +866,30 @@ describe("FileSync.sync", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+
+    (await expectFilesVersionDirs(3)).toMatchInlineSnapshot(`
+      Map {
+        1n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo",
+        },
+        2n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo gadget",
+          "gadget-file.js" => "// gadget",
+        },
+        3n => Map {
+          ".gadget/" => "",
+          "foo.js" => "// foo gadget",
+          "local-file.js" => "// local",
+          "gadget-file.js" => "// gadget",
+        },
+      }
+    `);
   });
 
   it("automatically chooses gadget's conflicting changes to .gadget/ files", async () => {
-    const { filesync, filesVersionDirs, gadgetDir, localDir, expectLocalAndGadgetHashesMatch } = await setup({
+    const { filesync, gadgetDir, localDir, expectLocalAndGadgetHashesMatch, expectFilesVersionDirs } = await setup({
       filesVersion1Files: {
         ".gadget/dot-gadget-file": "// v1",
         "foo.js": "// foo",
@@ -944,24 +930,6 @@ describe("FileSync.sync", () => {
       ]
     `);
 
-    expect(filesVersionDirs.size).toBe(2);
-
-    await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        ".gadget/dot-gadget-file" => "// v1",
-        "foo.js" => "// foo",
-      }
-    `);
-
-    await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
-      Map {
-        ".gadget/" => "",
-        ".gadget/dot-gadget-file" => "// v2",
-        "foo.js" => "// foo",
-      }
-    `);
-
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -984,6 +952,21 @@ describe("FileSync.sync", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+
+    (await expectFilesVersionDirs(2)).toMatchInlineSnapshot(`
+      Map {
+        1n => Map {
+          ".gadget/" => "",
+          ".gadget/dot-gadget-file" => "// v1",
+          "foo.js" => "// foo",
+        },
+        2n => Map {
+          ".gadget/" => "",
+          ".gadget/dot-gadget-file" => "// v2",
+          "foo.js" => "// foo",
+        },
+      }
+    `);
   });
 });
 

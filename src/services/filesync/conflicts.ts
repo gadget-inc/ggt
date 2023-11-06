@@ -61,6 +61,15 @@ export const getConflicts = ({
     conflicts.set(path, { localChange, gadgetChange });
   }
 
+  // ignore .gadget/ file conflicts and always use gadget's version
+  // since gadget is the source of truth for .gadget/ files
+  for (const filepath of conflicts.keys()) {
+    if (filepath.startsWith(".gadget/")) {
+      localChanges.delete(filepath);
+      conflicts.delete(filepath);
+    }
+  }
+
   return conflicts;
 };
 

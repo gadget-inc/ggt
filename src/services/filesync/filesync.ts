@@ -551,15 +551,6 @@ export class FileSync {
       assert(localChanges.size > 0 || gadgetChanges.size > 0, "there should be changes if the hashes don't match");
     }
 
-    // ignore .gadget/ file conflicts and always use gadget's version
-    // because gadget is the source of truth for .gadget/ files
-    for (const filepath of conflicts.keys()) {
-      if (filepath.startsWith(".gadget/")) {
-        localChanges.delete(filepath);
-        conflicts.delete(filepath);
-      }
-    }
-
     if (conflicts.size > 0) {
       printlns`{bold You have conflicting changes with Gadget}`;
       printConflicts({ conflicts });

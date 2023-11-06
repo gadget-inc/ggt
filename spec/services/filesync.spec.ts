@@ -292,8 +292,8 @@ describe("FileSync.sync", () => {
       gadgetFiles: { "foo.js": "// foo" },
     });
 
-    vi.spyOn(prompt, "select");
-    vi.spyOn(prompt, "confirm");
+    vi.spyOn(prompt, "select").mockRejectedValue(new Error("should not select"));
+    vi.spyOn(prompt, "confirm").mockRejectedValue(new Error("should not confirm"));
 
     await filesync.sync();
 
@@ -320,13 +320,14 @@ describe("FileSync.sync", () => {
       },
     });
 
-    vi.spyOn(prompt, "select");
-    vi.spyOn(prompt, "confirm");
+    vi.spyOn(prompt, "select").mockRejectedValue(new Error("should not select"));
+    vi.spyOn(prompt, "confirm").mockRejectedValue(new Error("should not confirm"));
 
     await filesync.sync();
 
     expect(prompt.select).not.toHaveBeenCalled();
     expect(prompt.confirm).not.toHaveBeenCalled();
+
     expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -341,6 +342,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -357,12 +359,14 @@ describe("FileSync.sync", () => {
     `);
 
     expect(filesVersionDirs.size).toBe(3);
+
     await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// foo",
       }
     `);
+
     await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -370,6 +374,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -378,6 +383,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -391,6 +397,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -399,6 +406,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expectLocalAndGadgetHashesMatch();
   });
 
@@ -433,6 +441,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(prompt.confirm).not.toHaveBeenCalled();
     expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
     expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
@@ -469,6 +478,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
         [
           {
@@ -476,7 +486,9 @@ describe("FileSync.sync", () => {
           },
         ]
       `);
+
     expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
+
     expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -493,24 +505,28 @@ describe("FileSync.sync", () => {
     `);
 
     expect(filesVersionDirs.size).toBe(3);
+
     await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// foo",
       }
     `);
+
     await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// gadget foo",
       }
     `);
+
     await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// local foo",
       }
     `);
+
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -522,12 +538,14 @@ describe("FileSync.sync", () => {
         "foo.js" => "// local foo",
       }
     `);
+
     await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// local foo",
       }
     `);
+
     await expectLocalAndGadgetHashesMatch();
   });
 
@@ -562,6 +580,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
         [
           {
@@ -569,7 +588,9 @@ describe("FileSync.sync", () => {
           },
         ]
       `);
+
     expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
+
     expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -586,18 +607,21 @@ describe("FileSync.sync", () => {
     `);
 
     expect(filesVersionDirs.size).toBe(2);
+
     await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// foo",
       }
     `);
+
     await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// gadget foo",
       }
     `);
+
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -609,12 +633,14 @@ describe("FileSync.sync", () => {
         "foo.js" => "// gadget foo",
       }
     `);
+
     await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// gadget foo",
       }
     `);
+
     await expectLocalAndGadgetHashesMatch();
   });
 
@@ -651,6 +677,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -658,6 +685,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -677,6 +705,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -693,12 +722,14 @@ describe("FileSync.sync", () => {
     `);
 
     expect(filesVersionDirs.size).toBe(3);
+
     await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// foo",
       }
     `);
+
     await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -706,6 +737,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -714,6 +746,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -727,6 +760,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -735,6 +769,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expectLocalAndGadgetHashesMatch();
   });
 
@@ -771,6 +806,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(prompt.confirm.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -778,6 +814,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -792,6 +829,7 @@ describe("FileSync.sync", () => {
         },
       ]
     `);
+
     expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
@@ -813,12 +851,14 @@ describe("FileSync.sync", () => {
     `);
 
     expect(filesVersionDirs.size).toBe(3);
+
     await expect(readFiles(filesVersionDirs.get(1n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
         "foo.js" => "// foo",
       }
     `);
+
     await expect(readFiles(filesVersionDirs.get(2n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -826,6 +866,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expect(readFiles(filesVersionDirs.get(3n)!.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -834,6 +875,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expect(readFiles(localDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -847,6 +889,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expect(readFiles(gadgetDir.path)).resolves.toMatchInlineSnapshot(`
       Map {
         ".gadget/" => "",
@@ -855,6 +898,7 @@ describe("FileSync.sync", () => {
         "gadget-file.js" => "// gadget",
       }
     `);
+
     await expectLocalAndGadgetHashesMatch();
   });
 

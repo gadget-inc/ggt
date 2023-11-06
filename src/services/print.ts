@@ -44,8 +44,10 @@ export class Stream {
       for (const line of stripAnsi(data).split("\n")) {
         this._log.debug(line as Lowercase<string>);
       }
+      return true;
+    } else {
+      return process[this.channel].write(data);
     }
-    return process[this.channel].write(data);
   }
 
   public on(event: string, listener: (...args: unknown[]) => void): this {

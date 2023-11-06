@@ -377,7 +377,9 @@ export class FileSync {
     });
 
     try {
-      const { publishFileSyncEvents } = await this.editGraphQL.query({
+      const {
+        publishFileSyncEvents: { remoteFilesVersion },
+      } = await this.editGraphQL.query({
         query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
         variables: {
           input: {
@@ -387,15 +389,25 @@ export class FileSync {
           },
         },
       });
-      this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
+
+      this._state.filesVersion = remoteFilesVersion;
       this._save();
+
+      if (BigInt(remoteFilesVersion) > expectedFilesVersion + 1n) {
+        // when we sent our changes to gadget, gadget's files version
+        // was the one we expected, but something else was changing
+        // gadget's files at the same time, so we need to sync to get
+        // those changes
+        this.log.warn("files version incremented by more than 1", { before: expectedFilesVersion, after: remoteFilesVersion });
+        await this.sync();
+      }
     } catch (error) {
-      const mismatch = getFilesVersionMismatchError(error);
-      if (!mismatch) {
+      const unexpected = getUnexpectedFilesVersionError(error);
+      if (!unexpected) {
         throw error;
       }
 
-      this.log.warn("files version mismatch", mismatch);
+      this.log.warn("unexpected files version", unexpected);
       await this.sync();
       return;
     }
@@ -531,10 +543,12 @@ export class FileSync {
         return;
       }
 
+      // if we're here, then the files version was incremented by more
+      // than 1 after we sent our changes to gadget
       localChanges = getChanges({ from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
       gadgetChanges = getChanges({ from: localHashes, to: gadgetHashes });
       conflicts = getConflicts({ localChanges, gadgetChanges });
-      assert(localChanges.size === 0 || gadgetChanges.size === 0, "there should be changes if the hashes don't match");
+      assert(localChanges.size > 0 || gadgetChanges.size > 0, "there should be changes if the hashes don't match");
     }
 
     // ignore .gadget/ file conflicts and always use gadget's version
@@ -602,7 +616,7 @@ export class FileSync {
   }
 }
 
-const getFilesVersionMismatchError = (error: unknown): { expected: bigint; actual: bigint } | undefined => {
+const getUnexpectedFilesVersionError = (error: unknown): { expected: bigint; actual: bigint } | undefined => {
   let message = error instanceof ClientError && isGraphQLErrors(error.cause) && error.cause.length === 1 && error.cause[0]?.message;
   message ||=
     error instanceof HTTPError &&

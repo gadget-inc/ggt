@@ -3,7 +3,12 @@ import { map } from "./collections.js";
 
 export type JsonifiableObject =
   | {
-      [Key in string]?: Jsonifiable | bigint | Map<Jsonifiable, Jsonifiable> | Set<Jsonifiable>;
+      [Key in string]?:
+        | JsonifiableObject
+        | Jsonifiable
+        | bigint
+        | Map<Jsonifiable | bigint, Jsonifiable | bigint>
+        | Set<Jsonifiable | bigint>;
     }
   | { toJSON: () => Jsonifiable }
   | { error?: unknown };

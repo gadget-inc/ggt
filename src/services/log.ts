@@ -139,6 +139,14 @@ const formatFields = (fields: Record<string, unknown>, indent = 2): string => {
   for (let [key, value] of Object.entries(fields)) {
     buf.push(formatKey(key, indent));
 
+    if (value instanceof Set) {
+      value = Array.from(value);
+    }
+
+    if (value instanceof Map) {
+      value = Object.fromEntries(value.entries());
+    }
+
     if (Array.isArray(value)) {
       if (value.length === 0) {
         buf.push(formatValue(" []", gray, indent));

@@ -52,6 +52,7 @@ export const createLogger = (name: string, loggerFields: Fields = {}): Logger =>
         return;
       }
 
+      // TODO: do this in noop logger
       addSentryBreadcrumb({
         level: level === "warn" ? "warning" : level,
         message: msg,

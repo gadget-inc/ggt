@@ -43,7 +43,9 @@ export const env = {
 };
 
 export const config = {
-  debug: false,
+  get debug() {
+    return parseBoolean(process.env["DEBUG"]);
+  },
 
   get name(): string {
     return pkgJson.name;
@@ -176,4 +178,15 @@ export const config = {
       return process.env["GGT_GADGET_SERVICES_DOMAIN"] || (env.productionLike ? "app.gadget.dev" : "app.ggt.dev");
     },
   },
+};
+
+/**
+ * Parses a string value and returns a boolean value.
+ *
+ * @param value - The string value to parse.
+ * @returns A boolean value representing the parsed value.
+ */
+export const parseBoolean = (value: string | null | undefined): boolean => {
+  value ??= "";
+  return ["true", "1"].includes(value.trim().toLowerCase());
 };

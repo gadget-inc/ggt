@@ -1,7 +1,7 @@
 import ms from "ms";
 import inspector from "node:inspector";
 import process from "node:process";
-import { parseBoolean } from "./args.js";
+import { parseBoolean } from "./config.js";
 
 /**
  * Returns the timeout duration in milliseconds.

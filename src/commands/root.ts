@@ -1,6 +1,4 @@
 import arg from "arg";
-import debug from "debug";
-import { parseBoolean } from "../services/args.js";
 import { config } from "../services/config.js";
 import { CLIError } from "../services/errors.js";
 import { isNil } from "../services/is.js";
@@ -50,9 +48,8 @@ export const command = async (): Promise<void> => {
     stopAtPositional: false,
   });
 
-  if (rootArgs["--debug"] ?? parseBoolean(process.env["DEBUG"])) {
-    debug.enable("ggt:*");
-    config.debug = true;
+  if (rootArgs["--debug"]) {
+    process.env["DEBUG"] = "true";
   }
 
   if (rootArgs["--version"]) {

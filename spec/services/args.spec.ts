@@ -1,19 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { AppArg, parseBoolean } from "../../src/services/args.js";
+import { AppArg } from "../../src/services/args.js";
 import { ArgError } from "../../src/services/errors.js";
 import { expectError } from "../__support__/error.js";
 
 describe("args", () => {
-  describe("parseBoolean", () => {
-    it.each(["1", "true", "True", "TRUE"])("parses %s as true", (value) => {
-      expect(parseBoolean(value)).toBe(true);
-    });
-
-    it.each(["0", "false", "False", "FALSE"])("parses %s as false", (value) => {
-      expect(parseBoolean(value)).toBe(false);
-    });
-  });
-
   describe("AppArg", () => {
     it.each([
       "my-app",

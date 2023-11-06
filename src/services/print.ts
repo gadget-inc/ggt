@@ -3,66 +3,12 @@ import chalkTemplate from "chalk-template";
 import CliTable3, { type TableConstructorOptions } from "cli-table3";
 import levenshtein from "fast-levenshtein";
 import assert from "node:assert";
-import process from "node:process";
-import stripAnsi from "strip-ansi";
 import { dedent } from "ts-dedent";
-import { config } from "./config.js";
-import { isObject, isString } from "./is.js";
-import { createLogger, type Logger } from "./log.js";
+import { isString } from "./is.js";
+import { stdout } from "./stream.js";
 
 export const color = ansiColors;
 export const symbol = ansiColors.symbols;
-
-/**
- * A wrapper around process.stdout and process.stderr that allows us to mock out the streams for testing.
- *
- * @see https://github.com/oclif/core/blob/16139fe8a7f991b4b446a1599ab63f15d9809b8e/src/cli-ux/stream.ts
- */
-export class Stream {
-  private _log?: Logger;
-
-  public constructor(public channel: "stdout" | "stderr") {
-    process[this.channel].on("error", (err: unknown) => {
-      if (isObject(err) && "code" in err && err.code === "EPIPE") {
-        return;
-      }
-      throw err;
-    });
-  }
-
-  public get isTTY(): boolean {
-    return process[this.channel].isTTY;
-  }
-
-  public getWindowSize(): number[] {
-    return process[this.channel].getWindowSize();
-  }
-
-  public write(data: string): boolean {
-    if (config.debug) {
-      this._log ??= createLogger(this.channel);
-      for (const line of stripAnsi(data).split("\n")) {
-        this._log.debug(line as Lowercase<string>);
-      }
-      return true;
-    } else {
-      return process[this.channel].write(data);
-    }
-  }
-
-  public on(event: string, listener: (...args: unknown[]) => void): this {
-    process[this.channel].on(event, listener);
-    return this;
-  }
-
-  public once(event: string, listener: (...args: unknown[]) => void): this {
-    process[this.channel].once(event, listener);
-    return this;
-  }
-}
-
-export const stdout = new Stream("stdout");
-export const stderr = new Stream("stderr");
 
 export const sprint = (template: TemplateStringsArray | string, ...values: unknown[]): string => {
   let content = template;
@@ -81,15 +27,18 @@ export const sprintlns = (template: TemplateStringsArray | string, ...values: un
 };
 
 export const print = (template: TemplateStringsArray | string, ...values: unknown[]): void => {
-  stdout.write(sprint(template, ...values));
+  const message = sprint(template, ...values);
+  stdout.write(message);
 };
 
 export const println = (template: TemplateStringsArray | string, ...values: unknown[]): void => {
-  stdout.write(sprintln(template, ...values));
+  const message = sprintln(template, ...values);
+  stdout.write(message);
 };
 
 export const printlns = (template: TemplateStringsArray | string, ...values: unknown[]): void => {
-  stdout.write(sprintlns(template, ...values));
+  const message = sprintlns(template, ...values);
+  stdout.write(message);
 };
 
 /**

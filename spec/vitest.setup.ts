@@ -15,11 +15,11 @@ beforeEach(async () => {
   vi.spyOn(config, "dataDir", "get").mockReturnValue(testDirPath("data"));
 
   // write to in-memory stdout/stderr instead of real stdout/stderr
-  const { Stream } = await import("../src/services/print.js");
-  Stream.prototype.write = function (data) {
+  const { stdout } = await import("../src/services/stream.js");
+  vi.spyOn(stdout, "write").mockImplementation((data) => {
     testStdout.push(data);
     return true;
-  };
+  });
 
   // clear testOutput so that we can `expect(testOutput).not.toContain("some output")` in tests where "some output" was output in another test
   testStdout.length = 0;

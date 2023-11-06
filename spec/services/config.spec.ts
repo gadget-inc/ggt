@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { config } from "../../src/services/config.js";
+import { config, parseBoolean } from "../../src/services/config.js";
 
 describe("domains", () => {
   beforeEach(() => {
@@ -45,5 +45,15 @@ describe("domains", () => {
         expect(config.domains.services).toBe("app.gadget.dev");
       }
     });
+  });
+});
+
+describe("parseBoolean", () => {
+  it.each(["1", "true", "True", "TRUE"])("parses %s as true", (value) => {
+    expect(parseBoolean(value)).toBe(true);
+  });
+
+  it.each(["0", "false", "False", "FALSE"])("parses %s as false", (value) => {
+    expect(parseBoolean(value)).toBe(false);
   });
 });

@@ -23,7 +23,7 @@ import {
 import { mapValues } from "../collections.js";
 import { config } from "../config.js";
 import { ArgError, ClientError, InvalidSyncFileError } from "../errors.js";
-import { isGraphQLErrors, isObject } from "../is.js";
+import { isGraphQLErrors, isNil, isObject } from "../is.js";
 import { createLogger } from "../log.js";
 import { noop } from "../noop.js";
 import { printlns, sortBySimilarity, sprint } from "../print.js";
@@ -393,12 +393,16 @@ export class FileSync {
       this._state.filesVersion = remoteFilesVersion;
       this._save();
 
-      if (BigInt(remoteFilesVersion) > expectedFilesVersion + 1n) {
+      if (this.filesVersion > expectedFilesVersion + 1n) {
+        this.log.warn("files version incremented by more than 1", {
+          before: expectedFilesVersion,
+          after: this.filesVersion,
+        });
+
         // when we sent our changes to gadget, gadget's files version
-        // was the one we expected, but something else was changing
+        // was the one we expected, but someone else was changing
         // gadget's files at the same time, so we need to sync to get
         // those changes
-        this.log.warn("files version incremented by more than 1", { before: expectedFilesVersion, after: remoteFilesVersion });
         await this.sync();
       }
     } catch (error) {
@@ -416,8 +420,8 @@ export class FileSync {
     printChanges({ changes, tense: "present", limit: 10, mt: 0 });
   }
 
-  async receiveChangesFromGadget({ filesVersion, changes }: { filesVersion: bigint; changes: Changes | ChangesWithHash }): Promise<void> {
-    this.log.debug("receiving changes from gadget", { filesVersion, changes });
+  async getChangesFromGadget({ filesVersion, changes }: { filesVersion: bigint; changes: Changes | ChangesWithHash }): Promise<void> {
+    this.log.debug("getting changes from gadget", { filesVersion, changes });
     const created = changes.created();
     const updated = changes.updated();
 
@@ -459,6 +463,13 @@ export class FileSync {
       {
         error: onError,
         next: ({ remoteFileSyncEvents }) => {
+          if (BigInt(remoteFileSyncEvents.remoteFilesVersion) < this.filesVersion) {
+            this.log.debug("skipping received changes because files version is less than current files version", {
+              filesVersion: remoteFileSyncEvents.remoteFilesVersion,
+            });
+            return;
+          }
+
           log.info("received files", {
             remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
             changed: mapValues(remoteFileSyncEvents.changed, "path", 10),
@@ -587,7 +598,7 @@ export class FileSync {
     }
 
     if (gadgetChanges.size > 0) {
-      await this.receiveChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
+      await this.getChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
     }
 
     if (localChanges.size > 0) {
@@ -623,7 +634,7 @@ const getUnexpectedFilesVersionError = (error: unknown): { expected: bigint; act
 
   // Files version mismatch, expected 1 but got 2
   const { expected, actual } = message.match(/Files version mismatch, expected (?<expected>\d+) but got (?<actual>\d+)/)?.groups ?? {};
-  assert(expected && actual, "expected and actual should be defined");
+  assert(!isNil(expected) && !isNil(actual), "expected and actual should be defined");
 
   return { expected: BigInt(expected), actual: BigInt(actual) };
 };

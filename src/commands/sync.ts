@@ -201,10 +201,9 @@ export const command: Command = async (rootArgs) => {
    * A debounced function that sends the local file changes to Gadget.
    */
   const sendChangesToGadget = debounce(args["--file-push-delay"], () => {
-    const changes = new Changes(localChangesBuffer.entries());
-    localChangesBuffer.clear();
-
     enqueue(async () => {
+      const changes = new Changes(localChangesBuffer.entries());
+      localChangesBuffer.clear();
       await filesync.sendChangesToGadget({ changes });
     });
   });

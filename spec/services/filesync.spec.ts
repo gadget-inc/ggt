@@ -267,7 +267,7 @@ describe("FileSync.sync", () => {
       filesync._save();
     });
 
-    vi.spyOn(filesync, "receiveChangesFromGadget");
+    vi.spyOn(filesync, "getChangesFromGadget");
 
     return {
       filesync,
@@ -311,7 +311,7 @@ describe("FileSync.sync", () => {
 
     expect(prompt.select).not.toHaveBeenCalled();
     expect(prompt.confirm).not.toHaveBeenCalled();
-    expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
+    expect(filesync.getChangesFromGadget).not.toHaveBeenCalled();
     expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
     await expectLocalAndGadgetHashesMatch();
     await expectFilesVersionDirs().toMatchInlineSnapshot(`
@@ -363,7 +363,7 @@ describe("FileSync.sync", () => {
       ]
     `);
 
-    expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
+    expect(filesync.getChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
           "changes": Map {
@@ -457,7 +457,7 @@ describe("FileSync.sync", () => {
     `);
 
     expect(prompt.confirm).not.toHaveBeenCalled();
-    expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
+    expect(filesync.getChangesFromGadget).not.toHaveBeenCalled();
     expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
   });
 
@@ -501,7 +501,7 @@ describe("FileSync.sync", () => {
         ]
       `);
 
-    expect(filesync.receiveChangesFromGadget).not.toHaveBeenCalled();
+    expect(filesync.getChangesFromGadget).not.toHaveBeenCalled();
 
     expect(filesync.sendChangesToGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
@@ -599,7 +599,7 @@ describe("FileSync.sync", () => {
 
     expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
 
-    expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
+    expect(filesync.getChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
           "changes": Map {
@@ -711,7 +711,7 @@ describe("FileSync.sync", () => {
       ]
     `);
 
-    expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
+    expect(filesync.getChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
           "changes": Map {
@@ -829,7 +829,7 @@ describe("FileSync.sync", () => {
       ]
     `);
 
-    expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
+    expect(filesync.getChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
           "changes": Map {
@@ -922,7 +922,7 @@ describe("FileSync.sync", () => {
     expect(prompt.confirm).not.toHaveBeenCalled();
     expect(filesync.sendChangesToGadget).not.toHaveBeenCalled();
 
-    expect(filesync.receiveChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
+    expect(filesync.getChangesFromGadget.mock.lastCall).toMatchInlineSnapshot(`
       [
         {
           "changes": Map {

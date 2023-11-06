@@ -21,7 +21,8 @@ import {
 } from "../app/edit-graphql.js";
 import { mapValues } from "../collections.js";
 import { config } from "../config.js";
-import { ArgError, InvalidSyncFileError } from "../errors.js";
+import { ArgError, ClientError, InvalidSyncFileError } from "../errors.js";
+import { isGraphQLErrors } from "../is.js";
 import { createLogger } from "../log.js";
 import { noop } from "../noop.js";
 import { printlns, sortBySimilarity, sprint } from "../print.js";
@@ -368,32 +369,52 @@ export class FileSync {
       });
     });
 
-    const { publishFileSyncEvents } = await this.editGraphQL.query({
-      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      variables: {
-        input: {
-          expectedRemoteFilesVersion: String(expectedFilesVersion),
-          changed,
-          deleted,
+    try {
+      const { publishFileSyncEvents } = await this.editGraphQL.query({
+        query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+        variables: {
+          input: {
+            expectedRemoteFilesVersion: String(expectedFilesVersion),
+            changed,
+            deleted,
+          },
         },
-      },
-    });
+      });
+      this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
+      this._save();
+    } catch (error) {
+      if (!isFilesVersionMismatchError(error)) {
+        throw error;
+      }
+      log.warn("files version mismatch", { error });
+      await this.sync();
+      return;
+    }
 
-    this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
-    this._save();
+    printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
+    printChanges({ changes, tense: "present", limit: 10, mt: 0 });
   }
 
   async receiveChangesFromGadget({ filesVersion, changes }: { filesVersion: bigint; changes: Changes | ChangesWithHash }): Promise<void> {
-    const { files } = await this.getFilesFromGadget({
-      filesVersion,
-      paths: [...changes.created(), ...changes.updated()],
-    });
+    const created = changes.created();
+    const updated = changes.updated();
+
+    let files: File[] = [];
+    if (created.length > 0 || updated.length > 0) {
+      ({ files } = await this.getFilesFromGadget({
+        filesVersion,
+        paths: [...created, ...updated],
+      }));
+    }
 
     await this.writeToLocalFilesystem({
       filesVersion,
       files,
       delete: changes.deleted(),
     });
+
+    printlns`← Received {gray (${dayjs().format("hh:mm:ss A")})}`;
+    printChanges({ changes, tense: "present", mt: 0, limit: 10 });
   }
 
   subscribeToGadgetChanges({
@@ -494,7 +515,7 @@ export class FileSync {
       assert(conflicts.size === 0, "there shouldn't be any conflicts if there are no changes");
 
       if (localHashes.equals(gadgetHashes)) {
-        this.log.info("filesystem is in sync", { filesVersion: this.filesVersion });
+        this.log.info("filesystem is in sync");
         this._state.filesVersion = String(gadgetFilesVersion);
         this._save();
         return;
@@ -503,15 +524,11 @@ export class FileSync {
       localChanges = getChanges({ from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
       gadgetChanges = getChanges({ from: localHashes, to: gadgetHashes });
       conflicts = getConflicts({ localChanges, gadgetChanges });
-      assert(localChanges.size === 0 || gadgetChanges.size === 0, "if the hashes are different, there should be changes");
-
-      // for (const filepath of conflicts.keys()) {
-
-      // }
+      assert(localChanges.size === 0 || gadgetChanges.size === 0, "there should be changes if the hashes don't match");
     }
 
-    // if there are any conflicts with .gadget/ files, ignore them
-    // because gadget is the source of truth
+    // ignore .gadget/ file conflicts and always use gadget's version
+    // because gadget is the source of truth for .gadget/ files
     for (const filepath of conflicts.keys()) {
       if (filepath.startsWith(".gadget/")) {
         localChanges.delete(filepath);
@@ -556,14 +573,10 @@ export class FileSync {
 
     if (gadgetChanges.size > 0) {
       await this.receiveChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
-      printlns`← Received {gray (${dayjs().format("hh:mm:ss A")})}`;
-      printChanges({ changes: gadgetChanges, tense: "present" });
     }
 
     if (localChanges.size > 0) {
       await this.sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
-      printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
-      printChanges({ changes: localChanges, tense: "present" });
     }
 
     // recursively call this function until we're in sync
@@ -577,3 +590,12 @@ export class FileSync {
     fs.outputJSONSync(this.directory.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
   }
 }
+
+const isFilesVersionMismatchError = (error: unknown): boolean => {
+  return Boolean(
+    error instanceof ClientError &&
+      isGraphQLErrors(error.cause) &&
+      error.cause.length === 1 &&
+      error.cause[0]?.message.startsWith("Files version mismatch"),
+  );
+};

@@ -11,10 +11,9 @@ import { mapValues } from "../services/collections.js";
 import { config } from "../services/config.js";
 import { debounce } from "../services/debounce.js";
 import { defaults } from "../services/defaults.js";
-import { ClientError, YarnNotFoundError } from "../services/errors.js";
+import { YarnNotFoundError } from "../services/errors.js";
 import { Changes, Create, Delete, Update, printChanges } from "../services/filesync/changes.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { isGraphQLErrors } from "../services/is.js";
 import { println, printlns, sprint } from "../services/print.js";
 import { PromiseSignal } from "../services/promise.js";
 import { getUserOrLogin } from "../services/user.js";
@@ -206,18 +205,7 @@ export const command: Command = async (rootArgs) => {
     localChangesBuffer.clear();
 
     enqueue(async () => {
-      try {
-        await filesync.sendChangesToGadget({ changes });
-        printlns`→ Sent {gray (${dayjs().format("hh:mm:ss A")})}`;
-        printChanges({ changes, tense: "present", limit: 10, mt: 0 });
-      } catch (error) {
-        if (!isFilesVersionMismatchError(error)) {
-          throw error;
-        }
-        log.warn("files version mismatch", { error });
-        await filesync.sync();
-        log.info("synced");
-      }
+      await filesync.sendChangesToGadget({ changes });
     });
   });
 
@@ -244,12 +232,7 @@ export const command: Command = async (rootArgs) => {
     const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
     const normalizedPath = filesync.directory.normalize(filepath, isDirectory);
 
-    log.debug("file event", {
-      event,
-      isDirectory,
-      path: normalizedPath,
-      recentRemoteChanges: Array.from(recentWritesToLocalFilesystem.keys()),
-    });
+    log.debug("file event", { event, isDirectory, path: normalizedPath });
 
     if (filepath === filesync.directory.absolute(".ignore")) {
       filesync.directory.loadIgnoreFile();
@@ -258,6 +241,7 @@ export const command: Command = async (rootArgs) => {
     }
 
     if (recentWritesToLocalFilesystem.delete(normalizedPath)) {
+      log.debug("ignoring event because we caused it", { event, path: normalizedPath });
       return;
     }
 
@@ -382,13 +366,4 @@ export const command: Command = async (rootArgs) => {
   } else {
     println("Goodbye!");
   }
-};
-
-const isFilesVersionMismatchError = (error: unknown): boolean => {
-  return Boolean(
-    error instanceof ClientError &&
-      isGraphQLErrors(error.cause) &&
-      error.cause.length === 1 &&
-      error.cause[0]?.message.startsWith("Files version mismatch"),
-  );
 };

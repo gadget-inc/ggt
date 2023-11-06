@@ -158,14 +158,11 @@ export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes;
 };
 
 /**
- * Filters out changes that
- * changes needed to be made to `existing` to apply all the `changes`.
+ * Filters out changes that the existing filesystem already has.
  *
- * @param changes - The `ChangesWithHash` object containing the changes
- * to be made.
- * @param existing - The `Hashes` object containing the existing hashes.
- * @returns A new `ChangesWithHash` object containing only the necessary
- * changes to be made.
+ * @param changes - The changes that are going to be applied to `existing`.
+ * @param existing - The existing filesystem `Hashes`.
+ * @returns Changes that are necessary to apply to `existing`.
  */
 export const withoutUnnecessaryChanges = ({ changes, existing }: { changes: ChangesWithHash; existing: Hashes }): ChangesWithHash => {
   const necessaryChanges = new ChangesWithHash();

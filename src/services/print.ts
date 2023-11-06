@@ -4,8 +4,11 @@ import CliTable3, { type TableConstructorOptions } from "cli-table3";
 import levenshtein from "fast-levenshtein";
 import assert from "node:assert";
 import process from "node:process";
+import stripAnsi from "strip-ansi";
 import { dedent } from "ts-dedent";
+import { config } from "./config.js";
 import { isObject, isString } from "./is.js";
+import { createLogger, type Logger } from "./log.js";
 
 export const color = ansiColors;
 export const symbol = ansiColors.symbols;
@@ -16,6 +19,8 @@ export const symbol = ansiColors.symbols;
  * @see https://github.com/oclif/core/blob/16139fe8a7f991b4b446a1599ab63f15d9809b8e/src/cli-ux/stream.ts
  */
 export class Stream {
+  private _log?: Logger;
+
   public constructor(public channel: "stdout" | "stderr") {
     process[this.channel].on("error", (err: unknown) => {
       if (isObject(err) && "code" in err && err.code === "EPIPE") {
@@ -34,6 +39,12 @@ export class Stream {
   }
 
   public write(data: string): boolean {
+    if (config.debug) {
+      this._log ??= createLogger(this.channel);
+      for (const line of stripAnsi(data).split("\n")) {
+        this._log.debug(line as Lowercase<string>);
+      }
+    }
     return process[this.channel].write(data);
   }
 
@@ -72,11 +83,11 @@ export const print = (template: TemplateStringsArray | string, ...values: unknow
 };
 
 export const println = (template: TemplateStringsArray | string, ...values: unknown[]): void => {
-  stdout.write(sprintln(template, ...values));
+  print(sprintln(template, ...values));
 };
 
 export const printlns = (template: TemplateStringsArray | string, ...values: unknown[]): void => {
-  stdout.write(sprintlns(template, ...values));
+  print(sprintlns(template, ...values));
 };
 
 /**

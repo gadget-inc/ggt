@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-confusing-void-expression */
 import { addBreadcrumb as addSentryBreadcrumb } from "@sentry/node";
 import Debug from "debug";
 import assert from "node:assert";
@@ -11,7 +10,7 @@ let longestMessage = 0;
 
 type Log = (msg: Lowercase<string>, fields?: JsonifiableObject) => void;
 
-type Logger = {
+export type Logger = {
   debug: Log;
   info: Log;
   warn: Log;

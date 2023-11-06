@@ -85,11 +85,11 @@ export const print = (template: TemplateStringsArray | string, ...values: unknow
 };
 
 export const println = (template: TemplateStringsArray | string, ...values: unknown[]): void => {
-  print(sprintln(template, ...values));
+  stdout.write(sprintln(template, ...values));
 };
 
 export const printlns = (template: TemplateStringsArray | string, ...values: unknown[]): void => {
-  print(sprintlns(template, ...values));
+  stdout.write(sprintlns(template, ...values));
 };
 
 /**

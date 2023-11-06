@@ -21,7 +21,7 @@ import type {
 } from "../../__generated__/graphql.js";
 import { config } from "../config.js";
 import { ClientError } from "../errors.js";
-import { loadCookie } from "../http.js";
+import { http, loadCookie } from "../http.js";
 import { isFunction } from "../is.js";
 import { createLogger } from "../log.js";
 import { noop } from "../noop.js";
@@ -44,7 +44,7 @@ export class EditGraphQL {
 
   private _client: ReturnType<typeof createClient>;
 
-  constructor(app: App) {
+  constructor(readonly app: App) {
     this._client = createClient({
       url: `wss://${app.slug}.${config.domains.app}/edit/api/graphql-ws`,
       shouldRetry: () => true,
@@ -193,7 +193,7 @@ export class EditGraphQL {
           assert(isFunction(payload.variables));
           subscribePayload = { ...payload, variables: payload.variables() };
           const [type, operation] = subscribePayload.query.split(/ |\(/, 2);
-          log.info("re-sending graphql query", { type, operation });
+          log.info("re-sending graphql query via ws", { type, operation });
         }
       });
     } else {
@@ -201,7 +201,7 @@ export class EditGraphQL {
     }
 
     const [type, operation] = subscribePayload.query.split(/ |\(/, 2);
-    log.info("sending graphql query", { type, operation });
+    log.info("sending graphql query via ws", { type, operation });
 
     const unsubscribe = this._client.subscribe(subscribePayload as SubscribePayload, {
       next: (result: ExecutionResult<Data, Extensions>) => {
@@ -221,12 +221,30 @@ export class EditGraphQL {
     };
   }
 
-  private _query<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
+  private async _query<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
     payload: Payload<Data, Variables>,
   ): Promise<ExecutionResult<Data, Extensions>> {
-    return new Promise((resolve, reject) => {
-      this._subscribe<Data, Variables, Extensions>(payload, { next: resolve, error: reject });
+    const cookie = loadCookie();
+    assert(cookie, "missing cookie when connecting to GraphQL API");
+
+    const [type, operation] = payload.query.split(/ |\(/, 2);
+    log.info("sending graphql query via http", { type, operation });
+
+    let subdomain = this.app.slug;
+    if (this.app.hasSplitEnvironments) {
+      subdomain += "--development";
+    }
+
+    const json = await http({
+      method: "POST",
+      url: `https://${subdomain}.${config.domains.app}/edit/api/graphql`,
+      headers: { cookie },
+      json: payload,
+      responseType: "json",
+      resolveBodyOnly: true,
     });
+
+    return json as ExecutionResult<Data, Extensions>;
   }
 }
 

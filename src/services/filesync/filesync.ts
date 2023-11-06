@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { findUp } from "find-up";
 import fs from "fs-extra";
+import { HTTPError } from "got";
 import ms from "ms";
 import assert from "node:assert";
 import path from "node:path";
@@ -22,7 +23,7 @@ import {
 import { mapValues } from "../collections.js";
 import { config } from "../config.js";
 import { ArgError, ClientError, InvalidSyncFileError } from "../errors.js";
-import { isGraphQLErrors } from "../is.js";
+import { isGraphQLErrors, isObject } from "../is.js";
 import { createLogger } from "../log.js";
 import { noop } from "../noop.js";
 import { printlns, sortBySimilarity, sprint } from "../print.js";
@@ -262,8 +263,15 @@ export class FileSync {
   }): Promise<Changes> {
     const filesVersion = BigInt(options.filesVersion);
     if (filesVersion < BigInt(this._state.filesVersion)) {
+      this.log.debug("skipping write because files version is less than current files version", { filesVersion });
       return new Changes([]);
     }
+
+    this.log.debug("writing to local filesystem", {
+      filesVersion,
+      files: mapValues(options.files, "path", 10),
+      delete: Array.from(options.delete),
+    });
 
     const created: string[] = [];
     const updated: string[] = [];
@@ -320,7 +328,6 @@ export class FileSync {
     });
 
     this._state.filesVersion = String(filesVersion);
-
     this._save();
 
     return new Changes<Change>([
@@ -383,10 +390,12 @@ export class FileSync {
       this._state.filesVersion = publishFileSyncEvents.remoteFilesVersion;
       this._save();
     } catch (error) {
-      if (!isFilesVersionMismatchError(error)) {
+      const mismatch = getFilesVersionMismatchError(error);
+      if (!mismatch) {
         throw error;
       }
-      log.warn("files version mismatch", { error });
+
+      this.log.warn("files version mismatch", mismatch);
       await this.sync();
       return;
     }
@@ -396,6 +405,7 @@ export class FileSync {
   }
 
   async receiveChangesFromGadget({ filesVersion, changes }: { filesVersion: bigint; changes: Changes | ChangesWithHash }): Promise<void> {
+    this.log.debug("receiving changes from gadget", { filesVersion, changes });
     const created = changes.created();
     const updated = changes.updated();
 
@@ -587,15 +597,28 @@ export class FileSync {
    * Synchronously writes {@linkcode _state} to `.gadget/sync.json`.
    */
   private _save(): void {
+    this.log.debug("saving state", { state: this._state });
     fs.outputJSONSync(this.directory.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
   }
 }
 
-const isFilesVersionMismatchError = (error: unknown): boolean => {
-  return Boolean(
-    error instanceof ClientError &&
-      isGraphQLErrors(error.cause) &&
-      error.cause.length === 1 &&
-      error.cause[0]?.message.startsWith("Files version mismatch"),
-  );
+const getFilesVersionMismatchError = (error: unknown): { expected: bigint; actual: bigint } | undefined => {
+  let message = error instanceof ClientError && isGraphQLErrors(error.cause) && error.cause.length === 1 && error.cause[0]?.message;
+  message ||=
+    error instanceof HTTPError &&
+    isObject(error.response.body) &&
+    "errors" in error.response.body &&
+    isGraphQLErrors(error.response.body.errors) &&
+    error.response.body.errors.length === 1 &&
+    error.response.body.errors[0]?.message;
+
+  if (!message || !message.startsWith("Files version mismatch")) {
+    return undefined;
+  }
+
+  // Files version mismatch, expected 1 but got 2
+  const { expected, actual } = message.match(/Files version mismatch, expected (?<expected>\d+) but got (?<actual>\d+)/)?.groups ?? {};
+  assert(expected && actual, "expected and actual should be defined");
+
+  return { expected: BigInt(expected), actual: BigInt(actual) };
 };

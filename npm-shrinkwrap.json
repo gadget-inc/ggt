@@ -60,7 +60,7 @@
         "@swc/core": "^1.3.96",
         "@types/debug": "^4.1.11",
         "@types/eslint": "^8.44.7",
-        "@types/fast-levenshtein": "^0.0.3",
+        "@types/fast-levenshtein": "^0.0.4",
         "@types/fs-extra": "^11.0.3",
         "@types/ms": "^0.7.34",
         "@types/node": "^20.8.10",
@@ -4647,9 +4647,9 @@
       "dev": true
     },
     "node_modules/@types/fast-levenshtein": {
-      "version": "0.0.3",
-      "resolved": "https://registry.npmjs.org/@types/fast-levenshtein/-/fast-levenshtein-0.0.3.tgz",
-      "integrity": "sha512-KGLJbBibqCUA9WU9aNI7UK1dkw2FVIJ+W4a1JiSDotqRWVofPIr7BZI+UPV3MXOGyHifxzrHPNkpIUAbpqEN5w==",
+      "version": "0.0.4",
+      "resolved": "https://registry.npmjs.org/@types/fast-levenshtein/-/fast-levenshtein-0.0.4.tgz",
+      "integrity": "sha512-tkDveuitddQCxut1Db8eEFfMahTjOumTJGPHmT9E7KUH+DkVq9WTpVvlfenf3S+uCBeu8j5FP2xik/KfxOEjeA==",
       "dev": true
     },
     "node_modules/@types/fs-extra": {
@@ -19134,9 +19134,9 @@
       "dev": true
     },
     "@types/fast-levenshtein": {
-      "version": "0.0.3",
-      "resolved": "https://registry.npmjs.org/@types/fast-levenshtein/-/fast-levenshtein-0.0.3.tgz",
-      "integrity": "sha512-KGLJbBibqCUA9WU9aNI7UK1dkw2FVIJ+W4a1JiSDotqRWVofPIr7BZI+UPV3MXOGyHifxzrHPNkpIUAbpqEN5w==",
+      "version": "0.0.4",
+      "resolved": "https://registry.npmjs.org/@types/fast-levenshtein/-/fast-levenshtein-0.0.4.tgz",
+      "integrity": "sha512-tkDveuitddQCxut1Db8eEFfMahTjOumTJGPHmT9E7KUH+DkVq9WTpVvlfenf3S+uCBeu8j5FP2xik/KfxOEjeA==",
       "dev": true
     },
     "@types/fs-extra": {

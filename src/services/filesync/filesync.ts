@@ -44,8 +44,6 @@ import {
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { Directory, swallowEnoent } from "./directory.js";
 
-const log = createLogger("filesync");
-
 export type File = {
   path: string;
   oldPath?: string;
@@ -300,7 +298,7 @@ export class FileSync {
           retries: 2,
           minTimeout: ms("100ms"),
           onFailedAttempt: (error) => {
-            log.warn("failed to move file to backup", { error });
+            this.log.warn("failed to move file to backup", { error, currentPath, backupPath });
           },
         },
       );
@@ -344,7 +342,7 @@ export class FileSync {
     expectedFilesVersion?: bigint;
     changes: Changes | ChangesWithHash;
   }): Promise<void> {
-    log.debug("sending changes to gadget", { expectedFilesVersion, changes });
+    this.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
     const changed: FileSyncChangedEventInput[] = [];
     const deleted: FileSyncDeletedEventInput[] = [];
 
@@ -470,7 +468,7 @@ export class FileSync {
             return;
           }
 
-          log.info("received files", {
+          this.log.info("received files", {
             remoteFilesVersion: remoteFileSyncEvents.remoteFilesVersion,
             changed: mapValues(remoteFileSyncEvents.changed, "path", 10),
             deleted: mapValues(remoteFileSyncEvents.deleted, "path", 10),

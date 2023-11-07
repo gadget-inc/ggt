@@ -1,3 +1,9 @@
+/**
+ * DO NOT MODIFY
+ *
+ * Everything in this file also exists in Gadget to ensure that this
+ * logic is the same between the two projects.
+ */
 import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
@@ -23,7 +29,8 @@ export const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/backup"] as c
  */
 export class Directory {
   /**
-   * A gitignore-style file parser used to determine which files to ignore while syncing.
+   * A gitignore-style file parser used to determine which files to
+   * ignore while syncing.
    *
    * @see https://www.npmjs.com/package/ignore
    */
@@ -97,8 +104,8 @@ export class Directory {
    * condenses repeated slashes into a single slash, and adds a trailing
    * slash if the path is a directory.
    *
-   * This is used when sending file-sync events to Gadget to ensure that
-   * the paths are consistent across platforms.
+   * This is used when sending files to Gadget to ensure that the paths
+   * are consistent across platforms.
    *
    * @see https://www.npmjs.com/package/normalize-path
    */
@@ -117,8 +124,8 @@ export class Directory {
   }
 
   /**
-   * Loads the ignore file from the `.ignore` file in the directory. If
-   * the file does not exist, it is silently ignored.
+   * Loads the `.ignore` file in the directory. If the file does not
+   * exist, it is silently ignored.
    */
   loadIgnoreFile(): void {
     this._ignorer = ignore.default();
@@ -159,8 +166,8 @@ export class Directory {
   }
 
   /**
-   * Recursively walks through the directory and yields all files and
-   * directories within it.
+   * Recursively walks through the directory and yields all non-ignored
+   * files and directories within it.
    *
    * @yields - The normalized path of each file and directory.
    */
@@ -168,8 +175,8 @@ export class Directory {
     const stats = await fs.stat(dir);
     assert(stats.isDirectory(), `expected ${dir} to be a directory`);
 
+    // don't yield the root directory
     if (dir !== this.path) {
-      // don't yield the root directory
       yield this.normalize(dir, true);
     }
 

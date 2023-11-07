@@ -1,3 +1,9 @@
+/**
+ * DO NOT MODIFY
+ *
+ * Everything in this file also exists in Gadget to ensure that this
+ * logic is the same between the two projects.
+ */
 import fs from "fs-extra";
 import path from "node:path";
 import { describe, expect, it } from "vitest";

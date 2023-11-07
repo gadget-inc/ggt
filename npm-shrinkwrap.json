@@ -66,7 +66,7 @@
         "@types/node": "^20.8.10",
         "@types/node-notifier": "^8.0.4",
         "@types/normalize-path": "^3.0.2",
-        "@types/pluralize": "^0.0.32",
+        "@types/pluralize": "^0.0.33",
         "@types/which": "^3.0.1",
         "@types/ws": "^8.5.9",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
@@ -4769,9 +4769,9 @@
       "dev": true
     },
     "node_modules/@types/pluralize": {
-      "version": "0.0.32",
-      "resolved": "https://registry.npmjs.org/@types/pluralize/-/pluralize-0.0.32.tgz",
-      "integrity": "sha512-exDkoRIkWJlbRDRmtYDbI3ZUE28HwBwHe5VKn4mvpvMW7qIRDHO6URItErBsBSX7J8/PrDLSOHCcbUMFXwA6CA==",
+      "version": "0.0.33",
+      "resolved": "https://registry.npmjs.org/@types/pluralize/-/pluralize-0.0.33.tgz",
+      "integrity": "sha512-JOqsl+ZoCpP4e8TDke9W79FDcSgPAR0l6pixx2JHkhnRjvShyYiAYw2LVsnA7K08Y6DeOnaU6ujmENO4os/cYg==",
       "dev": true
     },
     "node_modules/@types/responselike": {
@@ -19255,9 +19255,9 @@
       "dev": true
     },
     "@types/pluralize": {
-      "version": "0.0.32",
-      "resolved": "https://registry.npmjs.org/@types/pluralize/-/pluralize-0.0.32.tgz",
-      "integrity": "sha512-exDkoRIkWJlbRDRmtYDbI3ZUE28HwBwHe5VKn4mvpvMW7qIRDHO6URItErBsBSX7J8/PrDLSOHCcbUMFXwA6CA==",
+      "version": "0.0.33",
+      "resolved": "https://registry.npmjs.org/@types/pluralize/-/pluralize-0.0.33.tgz",
+      "integrity": "sha512-JOqsl+ZoCpP4e8TDke9W79FDcSgPAR0l6pixx2JHkhnRjvShyYiAYw2LVsnA7K08Y6DeOnaU6ujmENO4os/cYg==",
       "dev": true
     },
     "@types/responselike": {

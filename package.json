@@ -88,7 +88,7 @@
     "@types/debug": "^4.1.11",
     "@types/eslint": "^8.44.7",
     "@types/fast-levenshtein": "^0.0.4",
-    "@types/fs-extra": "^11.0.3",
+    "@types/fs-extra": "^11.0.4",
     "@types/ms": "^0.7.34",
     "@types/node": "^20.8.10",
     "@types/node-notifier": "^8.0.4",

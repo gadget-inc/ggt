@@ -24,7 +24,7 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-} from "../../src/services/filesync.js";
+} from "../../src/services/filesync/filesync.js";
 import { isFunction, isNil, isString } from "../../src/services/is.js";
 import { noop } from "../../src/services/noop.js";
 import { sleep, sleepUntil } from "../../src/services/sleep.js";

@@ -1,10 +1,10 @@
 import fs from "fs-extra";
 import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as app from "../../src/services/app.js";
-import { ArgError, InvalidSyncFileError } from "../../src/services/errors.js";
-import { FileSync } from "../../src/services/filesync.js";
-import { expectError, testApp, testDirPath, testUser } from "../util.js";
+import * as app from "../../../src/services/app.js";
+import { ArgError, InvalidSyncFileError } from "../../../src/services/errors.js";
+import { FileSync } from "../../../src/services/filesync/filesync.js";
+import { expectError, testApp, testDirPath, testUser } from "../../util.js";
 
 describe("filesync", () => {
   let dir: string;

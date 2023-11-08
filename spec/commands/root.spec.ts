@@ -1,7 +1,6 @@
 import debug from "debug";
-import { afterEach } from "node:test";
 import { dedent } from "ts-dedent";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { availableCommands, type Command } from "../../src/commands/index.js";
 import { config } from "../../src/services/config.js";
 import { CLIError, IsBug } from "../../src/services/errors.js";

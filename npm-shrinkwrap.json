@@ -39,7 +39,7 @@
         "p-retry": "^6.1.0",
         "pluralize": "^8.0.0",
         "semver": "^7.5.4",
-        "serialize-error": "^11.0.2",
+        "serialize-error": "^11.0.3",
         "ts-dedent": "^2.2.0",
         "watcher": "^2.3.0",
         "which": "^4.0.0",
@@ -13564,9 +13564,9 @@
       }
     },
     "node_modules/serialize-error": {
-      "version": "11.0.2",
-      "resolved": "https://registry.npmjs.org/serialize-error/-/serialize-error-11.0.2.tgz",
-      "integrity": "sha512-o43i0jLcA0LXA5Uu+gI1Vj+lF66KR9IAcy0ThbGq1bAMPN+k5IgSHsulfnqf/ddKAz6dWf+k8PD5hAr9oCSHEQ==",
+      "version": "11.0.3",
+      "resolved": "https://registry.npmjs.org/serialize-error/-/serialize-error-11.0.3.tgz",
+      "integrity": "sha512-2G2y++21dhj2R7iHAdd0FIzjGwuKZld+7Pl/bTU6YIkrC2ZMbVUjm+luj6A6V34Rv9XfKJDKpTWu9W4Gse1D9g==",
       "dependencies": {
         "type-fest": "^2.12.2"
       },
@@ -25292,9 +25292,9 @@
       }
     },
     "serialize-error": {
-      "version": "11.0.2",
-      "resolved": "https://registry.npmjs.org/serialize-error/-/serialize-error-11.0.2.tgz",
-      "integrity": "sha512-o43i0jLcA0LXA5Uu+gI1Vj+lF66KR9IAcy0ThbGq1bAMPN+k5IgSHsulfnqf/ddKAz6dWf+k8PD5hAr9oCSHEQ==",
+      "version": "11.0.3",
+      "resolved": "https://registry.npmjs.org/serialize-error/-/serialize-error-11.0.3.tgz",
+      "integrity": "sha512-2G2y++21dhj2R7iHAdd0FIzjGwuKZld+7Pl/bTU6YIkrC2ZMbVUjm+luj6A6V34Rv9XfKJDKpTWu9W4Gse1D9g==",
       "requires": {
         "type-fest": "^2.12.2"
       },

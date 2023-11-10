@@ -10,6 +10,8 @@ import ignore from "ignore";
 import assert from "node:assert";
 import { createHash } from "node:crypto";
 import path from "node:path";
+import { Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import normalizePath from "normalize-path";
 
 /**
@@ -239,32 +241,27 @@ const hash = async (absolutePath: string): Promise<string> => {
     return sha1.digest("hex");
   }
 
-  return await new Promise((resolve, reject) => {
-    try {
-      const stream = fs.createReadStream(absolutePath);
-
-      stream.on("data", (data: Buffer) => {
-        // windows uses CRLF line endings whereas unix uses LF line
-        // endings so we always strip out CR bytes (0x0d) when hashing
-        // files. this does make us blind to files that only differ by
-        // CR bytes, but that's a tradeoff we're willing to make.
-        sha1.update(data.filter((byte) => byte !== 0x0d));
-      });
-
-      stream.on("error", (err) => {
-        sha1.destroy();
-        stream.destroy();
-        reject(err);
-      });
-
-      stream.on("end", () => {
-        stream.close();
-        resolve(sha1.digest("hex"));
-      });
-    } catch (error) {
-      reject(error);
-    }
+  // windows uses CRLF line endings whereas unix uses LF line endings so
+  // we always strip out CR bytes (0x0d) when hashing files. this does
+  // make us blind to files that only differ by CR bytes, but that's a
+  // tradeoff we're willing to make.
+  const removeCR = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      let filteredChunk = Buffer.alloc(chunk.length);
+      let i = 0;
+      for (const byte of chunk) {
+        if (byte !== 0x0d) {
+          filteredChunk[i++] = byte;
+        }
+      }
+      filteredChunk = filteredChunk.slice(0, i);
+      callback(undefined, filteredChunk);
+    },
   });
+
+  await pipeline(fs.createReadStream(absolutePath), removeCR, sha1);
+
+  return sha1.digest("hex");
 };
 
 /**

@@ -81,7 +81,7 @@
         "eslint-plugin-unicorn": "^49.0.0",
         "nock": "^13.3.8",
         "prettier": "^3.0.3",
-        "prettier-plugin-organize-imports": "^3.2.3",
+        "prettier-plugin-organize-imports": "^3.2.4",
         "prettier-plugin-packagejson": "^2.4.6",
         "remark": "^15.0.1",
         "remark-gfm": "^4.0.0",
@@ -12636,9 +12636,9 @@
       }
     },
     "node_modules/prettier-plugin-organize-imports": {
-      "version": "3.2.3",
-      "resolved": "https://registry.npmjs.org/prettier-plugin-organize-imports/-/prettier-plugin-organize-imports-3.2.3.tgz",
-      "integrity": "sha512-KFvk8C/zGyvUaE3RvxN2MhCLwzV6OBbFSkwZ2OamCrs9ZY4i5L77jQ/w4UmUr+lqX8qbaqVq6bZZkApn+IgJSg==",
+      "version": "3.2.4",
+      "resolved": "https://registry.npmjs.org/prettier-plugin-organize-imports/-/prettier-plugin-organize-imports-3.2.4.tgz",
+      "integrity": "sha512-6m8WBhIp0dfwu0SkgfOxJqh+HpdyfqSSLfKKRZSFbDuEQXDDndb8fTpRWkUrX/uBenkex3MgnVk0J3b3Y5byog==",
       "dev": true,
       "peerDependencies": {
         "@volar/vue-language-plugin-pug": "^1.0.4",
@@ -24655,9 +24655,9 @@
       "dev": true
     },
     "prettier-plugin-organize-imports": {
-      "version": "3.2.3",
-      "resolved": "https://registry.npmjs.org/prettier-plugin-organize-imports/-/prettier-plugin-organize-imports-3.2.3.tgz",
-      "integrity": "sha512-KFvk8C/zGyvUaE3RvxN2MhCLwzV6OBbFSkwZ2OamCrs9ZY4i5L77jQ/w4UmUr+lqX8qbaqVq6bZZkApn+IgJSg==",
+      "version": "3.2.4",
+      "resolved": "https://registry.npmjs.org/prettier-plugin-organize-imports/-/prettier-plugin-organize-imports-3.2.4.tgz",
+      "integrity": "sha512-6m8WBhIp0dfwu0SkgfOxJqh+HpdyfqSSLfKKRZSFbDuEQXDDndb8fTpRWkUrX/uBenkex3MgnVk0J3b3Y5byog==",
       "dev": true,
       "requires": {}
     },

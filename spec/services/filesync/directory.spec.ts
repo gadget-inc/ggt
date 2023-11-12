@@ -7,8 +7,9 @@
 import fs from "fs-extra";
 import os from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
-import { ALWAYS_IGNORE_PATHS, Directory, HASHING_IGNORE_PATHS } from "../../../src/services/filesync/directory.js";
+import { describe, expect, it, test } from "vitest";
+import { mapValues } from "../../../src/services/collections.js";
+import { ALWAYS_IGNORE_PATHS, Directory, HASHING_IGNORE_PATHS, supportsPermissions } from "../../../src/services/filesync/directory.js";
 import { writeDir, type Files } from "../../__support__/files.js";
 import { appFixturePath, testDirPath } from "../../__support__/paths.js";
 
@@ -308,7 +309,16 @@ describe("Directory.walk", () => {
 describe("Directory.hashes", () => {
   it("produces the expected result", async () => {
     const directory = await Directory.init(appFixturePath());
-    await expect(directory.hashes()).resolves.toMatchSnapshot();
+    const hashes = await directory.hashes();
+    expect(mapValues(hashes, (hash) => hash.sha1)).toMatchSnapshot();
+
+    if (supportsPermissions) {
+      expect(mapValues(hashes, (hash) => hash.permissions!.toString(8))).toMatchSnapshot();
+    } else {
+      expect(mapValues(hashes, (hash) => hash.permissions)).toEqual(mapValues(hashes, () => undefined));
+    }
+
+    expect.assertions(2);
   });
 });
 
@@ -334,3 +344,51 @@ describe("HASHING_IGNORE_PATHS", () => {
     `);
   });
 });
+
+const Read = 0o4;
+const Write = 0o2;
+const Execute = 0o1;
+
+const Permissions = {
+  Read: Read,
+  Write: Write,
+  Execute: Execute,
+  ReadWrite: Read | Write,
+  ReadExecute: Read | Execute,
+  WriteExecute: Write | Execute,
+  ReadWriteExecute: Read | Write | Execute,
+} as const;
+
+const Other = Permissions;
+const Group = mapValues(Permissions, (mode) => mode << 3);
+const User = mapValues(Permissions, (mode) => mode << 6);
+
+const modes = {} as Record<string, number>;
+for (const user of Object.keys(User)) {
+  for (const group of Object.keys(Group)) {
+    // eslint-disable-next-line max-depth
+    for (const other of Object.keys(Other)) {
+      const mode = User[user as keyof typeof User] | Group[group as keyof typeof Group] | Other[other as keyof typeof Other];
+      modes[mode.toString(8)] = mode;
+    }
+  }
+}
+
+test.runIf(supportsPermissions && (process.getuid?.() === 0 || process.env["CI"])).each(Object.entries(modes))(
+  "we can set a file/folder's mode to %s",
+  async (formatted, mode) => {
+    const filename = testDirPath(`${formatted}.txt`);
+    await fs.outputFile(filename, "");
+    await fs.chmod(filename, mode);
+
+    let stats = await fs.stat(filename);
+    expect.soft(stats.mode & 0o777).toBe(mode);
+
+    const dirname = testDirPath(formatted);
+    await fs.mkdir(dirname);
+    await fs.chmod(dirname, mode);
+
+    stats = await fs.stat(dirname);
+    expect.soft(stats.mode & 0o777).toBe(mode);
+  },
+);

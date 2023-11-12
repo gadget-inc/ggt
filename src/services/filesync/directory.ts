@@ -216,11 +216,27 @@ export class Directory {
   }
 }
 
+export interface Hash {
+  /**
+   * The SHA-1 hash of the file or directory.
+   */
+  sha1: string;
+
+  /**
+   * The permissions of the file or directory, or undefined if on Windows.
+   * @example 0o755
+   * @example 0o644
+   */
+  permissions?: number;
+}
+
 /**
  * Key/value pairs where the key is the normalized path and the value is
  * the result of {@linkcode hash} for that path.
  */
-export type Hashes = Record<string, string>;
+export type Hashes = Record<string, Hash>;
+
+export const supportsPermissions = process.platform === "linux" || process.platform === "darwin";
 
 /**
  * Calculates the SHA-1 hash of the file or directory at the specified
@@ -232,13 +248,24 @@ export type Hashes = Record<string, string>;
  * @returns A Promise that resolves to the SHA-1 hash of the file or
  * directory.
  */
-const hash = async (absolutePath: string): Promise<string> => {
+const hash = async (absolutePath: string): Promise<Hash> => {
   const sha1 = createHash("sha1");
   sha1.update(path.basename(absolutePath));
 
   const stats = await fs.stat(absolutePath);
+
+  let permissions;
+  if (supportsPermissions) {
+    // only keep the last 9 bits of the mode (i.e. the permissions)
+    permissions = stats.mode & 0o777;
+  } else {
+    // on windows, we can't see if a file is executable nor can we make
+    // a file executable, so we just ignore the permissions and only let
+    // the contents of the file determine the hash
+  }
+
   if (stats.isDirectory()) {
-    return sha1.digest("hex");
+    return { sha1: sha1.digest("hex"), permissions };
   }
 
   // windows uses CRLF line endings whereas unix uses LF line endings so
@@ -261,7 +288,7 @@ const hash = async (absolutePath: string): Promise<string> => {
 
   await pipeline(fs.createReadStream(absolutePath), removeCR, sha1);
 
-  return sha1.digest("hex");
+  return { sha1: sha1.digest("hex"), permissions };
 };
 
 /**

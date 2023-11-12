@@ -170,9 +170,6 @@ export class Directory {
    * @yields - The normalized path of each file and directory.
    */
   async *walk({ dir = this.path } = {}): AsyncGenerator<string> {
-    const stats = await fs.stat(dir);
-    assert(stats.isDirectory(), `expected ${dir} to be a directory`);
-
     // don't yield the root directory
     if (dir !== this.path) {
       yield this.normalize(dir, true);

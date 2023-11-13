@@ -8,7 +8,8 @@ import fs from "fs-extra";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { ALWAYS_IGNORE_PATHS, Directory, HASHING_IGNORE_PATHS } from "../../../src/services/filesync/directory.js";
+import { mapValues } from "../../../src/services/collections.js";
+import { ALWAYS_IGNORE_PATHS, Directory, HASHING_IGNORE_PATHS, supportsPermissions } from "../../../src/services/filesync/directory.js";
 import { writeDir, type Files } from "../../__support__/files.js";
 import { appFixturePath, testDirPath } from "../../__support__/paths.js";
 
@@ -308,7 +309,16 @@ describe("Directory.walk", () => {
 describe("Directory.hashes", () => {
   it("produces the expected result", async () => {
     const directory = await Directory.init(appFixturePath());
-    await expect(directory.hashes()).resolves.toMatchSnapshot();
+    const hashes = await directory.hashes();
+    expect(mapValues(hashes, (hash) => hash.sha1)).toMatchSnapshot();
+
+    if (supportsPermissions) {
+      expect(mapValues(hashes, (hash) => hash.permissions!.toString(8))).toMatchSnapshot();
+    } else {
+      expect(mapValues(hashes, (hash) => hash.permissions)).toEqual(mapValues(hashes, () => undefined));
+    }
+
+    expect.assertions(2);
   });
 });
 

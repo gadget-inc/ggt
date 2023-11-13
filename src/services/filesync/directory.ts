@@ -217,25 +217,60 @@ export class Directory {
  * Key/value pairs where the key is the normalized path and the value is
  * the result of {@linkcode hash} for that path.
  */
-export type Hashes = Record<string, string>;
+export type Hashes = Record<string, Hash>;
+
+export interface Hash {
+  /**
+   * The SHA-1 hash of the file or directory.
+   *
+   * If the path points to a directory, the hash is calculated based on
+   * the directory's basename. If the path points to a file, the hash is
+   * calculated based on the file's basename and contents.
+   */
+  sha1: string;
+
+  /**
+   * The Unix-style file permissions of the file or directory, or
+   * undefined if the platform that generated this hash doesn't support
+   * them.
+   *
+   * @example 0o644
+   * @see supportsPermissions
+   */
+  permissions?: number;
+}
 
 /**
- * Calculates the SHA-1 hash of the file or directory at the specified
- * absolute path. If the path points to a directory, the hash is
- * calculated based on the directory name. If the path points to a file,
- * the hash is calculated based on the file's name and contents.
+ * Whether the current platform supports Unix-style file permissions.
+ *
+ * Windows doesn't support Unix-style file permissions and all file
+ * permissions retrieved via `node:fs` on Windows are translated to 666
+ * or 444.
+ */
+export const supportsPermissions = process.platform === "linux" || process.platform === "darwin";
+
+/**
+ * Calculates the {@linkcode Hash} of the file or directory at the
+ * specified absolute path.
  *
  * @param absolutePath The absolute path to the file or directory.
- * @returns A Promise that resolves to the SHA-1 hash of the file or
- * directory.
+ * @returns A Promise that resolves to the {@linkcode Hash} of the file
+ * or directory.
  */
-const hash = async (absolutePath: string): Promise<string> => {
+const hash = async (absolutePath: string): Promise<Hash> => {
   const sha1 = createHash("sha1");
   sha1.update(path.basename(absolutePath));
 
   const stats = await fs.stat(absolutePath);
+
+  let permissions;
+  if (supportsPermissions) {
+    // strip everything but the permissions
+    permissions = stats.mode & 0o777;
+  }
+
   if (stats.isDirectory()) {
-    return sha1.digest("hex");
+    return { sha1: sha1.digest("hex"), permissions };
   }
 
   // windows uses CRLF line endings whereas unix uses LF line endings so
@@ -258,7 +293,7 @@ const hash = async (absolutePath: string): Promise<string> => {
 
   await pipeline(fs.createReadStream(absolutePath), removeCR, sha1);
 
-  return sha1.digest("hex");
+  return { sha1: sha1.digest("hex"), permissions };
 };
 
 /**

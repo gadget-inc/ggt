@@ -124,6 +124,7 @@ export enum Action {
   CANCEL = "Cancel (Ctrl+C)",
   MERGE = "Merge local files with remote ones",
   RESET = "Reset local files to remote ones",
+  DEPLOY_ANYWAYS = "Deploy anyways"
 }
 
 const argSpec = {

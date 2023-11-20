@@ -14,8 +14,12 @@ import pluralize from "pluralize";
 import { dedent } from "ts-dedent";
 import { z } from "zod";
 import type {
+  DeployAppMutationMutation,
+  DeployAppMutationMutationVariables,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
+  PublishServerContractStatusSubscription,
+  PublishServerContractStatusSubscriptionVariables,
   RemoteFileSyncEventsSubscription,
   RemoteFileSyncEventsSubscriptionVariables,
   RemoteFilesVersionQuery,
@@ -457,6 +461,33 @@ export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
   }
 `) as Query<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
 
+export const REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION = dedent(/* GraphQL */ `
+  subscription PublishServerContractStatus($localFilesVersion: String!, $force: Boolean) {
+    publishServerContractStatus(localFilesVersion: $localFilesVersion, force: $force) {
+      remoteFilesVersion
+      progress
+      problems {
+        problem {
+          severity
+          message
+        }
+        node {
+          type
+          key
+          name
+          fieldType
+          parentKey
+          parentApiIdentifier
+        }
+      }
+      missingProductionShopifyConfig
+      missingProductionOpenAIConnectionConfig
+      missingProductionGoogleAuthConfig
+      isUsingOpenAIGadgetManagedKeys
+    }
+  }
+`) as Query<PublishServerContractStatusSubscription, PublishServerContractStatusSubscriptionVariables>;
+
 export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
   query RemoteFilesVersion {
     remoteFilesVersion
@@ -470,3 +501,11 @@ export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
     }
   }
 `) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
+
+export const DEPLOY_APP_MUTATION = dedent(/* GraphQL */ `
+  mutation DeployAppMutation($input: EnvironmentPublishInput!) {
+    publish(input: $input) {
+      success
+    }
+  }
+`) as Query<DeployAppMutationMutation, DeployAppMutationMutationVariables>;

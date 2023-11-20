@@ -15,7 +15,7 @@ export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> =
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string | number; output: string; }
+  ID: { input: string; output: string; }
   String: { input: string; output: string; }
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
@@ -32,6 +32,18 @@ export type Scalars = {
 export type ApiUpgradeConvergePlanResult = {
   __typename?: 'APIUpgradeConvergePlanResult';
   items: Array<Scalars['JSON']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type AddApplicationTagResult = {
+  __typename?: 'AddApplicationTagResult';
+  reason?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type AddUserTagResult = {
+  __typename?: 'AddUserTagResult';
+  reason?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -65,6 +77,11 @@ export type EnableFrontendResult = {
 export type EnvironmentPatchResult = {
   __typename?: 'EnvironmentPatchResult';
   success: Scalars['Boolean']['output'];
+};
+
+export type EnvironmentPublishInput = {
+  expectedRemoteFilesVersion?: InputMaybe<Scalars['String']['input']>;
+  force?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type EnvironmentPublishResult = {
@@ -132,6 +149,12 @@ export type LogSearchResult = {
   status: Scalars['String']['output'];
 };
 
+export type MigrateAacResult = {
+  __typename?: 'MigrateAACResult';
+  reason?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type MigrateEnvironmentsResult = {
   __typename?: 'MigrateEnvironmentsResult';
   success: Scalars['Boolean']['output'];
@@ -139,9 +162,13 @@ export type MigrateEnvironmentsResult = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addApplicationTag?: Maybe<AddApplicationTagResult>;
+  addUserTag?: Maybe<AddUserTagResult>;
   changeAppDomain?: Maybe<ChangeAppDomainResult>;
+  convergePackages: Scalars['Boolean']['output'];
   deleteApp?: Maybe<DeleteAppStatusResult>;
   enableFrontend?: Maybe<EnableFrontendResult>;
+  migrateAAC?: Maybe<MigrateAacResult>;
   migrateEnvironments?: Maybe<MigrateEnvironmentsResult>;
   patchEnvironmentTree?: Maybe<EnvironmentPatchResult>;
   publish?: Maybe<EnvironmentPublishResult>;
@@ -150,14 +177,31 @@ export type Mutation = {
   registerWebhooks?: Maybe<RegisterWebhooksResult>;
   removeContributor?: Maybe<RemoveContributorResult>;
   sendAppInvitation?: Maybe<SendAppInvitationResult>;
+  uninstallShop?: Maybe<UninstallShopResult>;
   unregisterWebhooks?: Maybe<UnregisterWebhooksResult>;
   uploadFiles: UploadFilesResult;
+};
+
+
+export type MutationAddApplicationTagArgs = {
+  tag: Scalars['String']['input'];
+};
+
+
+export type MutationAddUserTagArgs = {
+  replaceMatches?: InputMaybe<Array<Scalars['String']['input']>>;
+  tag: Scalars['String']['input'];
 };
 
 
 export type MutationChangeAppDomainArgs = {
   newSubdomain: Scalars['String']['input'];
   onlyValidate?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
+export type MutationDeleteAppArgs = {
+  onlyProduction?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -174,6 +218,11 @@ export type MutationMigrateEnvironmentsArgs = {
 export type MutationPatchEnvironmentTreeArgs = {
   clientID: EnvironmentTreeClientId;
   patches: Array<Scalars['JSON']['input']>;
+};
+
+
+export type MutationPublishArgs = {
+  input?: InputMaybe<EnvironmentPublishInput>;
 };
 
 
@@ -210,6 +259,11 @@ export type MutationSendAppInvitationArgs = {
 };
 
 
+export type MutationUninstallShopArgs = {
+  shopId: Scalars['String']['input'];
+};
+
+
 export type MutationUnregisterWebhooksArgs = {
   apiKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   connectionKey: Scalars['String']['input'];
@@ -219,6 +273,39 @@ export type MutationUnregisterWebhooksArgs = {
 
 export type MutationUploadFilesArgs = {
   files: Array<UploadFile>;
+};
+
+export type NodeInput = {
+  __typename?: 'NodeInput';
+  fieldType?: Maybe<Scalars['String']['output']>;
+  key: Scalars['String']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  parentApiIdentifier?: Maybe<Scalars['String']['output']>;
+  parentKey?: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
+};
+
+export type ProblemInput = {
+  __typename?: 'ProblemInput';
+  message: Scalars['String']['output'];
+  severity: Scalars['String']['output'];
+};
+
+export type PublishContractProblem = {
+  __typename?: 'PublishContractProblem';
+  node?: Maybe<NodeInput>;
+  problem?: Maybe<ProblemInput>;
+};
+
+export type PublishContractState = {
+  __typename?: 'PublishContractState';
+  isUsingOpenAIGadgetManagedKeys?: Maybe<Scalars['Boolean']['output']>;
+  missingProductionGoogleAuthConfig?: Maybe<Scalars['Boolean']['output']>;
+  missingProductionOpenAIConnectionConfig?: Maybe<Scalars['Boolean']['output']>;
+  missingProductionShopifyConfig?: Maybe<Scalars['Boolean']['output']>;
+  problems?: Maybe<Array<Maybe<PublishContractProblem>>>;
+  progress: Scalars['String']['output'];
+  remoteFilesVersion: Scalars['String']['output'];
 };
 
 export type PublishFileSyncEventsInput = {
@@ -238,6 +325,7 @@ export type Query = {
   currentUser: User;
   environmentTreeChildKeys: Array<Scalars['String']['output']>;
   environmentTreePath?: Maybe<Scalars['JSON']['output']>;
+  filesystemIntegrityHashes: Scalars['JSON']['output'];
   identifySupportConversation?: Maybe<IdentifySupportConversationResult>;
   listContributors: Array<ContributorResult>;
   logsSearch: LogSearchResult;
@@ -266,6 +354,11 @@ export type QueryEnvironmentTreePathArgs = {
 };
 
 
+export type QueryFilesystemIntegrityHashesArgs = {
+  subpath?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type QueryLogsSearchArgs = {
   direction?: InputMaybe<Scalars['String']['input']>;
   end?: InputMaybe<Scalars['DateTime']['input']>;
@@ -278,6 +371,7 @@ export type QueryLogsSearchArgs = {
 
 export type QueryTypesManifestArgs = {
   dependenciesHash: Scalars['String']['input'];
+  environmentStatus?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RefreshScopesResult = {
@@ -314,6 +408,7 @@ export type Subscription = {
   editorActive?: Maybe<Scalars['Boolean']['output']>;
   environmentTreePathPatches?: Maybe<EnvironmentSubscriptionResult>;
   logsSearch: LogSearchResult;
+  publishServerContractStatus?: Maybe<PublishContractState>;
   remoteFileSyncEvents: RemoteFileSyncEvents;
   typesManifestStream: TypesManifest;
 };
@@ -332,9 +427,20 @@ export type SubscriptionLogsSearchArgs = {
 };
 
 
+export type SubscriptionPublishServerContractStatusArgs = {
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+  localFilesVersion: Scalars['String']['input'];
+};
+
+
 export type SubscriptionRemoteFileSyncEventsArgs = {
   encoding?: InputMaybe<FileSyncEncoding>;
   localFilesVersion: Scalars['String']['input'];
+};
+
+export type TeamEntitlements = {
+  __typename?: 'TeamEntitlements';
+  openAICredits?: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type TeamMember = {
@@ -346,7 +452,13 @@ export type TeamMember = {
 export type TeamResult = {
   __typename?: 'TeamResult';
   availableSeats?: Maybe<Scalars['Int']['output']>;
+  canPublish: Scalars['Boolean']['output'];
+  costPerApplication?: Maybe<Scalars['String']['output']>;
   costPerSeat?: Maybe<Scalars['String']['output']>;
+  includedApplications?: Maybe<Scalars['Int']['output']>;
+  includedApplicationsRemaining?: Maybe<Scalars['Int']['output']>;
+  maxApplications?: Maybe<Scalars['Int']['output']>;
+  teamEntitlements: TeamEntitlements;
   teamMembers: Array<TeamMember>;
 };
 
@@ -362,6 +474,12 @@ export type TypesManifest = {
   dependenciesHash: Scalars['String']['output'];
   entries: Array<TypeManifestEntry>;
   environmentVersion: Scalars['Int']['output'];
+};
+
+export type UninstallShopResult = {
+  __typename?: 'UninstallShopResult';
+  reason?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
 };
 
 export type UnregisterWebhooksResult = {
@@ -392,6 +510,14 @@ export type RemoteFileSyncEventsSubscriptionVariables = Exact<{
 
 export type RemoteFileSyncEventsSubscription = { __typename?: 'Subscription', remoteFileSyncEvents: { __typename?: 'RemoteFileSyncEvents', remoteFilesVersion: string, changed: Array<{ __typename?: 'FileSyncChangedEvent', path: string, mode: number, content: string, encoding: FileSyncEncoding }>, deleted: Array<{ __typename?: 'FileSyncDeletedEvent', path: string }> } };
 
+export type PublishServerContractStatusSubscriptionVariables = Exact<{
+  localFilesVersion: Scalars['String']['input'];
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+}>;
+
+
+export type PublishServerContractStatusSubscription = { __typename?: 'Subscription', publishServerContractStatus?: { __typename?: 'PublishContractState', remoteFilesVersion: string, progress: string, missingProductionShopifyConfig?: boolean | null, missingProductionOpenAIConnectionConfig?: boolean | null, missingProductionGoogleAuthConfig?: boolean | null, isUsingOpenAIGadgetManagedKeys?: boolean | null, problems?: Array<{ __typename?: 'PublishContractProblem', problem?: { __typename?: 'ProblemInput', severity: string, message: string } | null, node?: { __typename?: 'NodeInput', type: string, key: string, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null } | null> | null } | null };
+
 export type RemoteFilesVersionQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -403,3 +529,10 @@ export type PublishFileSyncEventsMutationVariables = Exact<{
 
 
 export type PublishFileSyncEventsMutation = { __typename?: 'Mutation', publishFileSyncEvents: { __typename?: 'PublishFileSyncEventsResult', remoteFilesVersion: string } };
+
+export type DeployAppMutationMutationVariables = Exact<{
+  input: EnvironmentPublishInput;
+}>;
+
+
+export type DeployAppMutationMutation = { __typename?: 'Mutation', publish?: { __typename?: 'EnvironmentPublishResult', success: boolean } | null };

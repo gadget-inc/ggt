@@ -17,6 +17,16 @@ type APIUpgradeConvergePlanResult {
   success: Boolean!
 }
 
+type AddApplicationTagResult {
+  reason: String
+  success: Boolean!
+}
+
+type AddUserTagResult {
+  reason: String
+  success: Boolean!
+}
+
 type ChangeAppDomainResult {
   onlyValidate: Boolean
   reason: String
@@ -52,6 +62,11 @@ type EnableFrontendResult {
 
 type EnvironmentPatchResult {
   success: Boolean!
+}
+
+input EnvironmentPublishInput {
+  expectedRemoteFilesVersion: String
+  force: Boolean
 }
 
 type EnvironmentPublishResult {
@@ -114,24 +129,63 @@ type LogSearchResult {
   status: String!
 }
 
+type MigrateAACResult {
+  reason: String
+  success: Boolean!
+}
+
 type MigrateEnvironmentsResult {
   success: Boolean!
 }
 
 type Mutation {
+  addApplicationTag(tag: String!): AddApplicationTagResult
+  addUserTag(replaceMatches: [String!], tag: String!): AddUserTagResult
   changeAppDomain(newSubdomain: String!, onlyValidate: Boolean): ChangeAppDomainResult
-  deleteApp: DeleteAppStatusResult
+  convergePackages: Boolean!
+  deleteApp(onlyProduction: Boolean): DeleteAppStatusResult
   enableFrontend(hasShopifyConnection: Boolean!): EnableFrontendResult
+  migrateAAC: MigrateAACResult
   migrateEnvironments(existingToProduction: Boolean!): MigrateEnvironmentsResult
   patchEnvironmentTree(clientID: EnvironmentTreeClientId!, patches: [JSON!]!): EnvironmentPatchResult
-  publish: EnvironmentPublishResult
+  publish(input: EnvironmentPublishInput): EnvironmentPublishResult
   publishFileSyncEvents(input: PublishFileSyncEventsInput!): PublishFileSyncEventsResult!
   refreshScopes(appConfigKey: String!, connectionKey: String!, shopId: String!): RefreshScopesResult
   registerWebhooks(connectionKey: String!, keepExtraTopics: Boolean, modelKeys: [String!], shopIds: [String!]!): RegisterWebhooksResult
   removeContributor(email: String!, isInvitation: Boolean!): RemoveContributorResult
   sendAppInvitation(email: String, emails: [String!], resend: Boolean): SendAppInvitationResult
+  uninstallShop(shopId: String!): UninstallShopResult
   unregisterWebhooks(apiKeys: [String!], connectionKey: String!, modelKeys: [String!]): UnregisterWebhooksResult
   uploadFiles(files: [UploadFile!]!): UploadFilesResult!
+}
+
+type NodeInput {
+  fieldType: String
+  key: String!
+  name: String
+  parentApiIdentifier: String
+  parentKey: Stringp
+  type: String!
+}
+
+type ProblemInput {
+  message: String!
+  severity: String!
+}
+
+type PublishContractProblem {
+  node: NodeInput
+  problem: ProblemInput
+}
+
+type PublishContractState {
+  isUsingOpenAIGadgetManagedKeys: Boolean
+  missingProductionGoogleAuthConfig: Boolean
+  missingProductionOpenAIConnectionConfig: Boolean
+  missingProductionShopifyConfig: Boolean
+  problems: [PublishContractProblem]
+  progress: String!
+  remoteFilesVersion: String!
 }
 
 input PublishFileSyncEventsInput {
@@ -149,6 +203,7 @@ type Query {
   currentUser: User!
   environmentTreeChildKeys(path: String!): [String!]!
   environmentTreePath(hydrateChildrenGlobs: [String!], path: String!): JSON
+  filesystemIntegrityHashes(subpath: String): JSON!
   identifySupportConversation: IdentifySupportConversationResult
   listContributors: [ContributorResult!]!
   logsSearch(direction: String, end: DateTime, limit: Int, query: String!, start: DateTime, step: Int): LogSearchResult!
@@ -156,7 +211,7 @@ type Query {
   roles: [GadgetRole!]!
   runTestSupportFunction: JSON
   team: TeamResult!
-  typesManifest(dependenciesHash: String!): TypesManifest!
+  typesManifest(dependenciesHash: String!, environmentStatus: String): TypesManifest!
 }
 
 type RefreshScopesResult {
@@ -187,8 +242,13 @@ type Subscription {
   editorActive: Boolean
   environmentTreePathPatches(clientID: EnvironmentTreeClientId!, path: String!): EnvironmentSubscriptionResult
   logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
+  publishServerContractStatus(force: Boolean, localFilesVersion: String!): PublishContractState
   remoteFileSyncEvents(encoding: FileSyncEncoding, localFilesVersion: String!): RemoteFileSyncEvents!
   typesManifestStream: TypesManifest!
+}
+
+type TeamEntitlements {
+  openAICredits: Boolean
 }
 
 type TeamMember {
@@ -198,7 +258,13 @@ type TeamMember {
 
 type TeamResult {
   availableSeats: Int
+  canPublish: Boolean!
+  costPerApplication: String
   costPerSeat: String
+  includedApplications: Int
+  includedApplicationsRemaining: Int
+  maxApplications: Int
+  teamEntitlements: TeamEntitlements!
   teamMembers: [TeamMember!]!
 }
 
@@ -212,6 +278,11 @@ type TypesManifest {
   dependenciesHash: String!
   entries: [TypeManifestEntry!]!
   environmentVersion: Int!
+}
+
+type UninstallShopResult {
+  reason: String
+  success: Boolean!
 }
 
 type UnregisterWebhooksResult {

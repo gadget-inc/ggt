@@ -29,6 +29,7 @@ export const usage = sprint`
       login   Log in to your account.
       logout  Log out of your account.
       whoami  Print the currently logged in account.
+      deploy  Deploys your app to production.
 `;
 
 export const rootArgsSpec = {

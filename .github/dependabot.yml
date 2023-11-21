@@ -7,3 +7,7 @@ updates:
     rebase-strategy: auto
     schedule:
       interval: daily
+    ignore:
+      - dependency-name: "find-up"
+        update-types:
+          - "version-update:semver-major"

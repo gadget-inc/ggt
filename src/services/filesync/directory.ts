@@ -279,15 +279,20 @@ const hash = async (absolutePath: string): Promise<Hash> => {
   // tradeoff we're willing to make.
   const removeCR = new Transform({
     transform(chunk: Buffer, _encoding, callback) {
-      let filteredChunk = Buffer.alloc(chunk.length);
+      if (!chunk.includes(0x0d)) {
+        callback(undefined, chunk);
+        return;
+      }
+
+      const filteredChunk = Buffer.alloc(chunk.length);
       let i = 0;
       for (const byte of chunk) {
         if (byte !== 0x0d) {
           filteredChunk[i++] = byte;
         }
       }
-      filteredChunk = filteredChunk.slice(0, i);
-      callback(undefined, filteredChunk);
+
+      callback(undefined, filteredChunk.slice(0, i));
     },
   });
 

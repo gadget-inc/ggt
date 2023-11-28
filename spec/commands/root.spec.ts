@@ -33,9 +33,7 @@ describe("root", () => {
     await expectProcessExit(command);
 
     expectStdout().toMatchInlineSnapshot(`
-      "ggt v0.3.3
-
-      The command-line interface for Gadget
+      "The command-line interface for Gadget
 
       USAGE
         ggt [COMMAND]

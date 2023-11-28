@@ -1,6 +1,5 @@
 import arg from "arg";
 import ms from "ms";
-import { config } from "../services/config/config.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { createLogger } from "../services/output/log/logger.js";
 import { sprint } from "../services/output/sprint.js";
@@ -12,8 +11,6 @@ import { AvailableCommands, importCommandModule, isAvailableCommand, type Usage 
 const log = createLogger({ name: "root" });
 
 export const usage: Usage = () => sprint`
-    ggt v${config.version}
-
     The command-line interface for Gadget
 
     {bold USAGE}

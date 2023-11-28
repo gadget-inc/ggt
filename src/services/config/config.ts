@@ -1,18 +1,10 @@
-import fs from "fs-extra";
 import isWsl from "is-wsl";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import normalizePackageData, { type Package } from "normalize-package-data";
 import { Level, parseLevel } from "../output/log/level.js";
 import { env } from "./env.js";
-import { workspacePath } from "./paths.js";
-
-/**
- * The package.json of the ggt package.
- */
-const packageJson = (await fs.readJson(workspacePath("package.json"))) as Package;
-normalizePackageData(packageJson, true);
+import { packageJson } from "./package-json.js";
 
 export const config = {
   get name(): string {

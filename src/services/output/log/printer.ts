@@ -105,7 +105,10 @@ export const createPrinter = ({ name }: { name: string }): Printer => {
       } else {
         output += table.toString();
       }
-      output += "\n" + footer;
+
+      if (footer) {
+        output += "\n" + footer;
+      }
 
       this.printlns(output);
     },

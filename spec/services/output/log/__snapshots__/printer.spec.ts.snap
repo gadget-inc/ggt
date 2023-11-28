@@ -75,6 +75,15 @@ Table Footer
 "
 `;
 
+exports[`printer > printTable > writes a table with without a footer to stdout 1`] = `
+"
+Table Title
+Column 1         Column 2        
+Row 1, Column 1  Row 1, Column 2 
+Row 2, Column 1  Row 2, Column 2 
+"
+`;
+
 exports[`printer > printTable > writes the table as json when GGT_LOG_FORMAT=json 1`] = `
 "{\\"level\\":6,\\"name\\":\\"printer\\",\\"msg\\":\\"Table Title\\",\\"fields\\":{\\"headers\\":[\\"Column 1\\",\\"Column 2\\"],\\"rows\\":[[\\"Row 1, Column 1\\",\\"Row 1, Column 2\\"],[\\"Row 2, Column 1\\",\\"Row 2, Column 2\\"]],\\"footer\\":\\"Table Footer\\"}}
 "

@@ -80,6 +80,18 @@ describe("printer", () => {
       expectStdout().toMatchSnapshot();
     });
 
+    it("writes a table with without a footer to stdout", () => {
+      printer.printTable({
+        message: "Table Title",
+        headers: ["Column 1", "Column 2"],
+        rows: [
+          ["Row 1, Column 1", "Row 1, Column 2"],
+          ["Row 2, Column 1", "Row 2, Column 2"],
+        ],
+      });
+      expectStdout().toMatchSnapshot();
+    });
+
     it("writes the table as json when GGT_LOG_FORMAT=json", () => {
       withEnv({ GGT_LOG_FORMAT: "json" }, () => {
         printer.printTable({

@@ -10,17 +10,16 @@ import { noop, noopThis } from "../../src/services/util/function.js";
 import { withEnv } from "../__support__/env.js";
 import { expectProcessExit } from "../__support__/process.js";
 import { expectStdout } from "../__support__/stdout.js";
+import { mockVersion } from "../__support__/version.js";
 
 describe("root", () => {
+  mockVersion();
+
   beforeEach(() => {
     spyOnImplementing(process, "once", noopThis);
 
     // don't check for updates
     vi.spyOn(update, "warnIfUpdateAvailable").mockResolvedValue();
-
-    // mock the versionFull so that it doesn't change between releases,
-    // node versions, ci architectures, etc.
-    vi.spyOn(config, "versionFull", "get").mockReturnValue("ggt/1.2.3 darwin-arm64 node-v16.0.0");
   });
 
   afterEach(() => {

@@ -8,8 +8,8 @@ import fs from "fs-extra";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { mapValues } from "../../../src/services/collections.js";
 import { ALWAYS_IGNORE_PATHS, Directory, HASHING_IGNORE_PATHS, supportsPermissions } from "../../../src/services/filesync/directory.js";
+import { mapValues } from "../../../src/services/util/object.js";
 import { writeDir, type Files } from "../../__support__/files.js";
 import { appFixturePath, testDirPath } from "../../__support__/paths.js";
 

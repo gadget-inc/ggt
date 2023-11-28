@@ -1,5 +1,5 @@
-import path from "node:path";
-import { assert, expect } from "vitest";
+import { workspacePath } from "../../src/services/config/paths.js";
+import { getCurrentTest } from "./debug.js";
 
 /**
  * Returns the path to a test directory within tmp/spec/ based on the
@@ -13,19 +13,12 @@ import { assert, expect } from "vitest";
  * testDirPath("foo/bar", "baz.txt"); // => tmp/spec/some/test.spec.ts/foo/bar/baz.txt
  */
 export const testDirPath = (...segments: string[]): string => {
-  const currentTestName = expect.getState().currentTestName;
-  assert(currentTestName, "expected currentTestName to be defined");
-
-  const [testFile, ...rest] = currentTestName.split(" > ");
-  const describes = rest.length > 1 ? rest.slice(0, -1).join("/") : "";
-  const testName = rest.at(-1)?.replace(/[^\s\w-]/g, "");
-  assert(testFile && testName, "expected test file and test name to be defined");
-
-  return path.join(__dirname, "../../tmp/", testFile, describes, testName, ...segments);
+  const test = getCurrentTest();
+  return workspacePath("tmp/", test.filepath, test.describes.join("/"), test.name.replace(/[^\s\w-]/g, ""), ...segments);
 };
 
 const fixturesDirPath = (...segments: string[]): string => {
-  return path.join(__dirname, "../__fixtures__", ...segments);
+  return workspacePath("spec/__fixtures__", ...segments);
 };
 
 /**

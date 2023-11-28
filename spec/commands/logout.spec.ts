@@ -1,22 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { run } from "../../src/commands/logout.js";
-import { readSession, writeSession } from "../../src/services/session.js";
-import { expectStdout } from "../util.js";
+import { command } from "../../src/commands/logout.js";
+import { readSession, writeSession } from "../../src/services/user/session.js";
+import { expectStdout } from "../__support__/stdout.js";
 
 describe("logout", () => {
-  it("deletes the session from disk", () => {
+  const rootArgs = { _: [] };
+
+  it("deletes the session from disk", async () => {
     writeSession("test");
     expect(readSession()).toBe("test");
 
-    run();
+    await command(rootArgs);
 
     expect(readSession()).toBeUndefined();
   });
 
-  it("prints a message if the user is logged in", () => {
+  it("prints a message if the user is logged in", async () => {
     writeSession("test");
 
-    run();
+    await command(rootArgs);
 
     expectStdout().toMatchInlineSnapshot(`
       "Goodbye
@@ -24,10 +26,10 @@ describe("logout", () => {
     `);
   });
 
-  it("prints a different message if the user is logged out", () => {
+  it("prints a different message if the user is logged out", async () => {
     writeSession(undefined);
 
-    run();
+    await command(rootArgs);
 
     expectStdout().toMatchInlineSnapshot(`
       "You are not logged in

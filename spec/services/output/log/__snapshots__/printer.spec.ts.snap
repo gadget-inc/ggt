@@ -1,0 +1,156 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`printer > print > prints json when GGT_LOG_FORMAT=json 1`] = `
+"{\\"level\\":6,\\"name\\":\\"printer\\",\\"msg\\":\\"Hello, world!\\",\\"fields\\":{}}
+"
+`;
+
+exports[`printer > print > prints like a structured logger when GGT_LOG_LEVEL is set 1`] = `
+"12:00:00 PRINT printer: Hello, world!
+"
+`;
+
+exports[`printer > print > strips indentation from multiline strings 1`] = `
+"Hello, world!
+I am a multiline string."
+`;
+
+exports[`printer > print > supports chalk colors within template literals 1`] = `
+"[1mHello, world![22m
+[4mI am a multiline string.[24m"
+`;
+
+exports[`printer > print > supports tagged template literals 1`] = `
+"Hello, world!
+I am a multiline string."
+`;
+
+exports[`printer > print > writes to stdout 1`] = `"Hello, world!"`;
+
+exports[`printer > printTable > writes a table to stdout 1`] = `
+"
+Table Title
+Column 1         Column 2        
+Row 1, Column 1  Row 1, Column 2 
+Row 2, Column 1  Row 2, Column 2 
+Table Footer
+"
+`;
+
+exports[`printer > printTable > writes a table with none borders to stdout 1`] = `
+"
+Table Title
+Column 1         Column 2        
+Row 1, Column 1  Row 1, Column 2 
+Row 2, Column 1  Row 2, Column 2 
+Table Footer
+"
+`;
+
+exports[`printer > printTable > writes a table with thick borders to stdout 1`] = `
+"
+Table Title
+╔═════════════════╤═════════════════╗
+║ Column 1        │ Column 2        ║
+╟─────────────────┼─────────────────╢
+║ Row 1, Column 1 │ Row 1, Column 2 ║
+╟─────────────────┼─────────────────╢
+║ Row 2, Column 1 │ Row 2, Column 2 ║
+╚═════════════════╧═════════════════╝
+Table Footer
+"
+`;
+
+exports[`printer > printTable > writes a table with thin borders to stdout 1`] = `
+"
+Table Title
+┌─────────────────┬─────────────────┐
+│ Column 1        │ Column 2        │
+├─────────────────┼─────────────────┤
+│ Row 1, Column 1 │ Row 1, Column 2 │
+├─────────────────┼─────────────────┤
+│ Row 2, Column 1 │ Row 2, Column 2 │
+└─────────────────┴─────────────────┘
+Table Footer
+"
+`;
+
+exports[`printer > printTable > writes the table as json when GGT_LOG_FORMAT=json 1`] = `
+"{\\"level\\":6,\\"name\\":\\"printer\\",\\"msg\\":\\"Table Title\\",\\"fields\\":{\\"headers\\":[\\"Column 1\\",\\"Column 2\\"],\\"rows\\":[[\\"Row 1, Column 1\\",\\"Row 1, Column 2\\"],[\\"Row 2, Column 1\\",\\"Row 2, Column 2\\"]],\\"footer\\":\\"Table Footer\\"}}
+"
+`;
+
+exports[`printer > println > prints json when GGT_LOG_FORMAT=json 1`] = `
+"{\\"level\\":6,\\"name\\":\\"printer\\",\\"msg\\":\\"Hello, world!\\",\\"fields\\":{}}
+"
+`;
+
+exports[`printer > println > prints like a structured logger when GGT_LOG_LEVEL is set 1`] = `
+"12:00:00 PRINT printer:
+  Hello, world!
+  
+"
+`;
+
+exports[`printer > println > strips indentation from multiline strings 1`] = `
+"Hello, world!
+I am a multiline string.
+"
+`;
+
+exports[`printer > println > supports chalk colors within template literals 1`] = `
+"[1mHello, world![22m
+[4mI am a multiline string.[24m
+"
+`;
+
+exports[`printer > println > supports tagged template literals 1`] = `
+"Hello, world!
+I am a multiline string.
+"
+`;
+
+exports[`printer > println > writes to stdout 1`] = `
+"Hello, world!
+"
+`;
+
+exports[`printer > printlns > prints json when GGT_LOG_FORMAT=json 1`] = `
+"{\\"level\\":6,\\"name\\":\\"printer\\",\\"msg\\":\\"Hello, world!\\",\\"fields\\":{}}
+"
+`;
+
+exports[`printer > printlns > prints like a structured logger when GGT_LOG_LEVEL is set 1`] = `
+"12:00:00 PRINT printer:
+  
+  Hello, world!
+  
+"
+`;
+
+exports[`printer > printlns > strips indentation from multiline strings 1`] = `
+"
+Hello, world!
+I am a multiline string.
+"
+`;
+
+exports[`printer > printlns > supports chalk colors within template literals 1`] = `
+"
+[1mHello, world![22m
+[4mI am a multiline string.[24m
+"
+`;
+
+exports[`printer > printlns > supports tagged template literals 1`] = `
+"
+Hello, world!
+I am a multiline string.
+"
+`;
+
+exports[`printer > printlns > writes to stdout 1`] = `
+"
+Hello, world!
+"
+`;

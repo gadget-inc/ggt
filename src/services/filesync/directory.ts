@@ -219,7 +219,7 @@ export class Directory {
  */
 export type Hashes = Record<string, Hash>;
 
-export interface Hash {
+export type Hash = {
   /**
    * The SHA-1 hash of the file or directory.
    *
@@ -238,7 +238,7 @@ export interface Hash {
    * @see supportsPermissions
    */
   permissions?: number;
-}
+};
 
 /**
  * Whether the current platform supports Unix-style file permissions.

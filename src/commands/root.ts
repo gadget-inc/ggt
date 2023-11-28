@@ -1,47 +1,54 @@
 import arg from "arg";
-import debug from "debug";
-import { parseBoolean } from "../services/args.js";
-import { config } from "../services/config.js";
-import { CLIError } from "../services/errors.js";
-import { isNil } from "../services/is.js";
-import { println, sortByLevenshtein, sprint } from "../services/output.js";
-import { warnIfUpdateAvailable } from "../services/version.js";
-import { availableCommands, type Command } from "./index.js";
+import ms from "ms";
+import { config } from "../services/config/config.js";
+import { verbosityToLevel } from "../services/output/log/level.js";
+import { createLogger } from "../services/output/log/logger.js";
+import { sprint } from "../services/output/sprint.js";
+import { warnIfUpdateAvailable } from "../services/output/update.js";
+import { sortBySimilar } from "../services/util/collection.js";
+import { isNil } from "../services/util/is.js";
+import { AvailableCommands, importCommandModule, isAvailableCommand, type Usage } from "./command.js";
 
-export const usage = sprint`
+const log = createLogger({ name: "root" });
+
+export const usage: Usage = () => sprint`
+    ggt v${config.version}
+
     The command-line interface for Gadget
 
-    {bold VERSION}
-      ${config.versionFull}
-
     {bold USAGE}
-      $ ggt [COMMAND]
-
-    {bold FLAGS}
-      -h, --help     {gray Print command's usage}
-      -v, --version  {gray Print version}
-          --debug    {gray Print debug output}
+      ggt [COMMAND]
 
     {bold COMMANDS}
-      sync    Sync your Gadget application's source code to and
-              from your local filesystem.
-      list    List your apps.
-      login   Log in to your account.
-      logout  Log out of your account.
-      whoami  Print the currently logged in account.
+      sync           Sync your Gadget application's source code
+      list           List your apps
+      login          Log in to your account
+      logout         Log out of your account
+      whoami         Print the currently logged in account
+      version        Print the version of ggt
+
+    {bold FLAGS}
+      -h, --help     Print command's usage
+      -v, --verbose  Print verbose output
+          --json     Print output as JSON
+
+    For more information on a specific command, use 'ggt [COMMAND] --help'
 `;
 
 export const rootArgsSpec = {
   "--help": Boolean,
   "-h": "--help",
-  "--version": Boolean,
-  "-v": "--version",
-  "--debug": Boolean,
+  "--verbose": arg.COUNT,
+  "-v": "--verbose",
+  "--json": Boolean,
+
+  // deprecated
+  "--debug": "--verbose",
 };
 
 export type RootArgs = arg.Result<typeof rootArgsSpec>;
 
-export const run = async () => {
+export const command = async (): Promise<void> => {
   await warnIfUpdateAvailable();
 
   const rootArgs = arg(rootArgsSpec, {
@@ -50,24 +57,23 @@ export const run = async () => {
     stopAtPositional: false,
   });
 
-  if (rootArgs["--debug"] ?? parseBoolean(process.env["DEBUG"])) {
-    debug.enable("ggt:*");
+  if (rootArgs["--json"]) {
+    process.env["GGT_LOG_FORMAT"] = "json";
   }
 
-  if (rootArgs["--version"]) {
-    println(config.version);
-    process.exit(0);
+  if (rootArgs["--verbose"]) {
+    process.env["GGT_LOG_LEVEL"] = verbosityToLevel(rootArgs["--verbose"]).toString();
   }
 
-  const command = rootArgs._.shift() as (typeof availableCommands)[number] | undefined;
+  const command = rootArgs._.shift();
   if (isNil(command)) {
-    println(usage);
+    log.println(usage());
     process.exit(0);
   }
 
-  if (!availableCommands.includes(command)) {
-    const [closest] = sortByLevenshtein(command, availableCommands);
-    println`
+  if (!isAvailableCommand(command)) {
+    const [closest] = sortBySimilar(command, AvailableCommands);
+    log.println`
       Unknown command {yellow ${command}}
 
       Did you mean {blueBright ${closest}}?
@@ -77,20 +83,33 @@ export const run = async () => {
     process.exit(1);
   }
 
-  const cmd = (await import(`./${command}.js`)) as Command;
+  const commandModule = await importCommandModule(command);
 
   if (rootArgs["--help"]) {
-    println(cmd.usage);
+    log.println(commandModule.usage());
     process.exit(0);
   }
 
-  try {
-    await cmd.init?.(rootArgs);
-    await cmd.run(rootArgs);
-  } catch (cause) {
-    const error = CLIError.from(cause);
-    println(error.render());
-    await error.capture();
-    process.exit(1);
+  const stop = await commandModule.command(rootArgs);
+  if (!stop) {
+    return;
+  }
+
+  for (const signal of ["SIGINT", "SIGTERM"] as const) {
+    process.once(signal, () => {
+      log.println` Stopping... {gray Press Ctrl+C again to force}`;
+      void stop();
+
+      // when ggt is run via npx, and the user presses ctrl+c, npx
+      // sends sigint twice in quick succession. in order to prevent
+      // the second sigint from triggering the force exit listener,
+      // we wait a bit before registering it
+      setTimeout(() => {
+        process.once(signal, () => {
+          log.println(" Exiting immediately");
+          process.exit(1);
+        });
+      }, ms("100ms")).unref();
+    });
   }
 };

@@ -3,13 +3,17 @@
   "version": "0.3.3",
   "description": "The command-line interface for Gadget",
   "homepage": "https://github.com/gadget-inc/ggt",
-  "bugs": "https://github.com/gadget-inc/ggt/issues",
+  "bugs": {
+    "url": "https://github.com/gadget-inc/ggt/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gadget-inc/ggt.git"
   },
   "license": "MIT",
-  "author": "Gadget Authors",
+  "author": {
+    "name": "Gadget Authors"
+  },
   "type": "module",
   "main": "lib/main.js",
   "bin": {
@@ -66,6 +70,7 @@
     "normalize-package-data": "^6.0.0",
     "normalize-path": "^3.0.0",
     "open": "^9.1.0",
+    "ora": "^7.0.1",
     "p-map": "^6.0.0",
     "p-queue": "^7.4.1",
     "p-retry": "^6.1.0",

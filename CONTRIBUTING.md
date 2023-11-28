@@ -194,8 +194,35 @@ $ vitest
 
 Tests also make use of the `tmp` directory. Every test gets its own directory in `tmp/spec/` to store temporary files. This means you can run tests in parallel without worrying about them interfering with each other.
 
-<!-- TODO -->
+## Pull Requests
 
-<!-- ## Pull Requests -->
+To contribute to `ggt`, please open a pull request against the `main` branch. Pull requests must pass all tests and be reviewed by at least one other contributor before being merged.
 
-<!-- ## Releasing -->
+Once your pull request is ready to be merged, you can add a description of the change along with the kind of change it is (major, minor, or patch) by performing the following steps:
+
+> [!NOTE]
+> If the changes don't warrant a new version (e.g. a documentation change), you can skip this step.
+
+1. Click this button to add a new file that describes the change:
+
+![CleanShot 2023-04-12 at 13 10 37@2x](https://user-images.githubusercontent.com/21965521/231532322-1e13919c-04b3-4604-83c2-4f1e4401b263.png)
+
+2. Write a brief description of what this PR changes and click the Commit Changes button when you're done:
+
+![CleanShot 2023-04-12 at 13 11 31@2x](https://user-images.githubusercontent.com/21965521/231532593-0d56146f-b8a5-4c77-8d9b-b138350cbd6b.png)
+
+When we publish a new version, your description of the change will end up looking like this:
+
+![CleanShot 2023-04-12 at 13 09 37@2x](https://user-images.githubusercontent.com/21965521/231532179-e5fc6174-06e4-43b0-8e4d-5b81efdac14b.png)
+
+## Releasing
+
+`ggt` uses [Changesets](https://github.com/changesets/changesets) and [Github Actions](https://github.com/features/actions) to publish new versions to NPM.
+
+When there are changes to be published, a pull request named "Version Packages" will be opened. This pull request will contain a list of all the changesets that have been created since the last version was published.
+
+To publish the changes, merge the "Version Packages" pull request to trigger the Github Action that publishes the new version to NPM and creates a new Github release.
+
+### Experimental Releases
+
+If you want to publish an experimental release, you can run the [`./scripts/publish-experimental.ts`](./scripts/publish-experimental.ts) script. This will publish a new version with the `experimental` tag to NPM. You can then install this version by running `npm install -g ggt@experimental`.

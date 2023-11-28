@@ -13,3 +13,14 @@ export const pick = <T extends Record<string, unknown>, K extends keyof T>(objec
   }
   return final;
 };
+
+export const mapValues = <Key extends string | number | symbol, Value, MappedValue>(
+  obj: Record<Key, Value>,
+  fn: (value: Value) => MappedValue,
+) => {
+  const mapped = {} as Record<Key, MappedValue>;
+  for (const [key, value] of Object.entries(obj)) {
+    mapped[key as Key] = fn(value as Value);
+  }
+  return mapped;
+};

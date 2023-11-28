@@ -20,18 +20,18 @@ import type {
   RemoteFileSyncEventsSubscriptionVariables,
   RemoteFilesVersionQuery,
   RemoteFilesVersionQueryVariables,
-} from "../__generated__/graphql.js";
-import type { App } from "./app.js";
-import { getApps } from "./app.js";
-import { config } from "./config.js";
-import type { Query } from "./edit-graphql.js";
-import { ArgError, InvalidSyncFileError } from "./errors.js";
-import { isEmptyOrNonExistentDir, swallowEnoent } from "./fs.js";
-import { createLogger } from "./log.js";
-import { noop } from "./noop.js";
-import { println, sortByLevenshtein, sprint } from "./output.js";
-import { select } from "./prompt.js";
-import type { User } from "./user.js";
+} from "../../__generated__/graphql.js";
+import type { App } from "../app.js";
+import { getApps } from "../app.js";
+import { config } from "../config.js";
+import type { Query } from "../edit-graphql.js";
+import { ArgError, InvalidSyncFileError } from "../errors.js";
+import { isEmptyOrNonExistentDir, swallowEnoent } from "../fs.js";
+import { createLogger } from "../log.js";
+import { noop } from "../noop.js";
+import { println, sortByLevenshtein, sprint } from "../output.js";
+import { select } from "../prompt.js";
+import type { User } from "../user.js";
 
 const log = createLogger("filesync");
 

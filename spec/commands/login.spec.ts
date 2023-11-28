@@ -2,36 +2,49 @@ import getPort from "get-port";
 import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { run } from "../../src/commands/login.js";
-import { config } from "../../src/services/config.js";
-import { noop } from "../../src/services/noop.js";
-import { readSession, writeSession } from "../../src/services/session.js";
-import { sleepUntil } from "../../src/services/sleep.js";
-import * as user from "../../src/services/user.js";
-import { expectStdout, testUser } from "../util.js";
+import { command } from "../../src/commands/login.js";
+import { config } from "../../src/services/config/config.js";
+import { readSession, writeSession } from "../../src/services/user/session.js";
+import * as user from "../../src/services/user/user.js";
+import { noop } from "../../src/services/util/function.js";
+import { PromiseSignal } from "../../src/services/util/promise.js";
+import { expectStdout } from "../__support__/stdout.js";
+import { testUser } from "../__support__/user.js";
 
 describe("login", () => {
+  const rootArgs = { _: [] };
   let port: number;
   let server: http.Server;
+  let serverListening: PromiseSignal;
+  let serverClosed: PromiseSignal;
   let requestListener: http.RequestListener;
+  let openedBrowser: PromiseSignal;
 
   beforeEach(async () => {
     port = await getPort();
-    server = { listen: vi.fn(), close: vi.fn() } as any;
+    serverListening = new PromiseSignal();
+    serverClosed = new PromiseSignal();
+    server = { listen: vi.fn(serverListening.resolve), close: vi.fn(serverClosed.resolve) } as any;
+
     vi.spyOn(http, "createServer").mockImplementation((opt, cb) => {
       requestListener = cb ?? (opt as http.RequestListener);
       return server;
     });
-    open.mockReset();
+
+    openedBrowser = new PromiseSignal();
+    open.mockImplementationOnce(() => {
+      openedBrowser.resolve();
+      return Promise.resolve();
+    });
   });
 
   it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
     writeSession(undefined);
     vi.spyOn(user, "getUser").mockResolvedValue(testUser);
 
-    void run();
+    void command(rootArgs);
+    await serverListening;
 
-    await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
     expect(requestListener!).toBeDefined();
     expect(server.listen).toHaveBeenCalledWith(port);
@@ -40,11 +53,13 @@ describe("login", () => {
         `https://${config.domains.services}/auth/cli/callback?port=${port}`,
       )}`,
     );
+
+    await openedBrowser;
     expectStdout().toMatchInlineSnapshot(`
-      "We've opened Gadget's login page using your default browser.
+      "
+      We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
-
       "
     `);
 
@@ -53,7 +68,7 @@ describe("login", () => {
     expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(undefined as any);
-    req.url = `?session=test`;
+    req.url = "?session=test";
 
     const res = new http.ServerResponse(req);
     vi.spyOn(res, "writeHead");
@@ -61,16 +76,16 @@ describe("login", () => {
 
     requestListener!(req, res);
 
-    await sleepUntil(() => server.close.mock.calls.length > 0);
+    await serverClosed;
     expect(readSession()).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
-      "We've opened Gadget's login page using your default browser.
+      "
+      We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
 
       Hello, Jane Doe (test@example.com)
-
       "
     `);
     expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=true` });
@@ -81,11 +96,16 @@ describe("login", () => {
   it("prints the login page when open fails, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
     writeSession(undefined);
     vi.spyOn(user, "getUser").mockResolvedValue(testUser);
-    open.mockRejectedValue(new Error("boom"));
 
-    void run();
+    open.mockReset();
+    open.mockImplementationOnce(() => {
+      openedBrowser.resolve();
+      throw new Error("boom");
+    });
 
-    await sleepUntil(() => http.createServer.mock.calls.length > 0);
+    void command(rootArgs);
+    await serverListening;
+
     expect(getPort).toHaveBeenCalled();
     expect(requestListener!).toBeDefined();
     expect(server.listen).toHaveBeenCalledWith(port);
@@ -94,13 +114,15 @@ describe("login", () => {
         `https://${config.domains.services}/auth/cli/callback?port=${port}`,
       )}`,
     );
+
+    await openedBrowser;
     expectStdout().toMatchInlineSnapshot(`
-      "Please open the following URL in your browser and log in:
+      "
+      Please open the following URL in your browser and log in:
 
         https://app.ggt.dev/auth/login?returnTo=https%3A%2F%2Fapp.ggt.dev%2Fauth%2Fcli%2Fcallback%3Fport%3D1234
 
       Once logged in, return to this terminal.
-
       "
     `);
 
@@ -109,7 +131,7 @@ describe("login", () => {
     expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(undefined as any);
-    req.url = `?session=test`;
+    req.url = "?session=test";
 
     const res = new http.ServerResponse(req);
     vi.spyOn(res, "writeHead");
@@ -117,18 +139,18 @@ describe("login", () => {
 
     requestListener!(req, res);
 
-    await sleepUntil(() => server.close.mock.calls.length > 0);
+    await serverClosed;
     expect(readSession()).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
-      "Please open the following URL in your browser and log in:
+      "
+      Please open the following URL in your browser and log in:
 
         https://app.ggt.dev/auth/login?returnTo=https%3A%2F%2Fapp.ggt.dev%2Fauth%2Fcli%2Fcallback%3Fport%3D1234
 
       Once logged in, return to this terminal.
 
       Hello, Jane Doe (test@example.com)
-
       "
     `);
     expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=true` });
@@ -140,9 +162,9 @@ describe("login", () => {
     writeSession(undefined);
     vi.spyOn(user, "getUser").mockRejectedValue(new Error("boom"));
 
-    void run().catch(noop);
+    void Promise.resolve(command(rootArgs)).catch(noop);
+    await serverListening;
 
-    await sleepUntil(() => http.createServer.mock.calls.length > 0);
     expect(getPort).toHaveBeenCalled();
     expect(requestListener!).toBeDefined();
     expect(server.listen).toHaveBeenCalledWith(port);
@@ -151,11 +173,13 @@ describe("login", () => {
         `https://${config.domains.services}/auth/cli/callback?port=${port}`,
       )}`,
     );
+
+    await openedBrowser;
     expectStdout().toMatchInlineSnapshot(`
-      "We've opened Gadget's login page using your default browser.
+      "
+      We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
-
       "
     `);
 
@@ -164,7 +188,7 @@ describe("login", () => {
     expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(undefined as any);
-    req.url = `?session=test`;
+    req.url = "?session=test";
 
     const res = new http.ServerResponse(req);
     vi.spyOn(res, "writeHead");
@@ -172,7 +196,7 @@ describe("login", () => {
 
     requestListener!(req, res);
 
-    await sleepUntil(() => server.close.mock.calls.length > 0);
+    await serverClosed;
     expect(readSession()).toBeUndefined();
     expect(user.getUser).toHaveBeenCalled();
     expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=false` });

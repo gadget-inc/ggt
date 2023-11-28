@@ -1,23 +1,27 @@
-import { println, sprint } from "../services/output.js";
-import { readSession, writeSession } from "../services/session.js";
+import { createLogger } from "../services/output/log/logger.js";
+import { sprint } from "../services/output/sprint.js";
+import { readSession, writeSession } from "../services/user/session.js";
+import type { Command, Usage } from "./command.js";
 
-export const usage = sprint`
+const log = createLogger({ name: "logout" });
+
+export const usage: Usage = () => sprint`
     Log out of your account.
 
     {bold USAGE}
-      $ ggt logout
+      ggt logout
 
     {bold EXAMPLES}
-      {gray $ ggt logout}
-      Goodbye
+      $ ggt logout
+        Goodbye
 `;
 
-export const run = () => {
+export const command: Command = () => {
   const token = readSession();
   if (token) {
     writeSession(undefined);
-    println`Goodbye`;
+    log.println("Goodbye");
   } else {
-    println`You are not logged in`;
+    log.println("You are not logged in");
   }
 };

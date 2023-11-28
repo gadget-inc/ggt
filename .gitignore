@@ -1,6 +1,8 @@
 .direnv
+.idea
 .log
 .nyc_output
+.vscode
 lib
 node_modules
 tmp

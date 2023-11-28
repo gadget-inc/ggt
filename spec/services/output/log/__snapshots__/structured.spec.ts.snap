@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`structured > logs the expected output when GGT_LOG_LEVEL=debug 1`] = `
+"12:00:00 DEBUG structured: debug
+12:00:00 INFO structured: info
+12:00:00 WARN structured: warn
+12:00:00 ERROR structured: error
+"
+`;
+
+exports[`structured > logs the expected output when GGT_LOG_LEVEL=error 1`] = `
+"12:00:00 ERROR structured: error
+"
+`;
+
+exports[`structured > logs the expected output when GGT_LOG_LEVEL=info 1`] = `
+"12:00:00 INFO structured: info
+12:00:00 WARN structured: warn
+12:00:00 ERROR structured: error
+"
+`;
+
+exports[`structured > logs the expected output when GGT_LOG_LEVEL=trace 1`] = `
+"12:00:00 TRACE structured: trace
+12:00:00 DEBUG structured: debug
+12:00:00 INFO structured: info
+12:00:00 WARN structured: warn
+12:00:00 ERROR structured: error
+"
+`;
+
+exports[`structured > logs the expected output when GGT_LOG_LEVEL=warn 1`] = `
+"12:00:00 WARN structured: warn
+12:00:00 ERROR structured: error
+"
+`;
+
+exports[`structured > prints json when GGT_LOG_FORMAT=json 1`] = `
+"{\\"level\\":1,\\"name\\":\\"structured\\",\\"msg\\":\\"trace\\",\\"fields\\":{}}
+{\\"level\\":2,\\"name\\":\\"structured\\",\\"msg\\":\\"debug\\",\\"fields\\":{}}
+{\\"level\\":3,\\"name\\":\\"structured\\",\\"msg\\":\\"info\\",\\"fields\\":{}}
+{\\"level\\":4,\\"name\\":\\"structured\\",\\"msg\\":\\"warn\\",\\"fields\\":{}}
+{\\"level\\":5,\\"name\\":\\"structured\\",\\"msg\\":\\"error\\",\\"fields\\":{}}
+"
+`;

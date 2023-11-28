@@ -2,30 +2,31 @@ import getPort from "get-port";
 import assert from "node:assert";
 import http, { type Server } from "node:http";
 import open from "open";
-import { config } from "../services/config.js";
-import { createLogger } from "../services/log.js";
-import { println, sprint } from "../services/output.js";
-import { writeSession } from "../services/session.js";
-import { getUser } from "../services/user.js";
+import { config } from "../services/config/config.js";
+import { createLogger } from "../services/output/log/logger.js";
+import { sprint } from "../services/output/sprint.js";
+import { writeSession } from "../services/user/session.js";
+import { getUser } from "../services/user/user.js";
+import type { Command, Usage } from "./command.js";
 
-export const usage = sprint`
+const log = createLogger({ name: "login" });
+
+export const usage: Usage = () => sprint`
     Log in to your account.
 
     {bold USAGE}
-      $ ggt login
+      ggt login
 
     {bold EXAMPLES}
-      {gray $ ggt login}
-      We've opened Gadget's login page using your default browser.
+      $ ggt login
+        We've opened Gadget's login page using your default browser.
 
-      Please log in and then return to this terminal.
+        Please log in and then return to this terminal.
 
-      Hello, Jane Doe (jane@example.com)
+        Hello, Jane Doe (jane@example.com)
 `;
 
-const log = createLogger("login");
-
-export const run = async () => {
+export const login = async (): Promise<void> => {
   let server: Server | undefined;
 
   try {
@@ -46,11 +47,10 @@ export const run = async () => {
           assert(user, "missing user after successful login");
 
           if (user.name) {
-            println`Hello, ${user.name} {gray (${user.email})}`;
+            log.printlns`Hello, ${user.name} {gray (${user.email})}`;
           } else {
-            println`Hello, ${user.email}`;
+            log.printlns`Hello, ${user.email}`;
           }
-          println();
 
           landingPage.searchParams.set("success", "true");
           resolve();
@@ -76,19 +76,19 @@ export const run = async () => {
 
     try {
       await open(url.toString());
-      println`
+      log.printlns`
         We've opened Gadget's login page using your default browser.
 
-        Please log in and then return to this terminal.\n
+        Please log in and then return to this terminal.
     `;
     } catch (error) {
       log.error("failed to open browser", { error });
-      println`
+      log.printlns`
         Please open the following URL in your browser and log in:
 
           {gray ${url.toString()}}
 
-        Once logged in, return to this terminal.\n
+        Once logged in, return to this terminal.
       `;
     }
 
@@ -97,3 +97,5 @@ export const run = async () => {
     server?.close();
   }
 };
+
+export const command: Command = login;

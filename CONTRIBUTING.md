@@ -30,26 +30,27 @@ Once dependencies are installed, you can run `ggt` via `bin/dev.js`:
 
 ```shell-session
 $ bin/dev.js --help
+ggt v0.3.3
+
 The command-line interface for Gadget
 
-VERSION
-  ggt/0.3.2 darwin-arm64 node-v16.18.1
-
 USAGE
-  $ ggt [COMMAND]
+  ggt [COMMAND]
+
+COMMANDS
+  sync           Sync your Gadget application's source code
+  list           List your apps
+  login          Log in to your account
+  logout         Log out of your account
+  whoami         Print the currently logged in account
+  version        Print the version of ggt
 
 FLAGS
   -h, --help     Print command's usage
-  -v, --version  Print version
-      --debug    Print debug output
+  -v, --verbose  Print verbose output
+      --json     Print output as JSON
 
-COMMANDS
-  sync    Sync your Gadget application's source code to and
-          from your local filesystem.
-  list    List your apps.
-  login   Log in to your account.
-  logout  Log out of your account.
-  whoami  Print the currently logged in account.
+For more information on a specific command, use 'ggt [COMMAND] --help'
 ```
 
 Using `bin/dev.js` runs `ggt` using the source code in the `src` directory. This means you can make changes to the source code and see them reflected immediately every time you run `bin/dev.js`.
@@ -74,6 +75,19 @@ The other differences between `bin/dev.js` and `ggt` are:
   - The environment to run `ggt` in.
   - Defaults to `"production"`.
   - If you're a Gadget staff member, you can set this to `"development"` to run against the development version of Gadget.
+- `GGT_LOG_LEVEL`
+  - The minimum log level to print to stderr.
+  - Defaults to none, which means no logs are printed.
+  - Valid values are `"trace"`, `"debug"`, `"info"`, `"warn"`, and `"error"`.
+  - This is ignored if `--verbose` is passed.
+    - `-v` = `"info"`
+    - `-vv` = `"debug"`
+    - `-vvv` = `"trace"`
+- `GGT_LOG_FORMAT`
+  - The format to use when printing logs.
+  - Defaults to `"pretty"`.
+  - Valid values are `"pretty"` and `"json"`.
+  - This is ignored if `--json` is passed.
 - `GGT_SESSION`
   - The session to use when sending requests to the Gadget API.
   - Defaults to the contents of `GGT_CONFIG_DIR/session.txt`.
@@ -105,52 +119,77 @@ The other differences between `bin/dev.js` and `ggt` are:
 
 ### Tips
 
-- If you want more verbose output from `ggt`, you can pass the `--debug` flag:
+- If you want more verbose output from `ggt`, you can pass the `-v, --verbose` flag:
 
   ```shell-session
-  $ bin/dev.js whoami --debug
-    ggt:session reading session from disk +0ms
-    ggt:fs      swallowing enoent error   { path: 'session.txt' } +0ms
-  You are not logged in
+  $ bin/dev.js whoami --verbose
+  08:37:09 INFO http: http request
+    request:
+      method: 'GET'
+      url: 'https://app.gadget.dev/auth/api/current-user'
+  08:37:09 INFO http: http response
+    request:
+      method: 'GET'
+      url: 'https://app.gadget.dev/auth/api/current-user'
+    response:
+      statusCode: 200
+      traceId: '5fa2f892c9af4481fac8e87e62763ea2'
+      durationMs: 36
+  08:37:09 INFO user: loaded current user
+    user:
+      id: 1
+      name: 'Jane Doe'
+      email: 'jane.doe@example.com'
+  08:37:09 PRINT whoami:
+    You are logged in as Jane Doe (jane.doe@example.com)
   ```
 
-  We use the [debug](https://www.npmjs.com/package/debug) package to log debug messages. When you pass the `--debug` flag, `ggt` will log all debug messages in the `ggt:*` namespace. If you want to log debug messages for all namespaces, you can use the `DEBUG` environment variable directly (e.g. `DEBUG='*' bin/dev.js`)
+  If you want even more verbose output, you can pass the `-v, --verbose` flag multiple times. Each time you pass the flag, the log level is increased:
+
+  - `-v` = `"info"`
+  - `-vv` = `"debug"`
+  - `-vvv` = `"trace"`
 
 - If you're working on file sync, you can `ggt sync` apps into the `tmp/apps` directory. This way, you can have your synced files and `ggt` code in the same directory without worrying about them interfering with each other.
 
 ## Testing
 
-`ggt`'s tests live in the `spec` directory and are written using [Vitest](https://vitest.dev/). You can run them via `npm run test`:
+`ggt`'s tests live in the `spec` directory and are written using [Vitest](https://vitest.dev/). You can run them via `vitest`:
 
 ```shell-session
-$ npm run test
-
-> ggt@0.3.2 test
-> cross-env NODE_OPTIONS="--loader @swc-node/register/esm --no-warnings" vitest
+$ vitest
 
  RUN  v0.34.6 /Users/scott/Code/gadget/ggt
 
- ✓ spec/commands/sync.spec.ts (42) 11033ms
- ✓ spec/commands/sync.spec.ts (42) 11033ms
- ✓ spec/commands/root.spec.ts (25)
- ✓ spec/services/user.spec.ts (8)
- ✓ spec/commands/index.spec.ts (15)
- ✓ spec/services/version.spec.ts (6)
- ✓ spec/services/filesync.spec.ts (11)
+ ✓ spec/services/output/log/level.spec.ts (24)
+ ✓ spec/commands/command.spec.ts (12)
+ ✓ spec/services/output/log/printer.spec.ts (23)
+ ✓ spec/services/filesync/directory.spec.ts (25) 398ms
+ ✓ spec/services/output/update.spec.ts (6)
+ ✓ spec/commands/root.spec.ts (24)
+ ✓ spec/services/user/user.spec.ts (7)
+ ✓ spec/commands/sync.spec.ts (13) 5448ms
+ ✓ spec/services/filesync/filesync.spec.ts (26) 326ms
+ ✓ spec/services/util/number.spec.ts (22)
  ✓ spec/commands/login.spec.ts (3)
- ✓ spec/services/args.spec.ts (16)
- ✓ spec/services/app.spec.ts (3)
- ✓ spec/services/config.spec.ts (8)
- ✓ spec/services/errors.spec.ts (8)
+ ✓ spec/services/app/app.spec.ts (2)
+ ✓ spec/services/output/log/structured.spec.ts (8)
+ ✓ spec/services/util/object.spec.ts (14)
+ ✓ spec/services/error/error.spec.ts (9)
  ✓ spec/commands/logout.spec.ts (3)
- ✓ spec/services/session.spec.ts (5)
- ✓ spec/commands/whoami.spec.ts (3)
+ ✓ spec/services/util/function.spec.ts (6)
+ ✓ spec/services/app/arg.spec.ts (8)
+ ✓ spec/services/config/config.spec.ts (8)
+ ✓ spec/services/user/session.spec.ts (4)
+ ✓ spec/services/util/boolean.spec.ts (8)
  ✓ spec/commands/list.spec.ts (2)
+ ✓ spec/commands/whoami.spec.ts (3)
+ ✓ spec/commands/version.spec.ts (1)
 
- Test Files  15 passed (15)
-      Tests  155 passed | 3 skipped (158)
-   Start at  10:23:19
-   Duration  12.78s (transform 112ms, setup 645ms, collect 351ms, tests 11.32s, environment 0ms, prepare 55ms)
+ Test Files  24 passed (24)
+      Tests  260 passed | 1 todo (261)
+   Start at  20:45:41
+   Duration  6.44s (transform 387ms, setup 5.42s, collect 1.77s, tests 7.27s, environment 2ms, prepare 1.57s)
 ```
 
 Tests also make use of the `tmp` directory. Every test gets its own directory in `tmp/spec/` to store temporary files. This means you can run tests in parallel without worrying about them interfering with each other.

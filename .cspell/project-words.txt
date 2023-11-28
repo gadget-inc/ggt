@@ -1,6 +1,7 @@
 appvalue
 codegen
 commandsstop
+dedenting
 direnv
 ENOENT
 execa
@@ -19,7 +20,11 @@ notifysend
 oclif
 packagejson
 postbuild
+printlns
+Promisable
 sourcemaps
 sprintln
+sprintlns
 typecheck
+unthunk
 usagestop

@@ -1,83 +1,94 @@
-import chalkTemplate from "chalk-template";
+import dayjs from "dayjs";
 import { findUp } from "find-up";
-import type { Stats } from "fs-extra";
 import fs from "fs-extra";
-import type { Ignore } from "ignore";
-import ignore from "ignore";
 import ms from "ms";
+import assert from "node:assert";
 import path from "node:path";
 import process from "node:process";
-import normalizePath from "normalize-path";
 import pMap from "p-map";
+import PQueue from "p-queue";
 import pRetry from "p-retry";
-import pluralize from "pluralize";
-import { dedent } from "ts-dedent";
+import type { Promisable } from "type-fest";
 import { z } from "zod";
-import type {
-  PublishFileSyncEventsMutation,
-  PublishFileSyncEventsMutationVariables,
-  RemoteFileSyncEventsSubscription,
-  RemoteFileSyncEventsSubscriptionVariables,
-  RemoteFilesVersionQuery,
-  RemoteFilesVersionQueryVariables,
-} from "../../__generated__/graphql.js";
-import type { App } from "../app.js";
-import { getApps } from "../app.js";
-import { config } from "../config.js";
-import type { Query } from "../edit-graphql.js";
-import { ArgError, InvalidSyncFileError } from "../errors.js";
-import { isEmptyOrNonExistentDir, swallowEnoent } from "../fs.js";
-import { createLogger } from "../log.js";
-import { noop } from "../noop.js";
-import { println, sortByLevenshtein, sprint } from "../output.js";
-import { select } from "../prompt.js";
-import type { User } from "../user.js";
+import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
+import type { App } from "../app/app.js";
+import { getApps } from "../app/app.js";
+import {
+  EditGraphQL,
+  PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+  REMOTE_FILES_VERSION_QUERY,
+  REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+} from "../app/edit-graphql.js";
+import { config } from "../config/config.js";
+import { homePath } from "../config/paths.js";
+import { ArgError, InvalidSyncFileError } from "../error/error.js";
+import { createLogger } from "../output/log/logger.js";
+import { select } from "../output/prompt.js";
+import { sprint } from "../output/sprint.js";
+import type { User } from "../user/user.js";
+import { sortBySimilar } from "../util/collection.js";
+import { noop } from "../util/function.js";
+import { Changes, printChanges } from "./changes.js";
+import { Directory, swallowEnoent } from "./directory.js";
 
-const log = createLogger("filesync");
-
-export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
-
-interface File {
+export type File = {
   path: string;
+  oldPath?: string | null;
   mode: number;
   content: string;
-  encoding: "utf8" | "base64";
+  encoding: FileSyncEncoding;
+};
+
+export enum Action {
+  CANCEL = "Cancel (Ctrl+C)",
+  MERGE = "Merge local files with remote ones",
+  RESET = "Reset local files to remote ones",
 }
 
 export class FileSync {
+  readonly editGraphQL: EditGraphQL;
+
+  readonly log = createLogger({
+    name: "filesync",
+    fields: () => ({
+      state: {
+        app: this.app.slug,
+        filesVersion: String(this.filesVersion),
+        mtime: this.mtime,
+      },
+    }),
+  });
+
   /**
-   * The {@linkcode Ignore} instance that is used to determine if a file
-   * should be ignored.
-   *
-   * @see https://www.npmjs.com/package/ignore
+   * A FIFO async callback queue that ensures we process filesync events
+   * in the order we receive them.
    */
-  private _ignorer!: Ignore;
+  private _queue = new PQueue({ concurrency: 1 });
 
   private constructor(
     /**
-     * An absolute path to the directory that is being synced.
+     * The directory that is being synced to.
      */
-    readonly dir: string,
+    readonly directory: Directory,
 
     /**
-     * The Gadget application this filesystem is synced to.
+     * Whether the directory was empty or non-existent when we started.
+     */
+    readonly wasEmptyOrNonExistent: boolean,
+
+    /**
+     * The Gadget application that is being synced to.
      */
     readonly app: App,
 
     /**
-     * Additional paths to ignore when syncing the filesystem.
-     */
-    private _extraIgnorePaths: string[],
-
-    /**
      * The state of the filesystem.
      *
-     * This is persisted to `.gadget/sync.json`.
+     * This is persisted to `.gadget/sync.json` within the {@linkcode directory}.
      */
     private _state: { app: string; filesVersion: string; mtime: number },
   ) {
-    this._save();
-    this.reloadIgnorePaths();
+    this.editGraphQL = new EditGraphQL(this.app);
   }
 
   /**
@@ -86,7 +97,7 @@ export class FileSync {
    * This determines if the filesystem in Gadget is ahead of the
    * filesystem on the local machine.
    */
-  get filesVersion() {
+  get filesVersion(): bigint {
     return BigInt(this._state.filesVersion);
   }
 
@@ -96,7 +107,7 @@ export class FileSync {
    * This is used to determine if any files have changed since the last
    * sync. This does not include the mtime of files that are ignored.
    */
-  get mtime() {
+  get mtime(): number {
     return this._state.mtime;
   }
 
@@ -107,12 +118,12 @@ export class FileSync {
    * - Ensures an app is specified (either via `options.app` or by prompting the user)
    * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
    */
-  static async init(user: User, options: { dir?: string; app?: string; force?: boolean; extraIgnorePaths?: string[] }): Promise<FileSync> {
-    const apps = await getApps(user);
+  static async init(options: { user: User; dir?: string; app?: string; force?: boolean }): Promise<FileSync> {
+    const apps = await getApps(options.user);
     if (apps.length === 0) {
       throw new ArgError(
         sprint`
-          You (${user.email}) don't have have any Gadget applications.
+          You (${options.user.email}) don't have have any Gadget applications.
 
           Visit https://gadget.new to create one!
       `,
@@ -134,10 +145,11 @@ export class FileSync {
 
     if (config.windows && dir.startsWith("~/")) {
       // `~` doesn't expand to the home directory on Windows
-      dir = path.join(config.homeDir, dir.slice(2));
+      dir = homePath(dir.slice(2));
     }
 
     // ensure the root directory is an absolute path and exists
+    const wasEmptyOrNonExistent = await isEmptyOrNonExistentDir(dir);
     await fs.ensureDir((dir = path.resolve(dir)));
 
     // try to load the .gadget/sync.json file
@@ -170,7 +182,7 @@ export class FileSync {
       // either they misspelled it or they don't have access to it
       // anymore, suggest some apps that are similar to the one they
       // specified
-      const similarAppSlugs = sortByLevenshtein(
+      const similarAppSlugs = sortBySimilar(
         appSlug,
         apps.map((app) => app.slug),
       ).slice(0, 5);
@@ -188,14 +200,14 @@ export class FileSync {
       );
     }
 
-    const ignore = options.extraIgnorePaths ?? [];
+    const directory = await Directory.init(dir);
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
-      if ((await isEmptyOrNonExistentDir(dir)) || options.force) {
-        // the directory is empty or the user passed --force
+      if (wasEmptyOrNonExistent || options.force) {
+        // the directory was empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
-        return new FileSync(dir, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
+        return new FileSync(directory, wasEmptyOrNonExistent, app, { app: app.slug, filesVersion: "0", mtime: 0 });
       }
 
       // the directory isn't empty and the user didn't pass --force
@@ -205,13 +217,13 @@ export class FileSync {
     // the .gadget/sync.json file exists
     if (state.app === app.slug) {
       // the .gadget/sync.json file is for the same app that the user specified
-      return new FileSync(dir, app, ignore, state);
+      return new FileSync(directory, wasEmptyOrNonExistent, app, state);
     }
 
     // the .gadget/sync.json file is for a different app
     if (options.force) {
       // the user passed --force, so use the app they specified and overwrite everything
-      return new FileSync(dir, app, ignore, { app: app.slug, filesVersion: "0", mtime: 0 });
+      return new FileSync(directory, wasEmptyOrNonExistent, app, { app: app.slug, filesVersion: "0", mtime: 0 });
     }
 
     // the user didn't pass --force, so throw an error
@@ -233,119 +245,290 @@ export class FileSync {
   }
 
   /**
-   * Converts an absolute path into a relative one from {@linkcode dir}.
+   * Waits for all pending and ongoing filesync operations to complete.
    */
-  relative(to: string): string {
-    if (!path.isAbsolute(to)) {
-      // the filepath is already relative
-      return to;
-    }
-
-    return path.relative(this.dir, to);
+  async idle(): Promise<void> {
+    await this._queue.onIdle();
   }
 
   /**
-   * Converts a relative path into an absolute one from {@linkcode dir}.
-   */
-  absolute(...pathSegments: string[]): string {
-    return path.resolve(this.dir, ...pathSegments);
-  }
-
-  /**
-   * Similar to {@linkcode relative} in that it converts an absolute
-   * path into a relative one from {@linkcode dir}. However, it also
-   * changes any slashes to be posix/unix-like forward slashes,
-   * condenses repeated slashes into a single slash, and adds a trailing
-   * slash if the path is a directory.
+   * Sends file changes to the Gadget.
    *
-   * This is used when sending file-sync events to Gadget to ensure that
-   * the paths are consistent across platforms.
+   * @param changes - The changes to send.
+   * @returns A promise that resolves when the changes have been sent.
+   */
+  async sendChangesToGadget({ changes }: { changes: Changes }): Promise<void> {
+    await this._enqueue(() => this._sendChangesToGadget({ changes }));
+  }
+
+  /**
+   * Subscribes to file changes on Gadget and executes the provided
+   * callbacks before and after the changes occur.
    *
-   * @see https://www.npmjs.com/package/normalize-path
+   * @returns A function that unsubscribes from changes on Gadget.
    */
-  normalize(filepath: string, isDirectory: boolean): string {
-    return normalizePath(path.isAbsolute(filepath) ? this.relative(filepath) : filepath) + (isDirectory ? "/" : "");
+  subscribeToGadgetChanges({
+    beforeChanges,
+    afterChanges,
+    onError,
+  }: {
+    beforeChanges: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
+    afterChanges: (data: { changes: Changes }) => Promisable<void>;
+    onError: (error: unknown) => void;
+  }): () => void {
+    return this.editGraphQL.subscribe(
+      {
+        query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+        // the reason this is a function rather than a static value is
+        // so that it will be re-evaluated if the connection is lost and
+        // then re-established. this ensures that we send our current
+        // filesVersion rather than the one that was sent when we first
+        // subscribed
+        variables: () => ({ localFilesVersion: String(this.filesVersion) }),
+      },
+      {
+        error: onError,
+        next: ({ remoteFileSyncEvents: { changed, deleted, remoteFilesVersion } }) => {
+          this._enqueue(async () => {
+            if (BigInt(remoteFilesVersion) < this.filesVersion) {
+              this.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
+              return;
+            }
+
+            this.log.debug("received files", {
+              remoteFilesVersion: remoteFilesVersion,
+              changed: changed.map((change) => change.path),
+              deleted: deleted.map((change) => change.path),
+            });
+
+            const filterIgnoredFiles = (file: { path: string }): boolean => {
+              const ignored = this.directory.ignores(file.path);
+              if (ignored) {
+                this.log.warn("skipping received change because file is ignored", { path: file.path });
+              }
+              return !ignored;
+            };
+
+            changed = changed.filter(filterIgnoredFiles);
+            deleted = deleted.filter(filterIgnoredFiles);
+
+            if (changed.length === 0 && deleted.length === 0) {
+              await this._save({ filesVersion: remoteFilesVersion });
+              return;
+            }
+
+            await beforeChanges({
+              changed: changed.map((file) => file.path),
+              deleted: deleted.map((file) => file.path),
+            });
+
+            const changes = await this._writeToLocalFilesystem({
+              filesVersion: remoteFilesVersion,
+              files: changed,
+              delete: deleted.map((file) => file.path),
+            });
+
+            if (changes.size > 0) {
+              const timestamp = dayjs().format("hh:mm:ss A");
+              printChanges({
+                title: sprint`← Received {gray ${timestamp}}`,
+                changes,
+                tense: "present",
+                limit: 10,
+              });
+            }
+
+            await afterChanges({ changes });
+          }).catch(onError);
+        },
+      },
+    );
   }
 
   /**
-   * Reloads the ignore rules from the `.ignore` file.
+   * Synchronizes local files with Gadget files. If there are local
+   * changes, prompts the user to either merge or reset them.
    */
-  reloadIgnorePaths(): void {
-    this._ignorer = ignore.default();
-    this._ignorer.add([...ALWAYS_IGNORE_PATHS, ...this._extraIgnorePaths]);
+  async sync(): Promise<void> {
+    const data = await this.editGraphQL.query({ query: REMOTE_FILES_VERSION_QUERY });
+    const remoteFilesVersion = BigInt(data.remoteFilesVersion);
+    const hasRemoteChanges = remoteFilesVersion > this.filesVersion;
 
-    try {
-      const content = fs.readFileSync(this.absolute(".ignore"), "utf-8");
-      this._ignorer.add(content);
-      log.info("reloaded ignore rules");
-    } catch (error) {
-      swallowEnoent(error);
+    const getLocalChanges = async (): Promise<Changes> => {
+      const changes = new Changes();
+      for await (const normalizedPath of this.directory.walk()) {
+        if (normalizedPath.startsWith(".gadget/")) {
+          // ignore changes to the .gadget/ directory
+          continue;
+        }
+
+        const stats = await fs.stat(this.directory.absolute(normalizedPath));
+        if (stats.mtime.getTime() > this.mtime) {
+          this.log.trace("detected local change", { path: normalizedPath, mtime: stats.mtime.getTime() });
+          changes.set(normalizedPath, { type: "update" });
+        }
+      }
+      return changes;
+    };
+
+    let localChanges = await getLocalChanges();
+    const hasLocalChanges = localChanges.size > 0;
+    if (hasLocalChanges) {
+      printChanges({
+        title: "Local files have changed since you last synced",
+        changes: localChanges,
+        tense: "past",
+      });
+    }
+
+    let action: Action | undefined;
+    if (hasLocalChanges) {
+      action = await select({
+        message: hasRemoteChanges ? "Remote files have also changed. How would you like to proceed?" : "How would you like to proceed?",
+        choices: [Action.CANCEL, Action.MERGE, Action.RESET],
+      });
+    }
+
+    if (action && action !== Action.CANCEL) {
+      // get all the changed files again in case more changed
+      localChanges = await getLocalChanges();
+    }
+
+    switch (action) {
+      case Action.MERGE: {
+        this.log.info("merging local changes", {
+          remoteFilesVersion,
+          hasRemoteChanges,
+          hasLocalChanges,
+          changed: Array.from(localChanges.keys()),
+        });
+
+        const currentFilesVersion = this.filesVersion;
+        await this._sendChangesToGadget({ changes: localChanges, expectedFilesVersion: remoteFilesVersion });
+
+        // We purposefully set the files version to the one we just had
+        // because we haven't received the remote files that changed yet
+        this._state.filesVersion = String(currentFilesVersion);
+        break;
+      }
+      case Action.RESET: {
+        this.log.info("resetting local changes", {
+          remoteFilesVersion,
+          hasRemoteChanges,
+          hasLocalChanges,
+          changed: Array.from(localChanges.keys()),
+        });
+
+        // delete the local files that have changed since the last sync
+        await this._writeToLocalFilesystem({
+          filesVersion: this.filesVersion,
+          files: [],
+          delete: Array.from(localChanges.keys()),
+        });
+
+        // set the files version to 0 so we receive all the remote files
+        // again, including any files that we deleted that still exist
+        this._state.filesVersion = "0";
+        break;
+      }
+      case Action.CANCEL: {
+        process.exit(0);
+      }
     }
   }
 
-  /**
-   * Returns `true` if the {@linkcode filepath} should be ignored.
-   */
-  ignores(filepath: string): boolean {
-    const relative = this.relative(filepath);
-    if (relative === "") {
-      // don't ignore the root dir
-      return false;
-    }
+  private async _sendChangesToGadget({
+    expectedFilesVersion = this.filesVersion,
+    changes,
+  }: {
+    expectedFilesVersion?: bigint;
+    changes: Changes;
+  }): Promise<void> {
+    this.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
+    const changed: FileSyncChangedEventInput[] = [];
+    const deleted: FileSyncDeletedEventInput[] = [];
 
-    if (relative.startsWith("..")) {
-      // anything above the root dir is ignored
-      return true;
-    }
-
-    return this._ignorer.ignores(relative);
-  }
-
-  /**
-   * Walks the directory and yields each file and directory.
-   *
-   * If a directory is empty, or only contains ignored entries, it will
-   * be yielded as a directory. Otherwise, each file within the
-   * directory will be yielded.
-   */
-  async *walkDir({ dir = this.dir, skipIgnored = true } = {}): AsyncGenerator<[absolutePath: string, entry: Stats]> {
-    // track whether the directory has any entries (ignored entries don't count)
-    let hasEntries = false;
-
-    for await (const entry of await fs.opendir(dir)) {
-      const filepath = path.join(dir, entry.name);
-      if (skipIgnored && this.ignores(filepath)) {
-        continue;
+    await pMap(changes, async ([normalizedPath, change]) => {
+      if (change.type === "delete") {
+        deleted.push({ path: normalizedPath });
+        return;
       }
 
-      hasEntries = true;
+      const absolutePath = this.directory.absolute(normalizedPath);
 
-      if (entry.isDirectory()) {
-        yield* this.walkDir({ dir: filepath, skipIgnored });
-      } else if (entry.isFile()) {
-        yield [filepath, await fs.stat(filepath)];
+      let stats;
+      try {
+        stats = await fs.stat(absolutePath);
+      } catch (error) {
+        swallowEnoent(error);
+        this.log.debug("skipping change because file doesn't exist", { path: normalizedPath });
+        return;
       }
+
+      let content = "";
+      if (stats.isFile()) {
+        content = await fs.readFile(absolutePath, FileSyncEncoding.Base64);
+      }
+
+      let oldPath;
+      if (change.type === "create" && change.oldPath) {
+        oldPath = change.oldPath;
+      }
+
+      changed.push({
+        content,
+        oldPath,
+        path: normalizedPath,
+        mode: stats.mode,
+        encoding: FileSyncEncoding.Base64,
+      });
+    });
+
+    if (changed.length === 0 && deleted.length === 0) {
+      this.log.debug("skipping send because there are no changes");
+      return;
     }
 
-    if (!hasEntries) {
-      // if the directory is empty, or only contains ignored entries, yield it as a directory
-      yield [`${dir}/`, await fs.stat(dir)];
-    }
+    const {
+      publishFileSyncEvents: { remoteFilesVersion },
+    } = await this.editGraphQL.query({
+      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      variables: {
+        input: {
+          expectedRemoteFilesVersion: String(expectedFilesVersion),
+          changed,
+          deleted,
+        },
+      },
+    });
+
+    await this._save({ filesVersion: remoteFilesVersion, mtime: Date.now() + 1 });
+
+    const timestamp = dayjs().format("hh:mm:ss A");
+    printChanges({
+      title: sprint`→ Sent {gray ${timestamp}}`,
+      changes,
+      tense: "present",
+      limit: 10,
+    });
   }
 
-  /**
-   * Writes the {@linkcode changed} and {@linkcode deleted} files to the filesystem.
-   * @param filesVersion The files version associated with the files that are being written.
-   * @param changed The files that have changed.
-   * @param deleted The paths that have been deleted.
-   * @param force If `true`, the files version will be updated even if it's less than the current files version.
-   */
-  async write(filesVersion: bigint | string, changed: Iterable<File>, deleted: Iterable<string>, force = false): Promise<void> {
-    filesVersion = BigInt(filesVersion);
+  private async _writeToLocalFilesystem(options: { filesVersion: bigint | string; files: File[]; delete: string[] }): Promise<Changes> {
+    const filesVersion = BigInt(options.filesVersion);
+    assert(filesVersion >= this.filesVersion, "filesVersion must be greater than or equal to current filesVersion");
 
-    await pMap(deleted, async (filepath) => {
-      const currentPath = this.absolute(filepath);
-      const backupPath = this.absolute(".gadget/backup", this.relative(filepath));
+    this.log.debug("writing to local filesystem", {
+      filesVersion,
+      files: options.files.map((file) => file.path),
+      delete: options.delete,
+    });
+
+    const created: string[] = [];
+    const updated: string[] = [];
+
+    await pMap(options.delete, async (filepath) => {
+      const currentPath = this.directory.absolute(filepath);
+      const backupPath = this.directory.absolute(".gadget/backup", this.directory.relative(filepath));
 
       // rather than `rm -rf`ing files, we move them to
       // `.gadget/backup/` so that users can recover them if something
@@ -367,14 +550,20 @@ export class FileSync {
           retries: 2,
           minTimeout: ms("100ms"),
           onFailedAttempt: (error) => {
-            log.warn("failed to move file to backup", { error });
+            this.log.warn("failed to move file to backup", { error, currentPath, backupPath });
           },
         },
       );
     });
 
-    await pMap(changed, async (file) => {
-      const absolutePath = this.absolute(file.path);
+    await pMap(options.files, async (file) => {
+      const absolutePath = this.directory.absolute(file.path);
+      if (await fs.pathExists(absolutePath)) {
+        updated.push(file.path);
+      } else {
+        created.push(file.path);
+      }
+
       if (file.path.endsWith("/")) {
         await fs.ensureDir(absolutePath, { mode: 0o755 });
         return;
@@ -383,90 +572,51 @@ export class FileSync {
       await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
       await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
 
-      if (absolutePath === this.absolute(".ignore")) {
-        this.reloadIgnorePaths();
+      if (absolutePath === this.directory.absolute(".ignore")) {
+        await this.directory.loadIgnoreFile();
       }
     });
 
-    this._state.mtime = Date.now();
-    if (filesVersion > BigInt(this._state.filesVersion) || force) {
-      this._state.filesVersion = String(filesVersion);
-    }
+    await this._save({ filesVersion: String(filesVersion), mtime: Date.now() + 1 });
 
-    this._save();
-
-    log.info("wrote", {
-      ...this._state,
-      changed: Array.from(changed).map((x) => x.path),
-      deleted: Array.from(deleted),
-    });
+    return new Changes([
+      ...created.map((path) => [path, { type: "create" }] as const),
+      ...updated.map((path) => [path, { type: "update" }] as const),
+      ...options.delete.map((path) => [path, { type: "delete" }] as const),
+    ]);
   }
 
   /**
-   * Synchronously writes {@linkcode _state} to `.gadget/sync.json`.
+   * Updates {@linkcode _state} and saves it to `.gadget/sync.json`.
    */
-  private _save() {
-    fs.outputJSONSync(this.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
+  private async _save(state: Partial<typeof this._state>): Promise<void> {
+    this._state = { ...this._state, ...state };
+    this.log.debug("saving state", { state: this._state });
+    await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
+  }
+
+  /**
+   * Enqueues a function that handles filesync events onto the {@linkcode _queue}.
+   */
+  private _enqueue<T>(fn: () => Promise<T>): Promise<T> {
+    return this._queue.add(fn) as Promise<T>;
   }
 }
 
 /**
- * Pretty-prints changed and deleted filepaths to the console.
+ * Checks if a directory is empty or non-existent.
  *
- * @param prefix The prefix to print before each line.
- * @param changed The normalized paths that have changed.
- * @param deleted The normalized paths that have been deleted.
- * @param options.limit The maximum number of lines to print. Defaults to 10.
+ * @param dir - The directory path to check.
+ * @returns A Promise that resolves to a boolean indicating whether the directory is empty or non-existent.
  */
-export const printPaths = (prefix: string, changed: string[], deleted: string[], { limit = 10 } = {}) => {
-  const lines = [
-    ...changed.map((normalizedPath) => chalkTemplate`{green ${prefix}} ${normalizedPath} {gray (changed)}`),
-    ...deleted.map((normalizedPath) => chalkTemplate`{red ${prefix}} ${normalizedPath} {gray (deleted)}`),
-  ].sort((a, b) => a.slice(a.indexOf(" ") + 1).localeCompare(b.slice(b.indexOf(" ") + 1)));
-
-  let logged = 0;
-  for (const line of lines) {
-    println(line);
-    if (++logged === limit) {
-      break;
+export const isEmptyOrNonExistentDir = async (dir: string): Promise<boolean> => {
+  try {
+    for await (const _ of await fs.opendir(dir, { bufferSize: 1 })) {
+      return false;
     }
+    return true;
+  } catch (error) {
+    swallowEnoent(error);
+    return true;
   }
-
-  if (lines.length > logged) {
-    println`{gray … ${lines.length - logged} more}`;
-  }
-
-  println`{gray ${pluralize("file", lines.length, true)} in total. ${changed.length} changed, ${deleted.length} deleted.}`;
-  println();
 };
-
-export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
-  subscription RemoteFileSyncEvents($localFilesVersion: String!) {
-    remoteFileSyncEvents(localFilesVersion: $localFilesVersion, encoding: base64) {
-      remoteFilesVersion
-      changed {
-        path
-        mode
-        content
-        encoding
-      }
-      deleted {
-        path
-      }
-    }
-  }
-`) as Query<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
-
-export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
-  query RemoteFilesVersion {
-    remoteFilesVersion
-  }
-`) as Query<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables>;
-
-export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
-  mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
-    publishFileSyncEvents(input: $input) {
-      remoteFilesVersion
-    }
-  }
-`) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;

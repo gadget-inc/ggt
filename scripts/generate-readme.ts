@@ -6,10 +6,10 @@ import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkToc from "remark-toc";
 import { dedent } from "ts-dedent";
-import { availableCommands, type Command } from "../src/commands/index.js";
+import { AvailableCommands, type CommandModule } from "../src/commands/command.js";
 import { usage } from "../src/commands/root.js";
 
-let readme = await fs.readFile("README.md", "utf-8");
+let readme = await fs.readFile("README.md", "utf8");
 
 readme = readme.replace(
   /^## Usage.*?(^## )/ms,
@@ -19,7 +19,7 @@ readme = readme.replace(
     \`\`\`sh-session
     $ npm install -g @gadgetinc/ggt
     $ ggt
-    ${usage}
+    ${usage()}
     \`\`\`
 
     $1
@@ -27,13 +27,13 @@ readme = readme.replace(
 );
 
 const commands: string[] = [];
-for (const name of availableCommands) {
-  const command = (await import(`../src/commands/${name}.js`)) as Command;
+for (const name of AvailableCommands) {
+  const command = (await import(`../src/commands/${name}.js`)) as CommandModule;
   commands.push(dedent`
     ### \`ggt ${name}\`
 
     \`\`\`
-    ${command.usage}
+    ${command.usage()}
     \`\`\`
   `);
 }

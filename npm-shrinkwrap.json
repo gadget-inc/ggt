@@ -10,7 +10,7 @@
       "license": "MIT",
       "dependencies": {
         "@inquirer/confirm": "^2.0.14",
-        "@inquirer/select": "^1.3.0",
+        "@inquirer/select": "^1.3.1",
         "@sentry/node": "^7.82.0",
         "@swc/helpers": "^0.5.3",
         "arg": "^5.0.2",
@@ -3945,13 +3945,13 @@
       }
     },
     "node_modules/@inquirer/core": {
-      "version": "5.1.0",
-      "resolved": "https://registry.npmjs.org/@inquirer/core/-/core-5.1.0.tgz",
-      "integrity": "sha512-EVnific72BhMOMo8mElvrYhGFWJZ73X6j0I+fITIPTsdAz6Z9A3w3csKy+XaH87/5QAEIQHR7RSCVXvQpIqNdQ==",
+      "version": "5.1.1",
+      "resolved": "https://registry.npmjs.org/@inquirer/core/-/core-5.1.1.tgz",
+      "integrity": "sha512-IuJyZQUg75+L5AmopgnzxYrgcU6PJKL0hoIs332G1Gv55CnmZrhG6BzNOeZ5sOsTi1YCGOopw4rYICv74ejMFg==",
       "dependencies": {
         "@inquirer/type": "^1.1.5",
-        "@types/mute-stream": "^0.0.2",
-        "@types/node": "^20.8.2",
+        "@types/mute-stream": "^0.0.4",
+        "@types/node": "^20.9.0",
         "@types/wrap-ansi": "^3.0.0",
         "ansi-escapes": "^4.3.2",
         "chalk": "^4.1.2",
@@ -4054,11 +4054,11 @@
       }
     },
     "node_modules/@inquirer/select": {
-      "version": "1.3.0",
-      "resolved": "https://registry.npmjs.org/@inquirer/select/-/select-1.3.0.tgz",
-      "integrity": "sha512-3sL5odCDYI+i+piAFqFa5ULDUKEpc0U1zEY4Wm6gjP6nMAHWM8r1UzMlpQXCyHny91Tz+oeSLeKinAde0z6R7w==",
+      "version": "1.3.1",
+      "resolved": "https://registry.npmjs.org/@inquirer/select/-/select-1.3.1.tgz",
+      "integrity": "sha512-EgOPHv7XOHEqiBwBJTyiMg9r57ySyW4oyYCumGp+pGyOaXQaLb2kTnccWI6NFd9HSi5kDJhF7YjA+3RfMQJ2JQ==",
       "dependencies": {
-        "@inquirer/core": "^5.1.0",
+        "@inquirer/core": "^5.1.1",
         "@inquirer/type": "^1.1.5",
         "ansi-escapes": "^4.3.2",
         "chalk": "^4.1.2",
@@ -5242,9 +5242,9 @@
       "dev": true
     },
     "node_modules/@types/mute-stream": {
-      "version": "0.0.2",
-      "resolved": "https://registry.npmjs.org/@types/mute-stream/-/mute-stream-0.0.2.tgz",
-      "integrity": "sha512-FpiGjk6+IOrN0lZEfUUjdra1csU1VxwYFj4S0Zj+TJpu5x5mZW30RkEZojTadrNZHNmpCHgoE62IQZAH0OeuIA==",
+      "version": "0.0.4",
+      "resolved": "https://registry.npmjs.org/@types/mute-stream/-/mute-stream-0.0.4.tgz",
+      "integrity": "sha512-CPM9nzrCPPJHQNA9keH9CVkVI+WR5kMa+7XEs5jcGQ0VoAGnLv242w8lIVgwAEfmE4oufJRaTc9PNLQl0ioAow==",
       "dependencies": {
         "@types/node": "*"
       }
@@ -19272,13 +19272,13 @@
       }
     },
     "@inquirer/core": {
-      "version": "5.1.0",
-      "resolved": "https://registry.npmjs.org/@inquirer/core/-/core-5.1.0.tgz",
-      "integrity": "sha512-EVnific72BhMOMo8mElvrYhGFWJZ73X6j0I+fITIPTsdAz6Z9A3w3csKy+XaH87/5QAEIQHR7RSCVXvQpIqNdQ==",
+      "version": "5.1.1",
+      "resolved": "https://registry.npmjs.org/@inquirer/core/-/core-5.1.1.tgz",
+      "integrity": "sha512-IuJyZQUg75+L5AmopgnzxYrgcU6PJKL0hoIs332G1Gv55CnmZrhG6BzNOeZ5sOsTi1YCGOopw4rYICv74ejMFg==",
       "requires": {
         "@inquirer/type": "^1.1.5",
-        "@types/mute-stream": "^0.0.2",
-        "@types/node": "^20.8.2",
+        "@types/mute-stream": "^0.0.4",
+        "@types/node": "^20.9.0",
         "@types/wrap-ansi": "^3.0.0",
         "ansi-escapes": "^4.3.2",
         "chalk": "^4.1.2",
@@ -19353,11 +19353,11 @@
       }
     },
     "@inquirer/select": {
-      "version": "1.3.0",
-      "resolved": "https://registry.npmjs.org/@inquirer/select/-/select-1.3.0.tgz",
-      "integrity": "sha512-3sL5odCDYI+i+piAFqFa5ULDUKEpc0U1zEY4Wm6gjP6nMAHWM8r1UzMlpQXCyHny91Tz+oeSLeKinAde0z6R7w==",
+      "version": "1.3.1",
+      "resolved": "https://registry.npmjs.org/@inquirer/select/-/select-1.3.1.tgz",
+      "integrity": "sha512-EgOPHv7XOHEqiBwBJTyiMg9r57ySyW4oyYCumGp+pGyOaXQaLb2kTnccWI6NFd9HSi5kDJhF7YjA+3RfMQJ2JQ==",
       "requires": {
-        "@inquirer/core": "^5.1.0",
+        "@inquirer/core": "^5.1.1",
         "@inquirer/type": "^1.1.5",
         "ansi-escapes": "^4.3.2",
         "chalk": "^4.1.2",
@@ -20223,9 +20223,9 @@
       "dev": true
     },
     "@types/mute-stream": {
-      "version": "0.0.2",
-      "resolved": "https://registry.npmjs.org/@types/mute-stream/-/mute-stream-0.0.2.tgz",
-      "integrity": "sha512-FpiGjk6+IOrN0lZEfUUjdra1csU1VxwYFj4S0Zj+TJpu5x5mZW30RkEZojTadrNZHNmpCHgoE62IQZAH0OeuIA==",
+      "version": "0.0.4",
+      "resolved": "https://registry.npmjs.org/@types/mute-stream/-/mute-stream-0.0.4.tgz",
+      "integrity": "sha512-CPM9nzrCPPJHQNA9keH9CVkVI+WR5kMa+7XEs5jcGQ0VoAGnLv242w8lIVgwAEfmE4oufJRaTc9PNLQl0ioAow==",
       "requires": {
         "@types/node": "*"
       }

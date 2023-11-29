@@ -8,6 +8,8 @@ import arg from "arg";
 import { PromiseSignal } from "src/services/promise.js";
 import { Action, SyncStatus } from "./sync.js";
 import { select } from "src/services/prompt.js";
+import ora from "ora";
+import chalk from "chalk";
 
 export const usage = sprint`
     The description for deploying
@@ -67,6 +69,8 @@ export class Deploy {
   
   async run(): Promise<void> {
     const signal = new PromiseSignal();
+    let prevProgress: string | undefined;
+    const spinner = ora()
     
     // subscribes to the graphql subscription that will listen and send back the server contract status
     const unsubscribe = this.graphql.subscribe(
@@ -79,40 +83,51 @@ export class Deploy {
           // console.error("[jenny] Subscription error:", error);
         },
         next: async ({publishServerContractStatus}) => {
+          const contractStatus = publishServerContractStatus?.progress;
           
           // console.log("[jenny] data is", JSON.stringify(publishServerContractStatus, undefined, 4))
           
-          if(publishServerContractStatus?.progress === "ALREADY_SYNCING"){
-            println("❗ Detected a sync already in progress. Good bye!")
+          if(contractStatus === "ALREADY_SYNCING"){
+            println2(`
+            ${""}
+            ${chalk.inverse("Detected a sync already in progress. Good bye!")}
+            `)
             return
           }
 
-          if(publishServerContractStatus?.missingProductionShopifyConfig || publishServerContractStatus?.missingProductionGoogleAuthConfig || publishServerContractStatus?.missingProductionOpenAIConnectionConfig || publishServerContractStatus?.isUsingOpenAIGadgetManagedKeys){
-            println2`❗ Problems detected`
-            
-            if(publishServerContractStatus?.missingProductionShopifyConfig){
-              println("• Add shopify keys for production")
-            }
-            
-            if(publishServerContractStatus?.missingProductionGoogleAuthConfig){
-              println("• Add google keys for production")
-            }
-            
-            if(publishServerContractStatus?.missingProductionOpenAIConnectionConfig){
-              println("• Add OpenAI keys for production")
-            }
-            
-            if(publishServerContractStatus?.isUsingOpenAIGadgetManagedKeys){
-              println("• Limitations apply to Gadget's OpenAI keys")
-            }
+          if(contractStatus === "NOT_STARTED"){
+            println(`
+                ${""}
+                ${chalk.underline("Problems detected")}
+                ${publishServerContractStatus?.missingProductionShopifyConfig ? ' • Add Shopify keys for production' : ''}
+                ${publishServerContractStatus?.missingProductionGoogleAuthConfig ? ' • Add Google keys for production' : ''}
+                ${publishServerContractStatus?.missingProductionOpenAIConnectionConfig ? ' • Add OpenAI keys for production' : ''}
+                ${publishServerContractStatus?.isUsingOpenAIGadgetManagedKeys ? ' • Limitations apply to Gadget\'s OpenAI keys' : ''}
+            `.trimEnd());
                         
-            if(!this.args["--force"]){
-              signal.resolve();
-             }
-          }
-          
-          if(["STARTING", "BUILDING_ASSETS", "UPLOADING_ASSETS", "CONVERGING_STORAGE", "PUBLISHING_TREE", "RELOADING_SANDBOX"].includes(publishServerContractStatus?.progress ?? "")){
-            println(`${publishServerContractStatus?.progress} ...`)
+            !this.args["--force"] && signal.resolve();
+
+          }else{
+            if(contractStatus === "COMPLETED"){
+              spinner.succeed("DONE")
+              println("")
+              println2(`Deploy completed. Good bye!`)
+              return
+            }
+  
+            const currentProgress = AppDeploymentStepsToAppDeployState(contractStatus);
+
+            if(contractStatus && currentProgress !== prevProgress ){
+              if(contractStatus !== "STARTING"){
+                spinner.succeed("DONE")
+              }
+              
+              prevProgress = currentProgress;
+              println("")
+              println(`${currentProgress} ...`)              
+              spinner.start(`Working ...`)
+
+            }
           }
         },
         
@@ -146,6 +161,29 @@ export class Deploy {
 
   }
 }
+
+export const AppDeploymentStepsToAppDeployState = (step: string | undefined) => {
+  switch (step) {
+    case "ALREADY_SYNCING":
+      return "A deploy is already in progress";
+    case "NOT_STARTED":
+      return "Deploy not started";
+    case "STARTING":
+    case "BUILDING_ASSETS":
+    case "UPLOADING_ASSETS":
+      return "Building frontend assets";
+    case "CONVERGING_STORAGE":
+      return "Setting up database";
+    case "PUBLISHING_TREE":
+      return "Copying development";
+    case "RELOADING_SANDBOX":
+      return "Restarting app";
+    case "COMPLETED":
+      return "Deploy completed";
+    default:
+      return "Unknown step";
+  }
+};
 
 const deploy = new Deploy();
 export const init = deploy.init.bind(deploy);

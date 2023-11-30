@@ -13,6 +13,8 @@ import type {
   FileSyncHashesQueryVariables,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
+  PublishServerContractStatusSubscription,
+  PublishServerContractStatusSubscriptionVariables,
   RemoteFileSyncEventsSubscription,
   RemoteFileSyncEventsSubscriptionVariables,
   RemoteFilesVersionQuery,
@@ -340,3 +342,32 @@ export const FILE_SYNC_HASHES_QUERY = dedent(/* GraphQL */ `
 `) as GraphQLQuery<FileSyncHashesQuery, FileSyncHashesQueryVariables>;
 
 export type FILE_SYNC_HASHES_QUERY = typeof FILE_SYNC_HASHES_QUERY;
+
+export const REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION = dedent(/* GraphQL */ `
+  subscription PublishServerContractStatus($localFilesVersion: String!, $force: Boolean) {
+    publishServerContractStatus(localFilesVersion: $localFilesVersion, force: $force) {
+      remoteFilesVersion
+      progress
+      problems {
+        problem {
+          severity
+          message
+        }
+        node {
+          type
+          key
+          name
+          fieldType
+          parentKey
+          parentApiIdentifier
+        }
+      }
+      missingProductionShopifyConfig
+      missingProductionOpenAIConnectionConfig
+      missingProductionGoogleAuthConfig
+      isUsingOpenAIGadgetManagedKeys
+    }
+  }
+`) as GraphQLQuery<PublishServerContractStatusSubscription, PublishServerContractStatusSubscriptionVariables>
+
+export type REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION = typeof REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION;

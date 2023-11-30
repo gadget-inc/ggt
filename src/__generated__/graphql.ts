@@ -298,6 +298,39 @@ export type MutationUploadTemplateAssetArgs = {
   file: Scalars['Upload']['input'];
 };
 
+export type NodeInput = {
+  __typename?: 'NodeInput';
+  fieldType?: Maybe<Scalars['String']['output']>;
+  key: Scalars['String']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  parentApiIdentifier?: Maybe<Scalars['String']['output']>;
+  parentKey?: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
+};
+
+export type ProblemInput = {
+  __typename?: 'ProblemInput';
+  message: Scalars['String']['output'];
+  severity: Scalars['String']['output'];
+};
+
+export type PublishContractProblem = {
+  __typename?: 'PublishContractProblem';
+  node?: Maybe<NodeInput>;
+  problem?: Maybe<ProblemInput>;
+};
+
+export type PublishContractState = {
+  __typename?: 'PublishContractState';
+  isUsingOpenAIGadgetManagedKeys?: Maybe<Scalars['Boolean']['output']>;
+  missingProductionGoogleAuthConfig?: Maybe<Scalars['Boolean']['output']>;
+  missingProductionOpenAIConnectionConfig?: Maybe<Scalars['Boolean']['output']>;
+  missingProductionShopifyConfig?: Maybe<Scalars['Boolean']['output']>;
+  problems?: Maybe<Array<Maybe<PublishContractProblem>>>;
+  progress: Scalars['String']['output'];
+  remoteFilesVersion: Scalars['String']['output'];
+};
+
 export type PublishFileSyncEventsInput = {
   changed: Array<FileSyncChangedEventInput>;
   deleted: Array<FileSyncDeletedEventInput>;
@@ -411,6 +444,7 @@ export type Subscription = {
   editorActive?: Maybe<Scalars['Boolean']['output']>;
   environmentTreePathPatches?: Maybe<EnvironmentSubscriptionResult>;
   logsSearch: LogSearchResult;
+  publishServerContractStatus?: Maybe<PublishContractState>;
   remoteFileSyncEvents: RemoteFileSyncEvents;
   typesManifestStream: TypesManifest;
 };
@@ -426,6 +460,12 @@ export type SubscriptionLogsSearchArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   query: Scalars['String']['input'];
   start?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+
+export type SubscriptionPublishServerContractStatusArgs = {
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+  localFilesVersion: Scalars['String']['input'];
 };
 
 
@@ -539,3 +579,11 @@ export type FileSyncHashesQueryVariables = Exact<{
 
 
 export type FileSyncHashesQuery = { __typename?: 'Query', fileSyncHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } } };
+
+export type PublishServerContractStatusSubscriptionVariables = Exact<{
+  localFilesVersion: Scalars['String']['input'];
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+}>;
+
+
+export type PublishServerContractStatusSubscription = { __typename?: 'Subscription', publishServerContractStatus?: { __typename?: 'PublishContractState', remoteFilesVersion: string, progress: string, missingProductionShopifyConfig?: boolean | null, missingProductionOpenAIConnectionConfig?: boolean | null, missingProductionGoogleAuthConfig?: boolean | null, isUsingOpenAIGadgetManagedKeys?: boolean | null, problems?: Array<{ __typename?: 'PublishContractProblem', problem?: { __typename?: 'ProblemInput', severity: string, message: string } | null, node?: { __typename?: 'NodeInput', type: string, key: string, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null } | null> | null } | null };

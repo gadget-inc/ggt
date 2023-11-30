@@ -97,6 +97,7 @@ const argSpec = {
   "--once": Boolean,
   "--prefer": ConflictPreferenceArg,
   "--force": Boolean,
+  "--syncOnce": Boolean,
   "--file-push-delay": Number,
   "--file-watch-debounce": Number,
   "--file-watch-poll-interval": Number,
@@ -178,6 +179,11 @@ export const command: Command = async (ctx) => {
           log.error("yarn install failed", { error });
         });
       }
+      
+      if(args["--syncOnce"]){
+        log.println("Ran a sync.")
+        stop();
+      }
     },
   });
 
@@ -256,25 +262,36 @@ export const command: Command = async (ctx) => {
     },
   ).once("error", (error) => ctx.abort(error));
 
-  log.printlns`
-    ggt v${config.version}
+  log.println(
+    boxen(
+      sprint`
+      ggt v${config.version}
 
-    App         ${filesync.app.slug}
-    Editor      https://${filesync.app.slug}.gadget.app/edit
-    Playground  https://${filesync.app.slug}.gadget.app/api/graphql/playground
-    Docs        https://docs.gadget.dev/api/${filesync.app.slug}
-
-    Endpoints ${
-      filesync.app.hasSplitEnvironments
-        ? `
-      • https://${filesync.app.primaryDomain}
-      • https://${filesync.app.slug}--development.gadget.app`
-        : `
-      • https://${filesync.app.primaryDomain}`
-    }
-
-    Watching for file changes... {gray Press Ctrl+C to stop}
-  `;
+      App         ${filesync.app.slug}
+      Editor      https://${filesync.app.slug}.gadget.app/edit
+      Playground  https://${filesync.app.slug}.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/${filesync.app.slug}
+  
+      Endpoints ${
+        filesync.app.hasSplitEnvironments
+          ? `
+        • https://${filesync.app.primaryDomain}
+        • https://${filesync.app.slug}--development.gadget.app`
+          : `
+        • https://${filesync.app.primaryDomain}`
+      }
+      `,
+      {
+        padding: 1,
+        borderStyle: "round",
+        dimBorder: true,
+      },
+    ),
+  );
+  
+  log.println(`
+    ${!args["--syncOnce"] ? `Watching for file changes... {gray Press Ctrl+C to stop}` : ""}
+  `)
 
   ctx.onAbort(async (reason) => {
     log.info("stopping", { reason });

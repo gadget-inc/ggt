@@ -15,7 +15,7 @@ export type CommandModule = {
   command: Command;
 };
 
-export const AvailableCommands = ["sync", "list", "login", "logout", "whoami", "version"] as const;
+export const AvailableCommands = ["sync", "list", "login", "logout", "whoami", "version", "deploy"] as const;
 
 type AvailableCommand = (typeof AvailableCommands)[number];
 

@@ -5,7 +5,7 @@ import process from "node:process";
  */
 export const env = {
   get value(): string {
-    return process.env["GGT_ENV"] || "production";
+    return process.env["GGT_ENV"] || "development";
   },
 
   get productionLike(): boolean {

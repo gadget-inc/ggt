@@ -252,6 +252,44 @@ export const command: Command<typeof args> = async (ctx) => {
       • https://${filesync.app.slug}--development.gadget.app`
         : `
       • https://${filesync.app.primaryDomain}`
+=======
+    this.status = SyncStatus.RUNNING;
+    println();
+    println(`
+      {bold ggt v${config.version}}
+
+      App         ${this.filesync.app.slug}
+      Editor      https://${this.filesync.app.slug}.gadget.app/edit
+      Playground  https://${this.filesync.app.slug}.gadget.app/api/graphql/playground
+      Docs        https://docs.gadget.dev/api/${this.filesync.app.slug}
+
+      {underline Endpoints} ${
+        this.filesync.app.hasSplitEnvironments
+          ? `
+        • https://${this.filesync.app.primaryDomain}
+        • https://${this.filesync.app.slug}--development.gadget.app`
+          : `
+        • https://${this.filesync.app.primaryDomain}`
+      }
+
+      ${!this.args["--syncOnce"] ? "Watching for file changes... {gray Press Ctrl+C to stop}" :""}
+    `.trimEnd());
+    println();
+
+    await stopped;
+    if (error) {
+      notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
+      throw error as Error;
+    }else if(this.args["--syncOnce"]){
+      if(!hadChanges){
+        println("No changes to sync.")
+      }
+      println("Finished sync.")
+      process.exit(1)
+    }else{
+      println("Goodbye!");
+      process.exit(1)
+>>>>>>> c10d6e1 (wip)
     }
 
     Watching for file changes... {gray Press Ctrl+C to stop}

@@ -124,7 +124,8 @@ export enum Action {
   CANCEL = "Cancel (Ctrl+C)",
   MERGE = "Merge local files with remote ones",
   RESET = "Reset local files to remote ones",
-  DEPLOY_ANYWAYS = "Deploy anyways"
+  DEPLOY_ANYWAYS = "Deploy anyways",
+  SYNC_ONCE = "Sync once",
 }
 
 const argSpec = {
@@ -136,6 +137,7 @@ const argSpec = {
   "--file-watch-poll-interval": Number,
   "--file-watch-poll-timeout": Number,
   "--file-watch-rename-timeout": Number,
+  "--syncOnce": Boolean
 };
 
 export class Sync {
@@ -202,7 +204,7 @@ export class Sync {
    * - Ensures yarn v1 is installed.
    * - Prompts the user how to resolve conflicts if the local filesystem has changed since the last sync.
    */
-  async init(rootArgs: RootArgs): Promise<void> {
+  async init(rootArgs: RootArgs): Promise<void> {    
     this.args = defaults(arg(argSpec, { argv: rootArgs._ }), {
       "--file-push-delay": 100,
       "--file-watch-debounce": 300,
@@ -210,7 +212,11 @@ export class Sync {
       "--file-watch-poll-timeout": 20_000,
       "--file-watch-rename-timeout": 1_250,
     });
-
+    
+    if(rootArgs["--syncOnce"]){
+      this.args["--syncOnce"] = true;
+    }
+    
     if (!which.sync("yarn", { nothrow: true })) {
       throw new YarnNotFoundError();
     }
@@ -327,6 +333,7 @@ export class Sync {
   async run(): Promise<void> {
     let error: unknown;
     const stopped = new PromiseSignal();
+    let hadChanges = false;
 
     const recentRemoteChangesInterval = setInterval(() => {
       for (const [path, timestamp] of this.recentRemoteChanges) {
@@ -418,6 +425,7 @@ export class Sync {
             }
 
             if (changed.length > 0 || deleted.length > 0) {
+              hadChanges = true;
               println`Received {gray ${dayjs().format("hh:mm:ss A")}}`;
               printPaths(
                 "←",
@@ -431,9 +439,13 @@ export class Sync {
               changed,
               deleted.map((x) => x.path),
             );
-
+                        
             if (changed.some((x) => x.path === "yarn.lock")) {
-              await execa("yarn", ["install"], { cwd: this.filesync.dir }).catch(noop);
+              await execa("cyarn", ["install"], { cwd: this.filesync.dir }).catch(noop);
+            }
+                        
+            if(this.args["--syncOnce"]){
+              stopped.resolve();
             }
           });
         },
@@ -562,9 +574,8 @@ export class Sync {
     });
 
     this.status = SyncStatus.RUNNING;
-
     println();
-    println`
+    println(`
       {bold ggt v${config.version}}
 
       App         ${this.filesync.app.slug}
@@ -581,17 +592,23 @@ export class Sync {
         • https://${this.filesync.app.primaryDomain}`
       }
 
-      Watching for file changes... {gray Press Ctrl+C to stop}
-    `;
+      ${!this.args["--syncOnce"] ? "Watching for file changes... {gray Press Ctrl+C to stop}" :""}
+    `.trimEnd());
     println();
 
     await stopped;
-
     if (error) {
       notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
       throw error as Error;
-    } else {
+    }else if(this.args["--syncOnce"]){
+      if(!hadChanges){
+        println("No changes to sync.")
+      }
+      println("Finished sync.")
+      process.exit(1)
+    }else{
       println("Goodbye!");
+      process.exit(1)
     }
   }
 

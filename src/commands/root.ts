@@ -38,6 +38,7 @@ export const rootArgsSpec = {
   "--version": Boolean,
   "-v": "--version",
   "--debug": Boolean,
+  "--syncOnce": Boolean
 };
 
 export type RootArgs = arg.Result<typeof rootArgsSpec>;

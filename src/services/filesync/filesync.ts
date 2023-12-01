@@ -304,7 +304,7 @@ export class FileSync {
             deleted = deleted.filter(filterIgnoredFiles);
 
             if (changed.length === 0 && deleted.length === 0) {
-              await this._save({ filesVersion: remoteFilesVersion });
+              await this._save(remoteFilesVersion);
               return;
             }
 
@@ -493,9 +493,8 @@ export class FileSync {
       },
     });
 
-    await this._save({ filesVersion: remoteFilesVersion, mtime: Date.now() + 1 });
+    await this._save(remoteFilesVersion);
 
-    const timestamp = dayjs().format("hh:mm:ss A");
     printChanges({
       title: sprint`→ Sent {gray ${timestamp}}`,
       changes,
@@ -568,7 +567,7 @@ export class FileSync {
       }
     });
 
-    await this._save({ filesVersion: String(filesVersion), mtime: Date.now() + 1 });
+    await this._save(String(filesVersion));
 
     return new Changes([
       ...created.map((path) => [path, { type: "create" }] as const),
@@ -580,8 +579,8 @@ export class FileSync {
   /**
    * Updates {@linkcode _state} and saves it to `.gadget/sync.json`.
    */
-  private async _save(state: Partial<typeof this._state>): Promise<void> {
-    this._state = { ...this._state, ...state };
+  private async _save(filesVersion: string | bigint): Promise<void> {
+    this._state = { ...this._state, mtime: Date.now() + 1, filesVersion: String(filesVersion) };
     this.log.debug("saving state", { state: this._state });
     await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
   }

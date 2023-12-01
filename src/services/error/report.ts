@@ -13,7 +13,7 @@ import { CLIError, IsBug } from "./error.js";
 const log = createLogger({ name: "report" });
 
 let user: User | undefined;
-export const setUser = (newUser: User | undefined): void => {
+export const setUser = (newUser: typeof user): void => {
   log.trace("set user", { user: newUser });
   user = newUser;
   // eslint-disable-next-line unicorn/no-null
@@ -21,7 +21,7 @@ export const setUser = (newUser: User | undefined): void => {
 };
 
 let app: App | undefined;
-export const setApp = (newApp: App | undefined): void => {
+export const setApp = (newApp: typeof app): void => {
   log.trace("set app", { app: newApp });
   app = newApp;
 };

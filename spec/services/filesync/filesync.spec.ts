@@ -5,6 +5,7 @@ import * as app from "../../../src/services/app/app.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, REMOTE_FILES_VERSION_QUERY } from "../../../src/services/app/edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "../../../src/services/error/error.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
+import { supportsPermissions } from "../../../src/services/filesync/directory.js";
 import { Action, FileSync } from "../../../src/services/filesync/filesync.js";
 import * as prompt from "../../../src/services/output/prompt.js";
 import { testApp } from "../../__support__/app.js";
@@ -148,7 +149,10 @@ describe("FileSync.writeToLocalFilesystem", () => {
   it("writes files", async () => {
     await writeToLocalFilesystem({
       filesVersion: 1n,
-      files: [makeFile({ path: "file.js", content: "foo" }), makeFile({ path: "some/deeply/nested/file.js", content: "bar" })],
+      files: [
+        makeFile({ path: "file.js", content: "foo", mode: 0o644 }),
+        makeFile({ path: "some/deeply/nested/file.js", content: "bar", mode: 0o755 }),
+      ],
       delete: [],
     });
 
@@ -163,6 +167,14 @@ describe("FileSync.writeToLocalFilesystem", () => {
     });
 
     expect(filesync.filesVersion).toBe(1n);
+
+    if (supportsPermissions) {
+      const fileStat = await fs.stat(appDirPath("file.js"));
+      expect(fileStat.mode & 0o777).toBe(0o644);
+
+      const nestedFileStat = await fs.stat(appDirPath("some/deeply/nested/file.js"));
+      expect(nestedFileStat.mode & 0o777).toBe(0o755);
+    }
   });
 
   it("writes empty directories", async () => {

@@ -320,12 +320,10 @@ export class FileSync {
             });
 
             if (changes.size > 0) {
-              const timestamp = dayjs().format("hh:mm:ss A");
               printChanges({
-                title: sprint`← Received {gray ${timestamp}}`,
+                message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
                 changes,
-                tense: "present",
-                limit: 10,
+                tense: "past",
               });
             }
 
@@ -366,9 +364,11 @@ export class FileSync {
     const hasLocalChanges = localChanges.size > 0;
     if (hasLocalChanges) {
       printChanges({
-        title: "Local files have changed since you last synced",
         changes: localChanges,
         tense: "past",
+        message: sprint`{bold Local files have changed since you last synced}`,
+        spaceY: 1,
+        limit: Infinity,
       });
     }
 
@@ -496,10 +496,9 @@ export class FileSync {
     await this._save(remoteFilesVersion);
 
     printChanges({
-      title: sprint`→ Sent {gray ${timestamp}}`,
       changes,
-      tense: "present",
-      limit: 10,
+      tense: "past",
+      message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,
     });
   }
 
@@ -560,7 +559,7 @@ export class FileSync {
       }
 
       await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
-      await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
+      await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding));
 
       if (absolutePath === this.directory.absolute(".ignore")) {
         await this.directory.loadIgnoreFile();

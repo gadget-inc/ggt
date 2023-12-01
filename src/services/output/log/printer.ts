@@ -1,3 +1,5 @@
+import type { Options as BoxenOptions } from "boxen";
+import boxen from "boxen";
 import CliTable3 from "cli-table3";
 import { dedent } from "ts-dedent";
 import { config } from "../../config/config.js";
@@ -40,33 +42,60 @@ export type Printer = {
   /**
    * Prints a table to stdout.
    */
-  printTable: (options: {
-    /**
-     * The message to print above the table.
-     */
-    message: string;
+  printTable: (options: PrintTableOptions) => void;
+};
 
-    /**
-     * The headers of the table.
-     */
-    headers?: string[];
+export type PrintTableOptions = {
+  /**
+   * The message to print above the table.
+   */
+  message?: string;
 
-    /**
-     * The rows of the table.
-     */
-    rows: string[][];
+  /**
+   * The headers of the table.
+   */
+  headers?: string[];
 
-    /**
-     * The message to print below the table.
-     */
-    footer?: string;
+  /**
+   * The rows of the table.
+   */
+  rows: string[][];
 
-    /**
-     * The type of borders to use.
-     * @default "none"
-     */
-    borders?: "none" | "thin" | "thick";
-  }) => void;
+  /**
+   * The message to print below the table.
+   */
+  footer?: string;
+
+  /**
+   * The type of borders to use.
+   * @default "none"
+   */
+  borders?: "none" | "thin" | "thick";
+
+  /**
+   * The amount of empty lines to print between the message, table,
+   * and footer.
+   * @default 0
+   */
+  spaceY?: number;
+
+  /**
+   * The alignment of the content in each column.
+   * @default [] (left-aligned)
+   */
+  colAligns?: ("left" | "center" | "right")[];
+
+  /**
+   * The width of each column.
+   * @default [] (auto-sized)
+   */
+  colWidths?: number[];
+
+  /**
+   * The options to pass to `boxen`.
+   * @default undefined (no box)
+   */
+  boxen?: BoxenOptions;
 };
 
 export const createPrinter = ({ name }: { name: string }): Printer => {
@@ -84,21 +113,39 @@ export const createPrinter = ({ name }: { name: string }): Printer => {
     print: createPrint(sprint),
     println: createPrint(sprintln),
     printlns: createPrint(sprintlns),
-    printTable({ message, rows, footer, borders: borderType = "none", headers }) {
+    printTable({
+      message,
+      headers,
+      rows,
+      footer,
+      borders: borderType = "none",
+      spaceY = 0,
+      colAligns = [],
+      colWidths = [],
+      boxen: boxenOptions,
+    }) {
       if (config.logFormat === "json") {
-        stdout.write(formatters.json(Level.PRINT, name, message, { headers, rows, footer }));
+        stdout.write(formatters.json(Level.PRINT, name, message || boxenOptions?.title || "table", { headers, rows, footer }));
         return;
       }
 
       const table = new CliTable3({
-        style: { head: [], border: [] },
-        head: headers,
         chars: borders[borderType],
+        colAligns,
+        colWidths,
+        head: headers,
+        style: { head: [], border: [] },
       });
 
       table.push(...rows);
 
-      let output = message + "\n";
+      const padding = "\n".repeat(spaceY + 1);
+
+      let output = "";
+      if (message) {
+        output += message + padding;
+      }
+
       if (borderType === "none") {
         // remove the left padding
         output += dedent(table.toString()).slice(1);
@@ -107,7 +154,11 @@ export const createPrinter = ({ name }: { name: string }): Printer => {
       }
 
       if (footer) {
-        output += "\n" + footer;
+        output += padding + footer;
+      }
+
+      if (boxenOptions) {
+        output = boxen(output, boxenOptions);
       }
 
       this.printlns(output);

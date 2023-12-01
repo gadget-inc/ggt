@@ -97,8 +97,8 @@ const formatFields = (fields: Record<string, unknown>, indent = 2): string => {
         continue;
       }
 
-      if (value.length > 10 && config.logLevel > Level.DEBUG) {
-        // truncate arrays to 10 elements when not debugging
+      if (value.length > 10 && config.logLevel > Level.TRACE) {
+        // truncate arrays to 10 elements when not tracing
         value = value.slice(0, 10);
         assert(Array.isArray(value));
       }

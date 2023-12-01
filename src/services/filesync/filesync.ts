@@ -280,10 +280,15 @@ export class FileSync {
     beforeChanges,
     afterChanges,
     onError,
+    opts,
   }: {
     beforeChanges: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
     afterChanges: (data: { changes: Changes }) => Promisable<void>;
     onError: (error: unknown) => void;
+    opts? : {
+      syncOnce?: boolean,
+      signal? : () => Promise<void>
+    }
   }): () => void {
     return this.editGraphQL.subscribe({
       query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,

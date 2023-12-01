@@ -143,9 +143,9 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
         error: (error) => {
         },
         next: async ({publishServerContractStatus}) => {
-          const contractStatus = publishServerContractStatus?.progress;
+          const {progress, problems, isUsingOpenAIGadgetManagedKeys, missingProductionGoogleAuthConfig, missingProductionOpenAIConnectionConfig, missingProductionShopifyConfig} = publishServerContractStatus || {};
                     
-          if(contractStatus === "ALREADY_SYNCING"){
+          if(progress === "ALREADY_SYNCING"){
             log.println(`
             ${""}
             ${chalk.inverse("Detected a sync already in progress. Please try again later.")}
@@ -154,13 +154,13 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
           }
      
           if(!showedErrors){
-            if(publishServerContractStatus?.problems){
+            if(problems){
               log.println(`
                 ${""}
                 ${chalk.underline("Errors detected")}`
               )
               
-              for(const problemItem of publishServerContractStatus?.problems){
+              for(const problemItem of problems){
                 const message = problemItem?.problem?.message.replace(/"/g, '');
                 const nodeType = problemItem?.node?.type;
                 const nodeName = problemItem?.node?.name;
@@ -168,22 +168,22 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
 
                 log.printlns(`
                   • ${message}
-                      ${nodeType}: ${chalk.cyan(nodeName)}                ${nodeParent ? `Parent Resource: ${chalk.cyan(nodeParent)}` : ""}
+                      ${nodeType}: ${chalk.cyan(nodeName)}                  ${nodeParent ? `ParentResource: ${chalk.cyan(nodeParent)}` : ""}
                 `)
               }
             }
             
-            if(publishServerContractStatus?.isUsingOpenAIGadgetManagedKeys || publishServerContractStatus?.missingProductionGoogleAuthConfig || publishServerContractStatus?.missingProductionOpenAIConnectionConfig || publishServerContractStatus?.missingProductionShopifyConfig){
+            if(isUsingOpenAIGadgetManagedKeys || missingProductionGoogleAuthConfig || missingProductionOpenAIConnectionConfig || missingProductionShopifyConfig){
               log.printlns(`
               ${chalk.underline("Problems detected")}
               ${
-                publishServerContractStatus?.missingProductionShopifyConfig ? '\n • Add Shopify keys for production' : ''
+                missingProductionShopifyConfig ? '\n • Add Shopify keys for production' : ''
               }${
-                publishServerContractStatus?.missingProductionGoogleAuthConfig ? '\n • Add Google keys for production' : ''
+                missingProductionGoogleAuthConfig ? '\n • Add Google keys for production' : ''
               }${
-                publishServerContractStatus?.missingProductionOpenAIConnectionConfig ? '\n • Add OpenAI keys for production' : ''
+                missingProductionOpenAIConnectionConfig ? '\n • Add OpenAI keys for production' : ''
               }${
-                publishServerContractStatus?.isUsingOpenAIGadgetManagedKeys ? '\n • Limitations apply to Gadget\'s OpenAI keys' : ''
+                isUsingOpenAIGadgetManagedKeys ? '\n • Limitations apply to Gadget\'s OpenAI keys' : ''
               }
             `.trim());
             }
@@ -192,17 +192,17 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
             showedErrors = true;
 
           }else{
-            if(contractStatus === "COMPLETED"){
+            if(progress === "COMPLETED"){
               spinner.succeed("DONE")
               log.println("")
               log.println(`Deploy completed. Good bye!`)
               return
             }
   
-            const currentProgress = AppDeploymentStepsToAppDeployState(contractStatus);
+            const currentProgress = AppDeploymentStepsToAppDeployState(progress);
 
-            if(contractStatus && currentProgress !== prevProgress ){
-              if(contractStatus !== "STARTING"){
+            if(progress && currentProgress !== prevProgress ){
+              if(progress !== "STARTING"){
                 spinner.succeed("DONE")
               }
               

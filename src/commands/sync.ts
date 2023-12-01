@@ -185,6 +185,10 @@ export const command: Command = async (ctx) => {
         stop();
       }
     },
+    opts: {
+      syncOnce: args["--syncOnce"],
+      signal: () => stop(),
+    }
   });
 
   /**

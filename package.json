@@ -107,7 +107,7 @@
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
     "concurrently": "^8.2.2",
-    "cspell": "^7.3.8",
+    "cspell": "^8.1.0",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-import-resolver-typescript": "^3.6.1",

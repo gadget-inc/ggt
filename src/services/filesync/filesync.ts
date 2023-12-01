@@ -48,16 +48,7 @@ export enum Action {
 export class FileSync {
   readonly editGraphQL: EditGraphQL;
 
-  readonly log = createLogger({
-    name: "filesync",
-    fields: () => ({
-      state: {
-        app: this.app.slug,
-        filesVersion: String(this.filesVersion),
-        mtime: this.mtime,
-      },
-    }),
-  });
+  readonly log = createLogger({ name: "filesync", fields: () => ({ state: this._state }) });
 
   /**
    * A FIFO async callback queue that ensures we process filesync events

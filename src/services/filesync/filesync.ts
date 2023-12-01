@@ -29,7 +29,7 @@ import type { User } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { Changes, printChanges } from "./changes.js";
-import { Directory, swallowEnoent } from "./directory.js";
+import { Directory, supportsPermissions, swallowEnoent } from "./directory.js";
 
 export type File = {
   path: string;
@@ -554,12 +554,17 @@ export class FileSync {
       }
 
       if (file.path.endsWith("/")) {
-        await fs.ensureDir(absolutePath, { mode: 0o755 });
-        return;
+        await fs.ensureDir(absolutePath);
+      } else {
+        await fs.outputFile(absolutePath, Buffer.from(file.content, file.encoding));
       }
 
-      await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
-      await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding));
+      if (supportsPermissions) {
+        // the os's default umask makes setting the mode during creation
+        // not work, so an additional fs.chmod call is necessary to
+        // ensure the file has the correct mode
+        await fs.chmod(absolutePath, file.mode & 0o777);
+      }
 
       if (absolutePath === this.directory.absolute(".ignore")) {
         await this.directory.loadIgnoreFile();

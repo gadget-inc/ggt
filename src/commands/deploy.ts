@@ -1,17 +1,17 @@
-import { sprint } from "src/services/output/sprint.js";
-import { importCommandModule, type Command, type Usage } from "./command.js";
-import { AppArg } from "src/services/app/arg.js";
-import type { RootArgs } from "./root.js";
 import arg from "arg";
 import boxen from "boxen";
-import { getUserOrLogin } from "../services/user/user.js";
-import { Action, FileSync } from "src/services/filesync/filesync.js";
-import { REMOTE_FILES_VERSION_QUERY, REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "src/services/app/edit-graphql.js";
 import chalk from "chalk";
-import { PromiseSignal } from "src/services/util/promise.js";
 import ora from "ora";
-import { select } from "src/services/output/prompt.js";
+import { AppArg } from "src/services/app/arg.js";
+import { REMOTE_FILES_VERSION_QUERY, REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "src/services/app/edit-graphql.js";
 import { config } from "src/services/config/config.js";
+import { Action, FileSync } from "src/services/filesync/filesync.js";
+import { select } from "src/services/output/prompt.js";
+import { sprint } from "src/services/output/sprint.js";
+import { PromiseSignal } from "src/services/util/promise.js";
+import { getUserOrLogin } from "../services/user/user.js";
+import { importCommandModule, type Command, type Usage } from "./command.js";
+import type { RootArgs } from "./root.js";
 
 export const usage: Usage = () => sprint`
     Deploy your Gadget application's development source code to production.
@@ -79,29 +79,29 @@ const argSpec = {
 
 export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
   const signal = new PromiseSignal();
-  const spinner = ora()
+  const spinner = ora();
   let localFilesUpToDate = false;
   let prevProgress: string | undefined = AppDeploymentStepsToAppDeployState("NOT_STARTED");
   let action: Action | undefined;
-    
-  const args = (arg(argSpec, {argv: rootArgs._}))
-  
+
+  const args = arg(argSpec, { argv: rootArgs._ });
+
   const filesync = await FileSync.init({
     user: await getUserOrLogin(),
     dir: args._[0],
     app: args["--app"],
     force: args["--force"],
   });
-  
+
   const log = filesync.log.extend("deploy");
-  
+
   const { remoteFilesVersion } = await filesync.editGraphQL.query({ query: REMOTE_FILES_VERSION_QUERY });
-  
-  if (BigInt(remoteFilesVersion) === filesync.filesVersion){
+
+  if (BigInt(remoteFilesVersion) === filesync.filesVersion) {
     localFilesUpToDate = true;
   }
-  
-  if(!showedErrors){
+
+  if (!showedErrors) {
     log.println(
       boxen(
         sprint`
@@ -128,40 +128,47 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
         },
       ),
     );
-    }
-    
+  }
+
   await filesync.sync();
-  
-  if(localFilesUpToDate){
+
+  if (localFilesUpToDate) {
     // subscribes to the graphql subscription that will listen and send back the server contract status
     const unsubscribe = filesync.editGraphQL.subscribe(
       {
         query: REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION,
-        variables: () => ({localFilesVersion: String(filesync.filesVersion), force: args["--force"]})
+        variables: () => ({ localFilesVersion: String(filesync.filesVersion), force: args["--force"] }),
       },
       {
         error: (error) => {
+          log.error("failed to depoy", { error });
         },
-        next: async ({publishServerContractStatus}) => {
-          const {progress, problems, isUsingOpenAIGadgetManagedKeys, missingProductionGoogleAuthConfig, missingProductionOpenAIConnectionConfig, missingProductionShopifyConfig} = publishServerContractStatus || {};
-                    
-          if(progress === "ALREADY_SYNCING"){
+        next: async ({ publishServerContractStatus }) => {
+          const {
+            progress,
+            problems,
+            isUsingOpenAIGadgetManagedKeys,
+            missingProductionGoogleAuthConfig,
+            missingProductionOpenAIConnectionConfig,
+            missingProductionShopifyConfig,
+          } = publishServerContractStatus || {};
+
+          if (progress === "ALREADY_SYNCING") {
             log.println(`
             ${""}
             ${chalk.inverse("Detected a sync already in progress. Please try again later.")}
-            `)
-            return
+            `);
+            return;
           }
-     
-          if(!showedErrors){
-            if(problems){
+
+          if (!showedErrors) {
+            if (problems) {
               log.println(`
                 ${""}
-                ${chalk.underline("Errors detected")}`
-              )
-              
-              for(const problemItem of problems){
-                const message = problemItem?.problem?.message.replace(/"/g, '');
+                ${chalk.underline("Errors detected")}`);
+
+              for (const problemItem of problems) {
+                const message = problemItem?.problem?.message.replace(/"/g, "");
                 const nodeType = problemItem?.node?.type;
                 const nodeName = problemItem?.node?.name;
                 const nodeParent = problemItem?.node?.parentApiIdentifier;
@@ -169,63 +176,65 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
                 log.printlns(`
                   • ${message}
                       ${nodeType}: ${chalk.cyan(nodeName)}                  ${nodeParent ? `ParentResource: ${chalk.cyan(nodeParent)}` : ""}
-                `)
+                `);
               }
             }
-            
-            if(isUsingOpenAIGadgetManagedKeys || missingProductionGoogleAuthConfig || missingProductionOpenAIConnectionConfig || missingProductionShopifyConfig){
-              log.printlns(`
+
+            if (
+              isUsingOpenAIGadgetManagedKeys ||
+              missingProductionGoogleAuthConfig ||
+              missingProductionOpenAIConnectionConfig ||
+              missingProductionShopifyConfig
+            ) {
+              log.printlns(
+                `
               ${chalk.underline("Problems detected")}
-              ${
-                missingProductionShopifyConfig ? '\n • Add Shopify keys for production' : ''
-              }${
-                missingProductionGoogleAuthConfig ? '\n • Add Google keys for production' : ''
-              }${
-                missingProductionOpenAIConnectionConfig ? '\n • Add OpenAI keys for production' : ''
-              }${
-                isUsingOpenAIGadgetManagedKeys ? '\n • Limitations apply to Gadget\'s OpenAI keys' : ''
+              ${missingProductionShopifyConfig ? "\n • Add Shopify keys for production" : ""}${
+                missingProductionGoogleAuthConfig ? "\n • Add Google keys for production" : ""
+              }${missingProductionOpenAIConnectionConfig ? "\n • Add OpenAI keys for production" : ""}${
+                isUsingOpenAIGadgetManagedKeys ? "\n • Limitations apply to Gadget's OpenAI keys" : ""
               }
-            `.trim());
+            `.trim(),
+              );
             }
-                        
+
             !args["--force"] && signal.resolve();
             showedErrors = true;
-
-          }else{
-            if(progress === "COMPLETED"){
-              spinner.succeed("DONE")
-              log.println("")
-              log.println(`Deploy completed. Good bye!`)
-              return
+          } else {
+            if (progress === "COMPLETED") {
+              spinner.succeed("DONE");
+              log.println("");
+              log.println(`Deploy completed. Good bye!`);
+              return;
             }
-  
+
             const currentProgress = AppDeploymentStepsToAppDeployState(progress);
 
-            if(progress && currentProgress !== prevProgress ){
-              if(progress !== "STARTING"){
-                spinner.succeed("DONE")
+            if (progress && currentProgress !== prevProgress) {
+              if (progress !== "STARTING") {
+                spinner.succeed("DONE");
               }
-              
+
               prevProgress = currentProgress;
-              log.println("")
-              log.println(`${currentProgress} ...`)              
-              spinner.start(`Working ...`)
+              log.println("");
+              log.println(`${currentProgress} ...`);
+              spinner.start(`Working ...`);
             }
           }
         },
-      }
-    )
-      
+      },
+    );
+
     await signal;
     unsubscribe();
-        
+
     action = await select({
       message: "Detected some issues with your app. How would you like to proceed?",
       choices: [Action.CANCEL, Action.DEPLOY_ANYWAYS],
     });
-          
+
     switch (action) {
-      case Action.DEPLOY_ANYWAYS:{
+      case Action.DEPLOY_ANYWAYS: {
         args["--force"] = true;
         break;
       }
@@ -234,34 +243,38 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
       }
     }
 
-    if(args["--force"]){
-      command({...rootArgs, _: [...rootArgs._, '--force=true']}, true);
+    if (args["--force"]) {
+      command({ ...rootArgs, _: [...rootArgs._, "--force=true"] }, true);
     }
-  }else{
+  } else {
     log.println(`
     ${""}
-    ${chalk.bold(`Local files have diverged from remote. Run a sync once to converge your files or keep ${chalk.italic("ggt sync")} running in the background.`)}
-    `)
+    ${chalk.bold(
+      `Local files have diverged from remote. Run a sync once to converge your files or keep ${chalk.italic(
+        "ggt sync",
+      )} running in the background.`,
+    )}
+    `);
     action = await select({
       message: "How would you like to proceed?",
       choices: [Action.CANCEL, Action.SYNC_ONCE],
     });
-    
-    switch(action){
+
+    switch (action) {
       case Action.SYNC_ONCE: {
-        const syncCommandModule = await importCommandModule("sync")
+        const syncCommandModule = await importCommandModule("sync");
         syncCommandModule.command({
           ...rootArgs,
-          _: [...rootArgs._, '--syncOnce=true']
+          _: [...rootArgs._, "--syncOnce=true"],
         });
         break;
       }
       case Action.CANCEL: {
         process.exit(0);
       }
-    }  
-  } 
-}) satisfies(Command)
+    }
+  }
+}) satisfies Command;
 
 export const AppDeploymentStepsToAppDeployState = (step: string | undefined) => {
   switch (step) {
@@ -285,4 +298,3 @@ export const AppDeploymentStepsToAppDeployState = (step: string | undefined) => 
       return "Unknown step";
   }
 };
-

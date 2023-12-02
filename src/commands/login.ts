@@ -2,12 +2,12 @@ import getPort from "get-port";
 import assert from "node:assert";
 import http, { type Server } from "node:http";
 import open from "open";
+import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
 import { createLogger } from "../services/output/log/logger.js";
 import { sprint } from "../services/output/sprint.js";
 import { writeSession } from "../services/user/session.js";
 import { getUser } from "../services/user/user.js";
-import type { Command, Usage } from "./command.js";
 
 const log = createLogger({ name: "login" });
 

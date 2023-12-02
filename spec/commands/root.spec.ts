@@ -1,8 +1,8 @@
 import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { spyOnImplementing } from "vitest-mock-process";
-import { AvailableCommands, importCommandModule, type CommandModule } from "../../src/commands/command.js";
 import { command } from "../../src/commands/root.js";
+import { AvailableCommands, importCommandModule, type CommandModule } from "../../src/services/command/command.js";
 import { config } from "../../src/services/config/config.js";
 import { Level } from "../../src/services/output/log/level.js";
 import * as update from "../../src/services/output/update.js";

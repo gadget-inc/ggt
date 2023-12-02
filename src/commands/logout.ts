@@ -1,7 +1,7 @@
+import type { Command, Usage } from "../services/command/command.js";
 import { createLogger } from "../services/output/log/logger.js";
 import { sprint } from "../services/output/sprint.js";
 import { readSession, writeSession } from "../services/user/session.js";
-import type { Command, Usage } from "./command.js";
 
 const log = createLogger({ name: "logout" });
 

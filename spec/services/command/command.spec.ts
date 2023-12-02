@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { AvailableCommands, importCommandModule, type CommandModule } from "../../src/commands/command.js";
-import { mockVersion } from "../__support__/version.js";
+import { AvailableCommands, importCommandModule, type CommandModule } from "../../../src/services/command/command.js";
+import { mockVersion } from "../../__support__/version.js";
 
 describe.each(AvailableCommands)("%s", (command) => {
   mockVersion();

@@ -1,12 +1,13 @@
 import arg from "arg";
 import ms from "ms";
+import { AvailableCommands, importCommandModule, isAvailableCommand, rootArgsSpec, type Usage } from "../services/command/command.js";
+import { Context } from "../services/command/context.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { createLogger } from "../services/output/log/logger.js";
 import { sprint } from "../services/output/sprint.js";
 import { warnIfUpdateAvailable } from "../services/output/update.js";
 import { sortBySimilar } from "../services/util/collection.js";
 import { isNil } from "../services/util/is.js";
-import { AvailableCommands, importCommandModule, isAvailableCommand, type Usage } from "./command.js";
 
 const log = createLogger({ name: "root" });
 
@@ -31,19 +32,6 @@ export const usage: Usage = () => sprint`
 
     For more information on a specific command, use 'ggt [COMMAND] --help'
 `;
-
-export const rootArgsSpec = {
-  "--help": Boolean,
-  "-h": "--help",
-  "--verbose": arg.COUNT,
-  "-v": "--verbose",
-  "--json": Boolean,
-
-  // deprecated
-  "--debug": "--verbose",
-};
-
-export type RootArgs = arg.Result<typeof rootArgsSpec>;
 
 export const command = async (): Promise<void> => {
   await warnIfUpdateAvailable();
@@ -87,15 +75,13 @@ export const command = async (): Promise<void> => {
     process.exit(0);
   }
 
-  const stop = await commandModule.command(rootArgs);
-  if (!stop) {
-    return;
-  }
+  const ctx = new Context(rootArgs);
+  await commandModule.command(ctx);
 
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.once(signal, () => {
       log.println` Stopping... {gray Press Ctrl+C again to force}`;
-      void stop();
+      ctx.abort();
 
       // when ggt is run via npx, and the user presses ctrl+c, npx
       // sends sigint twice in quick succession. in order to prevent

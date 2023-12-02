@@ -40,3 +40,7 @@ export const isNever = (value: never): never => {
   // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
   throw new Error(`Unexpected value: ${value}`);
 };
+
+export const isAbortError = (error: unknown): error is Error => {
+  return error instanceof Error && error.name === "AbortError";
+};

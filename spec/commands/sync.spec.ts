@@ -6,13 +6,13 @@ import notifier from "node-notifier";
 import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
-import type { RootArgs } from "../../src/commands/root.js";
 import { command as sync } from "../../src/commands/sync.js";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit-graphql.js";
+import { Context } from "../../src/services/command/context.js";
 import { assetsPath } from "../../src/services/config/paths.js";
 import { ClientError, YarnNotFoundError } from "../../src/services/error/error.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
@@ -31,12 +31,11 @@ import { sleep, sleepUntil } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("sync", () => {
-  let rootArgs: RootArgs;
   let appDir: string;
   let appDirPath: (...segments: string[]) => string;
   let filesync: FileSync;
   let mockEditGraphQL: MockEditGraphQL;
-  let stop: () => Promise<void>;
+  let ctx: Context;
 
   beforeEach(() => {
     loginTestUser();
@@ -46,7 +45,7 @@ describe("sync", () => {
     appDirPath = (...segments: string[]) => testDirPath("app", ...segments);
     appDir = appDirPath();
 
-    rootArgs = {
+    ctx = new Context({
       _: [
         appDir,
         "--app",
@@ -62,7 +61,7 @@ describe("sync", () => {
         "--file-watch-rename-timeout",
         "50", // default 1_250ms
       ],
-    };
+    });
 
     const originalInit = FileSync.init;
     vi.spyOn(FileSync, "init").mockImplementation(async (args) => {
@@ -86,17 +85,13 @@ describe("sync", () => {
     });
   });
 
-  afterEach(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (stop) {
-      await stop();
-    }
-
+  afterEach(() => {
+    ctx.abort();
     expect(nock.pendingMocks()).toEqual([]);
   });
 
   it("writes changes from gadget to the local filesystem", async () => {
-    stop = await sync(rootArgs);
+    await sync(ctx);
 
     const gadgetChangesSubscription = mockEditGraphQL.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);
 
@@ -227,7 +222,7 @@ describe("sync", () => {
   it("writes changes from gadget in the order they were received", async () => {
     // this test is exactly the same as the previous one, except we just
     // wait for the final filesVersion and expect the same result
-    stop = await sync(rootArgs);
+    await sync(ctx);
 
     const gadgetChangesSubscription = mockEditGraphQL.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);
 
@@ -313,7 +308,12 @@ describe("sync", () => {
   it("writes all received files before stopping", async () => {
     // this test is exactly the same as the previous one, except we just
     // wait for stop() to finish and expect the same result
-    stop = await sync(rootArgs);
+    let stop: (() => Promise<void>) | undefined = undefined;
+    vi.spyOn(ctx.signal, "addEventListener").mockImplementationOnce((_, listener) => {
+      stop = listener as () => Promise<void>;
+    });
+
+    await sync(ctx);
 
     const gadgetChangesSubscription = mockEditGraphQL.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);
 
@@ -384,7 +384,8 @@ describe("sync", () => {
       },
     });
 
-    await stop();
+    ctx.abort();
+    await stop!();
 
     await expectDir(appDir, {
       ".gadget/": "",
@@ -405,7 +406,7 @@ describe("sync", () => {
       "tmp/file2.js": "bar",
     });
 
-    stop = await sync(rootArgs);
+    await sync(ctx);
 
     const gadgetChangesSubscription = mockEditGraphQL.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);
 
@@ -433,7 +434,7 @@ describe("sync", () => {
   });
 
   it("sends changes from the local filesystem to gadget", async () => {
-    stop = await sync(rootArgs);
+    await sync(ctx);
 
     // add a file
     let published = nockEditGraphQLResponse({
@@ -571,7 +572,7 @@ describe("sync", () => {
   });
 
   it("doesn't send multiple changes to the same file at once", async () => {
-    stop = await sync(rootArgs);
+    await sync(ctx);
 
     // add a file
     const published = nockEditGraphQLResponse({
@@ -600,7 +601,7 @@ describe("sync", () => {
       ".ignore": "tmp",
     });
 
-    stop = await sync(rootArgs);
+    await sync(ctx);
 
     vi.spyOn(filesync, "sendChangesToGadget");
 
@@ -635,7 +636,7 @@ describe("sync", () => {
       return Promise.resolve({});
     });
 
-    stop = await sync(rootArgs);
+    await sync(ctx);
 
     const gadgetChangesSubscription = mockEditGraphQL.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);
 
@@ -656,7 +657,7 @@ describe("sync", () => {
   });
 
   it("reloads the ignore file when .ignore changes", async () => {
-    stop = await sync(rootArgs);
+    await sync(ctx);
 
     vi.spyOn(filesync.directory, "loadIgnoreFile");
 
@@ -695,7 +696,7 @@ describe("sync", () => {
   });
 
   it("notifies the user when an error occurs", async () => {
-    stop = await sync(rootArgs);
+    await sync(ctx);
 
     const error = new ClientError({} as any, "test");
 
@@ -721,13 +722,12 @@ describe("sync", () => {
   it("throws YarnNotFoundError if yarn is not found", async () => {
     which.sync.mockReturnValue(undefined);
 
-    await expect(sync(rootArgs)).rejects.toThrow(YarnNotFoundError);
+    await expect(sync(ctx)).rejects.toThrow(YarnNotFoundError);
   });
 
   it("does not throw YarnNotFoundError if yarn is found", async () => {
     which.sync.mockReturnValue("/path/to/yarn");
-    stop = await sync(rootArgs);
-    await stop();
+    await sync(ctx);
   });
 
   it.todo("sends all changes before stopping");

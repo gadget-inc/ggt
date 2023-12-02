@@ -6,8 +6,8 @@ import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkToc from "remark-toc";
 import { dedent } from "ts-dedent";
-import { AvailableCommands, type CommandModule } from "../src/commands/command.js";
 import { usage } from "../src/commands/root.js";
+import { AvailableCommands, type CommandModule } from "../src/services/command/command.js";
 
 let readme = await fs.readFile("README.md", "utf8");
 

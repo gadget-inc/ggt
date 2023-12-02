@@ -1,10 +1,12 @@
+import arg from "arg";
 import assert from "node:assert";
 import type { Promisable } from "type-fest";
-import type { RootArgs } from "./root.js";
+import { relativeToThisFile } from "../config/paths.js";
+import type { Context } from "./context.js";
 
 export type Usage = () => string;
 
-export type Command = (rootArgs: RootArgs) => Promisable<void> | Promisable<(cause?: unknown) => Promisable<void>>;
+export type Command = (ctx: Context) => Promisable<void>;
 
 export type CommandModule = {
   usage: Usage;
@@ -21,5 +23,18 @@ export const isAvailableCommand = (value: unknown): value is AvailableCommand =>
 
 export const importCommandModule = async (command: AvailableCommand): Promise<CommandModule> => {
   assert(isAvailableCommand(command), `invalid command: ${command}`);
-  return (await import(`./${command}.js`)) as CommandModule;
+  return (await import(relativeToThisFile(`../../commands/${command}.js`))) as CommandModule;
 };
+
+export const rootArgsSpec = {
+  "--help": Boolean,
+  "-h": "--help",
+  "--verbose": arg.COUNT,
+  "-v": "--verbose",
+  "--json": Boolean,
+
+  // deprecated
+  "--debug": "--verbose",
+};
+
+export type RootArgs = arg.Result<typeof rootArgsSpec>;

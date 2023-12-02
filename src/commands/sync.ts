@@ -6,6 +6,7 @@ import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
 import { AppArg } from "../services/app/arg.js";
+import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
 import { YarnNotFoundError } from "../services/error/error.js";
 import { reportErrorAndExit } from "../services/error/report.js";
@@ -16,7 +17,6 @@ import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
 import { debounce } from "../services/util/function.js";
 import { defaults } from "../services/util/object.js";
-import type { Command, Usage } from "./command.js";
 
 export const usage: Usage = () => sprint`
   Sync your Gadget application's source code to and from
@@ -102,12 +102,8 @@ const argSpec = {
 /**
  * Runs the sync process until it is stopped or an error occurs.
  */
-export const command = (async (rootArgs) => {
-  if (!which.sync("yarn", { nothrow: true })) {
-    throw new YarnNotFoundError();
-  }
-
-  const args = defaults(arg(argSpec, { argv: rootArgs._ }), {
+export const command: Command = async (ctx) => {
+  const args = defaults(arg(argSpec, { argv: ctx.rootArgs._ }), {
     "--file-push-delay": 100,
     "--file-watch-debounce": 300,
     "--file-watch-poll-interval": 3_000,
@@ -126,6 +122,10 @@ export const command = (async (rootArgs) => {
 
   if (!filesync.wasEmptyOrNonExistent) {
     await filesync.sync();
+  }
+
+  if (!which.sync("yarn", { nothrow: true })) {
+    throw new YarnNotFoundError();
   }
 
   /**
@@ -149,7 +149,7 @@ export const command = (async (rootArgs) => {
    * filesystem.
    */
   const unsubscribeFromGadgetChanges = filesync.subscribeToGadgetChanges({
-    onError: (error) => void stop(error),
+    onError: (error) => ctx.abort(error),
     beforeChanges: ({ changed, deleted }) => {
       // add all the files and directories we're about to touch to
       // recentWritesToLocalFilesystem so that we don't send them back
@@ -184,7 +184,7 @@ export const command = (async (rootArgs) => {
   const sendChangesToGadget = debounce(args["--file-push-delay"], () => {
     const changes = new Changes(localChangesBuffer.entries());
     localChangesBuffer.clear();
-    filesync.sendChangesToGadget({ changes }).catch(stop);
+    filesync.sendChangesToGadget({ changes }).catch((error) => ctx.abort(error));
   });
 
   /**
@@ -212,7 +212,7 @@ export const command = (async (rootArgs) => {
       log.trace("file event", { event, isDirectory, path: normalizedPath });
 
       if (filepath === filesync.directory.absolute(".ignore")) {
-        filesync.directory.loadIgnoreFile().catch(stop);
+        filesync.directory.loadIgnoreFile().catch((error) => ctx.abort(error));
       } else if (filesync.directory.ignores(filepath)) {
         return;
       }
@@ -246,7 +246,7 @@ export const command = (async (rootArgs) => {
 
       sendChangesToGadget();
     },
-  ).once("error", (error) => void stop(error));
+  ).once("error", (error) => ctx.abort(error));
 
   log.printlns`
     ggt v${config.version}
@@ -270,16 +270,14 @@ export const command = (async (rootArgs) => {
 
   let stopping = false;
 
-  /**
-   * Gracefully stops the sync.
-   */
-  const stop = async (cause?: unknown): Promise<void> => {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  ctx.signal.addEventListener("abort", async () => {
     if (stopping) {
       return;
     }
 
-    log.info("stopping", { error: cause });
     stopping = true;
+    log.info("stopping", { error: ctx.signal.reason });
 
     try {
       unsubscribeFromGadgetChanges();
@@ -293,13 +291,12 @@ export const command = (async (rootArgs) => {
       log.info("stopped");
     }
 
-    if (cause) {
-      notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
-      await reportErrorAndExit(cause);
+    if (ctx.wasCanceled()) {
+      log.printlns("Goodbye!");
+      return;
     }
 
-    log.printlns("Goodbye!");
-  };
-
-  return stop;
-}) satisfies Command;
+    notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
+    await reportErrorAndExit(ctx.signal.reason);
+  });
+};

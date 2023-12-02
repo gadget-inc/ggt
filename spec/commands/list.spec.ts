@@ -1,12 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { command } from "../../src/commands/list.js";
 import * as app from "../../src/services/app/app.js";
+import { Context } from "../../src/services/command/context.js";
 import * as user from "../../src/services/user/user.js";
 import { expectStdout } from "../__support__/stdout.js";
 import { testUser } from "../__support__/user.js";
 
 describe("list", () => {
-  const rootArgs = { _: [] };
+  let ctx: Context;
+
+  beforeEach(() => {
+    ctx = new Context({ _: [] });
+  });
 
   it("lists apps", async () => {
     vi.spyOn(user, "getUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
@@ -15,7 +20,7 @@ describe("list", () => {
       { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, user: testUser },
     ]);
 
-    await command(rootArgs);
+    await command(ctx);
 
     expect(user.getUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
@@ -31,7 +36,7 @@ describe("list", () => {
     vi.spyOn(user, "getUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
     vi.spyOn(app, "getApps").mockResolvedValue([]);
 
-    await command(rootArgs);
+    await command(ctx);
 
     expect(user.getUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`

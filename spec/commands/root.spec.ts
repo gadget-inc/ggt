@@ -1,12 +1,16 @@
 import process from "node:process";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { inspect } from "node:util";
+import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { spyOnImplementing } from "vitest-mock-process";
-import { AvailableCommands, importCommandModule, type CommandModule } from "../../src/commands/command.js";
-import { command } from "../../src/commands/root.js";
+import { command as root } from "../../src/commands/root.js";
+import * as command from "../../src/services/command/command.js";
+import { importCommandModule, type CommandModule } from "../../src/services/command/command.js";
 import { config } from "../../src/services/config/config.js";
 import { Level } from "../../src/services/output/log/level.js";
 import * as update from "../../src/services/output/update.js";
-import { noop, noopThis } from "../../src/services/util/function.js";
+import { noop, noopThis, type AnyFunction } from "../../src/services/util/function.js";
+import { isAbortError } from "../../src/services/util/is.js";
+import { PromiseSignal } from "../../src/services/util/promise.js";
 import { withEnv } from "../__support__/env.js";
 import { expectProcessExit } from "../__support__/process.js";
 import { expectStdout } from "../__support__/stdout.js";
@@ -29,7 +33,7 @@ describe("root", () => {
   it("prints root usage when no command is given", async () => {
     process.argv = ["node", "ggt"];
 
-    await expectProcessExit(command);
+    await expectProcessExit(root);
 
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget
@@ -58,7 +62,7 @@ describe("root", () => {
   it("prints out a helpful message when an unknown command is given", async () => {
     process.argv = ["node", "ggt", "foobar"];
 
-    await expectProcessExit(command, 1);
+    await expectProcessExit(root, 1);
 
     expectStdout().toMatchInlineSnapshot(`
       "Unknown command foobar
@@ -75,7 +79,7 @@ describe("root", () => {
       expect(config.logFormat).toBe("pretty");
 
       process.argv = ["node", "ggt", "--json"];
-      await expectProcessExit(command);
+      await expectProcessExit(root);
 
       expect(process.env["GGT_LOG_FORMAT"]).toBe("json");
       expect(config.logFormat).toBe("json");
@@ -91,14 +95,48 @@ describe("root", () => {
       expect(config.logLevel).toBe(Level.PRINT);
 
       process.argv = ["node", "ggt", flag];
-      await expectProcessExit(command);
+      await expectProcessExit(root);
 
       expect(process.env["GGT_LOG_LEVEL"]).toBe(String(level));
       expect(config.logLevel).toBe(level);
     });
   });
 
-  describe.each(AvailableCommands)("when %s is given", (name) => {
+  const signals = ["SIGINT", "SIGTERM"] as const;
+  it.each(signals)("calls ctx.abort() on %s", async (expectedSignal) => {
+    const aborted = new PromiseSignal();
+
+    vi.spyOn(command, "isAvailableCommand").mockReturnValueOnce(true);
+    vi.spyOn(command, "importCommandModule").mockResolvedValueOnce({
+      usage: () => "abort test",
+      command: (ctx) => {
+        ctx.signal.addEventListener("abort", (reason) => {
+          assert(isAbortError(reason), `reason isn't an AbortError: ${inspect(reason)}`);
+          aborted.resolve();
+        });
+      },
+    });
+
+    let signalled = false;
+    let onSignal: AnyFunction;
+
+    spyOnImplementing(process, "once", (actualSignal, cb) => {
+      signalled ||= actualSignal === expectedSignal;
+      expect(signals).toContain(actualSignal);
+      onSignal = cb;
+      return process;
+    });
+
+    process.argv = ["node", "ggt", "test"];
+    await root();
+
+    expect(signalled).toBe(true);
+    onSignal!();
+
+    await aborted;
+  });
+
+  describe.each(command.AvailableCommands)("when %s is given", (name) => {
     let mod: CommandModule;
 
     beforeEach(async () => {
@@ -109,7 +147,7 @@ describe("root", () => {
     it.each(["--help", "-h"])("prints the usage when %s is passed", async (flag) => {
       process.argv = ["node", "ggt", name, flag];
 
-      await expectProcessExit(command);
+      await expectProcessExit(root);
 
       expectStdout().toEqual(mod.usage() + "\n");
     });
@@ -117,7 +155,7 @@ describe("root", () => {
     it("runs the command", async () => {
       process.argv = ["node", "ggt", name];
 
-      await command();
+      await root();
 
       expect(mod.command).toHaveBeenCalled();
     });

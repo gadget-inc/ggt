@@ -79,7 +79,9 @@ export const command = async (): Promise<void> => {
   await commandModule.command(ctx);
 
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
+    log.trace("registering signal", { signal });
     process.once(signal, () => {
+      log.trace("received signal", { signal });
       log.println` Stopping... {gray Press Ctrl+C again to force}`;
       ctx.abort();
 

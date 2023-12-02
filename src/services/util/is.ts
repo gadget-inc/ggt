@@ -42,5 +42,5 @@ export const isNever = (value: never): never => {
 };
 
 export const isAbortError = (error: unknown): error is Error => {
-  return error instanceof Error && error.name === "AbortError";
+  return (error instanceof Error && error.name === "AbortError") || (error instanceof Event && error.type === "abort");
 };

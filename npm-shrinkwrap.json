@@ -92,7 +92,7 @@
         "remark-gfm": "^4.0.0",
         "remark-toc": "^9.0.0",
         "rimraf": "^5.0.5",
-        "type-fest": "^4.8.2",
+        "type-fest": "^4.8.3",
         "typescript": "^5.3.2",
         "vitest": "^0.34.6",
         "vitest-mock-process": "^1.0.4"
@@ -15592,9 +15592,9 @@
       }
     },
     "node_modules/type-fest": {
-      "version": "4.8.2",
-      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-4.8.2.tgz",
-      "integrity": "sha512-mcvrCjixA5166hSrUoJgGb9gBQN4loMYyj9zxuMs/66ibHNEFd5JXMw37YVDx58L4/QID9jIzdTBB4mDwDJ6KQ==",
+      "version": "4.8.3",
+      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-4.8.3.tgz",
+      "integrity": "sha512-//BaTm14Q/gHBn09xlnKNqfI8t6bmdzx2DXYfPBNofN0WUybCEUDcbCWcTa0oF09lzLjZgPphXAsvRiMK0V6Bw==",
       "dev": true,
       "engines": {
         "node": ">=16"
@@ -27534,9 +27534,9 @@
       "dev": true
     },
     "type-fest": {
-      "version": "4.8.2",
-      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-4.8.2.tgz",
-      "integrity": "sha512-mcvrCjixA5166hSrUoJgGb9gBQN4loMYyj9zxuMs/66ibHNEFd5JXMw37YVDx58L4/QID9jIzdTBB4mDwDJ6KQ==",
+      "version": "4.8.3",
+      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-4.8.3.tgz",
+      "integrity": "sha512-//BaTm14Q/gHBn09xlnKNqfI8t6bmdzx2DXYfPBNofN0WUybCEUDcbCWcTa0oF09lzLjZgPphXAsvRiMK0V6Bw==",
       "dev": true
     },
     "typed-array-buffer": {

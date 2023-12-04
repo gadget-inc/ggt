@@ -1,5 +1,14 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`structured > does not print dev fields in production 1`] = `
+"12:00:00 TRACE structured: trace
+12:00:00 DEBUG structured: debug
+12:00:00 INFO structured: info
+12:00:00 WARN structured: warn
+12:00:00 ERROR structured: error
+"
+`;
+
 exports[`structured > logs the expected output when GGT_LOG_LEVEL=debug 1`] = `
 "12:00:00 DEBUG structured: debug
 12:00:00 INFO structured: info
@@ -32,6 +41,34 @@ exports[`structured > logs the expected output when GGT_LOG_LEVEL=trace 1`] = `
 exports[`structured > logs the expected output when GGT_LOG_LEVEL=warn 1`] = `
 "12:00:00 WARN structured: warn
 12:00:00 ERROR structured: error
+"
+`;
+
+exports[`structured > prints dev fields in development 1`] = `
+"12:00:00 TRACE structured: trace
+  dev: true
+12:00:00 DEBUG structured: debug
+  dev: true
+12:00:00 INFO structured: info
+  dev: true
+12:00:00 WARN structured: warn
+  dev: true
+12:00:00 ERROR structured: error
+  dev: true
+"
+`;
+
+exports[`structured > prints dev fields in test 1`] = `
+"12:00:00 TRACE structured: trace
+  dev: true
+12:00:00 DEBUG structured: debug
+  dev: true
+12:00:00 INFO structured: info
+  dev: true
+12:00:00 WARN structured: warn
+  dev: true
+12:00:00 ERROR structured: error
+  dev: true
 "
 `;
 

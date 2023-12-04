@@ -1,5 +1,6 @@
 import { addBreadcrumb as addSentryBreadcrumb } from "@sentry/node";
 import { config } from "../../config/config.js";
+import { env } from "../../config/env.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { serializeError } from "../../util/object.js";
 import { stderr } from "../stream.js";
@@ -7,7 +8,7 @@ import type { Fields } from "./field.js";
 import { formatters } from "./format/format.js";
 import { Level } from "./level.js";
 
-type StructuredLog = (msg: Lowercase<string>, fields?: Fields) => void;
+type StructuredLog = (msg: Lowercase<string>, fields?: Fields, devFields?: Fields) => void;
 
 export type StructuredLogger = {
   trace: StructuredLog;
@@ -25,7 +26,7 @@ export const setGlobalFields = (fields: Thunk<Fields>): void => {
 
 export const createStructuredLogger = ({ name, fields: loggerFields = {} }: { name: string; fields?: Thunk<Fields> }): StructuredLogger => {
   const createStructuredLog = (level: Level): StructuredLog => {
-    return (msg, messageFields) => {
+    return (msg, messageFields, devMessageFields) => {
       const shouldLog = level >= config.logLevel;
       const shouldSendToSentry = level >= Level.INFO;
       if (!shouldLog && !shouldSendToSentry) {
@@ -33,6 +34,10 @@ export const createStructuredLogger = ({ name, fields: loggerFields = {} }: { na
       }
 
       const fields = { ...unthunk(globalFields), ...unthunk(loggerFields), ...messageFields };
+      if (env.developmentOrTestLike) {
+        Object.assign(fields, devMessageFields);
+      }
+
       if ("error" in fields) {
         fields.error = serializeError(fields.error);
       }

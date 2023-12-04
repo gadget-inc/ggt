@@ -95,6 +95,34 @@ describe("structured", () => {
     });
   });
 
+  it.each(["development", "test"])("prints dev fields in %s", (name) => {
+    const structuredLogger = createStructuredLogger({ name: "structured" });
+
+    withEnv({ GGT_LOG_LEVEL: "trace", GGT_ENV: name }, () => {
+      structuredLogger.trace("trace", {}, { dev: true });
+      structuredLogger.debug("debug", {}, { dev: true });
+      structuredLogger.info("info", {}, { dev: true });
+      structuredLogger.warn("warn", {}, { dev: true });
+      structuredLogger.error("error", {}, { dev: true });
+    });
+
+    expectStderr().toMatchSnapshot();
+  });
+
+  it("does not print dev fields in production", () => {
+    const structuredLogger = createStructuredLogger({ name: "structured" });
+
+    withEnv({ GGT_LOG_LEVEL: "trace", GGT_ENV: "production" }, () => {
+      structuredLogger.trace("trace", {}, { dev: true });
+      structuredLogger.debug("debug", {}, { dev: true });
+      structuredLogger.info("info", {}, { dev: true });
+      structuredLogger.warn("warn", {}, { dev: true });
+      structuredLogger.error("error", {}, { dev: true });
+    });
+
+    expectStderr().toMatchSnapshot();
+  });
+
   it("prints json when GGT_LOG_FORMAT=json", () => {
     const structuredLogger = createStructuredLogger({ name: "structured" });
 

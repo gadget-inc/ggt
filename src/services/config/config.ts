@@ -147,3 +147,21 @@ export const config = {
     },
   },
 };
+
+/**
+ * Returns an absolute path within the {@linkcode config.configDir}
+ * directory.
+ *
+ * @param segments - The segments of the path to join.
+ * @returns The absolute path to the file or directory.
+ */
+export const configPath = (...segments: string[]): string => path.join(config.configDir, ...segments);
+
+/**
+ * Returns an absolute path within the {@linkcode config.homeDir}
+ * directory.
+ *
+ * @param segments - The segments of the path to join.
+ * @returns The absolute path to the file or directory.
+ */
+export const homePath = (...segments: string[]): string => path.join(config.homeDir, ...segments);

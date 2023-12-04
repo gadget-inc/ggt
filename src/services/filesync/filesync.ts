@@ -19,8 +19,7 @@ import {
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit-graphql.js";
-import { config } from "../config/config.js";
-import { homePath } from "../config/paths.js";
+import { config, homePath } from "../config/config.js";
 import { ArgError, InvalidSyncFileError } from "../error/error.js";
 import { createLogger } from "../output/log/logger.js";
 import { select } from "../output/prompt.js";

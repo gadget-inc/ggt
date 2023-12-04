@@ -2,13 +2,13 @@ import arg from "arg";
 import boxen from "boxen";
 import chalk from "chalk";
 import ora from "ora";
-import { AppArg } from "src/services/app/arg.js";
-import { REMOTE_FILES_VERSION_QUERY, REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "src/services/app/edit-graphql.js";
-import { config } from "src/services/config/config.js";
-import { Action, FileSync } from "src/services/filesync/filesync.js";
-import { select } from "src/services/output/prompt.js";
-import { sprint } from "src/services/output/sprint.js";
-import { PromiseSignal } from "src/services/util/promise.js";
+import { AppArg } from "../../src/services/app/arg.js";
+import { REMOTE_FILES_VERSION_QUERY, REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
+import { config } from "../../src/services/config/config.js";
+import { Action, FileSync } from "../../src/services/filesync/filesync.js";
+import { select } from "../../src/services/output/prompt.js";
+import { sprint } from "../../src/services/output/sprint.js";
+import { PromiseSignal } from "../../src/services/util/promise.js";
 import { getUserOrLogin } from "../services/user/user.js";
 import { importCommandModule, type Command, type Usage } from "./command.js";
 import type { RootArgs } from "./root.js";
@@ -77,7 +77,7 @@ const argSpec = {
  * Runs the deploy process.
  */
 
-export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
+export const command = (async (rootArgs: RootArgs, firstRun = true) => {
   const signal = new PromiseSignal();
   const spinner = ora();
   let localFilesUpToDate = false;
@@ -96,12 +96,9 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
   const log = filesync.log.extend("deploy");
 
   const { remoteFilesVersion } = await filesync.editGraphQL.query({ query: REMOTE_FILES_VERSION_QUERY });
+  // console.log("[jenny] after calling remotefiles query")
 
-  if (BigInt(remoteFilesVersion) === filesync.filesVersion) {
-    localFilesUpToDate = true;
-  }
-
-  if (!showedErrors) {
+  if (firstRun) {
     log.println(
       boxen(
         sprint`
@@ -130,7 +127,13 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
     );
   }
 
+  // check if the local and remote files are up to date and prompt them how to handle if not
   await filesync.sync();
+
+  // at this point everything should be up to date
+  if (BigInt(remoteFilesVersion) === filesync.filesVersion) {
+    localFilesUpToDate = true;
+  }
 
   if (localFilesUpToDate) {
     // subscribes to the graphql subscription that will listen and send back the server contract status
@@ -156,13 +159,13 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
           if (progress === "ALREADY_SYNCING") {
             log.println(`
             ${""}
-            ${chalk.inverse("Detected a sync already in progress. Please try again later.")}
+            ${chalk.red("Detected a sync already in progress. Please try again later.")}
             `);
             return;
           }
 
-          if (!showedErrors) {
-            if (problems) {
+          if (firstRun) {
+            if (problems?.length) {
               log.println(`
                 ${""}
                 ${chalk.underline("Errors detected")}`);
@@ -199,7 +202,7 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
             }
 
             !args["--force"] && signal.resolve();
-            showedErrors = true;
+            firstRun = false;
           } else {
             if (progress === "COMPLETED") {
               spinner.succeed("DONE");
@@ -244,7 +247,7 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
     }
 
     if (args["--force"]) {
-      command({ ...rootArgs, _: [...rootArgs._, "--force=true"] }, true);
+      command({ ...rootArgs, _: [...rootArgs._, "--force=true"] }, false);
     }
   } else {
     log.println(`
@@ -265,7 +268,7 @@ export const command = (async (rootArgs: RootArgs, showedErrors = false) => {
         const syncCommandModule = await importCommandModule("sync");
         syncCommandModule.command({
           ...rootArgs,
-          _: [...rootArgs._, "--syncOnce=true"],
+          _: [...rootArgs._, "--once=true"],
         });
         break;
       }

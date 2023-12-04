@@ -97,7 +97,7 @@ const argSpec = {
   "--once": Boolean,
   "--prefer": ConflictPreferenceArg,
   "--force": Boolean,
-  "--syncOnce": Boolean,
+  "--once": Boolean,
   "--file-push-delay": Number,
   "--file-watch-debounce": Number,
   "--file-watch-poll-interval": Number,
@@ -180,13 +180,13 @@ export const command: Command = async (ctx) => {
         });
       }
       
-      if(args["--syncOnce"]){
+      if(args["--once"]){
         log.println("Ran a sync.")
         stop();
       }
     },
     opts: {
-      syncOnce: args["--syncOnce"],
+      syncOnce: args["--once"],
       signal: () => stop(),
     }
   });
@@ -294,7 +294,7 @@ export const command: Command = async (ctx) => {
   );
   
   log.println(`
-    ${!args["--syncOnce"] ? `Watching for file changes... {gray Press Ctrl+C to stop}` : ""}
+    ${!args["--once"] ? `Watching for file changes... {gray Press Ctrl+C to stop}` : ""}
   `)
 
   ctx.onAbort(async (reason) => {

@@ -1,59 +1,92 @@
 import type { ExecutionResult } from "graphql";
 import nock from "nock";
-import type { JsonObject } from "type-fest";
+import type { JsonObject, Promisable } from "type-fest";
 import { expect, vi } from "vitest";
+import { z } from "zod";
 import type { App } from "../../src/services/app/app.js";
-import type { Payload, Query } from "../../src/services/app/edit-graphql.js";
+import type { Query } from "../../src/services/app/edit-graphql.js";
 import { EditGraphQL } from "../../src/services/app/edit-graphql.js";
 import { config } from "../../src/services/config/config.js";
-import type { ClientError } from "../../src/services/error/error.js";
-import { noop } from "../../src/services/util/function.js";
+import type { EditGraphQLError } from "../../src/services/error/error.js";
+import { noop, unthunk } from "../../src/services/util/function.js";
 import { loadCookie } from "../../src/services/util/http.js";
 import { isFunction } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { testApp } from "./app.js";
+import { log } from "./debug.js";
 
 export const nockEditGraphQLResponse = <Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject>({
   query,
-  response,
-  expectVariables,
   app = testApp,
+  ...opts
 }: {
   query: Query<Data, Variables, Extensions>;
-  response: ExecutionResult<Data, Extensions>;
   expectVariables?: Variables | ((actual: any) => void);
+  response:
+    | ExecutionResult<Data, Extensions>
+    | ((body: { query: Query<Data, Variables, Extensions>; variables?: Variables }) => Promisable<ExecutionResult<Data, Extensions>>);
   app?: App;
+  persist?: boolean;
+  optional?: boolean;
 }): PromiseSignal => {
   let subdomain = app.slug;
   if (app.hasSplitEnvironments) {
     subdomain += "--development";
   }
 
-  const receivedRequest = new PromiseSignal();
+  let expectVariables: (actual: any) => void;
+  switch (true) {
+    case isFunction(opts.expectVariables):
+      expectVariables = opts.expectVariables;
+      break;
+    case opts.expectVariables === undefined:
+      expectVariables = noop;
+      break;
+    default:
+      expectVariables = (actual) => expect(actual).toEqual({ query, variables: opts.expectVariables });
+      break;
+  }
+
+  const handledRequest = new PromiseSignal();
 
   nock(`https://${subdomain}.${config.domains.app}`)
-    .post("/edit/api/graphql", (body) => {
+    .post("/edit/api/graphql", (body) => body.query === query)
+    .matchHeader("cookie", (cookie) => loadCookie() === cookie)
+    .optionally(opts.optional)
+    .reply(200, (_uri, rawBody) => {
       try {
-        if (isFunction(expectVariables)) {
-          expectVariables(body.variables);
+        const body = z
+          .object({
+            query: z.literal(query),
+            variables: z
+              .record(z.unknown())
+              .optional()
+              .refine((variables) => {
+                expectVariables(variables);
+                return true;
+              }),
+          })
+          .parse(rawBody) as { query: Query<Data, Variables, Extensions>; variables?: Variables };
+
+        let response;
+        if (isFunction(opts.response)) {
+          response = opts.response(body);
         } else {
-          expect(body).toEqual({ query, variables: expectVariables });
+          response = opts.response;
         }
-        receivedRequest.resolve();
-        return true;
+
+        handledRequest.resolve();
+
+        return response;
       } catch (error) {
-        receivedRequest.reject(error);
-        return false;
+        log.error("failed to generate response", { error });
+        handledRequest.reject(error);
+        throw error;
       }
     })
-    .matchHeader("cookie", (value) => {
-      const cookie = loadCookie();
-      expect(cookie).toBeTruthy();
-      return value === cookie;
-    })
-    .reply(200, response);
+    .persist(opts.persist);
 
-  return receivedRequest;
+  return handledRequest;
 };
 
 export type MockSubscription<
@@ -61,9 +94,9 @@ export type MockSubscription<
   Variables extends JsonObject = JsonObject,
   Extensions extends JsonObject = JsonObject,
 > = {
-  payload: Payload<Data, Variables>;
+  variables?: Variables | null;
   emitNext(value: ExecutionResult<Data, Extensions>): void;
-  emitError(error: ClientError): void;
+  emitError(error: EditGraphQLError): void;
   emitComplete(): void;
 };
 
@@ -86,18 +119,18 @@ export const createMockEditGraphQL = (): MockEditGraphQL => {
   };
 
   vi.spyOn(EditGraphQL.prototype, "dispose");
-  vi.spyOn(EditGraphQL.prototype, "_subscribe").mockImplementation((payload, callbacks) => {
-    callbacks.complete ??= noop;
+  vi.spyOn(EditGraphQL.prototype, "_subscribe").mockImplementation((options) => {
+    options.onComplete ??= noop;
 
-    vi.spyOn(callbacks, "next");
-    vi.spyOn(callbacks, "error");
-    vi.spyOn(callbacks, "complete");
+    vi.spyOn(options, "onResult");
+    vi.spyOn(options, "onError");
+    vi.spyOn(options, "onComplete");
 
-    subscriptions.set(payload.query, {
-      payload,
-      emitNext: callbacks.next,
-      emitError: callbacks.error,
-      emitComplete: callbacks.complete,
+    subscriptions.set(options.query, {
+      variables: unthunk(options.variables),
+      emitNext: options.onResult,
+      emitError: options.onError,
+      emitComplete: options.onComplete,
     });
 
     return vi.fn();

@@ -1,11 +1,10 @@
-import type { GraphQLError } from "graphql";
-import type { ExecutionResult, SubscribePayload } from "graphql-ws";
+import type { ExecutionResult } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import assert from "node:assert";
 import type { ClientRequestArgs } from "node:http";
 import { dedent } from "ts-dedent";
-import type { JsonObject, SetOptional } from "type-fest";
-import type { CloseEvent, ErrorEvent } from "ws";
+import type { JsonObject } from "type-fest";
+import type { CloseEvent } from "ws";
 import WebSocket from "ws";
 import type {
   PublishFileSyncEventsMutation,
@@ -16,11 +15,10 @@ import type {
   RemoteFilesVersionQueryVariables,
 } from "../../__generated__/graphql.js";
 import { config } from "../config/config.js";
-import { ClientError } from "../error/error.js";
+import { EditGraphQLError } from "../error/error.js";
 import { createLogger } from "../output/log/logger.js";
-import { noop } from "../util/function.js";
+import { noop, unthunk, type Thunk } from "../util/function.js";
 import { http, loadCookie } from "../util/http.js";
-import { isFunction } from "../util/is.js";
 import type { App } from "./app.js";
 
 enum ConnectionStatus {
@@ -125,26 +123,32 @@ export class EditGraphQL {
    * @param sink The callbacks to invoke when the server responds.
    * @returns A function to unsubscribe from the subscription.
    */
-  subscribe<Data extends JsonObject, Variables extends JsonObject>(
-    payload: Payload<Data, Variables>,
-    sink: { next: (data: Data) => void; error: (error: ClientError) => void },
-  ): () => void {
-    const unsubscribe = this._subscribe(payload, {
-      ...sink,
-      next: (result) => {
+  subscribe<Data extends JsonObject, Variables extends JsonObject>({
+    onData,
+    ...options
+  }: {
+    query: Query<Data, Variables>;
+    variables?: Thunk<Variables> | null;
+    onData: (data: Data) => void;
+    onError: (error: EditGraphQLError) => void;
+    onComplete?: () => void;
+  }): () => void {
+    const unsubscribe = this._subscribe({
+      ...options,
+      onResult: (result) => {
         if (result.errors) {
           unsubscribe();
-          sink.error(new ClientError(payload, result.errors));
+          options.onError(new EditGraphQLError(options.query, result.errors));
           return;
         }
 
         if (!result.data) {
-          sink.error(new ClientError(payload, "Received a GraphQL response without errors or data"));
           unsubscribe();
+          options.onError(new EditGraphQLError(options.query, "Received a GraphQL response without errors or data"));
           return;
         }
 
-        sink.next(result.data);
+        onData(result.data);
       },
     });
 
@@ -157,13 +161,16 @@ export class EditGraphQL {
    * @param payload The query and variables to send to the server.
    * @returns The data returned by the server.
    */
-  async query<Data extends JsonObject, Variables extends JsonObject>(payload: Payload<Data, Variables>): Promise<Data> {
+  async query<Data extends JsonObject, Variables extends JsonObject>(payload: {
+    query: Query<Data, Variables>;
+    variables?: Thunk<Variables> | null;
+  }): Promise<Data> {
     const result = await this._query(payload);
     if (result.errors) {
-      throw new ClientError(payload, result.errors);
+      throw new EditGraphQLError(payload.query, result.errors);
     }
     if (!result.data) {
-      throw new ClientError(payload, "We received a response without data");
+      throw new EditGraphQLError(payload.query, "We received a response without data");
     }
     return result.data;
   }
@@ -181,42 +188,34 @@ export class EditGraphQL {
    * This method is only exposed for testing and shouldn't be used
    * directly.
    */
-  _subscribe<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
-    payload: Payload<Data, Variables>,
-    sink: SetOptional<Sink<Data, Extensions>, "complete">,
-  ): () => void {
-    let subscribePayload: Payload<Data, Variables>;
-    let removeConnectedListener = noop;
+  _subscribe<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>({
+    query,
+    variables,
+    onResult,
+    onError,
+    onComplete = noop,
+  }: {
+    query: Query<Data, Variables>;
+    variables?: Thunk<Variables> | null;
+    onResult: (result: ExecutionResult<Data, Extensions>) => void;
+    onError: (error: EditGraphQLError) => void;
+    onComplete?: () => void;
+  }): () => void {
+    let payload = { query, variables: unthunk(variables) };
+    const [type, operation] = payload.query.split(/ |\(/, 2);
 
-    if (isFunction(payload.variables)) {
-      // the caller wants us to re-evaluate the variables every time
-      // graphql-ws re-subscribes after reconnecting
-      subscribePayload = { ...payload, variables: payload.variables() };
-      removeConnectedListener = this._client.on("connected", () => {
-        if (this.status === ConnectionStatus.RECONNECTING) {
-          assert(isFunction(payload.variables));
-          subscribePayload = { ...payload, variables: payload.variables() };
-          const [type, operation] = subscribePayload.query.split(/ |\(/, 2);
-          log.info("re-sending graphql query via ws", { type, operation });
-        }
-      });
-    } else {
-      subscribePayload = payload;
-    }
+    const removeConnectedListener = this._client.on("connected", () => {
+      if (this.status === ConnectionStatus.RECONNECTING) {
+        payload = { query, variables: unthunk(variables) };
+        log.info("re-sending graphql query via ws", { type, operation }, { variables: payload.variables });
+      }
+    });
 
-    const [type, operation] = subscribePayload.query.split(/ |\(/, 2);
-    log.info("sending graphql query via ws", { type, operation });
-
-    const unsubscribe = this._client.subscribe(subscribePayload as SubscribePayload, {
-      next: (result: ExecutionResult<Data, Extensions>) => {
-        sink.next(result);
-      },
-      error: (error) => {
-        sink.error(new ClientError(subscribePayload, error as Error | GraphQLError[] | CloseEvent | ErrorEvent));
-      },
-      complete: () => {
-        sink.complete?.();
-      },
+    log.info("sending graphql query via ws", { type, operation }, { variables: payload.variables });
+    const unsubscribe = this._client.subscribe<Data, Extensions>(payload, {
+      next: (result) => onResult(result),
+      error: (error) => onError(new EditGraphQLError(query, error)),
+      complete: onComplete,
     });
 
     return () => {
@@ -225,19 +224,21 @@ export class EditGraphQL {
     };
   }
 
-  private async _query<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(
-    payload: Payload<Data, Variables>,
-  ): Promise<ExecutionResult<Data, Extensions>> {
+  private async _query<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(input: {
+    query: Query<Data, Variables>;
+    variables?: Thunk<Variables> | null;
+  }): Promise<ExecutionResult<Data, Extensions>> {
     const cookie = loadCookie();
     assert(cookie, "missing cookie when connecting to GraphQL API");
-
-    const [type, operation] = payload.query.split(/ |\(/, 2);
-    log.info("sending graphql query via http", { type, operation });
 
     let subdomain = this.app.slug;
     if (this.app.hasSplitEnvironments) {
       subdomain += "--development";
     }
+
+    const payload = { ...input, variables: unthunk(input.variables) };
+    const [type, operation] = payload.query.split(/ |\(/, 2);
+    log.info("sending graphql query via http", { type, operation }, { variables: payload.variables });
 
     const json = await http({
       method: "POST",
@@ -260,17 +261,6 @@ export type Query<
   __TData?: Data;
   __TVariables?: Variables;
   __TExtensions?: Extensions;
-};
-
-export type Payload<Data extends JsonObject, Variables extends JsonObject> = {
-  readonly query: Query<Data, Variables>;
-  readonly variables?: Variables | (() => Variables) | null;
-};
-
-export type Sink<Data extends JsonObject, Extensions extends JsonObject> = {
-  next(value: ExecutionResult<Data, Extensions>): void;
-  error(error: ClientError): void;
-  complete(): void;
 };
 
 export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `

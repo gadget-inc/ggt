@@ -14,7 +14,7 @@ import {
 } from "../../src/services/app/edit-graphql.js";
 import { Context } from "../../src/services/command/context.js";
 import { assetsPath } from "../../src/services/config/paths.js";
-import { ClientError, YarnNotFoundError } from "../../src/services/error/error.js";
+import { EditGraphQLError, YarnNotFoundError } from "../../src/services/error/error.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
 import * as prompt from "../../src/services/output/prompt.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
@@ -698,7 +698,7 @@ describe("sync", () => {
   it("notifies the user when an error occurs", async () => {
     await sync(ctx);
 
-    const error = new ClientError({} as any, "test");
+    const error = new EditGraphQLError("", "test");
 
     const gadgetChangesSubscription = mockEditGraphQL.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);
     gadgetChangesSubscription.emitError(error);

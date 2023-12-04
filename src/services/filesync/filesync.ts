@@ -267,71 +267,67 @@ export class FileSync {
     afterChanges: (data: { changes: Changes }) => Promisable<void>;
     onError: (error: unknown) => void;
   }): () => void {
-    return this.editGraphQL.subscribe(
-      {
-        query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-        // the reason this is a function rather than a static value is
-        // so that it will be re-evaluated if the connection is lost and
-        // then re-established. this ensures that we send our current
-        // filesVersion rather than the one that was sent when we first
-        // subscribed
-        variables: () => ({ localFilesVersion: String(this.filesVersion) }),
+    return this.editGraphQL.subscribe({
+      query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+      // the reason this is a function rather than a static value is
+      // so that it will be re-evaluated if the connection is lost and
+      // then re-established. this ensures that we send our current
+      // filesVersion rather than the one that was sent when we first
+      // subscribed
+      variables: () => ({ localFilesVersion: String(this.filesVersion) }),
+      onError,
+      onData: ({ remoteFileSyncEvents: { changed, deleted, remoteFilesVersion } }) => {
+        this._enqueue(async () => {
+          if (BigInt(remoteFilesVersion) < this.filesVersion) {
+            this.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
+            return;
+          }
+
+          this.log.debug("received files", {
+            remoteFilesVersion: remoteFilesVersion,
+            changed: changed.map((change) => change.path),
+            deleted: deleted.map((change) => change.path),
+          });
+
+          const filterIgnoredFiles = (file: { path: string }): boolean => {
+            const ignored = this.directory.ignores(file.path);
+            if (ignored) {
+              this.log.warn("skipping received change because file is ignored", { path: file.path });
+            }
+            return !ignored;
+          };
+
+          changed = changed.filter(filterIgnoredFiles);
+          deleted = deleted.filter(filterIgnoredFiles);
+
+          if (changed.length === 0 && deleted.length === 0) {
+            await this._save(remoteFilesVersion);
+            return;
+          }
+
+          await beforeChanges({
+            changed: changed.map((file) => file.path),
+            deleted: deleted.map((file) => file.path),
+          });
+
+          const changes = await this._writeToLocalFilesystem({
+            filesVersion: remoteFilesVersion,
+            files: changed,
+            delete: deleted.map((file) => file.path),
+          });
+
+          if (changes.size > 0) {
+            printChanges({
+              message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
+              changes,
+              tense: "past",
+            });
+          }
+
+          await afterChanges({ changes });
+        }).catch(onError);
       },
-      {
-        error: onError,
-        next: ({ remoteFileSyncEvents: { changed, deleted, remoteFilesVersion } }) => {
-          this._enqueue(async () => {
-            if (BigInt(remoteFilesVersion) < this.filesVersion) {
-              this.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
-              return;
-            }
-
-            this.log.debug("received files", {
-              remoteFilesVersion: remoteFilesVersion,
-              changed: changed.map((change) => change.path),
-              deleted: deleted.map((change) => change.path),
-            });
-
-            const filterIgnoredFiles = (file: { path: string }): boolean => {
-              const ignored = this.directory.ignores(file.path);
-              if (ignored) {
-                this.log.warn("skipping received change because file is ignored", { path: file.path });
-              }
-              return !ignored;
-            };
-
-            changed = changed.filter(filterIgnoredFiles);
-            deleted = deleted.filter(filterIgnoredFiles);
-
-            if (changed.length === 0 && deleted.length === 0) {
-              await this._save(remoteFilesVersion);
-              return;
-            }
-
-            await beforeChanges({
-              changed: changed.map((file) => file.path),
-              deleted: deleted.map((file) => file.path),
-            });
-
-            const changes = await this._writeToLocalFilesystem({
-              filesVersion: remoteFilesVersion,
-              files: changed,
-              delete: deleted.map((file) => file.path),
-            });
-
-            if (changes.size > 0) {
-              printChanges({
-                message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
-                changes,
-                tense: "past",
-              });
-            }
-
-            await afterChanges({ changes });
-          }).catch(onError);
-        },
-      },
-    );
+    });
   }
 
   /**

@@ -1,4 +1,5 @@
 import process from "node:process";
+import { env } from "../config/env.js";
 import { isObject } from "../util/is.js";
 
 /**
@@ -25,7 +26,20 @@ export class Stream {
   }
 
   public write(data: string): boolean {
-    return process[this.channel].write(data);
+    if (env.testLike) {
+      // use console.log/error in tests since vitest doesn't display
+      // process.stdout/stderr correctly; also, remove trailing newline
+      // since console.log/error adds one.
+      data = data.replace(/\n$/, "");
+      if (this.channel === "stdout") {
+        console.log(data);
+      } else {
+        console.error(data);
+      }
+      return true;
+    } else {
+      return process[this.channel].write(data);
+    }
   }
 
   public on(event: string, listener: (...args: unknown[]) => void): this {

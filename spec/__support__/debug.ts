@@ -1,16 +1,15 @@
 import assert from "node:assert";
 import { expect } from "vitest";
-import type { Fields } from "../../src/services/output/log/field.js";
 import { createLogger } from "../../src/services/output/log/logger.js";
 
+/**
+ * A logger just for tests.
+ */
 export const log = createLogger({ name: "test" });
 
-export const logStack = (msg: Lowercase<string>, fields?: Fields): void => {
-  const carrier = { stack: "" };
-  Error.captureStackTrace(carrier, logStack);
-  log.error(msg, { ...fields, error: { name: "LogStack", stack: carrier.stack } });
-};
-
+/**
+ * @returns The current test name, describes, and filepath.
+ */
 export const getCurrentTest = (): { name: string; describes: string[]; filepath: string } => {
   const currentTestName = expect.getState().currentTestName;
   assert(currentTestName, "expected currentTestName to be defined");

@@ -6,6 +6,13 @@ import { expect } from "vitest";
 
 export type Files = Record<string, string>;
 
+/**
+ * Writes a directory with the specified files.
+ *
+ * @param dir - The directory path to write.
+ * @param files - An object containing file paths as keys and file contents as values.
+ * @returns A promise that resolves when the directory and files have been written successfully.
+ */
 export const writeDir = async (dir: string, files: Files): Promise<void> => {
   await fs.ensureDir(dir);
 
@@ -16,6 +23,46 @@ export const writeDir = async (dir: string, files: Files): Promise<void> => {
       await fs.outputFile(path.join(dir, filepath), content);
     }
   }
+};
+
+/**
+ * Reads the contents of a directory and returns a map of file paths to
+ * their contents. If a directory is encountered, an empty string is
+ * assigned as the value for that directory path.
+ *
+ * @param dir The directory path to read.
+ * @returns A promise that resolves to a map of file paths to their
+ * contents.
+ */
+export const readDir = async (dir: string): Promise<Files> => {
+  const files = {} as Files;
+
+  for await (const { absolutePath, stats } of walkDir(dir)) {
+    const filepath = normalizePath(path.relative(dir, absolutePath));
+    if (stats.isDirectory()) {
+      files[filepath + "/"] = "";
+      continue;
+    }
+
+    assert(stats.isFile(), `expected ${absolutePath} to be a file`);
+    files[filepath] = await fs.readFile(absolutePath, { encoding: "utf8" });
+  }
+
+  return files;
+};
+
+/**
+ * Asserts that the contents of a directory match the expected contents.
+ *
+ * @param dir - The path to the directory.
+ * @param expected - An object representing the expected contents of the
+ * directory, where the keys are file names and the values are file
+ * contents.
+ * @returns A promise that resolves when the assertion is complete.
+ */
+export const expectDir = async (dir: string, expected: Record<string, string>): Promise<void> => {
+  const actual = await readDir(dir);
+  expect(actual).toEqual(expected);
 };
 
 // eslint-disable-next-line func-style
@@ -37,25 +84,3 @@ async function* walkDir(dir: string, root = dir): AsyncGenerator<{ absolutePath:
     }
   }
 }
-
-export const readDir = async (dir: string): Promise<Files> => {
-  const files = {} as Files;
-
-  for await (const { absolutePath, stats } of walkDir(dir)) {
-    const filepath = normalizePath(path.relative(dir, absolutePath));
-    if (stats.isDirectory()) {
-      files[filepath + "/"] = "";
-      continue;
-    }
-
-    assert(stats.isFile(), `expected ${absolutePath} to be a file`);
-    files[filepath] = await fs.readFile(absolutePath, { encoding: "utf8" });
-  }
-
-  return files;
-};
-
-export const expectDir = async (dir: string, expected: Record<string, string>): Promise<void> => {
-  const actual = await readDir(dir);
-  expect(actual).toEqual(expected);
-};

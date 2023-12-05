@@ -14,7 +14,7 @@ import * as prompt from "../../src/services/output/prompt.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
-import { makeDir, makeFile, makeSyncScenario } from "../__support__/filesync.js";
+import { makeFile, makeSyncScenario } from "../__support__/filesync.js";
 import { testDirPath } from "../__support__/paths.js";
 import { sleep } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
@@ -113,7 +113,7 @@ describe("sync", () => {
     // receive a new directory
     await emitGadgetChanges({
       remoteFilesVersion: "4",
-      changed: [makeDir({ path: "directory/" })],
+      changed: [makeFile({ path: "directory/" })],
       deleted: [],
     });
 
@@ -210,7 +210,7 @@ describe("sync", () => {
     // receive a new directory
     await emitGadgetChanges({
       remoteFilesVersion: "4",
-      changed: [makeDir({ path: "directory/" })],
+      changed: [makeFile({ path: "directory/" })],
       deleted: [],
     });
 
@@ -288,7 +288,7 @@ describe("sync", () => {
     // receive a new directory
     await emitGadgetChanges({
       remoteFilesVersion: "4",
-      changed: [makeDir({ path: "directory/" })],
+      changed: [makeFile({ path: "directory/" })],
       deleted: [],
     });
 

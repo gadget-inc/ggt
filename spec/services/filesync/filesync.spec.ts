@@ -14,7 +14,7 @@ import { testApp } from "../../__support__/app.js";
 import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, readDir, writeDir } from "../../__support__/files.js";
-import { expectSyncJson, makeDir, makeFile } from "../../__support__/filesync.js";
+import { expectSyncJson, makeFile } from "../../__support__/filesync.js";
 import { prettyJSON } from "../../__support__/json.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
@@ -182,7 +182,7 @@ describe("FileSync.writeToLocalFilesystem", () => {
   it("writes empty directories", async () => {
     await writeToLocalFilesystem({
       filesVersion: 1n,
-      files: [makeDir({ path: "some/deeply/nested/" })],
+      files: [makeFile({ path: "some/deeply/nested/" })],
       delete: [],
     });
 

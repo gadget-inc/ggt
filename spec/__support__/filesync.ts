@@ -173,7 +173,7 @@ export const makeSyncScenario = async ({
   void nockEditGraphQLResponse({
     persist: true,
     query: REMOTE_FILES_VERSION_QUERY,
-    response: () => {
+    result: () => {
       return {
         data: {
           remoteFilesVersion: String(gadgetFilesVersion),
@@ -186,32 +186,26 @@ export const makeSyncScenario = async ({
     optional: true,
     persist: true,
     query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-    response: async (body) => {
-      const { changed, deleted } = z
-        .object({
-          variables: z.object({
-            input: z.object({
-              expectedRemoteFilesVersion: z.literal(String(gadgetFilesVersion)),
-              changed: z.array(
-                z.object({
-                  path: z.string(),
-                  mode: z.number(),
-                  content: z.string(),
-                  encoding: z.nativeEnum(FileSyncEncoding),
-                }),
-              ),
-              deleted: z.array(z.object({ path: z.string() })),
-            }),
+    expectVariables: z.object({
+      input: z.object({
+        expectedRemoteFilesVersion: z.string(),
+        changed: z.array(
+          z.object({
+            path: z.string(),
+            mode: z.number(),
+            content: z.string(),
+            encoding: z.nativeEnum(FileSyncEncoding),
           }),
-        })
-        .refine(
-          (query) => {
-            const { changed, deleted } = query.variables.input;
-            return changed.every((change) => deleted.every((del) => del.path !== change.path));
-          },
-          { message: "changed and deleted files must not overlap" },
-        )
-        .parse(body).variables.input;
+        ),
+        deleted: z.array(z.object({ path: z.string() })),
+      }),
+    }),
+    result: async ({ input: { expectedRemoteFilesVersion, changed, deleted } }) => {
+      assert(expectedRemoteFilesVersion === String(gadgetFilesVersion), "Files version mismatch");
+      assert(
+        changed.every((change) => deleted.every((del) => del.path !== change.path)),
+        "changed and deleted files must not overlap",
+      );
 
       await processGadgetChanges({ changed, deleted });
 

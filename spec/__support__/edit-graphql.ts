@@ -1,89 +1,110 @@
 import nock from "nock";
 import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
-import { z } from "zod";
+import { ZodSchema, z } from "zod";
 import type { App } from "../../src/services/app/app.js";
 import type { GraphQLQuery } from "../../src/services/app/edit-graphql.js";
 import { EditGraphQL } from "../../src/services/app/edit-graphql.js";
 import { config } from "../../src/services/config/config.js";
 import type { EditGraphQLError } from "../../src/services/error/error.js";
-import { noop, unthunk } from "../../src/services/util/function.js";
+import { noop, unthunk, type Thunk } from "../../src/services/util/function.js";
 import { loadCookie } from "../../src/services/util/http.js";
 import { isFunction } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { testApp } from "./app.js";
 import { log } from "./debug.js";
 
+export type NockEditGraphQLResponseOptions<Query extends GraphQLQuery> = {
+  /**
+   * The query to respond to.
+   */
+  query: Query;
+
+  /**
+   * The result to respond with. If a function is provided, it will be
+   * called with the variables from the request.
+   */
+  result: Query["Result"] | ((variables: Query["Variables"]) => Promisable<Query["Result"]>);
+
+  /**
+   * The variables to expect in the request.
+   */
+  expectVariables?: Thunk<Query["Variables"] | ZodSchema> | null;
+
+  /**
+   * The app to respond to.
+   * @default testApp
+   */
+  app?: App;
+
+  /**
+   * Whether to keep responding to requests after the first one.
+   * @default false
+   */
+  persist?: boolean;
+
+  /**
+   * Whether the request has to be made.
+   * @default true
+   */
+  optional?: boolean;
+};
+
+/**
+ * Sets up a response to an {@linkcode EditGraphQL} query.
+ */
 export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
   query,
   app = testApp,
+  optional = false,
+  persist = false,
   ...opts
-}: {
-  query: Query;
-  expectVariables?: Query["Variables"] | ((actual: any) => void);
-  response: Query["Result"] | ((body: { query: Query; variables?: Query["Variables"] }) => Promisable<Query["Result"]>);
-  app?: App;
-  persist?: boolean;
-  optional?: boolean;
-}): PromiseSignal => {
+}: NockEditGraphQLResponseOptions<Query>): PromiseSignal => {
   let subdomain = app.slug;
   if (app.hasSplitEnvironments) {
     subdomain += "--development";
   }
 
-  let expectVariables: (actual: any) => void;
-  switch (true) {
-    case isFunction(opts.expectVariables):
-      expectVariables = opts.expectVariables;
-      break;
-    case opts.expectVariables === undefined:
-      expectVariables = noop;
-      break;
-    default:
-      expectVariables = (actual) => expect(actual).toEqual({ query, variables: opts.expectVariables });
-      break;
-  }
+  const expectVariables = (actual: unknown): Query["Variables"] => {
+    const expected = unthunk(opts.expectVariables);
+    if (expected instanceof ZodSchema) {
+      return expected.parse(actual) as Query["Variables"];
+    } else {
+      expect(actual).toEqual(expected);
+      return actual as Query["Variables"];
+    }
+  };
 
-  const handledRequest = new PromiseSignal();
+  const generateResult = (variables: Query["Variables"]): Promisable<Query["Result"]> => {
+    if (isFunction(opts.result)) {
+      return opts.result(variables);
+    } else {
+      return opts.result;
+    }
+  };
+
+  const responded = new PromiseSignal();
 
   nock(`https://${subdomain}.${config.domains.app}`)
     .post("/edit/api/graphql", (body) => body.query === query)
     .matchHeader("cookie", (cookie) => loadCookie() === cookie)
-    .optionally(opts.optional)
-    .reply(200, (_uri, rawBody) => {
+    .optionally(optional)
+    .reply(200, async (_uri, rawBody) => {
       try {
-        const body = z
-          .object({
-            query: z.literal(query),
-            variables: z
-              .record(z.unknown())
-              .optional()
-              .refine((variables) => {
-                expectVariables(variables);
-                return true;
-              }),
-          })
-          .parse(rawBody) as { query: Query; variables?: Query["Variables"] };
-
-        let response;
-        if (isFunction(opts.response)) {
-          response = opts.response(body);
-        } else {
-          response = opts.response;
-        }
-
-        handledRequest.resolve();
-
-        return response;
+        const body = z.object({ query: z.literal(query), variables: z.record(z.unknown()).optional() }).parse(rawBody);
+        const variables = expectVariables(body.variables);
+        const result = await generateResult(variables);
+        return result;
       } catch (error) {
         log.error("failed to generate response", { error });
-        handledRequest.reject(error);
         throw error;
+      } finally {
+        responded.resolve();
       }
     })
-    .persist(opts.persist);
+    .persist(persist);
 
-  return handledRequest;
+  return responded;
 };
 
 export type MockSubscription<Query extends GraphQLQuery = GraphQLQuery> = {

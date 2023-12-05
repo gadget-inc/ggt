@@ -1,9 +1,21 @@
 import { afterEach, beforeEach, expect, vi, type Assertion } from "vitest";
 
-export const testStdout: string[] = [];
+const testStdout: string[] = [];
 
+/**
+ * Returns an assertion that checks the contents of stdout.
+ * @example
+ * expectStdout().toEqual("Hello World!");
+ * @example
+ * expectStdout().toMatchInlineSnapshot();
+ */
 export const expectStdout = (): Assertion<string> => expect(testStdout.join(""));
 
+/**
+ * Mocks stdout and resets its contents before each test.
+ *
+ * This is called before each test by default.
+ */
 export const mockStdout = (): void => {
   beforeEach(async () => {
     const { stdout } = await import("../../src/services/output/stream.js");
@@ -20,10 +32,20 @@ export const mockStdout = (): void => {
   });
 };
 
-export const testStderr: string[] = [];
+const testStderr: string[] = [];
 
+/**
+ * Returns an assertion that checks the contents of stderr.
+ * @example
+ * expectStderr().toEqual("Hello World!");
+ * @example
+ * expectStderr().toMatchInlineSnapshot();
+ */
 export const expectStderr = (): Assertion<string> => expect(testStderr.join(""));
 
+/**
+ * Mocks stderr and resets its contents before each test.
+ */
 export const mockStderr = (): void => {
   beforeEach(async () => {
     const { stderr } = await import("../../src/services/output/stream.js");

@@ -1,3 +1,6 @@
+/**
+ * Sets the given environment variables for the duration of the given function.
+ */
 export const withEnv = <T>(env: Record<string, string | undefined>, fn: () => T): T => {
   const keys = Object.keys(env);
   const original = keys.map((key) => [key, process.env[key]] as const);

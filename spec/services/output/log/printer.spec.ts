@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { describe, it, vi } from "vitest";
 import { createPrinter } from "../../../../src/services/output/log/printer.js";
 import { withEnv } from "../../../__support__/env.js";
-import { expectStdout } from "../../../__support__/stdout.js";
+import { expectStdout } from "../../../__support__/stream.js";
 
 describe("printer", () => {
   const printer = createPrinter({ name: "printer" });

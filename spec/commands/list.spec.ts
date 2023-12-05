@@ -3,7 +3,7 @@ import { command } from "../../src/commands/list.js";
 import * as app from "../../src/services/app/app.js";
 import { Context } from "../../src/services/command/context.js";
 import * as user from "../../src/services/user/user.js";
-import { expectStdout } from "../__support__/stdout.js";
+import { expectStdout } from "../__support__/stream.js";
 import { testUser } from "../__support__/user.js";
 
 describe("list", () => {

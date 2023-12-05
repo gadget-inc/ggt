@@ -1,26 +1,39 @@
 import ms from "ms";
-import { timeoutMs } from "./timeout.js";
+import inspector from "node:inspector";
+import process from "node:process";
+import { parseBoolean } from "../../src/services/util/boolean.js";
 
+/**
+ * Suspends the execution of the current async function for the given
+ * duration.
+ *
+ * @param duration - The duration string, e.g. '1s', '500ms', '10m'.
+ * @returns A promise that resolves after the specified duration has
+ * elapsed.
+ */
 export const sleep = (duration: string): Promise<void> => {
   const milliseconds = ms(duration);
-  return new Promise((resolve) => (milliseconds === 0 ? setImmediate(resolve) : setTimeout(resolve, milliseconds)));
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 };
 
-export const sleepUntil = async (fn: () => boolean, { interval = "100ms", timeout = timeoutMs("5s") } = {}): Promise<void> => {
-  const start = isFinite(timeout) && Date.now();
-
-  // eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition
-  while (true) {
-    if (fn()) {
-      return;
-    }
-
-    await sleep(interval);
-
-    if (start && Date.now() - start > timeout) {
-      const error = new Error(`Timed out after ${timeout} milliseconds`);
-      Error.captureStackTrace(error, sleepUntil);
-      throw error;
-    }
+/**
+ * Returns the timeout duration in milliseconds.
+ * If running in an inspector, returns Infinity.
+ * If running in a CI environment, returns the duration multiplied by 2.
+ *
+ * @param duration - The duration string, e.g. '1s', '500ms', '10m'.
+ * @returns The timeout duration in milliseconds.
+ */
+export const timeoutMs = (duration: string): number => {
+  if (inspector.url() !== undefined) {
+    return Infinity;
   }
+
+  const milliseconds = ms(duration);
+
+  if (parseBoolean(process.env["CI"])) {
+    return milliseconds * 2;
+  }
+
+  return milliseconds;
 };

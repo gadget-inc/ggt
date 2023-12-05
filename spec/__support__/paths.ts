@@ -5,8 +5,7 @@ import { getCurrentTest } from "./debug.js";
  * Returns the path to a test directory within tmp/spec/ based on the
  * current test name and optional segments.
  *
- * @param segments - Optional path segments to append to the test
- * directory path.
+ * @param segments - path segments to append to the test directory path.
  * @returns The path to the test directory.
  * @example
  * // file: spec/some/test.spec.ts

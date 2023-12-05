@@ -12,7 +12,7 @@ import {
 } from "../../../src/services/error/error.js";
 import { reportErrorAndExit } from "../../../src/services/error/report.js";
 import { expectProcessExit } from "../../__support__/process.js";
-import { expectStdout } from "../../__support__/stdout.js";
+import { expectStdout } from "../../__support__/stream.js";
 
 describe("reportErrorAndExit", () => {
   it("captures errors", async () => {

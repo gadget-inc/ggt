@@ -5,23 +5,34 @@ import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/util/http.js";
 import { testUser } from "./user.js";
 
-export const testApp: App = {
+/**
+ * A test Gadget app to use in tests.
+ */
+export const testApp: App = Object.freeze({
   id: 1,
   slug: "test",
   primaryDomain: "test.gadget.app",
   hasSplitEnvironments: true,
   user: testUser,
-};
+});
 
-export const notTestApp: App = {
+/**
+ * Another test Gadget app to use in tests.
+ *
+ * This app does not have split environments.
+ */
+export const notTestApp: App = Object.freeze({
   id: 2,
   slug: "not-test",
   primaryDomain: "not-test.gadget.app",
   hasSplitEnvironments: false,
   user: testUser,
-};
+});
 
-export const nockTestApps = ({ optional = true } = {}): void => {
+/**
+ * Sets up a response for the apps endpoint that `getApps` uses.
+ */
+export const nockTestApps = ({ optional = true, persist = true } = {}): void => {
   nock(`https://${config.domains.services}`)
     .get("/auth/api/apps")
     .optionally(optional)
@@ -31,5 +42,5 @@ export const nockTestApps = ({ optional = true } = {}): void => {
       return value === cookie;
     })
     .reply(200, [testApp, notTestApp])
-    .persist();
+    .persist(persist);
 };

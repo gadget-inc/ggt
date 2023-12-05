@@ -1,6 +1,8 @@
 import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
+import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import * as app from "../../../src/services/app/app.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, REMOTE_FILES_VERSION_QUERY } from "../../../src/services/app/edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "../../../src/services/error/error.js";
@@ -12,7 +14,7 @@ import { testApp } from "../../__support__/app.js";
 import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, readDir, writeDir } from "../../__support__/files.js";
-import { expectPublishVariables, expectSyncJson, makeDir, makeFile } from "../../__support__/filesync.js";
+import { expectSyncJson, makeFile } from "../../__support__/filesync.js";
 import { prettyJSON } from "../../__support__/json.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
@@ -180,7 +182,7 @@ describe("FileSync.writeToLocalFilesystem", () => {
   it("writes empty directories", async () => {
     await writeToLocalFilesystem({
       filesVersion: 1n,
-      files: [makeDir({ path: "some/deeply/nested/" })],
+      files: [makeFile({ path: "some/deeply/nested/" })],
       delete: [],
     });
 
@@ -381,7 +383,7 @@ describe("FileSync.sync", () => {
 
   it("asks how to proceed if only local files changed", async () => {
     vi.spyOn(prompt, "select").mockResolvedValue(Action.CANCEL);
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, response: { data: { remoteFilesVersion: "1" } } });
+    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
     await writeDir(appDir, {
       ".gadget/sync.json": prettyJSON({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
       "foo.js": "foo",
@@ -404,7 +406,7 @@ describe("FileSync.sync", () => {
 
   it("asks how to proceed if both local and remote files changed", async () => {
     vi.spyOn(prompt, "select").mockResolvedValue(Action.CANCEL);
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, response: { data: { remoteFilesVersion: "2" } } });
+    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "2" } } });
     await writeDir(appDir, {
       ".gadget/sync.json": prettyJSON({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
       "foo.js": "foo",
@@ -428,7 +430,7 @@ describe("FileSync.sync", () => {
 
   it("does not ask how to proceed if only ignored files changed", async () => {
     vi.spyOn(prompt, "select");
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, response: { data: { remoteFilesVersion: "1" } } });
+    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
     await writeDir(appDir, {
       ".ignore": "bar.js",
       "foo.js": "foo",
@@ -451,7 +453,7 @@ describe("FileSync.sync", () => {
 
   it("does not ask how to proceed if only remote files changed", async () => {
     vi.spyOn(prompt, "select");
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, response: { data: { remoteFilesVersion: "1" } } });
+    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
     await writeDir(appDir, {
       "foo.js": "foo",
     });
@@ -467,7 +469,7 @@ describe("FileSync.sync", () => {
 
   it("does not ask how to proceed if neither local nor remote files changed", async () => {
     vi.spyOn(prompt, "select");
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, response: { data: { remoteFilesVersion: "1" } } });
+    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
     await writeDir(appDir, {
       "foo.js": "foo",
     });
@@ -483,16 +485,18 @@ describe("FileSync.sync", () => {
 
   it("publishes changed events when told to merge", async () => {
     vi.spyOn(prompt, "select").mockResolvedValue(Action.MERGE);
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, response: { data: { remoteFilesVersion: "1" } } });
+    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
     const published = nockEditGraphQLResponse({
       query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } },
-      expectVariables: expectPublishVariables({
-        input: {
-          expectedRemoteFilesVersion: "1",
-          changed: [makeFile({ path: "bar.js", content: "bar2" }), makeFile({ path: "baz.js", content: "baz" })],
-          deleted: [],
-        },
+      result: { data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } },
+      expectVariables: z.strictObject({
+        input: z.strictObject({
+          expectedRemoteFilesVersion: z.literal("1"),
+          changed: z
+            .array(z.strictObject({ path: z.string(), content: z.string(), mode: z.number(), encoding: z.nativeEnum(FileSyncEncoding) }))
+            .length(2),
+          deleted: z.array(z.string()).length(0),
+        }),
       }),
     });
 
@@ -522,7 +526,7 @@ describe("FileSync.sync", () => {
 
   it("deletes local file changes and sets filesVersion to 0 when told to reset", async () => {
     vi.spyOn(prompt, "select").mockResolvedValue(Action.RESET);
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, response: { data: { remoteFilesVersion: "1" } } });
+    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
 
     await writeDir(appDir, {
       "foo.js": "foo",

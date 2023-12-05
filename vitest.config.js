@@ -1,5 +1,5 @@
 import { defineConfig } from "vitest/config";
-import { timeoutMs } from "./spec/__support__/timeout.js";
+import { timeoutMs } from "./spec/__support__/sleep.js";
 
 export default defineConfig({
   test: {

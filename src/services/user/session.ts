@@ -1,5 +1,5 @@
 import fs from "fs-extra";
-import { configPath } from "../config/paths.js";
+import { configPath } from "../config/config.js";
 import { swallowEnoent } from "../filesync/directory.js";
 import { createLogger } from "../output/log/logger.js";
 import { memo } from "../util/function.js";

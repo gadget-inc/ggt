@@ -19,8 +19,7 @@ import {
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit-graphql.js";
-import { config } from "../config/config.js";
-import { homePath } from "../config/paths.js";
+import { config, homePath } from "../config/config.js";
 import { ArgError, InvalidSyncFileError } from "../error/error.js";
 import { createLogger } from "../output/log/logger.js";
 import { select } from "../output/prompt.js";
@@ -29,7 +28,7 @@ import type { User } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { Changes, printChanges } from "./changes.js";
-import { Directory, swallowEnoent } from "./directory.js";
+import { Directory, supportsPermissions, swallowEnoent } from "./directory.js";
 
 export type File = {
   path: string;
@@ -48,16 +47,7 @@ export enum Action {
 export class FileSync {
   readonly editGraphQL: EditGraphQL;
 
-  readonly log = createLogger({
-    name: "filesync",
-    fields: () => ({
-      state: {
-        app: this.app.slug,
-        filesVersion: String(this.filesVersion),
-        mtime: this.mtime,
-      },
-    }),
-  });
+  readonly log = createLogger({ name: "filesync", fields: () => ({ state: this._state }) });
 
   /**
    * A FIFO async callback queue that ensures we process filesync events
@@ -276,73 +266,67 @@ export class FileSync {
     afterChanges: (data: { changes: Changes }) => Promisable<void>;
     onError: (error: unknown) => void;
   }): () => void {
-    return this.editGraphQL.subscribe(
-      {
-        query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-        // the reason this is a function rather than a static value is
-        // so that it will be re-evaluated if the connection is lost and
-        // then re-established. this ensures that we send our current
-        // filesVersion rather than the one that was sent when we first
-        // subscribed
-        variables: () => ({ localFilesVersion: String(this.filesVersion) }),
+    return this.editGraphQL.subscribe({
+      query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+      // the reason this is a function rather than a static value is
+      // so that it will be re-evaluated if the connection is lost and
+      // then re-established. this ensures that we send our current
+      // filesVersion rather than the one that was sent when we first
+      // subscribed
+      variables: () => ({ localFilesVersion: String(this.filesVersion) }),
+      onError,
+      onData: ({ remoteFileSyncEvents: { changed, deleted, remoteFilesVersion } }) => {
+        this._enqueue(async () => {
+          if (BigInt(remoteFilesVersion) < this.filesVersion) {
+            this.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
+            return;
+          }
+
+          this.log.debug("received files", {
+            remoteFilesVersion: remoteFilesVersion,
+            changed: changed.map((change) => change.path),
+            deleted: deleted.map((change) => change.path),
+          });
+
+          const filterIgnoredFiles = (file: { path: string }): boolean => {
+            const ignored = this.directory.ignores(file.path);
+            if (ignored) {
+              this.log.warn("skipping received change because file is ignored", { path: file.path });
+            }
+            return !ignored;
+          };
+
+          changed = changed.filter(filterIgnoredFiles);
+          deleted = deleted.filter(filterIgnoredFiles);
+
+          if (changed.length === 0 && deleted.length === 0) {
+            await this._save(remoteFilesVersion);
+            return;
+          }
+
+          await beforeChanges({
+            changed: changed.map((file) => file.path),
+            deleted: deleted.map((file) => file.path),
+          });
+
+          const changes = await this._writeToLocalFilesystem({
+            filesVersion: remoteFilesVersion,
+            files: changed,
+            delete: deleted.map((file) => file.path),
+          });
+
+          if (changes.size > 0) {
+            printChanges({
+              message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
+              changes,
+              tense: "past",
+            });
+          }
+
+          await afterChanges({ changes });
+        }).catch(onError);
       },
-      {
-        error: onError,
-        next: ({ remoteFileSyncEvents: { changed, deleted, remoteFilesVersion } }) => {
-          this._enqueue(async () => {
-            if (BigInt(remoteFilesVersion) < this.filesVersion) {
-              this.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
-              return;
-            }
-
-            this.log.debug("received files", {
-              remoteFilesVersion: remoteFilesVersion,
-              changed: changed.map((change) => change.path),
-              deleted: deleted.map((change) => change.path),
-            });
-
-            const filterIgnoredFiles = (file: { path: string }): boolean => {
-              const ignored = this.directory.ignores(file.path);
-              if (ignored) {
-                this.log.warn("skipping received change because file is ignored", { path: file.path });
-              }
-              return !ignored;
-            };
-
-            changed = changed.filter(filterIgnoredFiles);
-            deleted = deleted.filter(filterIgnoredFiles);
-
-            if (changed.length === 0 && deleted.length === 0) {
-              await this._save({ filesVersion: remoteFilesVersion });
-              return;
-            }
-
-            await beforeChanges({
-              changed: changed.map((file) => file.path),
-              deleted: deleted.map((file) => file.path),
-            });
-
-            const changes = await this._writeToLocalFilesystem({
-              filesVersion: remoteFilesVersion,
-              files: changed,
-              delete: deleted.map((file) => file.path),
-            });
-
-            if (changes.size > 0) {
-              const timestamp = dayjs().format("hh:mm:ss A");
-              printChanges({
-                title: sprint`← Received {gray ${timestamp}}`,
-                changes,
-                tense: "present",
-                limit: 10,
-              });
-            }
-
-            await afterChanges({ changes });
-          }).catch(onError);
-        },
-      },
-    );
+    });
   }
 
   /**
@@ -375,9 +359,11 @@ export class FileSync {
     const hasLocalChanges = localChanges.size > 0;
     if (hasLocalChanges) {
       printChanges({
-        title: "Local files have changed since you last synced",
         changes: localChanges,
         tense: "past",
+        message: sprint`{bold Local files have changed since you last synced}`,
+        spaceY: 1,
+        limit: Infinity,
       });
     }
 
@@ -502,14 +488,12 @@ export class FileSync {
       },
     });
 
-    await this._save({ filesVersion: remoteFilesVersion, mtime: Date.now() + 1 });
+    await this._save(remoteFilesVersion);
 
-    const timestamp = dayjs().format("hh:mm:ss A");
     printChanges({
-      title: sprint`→ Sent {gray ${timestamp}}`,
       changes,
-      tense: "present",
-      limit: 10,
+      tense: "past",
+      message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,
     });
   }
 
@@ -565,19 +549,24 @@ export class FileSync {
       }
 
       if (file.path.endsWith("/")) {
-        await fs.ensureDir(absolutePath, { mode: 0o755 });
-        return;
+        await fs.ensureDir(absolutePath);
+      } else {
+        await fs.outputFile(absolutePath, Buffer.from(file.content, file.encoding));
       }
 
-      await fs.ensureDir(path.dirname(absolutePath), { mode: 0o755 });
-      await fs.writeFile(absolutePath, Buffer.from(file.content, file.encoding), { mode: file.mode });
+      if (supportsPermissions) {
+        // the os's default umask makes setting the mode during creation
+        // not work, so an additional fs.chmod call is necessary to
+        // ensure the file has the correct mode
+        await fs.chmod(absolutePath, file.mode & 0o777);
+      }
 
       if (absolutePath === this.directory.absolute(".ignore")) {
         await this.directory.loadIgnoreFile();
       }
     });
 
-    await this._save({ filesVersion: String(filesVersion), mtime: Date.now() + 1 });
+    await this._save(String(filesVersion));
 
     return new Changes([
       ...created.map((path) => [path, { type: "create" }] as const),
@@ -589,8 +578,8 @@ export class FileSync {
   /**
    * Updates {@linkcode _state} and saves it to `.gadget/sync.json`.
    */
-  private async _save(state: Partial<typeof this._state>): Promise<void> {
-    this._state = { ...this._state, ...state };
+  private async _save(filesVersion: string | bigint): Promise<void> {
+    this._state = { ...this._state, mtime: Date.now() + 1, filesVersion: String(filesVersion) };
     this.log.debug("saving state", { state: this._state });
     await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
   }

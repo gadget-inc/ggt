@@ -1,7 +1,9 @@
+import cleanStack from "clean-stack";
 import { RequestError } from "got";
 import { inspect } from "node:util";
 import { serializeError as baseSerializeError, type ErrorObject } from "serialize-error";
 import type { Simplify } from "type-fest";
+import { workspaceRoot } from "../config/paths.js";
 
 /**
  * Returns a new object with the properties of the input object merged
@@ -89,6 +91,10 @@ export const serializeError = (error: unknown): ErrorObject => {
   let serialized = baseSerializeError(Array.isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };
+  }
+
+  if (serialized.stack) {
+    serialized.stack = cleanStack(serialized.stack, { pretty: true, basePath: workspaceRoot });
   }
 
   if (error instanceof RequestError) {

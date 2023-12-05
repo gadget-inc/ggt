@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`ClientError > renders a CloseEvent correctly 1`] = `
+exports[`EditGraphQLError > renders a CloseEvent correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 The connection to Gadget closed unexpectedly.
@@ -10,7 +10,7 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`ClientError > renders a GraphQL error correctly 1`] = `
+exports[`EditGraphQLError > renders a GraphQL error correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 Gadget responded with the following error:
@@ -22,7 +22,7 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`ClientError > renders a string correctly 1`] = `
+exports[`EditGraphQLError > renders a string correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 We received a response without data
@@ -32,7 +32,7 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`ClientError > renders an ErrorEvent correctly 1`] = `
+exports[`EditGraphQLError > renders an ErrorEvent correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 connect ECONNREFUSED 10.254.254.254:3000
@@ -42,7 +42,7 @@ If you think this is a bug, please submit an issue using the link below.
 https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
 `;
 
-exports[`ClientError > renders multiple GraphQL errors correctly 1`] = `
+exports[`EditGraphQLError > renders multiple GraphQL errors correctly 1`] = `
 "GGT_CLI_CLIENT_ERROR: An error occurred while communicating with Gadget
 
 Gadget responded with multiple errors:

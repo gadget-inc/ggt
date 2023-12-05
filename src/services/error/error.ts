@@ -1,15 +1,15 @@
 import arg from "arg";
 import cleanStack from "clean-stack";
 import type { GraphQLError } from "graphql";
+import assert from "node:assert";
 import { randomUUID } from "node:crypto";
 import { dedent } from "ts-dedent";
-import type { JsonObject } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
-import type { Payload } from "../app/edit-graphql.js";
+import type { GraphQLQuery } from "../app/edit-graphql.js";
 import { env } from "../config/env.js";
 import { sprintln } from "../output/sprint.js";
 import { compact, uniq } from "../util/collection.js";
-import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors } from "../util/is.js";
+import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString } from "../util/is.js";
 import { serializeError } from "../util/object.js";
 
 export enum IsBug {
@@ -117,12 +117,14 @@ export class UnexpectedError extends CLIError {
   }
 }
 
-export class ClientError extends CLIError {
+export class EditGraphQLError extends CLIError {
   isBug = IsBug.MAYBE;
 
+  override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent;
+
   constructor(
-    readonly payload: Payload<JsonObject, JsonObject>,
-    override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent,
+    readonly query: GraphQLQuery,
+    cause: unknown,
   ) {
     super("GGT_CLI_CLIENT_ERROR", "An error occurred while communicating with Gadget");
 
@@ -142,6 +144,12 @@ export class ClientError extends CLIError {
         reason: cause.reason,
         wasClean: cause.wasClean,
       } as CloseEvent;
+    } else {
+      assert(
+        isString(cause) || isError(cause) || isGraphQLErrors(cause),
+        "cause must be a string, Error, GraphQLError[], CloseEvent, or ErrorEvent",
+      );
+      this.cause = cause;
     }
   }
 

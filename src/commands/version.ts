@@ -1,7 +1,7 @@
+import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
 import { createLogger } from "../services/output/log/logger.js";
 import { sprint } from "../services/output/sprint.js";
-import type { Command, Usage } from "./command.js";
 
 const log = createLogger({ name: "version" });
 

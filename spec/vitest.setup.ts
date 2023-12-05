@@ -18,11 +18,6 @@ beforeEach(async () => {
   vi.spyOn(config, "cacheDir", "get").mockReturnValue(testDirPath("cache"));
   vi.spyOn(config, "dataDir", "get").mockReturnValue(testDirPath("data"));
 
-  // add current test name to all structured log messages
-  const { setGlobalFields } = await import("../src/services/output/log/structured.js");
-  const { getCurrentTest } = await import("./__support__/debug.js");
-  setGlobalFields(() => ({ test: getCurrentTest().name }));
-
   // always opt in to nock'd requests
   nock.cleanAll();
 

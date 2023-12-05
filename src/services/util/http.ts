@@ -14,7 +14,7 @@ export const http = got.extend({
     beforeRequest: [
       (options) => {
         options.headers["user-agent"] = config.versionFull;
-        log.info("http request", {
+        log.debug("http request", {
           request: {
             method: options.method,
             url: options.url?.toString(),
@@ -40,7 +40,7 @@ export const http = got.extend({
     ],
     afterResponse: [
       (response) => {
-        log.info("http response", {
+        log.debug("http response", {
           request: {
             method: response.request.options.method,
             url: response.request.options.url?.toString(),

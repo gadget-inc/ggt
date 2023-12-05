@@ -9,7 +9,7 @@ import { readSession, writeSession } from "../../src/services/user/session.js";
 import * as user from "../../src/services/user/user.js";
 import { noop } from "../../src/services/util/function.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
-import { expectStdout } from "../__support__/stdout.js";
+import { expectStdout } from "../__support__/stream.js";
 import { testUser } from "../__support__/user.js";
 
 describe("login", () => {

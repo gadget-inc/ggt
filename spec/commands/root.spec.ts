@@ -13,7 +13,7 @@ import { isAbortError } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { withEnv } from "../__support__/env.js";
 import { expectProcessExit } from "../__support__/process.js";
-import { expectStdout } from "../__support__/stdout.js";
+import { expectStdout } from "../__support__/stream.js";
 import { mockVersion } from "../__support__/version.js";
 
 describe("root", () => {

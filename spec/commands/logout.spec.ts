@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { command } from "../../src/commands/logout.js";
 import { Context } from "../../src/services/command/context.js";
 import { readSession, writeSession } from "../../src/services/user/session.js";
-import { expectStdout } from "../__support__/stdout.js";
+import { expectStdout } from "../__support__/stream.js";
 
 describe("logout", () => {
   let ctx: Context;

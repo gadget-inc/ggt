@@ -4,7 +4,7 @@ import { beforeEach, vi } from "vitest";
 import { config } from "../src/services/config/config.js";
 import { clearMemoized } from "../src/services/util/function.js";
 import { testDirPath } from "./__support__/paths.js";
-import { mockStdout } from "./__support__/stdout.js";
+import { mockStdout } from "./__support__/stream.js";
 
 mockStdout();
 

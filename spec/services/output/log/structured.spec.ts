@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/node";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createStructuredLogger } from "../../../../src/services/output/log/structured.js";
 import { withEnv } from "../../../__support__/env.js";
-import { expectStderr, mockStderr } from "../../../__support__/stdout.js";
+import { expectStderr, mockStderr } from "../../../__support__/stream.js";
 
 describe("structured", () => {
   mockStderr();

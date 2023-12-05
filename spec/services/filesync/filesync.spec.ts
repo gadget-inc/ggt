@@ -12,7 +12,7 @@ import { testApp } from "../../__support__/app.js";
 import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, readDir, writeDir } from "../../__support__/files.js";
-import { expectPublishVariables, makeDir, makeFile, stateFile } from "../../__support__/filesync.js";
+import { expectPublishVariables, expectSyncJson, makeDir, makeFile } from "../../__support__/filesync.js";
 import { prettyJSON } from "../../__support__/json.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
@@ -158,7 +158,7 @@ describe("FileSync.writeToLocalFilesystem", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       "file.js": "foo",
       "some/": "",
       "some/deeply/": "",
@@ -186,7 +186,7 @@ describe("FileSync.writeToLocalFilesystem", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       "some/": "",
       "some/deeply/": "",
       "some/deeply/nested/": "",
@@ -217,7 +217,7 @@ describe("FileSync.writeToLocalFilesystem", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
       ".gadget/backup/file.js": "foo",
       ".gadget/backup/some/": "",
@@ -269,7 +269,7 @@ describe("FileSync.writeToLocalFilesystem", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
       // the directory should have been deleted
       ".gadget/backup/foo/": "",
@@ -315,7 +315,7 @@ describe("FileSync.writeToLocalFilesystem", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
       ".gadget/backup/foo.js": "// foo",
     });

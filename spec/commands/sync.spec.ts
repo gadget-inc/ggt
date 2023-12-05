@@ -24,7 +24,7 @@ import type { MockEditGraphQL } from "../__support__/edit-graphql.js";
 import { createMockEditGraphQL, nockEditGraphQLResponse } from "../__support__/edit-graphql.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
 import { expectDir, writeDir } from "../__support__/files.js";
-import { expectPublishVariables, makeDir, makeFile, stateFile } from "../__support__/filesync.js";
+import { expectPublishVariables, expectSyncJson, makeDir, makeFile } from "../__support__/filesync.js";
 import { prettyJSON } from "../__support__/json.js";
 import { testDirPath } from "../__support__/paths.js";
 import { sleep, sleepUntil } from "../__support__/sleep.js";
@@ -110,7 +110,7 @@ describe("sync", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       "file.js": "foo",
     });
 
@@ -129,7 +129,7 @@ describe("sync", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       "file.js": "foo v2",
     });
 
@@ -148,7 +148,7 @@ describe("sync", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
       ".gadget/backup/file.js": "foo v2",
     });
@@ -168,7 +168,7 @@ describe("sync", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
       ".gadget/backup/file.js": "foo v2",
       "directory/": "",
@@ -189,7 +189,7 @@ describe("sync", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
       ".gadget/backup/file.js": "foo v2",
       ".gadget/backup/directory/": "",
@@ -211,7 +211,7 @@ describe("sync", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
       ".gadget/backup/file.js": "foo v2",
       ".gadget/backup/directory/": "",
@@ -297,7 +297,7 @@ describe("sync", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
       ".gadget/backup/file.js": "foo v2",
       ".gadget/backup/directory/": "",
@@ -389,7 +389,7 @@ describe("sync", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
       ".gadget/backup/file.js": "foo v2",
       ".gadget/backup/directory/": "",
@@ -425,7 +425,7 @@ describe("sync", () => {
 
     await expectDir(appDir, {
       ".gadget/": "",
-      ".gadget/sync.json": stateFile(filesync),
+      ".gadget/sync.json": expectSyncJson(filesync),
       ".ignore": "tmp",
       "tmp/": "",
       "tmp/file.js": "foo",

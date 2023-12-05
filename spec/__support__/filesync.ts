@@ -2,7 +2,7 @@ import assert from "node:assert";
 import os from "node:os";
 import { expect } from "vitest";
 import { FileSyncEncoding, type MutationPublishFileSyncEventsArgs } from "../../src/__generated__/graphql.js";
-import type { File, FileSync } from "../../src/services/filesync/filesync.js";
+import { type File, type FileSync } from "../../src/services/filesync/filesync.js";
 import { isNil } from "../../src/services/util/is.js";
 import { defaults } from "../../src/services/util/object.js";
 import type { PartialExcept } from "../types.js";
@@ -11,8 +11,9 @@ import { prettyJSON } from "./json.js";
 export const defaultFileMode = os.platform() === "win32" ? 0o100666 : 0o100644;
 export const defaultDirMode = os.platform() === "win32" ? 0o40666 : 0o40755;
 
-export const makeFile = (options: PartialExcept<File, "path" | "content">): File => {
+export const makeFile = (options: PartialExcept<File, "path">): File => {
   const f = defaults(options, {
+    content: "",
     mode: defaultFileMode,
     encoding: FileSyncEncoding.Base64,
   });
@@ -44,7 +45,13 @@ export const expectPublishVariables = (
   };
 };
 
-export const stateFile = (filesync: FileSync): string => {
+export type SyncJson = (typeof FileSync.prototype)["_state"];
+
+export type PartialSyncJson = Partial<Omit<SyncJson, "filesVersion"> & { filesVersion?: string | bigint }>;
+
+export const expectSyncJson = (filesync: FileSync, expected: PartialSyncJson = {}): string => {
   // @ts-expect-error _state is private
-  return prettyJSON(filesync._state);
+  const state = filesync._state;
+  expect(state).toMatchObject(expected);
+  return prettyJSON(state);
 };

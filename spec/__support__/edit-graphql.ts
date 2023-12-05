@@ -1,10 +1,9 @@
-import type { ExecutionResult } from "graphql";
 import nock from "nock";
-import type { JsonObject, Promisable } from "type-fest";
+import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
 import { z } from "zod";
 import type { App } from "../../src/services/app/app.js";
-import type { Query } from "../../src/services/app/edit-graphql.js";
+import type { GraphQLQuery } from "../../src/services/app/edit-graphql.js";
 import { EditGraphQL } from "../../src/services/app/edit-graphql.js";
 import { config } from "../../src/services/config/config.js";
 import type { EditGraphQLError } from "../../src/services/error/error.js";
@@ -15,16 +14,14 @@ import { PromiseSignal } from "../../src/services/util/promise.js";
 import { testApp } from "./app.js";
 import { log } from "./debug.js";
 
-export const nockEditGraphQLResponse = <Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject>({
+export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
   query,
   app = testApp,
   ...opts
 }: {
-  query: Query<Data, Variables, Extensions>;
-  expectVariables?: Variables | ((actual: any) => void);
-  response:
-    | ExecutionResult<Data, Extensions>
-    | ((body: { query: Query<Data, Variables, Extensions>; variables?: Variables }) => Promisable<ExecutionResult<Data, Extensions>>);
+  query: Query;
+  expectVariables?: Query["Variables"] | ((actual: any) => void);
+  response: Query["Result"] | ((body: { query: Query; variables?: Query["Variables"] }) => Promisable<Query["Result"]>);
   app?: App;
   persist?: boolean;
   optional?: boolean;
@@ -66,7 +63,7 @@ export const nockEditGraphQLResponse = <Data extends JsonObject, Variables exten
                 return true;
               }),
           })
-          .parse(rawBody) as { query: Query<Data, Variables, Extensions>; variables?: Variables };
+          .parse(rawBody) as { query: Query; variables?: Query["Variables"] };
 
         let response;
         if (isFunction(opts.response)) {
@@ -89,24 +86,18 @@ export const nockEditGraphQLResponse = <Data extends JsonObject, Variables exten
   return handledRequest;
 };
 
-export type MockSubscription<
-  Data extends JsonObject = JsonObject,
-  Variables extends JsonObject = JsonObject,
-  Extensions extends JsonObject = JsonObject,
-> = {
-  variables?: Variables | null;
-  emitNext(value: ExecutionResult<Data, Extensions>): void;
+export type MockSubscription<Query extends GraphQLQuery = GraphQLQuery> = {
+  variables?: Query["Variables"] | null;
+  emitResult(value: Query["Result"]): void;
   emitError(error: EditGraphQLError): void;
   emitComplete(): void;
 };
 
 export type MockEditGraphQL = {
-  expectSubscription<Data extends JsonObject, Variables extends JsonObject>(
-    query: Query<Data, Variables>,
-  ): MockSubscription<Data, Variables>;
+  expectSubscription<Query extends GraphQLQuery>(query: Query): MockSubscription<Query>;
 };
 
-export const createMockEditGraphQL = (): MockEditGraphQL => {
+export const makeMockEditGraphQL = (): MockEditGraphQL => {
   const subscriptions = new Map<string, MockSubscription>();
 
   const mockEditGraphQL: MockEditGraphQL = {
@@ -128,7 +119,7 @@ export const createMockEditGraphQL = (): MockEditGraphQL => {
 
     subscriptions.set(options.query, {
       variables: unthunk(options.variables),
-      emitNext: options.onResult,
+      emitResult: options.onResult,
       emitError: options.onError,
       emitComplete: options.onComplete,
     });

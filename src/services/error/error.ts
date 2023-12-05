@@ -4,9 +4,8 @@ import type { GraphQLError } from "graphql";
 import assert from "node:assert";
 import { randomUUID } from "node:crypto";
 import { dedent } from "ts-dedent";
-import type { JsonObject } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
-import type { Query } from "../app/edit-graphql.js";
+import type { GraphQLQuery } from "../app/edit-graphql.js";
 import { env } from "../config/env.js";
 import { sprintln } from "../output/sprint.js";
 import { compact, uniq } from "../util/collection.js";
@@ -124,7 +123,7 @@ export class EditGraphQLError extends CLIError {
   override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent;
 
   constructor(
-    readonly query: Query<JsonObject>,
+    readonly query: GraphQLQuery,
     cause: unknown,
   ) {
     super("GGT_CLI_CLIENT_ERROR", "An error occurred while communicating with Gadget");

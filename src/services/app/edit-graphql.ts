@@ -123,13 +123,13 @@ export class EditGraphQL {
    * @param sink The callbacks to invoke when the server responds.
    * @returns A function to unsubscribe from the subscription.
    */
-  subscribe<Data extends JsonObject, Variables extends JsonObject>({
+  subscribe<Query extends GraphQLQuery>({
     onData,
     ...options
   }: {
-    query: Query<Data, Variables>;
-    variables?: Thunk<Variables> | null;
-    onData: (data: Data) => void;
+    query: Query;
+    variables?: Thunk<Query["Variables"]> | null;
+    onData: (data: Query["Data"]) => void;
     onError: (error: EditGraphQLError) => void;
     onComplete?: () => void;
   }): () => void {
@@ -161,16 +161,19 @@ export class EditGraphQL {
    * @param payload The query and variables to send to the server.
    * @returns The data returned by the server.
    */
-  async query<Data extends JsonObject, Variables extends JsonObject>(payload: {
-    query: Query<Data, Variables>;
-    variables?: Thunk<Variables> | null;
-  }): Promise<Data> {
-    const result = await this._query(payload);
+  async query<Query extends GraphQLQuery>({
+    query,
+    variables,
+  }: {
+    query: Query;
+    variables?: Thunk<Query["Variables"]> | null;
+  }): Promise<Query["Data"]> {
+    const result = await this._query({ query, variables });
     if (result.errors) {
-      throw new EditGraphQLError(payload.query, result.errors);
+      throw new EditGraphQLError(query, result.errors);
     }
     if (!result.data) {
-      throw new EditGraphQLError(payload.query, "We received a response without data");
+      throw new EditGraphQLError(query, "We received a response without data");
     }
     return result.data;
   }
@@ -188,16 +191,16 @@ export class EditGraphQL {
    * This method is only exposed for testing and shouldn't be used
    * directly.
    */
-  _subscribe<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>({
+  _subscribe<Query extends GraphQLQuery>({
     query,
     variables,
     onResult,
     onError,
     onComplete = noop,
   }: {
-    query: Query<Data, Variables>;
-    variables?: Thunk<Variables> | null;
-    onResult: (result: ExecutionResult<Data, Extensions>) => void;
+    query: Query;
+    variables?: Thunk<Query["Variables"]> | null;
+    onResult: (result: ExecutionResult<Query["Data"], Query["Extensions"]>) => void;
     onError: (error: EditGraphQLError) => void;
     onComplete?: () => void;
   }): () => void {
@@ -212,7 +215,7 @@ export class EditGraphQL {
     });
 
     log.info("sending graphql query via ws", { type, operation }, { variables: payload.variables });
-    const unsubscribe = this._client.subscribe<Data, Extensions>(payload, {
+    const unsubscribe = this._client.subscribe<Query["Data"], Query["Extensions"]>(payload, {
       next: (result) => onResult(result),
       error: (error) => onError(new EditGraphQLError(query, error)),
       complete: onComplete,
@@ -224,10 +227,10 @@ export class EditGraphQL {
     };
   }
 
-  private async _query<Data extends JsonObject, Variables extends JsonObject, Extensions extends JsonObject = JsonObject>(input: {
-    query: Query<Data, Variables>;
-    variables?: Thunk<Variables> | null;
-  }): Promise<ExecutionResult<Data, Extensions>> {
+  private async _query<Query extends GraphQLQuery>(input: {
+    query: Query;
+    variables?: Thunk<Query["Variables"]> | null;
+  }): Promise<ExecutionResult<Query["Data"], Query["Extensions"]>> {
     const cookie = loadCookie();
     assert(cookie, "missing cookie when connecting to GraphQL API");
 
@@ -249,18 +252,20 @@ export class EditGraphQL {
       resolveBodyOnly: true,
     });
 
-    return json as ExecutionResult<Data, Extensions>;
+    return json as Query["Result"];
   }
 }
 
-export type Query<
-  Data extends JsonObject,
+export type GraphQLQuery<
+  Data extends JsonObject = JsonObject,
   Variables extends JsonObject = JsonObject,
   Extensions extends JsonObject = JsonObject,
+  Result extends ExecutionResult<Data, Extensions> = ExecutionResult<Data, Extensions>,
 > = string & {
-  __TData?: Data;
-  __TVariables?: Variables;
-  __TExtensions?: Extensions;
+  Data: Data;
+  Variables: Variables;
+  Extensions: Extensions;
+  Result: Result;
 };
 
 export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
@@ -278,13 +283,17 @@ export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
       }
     }
   }
-`) as Query<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
+`) as GraphQLQuery<RemoteFileSyncEventsSubscription, RemoteFileSyncEventsSubscriptionVariables>;
+
+export type REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = typeof REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION;
 
 export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
   query RemoteFilesVersion {
     remoteFilesVersion
   }
-`) as Query<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables>;
+`) as GraphQLQuery<RemoteFilesVersionQuery, RemoteFilesVersionQueryVariables>;
+
+export type REMOTE_FILES_VERSION_QUERY = typeof REMOTE_FILES_VERSION_QUERY;
 
 export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
   mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
@@ -292,4 +301,6 @@ export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
       remoteFilesVersion
     }
   }
-`) as Query<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
+`) as GraphQLQuery<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
+
+export type PUBLISH_FILE_SYNC_EVENTS_MUTATION = typeof PUBLISH_FILE_SYNC_EVENTS_MUTATION;

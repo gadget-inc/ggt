@@ -6,7 +6,7 @@ export const sleep = (duration: string): Promise<void> => {
   return new Promise((resolve) => (milliseconds === 0 ? setImmediate(resolve) : setTimeout(resolve, milliseconds)));
 };
 
-export const sleepUntil = async (fn: () => boolean, { interval = "0ms", timeout = timeoutMs("5s") } = {}): Promise<void> => {
+export const sleepUntil = async (fn: () => boolean, { interval = "100ms", timeout = timeoutMs("5s") } = {}): Promise<void> => {
   const start = isFinite(timeout) && Date.now();
 
   // eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition

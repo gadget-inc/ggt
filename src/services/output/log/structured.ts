@@ -18,12 +18,6 @@ export type StructuredLogger = {
   error: StructuredLog;
 };
 
-let globalFields: Thunk<Fields> = {};
-
-export const setGlobalFields = (fields: Thunk<Fields>): void => {
-  globalFields = fields;
-};
-
 export const createStructuredLogger = ({ name, fields: loggerFields = {} }: { name: string; fields?: Thunk<Fields> }): StructuredLogger => {
   const createStructuredLog = (level: Level): StructuredLog => {
     return (msg, messageFields, devMessageFields) => {
@@ -33,7 +27,7 @@ export const createStructuredLogger = ({ name, fields: loggerFields = {} }: { na
         return;
       }
 
-      const fields = { ...unthunk(globalFields), ...unthunk(loggerFields), ...messageFields };
+      const fields = { ...unthunk(loggerFields), ...messageFields };
       if (env.developmentOrTestLike) {
         Object.assign(fields, devMessageFields);
       }

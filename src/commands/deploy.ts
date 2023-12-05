@@ -3,7 +3,7 @@ import boxen from "boxen";
 import chalk from "chalk";
 import ora from "ora";
 import { AppArg } from "../../src/services/app/arg.js";
-import { REMOTE_FILES_VERSION_QUERY, REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
+import { REMOTE_FILES_VERSION_QUERY, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
 import { config } from "../../src/services/config/config.js";
 import { Action, FileSync } from "../../src/services/filesync/filesync.js";
 import { select } from "../../src/services/output/prompt.js";
@@ -12,6 +12,10 @@ import { PromiseSignal } from "../../src/services/util/promise.js";
 import { getUserOrLogin } from "../services/user/user.js";
 import { importCommandModule, type Command, type Usage } from "./command.js";
 import type { RootArgs } from "./root.js";
+import dayjs from "dayjs";
+import { printChanges } from "src/services/filesync/changes.js";
+import path from "node:path";
+import { execa } from "execa";
 
 export const usage: Usage = () => sprint`
     Deploy your Gadget application's development source code to production.
@@ -96,7 +100,6 @@ export const command = (async (rootArgs: RootArgs, firstRun = true) => {
   const log = filesync.log.extend("deploy");
 
   const { remoteFilesVersion } = await filesync.editGraphQL.query({ query: REMOTE_FILES_VERSION_QUERY });
-  // console.log("[jenny] after calling remotefiles query")
 
   if (firstRun) {
     log.println(
@@ -128,8 +131,68 @@ export const command = (async (rootArgs: RootArgs, firstRun = true) => {
   }
 
   // check if the local and remote files are up to date and prompt them how to handle if not
-  await filesync.sync();
+  const result = await filesync.sync();
+  
+  if(result === 0){
+    // if the user chose to reset their local files, we have to subscribe to get the latest 
+    const recentWritesToLocalFilesystem = new Map<string, number>();
 
+    const signal2 = new PromiseSignal();
+
+    /**
+     * Gracefully stops the sync.
+     */
+    const stop = async (): Promise<void> => {
+
+      try {
+        unsubscribeFromGadgetChanges();
+        await filesync.idle();
+      } catch (error) {
+        log.error("error while stopping", { error });
+      } finally {
+        log.info("stopped");
+      }
+      signal2.resolve();
+    };
+    
+    const unsubscribeFromGadgetChanges = filesync.subscribeToGadgetChanges({
+      onError: (error) => console.log(error),
+      beforeChanges: ({ changed, deleted }) => {
+        // add all the files and directories we're about to touch to
+        // recentWritesToLocalFilesystem so that we don't send them back
+        // to Gadget
+        for (const filepath of [...changed, ...deleted]) {
+          recentWritesToLocalFilesystem.set(filepath, Date.now());
+
+          let dir = path.dirname(filepath);
+          while (dir !== ".") {
+            recentWritesToLocalFilesystem.set(dir + "/", Date.now());
+            dir = path.dirname(dir);
+          }
+        }
+      },
+      afterChanges: async ({ changes }) => {
+        if (changes.has("yarn.lock")) {
+          await execa("yarn", ["install", "--check-files"], { cwd: filesync.directory.path }).catch((error) => {
+            log.error("yarn install failed", { error });
+          });
+        }
+        
+        if(true){
+          log.println("Ran a sync.")
+          stop();
+        }
+      },
+      opts: {
+        syncOnce: true,
+        signal: () => stop(),
+      }
+    });
+    
+    /// await the subscription to close
+    await signal2;
+  }
+ 
   // at this point everything should be up to date
   if (BigInt(remoteFilesVersion) === filesync.filesVersion) {
     localFilesUpToDate = true;
@@ -301,3 +364,4 @@ export const AppDeploymentStepsToAppDeployState = (step: string | undefined) => 
       return "Unknown step";
   }
 };
+

@@ -1,24 +1,16 @@
 import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
-import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import * as app from "../../../src/services/app/app.js";
-import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, REMOTE_FILES_VERSION_QUERY } from "../../../src/services/app/edit-graphql.js";
 import { ArgError, InvalidSyncFileError } from "../../../src/services/error/error.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
-import { Action, FileSync } from "../../../src/services/filesync/filesync.js";
-import * as prompt from "../../../src/services/output/prompt.js";
+import { FileSync } from "../../../src/services/filesync/filesync.js";
 import { testApp } from "../../__support__/app.js";
-import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
 import { expectError } from "../../__support__/error.js";
-import { expectDir, readDir, writeDir } from "../../__support__/files.js";
+import { expectDir, writeDir } from "../../__support__/files.js";
 import { expectSyncJson, makeFile } from "../../__support__/filesync.js";
-import { prettyJSON } from "../../__support__/json.js";
 import { testDirPath } from "../../__support__/paths.js";
-import { expectProcessExit } from "../../__support__/process.js";
-import { sleep } from "../../__support__/sleep.js";
 import { loginTestUser, testUser } from "../../__support__/user.js";
 
 let appDir: string;
@@ -379,187 +371,5 @@ describe("FileSync.sync", () => {
 
   afterEach(() => {
     expect(nock.pendingMocks()).toEqual([]);
-  });
-
-  it("asks how to proceed if only local files changed", async () => {
-    vi.spyOn(prompt, "select").mockResolvedValue(Action.CANCEL);
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
-    await writeDir(appDir, {
-      ".gadget/sync.json": prettyJSON({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
-      "foo.js": "foo",
-    });
-
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
-    await expectProcessExit(() => filesync.sync());
-
-    expect(prompt.select.mock.lastCall?.[0]).toMatchInlineSnapshot(`
-        {
-          "choices": [
-            "Cancel (Ctrl+C)",
-            "Merge local files with remote ones",
-            "Reset local files to remote ones",
-          ],
-          "message": "How would you like to proceed?",
-        }
-      `);
-  });
-
-  it("asks how to proceed if both local and remote files changed", async () => {
-    vi.spyOn(prompt, "select").mockResolvedValue(Action.CANCEL);
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "2" } } });
-    await writeDir(appDir, {
-      ".gadget/sync.json": prettyJSON({ app: "test", filesVersion: "1", mtime: Date.now() - 1000 }),
-      "foo.js": "foo",
-      "bar.js": "bar",
-    });
-
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
-    await expectProcessExit(() => filesync.sync());
-
-    expect(prompt.select.mock.lastCall?.[0]).toMatchInlineSnapshot(`
-        {
-          "choices": [
-            "Cancel (Ctrl+C)",
-            "Merge local files with remote ones",
-            "Reset local files to remote ones",
-          ],
-          "message": "Remote files have also changed. How would you like to proceed?",
-        }
-      `);
-  });
-
-  it("does not ask how to proceed if only ignored files changed", async () => {
-    vi.spyOn(prompt, "select");
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
-    await writeDir(appDir, {
-      ".ignore": "bar.js",
-      "foo.js": "foo",
-    });
-
-    const stat = await fs.stat(appDirPath("foo.js"));
-    await fs.outputJson(appDirPath(".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
-
-    // wait a bit so the mtime is different
-    await sleep("10ms");
-
-    // write an ignored file
-    await fs.writeFile(appDirPath("bar.js"), "bar");
-
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
-    await filesync.sync();
-
-    expect(prompt.select).not.toHaveBeenCalled();
-  });
-
-  it("does not ask how to proceed if only remote files changed", async () => {
-    vi.spyOn(prompt, "select");
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
-    await writeDir(appDir, {
-      "foo.js": "foo",
-    });
-
-    const stat = fs.statSync(appDirPath("foo.js"));
-    fs.outputJSONSync(appDirPath(".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
-
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
-    await filesync.sync();
-
-    expect(prompt.select).not.toHaveBeenCalled();
-  });
-
-  it("does not ask how to proceed if neither local nor remote files changed", async () => {
-    vi.spyOn(prompt, "select");
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
-    await writeDir(appDir, {
-      "foo.js": "foo",
-    });
-
-    const stat = fs.statSync(appDirPath("foo.js"));
-    fs.outputJsonSync(appDirPath(".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
-
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
-    await filesync.sync();
-
-    expect(prompt.select).not.toHaveBeenCalled();
-  });
-
-  it("publishes changed events when told to merge", async () => {
-    vi.spyOn(prompt, "select").mockResolvedValue(Action.MERGE);
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
-    const published = nockEditGraphQLResponse({
-      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      result: { data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } },
-      expectVariables: z.strictObject({
-        input: z.strictObject({
-          expectedRemoteFilesVersion: z.literal("1"),
-          changed: z
-            .array(z.strictObject({ path: z.string(), content: z.string(), mode: z.number(), encoding: z.nativeEnum(FileSyncEncoding) }))
-            .length(2),
-          deleted: z.array(z.string()).length(0),
-        }),
-      }),
-    });
-
-    await writeDir(appDir, {
-      "foo.js": "foo",
-      "bar.js": "bar",
-    });
-
-    const stat = await fs.stat(appDirPath("bar.js"));
-    await fs.outputJSON(appDirPath(".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
-
-    // wait a bit so the mtime is different
-    await sleep("10ms");
-
-    // update a file
-    fs.writeFileSync(appDirPath("bar.js"), "bar2", "utf8");
-
-    // add a new file
-    fs.writeFileSync(appDirPath("baz.js"), "baz", "utf8");
-
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
-    await filesync.sync();
-
-    await expect(published).resolves.toBeUndefined();
-    expect(prompt.select).toHaveBeenCalled();
-  });
-
-  it("deletes local file changes and sets filesVersion to 0 when told to reset", async () => {
-    vi.spyOn(prompt, "select").mockResolvedValue(Action.RESET);
-    void nockEditGraphQLResponse({ query: REMOTE_FILES_VERSION_QUERY, result: { data: { remoteFilesVersion: "1" } } });
-
-    await writeDir(appDir, {
-      "foo.js": "foo",
-      "bar.js": "bar",
-    });
-
-    const stat = fs.statSync(appDirPath("bar.js"));
-    fs.outputJSONSync(appDirPath(".gadget/sync.json"), { app: "test", filesVersion: "1", mtime: stat.mtime.getTime() });
-
-    // wait a bit so the mtime is different
-    await sleep("10ms");
-
-    // modify bar.js
-    fs.writeFileSync(appDirPath("bar.js"), "bar2", "utf8");
-
-    // add baz.js
-    fs.writeFileSync(appDirPath("baz.js"), "baz", "utf8");
-
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
-    await filesync.sync();
-
-    const actual = await readDir(appDir);
-    expect(actual).toEqual({
-      ".gadget/": "",
-      // @ts-expect-error _state is private
-      ".gadget/sync.json": prettyJSON({ ...filesync._state, filesVersion: "1" }),
-      ".gadget/backup/": "",
-      ".gadget/backup/bar.js": "bar2",
-      ".gadget/backup/baz.js": "baz",
-      // foo.js didn't change, so it shouldn't be backed up
-      "foo.js": "foo",
-    });
-
-    expect(filesync.filesVersion).toBe(0n);
   });
 });

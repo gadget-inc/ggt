@@ -10,7 +10,7 @@ import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
 import { Changes } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
-import { FileSync } from "../services/filesync/filesync.js";
+import { ConflictPreferenceArg, FileSync } from "../services/filesync/filesync.js";
 import { notify } from "../services/output/notify.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
@@ -19,18 +19,19 @@ import { debounce } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 
 export const usage: Usage = () => sprint`
-  Sync your Gadget application's source code to and from
-  your local filesystem.
+  Sync your Gadget environment's source code with your local filesystem.
 
   {bold USAGE}
     ggt sync [DIRECTORY]
 
   {bold ARGUMENTS}
-    DIRECTORY         The directory to sync files to (default: ".")
+    DIRECTORY                  The directory to sync files to (default: ".")
 
   {bold FLAGS}
-    -a, --app=<name>  The Gadget application to sync files to
-        --force       Sync regardless of local file state
+    -a, --app=<name>           The Gadget application to sync files to
+        --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
+        --once                 Sync once and exit
+        --force                Sync regardless of local filesystem state
 
   {bold DESCRIPTION}
     Sync allows you to synchronize your Gadget application's source
@@ -91,6 +92,8 @@ export const usage: Usage = () => sprint`
 export const args = {
   "--app": { type: AppArg, alias: "-a" },
   "--force": Boolean,
+  "--once": Boolean,
+  "--prefer": ConflictPreferenceArg,
   "--file-push-delay": { type: Number, default: ms("100ms") },
   "--file-watch-debounce": { type: Number, default: ms("300ms") },
   "--file-watch-poll-interval": { type: Number, default: ms("3s") },
@@ -109,7 +112,12 @@ export const command: Command<typeof args> = async (ctx) => {
     force: ctx.args["--force"],
   });
 
-  await filesync.sync();
+  await filesync.sync({ preference: ctx.args["--prefer"] });
+
+  if (ctx.args["--once"]) {
+    ctx.log.println("Done!");
+    return;
+  }
 
   if (!which.sync("yarn", { nothrow: true })) {
     throw new YarnNotFoundError();

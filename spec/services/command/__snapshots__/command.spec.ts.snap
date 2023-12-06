@@ -96,18 +96,19 @@ EXAMPLES
 `;
 
 exports[`sync > has a usage 1`] = `
-"Sync your Gadget application's source code to and from
-your local filesystem.
+"Sync your Gadget environment's source code with your local filesystem.
 
 USAGE
   ggt sync [DIRECTORY]
 
 ARGUMENTS
-  DIRECTORY         The directory to sync files to (default: \\".\\")
+  DIRECTORY                  The directory to sync files to (default: \\".\\")
 
 FLAGS
-  -a, --app=<name>  The Gadget application to sync files to
-      --force       Sync regardless of local file state
+  -a, --app=<name>           The Gadget application to sync files to
+      --prefer=<filesystem>  Prefer \\"local\\" or \\"gadget\\" conflicting changes
+      --once                 Sync once and exit
+      --force                Sync regardless of local filesystem state
 
 DESCRIPTION
   Sync allows you to synchronize your Gadget application's source

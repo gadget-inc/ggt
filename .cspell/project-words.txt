@@ -6,6 +6,7 @@ direnv
 ENOENT
 execa
 filesync
+filesystems
 gadgetinc
 getsentry
 HOMEDRIVE

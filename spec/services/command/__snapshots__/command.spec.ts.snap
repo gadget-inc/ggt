@@ -52,8 +52,10 @@ ARGUMENTS
   DIRECTORY         The directory to sync files to (default: \\".\\")
 
 FLAGS
-  -a, --app=<name>  The Gadget application to sync files to
-      --force       Sync regardless of local file state
+  -a, --app=<name>             The Gadget application to sync files to
+      --prefer=<local|gadget>  Conflict resolution strategy
+      --once                   Sync once and exit
+      --force                  Sync regardless of local file state
 
 DESCRIPTION
   Sync allows you to synchronize your Gadget application's source

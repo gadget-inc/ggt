@@ -11,7 +11,7 @@ import { config } from "../services/config/config.js";
 import { YarnNotFoundError } from "../services/error/error.js";
 import { reportErrorAndExit } from "../services/error/report.js";
 import { Changes } from "../services/filesync/changes.js";
-import { FileSync } from "../services/filesync/filesync.js";
+import { ConflictPreferenceArg, FileSync } from "../services/filesync/filesync.js";
 import { notify } from "../services/output/notify.js";
 import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
@@ -30,8 +30,10 @@ export const usage: Usage = () => sprint`
     DIRECTORY         The directory to sync files to (default: ".")
 
   {bold FLAGS}
-    -a, --app=<name>  The Gadget application to sync files to
-        --force       Sync regardless of local file state
+    -a, --app=<name>             The Gadget application to sync files to
+        --prefer=<local|gadget>  Conflict resolution strategy
+        --once                   Sync once and exit
+        --force                  Sync regardless of local file state
 
   {bold DESCRIPTION}
     Sync allows you to synchronize your Gadget application's source
@@ -92,6 +94,8 @@ export const usage: Usage = () => sprint`
 const argSpec = {
   "-a": "--app",
   "--app": AppArg,
+  "--once": Boolean,
+  "--prefer": ConflictPreferenceArg,
   "--force": Boolean,
   "--file-push-delay": Number,
   "--file-watch-debounce": Number,
@@ -119,9 +123,14 @@ export const command: Command = async (ctx) => {
     force: args["--force"],
   });
 
-  await filesync.sync();
+  await filesync.sync({ preference: args["--prefer"] });
 
   const log = filesync.log.extend("sync");
+
+  if (args["--once"]) {
+    log.println("Done!");
+    return;
+  }
 
   if (!which.sync("yarn", { nothrow: true })) {
     throw new YarnNotFoundError();

@@ -47,6 +47,20 @@ export enum ConflictPreference {
   GADGET = "Keep Gadget's conflicting changes",
 }
 
+export const ConflictPreferenceArg = (value: string, name: string): ConflictPreference => {
+  if (["local", "gadget"].includes(value)) {
+    return ConflictPreference[value.toUpperCase() as keyof typeof ConflictPreference];
+  }
+
+  throw new ArgError(sprint`
+      ${name} must be {bold local} or {bold gadget}
+
+      {bold EXAMPLES:}
+        ${name} local
+        ${name} gadget
+    `);
+};
+
 export class FileSync {
   readonly editGraphQL: EditGraphQL;
 
@@ -342,7 +356,7 @@ export class FileSync {
    *   local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  async sync(): Promise<void> {
+  async sync({ preference }: { preference?: ConflictPreference } = {}): Promise<void> {
     const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await this._getHashes();
     this.log.debug("syncing", { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
 
@@ -364,15 +378,18 @@ export class FileSync {
     const conflicts = getConflicts({ localChanges, gadgetChanges });
     if (conflicts.size > 0) {
       this.log.debug("conflicts detected", { conflicts });
-      printConflicts({
-        message: sprint`{bold You have conflicting changes with Gadget}`,
-        conflicts,
-      });
 
-      const preference = await select({
-        message: "How would you like to resolve these conflicts?",
-        choices: Object.values(ConflictPreference),
-      });
+      if (!preference) {
+        printConflicts({
+          message: sprint`{bold You have conflicting changes with Gadget}`,
+          conflicts,
+        });
+
+        preference = await select({
+          message: "How would you like to resolve these conflicts?",
+          choices: Object.values(ConflictPreference),
+        });
+      }
 
       switch (preference) {
         case ConflictPreference.CANCEL: {
@@ -404,7 +421,7 @@ export class FileSync {
     }
 
     // recursively call this function until we're in sync
-    return this.sync();
+    return this.sync({ preference });
   }
 
   private async _getChangesFromGadget({

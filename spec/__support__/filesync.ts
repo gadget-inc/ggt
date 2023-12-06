@@ -38,7 +38,7 @@ export type SyncScenarioOptions = {
    * The files at filesVersion 1.
    * @default { ".gadget/": "" }
    */
-  filesVersion1Files: Record<string, string>;
+  filesVersion1Files: Files;
 
   /**
    * The .gadget/sync.json file on the local filesystem.
@@ -50,7 +50,7 @@ export type SyncScenarioOptions = {
    * The files on the local filesystem.
    * @default { ".gadget/": "" }
    */
-  localFiles: Record<string, string>;
+  localFiles: Files;
 
   /**
    * The filesVersion of the files Gadget currently has.
@@ -62,7 +62,7 @@ export type SyncScenarioOptions = {
    * The files Gadget currently has.
    * @default { ".gadget/": "" }
    */
-  gadgetFiles: Record<string, string>;
+  gadgetFiles: Files;
 };
 
 export type SyncScenario = {

@@ -23,7 +23,7 @@ export const usage: Usage = () => sprint`
   your local filesystem.
 
   {bold USAGE}
-    ggt sync [DIRECTORY] [--app=<name>]
+    ggt sync [DIRECTORY]
 
   {bold ARGUMENTS}
     DIRECTORY         The directory to sync files to (default: ".")

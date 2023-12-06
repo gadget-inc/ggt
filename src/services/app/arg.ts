@@ -18,15 +18,14 @@ export const AppArg = (value: string, name: string): string => {
 
   throw new ArgError(
     sprint`
-      The ${name} option must be the application's slug or URL
+      ${name} must be the application's {bold slug} or {bold URL}
 
-      Examples:
-
-        --${name} my-app
-        --${name} my-app.gadget.app
-        --${name} https://my-app.gadget.app
-        --${name} https://my-app.gadget.app/edit
-        --${name} https://my-app--development.gadget.app/edit
+      {bold EXAMPLES:}
+        ${name} my-app
+        ${name} my-app.gadget.app
+        ${name} https://my-app.gadget.app
+        ${name} https://my-app.gadget.app/edit
+        ${name} https://my-app--development.gadget.app/edit
     `,
   );
 };

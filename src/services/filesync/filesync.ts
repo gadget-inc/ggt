@@ -320,6 +320,7 @@ export class FileSync {
               message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
               changes,
               tense: "past",
+              limit: 10,
             });
           }
 
@@ -426,9 +427,11 @@ export class FileSync {
   private async _sendChangesToGadget({
     expectedFilesVersion = this.filesVersion,
     changes,
+    printLimit,
   }: {
     expectedFilesVersion?: bigint;
     changes: Changes;
+    printLimit?: number;
   }): Promise<void> {
     this.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
     const changed: FileSyncChangedEventInput[] = [];
@@ -494,6 +497,7 @@ export class FileSync {
       changes,
       tense: "past",
       message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,
+      limit: printLimit,
     });
   }
 

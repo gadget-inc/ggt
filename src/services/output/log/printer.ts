@@ -3,7 +3,7 @@ import boxen from "boxen";
 import CliTable3 from "cli-table3";
 import { dedent } from "ts-dedent";
 import { config } from "../../config/config.js";
-import { sprint, sprintln, sprintlns, type Sprint } from "../sprint.js";
+import { sprint, sprintln, sprintln2, sprintlns, type Sprint } from "../sprint.js";
 import { stdout } from "../stream.js";
 import { formatters } from "./format/format.js";
 import { Level } from "./level.js";
@@ -28,6 +28,16 @@ export type Printer = {
    * // Hello, world!\n
    */
   println: Print;
+
+  /**
+   * Prints a message to stdout followed by two newlines.
+   *
+   * @example
+   * logger.println2("Hello, world!");
+   * // Hello, world!\n
+   * // \n
+   */
+  println2: Print;
 
   /**
    * Prints a message to stdout surrounded by newlines.
@@ -112,6 +122,7 @@ export const createPrinter = ({ name }: { name: string }): Printer => {
   return {
     print: createPrint(sprint),
     println: createPrint(sprintln),
+    println2: createPrint(sprintln2),
     printlns: createPrint(sprintlns),
     printTable({
       message,
@@ -161,7 +172,7 @@ export const createPrinter = ({ name }: { name: string }): Printer => {
         output = boxen(output, boxenOptions);
       }
 
-      this.printlns(output);
+      this.println2(output);
     },
   };
 };

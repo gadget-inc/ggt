@@ -16,6 +16,10 @@ export const sprintln: Sprint = (template, ...values) => {
   return sprint(template, ...values) + "\n";
 };
 
+export const sprintln2: Sprint = (template, ...values) => {
+  return sprintln(template, ...values) + "\n";
+};
+
 export const sprintlns: Sprint = (template, ...values) => {
   return "\n" + sprintln(template, ...values);
 };

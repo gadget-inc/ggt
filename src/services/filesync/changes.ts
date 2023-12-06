@@ -44,7 +44,7 @@ export class Changes extends Map<string, Change> {
 export const printChanges = ({
   changes,
   tense,
-  limit = 10,
+  limit = Infinity,
   ...tableOptions
 }: {
   changes: Changes;
@@ -85,6 +85,8 @@ export const printChanges = ({
 
   let footer: string | undefined;
   if (changes.size >= 10) {
+    tableOptions.spaceY = 1;
+
     footer = sprint`${pluralize("change", changes.size, true)} in total.`;
 
     const created = changes.created();

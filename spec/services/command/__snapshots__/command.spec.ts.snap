@@ -46,7 +46,7 @@ exports[`sync > has a usage 1`] = `
 your local filesystem.
 
 USAGE
-  ggt sync [DIRECTORY] [--app=<name>]
+  ggt sync [DIRECTORY]
 
 ARGUMENTS
   DIRECTORY         The directory to sync files to (default: \\".\\")
@@ -96,16 +96,16 @@ EXAMPLE
     Watching for file changes... Press Ctrl+C to stop
 
     → Sent 09:06:25 AM
-    routes/GET-hello.js  + create
+    routes/GET-hello.js  + created
 
     → Sent 09:06:49 AM
-    routes/GET-hello.js  ± update
+    routes/GET-hello.js  ± updated
 
     ← Received 09:06:54 AM
-    routes/GET-hello.js  ± update
+    routes/GET-hello.js  ± updated
 
     ← Received 09:06:56 AM
-    routes/GET-hello.js  - delete
+    routes/GET-hello.js  - deleted
     ^C Stopping... press Ctrl+C again to force
 
     Goodbye!"

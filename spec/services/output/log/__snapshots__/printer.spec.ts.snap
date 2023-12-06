@@ -28,28 +28,27 @@ I am a multiline string."
 exports[`printer > print > writes to stdout 1`] = `"Hello, world!"`;
 
 exports[`printer > printTable > writes a table to stdout 1`] = `
-"
-Table Title
+"Table Title
 Column 1         Column 2        
 Row 1, Column 1  Row 1, Column 2 
 Row 2, Column 1  Row 2, Column 2 
 Table Footer
+
 "
 `;
 
 exports[`printer > printTable > writes a table with none borders to stdout 1`] = `
-"
-Table Title
+"Table Title
 Column 1         Column 2        
 Row 1, Column 1  Row 1, Column 2 
 Row 2, Column 1  Row 2, Column 2 
 Table Footer
+
 "
 `;
 
 exports[`printer > printTable > writes a table with thick borders to stdout 1`] = `
-"
-Table Title
+"Table Title
 ╔═════════════════╤═════════════════╗
 ║ Column 1        │ Column 2        ║
 ╟─────────────────┼─────────────────╢
@@ -58,12 +57,12 @@ Table Title
 ║ Row 2, Column 1 │ Row 2, Column 2 ║
 ╚═════════════════╧═════════════════╝
 Table Footer
+
 "
 `;
 
 exports[`printer > printTable > writes a table with thin borders to stdout 1`] = `
-"
-Table Title
+"Table Title
 ┌─────────────────┬─────────────────┐
 │ Column 1        │ Column 2        │
 ├─────────────────┼─────────────────┤
@@ -72,15 +71,16 @@ Table Title
 │ Row 2, Column 1 │ Row 2, Column 2 │
 └─────────────────┴─────────────────┘
 Table Footer
+
 "
 `;
 
 exports[`printer > printTable > writes a table with without a footer to stdout 1`] = `
-"
-Table Title
+"Table Title
 Column 1         Column 2        
 Row 1, Column 1  Row 1, Column 2 
 Row 2, Column 1  Row 2, Column 2 
+
 "
 `;
 
@@ -121,6 +121,46 @@ I am a multiline string.
 
 exports[`printer > println > writes to stdout 1`] = `
 "Hello, world!
+"
+`;
+
+exports[`printer > println2 > prints json when GGT_LOG_FORMAT=json 1`] = `
+"{\\"level\\":6,\\"name\\":\\"printer\\",\\"msg\\":\\"Hello, world!\\",\\"fields\\":{}}
+"
+`;
+
+exports[`printer > println2 > prints like a structured logger when GGT_LOG_LEVEL is set 1`] = `
+"12:00:00 PRINT printer:
+  Hello, world!
+  
+  
+"
+`;
+
+exports[`printer > println2 > strips indentation from multiline strings 1`] = `
+"Hello, world!
+I am a multiline string.
+
+"
+`;
+
+exports[`printer > println2 > supports chalk colors within template literals 1`] = `
+"[1mHello, world![22m
+[4mI am a multiline string.[24m
+
+"
+`;
+
+exports[`printer > println2 > supports tagged template literals 1`] = `
+"Hello, world!
+I am a multiline string.
+
+"
+`;
+
+exports[`printer > println2 > writes to stdout 1`] = `
+"Hello, world!
+
 "
 `;
 

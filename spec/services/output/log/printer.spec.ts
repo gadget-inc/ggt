@@ -7,7 +7,7 @@ import { expectStdout } from "../../../__support__/stream.js";
 describe("printer", () => {
   const printer = createPrinter({ name: "printer" });
 
-  for (const method of ["print", "println", "printlns"] as const) {
+  for (const method of ["print", "println", "println2", "printlns"] as const) {
     describe(method, () => {
       it("writes to stdout", () => {
         printer[method]("Hello, world!");

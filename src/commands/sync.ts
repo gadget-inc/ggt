@@ -73,16 +73,16 @@ export const usage: Usage = () => sprint`
       Watching for file changes... {gray Press Ctrl+C to stop}
 
       → Sent {gray 09:06:25 AM}
-      {greenBright routes/GET-hello.js  + create}
+      {greenBright routes/GET-hello.js  + created}
 
       → Sent {gray 09:06:49 AM}
-      {blueBright routes/GET-hello.js  ± update}
+      {blueBright routes/GET-hello.js  ± updated}
 
       ← Received {gray 09:06:54 AM}
-      {blueBright routes/GET-hello.js  ± update}
+      {blueBright routes/GET-hello.js  ± updated}
 
       ← Received {gray 09:06:56 AM}
-      {redBright routes/GET-hello.js  - delete}
+      {redBright routes/GET-hello.js  - deleted}
       ^C Stopping... {gray press Ctrl+C again to force}
 
       Goodbye!

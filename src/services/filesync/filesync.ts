@@ -492,7 +492,7 @@ export class FileSync {
 
     printChanges({
       changes,
-      tense: "present",
+      tense: "past",
       message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,
     });
   }

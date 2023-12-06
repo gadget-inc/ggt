@@ -6,7 +6,6 @@ import { createLogger } from "../output/log/logger.js";
 import type { PrintTableOptions } from "../output/log/printer.js";
 import { sprint } from "../output/sprint.js";
 import { isNever, isString } from "../util/is.js";
-import { ensureLength } from "../util/string.js";
 
 const log = createLogger({ name: "changes" });
 
@@ -57,24 +56,18 @@ export const printChanges = ({
     limit = Infinity;
   }
 
-  const created = chalk.greenBright("+ " + (tense === "past" ? "created" : "create"));
-  const updated = chalk.blueBright("± " + (tense === "past" ? "updated" : "update"));
-  const renamed = chalk.blueBright("→ " + (tense === "past" ? "renamed" : "rename"));
-  const deleted = chalk.redBright("- " + (tense === "past" ? "deleted" : "delete"));
+  const renamed = chalk.yellowBright((tense === "past" ? "renamed" : "rename") + " →");
+  const created = chalk.greenBright((tense === "past" ? "created" : "create") + " +");
+  const updated = chalk.blueBright((tense === "past" ? "updated" : "update") + " ±");
+  const deleted = chalk.redBright((tense === "past" ? "deleted" : "delete") + " -");
 
   const rows = Array.from(changes.entries())
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(0, limit)
     .map(([path, change]) => {
-      if (change.type === "create" && isString(change.oldPath)) {
-        path = `${ensureLength(change.oldPath, 21)} → ${ensureLength(path, 21)}`;
-      } else {
-        path = ensureLength(path, 45);
-      }
-
       switch (true) {
         case change.type === "create" && isString(change.oldPath):
-          return [chalk.blueBright(path), renamed];
+          return [chalk.yellowBright(change.oldPath), renamed, chalk.yellowBright(path)];
         case change.type === "create":
           return [chalk.greenBright(path), created];
         case change.type === "update":
@@ -92,14 +85,22 @@ export const printChanges = ({
 
   let footer: string | undefined;
   if (changes.size >= 10) {
-    tableOptions.spaceY = 1;
+    footer = sprint`${pluralize("change", changes.size, true)} in total.`;
 
-    const nChanges = pluralize("change", changes.size, true);
-    const nCreates = pluralize("create", changes.created().length, true);
-    const nUpdates = pluralize("update", changes.updated().length, true);
-    const nDeletes = pluralize("delete", changes.deleted().length, true);
+    const created = changes.created();
+    if (created.length > 0) {
+      footer += sprint` {greenBright ${pluralize("create", created.length, true)}}`;
+    }
 
-    footer = sprint`${nChanges} in total. {greenBright ${nCreates}}, {blueBright ${nUpdates}}, {redBright ${nDeletes}}`;
+    const updated = changes.updated();
+    if (updated.length > 0) {
+      footer += sprint` {blueBright ${pluralize("update", updated.length, true)}}`;
+    }
+
+    const deleted = changes.deleted();
+    if (deleted.length > 0) {
+      footer += sprint` {redBright ${pluralize("delete", deleted.length, true)}}`;
+    }
   }
 
   log.printTable({ rows, footer, ...tableOptions });

@@ -3,20 +3,25 @@ import assert from "node:assert";
 import os from "node:os";
 import { expect, vi, type Assertion } from "vitest";
 import { z } from "zod";
-import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../src/__generated__/graphql.js";
+import {
+  FileSyncEncoding,
+  type FileSyncChangedEvent,
+  type FileSyncChangedEventInput,
+  type FileSyncDeletedEventInput,
+} from "../../src/__generated__/graphql.js";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit-graphql.js";
-import { Directory } from "../../src/services/filesync/directory.js";
+import { Directory, swallowEnoent } from "../../src/services/filesync/directory.js";
 import { FileSync, isEmptyOrNonExistentDir, type File } from "../../src/services/filesync/filesync.js";
 import { defaults, omit } from "../../src/services/util/object.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import type { PartialExcept } from "../types.js";
 import { testApp } from "./app.js";
 import { log } from "./debug.js";
-import { makeMockEditGraphQL, nockEditGraphQLResponse, type MockSubscription } from "./edit-graphql.js";
+import { makeMockEditGraphQLSubscriptions, nockEditGraphQLResponse, type MockEditGraphQLSubscription } from "./edit-graphql.js";
 import { readDir, writeDir, type Files } from "./files.js";
 import { prettyJSON } from "./json.js";
 import { testDirPath } from "./paths.js";
@@ -122,7 +127,7 @@ export type SyncScenario = {
   /**
    * @returns A mock subscription for {@linkcode REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION}.
    */
-  expectGadgetChangesSubscription: () => MockSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION>;
+  expectGadgetChangesSubscription: () => MockEditGraphQLSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION>;
 };
 
 /**
@@ -138,22 +143,29 @@ export const makeSyncScenario = async ({
   gadgetFiles,
   gadgetFilesVersion = 1n,
 }: Partial<SyncScenarioOptions> = {}): Promise<SyncScenario> => {
-  await writeDir(testDirPath("local"), { ".gadget/sync.json": makeSyncJson(syncJson), ...localFiles });
-  const localDir = await Directory.init(testDirPath("local"));
-
-  await writeDir(testDirPath("gadget"), { ".gadget/": "", ...gadgetFiles });
-  const gadgetDir = await Directory.init(testDirPath("gadget"));
-
   await writeDir(testDirPath("fv-1"), { ".gadget/": "", ...filesVersion1Files });
   const filesVersion1Dir = await Directory.init(testDirPath("fv-1"));
 
   const filesVersionDirs = new Map<bigint, Directory>();
   filesVersionDirs.set(1n, filesVersion1Dir);
 
+  await writeDir(testDirPath("gadget"), { ".gadget/": "", ...gadgetFiles });
+  const gadgetDir = await Directory.init(testDirPath("gadget"));
+
   if (gadgetFilesVersion === 2n) {
     await fs.copy(gadgetDir.path, testDirPath("fv-2"));
     filesVersionDirs.set(2n, await Directory.init(testDirPath("fv-2")));
   }
+
+  if (localFiles) {
+    await writeDir(testDirPath("local"), localFiles);
+    await fs.outputFile(testDirPath("local/.gadget/sync.json"), makeSyncJson(syncJson));
+  }
+  const localDir = await Directory.init(testDirPath("local"));
+
+  FileSync.init.mockRestore?.();
+  const filesync = await FileSync.init({ user: testUser, dir: localDir.path, app: testApp.slug });
+  vi.spyOn(FileSync, "init").mockResolvedValue(filesync);
 
   const processGadgetChanges = async ({
     changed,
@@ -192,14 +204,8 @@ export const makeSyncScenario = async ({
     filesVersionDirs.set(gadgetFilesVersion, newFilesVersionDir);
   };
 
-  FileSync.init.mockRestore?.();
-  const filesync = await FileSync.init({ user: testUser, dir: localDir.path });
-  // save to update the mtime and not require a sync
-  // @ts-expect-error _save is private
-  await filesync._save(filesync.filesVersion);
-  vi.spyOn(FileSync, "init").mockResolvedValue(filesync);
-
   void nockEditGraphQLResponse({
+    optional: true,
     persist: true,
     query: REMOTE_FILES_VERSION_QUERY,
     result: () => {
@@ -230,6 +236,8 @@ export const makeSyncScenario = async ({
       }),
     }),
     result: async ({ input: { expectedRemoteFilesVersion, changed, deleted } }) => {
+      log.trace("mocking publish filesync events result", { expectedRemoteFilesVersion, changed, deleted });
+
       assert(expectedRemoteFilesVersion === String(gadgetFilesVersion), "Files version mismatch");
       assert(
         changed.every((change) => deleted.every((del) => del.path !== change.path)),
@@ -248,7 +256,38 @@ export const makeSyncScenario = async ({
     },
   });
 
-  const mockEditGraphQL = makeMockEditGraphQL();
+  const mockEditGraphQLSubs = makeMockEditGraphQLSubscriptions();
+  mockEditGraphQLSubs.mockInitialResult(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, async ({ localFilesVersion }) => {
+    log.trace("mocking initial result for remote file sync events", { localFilesVersion });
+
+    const changed = [] as FileSyncChangedEvent[];
+    if (localFilesVersion === "0") {
+      const gadgetFiles = await readDir(gadgetDir.path);
+      for (const [path, content] of Object.entries(gadgetFiles)) {
+        changed.push({
+          path,
+          mode: path.endsWith("/") ? defaultDirMode : defaultFileMode,
+          content: Buffer.from(content).toString(FileSyncEncoding.Base64),
+          encoding: FileSyncEncoding.Base64,
+        });
+      }
+    } else if (localFilesVersion !== String(gadgetFilesVersion)) {
+      // tests should make local files start at version 0 (initial sync)
+      // or the same version as gadget (no changes) because we don't
+      // mimic sending file version diffs
+      throw new Error(`Unexpected local files version: ${localFilesVersion}, expected ${gadgetFilesVersion}`);
+    }
+
+    return {
+      data: {
+        remoteFileSyncEvents: {
+          remoteFilesVersion: String(gadgetFilesVersion),
+          changed,
+          deleted: [],
+        },
+      },
+    };
+  });
 
   return {
     filesync,
@@ -285,15 +324,20 @@ export const makeSyncScenario = async ({
       const signal = new PromiseSignal();
       const localSyncJsonPath = localDir.absolute(".gadget/sync.json");
 
+      const interval = setInterval(() => void signalIfFilesVersion(), 100);
+
       const signalIfFilesVersion = async (): Promise<void> => {
-        const syncJson = await fs.readJSON(localSyncJsonPath);
-        if (BigInt(syncJson.filesVersion) === filesVersion) {
-          log.trace("signaling local files version", { filesVersion });
-          signal.resolve();
+        try {
+          const syncJson = await fs.readJSON(localSyncJsonPath);
+          if (BigInt(syncJson.filesVersion) === filesVersion) {
+            log.trace("signaling local files version", { filesVersion });
+            signal.resolve();
+            clearInterval(interval);
+          }
+        } catch (error) {
+          swallowEnoent(error);
         }
       };
-
-      fs.watch(localSyncJsonPath, () => void signalIfFilesVersion());
 
       return signal;
     },
@@ -317,10 +361,10 @@ export const makeSyncScenario = async ({
 
     emitGadgetChanges: async (changes) => {
       await processGadgetChanges(changes);
-      mockEditGraphQL.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).emitResult({ data: { remoteFileSyncEvents: changes } });
+      mockEditGraphQLSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).emitResult({ data: { remoteFileSyncEvents: changes } });
     },
 
-    expectGadgetChangesSubscription: () => mockEditGraphQL.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION),
+    expectGadgetChangesSubscription: () => mockEditGraphQLSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION),
   };
 };
 

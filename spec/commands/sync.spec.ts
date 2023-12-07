@@ -56,25 +56,8 @@ describe("sync", () => {
 
     // receive a new file
     await emitGadgetChanges({
-      remoteFilesVersion: "1",
-      changed: [makeFile({ path: "file.js", content: "foo" })],
-      deleted: [],
-    });
-
-    await waitUntilLocalFilesVersion(1n);
-
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
-      {
-        ".gadget/": "",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
-        "file.js": "foo",
-      }
-    `);
-
-    // receive an update to a file
-    await emitGadgetChanges({
       remoteFilesVersion: "2",
-      changed: [makeFile({ path: "file.js", content: "foo v2" })],
+      changed: [makeFile({ path: "file.txt", content: "file v2" })],
       deleted: [],
     });
 
@@ -84,15 +67,15 @@ describe("sync", () => {
       {
         ".gadget/": "",
         ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
-        "file.js": "foo v2",
+        "file.txt": "file v2",
       }
     `);
 
-    // receive a delete to a file
+    // receive an update to a file
     await emitGadgetChanges({
       remoteFilesVersion: "3",
-      changed: [],
-      deleted: [{ path: "file.js" }],
+      changed: [makeFile({ path: "file.txt", content: "file v3" })],
+      deleted: [],
     });
 
     await waitUntilLocalFilesVersion(3n);
@@ -100,17 +83,16 @@ describe("sync", () => {
     await expectLocalDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        ".gadget/backup/": "",
-        ".gadget/backup/file.js": "foo v2",
         ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+        "file.txt": "file v3",
       }
     `);
 
-    // receive a new directory
+    // receive a delete to a file
     await emitGadgetChanges({
       remoteFilesVersion: "4",
-      changed: [makeFile({ path: "directory/" })],
-      deleted: [],
+      changed: [],
+      deleted: [{ path: "file.txt" }],
     });
 
     await waitUntilLocalFilesVersion(4n);
@@ -119,17 +101,16 @@ describe("sync", () => {
       {
         ".gadget/": "",
         ".gadget/backup/": "",
-        ".gadget/backup/file.js": "foo v2",
+        ".gadget/backup/file.txt": "file v3",
         ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\"}",
-        "directory/": "",
       }
     `);
 
-    // receive a delete to a directory
+    // receive a new directory
     await emitGadgetChanges({
       remoteFilesVersion: "5",
-      changed: [],
-      deleted: [{ path: "directory/" }],
+      changed: [makeFile({ path: "directory/" })],
+      deleted: [],
     });
 
     await waitUntilLocalFilesVersion(5n);
@@ -138,18 +119,17 @@ describe("sync", () => {
       {
         ".gadget/": "",
         ".gadget/backup/": "",
-        ".gadget/backup/directory/": "",
-        ".gadget/backup/file.js": "foo v2",
+        ".gadget/backup/file.txt": "file v3",
         ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"5\\"}",
+        "directory/": "",
       }
     `);
 
-    // receive a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.js`);
+    // receive a delete to a directory
     await emitGadgetChanges({
       remoteFilesVersion: "6",
-      changed: files.map((filename) => makeFile({ path: filename, content: filename })),
-      deleted: [],
+      changed: [],
+      deleted: [{ path: "directory/" }],
     });
 
     await waitUntilLocalFilesVersion(6n);
@@ -159,18 +139,38 @@ describe("sync", () => {
         ".gadget/": "",
         ".gadget/backup/": "",
         ".gadget/backup/directory/": "",
-        ".gadget/backup/file.js": "foo v2",
+        ".gadget/backup/file.txt": "file v3",
         ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\"}",
-        "file1.js": "file1.js",
-        "file10.js": "file10.js",
-        "file2.js": "file2.js",
-        "file3.js": "file3.js",
-        "file4.js": "file4.js",
-        "file5.js": "file5.js",
-        "file6.js": "file6.js",
-        "file7.js": "file7.js",
-        "file8.js": "file8.js",
-        "file9.js": "file9.js",
+      }
+    `);
+
+    // receive a bunch of files
+    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
+    await emitGadgetChanges({
+      remoteFilesVersion: "7",
+      changed: files.map((filename) => makeFile({ path: filename, content: filename })),
+      deleted: [],
+    });
+
+    await waitUntilLocalFilesVersion(7n);
+
+    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+      {
+        ".gadget/": "",
+        ".gadget/backup/": "",
+        ".gadget/backup/directory/": "",
+        ".gadget/backup/file.txt": "file v3",
+        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+        "file1.txt": "file1.txt",
+        "file10.txt": "file10.txt",
+        "file2.txt": "file2.txt",
+        "file3.txt": "file3.txt",
+        "file4.txt": "file4.txt",
+        "file5.txt": "file5.txt",
+        "file6.txt": "file6.txt",
+        "file7.txt": "file7.txt",
+        "file8.txt": "file8.txt",
+        "file9.txt": "file9.txt",
       }
     `);
   });
@@ -184,66 +184,66 @@ describe("sync", () => {
 
     // receive a new file
     await emitGadgetChanges({
-      remoteFilesVersion: "1",
-      changed: [makeFile({ path: "file.js", content: "foo" })],
+      remoteFilesVersion: "2",
+      changed: [makeFile({ path: "file.txt", content: "file v2" })],
       deleted: [],
     });
 
     // receive an update to a file
     await emitGadgetChanges({
-      remoteFilesVersion: "2",
-      changed: [makeFile({ path: "file.js", content: "foo v2" })],
+      remoteFilesVersion: "3",
+      changed: [makeFile({ path: "file.txt", content: "file v3" })],
       deleted: [],
     });
 
     // receive a delete to a file
     await emitGadgetChanges({
-      remoteFilesVersion: "3",
+      remoteFilesVersion: "4",
       changed: [],
-      deleted: [{ path: "file.js" }],
+      deleted: [{ path: "file.txt" }],
     });
 
     // receive a new directory
     await emitGadgetChanges({
-      remoteFilesVersion: "4",
+      remoteFilesVersion: "5",
       changed: [makeFile({ path: "directory/" })],
       deleted: [],
     });
 
     // receive a delete to a directory
     await emitGadgetChanges({
-      remoteFilesVersion: "5",
+      remoteFilesVersion: "6",
       changed: [],
       deleted: [{ path: "directory/" }],
     });
 
     // receive a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.js`);
+    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
     await emitGadgetChanges({
-      remoteFilesVersion: "6",
+      remoteFilesVersion: "7",
       changed: files.map((filename) => makeFile({ path: filename, content: filename })),
       deleted: [],
     });
 
-    await waitUntilLocalFilesVersion(6n);
+    await waitUntilLocalFilesVersion(7n);
 
     await expectLocalDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
         ".gadget/backup/": "",
         ".gadget/backup/directory/": "",
-        ".gadget/backup/file.js": "foo v2",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\"}",
-        "file1.js": "file1.js",
-        "file10.js": "file10.js",
-        "file2.js": "file2.js",
-        "file3.js": "file3.js",
-        "file4.js": "file4.js",
-        "file5.js": "file5.js",
-        "file6.js": "file6.js",
-        "file7.js": "file7.js",
-        "file8.js": "file8.js",
-        "file9.js": "file9.js",
+        ".gadget/backup/file.txt": "file v3",
+        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+        "file1.txt": "file1.txt",
+        "file10.txt": "file10.txt",
+        "file2.txt": "file2.txt",
+        "file3.txt": "file3.txt",
+        "file4.txt": "file4.txt",
+        "file5.txt": "file5.txt",
+        "file6.txt": "file6.txt",
+        "file7.txt": "file7.txt",
+        "file8.txt": "file8.txt",
+        "file9.txt": "file9.txt",
       }
     `);
   });
@@ -262,41 +262,41 @@ describe("sync", () => {
 
     // receive a new file
     await emitGadgetChanges({
-      remoteFilesVersion: "1",
-      changed: [makeFile({ path: "file.js", content: "foo" })],
+      remoteFilesVersion: "2",
+      changed: [makeFile({ path: "file.js", content: "file v2" })],
       deleted: [],
     });
 
     // receive an update to a file
     await emitGadgetChanges({
-      remoteFilesVersion: "2",
-      changed: [makeFile({ path: "file.js", content: "foo v2" })],
+      remoteFilesVersion: "3",
+      changed: [makeFile({ path: "file.txt", content: "file v3" })],
       deleted: [],
     });
 
     // receive a delete to a file
     await emitGadgetChanges({
-      remoteFilesVersion: "3",
+      remoteFilesVersion: "4",
       changed: [],
-      deleted: [{ path: "file.js" }],
+      deleted: [{ path: "file.txt" }],
     });
 
     // receive a new directory
     await emitGadgetChanges({
-      remoteFilesVersion: "4",
+      remoteFilesVersion: "5",
       changed: [makeFile({ path: "directory/" })],
       deleted: [],
     });
 
     // receive a delete to a directory
     await emitGadgetChanges({
-      remoteFilesVersion: "5",
+      remoteFilesVersion: "6",
       changed: [],
       deleted: [{ path: "directory/" }],
     });
 
     // receive a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.js`);
+    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
     await emitGadgetChanges({
       remoteFilesVersion: "6",
       changed: files.map((filename) => makeFile({ path: filename, content: filename })),
@@ -311,18 +311,19 @@ describe("sync", () => {
         ".gadget/": "",
         ".gadget/backup/": "",
         ".gadget/backup/directory/": "",
-        ".gadget/backup/file.js": "foo v2",
+        ".gadget/backup/file.txt": "file v3",
         ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\"}",
-        "file1.js": "file1.js",
-        "file10.js": "file10.js",
-        "file2.js": "file2.js",
-        "file3.js": "file3.js",
-        "file4.js": "file4.js",
-        "file5.js": "file5.js",
-        "file6.js": "file6.js",
-        "file7.js": "file7.js",
-        "file8.js": "file8.js",
-        "file9.js": "file9.js",
+        "file.js": "file v2",
+        "file1.txt": "file1.txt",
+        "file10.txt": "file10.txt",
+        "file2.txt": "file2.txt",
+        "file3.txt": "file3.txt",
+        "file4.txt": "file4.txt",
+        "file5.txt": "file5.txt",
+        "file6.txt": "file6.txt",
+        "file7.txt": "file7.txt",
+        "file8.txt": "file8.txt",
+        "file9.txt": "file9.txt",
       }
     `);
   });
@@ -331,13 +332,13 @@ describe("sync", () => {
     const { waitUntilLocalFilesVersion, emitGadgetChanges, expectLocalDir } = await makeSyncScenario({
       localFiles: {
         ".ignore": "tmp",
-        "tmp/file.js": "foo",
-        "tmp/file2.js": "bar",
+        "tmp/file1.txt": "file1 v1",
+        "tmp/file2.txt": "file2 v1",
       },
       gadgetFiles: {
         ".ignore": "tmp",
-        "tmp/file.js": "foo",
-        "tmp/file2.js": "bar",
+        "tmp/file1.txt": "file1 v1",
+        "tmp/file2.txt": "file2 v1",
       },
     });
 
@@ -345,8 +346,8 @@ describe("sync", () => {
 
     await emitGadgetChanges({
       remoteFilesVersion: "2",
-      changed: [makeFile({ path: "tmp/file.js", content: "foo changed" })],
-      deleted: [{ path: "tmp/file2.js" }],
+      changed: [makeFile({ path: "tmp/file1.txt", content: "file1 v2" })],
+      deleted: [{ path: "tmp/file2.txt" }],
     });
 
     // it should still update the filesVersion
@@ -358,8 +359,8 @@ describe("sync", () => {
         ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
         ".ignore": "tmp",
         "tmp/": "",
-        "tmp/file.js": "foo",
-        "tmp/file2.js": "bar",
+        "tmp/file1.txt": "file1 v1",
+        "tmp/file2.txt": "file2 v1",
       }
     `);
   });
@@ -370,43 +371,43 @@ describe("sync", () => {
     await sync(ctx);
 
     // add a file
-    await fs.outputFile(localDir.absolute("file.js"), "foo");
+    await fs.outputFile(localDir.absolute("file.txt"), "file v2");
     await waitUntilGadgetFilesVersion(2n);
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "file.js": "foo",
+        "file.txt": "file v2",
       }
     `);
 
     // update a file
-    await fs.outputFile(localDir.absolute("file.js"), "foo v2");
+    await fs.outputFile(localDir.absolute("file.txt"), "file v3");
     await waitUntilGadgetFilesVersion(3n);
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "file.js": "foo v2",
+        "file.txt": "file v3",
       }
     `);
 
     // move a file
-    await fs.move(localDir.absolute("file.js"), localDir.absolute("renamed-file.js"));
+    await fs.move(localDir.absolute("file.txt"), localDir.absolute("renamed-file.txt"));
     await waitUntilGadgetFilesVersion(4n);
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "file.js": "foo v2",
-        "renamed-file.js": "foo v2",
+        "file.txt": "file v3",
+        "renamed-file.txt": "file v3",
       }
     `);
 
     // delete a file
-    await fs.remove(localDir.absolute("renamed-file.js"));
+    await fs.remove(localDir.absolute("renamed-file.txt"));
     await waitUntilGadgetFilesVersion(5n);
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "file.js": "foo v2",
+        "file.txt": "file v3",
       }
     `);
 
@@ -417,7 +418,7 @@ describe("sync", () => {
       {
         ".gadget/": "",
         "directory/": "",
-        "file.js": "foo v2",
+        "file.txt": "file v3",
       }
     `);
 
@@ -428,7 +429,7 @@ describe("sync", () => {
       {
         ".gadget/": "",
         "directory/": "",
-        "file.js": "foo v2",
+        "file.txt": "file v3",
         "renamed-directory/": "",
       }
     `);
@@ -440,12 +441,12 @@ describe("sync", () => {
       {
         ".gadget/": "",
         "directory/": "",
-        "file.js": "foo v2",
+        "file.txt": "file v3",
       }
     `);
 
     // add a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.js`);
+    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
 
     // sleep a bit between each one to simulate a slow filesystem
     for (const filename of files) {
@@ -458,17 +459,17 @@ describe("sync", () => {
       {
         ".gadget/": "",
         "directory/": "",
-        "file.js": "foo v2",
-        "file1.js": "file1.js",
-        "file10.js": "file10.js",
-        "file2.js": "file2.js",
-        "file3.js": "file3.js",
-        "file4.js": "file4.js",
-        "file5.js": "file5.js",
-        "file6.js": "file6.js",
-        "file7.js": "file7.js",
-        "file8.js": "file8.js",
-        "file9.js": "file9.js",
+        "file.txt": "file v3",
+        "file1.txt": "file1.txt",
+        "file10.txt": "file10.txt",
+        "file2.txt": "file2.txt",
+        "file3.txt": "file3.txt",
+        "file4.txt": "file4.txt",
+        "file5.txt": "file5.txt",
+        "file6.txt": "file6.txt",
+        "file7.txt": "file7.txt",
+        "file8.txt": "file8.txt",
+        "file9.txt": "file9.txt",
       }
     `);
   });
@@ -480,21 +481,24 @@ describe("sync", () => {
 
     // update a file 10 times
     for (let i = 0; i < 10; i++) {
-      await fs.outputFile(localDir.absolute("file.js"), `v${i + 1}`);
+      await fs.outputFile(localDir.absolute("file.txt"), `v${i + 1}`);
     }
 
     await waitUntilGadgetFilesVersion(2n);
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "file.js": "v10",
+        "file.txt": "v10",
       }
     `);
   });
 
   it("doesn't send changes from the local filesystem to gadget if the file is ignored", async () => {
-    const { localDir, expectGadgetDir } = await makeSyncScenario({
-      localFiles: {
+    const { localDir, expectGadgetDir, expectLocalDir } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".ignore": "tmp",
+      },
+      gadgetFiles: {
         ".ignore": "tmp",
       },
     });
@@ -523,16 +527,37 @@ describe("sync", () => {
     await fs.remove(localDir.absolute("tmp/renamed-directory"));
 
     // add a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.js`);
+    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
     for (const filename of files) {
       await fs.outputFile(localDir.absolute(`tmp/${filename}`), filename);
     }
 
+    // give the watcher a chance to see the changes
     await sleep("2s");
+
+    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+      {
+        ".gadget/": "",
+        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+        ".ignore": "tmp",
+        "tmp/": "",
+        "tmp/file1.txt": "file1.txt",
+        "tmp/file10.txt": "file10.txt",
+        "tmp/file2.txt": "file2.txt",
+        "tmp/file3.txt": "file3.txt",
+        "tmp/file4.txt": "file4.txt",
+        "tmp/file5.txt": "file5.txt",
+        "tmp/file6.txt": "file6.txt",
+        "tmp/file7.txt": "file7.txt",
+        "tmp/file8.txt": "file8.txt",
+        "tmp/file9.txt": "file9.txt",
+      }
+    `);
 
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
+        ".ignore": "tmp",
       }
     `);
   });
@@ -549,14 +574,14 @@ describe("sync", () => {
     await sync(ctx);
 
     await emitGadgetChanges({
-      remoteFilesVersion: "1",
+      remoteFilesVersion: "2",
       changed: [makeFile({ path: "yarn.lock", content: "# THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY." })],
       deleted: [],
     });
 
     await execaCalled;
 
-    expect(filesync.filesVersion).toBe(1n);
+    expect(filesync.filesVersion).toBe(2n);
     expect(execa.mock.lastCall).toEqual(["yarn", ["install", "--check-files"], { cwd: localDir.path }]);
   });
 

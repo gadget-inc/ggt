@@ -256,6 +256,11 @@ export class EditGraphQL {
   }
 }
 
+/**
+ * A GraphQL query with its associated types.
+ *
+ * At runtime, this type is just a string.
+ */
 export type GraphQLQuery<
   Data extends JsonObject = JsonObject,
   Variables extends JsonObject = JsonObject,

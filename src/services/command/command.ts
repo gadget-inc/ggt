@@ -1,5 +1,6 @@
 import arg from "arg";
 import assert from "node:assert";
+import { pathToFileURL } from "node:url";
 import type { Promisable } from "type-fest";
 import { relativeToThisFile } from "../config/paths.js";
 import type { Context } from "./context.js";
@@ -23,7 +24,9 @@ export const isAvailableCommand = (value: unknown): value is AvailableCommand =>
 
 export const importCommandModule = async (command: AvailableCommand): Promise<CommandModule> => {
   assert(isAvailableCommand(command), `invalid command: ${command}`);
-  return (await import(relativeToThisFile(`../../commands/${command}.js`))) as CommandModule;
+  const commandPath = relativeToThisFile(`../../commands/${command}.js`);
+  const commandUrl = pathToFileURL(commandPath);
+  return (await import(commandUrl.toString())) as CommandModule;
 };
 
 export const rootArgsSpec = {

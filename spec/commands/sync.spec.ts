@@ -10,7 +10,6 @@ import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edi
 import { Context } from "../../src/services/command/context.js";
 import { assetsPath } from "../../src/services/config/paths.js";
 import { EditGraphQLError, YarnNotFoundError } from "../../src/services/error/error.js";
-import * as prompt from "../../src/services/output/prompt.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
@@ -43,9 +42,6 @@ describe("sync", () => {
         ms("50ms" /* default 1_250ms */),
       ].map(String),
     });
-
-    vi.spyOn(prompt, "confirm").mockRejectedValueOnce(new Error("prompt.confirm() should not be called"));
-    vi.spyOn(prompt, "select").mockRejectedValueOnce(new Error("prompt.select() should not be called"));
   });
 
   afterEach(() => {

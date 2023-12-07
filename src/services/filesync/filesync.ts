@@ -622,7 +622,7 @@ export class FileSync {
     ]);
   }
 
-  private async _getHashes(): Promise<{
+  async _getHashes(): Promise<{
     gadgetFilesVersion: bigint;
     filesVersionHashes: Hashes;
     localHashes: Hashes;

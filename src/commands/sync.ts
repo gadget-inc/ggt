@@ -18,6 +18,7 @@ import { getUserOrLogin } from "../services/user/user.js";
 import { debounce } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 import { defaults } from "../services/util/object.js";
+import boxen from "boxen";
 
 export const usage: Usage = () => sprint`
   Sync your Gadget application's source code to and from
@@ -97,7 +98,6 @@ const argSpec = {
   "--once": Boolean,
   "--prefer": ConflictPreferenceArg,
   "--force": Boolean,
-  "--once": Boolean,
   "--file-push-delay": Number,
   "--file-watch-debounce": Number,
   "--file-watch-poll-interval": Number,
@@ -179,15 +179,6 @@ export const command: Command = async (ctx) => {
           log.error("yarn install failed", { error });
         });
       }
-      
-      if(args["--once"]){
-        log.println("Ran a sync.")
-        stop();
-      }
-    },
-    opts: {
-      syncOnce: args["--once"],
-      signal: () => stop(),
     }
   });
 

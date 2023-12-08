@@ -12,6 +12,7 @@ import { noop, noopThis, type AnyFunction } from "../../src/services/util/functi
 import { isAbortError } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { withEnv } from "../__support__/env.js";
+import { expectReportErrorAndExit } from "../__support__/error.js";
 import { expectProcessExit } from "../__support__/process.js";
 import { expectStdout } from "../__support__/stream.js";
 import { mockVersion } from "../__support__/version.js";
@@ -156,6 +157,18 @@ describe("root", () => {
       process.argv = ["node", "ggt", name];
 
       await root();
+
+      expect(mod.command).toHaveBeenCalled();
+    });
+
+    it("reports and exits if an error occurs", async () => {
+      const error = new Error("boom!");
+      vi.spyOn(mod, "command").mockRejectedValueOnce(error);
+
+      process.argv = ["node", "ggt", name];
+
+      void root();
+      await expectReportErrorAndExit(error);
 
       expect(mod.command).toHaveBeenCalled();
     });

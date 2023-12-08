@@ -2,6 +2,7 @@ import arg from "arg";
 import ms from "ms";
 import { AvailableCommands, importCommandModule, isAvailableCommand, rootArgsSpec, type Usage } from "../services/command/command.js";
 import { Context } from "../services/command/context.js";
+import { reportErrorAndExit } from "../services/error/report.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { createLogger } from "../services/output/log/logger.js";
 import { sprint } from "../services/output/sprint.js";
@@ -76,10 +77,14 @@ export const command = async (): Promise<void> => {
   }
 
   const ctx = new Context(rootArgs);
-  await commandModule.command(ctx);
+
+  try {
+    await commandModule.command(ctx);
+  } catch (error) {
+    await reportErrorAndExit(error);
+  }
 
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
-    log.trace("registering signal", { signal });
     process.once(signal, () => {
       log.trace("received signal", { signal });
       log.println` Stopping... {gray Press Ctrl+C again to force}`;

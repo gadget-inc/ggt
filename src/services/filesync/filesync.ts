@@ -15,8 +15,9 @@ import type { App } from "../app/app.js";
 import { getApps } from "../app/app.js";
 import {
   EditGraphQL,
+  FILE_SYNC_FILES_QUERY,
+  FILE_SYNC_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-  REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit-graphql.js";
 import { config, homePath } from "../config/config.js";
@@ -28,7 +29,9 @@ import type { User } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { Changes, printChanges } from "./changes.js";
-import { Directory, supportsPermissions, swallowEnoent } from "./directory.js";
+import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
+import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
+import { getChanges, isEqualHashes, withoutUnnecessaryChanges, type ChangesWithHash } from "./hashes.js";
 
 export type File = {
   path: string;
@@ -38,10 +41,10 @@ export type File = {
   encoding: FileSyncEncoding;
 };
 
-export enum Action {
+export enum ConflictPreference {
   CANCEL = "Cancel (Ctrl+C)",
-  MERGE = "Merge local files with remote ones",
-  RESET = "Reset local files to remote ones",
+  LOCAL = "Keep my conflicting changes",
+  GADGET = "Keep Gadget's conflicting changes",
 }
 
 export class FileSync {
@@ -194,13 +197,15 @@ export class FileSync {
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
-      if (wasEmptyOrNonExistent || options.force) {
-        // the directory was empty or the user passed --force
+      const syncJsonExists = await fs.pathExists(path.join(dir, ".gadget/sync.json"));
+      if (!syncJsonExists || options.force) {
+        // .gadget/sync.json didn't exist or the user passed --force
         // either way, create a fresh .gadget/sync.json file
         return new FileSync(directory, wasEmptyOrNonExistent, app, { app: app.slug, filesVersion: "0", mtime: 0 });
       }
 
-      // the directory isn't empty and the user didn't pass --force
+      // .gadget/sync.json exists, it contains invalid json,
+      // and the user didn't pass --force
       throw new InvalidSyncFileError(dir, app.slug);
     }
 
@@ -327,6 +332,116 @@ export class FileSync {
           await afterChanges({ changes });
         }).catch(onError);
       },
+    });
+  }
+
+  /**
+   * Ensures the local filesystem is in sync with Gadget's filesystem.
+   * - All non-conflicting changes are automatically merged.
+   * - Conflicts are resolved by prompting the user to either keep their
+   *   local changes or keep Gadget's changes.
+   * - This function will not return until the filesystem is in sync.
+   */
+  async sync(): Promise<void> {
+    const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await this._getHashes();
+    this.log.debug("syncing", { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
+
+    if (isEqualHashes(localHashes, gadgetHashes)) {
+      this.log.info("filesystem is in sync");
+      await this._save(gadgetFilesVersion);
+      return;
+    }
+
+    let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
+    let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
+
+    if (localChanges.size === 0 && gadgetChanges.size === 0) {
+      // the local filesystem is missing .gadget/ files
+      gadgetChanges = getChanges({ from: localHashes, to: gadgetHashes });
+      assertAllGadgetFiles({ gadgetChanges });
+    }
+
+    const conflicts = getConflicts({ localChanges, gadgetChanges });
+    if (conflicts.size > 0) {
+      this.log.debug("conflicts detected", { conflicts });
+      printConflicts({
+        message: sprint`{bold You have conflicting changes with Gadget}`,
+        conflicts,
+      });
+
+      const preference = await select({
+        message: "How would you like to resolve these conflicts?",
+        choices: Object.values(ConflictPreference),
+      });
+
+      switch (preference) {
+        case ConflictPreference.CANCEL: {
+          process.exit(0);
+          break;
+        }
+        case ConflictPreference.LOCAL: {
+          gadgetChanges = withoutConflictingChanges({ conflicts, changes: gadgetChanges });
+          break;
+        }
+        case ConflictPreference.GADGET: {
+          localChanges = withoutConflictingChanges({ conflicts, changes: localChanges });
+          break;
+        }
+      }
+    }
+
+    localChanges = withoutUnnecessaryChanges({ changes: localChanges, existing: gadgetHashes });
+    gadgetChanges = withoutUnnecessaryChanges({ changes: gadgetChanges, existing: localHashes });
+
+    assert(localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
+
+    if (gadgetChanges.size > 0) {
+      await this._getChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
+    }
+
+    if (localChanges.size > 0) {
+      await this._sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
+    }
+
+    // recursively call this function until we're in sync
+    return this.sync();
+  }
+
+  private async _getChangesFromGadget({
+    filesVersion,
+    changes,
+  }: {
+    filesVersion: bigint;
+    changes: Changes | ChangesWithHash;
+  }): Promise<void> {
+    this.log.debug("getting changes from gadget", { filesVersion, changes });
+    const created = changes.created();
+    const updated = changes.updated();
+
+    let files: File[] = [];
+    if (created.length > 0 || updated.length > 0) {
+      const { fileSyncFiles } = await this.editGraphQL.query({
+        query: FILE_SYNC_FILES_QUERY,
+        variables: {
+          paths: [...created, ...updated],
+          filesVersion: String(filesVersion),
+          encoding: FileSyncEncoding.Base64,
+        },
+      });
+
+      files = fileSyncFiles.files;
+    }
+
+    await this._writeToLocalFilesystem({
+      filesVersion,
+      files,
+      delete: changes.deleted(),
+    });
+
+    printChanges({
+      changes,
+      tense: "past",
+      message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
     });
   }
 
@@ -485,6 +600,31 @@ export class FileSync {
     ]);
   }
 
+  private async _getHashes(): Promise<{
+    gadgetFilesVersion: bigint;
+    filesVersionHashes: Hashes;
+    localHashes: Hashes;
+    gadgetHashes: Hashes;
+  }> {
+    const [localHashes, filesVersionHashes, { gadgetFilesVersion, gadgetHashes }] = await Promise.all([
+      // get the hashes of our local files
+      this.directory.hashes(),
+      // get the hashes of the files at our current filesVersion
+      this.filesVersion === 0n
+        ? {}
+        : this.editGraphQL
+            .query({ query: FILE_SYNC_HASHES_QUERY, variables: { filesVersion: String(this.filesVersion) } })
+            .then((data) => data.fileSyncHashes.hashes),
+      // get the hashes of the files at the latest filesVersion
+      this.editGraphQL.query({ query: FILE_SYNC_HASHES_QUERY }).then((data) => ({
+        gadgetFilesVersion: BigInt(data.fileSyncHashes.filesVersion),
+        gadgetHashes: data.fileSyncHashes.hashes,
+      })),
+    ]);
+
+    return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion };
+  }
+
   /**
    * Updates {@linkcode _state} and saves it to `.gadget/sync.json`.
    */
@@ -518,4 +658,13 @@ export const isEmptyOrNonExistentDir = async (dir: string): Promise<boolean> => 
     swallowEnoent(error);
     return true;
   }
+};
+
+export const assertAllGadgetFiles = ({ gadgetChanges }: { gadgetChanges: Changes }): void => {
+  assert(gadgetChanges.created().length > 0, "expected gadgetChanges to have created files");
+  assert(gadgetChanges.deleted().length === 0, "expected gadgetChanges to not have deleted files");
+  assert(gadgetChanges.updated().length === 0, "expected gadgetChanges to not have updated files");
+
+  const allGadgetFiles = Array.from(gadgetChanges.keys()).every((path) => path.startsWith(".gadget/"));
+  assert(allGadgetFiles, "expected all gadgetChanges to be .gadget/ files");
 };

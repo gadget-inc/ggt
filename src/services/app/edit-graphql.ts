@@ -7,6 +7,10 @@ import type { JsonObject } from "type-fest";
 import type { CloseEvent } from "ws";
 import WebSocket from "ws";
 import type {
+  FileSyncFilesQuery,
+  FileSyncFilesQueryVariables,
+  FileSyncHashesQuery,
+  FileSyncHashesQueryVariables,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
   RemoteFileSyncEventsSubscription,
@@ -309,3 +313,30 @@ export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
 `) as GraphQLQuery<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
 
 export type PUBLISH_FILE_SYNC_EVENTS_MUTATION = typeof PUBLISH_FILE_SYNC_EVENTS_MUTATION;
+
+export const FILE_SYNC_FILES_QUERY = dedent(/* GraphQL */ `
+  query FileSyncFiles($paths: [String!]!, $filesVersion: String, $encoding: FileSyncEncoding) {
+    fileSyncFiles(paths: $paths, filesVersion: $filesVersion, encoding: $encoding) {
+      filesVersion
+      files {
+        path
+        mode
+        content
+        encoding
+      }
+    }
+  }
+`) as GraphQLQuery<FileSyncFilesQuery, FileSyncFilesQueryVariables>;
+
+export type FILE_SYNC_FILES_QUERY = typeof FILE_SYNC_FILES_QUERY;
+
+export const FILE_SYNC_HASHES_QUERY = dedent(/* GraphQL */ `
+  query FileSyncHashes($filesVersion: String) {
+    fileSyncHashes(filesVersion: $filesVersion) {
+      filesVersion
+      hashes
+    }
+  }
+`) as GraphQLQuery<FileSyncHashesQuery, FileSyncHashesQueryVariables>;
+
+export type FILE_SYNC_HASHES_QUERY = typeof FILE_SYNC_HASHES_QUERY;

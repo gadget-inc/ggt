@@ -87,22 +87,27 @@ export const printChanges = ({
   if (changes.size >= 10) {
     tableOptions.spaceY = 1;
 
-    footer = sprint`${pluralize("change", changes.size, true)} in total.`;
+    footer = sprint`${pluralize("change", changes.size, true)} in total. `;
+
+    const breakdown = [];
 
     const created = changes.created();
     if (created.length > 0) {
-      footer += sprint` {greenBright ${pluralize("create", created.length, true)}}`;
+      breakdown.push(sprint`{greenBright ${pluralize("create", created.length, true)}}`);
     }
 
     const updated = changes.updated();
     if (updated.length > 0) {
-      footer += sprint` {blueBright ${pluralize("update", updated.length, true)}}`;
+      breakdown.push(sprint`{blueBright ${pluralize("update", updated.length, true)}}`);
     }
 
     const deleted = changes.deleted();
     if (deleted.length > 0) {
-      footer += sprint` {redBright ${pluralize("delete", deleted.length, true)}}`;
+      breakdown.push(sprint`{redBright ${pluralize("delete", deleted.length, true)}}`);
     }
+
+    footer += breakdown.join(", ");
+    footer += ".";
   }
 
   log.printTable({ rows, footer, ...tableOptions });

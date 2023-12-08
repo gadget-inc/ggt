@@ -25,6 +25,7 @@
     "prefer-const": ["warn", { "destructuring": "all" }],
     "quotes": ["warn", "double", { "avoidEscape": true }],
     "spaced-comment": ["warn", "always"],
+    "no-restricted-imports": ["warn", { "paths": [{ "name": "node:test", "message": "Use 'vitest' instead" }] }],
 
     "unicorn/consistent-destructuring": ["warn"],
     "unicorn/explicit-length-check": ["warn"],
@@ -46,6 +47,15 @@
     "@typescript-eslint/prefer-nullish-coalescing": ["warn", { "ignorePrimitives": { "string": true } }]
   },
   "overrides": [
+    {
+      "files": "src/services/config/paths.ts",
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          { "patterns": [{ "group": ["./", "../"], "message": "paths.ts must not rely on external state" }] }
+        ]
+      }
+    },
     {
       "files": "**/spec/**",
       "rules": {

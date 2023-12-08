@@ -65,6 +65,25 @@ jobs:
       - name: Run tests
         run: npm run test
 
+  bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Show bundle size
+        run: |
+          ./scripts/show-bundle-size.ts
+
   dependabot:
     needs: [lint, build, test]
     if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'dependabot/npm_and_yarn/')

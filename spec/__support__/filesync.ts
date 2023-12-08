@@ -15,7 +15,8 @@ import {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit-graphql.js";
 import { Directory, swallowEnoent } from "../../src/services/filesync/directory.js";
-import { FileSync, isEmptyOrNonExistentDir, type File } from "../../src/services/filesync/filesync.js";
+import { FileSync, type File } from "../../src/services/filesync/filesync.js";
+import { noop } from "../../src/services/util/function.js";
 import { defaults, omit } from "../../src/services/util/object.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import type { PartialExcept } from "../types.js";
@@ -46,22 +47,15 @@ export type SyncScenarioOptions = {
   filesVersion1Files: Files;
 
   /**
-   * The .gadget/sync.json file on the local filesystem.
-   * @default { app: testApp.slug, filesVersion: "1", mtime: Date.now() }
-   */
-  syncJson: PartialSyncJson;
-
-  /**
    * The files on the local filesystem.
    * @default { ".gadget/": "" }
    */
   localFiles: Files;
 
   /**
-   * The filesVersion of the files Gadget currently has.
-   * @default 1n
+   * The filesVersion Gadget currently has.
    */
-  gadgetFilesVersion: bigint;
+  gadgetFilesVersion?: 1n | 2n;
 
   /**
    * The files Gadget currently has.
@@ -138,30 +132,32 @@ export type SyncScenario = {
  */
 export const makeSyncScenario = async ({
   filesVersion1Files,
-  syncJson,
   localFiles,
-  gadgetFiles,
   gadgetFilesVersion = 1n,
+  gadgetFiles,
 }: Partial<SyncScenarioOptions> = {}): Promise<SyncScenario> => {
+  await writeDir(testDirPath("gadget"), { ".gadget/": "", ...gadgetFiles });
+  const gadgetDir = await Directory.init(testDirPath("gadget"));
+
   await writeDir(testDirPath("fv-1"), { ".gadget/": "", ...filesVersion1Files });
   const filesVersion1Dir = await Directory.init(testDirPath("fv-1"));
 
   const filesVersionDirs = new Map<bigint, Directory>();
   filesVersionDirs.set(1n, filesVersion1Dir);
 
-  await writeDir(testDirPath("gadget"), { ".gadget/": "", ...gadgetFiles });
-  const gadgetDir = await Directory.init(testDirPath("gadget"));
-
   if (gadgetFilesVersion === 2n) {
     await fs.copy(gadgetDir.path, testDirPath("fv-2"));
     filesVersionDirs.set(2n, await Directory.init(testDirPath("fv-2")));
   }
 
+  const localDir = await Directory.init(testDirPath("local"));
   if (localFiles) {
     await writeDir(testDirPath("local"), localFiles);
-    await fs.outputFile(testDirPath("local/.gadget/sync.json"), makeSyncJson(syncJson));
+    await localDir.loadIgnoreFile();
+
+    const syncJson: SyncJson = { app: testApp.slug, filesVersion: "1", mtime: Date.now() };
+    await fs.outputJSON(localDir.absolute(".gadget/sync.json"), syncJson, { spaces: 2 });
   }
-  const localDir = await Directory.init(testDirPath("local"));
 
   FileSync.init.mockRestore?.();
   const filesync = await FileSync.init({ user: testUser, dir: localDir.path, app: testApp.slug });
@@ -177,9 +173,7 @@ export const makeSyncScenario = async ({
     for (const file of deleted) {
       if (file.path.endsWith("/")) {
         // replicate dl and only delete the dir if it's empty
-        if (await isEmptyOrNonExistentDir(gadgetDir.absolute(file.path))) {
-          await fs.remove(gadgetDir.absolute(file.path));
-        }
+        await fs.rmdir(gadgetDir.absolute(file.path)).catch(noop);
       } else {
         await fs.remove(gadgetDir.absolute(file.path));
       }
@@ -191,17 +185,17 @@ export const makeSyncScenario = async ({
       } else if (file.path.endsWith("/")) {
         await fs.ensureDir(gadgetDir.absolute(file.path));
       } else {
-        await fs.writeFile(gadgetDir.absolute(file.path), file.content, { encoding: file.encoding });
+        await fs.outputFile(gadgetDir.absolute(file.path), file.content, { encoding: file.encoding });
       }
 
       await fs.chmod(gadgetDir.absolute(file.path), file.mode & 0o777);
     }
 
     gadgetFilesVersion += 1n;
-
     const newFilesVersionDir = await Directory.init(testDirPath(`fv-${gadgetFilesVersion}`));
     await fs.copy(gadgetDir.path, newFilesVersionDir.path);
     filesVersionDirs.set(gadgetFilesVersion, newFilesVersionDir);
+    log.trace("new files version", { gadgetFilesVersion });
   };
 
   void nockEditGraphQLResponse({
@@ -388,8 +382,4 @@ export const expectSyncJson = (filesync: FileSync, expected: PartialSyncJson = {
   const state = filesync._state;
   expect(state).toMatchObject(expected);
   return prettyJSON(state);
-};
-
-export const makeSyncJson = ({ app = testApp.slug, filesVersion = 1n, mtime = Date.now() }: PartialSyncJson = {}): string => {
-  return prettyJSON({ app, filesVersion: String(filesVersion), mtime });
 };

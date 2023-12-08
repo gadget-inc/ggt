@@ -119,11 +119,9 @@ export const command: Command = async (ctx) => {
     force: args["--force"],
   });
 
-  const log = filesync.log.extend("sync");
+  await filesync.sync();
 
-  if (!filesync.wasEmptyOrNonExistent) {
-    await filesync.sync();
-  }
+  const log = filesync.log.extend("sync");
 
   if (!which.sync("yarn", { nothrow: true })) {
     throw new YarnNotFoundError();

@@ -1,6 +1,6 @@
 import { type JsonObject, type JsonPrimitive } from "type-fest";
 
-export type Fields = Record<string, Field> | { error: unknown };
+export type Fields = Record<string, Field> | { error: unknown } | { reason: unknown };
 
 export type Field = FieldPrimitive | FieldObject | FieldArray;
 

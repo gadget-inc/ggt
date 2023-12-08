@@ -36,6 +36,10 @@ export const createStructuredLogger = ({ name, fields: loggerFields = {} }: { na
         fields.error = serializeError(fields.error);
       }
 
+      if ("reason" in fields) {
+        fields.reason = serializeError(fields.reason);
+      }
+
       if (shouldLog) {
         const format = formatters[config.logFormat];
         stderr.write(format(level, name, msg, fields));

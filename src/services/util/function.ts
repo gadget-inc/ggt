@@ -2,9 +2,12 @@
 /* eslint-disable func-style */
 import mimicFunction from "mimic-fn";
 import assert from "node:assert";
+import type { Promisable } from "type-fest";
 import { isFunction } from "./is.js";
 
 export type AnyFunction = (...args: never[]) => unknown;
+
+export type AnyVoid = Promisable<void>;
 
 const memoizedFns = new Set<MemoizedFn>();
 

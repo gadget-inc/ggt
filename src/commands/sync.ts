@@ -16,6 +16,7 @@ import { notify } from "../services/output/notify.js";
 import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
 import { debounce } from "../services/util/function.js";
+import { isAbortError } from "../services/util/is.js";
 import { defaults } from "../services/util/object.js";
 
 export const usage: Usage = () => sprint`
@@ -268,35 +269,26 @@ export const command: Command = async (ctx) => {
     Watching for file changes... {gray Press Ctrl+C to stop}
   `;
 
-  let stopping = false;
+  ctx.onAbort(async (reason) => {
+    log.info("stopping", { reason });
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  ctx.signal.addEventListener("abort", async () => {
-    if (stopping) {
-      return;
-    }
-
-    stopping = true;
-    log.info("stopping", { error: ctx.signal.reason });
+    unsubscribeFromGadgetChanges();
+    fileWatcher.close();
+    clearInterval(clearRecentWritesInterval);
+    sendChangesToGadget.flush();
 
     try {
-      unsubscribeFromGadgetChanges();
-      fileWatcher.close();
-      clearInterval(clearRecentWritesInterval);
-      sendChangesToGadget.flush();
       await filesync.idle();
     } catch (error) {
-      log.error("error while stopping", { error });
-    } finally {
-      log.info("stopped");
+      log.error("error while waiting for idle", { error });
     }
 
-    if (ctx.wasCanceled()) {
+    if (isAbortError(reason)) {
       log.printlns("Goodbye!");
       return;
     }
 
     notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
-    await reportErrorAndExit(ctx.signal.reason);
+    await reportErrorAndExit(reason);
   });
 };

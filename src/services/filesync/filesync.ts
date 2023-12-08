@@ -160,7 +160,7 @@ export class FileSync {
     if (!appSlug) {
       // the user didn't specify an app, suggest some apps that they can sync to
       appSlug = await select({
-        message: "Please select the app to sync to.",
+        message: "Select the app to sync to",
         choices: apps.map((x) => x.slug),
       });
     }

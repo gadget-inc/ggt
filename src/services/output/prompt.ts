@@ -1,6 +1,4 @@
-import inqConfirm from "@inquirer/confirm";
-import inqSelect from "@inquirer/select";
-import { z } from "zod";
+import prompts from "prompts";
 import { createLogger } from "./log/logger.js";
 
 const log = createLogger({ name: "prompt" });
@@ -16,12 +14,20 @@ export const select = async <T extends string>({ message, choices }: { message: 
   log.println("");
 
   try {
-    return await inqSelect({
+    const response = await prompts({
+      name: "value",
+      type: "autocomplete",
       message,
-      choices: choices.map((value) => ({ value })),
+      choices: choices.map((value) => ({ title: value, value })),
     });
+
+    if (!response.value) {
+      // The user pressed Ctrl+C
+      process.exit(0);
+    }
+
+    return response.value as T;
   } catch (error) {
-    swallowCtrlC(error);
     process.exit(0);
   }
 };
@@ -36,17 +42,14 @@ export const select = async <T extends string>({ message, choices }: { message: 
 export const confirm = async ({ message }: { message: string }): Promise<void> => {
   log.println("");
 
-  try {
-    const yes = await inqConfirm({ message, default: false });
-    if (!yes) {
-      process.exit(0);
-    }
-  } catch (error) {
-    swallowCtrlC(error);
+  const response = await prompts({
+    name: "value",
+    type: "confirm",
+    message,
+  });
+
+  if (!response.value) {
+    // The user pressed Ctrl+C
     process.exit(0);
   }
-};
-
-const swallowCtrlC = (error: unknown): void => {
-  z.object({ message: z.string().startsWith("User force closed") }).parse(error);
 };

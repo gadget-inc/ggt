@@ -1,4 +1,4 @@
-#!/usr/bin/env node --loader @swc-node/register/esm --no-warnings
+#!/usr/bin/env -S node --loader @swc-node/register/esm --no-warnings
 
 import { $ } from "execa";
 import fs from "fs-extra";

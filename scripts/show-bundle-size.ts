@@ -2,8 +2,8 @@
 
 import { $ } from "execa";
 import process from "node:process";
-import { workspaceRoot } from "../src/services/config/paths.js";
 import { parseBoolean } from "../src/services/util/boolean.js";
+import { workspaceRoot } from "../src/services/util/paths.js";
 
 try {
   process.chdir(workspaceRoot);

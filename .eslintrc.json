@@ -48,12 +48,9 @@
   },
   "overrides": [
     {
-      "files": "src/services/config/paths.ts",
+      "files": "src/services/util/**",
       "rules": {
-        "no-restricted-imports": [
-          "error",
-          { "patterns": [{ "group": ["./", "../"], "message": "paths.ts must not rely on external state" }] }
-        ]
+        "no-restricted-imports": ["error", { "patterns": [{ "group": ["../"], "message": "utilities can only import other utilities" }] }]
       }
     },
     {

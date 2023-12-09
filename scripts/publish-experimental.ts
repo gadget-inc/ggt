@@ -4,8 +4,8 @@ import { $ } from "execa";
 import fs from "fs-extra";
 import { oraPromise } from "ora";
 import { packageJson } from "../src/services/config/package-json.js";
-import { workspacePath } from "../src/services/config/paths.js";
 import { createLogger } from "../src/services/output/log/logger.js";
+import { workspacePath } from "../src/services/util/paths.js";
 
 const log = createLogger({ name: "publish-experimental" });
 

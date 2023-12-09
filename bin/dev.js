@@ -1,7 +1,7 @@
 #!/usr/bin/env node --loader @swc-node/register/esm --no-warnings
 
 import process from "node:process";
-import { workspacePath } from "../src/services/config/paths.js";
+import { workspacePath } from "../src/services/util/paths.js";
 
 process.env["NODE_ENV"] ??= "development";
 process.env["GGT_ENV"] ??= "development";

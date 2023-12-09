@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { pathToFileURL } from "node:url";
 import type { Promisable } from "type-fest";
 import { config } from "../config/config.js";
-import { relativeToThisFile } from "../config/paths.js";
+import { relativeToThisFile } from "../util/paths.js";
 import type { Context } from "./context.js";
 
 export type Usage = () => string;

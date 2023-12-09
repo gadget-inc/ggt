@@ -1,4 +1,4 @@
-import { workspacePath } from "../../src/services/config/paths.js";
+import { workspacePath } from "../../src/services/util/paths.js";
 import { getCurrentTest } from "./debug.js";
 
 /**

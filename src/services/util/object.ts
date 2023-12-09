@@ -3,7 +3,7 @@ import { RequestError } from "got";
 import { inspect } from "node:util";
 import { serializeError as baseSerializeError, type ErrorObject } from "serialize-error";
 import type { Simplify } from "type-fest";
-import { workspaceRoot } from "../config/paths.js";
+import { workspaceRoot } from "./paths.js";
 
 /**
  * Returns a new object with the properties of the input object merged

@@ -16,9 +16,10 @@ import type {
 } from "../../__generated__/graphql.js";
 import { config } from "../config/config.js";
 import { EditGraphQLError } from "../error/error.js";
+import { loadCookie } from "../http/auth.js";
+import { http } from "../http/http.js";
 import { createLogger } from "../output/log/logger.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
-import { http, loadCookie } from "../util/http.js";
 import type { App } from "./app.js";
 
 enum ConnectionStatus {

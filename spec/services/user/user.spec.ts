@@ -3,10 +3,10 @@ import process from "node:process";
 import { describe, expect, it, vi } from "vitest";
 import * as login from "../../../src/commands/login.js";
 import { config } from "../../../src/services/config/config.js";
+import { loadCookie } from "../../../src/services/http/auth.js";
 import * as prompt from "../../../src/services/output/prompt.js";
 import { readSession, writeSession } from "../../../src/services/user/session.js";
 import { getUser, getUserOrLogin } from "../../../src/services/user/user.js";
-import { loadCookie } from "../../../src/services/util/http.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { loginTestUser, testUser } from "../../__support__/user.js";
 

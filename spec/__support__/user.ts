@@ -2,9 +2,9 @@ import nock from "nock";
 import { randomUUID } from "node:crypto";
 import { expect } from "vitest";
 import { config } from "../../src/services/config/config.js";
+import { loadCookie } from "../../src/services/http/auth.js";
 import { writeSession } from "../../src/services/user/session.js";
 import type { User } from "../../src/services/user/user.js";
-import { loadCookie } from "../../src/services/util/http.js";
 
 /**
  * A test user to use in tests.

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { config } from "../config/config.js";
+import { loadCookie } from "../http/auth.js";
+import { http } from "../http/http.js";
 import type { User } from "../user/user.js";
-import { http, loadCookie } from "../util/http.js";
 
 export const App = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]),

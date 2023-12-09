@@ -7,7 +7,7 @@ import path from "node:path";
 import semver from "semver";
 import { z } from "zod";
 import { config } from "../config/config.js";
-import { http } from "../util/http.js";
+import { http } from "../http/http.js";
 import { createLogger } from "./log/logger.js";
 import { sprint } from "./sprint.js";
 

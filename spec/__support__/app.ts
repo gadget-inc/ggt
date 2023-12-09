@@ -2,7 +2,7 @@ import nock from "nock";
 import { expect } from "vitest";
 import type { App } from "../../src/services/app/app.js";
 import { config } from "../../src/services/config/config.js";
-import { loadCookie } from "../../src/services/util/http.js";
+import { loadCookie } from "../../src/services/http/auth.js";
 import { testUser } from "./user.js";
 
 /**

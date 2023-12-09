@@ -1,9 +1,10 @@
-import { got, HTTPError, type OptionsInit } from "got";
+import { got } from "got";
 import { config } from "../config/config.js";
 import { createLogger } from "../output/log/logger.js";
-import { readSession, writeSession } from "../user/session.js";
+import { writeSession } from "../user/session.js";
+import { isGadgetServicesRequest } from "./auth.js";
 
-const log = createLogger({ name: "http" });
+export const log = createLogger({ name: "http" });
 
 /**
  * An instance of the `got` library with hooks for logging and handling
@@ -62,43 +63,3 @@ export const http = got.extend({
     ],
   },
 });
-
-export const isUnauthorized = (error: unknown): boolean => {
-  return error instanceof HTTPError && error.response.statusCode === 401 && isGadgetServicesRequest(error.request.options);
-};
-
-/**
- * Swallows unauthorized errors and logs a warning, rethrows all other
- * errors.
- *
- * @param error The error to handle.
- */
-export const swallowUnauthorized = (error: unknown): void => {
-  if (isUnauthorized(error)) {
-    log.warn("swallowing unauthorized error", { error });
-    return;
-  }
-  throw error;
-};
-
-/**
- * Loads the cookie from the session.
- *
- * @returns The cookie string or undefined if there is no session.
- */
-export const loadCookie = (): string | undefined => {
-  const token = readSession();
-  return token && `session=${encodeURIComponent(token)};`;
-};
-
-/**
- * Determines whether the given request options are for a Gadget
- * Services request.
- *
- * @param options - The request options to check.
- * @returns True if the request options are for a Gadget Services
- * request, false otherwise.
- */
-const isGadgetServicesRequest = (options: OptionsInit): boolean => {
-  return options.url instanceof URL && options.url.host === config.domains.services;
-};

@@ -2,6 +2,7 @@ import { GraphQLError } from "graphql";
 import { dedent } from "ts-dedent";
 import { describe, expect, it } from "vitest";
 import type { CloseEvent, ErrorEvent } from "ws";
+import type { GraphQLQuery } from "../../../src/services/app/edit-graphql.js";
 import {
   CLIError,
   EditGraphQLError,
@@ -52,13 +53,15 @@ describe("UnexpectedError", () => {
 });
 
 describe("EditGraphQLError", () => {
+  const query = "query { foo }" as GraphQLQuery;
+
   it("renders a GraphQL error correctly", () => {
-    const error = new EditGraphQLError("query { foo }", [new GraphQLError("Changed and deleted files must not overlap")]);
+    const error = new EditGraphQLError(query, [new GraphQLError("Changed and deleted files must not overlap")]);
     expect(error.render()).toMatchSnapshot();
   });
 
   it("renders multiple GraphQL errors correctly", () => {
-    const error = new EditGraphQLError("query { foo }", [
+    const error = new EditGraphQLError(query, [
       new GraphQLError("Changed and deleted files must not overlap"),
       new GraphQLError("Files version mismatch, expected 1 but got 2"),
     ]);
@@ -66,7 +69,7 @@ describe("EditGraphQLError", () => {
   });
 
   it("renders a CloseEvent correctly", () => {
-    const error = new EditGraphQLError("query { foo }", {
+    const error = new EditGraphQLError(query, {
       type: "close",
       code: 1000,
       reason: "Normal closure",
@@ -76,7 +79,7 @@ describe("EditGraphQLError", () => {
   });
 
   it("renders an ErrorEvent correctly", () => {
-    const error = new EditGraphQLError("query { foo }", {
+    const error = new EditGraphQLError(query, {
       type: "error",
       message: "connect ECONNREFUSED 10.254.254.254:3000",
       error: {
@@ -91,7 +94,7 @@ describe("EditGraphQLError", () => {
   });
 
   it("renders a string correctly", () => {
-    const error = new EditGraphQLError("query { foo }", "We received a response without data");
+    const error = new EditGraphQLError(query, "We received a response without data");
     expect(error.render()).toMatchSnapshot();
   });
 });

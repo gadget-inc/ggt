@@ -15,7 +15,8 @@ import {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit-graphql.js";
 import { Directory, swallowEnoent } from "../../src/services/filesync/directory.js";
-import { FileSync, type File } from "../../src/services/filesync/filesync.js";
+import type { File } from "../../src/services/filesync/file.js";
+import { FileSync } from "../../src/services/filesync/filesync.js";
 import { noop } from "../../src/services/util/function.js";
 import { defaults, omit } from "../../src/services/util/object.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";

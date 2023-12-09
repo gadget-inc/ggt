@@ -29,14 +29,7 @@ import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { Changes, printChanges } from "./changes.js";
 import { Directory, supportsPermissions, swallowEnoent } from "./directory.js";
-
-export type File = {
-  path: string;
-  oldPath?: string | null;
-  mode: number;
-  content: string;
-  encoding: FileSyncEncoding;
-};
+import type { File } from "./file.js";
 
 export enum Action {
   CANCEL = "Cancel (Ctrl+C)",

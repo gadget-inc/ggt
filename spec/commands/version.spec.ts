@@ -8,7 +8,7 @@ describe("version", () => {
   mockVersion();
 
   it("prints the version", async () => {
-    await command(new Context({ _: [] }));
+    await command(new Context());
 
     expectStdout().toEqual("1.2.3\n");
   });

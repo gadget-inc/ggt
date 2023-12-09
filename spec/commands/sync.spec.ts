@@ -6,9 +6,9 @@ import notifier from "node-notifier";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
 import { command as sync } from "../../src/commands/sync.js";
-import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
+import { EditGraphQLError, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
 import { Context } from "../../src/services/command/context.js";
-import { EditGraphQLError, YarnNotFoundError } from "../../src/services/error/error.js";
+import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { assetsPath } from "../../src/services/util/paths.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
@@ -25,23 +25,26 @@ describe("sync", () => {
     loginTestUser();
     nockTestApps();
 
-    ctx = new Context({
-      _: [
-        testDirPath("local"),
-        "--app",
-        testApp.slug,
-        "--file-push-delay",
-        ms("10ms" /* default 100ms */),
-        "--file-watch-debounce",
-        ms("300ms" /* default 300ms */),
-        "--file-watch-poll-interval",
-        ms("30ms" /* default 3_000ms */),
-        "--file-watch-poll-timeout",
-        ms("20ms" /* default 20_000ms */),
-        "--file-watch-rename-timeout",
-        ms("50ms" /* default 1_250ms */),
-      ].map(String),
-    });
+    process.argv = [
+      "node",
+      "ggt",
+      "sync",
+      testDirPath("local"),
+      "--app",
+      testApp.slug,
+      "--file-push-delay",
+      ms("10ms" /* default 100ms */),
+      "--file-watch-debounce",
+      ms("300ms" /* default 300ms */),
+      "--file-watch-poll-interval",
+      ms("30ms" /* default 3_000ms */),
+      "--file-watch-poll-timeout",
+      ms("20ms" /* default 20_000ms */),
+      "--file-watch-rename-timeout",
+      ms("50ms" /* default 1_250ms */),
+    ].map(String);
+
+    ctx = new Context();
   });
 
   afterEach(() => {

@@ -1,4 +1,3 @@
-import arg from "arg";
 import dayjs from "dayjs";
 import { execa } from "execa";
 import ms from "ms";
@@ -6,18 +5,18 @@ import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
 import { AppArg } from "../services/app/arg.js";
+import { parseArgs } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
-import { YarnNotFoundError } from "../services/error/error.js";
-import { reportErrorAndExit } from "../services/error/report.js";
 import { Changes } from "../services/filesync/changes.js";
+import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { notify } from "../services/output/notify.js";
+import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
 import { debounce } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
-import { defaults } from "../services/util/object.js";
 
 export const usage: Usage = () => sprint`
   Sync your Gadget application's source code to and from
@@ -89,27 +88,28 @@ export const usage: Usage = () => sprint`
       Goodbye!
 `;
 
-const argSpec = {
-  "-a": "--app",
-  "--app": AppArg,
-  "--force": Boolean,
-  "--file-push-delay": Number,
-  "--file-watch-debounce": Number,
-  "--file-watch-poll-interval": Number,
-  "--file-watch-poll-timeout": Number,
-  "--file-watch-rename-timeout": Number,
-};
-
 /**
  * Runs the sync process until it is stopped or an error occurs.
  */
 export const command: Command = async (ctx) => {
-  const args = defaults(arg(argSpec, { argv: ctx.rootArgs._ }), {
-    "--file-push-delay": 100,
-    "--file-watch-debounce": 300,
-    "--file-watch-poll-interval": 3_000,
-    "--file-watch-poll-timeout": 20_000,
-    "--file-watch-rename-timeout": 1_250,
+  const args = parseArgs({
+    args: {
+      "-a": "--app",
+      "--app": AppArg,
+      "--force": Boolean,
+      "--file-push-delay": Number,
+      "--file-watch-debounce": Number,
+      "--file-watch-poll-interval": Number,
+      "--file-watch-poll-timeout": Number,
+      "--file-watch-rename-timeout": Number,
+    },
+    defaults: {
+      "--file-push-delay": ms("100ms"),
+      "--file-watch-debounce": ms("300ms"),
+      "--file-watch-poll-interval": ms("3s"),
+      "--file-watch-poll-timeout": ms("20s"),
+      "--file-watch-rename-timeout": ms("1.25s"),
+    },
   });
 
   const filesync = await FileSync.init({

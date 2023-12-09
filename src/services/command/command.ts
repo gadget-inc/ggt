@@ -1,4 +1,3 @@
-import arg from "arg";
 import assert from "node:assert";
 import { pathToFileURL } from "node:url";
 import type { Promisable } from "type-fest";
@@ -32,16 +31,3 @@ export const importCommandModule = async (command: AvailableCommand): Promise<Co
   }
   return (await import(commandPath)) as CommandModule;
 };
-
-export const rootArgsSpec = {
-  "--help": Boolean,
-  "-h": "--help",
-  "--verbose": arg.COUNT,
-  "-v": "--verbose",
-  "--json": Boolean,
-
-  // deprecated
-  "--debug": "--verbose",
-};
-
-export type RootArgs = arg.Result<typeof rootArgsSpec>;

@@ -1,4 +1,4 @@
-import { ArgError } from "../error/error.js";
+import { ArgError } from "../command/arg.js";
 import { sprint } from "../output/sprint.js";
 
 /**

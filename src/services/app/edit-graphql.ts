@@ -1,10 +1,11 @@
+import type { GraphQLError } from "graphql";
 import type { ExecutionResult } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import assert from "node:assert";
 import type { ClientRequestArgs } from "node:http";
-import { dedent } from "ts-dedent";
+import pluralize from "pluralize";
 import type { JsonObject } from "type-fest";
-import type { CloseEvent } from "ws";
+import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
 import type {
   PublishFileSyncEventsMutation,
@@ -15,11 +16,15 @@ import type {
   RemoteFilesVersionQueryVariables,
 } from "../../__generated__/graphql.js";
 import { config } from "../config/config.js";
-import { EditGraphQLError } from "../error/error.js";
 import { loadCookie } from "../http/auth.js";
 import { http } from "../http/http.js";
 import { createLogger } from "../output/log/logger.js";
+import { CLIError, IsBug } from "../output/report.js";
+import { sprint } from "../output/sprint.js";
+import { uniq } from "../util/collection.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
+import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString } from "../util/is.js";
+import { serializeError } from "../util/object.js";
 import type { App } from "./app.js";
 
 enum ConnectionStatus {
@@ -257,6 +262,70 @@ export class EditGraphQL {
   }
 }
 
+export class EditGraphQLError extends CLIError {
+  isBug = IsBug.MAYBE;
+
+  override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent;
+
+  constructor(
+    readonly query: GraphQLQuery,
+    cause: unknown,
+  ) {
+    super("An error occurred while communicating with Gadget");
+
+    // ErrorEvent and CloseEvent aren't serializable, so we reconstruct
+    // them into an object. We discard the `target` property because
+    // it's large and not that useful
+    if (isErrorEvent(cause)) {
+      this.cause = {
+        type: cause.type,
+        message: cause.message,
+        error: serializeError(cause.error),
+      } as ErrorEvent;
+    } else if (isCloseEvent(cause)) {
+      this.cause = {
+        type: cause.type,
+        code: cause.code,
+        reason: cause.reason,
+        wasClean: cause.wasClean,
+      } as CloseEvent;
+    } else {
+      assert(
+        isString(cause) || isError(cause) || isGraphQLErrors(cause),
+        "cause must be a string, Error, GraphQLError[], CloseEvent, or ErrorEvent",
+      );
+      this.cause = cause;
+    }
+  }
+
+  override render(): string {
+    let body = "";
+
+    switch (true) {
+      case isGraphQLErrors(this.cause): {
+        const errors = uniq(this.cause.map((x) => x.message));
+        body = sprint`
+          Gadget responded with the following ${pluralize("error", errors.length, false)}:
+
+            • ${errors.join("\n            • ")}
+        `;
+        break;
+      }
+      case isCloseEvent(this.cause):
+        body = "The connection to Gadget closed unexpectedly.";
+        break;
+      case isErrorEvent(this.cause) || isError(this.cause):
+        body = this.cause.message;
+        break;
+      default:
+        body = this.cause;
+        break;
+    }
+
+    return this.message + "\n\n" + body;
+  }
+}
+
 /**
  * A GraphQL query with its associated types.
  *
@@ -274,7 +343,7 @@ export type GraphQLQuery<
   Result: Result;
 };
 
-export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
+export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = sprint(/* GraphQL */ `
   subscription RemoteFileSyncEvents($localFilesVersion: String!) {
     remoteFileSyncEvents(localFilesVersion: $localFilesVersion, encoding: base64) {
       remoteFilesVersion
@@ -293,7 +362,7 @@ export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = dedent(/* GraphQL */ `
 
 export type REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = typeof REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION;
 
-export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
+export const REMOTE_FILES_VERSION_QUERY = sprint(/* GraphQL */ `
   query RemoteFilesVersion {
     remoteFilesVersion
   }
@@ -301,7 +370,7 @@ export const REMOTE_FILES_VERSION_QUERY = dedent(/* GraphQL */ `
 
 export type REMOTE_FILES_VERSION_QUERY = typeof REMOTE_FILES_VERSION_QUERY;
 
-export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = dedent(/* GraphQL */ `
+export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = sprint(/* GraphQL */ `
   mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
     publishFileSyncEvents(input: $input) {
       remoteFilesVersion

@@ -1,15 +1,30 @@
+import arg from "arg";
 import assert from "node:assert";
 import { createLogger } from "../output/log/logger.js";
 import type { AnyVoid } from "../util/function.js";
 import { isFunction } from "../util/is.js";
-import type { RootArgs } from "./command.js";
+import { parseArgs } from "./arg.js";
 
 export class Context extends AbortController {
   log = createLogger({ name: "context" });
 
-  constructor(public readonly rootArgs: RootArgs) {
-    super();
-  }
+  args = parseArgs({
+    args: {
+      "--help": Boolean,
+      "-h": "--help",
+      "--verbose": arg.COUNT,
+      "-v": "--verbose",
+      "--json": Boolean,
+
+      // deprecated
+      "--debug": "--verbose",
+    },
+    options: {
+      argv: process.argv.slice(2),
+      permissive: true,
+      stopAtPositional: false,
+    },
+  });
 
   onAbort(callback: OnAbort): void;
   onAbort(options: { once?: boolean }, callback: OnAbort): void;

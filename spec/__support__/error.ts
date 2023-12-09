@@ -1,6 +1,6 @@
 import { expect } from "vitest";
 import { spyOnImplementing } from "vitest-mock-process";
-import * as report from "../../src/services/error/report.js";
+import * as report from "../../src/services/output/report.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 
 /**

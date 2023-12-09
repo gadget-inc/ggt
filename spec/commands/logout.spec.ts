@@ -8,7 +8,7 @@ describe("logout", () => {
   let ctx: Context;
 
   beforeEach(() => {
-    ctx = new Context({ _: [] });
+    ctx = new Context();
   });
 
   it("deletes the session from disk", async () => {

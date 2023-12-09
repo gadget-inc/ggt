@@ -1,10 +1,9 @@
-import arg from "arg";
 import ms from "ms";
-import { AvailableCommands, importCommandModule, isAvailableCommand, rootArgsSpec, type Usage } from "../services/command/command.js";
+import { AvailableCommands, importCommandModule, isAvailableCommand, type Usage } from "../services/command/command.js";
 import { Context } from "../services/command/context.js";
-import { reportErrorAndExit } from "../services/error/report.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { createLogger } from "../services/output/log/logger.js";
+import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
 import { warnIfUpdateAvailable } from "../services/output/update.js";
 import { sortBySimilar } from "../services/util/collection.js";
@@ -35,23 +34,19 @@ export const usage: Usage = () => sprint`
 `;
 
 export const command = async (): Promise<void> => {
+  const ctx = new Context();
+
   await warnIfUpdateAvailable();
 
-  const rootArgs = arg(rootArgsSpec, {
-    argv: process.argv.slice(2),
-    permissive: true,
-    stopAtPositional: false,
-  });
-
-  if (rootArgs["--json"]) {
+  if (ctx.args["--json"]) {
     process.env["GGT_LOG_FORMAT"] = "json";
   }
 
-  if (rootArgs["--verbose"]) {
-    process.env["GGT_LOG_LEVEL"] = verbosityToLevel(rootArgs["--verbose"]).toString();
+  if (ctx.args["--verbose"]) {
+    process.env["GGT_LOG_LEVEL"] = verbosityToLevel(ctx.args["--verbose"]).toString();
   }
 
-  const command = rootArgs._.shift();
+  const command = ctx.args._.shift();
   if (isNil(command)) {
     log.println(usage());
     process.exit(0);
@@ -71,12 +66,10 @@ export const command = async (): Promise<void> => {
 
   const commandModule = await importCommandModule(command);
 
-  if (rootArgs["--help"]) {
+  if (ctx.args["--help"]) {
     log.println(commandModule.usage());
     process.exit(0);
   }
-
-  const ctx = new Context(rootArgs);
 
   try {
     await commandModule.command(ctx);

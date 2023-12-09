@@ -2,11 +2,11 @@ import assert from "node:assert";
 import z from "zod";
 import { login } from "../../commands/login.js";
 import { config } from "../config/config.js";
-import { setUser } from "../error/report.js";
 import { loadCookie, swallowUnauthorized } from "../http/auth.js";
 import { http } from "../http/http.js";
 import { createLogger } from "../output/log/logger.js";
 import { confirm } from "../output/prompt.js";
+import { setUser } from "../output/report.js";
 import { pick } from "../util/object.js";
 
 const log = createLogger({ name: "user" });

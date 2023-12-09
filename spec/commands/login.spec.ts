@@ -22,7 +22,7 @@ describe("login", () => {
   let openedBrowser: PromiseSignal;
 
   beforeEach(async () => {
-    ctx = new Context({ _: [] });
+    ctx = new Context();
     port = await getPort();
     serverListening = new PromiseSignal();
     serverClosed = new PromiseSignal();

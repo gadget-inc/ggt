@@ -8,7 +8,7 @@ describe("whoami", () => {
   let ctx: Context;
 
   beforeEach(() => {
-    ctx = new Context({ _: [] });
+    ctx = new Context();
   });
 
   it("outputs the current user", async () => {

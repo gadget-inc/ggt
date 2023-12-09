@@ -1,12 +1,12 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`AppArg > rejects ~ 1`] = `
-"app must be the application's slug or URL
+"--app must be the application's slug or URL
 
 EXAMPLES:
-  app my-app
-  app my-app.gadget.app
-  app https://my-app.gadget.app
-  app https://my-app.gadget.app/edit
-  app https://my-app--development.gadget.app/edit"
+  --app my-app
+  --app my-app.gadget.app
+  --app https://my-app.gadget.app
+  --app https://my-app.gadget.app/edit
+  --app https://my-app--development.gadget.app/edit"
 `;

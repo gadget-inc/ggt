@@ -19,8 +19,8 @@ import {
   REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit-graphql.js";
+import { ArgError } from "../command/arg.js";
 import { config, homePath } from "../config/config.js";
-import { ArgError, InvalidSyncFileError } from "../error/error.js";
 import { createLogger } from "../output/log/logger.js";
 import { select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
@@ -29,6 +29,7 @@ import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { Changes, printChanges } from "./changes.js";
 import { Directory, supportsPermissions, swallowEnoent } from "./directory.js";
+import { InvalidSyncFileError } from "./error.js";
 import type { File } from "./file.js";
 
 export enum Action {

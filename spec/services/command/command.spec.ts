@@ -1,24 +1,24 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { AvailableCommands, importCommandModule, type CommandModule } from "../../../src/services/command/command.js";
+import { AvailableCommands, importCommand, type CommandSpec } from "../../../src/services/command/command.js";
 import { mockVersion } from "../../__support__/version.js";
 
 describe.each(AvailableCommands)("%s", (command) => {
   mockVersion();
 
-  let mod: CommandModule;
+  let cmd: CommandSpec;
 
   beforeAll(async () => {
-    mod = await importCommandModule(command);
+    cmd = await importCommand(command);
   });
 
   it("has a usage", () => {
-    expect(mod.usage).toBeDefined();
-    expect(mod.usage).toBeInstanceOf(Function);
-    expect(mod.usage()).toMatchSnapshot();
+    expect(cmd.usage).toBeDefined();
+    expect(cmd.usage).toBeInstanceOf(Function);
+    expect(cmd.usage()).toMatchSnapshot();
   });
 
   it("has a command", () => {
-    expect(mod.command).toBeDefined();
-    expect(mod.command).toBeInstanceOf(Function);
+    expect(cmd.command).toBeDefined();
+    expect(cmd.command).toBeInstanceOf(Function);
   });
 });

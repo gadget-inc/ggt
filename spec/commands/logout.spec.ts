@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { command } from "../../src/commands/logout.js";
-import { Context } from "../../src/services/command/context.js";
+import { type Context } from "../../src/services/command/context.js";
 import { readSession, writeSession } from "../../src/services/user/session.js";
+import { makeContext } from "../__support__/context.js";
 import { expectStdout } from "../__support__/stream.js";
 
 describe("logout", () => {
   let ctx: Context;
 
   beforeEach(() => {
-    ctx = new Context();
+    ctx = makeContext();
   });
 
   it("deletes the session from disk", async () => {

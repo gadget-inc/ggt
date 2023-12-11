@@ -5,13 +5,14 @@ import nock from "nock";
 import notifier from "node-notifier";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
-import { command as sync } from "../../src/commands/sync.js";
+import { args, command as sync } from "../../src/commands/sync.js";
 import { EditGraphQLError, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
-import { Context } from "../../src/services/command/context.js";
+import { type Context } from "../../src/services/command/context.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { assetsPath } from "../../src/services/util/paths.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
+import { makeContext } from "../__support__/context.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
 import { makeFile, makeSyncScenario } from "../__support__/filesync.js";
 import { testDirPath } from "../__support__/paths.js";
@@ -19,7 +20,7 @@ import { sleep, timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("sync", () => {
-  let ctx: Context;
+  let ctx: Context<typeof args>;
 
   beforeEach(() => {
     loginTestUser();
@@ -44,7 +45,7 @@ describe("sync", () => {
       ms("50ms" /* default 1_250ms */),
     ].map(String);
 
-    ctx = new Context();
+    ctx = makeContext(args);
   });
 
   afterEach(() => {

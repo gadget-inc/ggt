@@ -1,23 +1,54 @@
 import arg from "arg";
+import type { Simplify } from "type-fest";
 import { CLIError, IsBug, UnexpectedError } from "../output/report.js";
-import { defaults as withDefaults } from "../util/object.js";
+import { isNil } from "../util/is.js";
 
-export const parseArgs = <Spec extends arg.Spec, Args extends arg.Result<Spec>, Defaults extends Partial<Args>>({
-  args,
-  defaults,
-  options,
-}: {
-  args: Spec;
-  defaults?: Defaults;
-  options?: arg.Options;
-}): Defaults & Args => {
+export type ArgsSpec = Record<string, ArgDefinition>;
+
+type ArgDefinition<Handler extends arg.Handler = arg.Handler> =
+  | Handler
+  | {
+      type: Handler;
+      alias?: string | string[];
+      default?: ReturnType<Handler>;
+    };
+
+export const parseArgs = <Args extends ArgsSpec>(args: Args, options?: arg.Options): ArgsSpecResult<Args> => {
+  const realSpec: arg.Spec = {};
+  const defaultValues: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(args)) {
+    if (!("type" in value)) {
+      realSpec[key] = value;
+      continue;
+    }
+
+    realSpec[key] = value.type;
+    defaultValues[key] = value.default;
+
+    if (value.alias) {
+      for (const alias of Array.isArray(value.alias) ? value.alias : [value.alias]) {
+        realSpec[alias] = key;
+      }
+    }
+  }
+
   try {
-    const parsed = arg(args, options);
-    return withDefaults(parsed, defaults ?? {}) as Defaults & Args;
+    const parsed = arg(realSpec, options);
+    for (const [key, value] of Object.entries(defaultValues)) {
+      if (isNil(parsed[key])) {
+        parsed[key] = value as never;
+      }
+    }
+    return parsed as ArgsSpecResult<Args>;
   } catch (error: unknown) {
     if (error instanceof arg.ArgError) {
       // convert arg.ArgError to CLIError
-      throw new ArgError(error.message);
+      // eslint-disable-next-line no-ex-assign
+      error = new ArgError(error.message);
+    }
+    if (error instanceof CLIError) {
+      throw error;
     }
     throw new UnexpectedError(error);
   }
@@ -30,3 +61,11 @@ export class ArgError extends CLIError {
     return this.message;
   }
 }
+
+export type ArgsSpecResult<Spec extends ArgsSpec, Args extends keyof Spec = keyof Spec> = Simplify<{
+  [Arg in Args]: Spec[Arg] extends ArgDefinition<infer Handler>
+    ? Spec[Arg] extends { default: unknown }
+      ? NonNullable<ReturnType<Handler>>
+      : ReturnType<Handler> | undefined
+    : never;
+}> & { _: string[] };

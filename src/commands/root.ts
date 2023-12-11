@@ -1,5 +1,7 @@
+import arg from "arg";
 import ms from "ms";
-import { AvailableCommands, importCommandModule, isAvailableCommand, type Usage } from "../services/command/command.js";
+import type { ArgsSpec } from "../services/command/arg.js";
+import { AvailableCommands, importCommand, isAvailableCommand, type Usage } from "../services/command/command.js";
 import { Context } from "../services/command/context.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { createLogger } from "../services/output/log/logger.js";
@@ -11,7 +13,7 @@ import { isNil } from "../services/util/is.js";
 
 const log = createLogger({ name: "root" });
 
-export const usage: Usage = () => sprint`
+export const rootUsage: Usage = () => sprint`
     The command-line interface for Gadget
 
     {bold USAGE}
@@ -33,8 +35,22 @@ export const usage: Usage = () => sprint`
     For more information on a specific command, use 'ggt [COMMAND] --help'
 `;
 
+export const rootArgs = {
+  "--help": {
+    type: Boolean,
+    alias: "-h",
+  },
+  "--verbose": {
+    type: arg.COUNT,
+    alias: ["-v", "--debug"],
+  },
+  "--json": {
+    type: Boolean,
+  },
+} satisfies ArgsSpec;
+
 export const command = async (): Promise<void> => {
-  const ctx = new Context();
+  const ctx = new Context(rootArgs, { argv: process.argv.slice(2), permissive: true });
 
   await warnIfUpdateAvailable();
 
@@ -46,16 +62,16 @@ export const command = async (): Promise<void> => {
     process.env["GGT_LOG_LEVEL"] = verbosityToLevel(ctx.args["--verbose"]).toString();
   }
 
-  const command = ctx.args._.shift();
-  if (isNil(command)) {
-    log.println(usage());
+  const cmd = ctx.args._.shift();
+  if (isNil(cmd)) {
+    log.println(rootUsage());
     process.exit(0);
   }
 
-  if (!isAvailableCommand(command)) {
-    const [closest] = sortBySimilar(command, AvailableCommands);
+  if (!isAvailableCommand(cmd)) {
+    const [closest] = sortBySimilar(cmd, AvailableCommands);
     log.println`
-      Unknown command {yellow ${command}}
+      Unknown command {yellow ${cmd}}
 
       Did you mean {blueBright ${closest}}?
 
@@ -64,15 +80,15 @@ export const command = async (): Promise<void> => {
     process.exit(1);
   }
 
-  const commandModule = await importCommandModule(command);
+  const { usage, command, args } = await importCommand(cmd);
 
   if (ctx.args["--help"]) {
-    log.println(commandModule.usage());
+    log.println(usage());
     process.exit(0);
   }
 
   try {
-    await commandModule.command(ctx);
+    await command(ctx.extend({ args, logName: cmd }));
   } catch (error) {
     await reportErrorAndExit(error);
   }

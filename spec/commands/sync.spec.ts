@@ -390,13 +390,12 @@ describe("sync", () => {
       }
     `);
 
-    // move a file
-    await fs.move(localDir.absolute("file.txt"), localDir.absolute("renamed-file.txt"));
+    // rename a file
+    await fs.rename(localDir.absolute("file.txt"), localDir.absolute("renamed-file.txt"));
     await waitUntilGadgetFilesVersion(4n);
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "file.txt": "file v3",
         "renamed-file.txt": "file v3",
       }
     `);
@@ -407,7 +406,6 @@ describe("sync", () => {
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "file.txt": "file v3",
       }
     `);
 
@@ -418,18 +416,15 @@ describe("sync", () => {
       {
         ".gadget/": "",
         "directory/": "",
-        "file.txt": "file v3",
       }
     `);
 
     // rename a directory
-    await fs.move(localDir.absolute("directory"), localDir.absolute("renamed-directory"));
+    await fs.rename(localDir.absolute("directory"), localDir.absolute("renamed-directory"));
     await waitUntilGadgetFilesVersion(7n);
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "directory/": "",
-        "file.txt": "file v3",
         "renamed-directory/": "",
       }
     `);
@@ -440,8 +435,6 @@ describe("sync", () => {
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "directory/": "",
-        "file.txt": "file v3",
       }
     `);
 
@@ -458,8 +451,6 @@ describe("sync", () => {
     await expectGadgetDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
-        "directory/": "",
-        "file.txt": "file v3",
         "file1.txt": "file1.txt",
         "file10.txt": "file10.txt",
         "file2.txt": "file2.txt",

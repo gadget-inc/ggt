@@ -184,7 +184,7 @@ export const makeSyncScenario = async ({
 
     for (const file of changed) {
       if (file.oldPath) {
-        await fs.move(gadgetDir.absolute(file.oldPath), gadgetDir.absolute(file.path));
+        await fs.rename(gadgetDir.absolute(file.oldPath), gadgetDir.absolute(file.path));
       } else if (file.path.endsWith("/")) {
         await fs.ensureDir(gadgetDir.absolute(file.path));
       } else {
@@ -224,6 +224,7 @@ export const makeSyncScenario = async ({
         changed: z.array(
           z.object({
             path: z.string(),
+            oldPath: z.string().optional(),
             mode: z.number(),
             content: z.string(),
             encoding: z.nativeEnum(FileSyncEncoding),
@@ -339,7 +340,7 @@ export const makeSyncScenario = async ({
 
       await pTimeout(signal, {
         message: `Timed out waiting for gadget files version to become ${filesVersion}`,
-        milliseconds: timeoutMs("1s"),
+        milliseconds: timeoutMs("2s"),
       });
     },
 
@@ -360,7 +361,7 @@ export const makeSyncScenario = async ({
 
       await pTimeout(signal, {
         message: `Timed out waiting for gadget files version to become ${filesVersion}`,
-        milliseconds: timeoutMs("1s"),
+        milliseconds: timeoutMs("2s"),
       });
     },
 

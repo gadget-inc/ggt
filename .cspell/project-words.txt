@@ -25,6 +25,7 @@ Promisable
 sourcemaps
 sprintln
 sprintlns
+SWCRC
 typecheck
 unthunk
 usagestop

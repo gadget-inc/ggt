@@ -1,47 +1,40 @@
-import arg from "arg";
+/* eslint-disable @typescript-eslint/consistent-type-imports */
 import assert from "node:assert";
 import { pathToFileURL } from "node:url";
 import type { Promisable } from "type-fest";
+import type { rootArgs } from "../../commands/root.js";
 import { config } from "../config/config.js";
 import { relativeToThisFile } from "../util/paths.js";
+import type { ArgsSpec } from "./arg.js";
 import type { Context } from "./context.js";
-
-export type Usage = () => string;
-
-export type Command = (ctx: Context) => Promisable<void>;
-
-export type CommandModule = {
-  usage: Usage;
-  command: Command;
-};
 
 export const AvailableCommands = ["sync", "list", "login", "logout", "whoami", "version"] as const;
 
-type AvailableCommand = (typeof AvailableCommands)[number];
+export type AvailableCommand = (typeof AvailableCommands)[number];
 
-export const isAvailableCommand = (value: unknown): value is AvailableCommand => {
-  return AvailableCommands.includes(value as AvailableCommand);
+export const isAvailableCommand = (command: string): command is AvailableCommand => {
+  return AvailableCommands.includes(command as AvailableCommand);
 };
 
-export const importCommandModule = async (command: AvailableCommand): Promise<CommandModule> => {
-  assert(isAvailableCommand(command), `invalid command: ${command}`);
-  let commandPath = relativeToThisFile(`../../commands/${command}.js`);
+export const importCommand = async (cmd: AvailableCommand): Promise<CommandSpec> => {
+  assert(isAvailableCommand(cmd), `invalid command: ${cmd}`);
+  let commandPath = relativeToThisFile(`../../commands/${cmd}.js`);
   if (config.windows) {
     // https://github.com/nodejs/node/issues/31710
     commandPath = pathToFileURL(commandPath).toString();
   }
-  return (await import(commandPath)) as CommandModule;
+  return (await import(commandPath)) as CommandSpec;
 };
 
-export const rootArgsSpec = {
-  "--help": Boolean,
-  "-h": "--help",
-  "--verbose": arg.COUNT,
-  "-v": "--verbose",
-  "--json": Boolean,
-
-  // deprecated
-  "--debug": "--verbose",
+export type CommandSpec<Args extends ArgsSpec = ArgsSpec, ParentArgsSpec extends ArgsSpec = typeof rootArgs> = {
+  args?: Args;
+  usage: () => string;
+  command: (ctx: Context<Args, ParentArgsSpec>) => Promisable<void>;
 };
 
-export type RootArgs = arg.Result<typeof rootArgsSpec>;
+export type Command<Spec extends ArgsSpec = ArgsSpec, ParentSpec extends ArgsSpec = typeof rootArgs> = CommandSpec<
+  Spec,
+  ParentSpec
+>["command"];
+
+export type Usage = CommandSpec["usage"];

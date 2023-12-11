@@ -1,4 +1,3 @@
-import arg from "arg";
 import dayjs from "dayjs";
 import { execa } from "execa";
 import ms from "ms";
@@ -6,18 +5,18 @@ import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
 import { AppArg } from "../services/app/arg.js";
+import type { ArgsSpec } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
-import { YarnNotFoundError } from "../services/error/error.js";
-import { reportErrorAndExit } from "../services/error/report.js";
 import { Changes } from "../services/filesync/changes.js";
+import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { notify } from "../services/output/notify.js";
+import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
 import { debounce } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
-import { defaults } from "../services/util/object.js";
 
 export const usage: Usage = () => sprint`
   Sync your Gadget application's source code to and from
@@ -89,39 +88,28 @@ export const usage: Usage = () => sprint`
       Goodbye!
 `;
 
-const argSpec = {
-  "-a": "--app",
-  "--app": AppArg,
+export const args = {
+  "--app": { type: AppArg, alias: "-a" },
   "--force": Boolean,
-  "--file-push-delay": Number,
-  "--file-watch-debounce": Number,
-  "--file-watch-poll-interval": Number,
-  "--file-watch-poll-timeout": Number,
-  "--file-watch-rename-timeout": Number,
-};
+  "--file-push-delay": { type: Number, default: ms("100ms") },
+  "--file-watch-debounce": { type: Number, default: ms("300ms") },
+  "--file-watch-poll-interval": { type: Number, default: ms("3s") },
+  "--file-watch-poll-timeout": { type: Number, default: ms("20s") },
+  "--file-watch-rename-timeout": { type: Number, default: ms("1.25s") },
+} satisfies ArgsSpec;
 
 /**
  * Runs the sync process until it is stopped or an error occurs.
  */
-export const command: Command = async (ctx) => {
-  const args = defaults(arg(argSpec, { argv: ctx.rootArgs._ }), {
-    "--file-push-delay": 100,
-    "--file-watch-debounce": 300,
-    "--file-watch-poll-interval": 3_000,
-    "--file-watch-poll-timeout": 20_000,
-    "--file-watch-rename-timeout": 1_250,
-  });
-
+export const command: Command<typeof args> = async (ctx) => {
   const filesync = await FileSync.init({
     user: await getUserOrLogin(),
-    dir: args._[0],
-    app: args["--app"],
-    force: args["--force"],
+    dir: ctx.args._[0],
+    app: ctx.args["--app"],
+    force: ctx.args["--force"],
   });
 
   await filesync.sync();
-
-  const log = filesync.log.extend("sync");
 
   if (!which.sync("yarn", { nothrow: true })) {
     throw new YarnNotFoundError();
@@ -166,7 +154,7 @@ export const command: Command = async (ctx) => {
     afterChanges: async ({ changes }) => {
       if (changes.has("yarn.lock")) {
         await execa("yarn", ["install", "--check-files"], { cwd: filesync.directory.path }).catch((error) => {
-          log.error("yarn install failed", { error });
+          ctx.log.error("yarn install failed", { error });
         });
       }
     },
@@ -180,11 +168,13 @@ export const command: Command = async (ctx) => {
   /**
    * A debounced function that sends the local file changes to Gadget.
    */
-  const sendChangesToGadget = debounce(args["--file-push-delay"], () => {
+  const sendChangesToGadget = debounce(ctx.args["--file-push-delay"], () => {
     const changes = new Changes(localChangesBuffer.entries());
     localChangesBuffer.clear();
     filesync.sendChangesToGadget({ changes }).catch((error) => ctx.abort(error));
   });
+
+  ctx.log.debug("watching", { path: filesync.directory.path });
 
   /**
    * Watches the local filesystem for changes.
@@ -198,17 +188,17 @@ export const command: Command = async (ctx) => {
       ignore: (path: string) => filesync.directory.relative(path).startsWith(".gadget") || filesync.directory.ignores(path),
       renameDetection: true,
       recursive: true,
-      debounce: args["--file-watch-debounce"],
-      pollingInterval: args["--file-watch-poll-interval"],
-      pollingTimeout: args["--file-watch-poll-timeout"],
-      renameTimeout: args["--file-watch-rename-timeout"],
+      debounce: ctx.args["--file-watch-debounce"],
+      pollingInterval: ctx.args["--file-watch-poll-interval"],
+      pollingTimeout: ctx.args["--file-watch-poll-timeout"],
+      renameTimeout: ctx.args["--file-watch-rename-timeout"],
     },
     (event: string, absolutePath: string, renamedPath: string) => {
       const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
       const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
       const normalizedPath = filesync.directory.normalize(filepath, isDirectory);
 
-      log.trace("file event", { event, isDirectory, path: normalizedPath });
+      ctx.log.trace("file event", { event, isDirectory, path: normalizedPath });
 
       if (filepath === filesync.directory.absolute(".ignore")) {
         filesync.directory.loadIgnoreFile().catch((error) => ctx.abort(error));
@@ -217,7 +207,7 @@ export const command: Command = async (ctx) => {
       }
 
       if (recentWritesToLocalFilesystem.delete(normalizedPath)) {
-        log.trace("ignoring event because we caused it", { event, path: normalizedPath });
+        ctx.log.trace("ignoring event because we caused it", { event, path: normalizedPath });
         return;
       }
 
@@ -247,7 +237,7 @@ export const command: Command = async (ctx) => {
     },
   ).once("error", (error) => ctx.abort(error));
 
-  log.printlns`
+  ctx.log.printlns`
     ggt v${config.version}
 
     App         ${filesync.app.slug}
@@ -268,7 +258,7 @@ export const command: Command = async (ctx) => {
   `;
 
   ctx.onAbort(async (reason) => {
-    log.info("stopping", { reason });
+    ctx.log.info("stopping", { reason });
 
     unsubscribeFromGadgetChanges();
     fileWatcher.close();
@@ -278,11 +268,11 @@ export const command: Command = async (ctx) => {
     try {
       await filesync.idle();
     } catch (error) {
-      log.error("error while waiting for idle", { error });
+      ctx.log.error("error while waiting for idle", { error });
     }
 
     if (isAbortError(reason)) {
-      log.printlns("Goodbye!");
+      ctx.log.printlns("Goodbye!");
       return;
     }
 

@@ -5,9 +5,10 @@ import { z } from "zod";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import * as app from "../../../src/services/app/app.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, REMOTE_FILES_VERSION_QUERY } from "../../../src/services/app/edit-graphql.js";
-import { ArgError, InvalidSyncFileError } from "../../../src/services/error/error.js";
+import { ArgError } from "../../../src/services/command/arg.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
+import { InvalidSyncFileError } from "../../../src/services/filesync/error.js";
 import { Action, FileSync } from "../../../src/services/filesync/filesync.js";
 import * as prompt from "../../../src/services/output/prompt.js";
 import { testApp } from "../../__support__/app.js";
@@ -110,10 +111,10 @@ describe("FileSync.init", () => {
 
     expect(error).toBeInstanceOf(ArgError);
     expect(error.message).toMatchInlineSnapshot(`
-            "You (test@example.com) don't have have any Gadget applications.
+      "You (test@example.com) don't have have any Gadget applications.
 
-            Visit https://gadget.new to create one!"
-          `);
+      Visit https://gadget.new to create one!"
+    `);
   });
 
   it("throws ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json", async () => {

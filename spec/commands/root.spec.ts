@@ -4,7 +4,7 @@ import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest"
 import { spyOnImplementing } from "vitest-mock-process";
 import { command as root } from "../../src/commands/root.js";
 import * as command from "../../src/services/command/command.js";
-import { importCommandModule, type CommandModule } from "../../src/services/command/command.js";
+import { importCommand, type CommandSpec } from "../../src/services/command/command.js";
 import { config } from "../../src/services/config/config.js";
 import { Level } from "../../src/services/output/log/level.js";
 import * as update from "../../src/services/output/update.js";
@@ -108,7 +108,7 @@ describe("root", () => {
     const aborted = new PromiseSignal();
 
     vi.spyOn(command, "isAvailableCommand").mockReturnValueOnce(true);
-    vi.spyOn(command, "importCommandModule").mockResolvedValueOnce({
+    vi.spyOn(command, "importCommand").mockResolvedValueOnce({
       usage: () => "abort test",
       command: (ctx) => {
         ctx.signal.addEventListener("abort", (reason) => {
@@ -138,11 +138,11 @@ describe("root", () => {
   });
 
   describe.each(command.AvailableCommands)("when %s is given", (name) => {
-    let mod: CommandModule;
+    let cmd: CommandSpec;
 
     beforeEach(async () => {
-      mod = await importCommandModule(name);
-      vi.spyOn(mod, "command").mockImplementation(noop);
+      cmd = await importCommand(name);
+      vi.spyOn(cmd, "command").mockImplementation(noop);
     });
 
     it.each(["--help", "-h"])("prints the usage when %s is passed", async (flag) => {
@@ -150,7 +150,7 @@ describe("root", () => {
 
       await expectProcessExit(root);
 
-      expectStdout().toEqual(mod.usage() + "\n");
+      expectStdout().toEqual(cmd.usage() + "\n");
     });
 
     it("runs the command", async () => {
@@ -158,19 +158,19 @@ describe("root", () => {
 
       await root();
 
-      expect(mod.command).toHaveBeenCalled();
+      expect(cmd.command).toHaveBeenCalled();
     });
 
     it("reports and exits if an error occurs", async () => {
       const error = new Error("boom!");
-      vi.spyOn(mod, "command").mockRejectedValueOnce(error);
+      vi.spyOn(cmd, "command").mockRejectedValueOnce(error);
 
       process.argv = ["node", "ggt", name];
 
       void root();
       await expectReportErrorAndExit(error);
 
-      expect(mod.command).toHaveBeenCalled();
+      expect(cmd.command).toHaveBeenCalled();
     });
   });
 });

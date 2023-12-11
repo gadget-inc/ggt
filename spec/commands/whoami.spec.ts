@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { command } from "../../src/commands/whoami.js";
-import { Context } from "../../src/services/command/context.js";
+import { type Context } from "../../src/services/command/context.js";
 import * as user from "../../src/services/user/user.js";
+import { makeContext } from "../__support__/context.js";
 import { expectStdout } from "../__support__/stream.js";
 
 describe("whoami", () => {
   let ctx: Context;
 
   beforeEach(() => {
-    ctx = new Context({ _: [] });
+    ctx = makeContext();
   });
 
   it("outputs the current user", async () => {

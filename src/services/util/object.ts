@@ -94,7 +94,7 @@ export const serializeError = (error: unknown): ErrorObject => {
   }
 
   if (serialized.stack) {
-    serialized.stack = cleanStack(serialized.stack, { pretty: true, basePath: workspaceRoot });
+    serialized.stack = cleanStack(serialized.stack, { pretty: true, basePath: workspaceRoot }).replaceAll(/file:\/\/\//g, "");
   }
 
   if (error instanceof RequestError) {

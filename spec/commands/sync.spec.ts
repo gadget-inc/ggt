@@ -506,8 +506,8 @@ describe("sync", () => {
     // update a file
     await fs.outputFile(localDir.absolute("tmp/file.js"), "foo v2");
 
-    // move a file
-    await fs.move(localDir.absolute("tmp/file.js"), localDir.absolute("tmp/renamed-file.js"));
+    // rename a file
+    await fs.rename(localDir.absolute("tmp/file.js"), localDir.absolute("tmp/renamed-file.js"));
 
     // delete a file
     await fs.remove(localDir.absolute("tmp/renamed-file.js"));
@@ -516,7 +516,7 @@ describe("sync", () => {
     await fs.mkdir(localDir.absolute("tmp/directory"));
 
     // rename a directory
-    await fs.move(localDir.absolute("tmp/directory"), localDir.absolute("tmp/renamed-directory"));
+    await fs.rename(localDir.absolute("tmp/directory"), localDir.absolute("tmp/renamed-directory"));
 
     // delete a directory
     await fs.remove(localDir.absolute("tmp/renamed-directory"));

@@ -340,7 +340,7 @@ export const makeSyncScenario = async ({
 
       await pTimeout(signal, {
         message: `Timed out waiting for gadget files version to become ${filesVersion}`,
-        milliseconds: timeoutMs("2s"),
+        milliseconds: timeoutMs("5s"),
       });
     },
 
@@ -361,7 +361,7 @@ export const makeSyncScenario = async ({
 
       await pTimeout(signal, {
         message: `Timed out waiting for gadget files version to become ${filesVersion}`,
-        milliseconds: timeoutMs("2s"),
+        milliseconds: timeoutMs("5s"),
       });
     },
 

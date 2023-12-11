@@ -2,8 +2,7 @@ import arg from "arg";
 import boxen from "boxen";
 import chalk from "chalk";
 import ora from "ora";
-import { importCommandModule, type Command, type Usage } from "src/services/command/command.js";
-import { Context } from "src/services/command/context.js";
+import { type Command, type Usage } from "src/services/command/command.js";
 import { isEqualHashes } from "src/services/filesync/hashes.js";
 import { AppArg } from "../../src/services/app/arg.js";
 import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
@@ -186,12 +185,7 @@ export const command: Command = async (ctx, firstRun = true) => {
 
     switch (action) {
       case "SYNC_ONCE": {
-        const syncCommandModule = await importCommandModule("sync");
-
-        // deep copy the original ctx here so that there is no shared references for nested objects
-        const newContext = new Context(JSON.parse(JSON.stringify(ctx.rootArgs)));
-        newContext.rootArgs._.push("--once");
-        await syncCommandModule.command(newContext);
+        await filesync.sync();
 
         break;
       }
@@ -200,9 +194,6 @@ export const command: Command = async (ctx, firstRun = true) => {
       }
     }
   }
-
-  // check if the local and remote files are up to date and prompt them how to handle if not
-  await filesync.sync();
 
   // subscribes to the graphql subscription that will listen and send back the server contract status
   const unsubscribe = filesync.editGraphQL.subscribe({
@@ -226,7 +217,7 @@ export const command: Command = async (ctx, firstRun = true) => {
             ${""}
             ${chalk.red("Detected a sync already in progress. Please try again later.")}
             `);
-        return;
+        process.exit(0);
       }
 
       const hasIssues =
@@ -280,7 +271,7 @@ export const command: Command = async (ctx, firstRun = true) => {
           spinner.succeed("DONE");
           log.println("");
           log.println(`Deploy completed. Good bye!`);
-          return;
+          process.exit(0);
         }
 
         const currentProgress = AppDeploymentStepsToAppDeployState(progress);

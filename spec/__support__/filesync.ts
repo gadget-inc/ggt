@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import assert from "node:assert";
 import os from "node:os";
+import pTimeout from "p-timeout";
 import { expect, vi, type Assertion } from "vitest";
 import { z } from "zod";
 import {
@@ -27,6 +28,7 @@ import { makeMockEditGraphQLSubscriptions, nockEditGraphQLResponse, type MockEdi
 import { readDir, writeDir, type Files } from "./files.js";
 import { prettyJSON } from "./json.js";
 import { testDirPath } from "./paths.js";
+import { timeoutMs } from "./sleep.js";
 import { testUser } from "./user.js";
 
 /**
@@ -106,12 +108,12 @@ export type SyncScenario = {
   /**
    * Waits until the local directory's filesVersion is the given filesVersion.
    */
-  waitUntilLocalFilesVersion: (filesVersion: bigint) => PromiseSignal;
+  waitUntilLocalFilesVersion: (filesVersion: bigint) => Promise<void>;
 
   /**
    * Waits until the gadget directory's filesVersion is the given filesVersion.
    */
-  waitUntilGadgetFilesVersion: (filesVersion: bigint) => PromiseSignal;
+  waitUntilGadgetFilesVersion: (filesVersion: bigint) => Promise<void>;
 
   /**
    * Updates Gadget's files with the given changes and emits them to the
@@ -314,7 +316,7 @@ export const makeSyncScenario = async ({
 
     expectGadgetDir: () => expect(readDir(gadgetDir.path)),
 
-    waitUntilLocalFilesVersion: (filesVersion) => {
+    waitUntilLocalFilesVersion: async (filesVersion) => {
       log.trace("waiting for local files version", { filesVersion });
       const signal = new PromiseSignal();
       const localSyncJsonPath = localDir.absolute(".gadget/sync.json");
@@ -323,6 +325,7 @@ export const makeSyncScenario = async ({
 
       const signalIfFilesVersion = async (): Promise<void> => {
         try {
+          log.trace("checking local files version", { filesVersion });
           const syncJson = await fs.readJSON(localSyncJsonPath);
           if (BigInt(syncJson.filesVersion) === filesVersion) {
             log.trace("signaling local files version", { filesVersion });
@@ -334,16 +337,20 @@ export const makeSyncScenario = async ({
         }
       };
 
-      return signal;
+      await pTimeout(signal, {
+        message: `Timed out waiting for gadget files version to become ${filesVersion}`,
+        milliseconds: timeoutMs("1s"),
+      });
     },
 
-    waitUntilGadgetFilesVersion: (filesVersion) => {
+    waitUntilGadgetFilesVersion: async (filesVersion) => {
       log.trace("waiting for gadget files version", { filesVersion });
       const signal = new PromiseSignal();
 
       const interval = setInterval(() => signalIfFilesVersion(), 100);
 
       const signalIfFilesVersion = (): void => {
+        log.trace("checking gadget files version", { filesVersion });
         if (filesVersionDirs.has(filesVersion)) {
           log.trace("signaling gadget files version", { filesVersion });
           signal.resolve();
@@ -351,7 +358,10 @@ export const makeSyncScenario = async ({
         }
       };
 
-      return signal;
+      await pTimeout(signal, {
+        message: `Timed out waiting for gadget files version to become ${filesVersion}`,
+        milliseconds: timeoutMs("1s"),
+      });
     },
 
     emitGadgetChanges: async (changes) => {

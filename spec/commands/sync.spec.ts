@@ -489,7 +489,7 @@ describe("sync", () => {
   });
 
   it("doesn't send changes from the local filesystem to gadget if the file is ignored", async () => {
-    const { localDir, expectGadgetDir, expectLocalDir } = await makeSyncScenario({
+    const { localDir, expectGadgetDir, expectLocalDir, expectFilesVersionDirs } = await makeSyncScenario({
       filesVersion1Files: {
         ".ignore": "tmp",
       },
@@ -530,6 +530,22 @@ describe("sync", () => {
     // give the watcher a chance to see the changes
     await sleep(timeoutMs("2.5s"));
 
+    await expectFilesVersionDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "1": {
+          ".gadget/": "",
+          ".ignore": "tmp",
+        },
+      }
+    `);
+
+    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+      {
+        ".gadget/": "",
+        ".ignore": "tmp",
+      }
+    `);
+
     await expectLocalDir().resolves.toMatchInlineSnapshot(`
       {
         ".gadget/": "",
@@ -546,13 +562,6 @@ describe("sync", () => {
         "tmp/file7.txt": "file7.txt",
         "tmp/file8.txt": "file8.txt",
         "tmp/file9.txt": "file9.txt",
-      }
-    `);
-
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
-      {
-        ".gadget/": "",
-        ".ignore": "tmp",
       }
     `);
   });

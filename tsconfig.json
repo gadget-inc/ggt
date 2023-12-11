@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["bin/dev.js", "scripts", "*.js", "*.cjs", ".*.cjs"],
-  "exclude": ["node_modules"],
+  "include": ["bin/dev.js", "scripts", "spec", "src", "*.js", "*.cjs", ".*.cjs"],
+  "exclude": ["node_modules", "spec/__fixtures__"],
   "compilerOptions": {
     /* Type Checking */
     "noFallthroughCasesInSwitch": true,

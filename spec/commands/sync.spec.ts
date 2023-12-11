@@ -524,7 +524,7 @@ describe("sync", () => {
     }
 
     // give the watcher a chance to see the changes
-    await sleep("2s");
+    await sleep("5s");
 
     await expectLocalDir().resolves.toMatchInlineSnapshot(`
       {

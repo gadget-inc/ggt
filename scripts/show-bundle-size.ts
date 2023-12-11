@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --loader @swc-node/register/esm --no-warnings
+#!/usr/bin/env -S SWCRC=true SWC_NODE_PROJECT=./src/tsconfig.json node --loader @swc-node/register/esm --no-warnings
 
 import { $ } from "execa";
 import process from "node:process";

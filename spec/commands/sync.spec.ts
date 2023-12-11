@@ -38,11 +38,11 @@ describe("sync", () => {
       "--file-watch-debounce",
       ms("300ms" /* default 300ms */),
       "--file-watch-poll-interval",
-      ms("30ms" /* default 3_000ms */),
+      ms("30ms" /* default 3s */),
       "--file-watch-poll-timeout",
-      ms("20ms" /* default 20_000ms */),
+      ms("20ms" /* default 20s */),
       "--file-watch-rename-timeout",
-      ms("50ms" /* default 1_250ms */),
+      ms("50ms" /* default 1.25s */),
     ].map(String);
 
     ctx = makeContext(args);

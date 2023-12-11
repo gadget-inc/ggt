@@ -2,6 +2,7 @@ import ms from "ms";
 import inspector from "node:inspector";
 import process from "node:process";
 import { parseBoolean } from "../../src/services/util/boolean.js";
+import { isString } from "../../src/services/util/is.js";
 
 /**
  * Suspends the execution of the current async function for the given
@@ -11,8 +12,8 @@ import { parseBoolean } from "../../src/services/util/boolean.js";
  * @returns A promise that resolves after the specified duration has
  * elapsed.
  */
-export const sleep = (duration: string): Promise<void> => {
-  const milliseconds = ms(duration);
+export const sleep = (duration: string | number): Promise<void> => {
+  const milliseconds = isString(duration) ? ms(duration) : duration;
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 };
 
@@ -24,12 +25,12 @@ export const sleep = (duration: string): Promise<void> => {
  * @param duration - The duration string, e.g. '1s', '500ms', '10m'.
  * @returns The timeout duration in milliseconds.
  */
-export const timeoutMs = (duration: string): number => {
+export const timeoutMs = (duration: string | number): number => {
   if (inspector.url() !== undefined) {
     return Infinity;
   }
 
-  const milliseconds = ms(duration);
+  const milliseconds = isString(duration) ? ms(duration) : duration;
 
   if (parseBoolean(process.env["CI"])) {
     return milliseconds * 2;

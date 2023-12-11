@@ -15,7 +15,7 @@ import { nockTestApps, testApp } from "../__support__/app.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
 import { makeFile, makeSyncScenario } from "../__support__/filesync.js";
 import { testDirPath } from "../__support__/paths.js";
-import { sleep } from "../__support__/sleep.js";
+import { sleep, timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("sync", () => {
@@ -524,7 +524,7 @@ describe("sync", () => {
     }
 
     // give the watcher a chance to see the changes
-    await sleep("5s");
+    await sleep(timeoutMs("2.5s"));
 
     await expectLocalDir().resolves.toMatchInlineSnapshot(`
       {

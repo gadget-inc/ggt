@@ -130,7 +130,6 @@ export const command: Command = async (ctx, firstRun = true) => {
     user: await getUserOrLogin(),
     dir: args._[0],
     app: args["--app"],
-    force: args["--force"],
   });
 
   const log = filesync.log.extend("deploy");

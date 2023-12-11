@@ -47,6 +47,12 @@ export type NockEditGraphQLResponseOptions<Query extends GraphQLQuery> = {
    * @default true
    */
   optional?: boolean;
+
+  /**
+   * The status code to respond with.
+   * @default 200
+   */
+  statusCode?: number;
 };
 
 /**
@@ -57,6 +63,7 @@ export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
   app = testApp,
   optional = false,
   persist = false,
+  statusCode = 200,
   ...opts
 }: NockEditGraphQLResponseOptions<Query>): PromiseSignal => {
   let subdomain = app.slug;
@@ -88,7 +95,7 @@ export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
     .post("/edit/api/graphql", (body) => body.query === query)
     .matchHeader("cookie", (cookie) => loadCookie() === cookie)
     .optionally(optional)
-    .reply(200, async (_uri, rawBody) => {
+    .reply(statusCode, async (_uri, rawBody) => {
       try {
         const body = z.object({ query: z.literal(query), variables: z.record(z.unknown()).optional() }).parse(rawBody);
         const variables = expectVariables(body.variables);

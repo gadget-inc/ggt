@@ -23,7 +23,7 @@ import { CLIError, IsBug } from "../output/report.js";
 import { sprint } from "../output/sprint.js";
 import { uniq } from "../util/collection.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
-import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString } from "../util/is.js";
+import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isObject, isString } from "../util/is.js";
 import { serializeError } from "../util/object.js";
 import type { App } from "./app.js";
 
@@ -249,16 +249,26 @@ export class EditGraphQL {
     const [type, operation] = payload.query.split(/ |\(/, 2);
     log.info("sending graphql query via http", { type, operation }, { variables: payload.variables });
 
-    const json = await http({
-      method: "POST",
-      url: `https://${subdomain}.${config.domains.app}/edit/api/graphql`,
-      headers: { cookie },
-      json: payload,
-      responseType: "json",
-      resolveBodyOnly: true,
-    });
+    try {
+      const json = await http({
+        method: "POST",
+        url: `https://${subdomain}.${config.domains.app}/edit/api/graphql`,
+        headers: { cookie },
+        json: payload,
+        responseType: "json",
+        resolveBodyOnly: true,
+        throwHttpErrors: false,
+      });
 
-    return json as Query["Result"];
+      if (!isObject(json) || (!("data" in json) && !("errors" in json))) {
+        log.error("received invalid graphql response", { error: json });
+        throw json;
+      }
+
+      return json as Query["Result"];
+    } catch (error) {
+      throw new EditGraphQLError(input.query, error);
+    }
   }
 }
 

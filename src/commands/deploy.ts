@@ -2,8 +2,8 @@ import arg from "arg";
 import boxen from "boxen";
 import chalk from "chalk";
 import ora from "ora";
-import { type Command, type Usage } from "src/services/command/command.js";
-import { isEqualHashes } from "src/services/filesync/hashes.js";
+import { type Command, type Usage } from "../../src/services/command/command.js";
+import { isEqualHashes } from "../../src/services/filesync/hashes.js";
 import { AppArg } from "../../src/services/app/arg.js";
 import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
 import { config } from "../../src/services/config/config.js";
@@ -73,7 +73,7 @@ const argSpec = {
   "--force": Boolean,
 };
 
-enum Action {
+export enum Action {
   DEPLOY_ANYWAYS = "Deploy anyways",
   SYNC_ONCE = "Sync once",
   CANCEL = "Cancel (Ctrl+C)",
@@ -204,11 +204,7 @@ export const command: Command = async (ctx, firstRun = true) => {
     onData: async ({ publishServerContractStatus }) => {
       const {
         progress,
-        problems,
-        isUsingOpenAIGadgetManagedKeys,
-        missingProductionGoogleAuthConfig,
-        missingProductionOpenAIConnectionConfig,
-        missingProductionShopifyConfig,
+        issues
       } = publishServerContractStatus || {};
 
       if (progress === AppDeploymentSteps.ALREADY_DEPLOYING) {
@@ -219,49 +215,24 @@ export const command: Command = async (ctx, firstRun = true) => {
         process.exit(0);
       }
 
-      const hasIssues =
-        problems?.length ||
-        isUsingOpenAIGadgetManagedKeys ||
-        missingProductionGoogleAuthConfig ||
-        missingProductionOpenAIConnectionConfig ||
-        missingProductionShopifyConfig;
+      const hasIssues = issues?.length 
 
       if (firstRun && hasIssues) {
-        if (problems?.length) {
           log.println(`
                 ${""}
-                ${chalk.underline("Errors detected")}`);
+                ${chalk.underline("Issues detected")}`);
 
-          for (const problemItem of problems) {
-            const message = problemItem?.problem?.message.replace(/"/g, "");
-            const nodeType = problemItem?.node?.type;
-            const nodeName = problemItem?.node?.name;
-            const nodeParent = problemItem?.node?.parentApiIdentifier;
+          for (const issue of issues) {
+            const message = issue.message.replace(/"/g, "");
+            const nodeType = issue.node?.type;
+            const nodeName = issue.node?.name;
+            const nodeParent = issue.node?.parentApiIdentifier;
 
             log.printlns(`
-                  • ${message}
-                      ${nodeType}: ${chalk.cyan(nodeName)}                  ${nodeParent ? `ParentResource: ${chalk.cyan(nodeParent)}` : ""}
-                `);
+                    • ${message}                                       
+                      ${nodeType ? `${nodeType}: ${chalk.cyan(nodeName)}`:""}                 ${nodeParent ? `ParentResource: ${chalk.cyan(nodeParent)}` : ""}
+            `.trim());
           }
-        }
-
-        if (
-          isUsingOpenAIGadgetManagedKeys ||
-          missingProductionGoogleAuthConfig ||
-          missingProductionOpenAIConnectionConfig ||
-          missingProductionShopifyConfig
-        ) {
-          log.printlns(
-            `
-              ${chalk.underline("Problems detected")}
-              ${missingProductionShopifyConfig ? "\n • Add Shopify keys for production" : ""}${
-                missingProductionGoogleAuthConfig ? "\n • Add Google keys for production" : ""
-              }${missingProductionOpenAIConnectionConfig ? "\n • Add OpenAI keys for production" : ""}${
-                isUsingOpenAIGadgetManagedKeys ? "\n • Limitations apply to Gadget's OpenAI keys" : ""
-              }
-            `.trim(),
-          );
-        }
 
         !args["--force"] && signal.resolve();
         firstRun = false;

@@ -79,6 +79,11 @@ export type EnvironmentPatchResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type EnvironmentPublishInput = {
+  expectedRemoteFilesVersion?: InputMaybe<Scalars['String']['input']>;
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type EnvironmentPublishResult = {
   __typename?: 'EnvironmentPublishResult';
   success: Scalars['Boolean']['output'];
@@ -190,8 +195,11 @@ export type Mutation = {
   publishFileSyncEvents: PublishFileSyncEventsResult;
   refreshScopes?: Maybe<RefreshScopesResult>;
   registerWebhooks?: Maybe<RegisterWebhooksResult>;
+  /** @deprecated use team */
   removeContributor?: Maybe<RemoveContributorResult>;
+  /** @deprecated app invitations are no longer supported */
   sendAppInvitation?: Maybe<SendAppInvitationResult>;
+  setClientCurrentPath: EnvironmentPatchResult;
   setFrameworkVersion: SetFrameworkVersionResult;
   syncToWebflow: Scalars['Boolean']['output'];
   uninstallShop?: Maybe<UninstallShopResult>;
@@ -239,6 +247,11 @@ export type MutationPatchEnvironmentTreeArgs = {
 };
 
 
+export type MutationPublishArgs = {
+  input?: InputMaybe<EnvironmentPublishInput>;
+};
+
+
 export type MutationPublishFileSyncEventsArgs = {
   input: PublishFileSyncEventsInput;
 };
@@ -272,6 +285,12 @@ export type MutationSendAppInvitationArgs = {
 };
 
 
+export type MutationSetClientCurrentPathArgs = {
+  clientID: EnvironmentTreeClientId;
+  currentPath: Scalars['String']['input'];
+};
+
+
 export type MutationSetFrameworkVersionArgs = {
   constraint: Scalars['String']['input'];
 };
@@ -298,35 +317,9 @@ export type MutationUploadTemplateAssetArgs = {
   file: Scalars['Upload']['input'];
 };
 
-export type NodeInput = {
-  __typename?: 'NodeInput';
-  fieldType?: Maybe<Scalars['String']['output']>;
-  key: Scalars['String']['output'];
-  name?: Maybe<Scalars['String']['output']>;
-  parentApiIdentifier?: Maybe<Scalars['String']['output']>;
-  parentKey?: Maybe<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
-};
-
-export type ProblemInput = {
-  __typename?: 'ProblemInput';
-  message: Scalars['String']['output'];
-  severity: Scalars['String']['output'];
-};
-
-export type PublishContractProblem = {
-  __typename?: 'PublishContractProblem';
-  node?: Maybe<NodeInput>;
-  problem?: Maybe<ProblemInput>;
-};
-
 export type PublishContractState = {
   __typename?: 'PublishContractState';
-  isUsingOpenAIGadgetManagedKeys?: Maybe<Scalars['Boolean']['output']>;
-  missingProductionGoogleAuthConfig?: Maybe<Scalars['Boolean']['output']>;
-  missingProductionOpenAIConnectionConfig?: Maybe<Scalars['Boolean']['output']>;
-  missingProductionShopifyConfig?: Maybe<Scalars['Boolean']['output']>;
-  problems?: Maybe<Array<Maybe<PublishContractProblem>>>;
+  issues: Array<PublishIssue>;
   progress: Scalars['String']['output'];
   remoteFilesVersion: Scalars['String']['output'];
 };
@@ -342,6 +335,23 @@ export type PublishFileSyncEventsResult = {
   remoteFilesVersion: Scalars['String']['output'];
 };
 
+export type PublishIssue = {
+  __typename?: 'PublishIssue';
+  message: Scalars['String']['output'];
+  node?: Maybe<PublishIssueNode>;
+  severity: Scalars['String']['output'];
+};
+
+export type PublishIssueNode = {
+  __typename?: 'PublishIssueNode';
+  fieldType?: Maybe<Scalars['String']['output']>;
+  key: Scalars['String']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  parentApiIdentifier?: Maybe<Scalars['String']['output']>;
+  parentKey?: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   apiUpgradeConvergePlan?: Maybe<ApiUpgradeConvergePlanResult>;
@@ -351,6 +361,7 @@ export type Query = {
   fileSyncFiles: FileSyncFiles;
   fileSyncHashes: FileSyncHashes;
   identifySupportConversation?: Maybe<IdentifySupportConversationResult>;
+  /** @deprecated use team */
   listContributors: Array<ContributorResult>;
   logsSearch: LogSearchResult;
   remoteFilesVersion: Scalars['String']['output'];
@@ -441,11 +452,11 @@ export type SetFrameworkVersionResult = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  editorActive?: Maybe<Scalars['Boolean']['output']>;
   environmentTreePathPatches?: Maybe<EnvironmentSubscriptionResult>;
   logsSearch: LogSearchResult;
   publishServerContractStatus?: Maybe<PublishContractState>;
   remoteFileSyncEvents: RemoteFileSyncEvents;
+  reportClientPresence?: Maybe<Scalars['Boolean']['output']>;
   typesManifestStream: TypesManifest;
 };
 
@@ -472,6 +483,11 @@ export type SubscriptionPublishServerContractStatusArgs = {
 export type SubscriptionRemoteFileSyncEventsArgs = {
   encoding?: InputMaybe<FileSyncEncoding>;
   localFilesVersion: Scalars['String']['input'];
+};
+
+
+export type SubscriptionReportClientPresenceArgs = {
+  clientID: EnvironmentTreeClientId;
 };
 
 export type TeamEntitlements = {
@@ -586,4 +602,4 @@ export type PublishServerContractStatusSubscriptionVariables = Exact<{
 }>;
 
 
-export type PublishServerContractStatusSubscription = { __typename?: 'Subscription', publishServerContractStatus?: { __typename?: 'PublishContractState', remoteFilesVersion: string, progress: string, missingProductionShopifyConfig?: boolean | null, missingProductionOpenAIConnectionConfig?: boolean | null, missingProductionGoogleAuthConfig?: boolean | null, isUsingOpenAIGadgetManagedKeys?: boolean | null, problems?: Array<{ __typename?: 'PublishContractProblem', problem?: { __typename?: 'ProblemInput', severity: string, message: string } | null, node?: { __typename?: 'NodeInput', type: string, key: string, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null } | null> | null } | null };
+export type PublishServerContractStatusSubscription = { __typename?: 'Subscription', publishServerContractStatus?: { __typename?: 'PublishContractState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null }> } | null };

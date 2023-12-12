@@ -1,11 +1,3 @@
-"""
-======================================================
-THIS IS A GENERATED FILE! DO NOT EDIT IT MANUALLY!
-
-You can find the original file in the gadget repository
-======================================================
-"""
-
 schema {
   query: Query
   mutation: Mutation
@@ -62,6 +54,11 @@ type EnableFrontendResult {
 
 type EnvironmentPatchResult {
   success: Boolean!
+}
+
+input EnvironmentPublishInput {
+  expectedRemoteFilesVersion: String
+  force: Boolean
 }
 
 type EnvironmentPublishResult {
@@ -160,12 +157,13 @@ type Mutation {
   migrateAAC: MigrateAACResult
   migrateEnvironments(existingToProduction: Boolean!): MigrateEnvironmentsResult
   patchEnvironmentTree(clientID: EnvironmentTreeClientId!, patches: [JSON!]!): EnvironmentPatchResult
-  publish: EnvironmentPublishResult
+  publish(input: EnvironmentPublishInput): EnvironmentPublishResult
   publishFileSyncEvents(input: PublishFileSyncEventsInput!): PublishFileSyncEventsResult!
   refreshScopes(appConfigKey: String!, connectionKey: String!, shopId: String!): RefreshScopesResult
   registerWebhooks(connectionKey: String!, keepExtraTopics: Boolean, modelKeys: [String!], shopIds: [String!]!): RegisterWebhooksResult
-  removeContributor(email: String!, isInvitation: Boolean!): RemoveContributorResult
-  sendAppInvitation(email: String, emails: [String!], resend: Boolean): SendAppInvitationResult
+  removeContributor(email: String!, isInvitation: Boolean!): RemoveContributorResult @deprecated(reason: "use team")
+  sendAppInvitation(email: String, emails: [String!], resend: Boolean): SendAppInvitationResult @deprecated(reason: "app invitations are no longer supported")
+  setClientCurrentPath(clientID: EnvironmentTreeClientId!, currentPath: String!): EnvironmentPatchResult!
   setFrameworkVersion(constraint: String!): SetFrameworkVersionResult!
   syncToWebflow: Boolean!
   uninstallShop(shopId: String!): UninstallShopResult
@@ -174,31 +172,8 @@ type Mutation {
   uploadTemplateAsset(file: Upload!): UploadTemplateAssetResult!
 }
 
-type NodeInput {
-  fieldType: String
-  key: String!
-  name: String
-  parentApiIdentifier: String
-  parentKey: String
-  type: String!
-}
-
-type ProblemInput {
-  message: String!
-  severity: String!
-}
-
-type PublishContractProblem {
-  node: NodeInput
-  problem: ProblemInput
-}
-
 type PublishContractState {
-  isUsingOpenAIGadgetManagedKeys: Boolean
-  missingProductionGoogleAuthConfig: Boolean
-  missingProductionOpenAIConnectionConfig: Boolean
-  missingProductionShopifyConfig: Boolean
-  problems: [PublishContractProblem]
+  issues: [PublishIssue!]!
   progress: String!
   remoteFilesVersion: String!
 }
@@ -213,6 +188,21 @@ type PublishFileSyncEventsResult {
   remoteFilesVersion: String!
 }
 
+type PublishIssue {
+  message: String!
+  node: PublishIssueNode
+  severity: String!
+}
+
+type PublishIssueNode {
+  fieldType: String
+  key: String!
+  name: String
+  parentApiIdentifier: String
+  parentKey: String
+  type: String!
+}
+
 type Query {
   apiUpgradeConvergePlan(currentVersion: String!, targetVersion: String!): APIUpgradeConvergePlanResult
   currentUser: User!
@@ -221,7 +211,7 @@ type Query {
   fileSyncFiles(encoding: FileSyncEncoding, filesVersion: String, paths: [String!]!): FileSyncFiles!
   fileSyncHashes(filesVersion: String): FileSyncHashes!
   identifySupportConversation: IdentifySupportConversationResult
-  listContributors: [ContributorResult!]!
+  listContributors: [ContributorResult!]! @deprecated(reason: "use team")
   logsSearch(direction: String, end: DateTime, limit: Int, query: String!, start: DateTime, step: Int): LogSearchResult!
   remoteFilesVersion: String!
   roles: [GadgetRole!]!
@@ -259,11 +249,11 @@ type SetFrameworkVersionResult {
 }
 
 type Subscription {
-  editorActive: Boolean
   environmentTreePathPatches(clientID: EnvironmentTreeClientId!, path: String!): EnvironmentSubscriptionResult
   logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
   publishServerContractStatus(force: Boolean, localFilesVersion: String!): PublishContractState
   remoteFileSyncEvents(encoding: FileSyncEncoding, localFilesVersion: String!): RemoteFileSyncEvents!
+  reportClientPresence(clientID: EnvironmentTreeClientId!): Boolean
   typesManifestStream: TypesManifest!
 }
 

@@ -348,11 +348,9 @@ export const REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION = dedent(/* GraphQL */ `
     publishServerContractStatus(localFilesVersion: $localFilesVersion, force: $force) {
       remoteFilesVersion
       progress
-      problems {
-        problem {
-          severity
-          message
-        }
+      issues {
+        severity
+        message
         node {
           type
           key
@@ -362,10 +360,6 @@ export const REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION = dedent(/* GraphQL */ `
           parentApiIdentifier
         }
       }
-      missingProductionShopifyConfig
-      missingProductionOpenAIConnectionConfig
-      missingProductionGoogleAuthConfig
-      isUsingOpenAIGadgetManagedKeys
     }
   }
 `) as GraphQLQuery<PublishServerContractStatusSubscription, PublishServerContractStatusSubscriptionVariables>

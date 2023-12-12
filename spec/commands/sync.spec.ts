@@ -54,7 +54,7 @@ describe("sync", () => {
   });
 
   it("writes changes from gadget to the local filesystem", async () => {
-    const { waitUntilLocalFilesVersion, emitGadgetChanges, expectLocalDir } = await makeSyncScenario();
+    const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
     await sync(ctx);
 
@@ -67,11 +67,26 @@ describe("sync", () => {
 
     await waitUntilLocalFilesVersion(2n);
 
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
-        "file.txt": "file v2",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file.txt": "file v2",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "file.txt": "file v2",
+        },
       }
     `);
 
@@ -84,11 +99,30 @@ describe("sync", () => {
 
     await waitUntilLocalFilesVersion(3n);
 
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
-        "file.txt": "file v3",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file.txt": "file v3",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "file.txt": "file v3",
+        },
       }
     `);
 
@@ -101,12 +135,33 @@ describe("sync", () => {
 
     await waitUntilLocalFilesVersion(4n);
 
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".gadget/backup/": "",
-        ".gadget/backup/file.txt": "file v3",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\"}",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/file.txt": "file v3",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\"}",
+        },
       }
     `);
 
@@ -119,13 +174,39 @@ describe("sync", () => {
 
     await waitUntilLocalFilesVersion(5n);
 
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".gadget/backup/": "",
-        ".gadget/backup/file.txt": "file v3",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"5\\"}",
-        "directory/": "",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+          "5": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "directory/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/file.txt": "file v3",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"5\\"}",
+          "directory/": "",
+        },
       }
     `);
 
@@ -138,13 +219,41 @@ describe("sync", () => {
 
     await waitUntilLocalFilesVersion(6n);
 
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".gadget/backup/": "",
-        ".gadget/backup/directory/": "",
-        ".gadget/backup/file.txt": "file v3",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\"}",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+          "5": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+          "6": {
+            ".gadget/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/directory/": "",
+          ".gadget/backup/file.txt": "file v3",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\"}",
+        },
       }
     `);
 
@@ -158,23 +267,74 @@ describe("sync", () => {
 
     await waitUntilLocalFilesVersion(7n);
 
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".gadget/backup/": "",
-        ".gadget/backup/directory/": "",
-        ".gadget/backup/file.txt": "file v3",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
-        "file1.txt": "file1.txt",
-        "file10.txt": "file10.txt",
-        "file2.txt": "file2.txt",
-        "file3.txt": "file3.txt",
-        "file4.txt": "file4.txt",
-        "file5.txt": "file5.txt",
-        "file6.txt": "file6.txt",
-        "file7.txt": "file7.txt",
-        "file8.txt": "file8.txt",
-        "file9.txt": "file9.txt",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+          "5": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+          "6": {
+            ".gadget/": "",
+          },
+          "7": {
+            ".gadget/": "",
+            "file1.txt": "file1.txt",
+            "file10.txt": "file10.txt",
+            "file2.txt": "file2.txt",
+            "file3.txt": "file3.txt",
+            "file4.txt": "file4.txt",
+            "file5.txt": "file5.txt",
+            "file6.txt": "file6.txt",
+            "file7.txt": "file7.txt",
+            "file8.txt": "file8.txt",
+            "file9.txt": "file9.txt",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/directory/": "",
+          ".gadget/backup/file.txt": "file v3",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
       }
     `);
   });
@@ -182,7 +342,7 @@ describe("sync", () => {
   it("writes changes from gadget in the order they were received", async () => {
     // this test is exactly the same as the previous one, except we just
     // wait for the final filesVersion and expect the same result
-    const { waitUntilLocalFilesVersion, emitGadgetChanges, expectLocalDir } = await makeSyncScenario();
+    const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
     await sync(ctx);
 
@@ -231,23 +391,74 @@ describe("sync", () => {
 
     await waitUntilLocalFilesVersion(7n);
 
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".gadget/backup/": "",
-        ".gadget/backup/directory/": "",
-        ".gadget/backup/file.txt": "file v3",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
-        "file1.txt": "file1.txt",
-        "file10.txt": "file10.txt",
-        "file2.txt": "file2.txt",
-        "file3.txt": "file3.txt",
-        "file4.txt": "file4.txt",
-        "file5.txt": "file5.txt",
-        "file6.txt": "file6.txt",
-        "file7.txt": "file7.txt",
-        "file8.txt": "file8.txt",
-        "file9.txt": "file9.txt",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+          "5": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+          "6": {
+            ".gadget/": "",
+          },
+          "7": {
+            ".gadget/": "",
+            "file1.txt": "file1.txt",
+            "file10.txt": "file10.txt",
+            "file2.txt": "file2.txt",
+            "file3.txt": "file3.txt",
+            "file4.txt": "file4.txt",
+            "file5.txt": "file5.txt",
+            "file6.txt": "file6.txt",
+            "file7.txt": "file7.txt",
+            "file8.txt": "file8.txt",
+            "file9.txt": "file9.txt",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/directory/": "",
+          ".gadget/backup/file.txt": "file v3",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
       }
     `);
   });
@@ -255,7 +466,7 @@ describe("sync", () => {
   it("writes all received files before stopping", async () => {
     // this test is exactly the same as the previous one, except we just
     // wait for stop() to finish and expect the same result
-    const { emitGadgetChanges, expectLocalDir } = await makeSyncScenario();
+    const { emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
     let stop: (() => Promise<void>) | undefined = undefined;
     vi.spyOn(ctx.signal, "addEventListener").mockImplementationOnce((_, listener) => {
@@ -302,7 +513,7 @@ describe("sync", () => {
     // receive a bunch of files
     const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
     await emitGadgetChanges({
-      remoteFilesVersion: "6",
+      remoteFilesVersion: "7",
       changed: files.map((filename) => makeFile({ path: filename, content: filename })),
       deleted: [],
     });
@@ -310,39 +521,95 @@ describe("sync", () => {
     ctx.abort();
     await stop!();
 
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".gadget/backup/": "",
-        ".gadget/backup/directory/": "",
-        ".gadget/backup/file.txt": "file v3",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\"}",
-        "file.js": "file v2",
-        "file1.txt": "file1.txt",
-        "file10.txt": "file10.txt",
-        "file2.txt": "file2.txt",
-        "file3.txt": "file3.txt",
-        "file4.txt": "file4.txt",
-        "file5.txt": "file5.txt",
-        "file6.txt": "file6.txt",
-        "file7.txt": "file7.txt",
-        "file8.txt": "file8.txt",
-        "file9.txt": "file9.txt",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.js": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.js": "file v2",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+            "file.js": "file v2",
+          },
+          "5": {
+            ".gadget/": "",
+            "directory/": "",
+            "file.js": "file v2",
+          },
+          "6": {
+            ".gadget/": "",
+            "file.js": "file v2",
+          },
+          "7": {
+            ".gadget/": "",
+            "file.js": "file v2",
+            "file1.txt": "file1.txt",
+            "file10.txt": "file10.txt",
+            "file2.txt": "file2.txt",
+            "file3.txt": "file3.txt",
+            "file4.txt": "file4.txt",
+            "file5.txt": "file5.txt",
+            "file6.txt": "file6.txt",
+            "file7.txt": "file7.txt",
+            "file8.txt": "file8.txt",
+            "file9.txt": "file9.txt",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file.js": "file v2",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/directory/": "",
+          ".gadget/backup/file.txt": "file v3",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+          "file.js": "file v2",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
       }
     `);
   });
 
   it("doesn't write changes from gadget to the local filesystem if the file is ignored", async () => {
-    const { waitUntilLocalFilesVersion, emitGadgetChanges, expectLocalDir } = await makeSyncScenario({
-      localFiles: {
-        ".ignore": "tmp",
-        "tmp/file1.txt": "file1 v1",
-        "tmp/file2.txt": "file2 v1",
+    const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".ignore": "**/tmp",
       },
       gadgetFiles: {
-        ".ignore": "tmp",
-        "tmp/file1.txt": "file1 v1",
-        "tmp/file2.txt": "file2 v1",
+        ".ignore": "**/tmp",
+      },
+      localFiles: {
+        ".ignore": "**/tmp",
       },
     });
 
@@ -350,95 +617,342 @@ describe("sync", () => {
 
     await emitGadgetChanges({
       remoteFilesVersion: "2",
-      changed: [makeFile({ path: "tmp/file1.txt", content: "file1 v2" })],
-      deleted: [{ path: "tmp/file2.txt" }],
+      changed: [makeFile({ path: "tmp/file.txt", content: "file" })],
+      deleted: [],
     });
 
     // it should still update the filesVersion
     await waitUntilLocalFilesVersion(2n);
 
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
-        ".ignore": "tmp",
-        "tmp/": "",
-        "tmp/file1.txt": "file1 v1",
-        "tmp/file2.txt": "file2 v1",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".ignore": "**/tmp",
+          },
+          "2": {
+            ".gadget/": "",
+            ".ignore": "**/tmp",
+            "tmp/": "",
+            "tmp/file.txt": "file",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".ignore": "**/tmp",
+          "tmp/": "",
+          "tmp/file.txt": "file",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          ".ignore": "**/tmp",
+        },
+      }
+    `);
+
+    await emitGadgetChanges({
+      remoteFilesVersion: "3",
+      changed: [],
+      deleted: [{ path: "tmp/file.txt" }],
+    });
+
+    // it should still update the filesVersion
+    await waitUntilLocalFilesVersion(3n);
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".ignore": "**/tmp",
+          },
+          "2": {
+            ".gadget/": "",
+            ".ignore": "**/tmp",
+            "tmp/": "",
+            "tmp/file.txt": "file",
+          },
+          "3": {
+            ".gadget/": "",
+            ".ignore": "**/tmp",
+            "tmp/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".ignore": "**/tmp",
+          "tmp/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          ".ignore": "**/tmp",
+        },
       }
     `);
   });
 
   it("sends changes from the local filesystem to gadget", async () => {
-    const { localDir, waitUntilGadgetFilesVersion, expectGadgetDir } = await makeSyncScenario();
+    const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
 
     await sync(ctx);
 
     // add a file
     await fs.outputFile(localDir.absolute("file.txt"), "file v2");
     await waitUntilGadgetFilesVersion(2n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        "file.txt": "file v2",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file.txt": "file v2",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "file.txt": "file v2",
+        },
       }
     `);
 
     // update a file
     await fs.outputFile(localDir.absolute("file.txt"), "file v3");
     await waitUntilGadgetFilesVersion(3n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        "file.txt": "file v3",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file.txt": "file v3",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "file.txt": "file v3",
+        },
       }
     `);
 
     // rename a file
     await fs.rename(localDir.absolute("file.txt"), localDir.absolute("renamed-file.txt"));
     await waitUntilGadgetFilesVersion(4n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        "renamed-file.txt": "file v3",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+            "renamed-file.txt": "file v3",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "renamed-file.txt": "file v3",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\"}",
+          "renamed-file.txt": "file v3",
+        },
       }
     `);
 
     // delete a file
     await fs.remove(localDir.absolute("renamed-file.txt"));
     await waitUntilGadgetFilesVersion(5n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+            "renamed-file.txt": "file v3",
+          },
+          "5": {
+            ".gadget/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"5\\"}",
+        },
       }
     `);
 
     // add a directory
     await fs.mkdir(localDir.absolute("directory"));
     await waitUntilGadgetFilesVersion(6n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        "directory/": "",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+            "renamed-file.txt": "file v3",
+          },
+          "5": {
+            ".gadget/": "",
+          },
+          "6": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "directory/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\"}",
+          "directory/": "",
+        },
       }
     `);
 
     // rename a directory
     await fs.rename(localDir.absolute("directory"), localDir.absolute("renamed-directory"));
     await waitUntilGadgetFilesVersion(7n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        "renamed-directory/": "",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+            "renamed-file.txt": "file v3",
+          },
+          "5": {
+            ".gadget/": "",
+          },
+          "6": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+          "7": {
+            ".gadget/": "",
+            "renamed-directory/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "renamed-directory/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+          "renamed-directory/": "",
+        },
       }
     `);
 
     // delete a directory
     await fs.remove(localDir.absolute("renamed-directory"));
     await waitUntilGadgetFilesVersion(8n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+            "renamed-file.txt": "file v3",
+          },
+          "5": {
+            ".gadget/": "",
+          },
+          "6": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+          "7": {
+            ".gadget/": "",
+            "renamed-directory/": "",
+          },
+          "8": {
+            ".gadget/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"8\\"}",
+        },
       }
     `);
 
@@ -452,25 +966,85 @@ describe("sync", () => {
     }
 
     await waitUntilGadgetFilesVersion(9n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        "file1.txt": "file1.txt",
-        "file10.txt": "file10.txt",
-        "file2.txt": "file2.txt",
-        "file3.txt": "file3.txt",
-        "file4.txt": "file4.txt",
-        "file5.txt": "file5.txt",
-        "file6.txt": "file6.txt",
-        "file7.txt": "file7.txt",
-        "file8.txt": "file8.txt",
-        "file9.txt": "file9.txt",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+            "renamed-file.txt": "file v3",
+          },
+          "5": {
+            ".gadget/": "",
+          },
+          "6": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+          "7": {
+            ".gadget/": "",
+            "renamed-directory/": "",
+          },
+          "8": {
+            ".gadget/": "",
+          },
+          "9": {
+            ".gadget/": "",
+            "file1.txt": "file1.txt",
+            "file10.txt": "file10.txt",
+            "file2.txt": "file2.txt",
+            "file3.txt": "file3.txt",
+            "file4.txt": "file4.txt",
+            "file5.txt": "file5.txt",
+            "file6.txt": "file6.txt",
+            "file7.txt": "file7.txt",
+            "file8.txt": "file8.txt",
+            "file9.txt": "file9.txt",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"9\\"}",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
       }
     `);
   });
 
   it("doesn't send multiple changes to the same file at once", async () => {
-    const { localDir, waitUntilGadgetFilesVersion, expectGadgetDir } = await makeSyncScenario();
+    const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
 
     await sync(ctx);
 
@@ -480,21 +1054,41 @@ describe("sync", () => {
     }
 
     await waitUntilGadgetFilesVersion(2n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        "file.txt": "v10",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "file.txt": "v10",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file.txt": "v10",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "file.txt": "v10",
+        },
       }
     `);
   });
 
   it("doesn't send changes from the local filesystem to gadget if the file is ignored", async () => {
-    const { localDir, expectGadgetDir, expectLocalDir, expectFilesVersionDirs } = await makeSyncScenario({
+    const { localDir, expectDirs } = await makeSyncScenario({
       filesVersion1Files: {
-        ".ignore": "tmp",
+        ".ignore": "**/tmp",
       },
       gadgetFiles: {
-        ".ignore": "tmp",
+        ".ignore": "**/tmp",
+      },
+      localFiles: {
+        ".ignore": "**/tmp",
       },
     });
 
@@ -530,38 +1124,34 @@ describe("sync", () => {
     // give the watcher a chance to see the changes
     await sleep(timeoutMs("2.5s"));
 
-    await expectFilesVersionDirs().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        "1": {
-          ".gadget/": "",
-          ".ignore": "tmp",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".ignore": "**/tmp",
+          },
         },
-      }
-    `);
-
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
-      {
-        ".gadget/": "",
-        ".ignore": "tmp",
-      }
-    `);
-
-    await expectLocalDir().resolves.toMatchInlineSnapshot(`
-      {
-        ".gadget/": "",
-        ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
-        ".ignore": "tmp",
-        "tmp/": "",
-        "tmp/file1.txt": "file1.txt",
-        "tmp/file10.txt": "file10.txt",
-        "tmp/file2.txt": "file2.txt",
-        "tmp/file3.txt": "file3.txt",
-        "tmp/file4.txt": "file4.txt",
-        "tmp/file5.txt": "file5.txt",
-        "tmp/file6.txt": "file6.txt",
-        "tmp/file7.txt": "file7.txt",
-        "tmp/file8.txt": "file8.txt",
-        "tmp/file9.txt": "file9.txt",
+        "gadgetDir": {
+          ".gadget/": "",
+          ".ignore": "**/tmp",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+          ".ignore": "**/tmp",
+          "tmp/": "",
+          "tmp/file1.txt": "file1.txt",
+          "tmp/file10.txt": "file10.txt",
+          "tmp/file2.txt": "file2.txt",
+          "tmp/file3.txt": "file3.txt",
+          "tmp/file4.txt": "file4.txt",
+          "tmp/file5.txt": "file5.txt",
+          "tmp/file6.txt": "file6.txt",
+          "tmp/file7.txt": "file7.txt",
+          "tmp/file8.txt": "file8.txt",
+          "tmp/file9.txt": "file9.txt",
+        },
       }
     `);
   });
@@ -590,7 +1180,7 @@ describe("sync", () => {
   });
 
   it("reloads the ignore file when .ignore changes", async () => {
-    const { filesync, waitUntilLocalFilesVersion, localDir, expectGadgetDir, waitUntilGadgetFilesVersion, emitGadgetChanges } =
+    const { filesync, waitUntilLocalFilesVersion, localDir, waitUntilGadgetFilesVersion, emitGadgetChanges, expectDirs } =
       await makeSyncScenario();
 
     await sync(ctx);
@@ -599,10 +1189,26 @@ describe("sync", () => {
 
     await fs.outputFile(localDir.absolute(".ignore"), "# watch it all");
     await waitUntilGadgetFilesVersion(2n);
-    await expectGadgetDir().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
       {
-        ".gadget/": "",
-        ".ignore": "# watch it all",
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            ".ignore": "# watch it all",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".ignore": "# watch it all",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          ".ignore": "# watch it all",
+        },
       }
     `);
 

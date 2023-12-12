@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import assert from "node:assert";
 import os from "node:os";
+import pMap from "p-map";
 import pTimeout from "p-timeout";
 import { expect, vi, type Assertion } from "vitest";
 import { z } from "zod";
@@ -89,23 +90,6 @@ export type SyncScenario = {
   gadgetDir: Directory;
 
   /**
-   * @returns An assertion on a record where the keys are filesVersions
-   * and the values are the {@linkcode Files} for that filesVersion.
-   */
-  expectFilesVersionDirs: () => Assertion<Promise<Record<string, Files>>>;
-
-  /**
-   * @param expectedSyncJson The expected {@linkcode SyncJson} in the local directory.
-   * @returns An assertion on the {@linkcode Files} in the local directory.
-   */
-  expectLocalDir: (expectedSyncJson?: PartialSyncJson) => Assertion<Promise<Files>>;
-
-  /**
-   * @returns An assertion on the {@linkcode Files} in the gadget directory.
-   */
-  expectGadgetDir: () => Assertion<Promise<Files>>;
-
-  /**
    * Waits until the local directory's filesVersion is the given filesVersion.
    */
   waitUntilLocalFilesVersion: (filesVersion: bigint) => Promise<void>;
@@ -125,6 +109,21 @@ export type SyncScenario = {
    * @returns A mock subscription for {@linkcode REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION}.
    */
   expectGadgetChangesSubscription: () => MockEditGraphQLSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION>;
+
+  /**
+   * @returns An assertion on an object with the following properties:
+   * - `localDir`: The {@linkcode Files} in the local directory.
+   * - `gadgetDir`: The {@linkcode Files} in the gadget directory.
+   * - `filesVersionDirs`: A record where the keys are filesVersions and
+   *   the values are the {@linkcode Files} for that filesVersion.
+   */
+  expectDirs: (expectedSyncJson?: PartialSyncJson) => Assertion<
+    Promise<{
+      localDir: Files;
+      gadgetDir: Files;
+      filesVersionDirs: Record<string, Files>;
+    }>
+  >;
 };
 
 /**
@@ -158,7 +157,7 @@ export const makeSyncScenario = async ({
     await writeDir(testDirPath("local"), localFiles);
     await localDir.loadIgnoreFile();
 
-    const syncJson: SyncJson = { app: testApp.slug, filesVersion: "1", mtime: Date.now() };
+    const syncJson: SyncJson = { app: testApp.slug, filesVersion: "1", mtime: Date.now() + 1 };
     await fs.outputJSON(localDir.absolute(".gadget/sync.json"), syncJson, { spaces: 2 });
   }
 
@@ -293,30 +292,6 @@ export const makeSyncScenario = async ({
     localDir,
     gadgetDir,
 
-    expectFilesVersionDirs: () =>
-      expect(
-        (async () => {
-          const dirs = {} as Record<string, Files>;
-          for (const [filesVersion, dir] of filesVersionDirs) {
-            dirs[String(filesVersion)] = await readDir(dir.path);
-          }
-          return dirs;
-        })(),
-      ),
-
-    expectLocalDir: (expectedSyncJson) =>
-      expect(
-        (async () => {
-          const dir = await readDir(localDir.path);
-          expect(dir[".gadget/sync.json"]).toEqual(expectSyncJson(filesync, expectedSyncJson));
-          // omit mtime from the snapshot
-          dir[".gadget/sync.json"] = JSON.stringify(omit(JSON.parse(dir[".gadget/sync.json"]!), ["mtime"]));
-          return dir;
-        })(),
-      ),
-
-    expectGadgetDir: () => expect(readDir(gadgetDir.path)),
-
     waitUntilLocalFilesVersion: async (filesVersion) => {
       log.trace("waiting for local files version", { filesVersion });
       const signal = new PromiseSignal();
@@ -366,11 +341,42 @@ export const makeSyncScenario = async ({
     },
 
     emitGadgetChanges: async (changes) => {
+      expect(changes.remoteFilesVersion).toBe(String(gadgetFilesVersion + 1n));
       await processGadgetChanges(changes);
       mockEditGraphQLSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).emitResult({ data: { remoteFileSyncEvents: changes } });
     },
 
     expectGadgetChangesSubscription: () => mockEditGraphQLSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION),
+
+    expectDirs: (expectedSyncJson) => {
+      return expect(
+        (async () => {
+          const [local, gadget, filesVersions] = await Promise.all([
+            readDir(localDir.path),
+            readDir(gadgetDir.path),
+            (async () => {
+              const dirs = {} as Record<string, Files>;
+              await pMap(filesVersionDirs, async ([filesVersion, dir]) => {
+                dirs[String(filesVersion)] = await readDir(dir.path);
+              });
+              return dirs;
+            })(),
+          ]);
+
+          expect(local[".gadget/sync.json"]).toEqual(expectSyncJson(filesync, expectedSyncJson));
+
+          // omit mtime from the snapshot
+          const withoutMtime = omit(JSON.parse(local[".gadget/sync.json"]!), ["mtime"]);
+          local[".gadget/sync.json"] = JSON.stringify(withoutMtime);
+
+          return {
+            localDir: local,
+            gadgetDir: gadget,
+            filesVersionDirs: filesVersions,
+          };
+        })(),
+      );
+    },
   };
 };
 

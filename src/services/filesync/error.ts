@@ -48,3 +48,21 @@ export class InvalidSyncFileError extends CLIError {
     `;
   }
 }
+
+export class TooManySyncAttemptsError extends CLIError {
+  isBug = IsBug.MAYBE;
+
+  constructor(readonly attempts: number) {
+    super(`Failed to sync files after ${attempts} attempts.`);
+  }
+
+  protected render(): string {
+    return sprint`
+        We synced your local files with Gadget ${this.attempts} times, but
+        your local filesystem is still out of sync.
+
+        Make sure no one else is editing files in the Gadget editor
+        and try again.
+    `;
+  }
+}

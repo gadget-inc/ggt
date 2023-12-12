@@ -6,12 +6,14 @@ import { ArgError } from "../../../src/services/command/arg.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
 import { InvalidSyncFileError } from "../../../src/services/filesync/error.js";
-import { FileSync } from "../../../src/services/filesync/filesync.js";
+import { ConflictPreference, FileSync } from "../../../src/services/filesync/filesync.js";
+import * as prompt from "../../../src/services/output/prompt.js";
 import { testApp } from "../../__support__/app.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
-import { expectSyncJson, makeFile } from "../../__support__/filesync.js";
+import { expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
 import { testDirPath } from "../../__support__/paths.js";
+import { expectProcessExit } from "../../__support__/process.js";
 import { loginTestUser, testUser } from "../../__support__/user.js";
 
 let appDir: string;
@@ -372,5 +374,570 @@ describe("FileSync.sync", () => {
 
   afterEach(() => {
     expect(nock.pendingMocks()).toEqual([]);
+  });
+
+  it("does nothing if there aren't any changes", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: { "foo.js": "// foo" },
+      localFiles: { "foo.js": "// foo" },
+      gadgetFiles: { "foo.js": "// foo" },
+    });
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+          "foo.js": "// foo",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("does nothing if only ignored files have changed", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".ignore": "foo.js",
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        ".ignore": "foo.js",
+        "foo.js": "// foo (local)",
+      },
+      gadgetFiles: {
+        ".ignore": "foo.js",
+        "foo.js": "// foo (gadget)",
+      },
+    });
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".ignore": "foo.js",
+            "foo.js": "// foo",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".ignore": "foo.js",
+          "foo.js": "// foo (gadget)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+          ".ignore": "foo.js",
+          "foo.js": "// foo (local)",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it(`exits the process when "${ConflictPreference.CANCEL}" is chosen`, async () => {
+    const { filesync, expectDirs } = await makeSyncScenario({
+      filesVersion1Files: { "foo.js": "foo" },
+      localFiles: { "foo.js": "foo (local)" },
+      gadgetFiles: { "foo.js": "foo (gadget)" },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.CANCEL);
+
+    await expectProcessExit(() => filesync.sync());
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "foo",
+          },
+          "2": {
+            ".gadget/": "",
+            "foo.js": "foo (gadget)",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "foo (gadget)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+          "foo.js": "foo (local)",
+        },
+      }
+    `);
+  });
+
+  it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        "foo.js": "// foo (local)",
+      },
+      gadgetFiles: {
+        "foo.js": "// foo (gadget)",
+      },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
+          },
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+          },
+          "3": {
+            ".gadget/": "",
+            "foo.js": "// foo (local)",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (local)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (local)",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        "foo.js": "// foo (local)",
+      },
+      gadgetFiles: {
+        "foo.js": "// foo (gadget)",
+      },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.GADGET);
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
+          },
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (gadget)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "foo.js": "// foo (gadget)",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("automatically merges changes if none are conflicting", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        "foo.js": "// foo",
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        "foo.js": "// foo",
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
+          },
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
+            ".gadget/": "",
+            "foo.js": "// foo",
+            "gadget-file.js": "// gadget",
+            "local-file.js": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it(`uses local conflicting changes and merges non-conflicting gadget changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        "foo.js": "// foo (local)",
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        "foo.js": "// foo (gadget)",
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
+          },
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
+            ".gadget/": "",
+            "foo.js": "// foo (local)",
+            "gadget-file.js": "// gadget",
+            "local-file.js": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (local)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (local)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        "foo.js": "// foo (local)",
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        "foo.js": "// foo (gadget)",
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.GADGET);
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
+          },
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+            "gadget-file.js": "// gadget",
+            "local-file.js": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (gadget)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (gadget)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("automatically uses gadget's conflicting changes if the conflicts are in the .gadget directory", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".gadget/client.js": "// client",
+      },
+      localFiles: {
+        ".gadget/client.js": "// client (local)",
+      },
+      gadgetFiles: {
+        ".gadget/client.js": "// client (gadget)",
+      },
+    });
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+          },
+          "2": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client (gadget)",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client (gadget)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client (gadget)",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it(`automatically uses gadget's conflicting changes in the .gadget directory even if "${ConflictPreference.LOCAL}" is chosen`, async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".gadget/client.js": "// client",
+        "foo.js": "// foo",
+      },
+      localFiles: {
+        ".gadget/client.js": "// client (local)",
+        "foo.js": "// foo (local)",
+      },
+      gadgetFiles: {
+        ".gadget/client.js": "// client (gadget)",
+        "foo.js": "// foo (gadget)",
+      },
+    });
+
+    vi.spyOn(prompt, "select").mockResolvedValueOnce(ConflictPreference.LOCAL);
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            "foo.js": "// foo",
+          },
+          "2": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client (gadget)",
+            "foo.js": "// foo (gadget)",
+          },
+          "3": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client (gadget)",
+            "foo.js": "// foo (local)",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client (gadget)",
+          "foo.js": "// foo (local)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client (gadget)",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (local)",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("fetches .gadget/ files when the local filesystem doesn't have them", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".gadget/client.js": "// client",
+      },
+      localFiles: {},
+      gadgetFiles: {
+        ".gadget/client.js": "// client",
+      },
+    });
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("merges files when .gadget/sync.json doesn't exist and force = true", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      force: true,
+      filesVersion1Files: {
+        ".gadget/client.js": "// client",
+        ".gadget/server.js": "// server",
+        "gadget-file.js": "// gadget",
+      },
+      localFiles: {
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        ".gadget/client.js": "// client",
+        ".gadget/server.js": "// server",
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    await filesync.sync();
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            ".gadget/server.js": "// server",
+            "gadget-file.js": "// gadget",
+          },
+          "2": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            ".gadget/server.js": "// server",
+            "gadget-file.js": "// gadget",
+            "local-file.js": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          ".gadget/server.js": "// server",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          ".gadget/server.js": "// server",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
   });
 });

@@ -12,14 +12,17 @@ import {
   type FileSyncDeletedEventInput,
 } from "../../src/__generated__/graphql.js";
 import {
+  FILE_SYNC_FILES_QUERY,
+  FILE_SYNC_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-  REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit-graphql.js";
-import { Directory, swallowEnoent } from "../../src/services/filesync/directory.js";
+import { Directory, swallowEnoent, type Hashes } from "../../src/services/filesync/directory.js";
 import type { File } from "../../src/services/filesync/file.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
+import { isEqualHashes } from "../../src/services/filesync/hashes.js";
 import { noop } from "../../src/services/util/function.js";
+import { isNil } from "../../src/services/util/is.js";
 import { defaults, omit } from "../../src/services/util/object.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import type { PartialExcept } from "../types.js";
@@ -45,6 +48,12 @@ export type PartialSyncJson = Partial<Omit<SyncJson, "filesVersion"> & { filesVe
 
 export type SyncScenarioOptions = {
   /**
+   * The `force` option to {@linkcode FileSync.init}.
+   * @default false
+   */
+  force: boolean;
+
+  /**
    * The files at filesVersion 1.
    * @default { ".gadget/": "" }
    */
@@ -55,11 +64,6 @@ export type SyncScenarioOptions = {
    * @default { ".gadget/": "" }
    */
   localFiles: Files;
-
-  /**
-   * The filesVersion Gadget currently has.
-   */
-  gadgetFilesVersion?: 1n | 2n;
 
   /**
    * The files Gadget currently has.
@@ -124,6 +128,11 @@ export type SyncScenario = {
       filesVersionDirs: Record<string, Files>;
     }>
   >;
+
+  /**
+   * Asserts that the local and gadget directories have the same hashes.
+   */
+  expectLocalAndGadgetHashesMatch: () => Promise<void>;
 };
 
 /**
@@ -135,9 +144,10 @@ export type SyncScenario = {
 export const makeSyncScenario = async ({
   filesVersion1Files,
   localFiles,
-  gadgetFilesVersion = 1n,
   gadgetFiles,
+  force,
 }: Partial<SyncScenarioOptions> = {}): Promise<SyncScenario> => {
+  let gadgetFilesVersion = 1n;
   await writeDir(testDirPath("gadget"), { ".gadget/": "", ...gadgetFiles });
   const gadgetDir = await Directory.init(testDirPath("gadget"));
 
@@ -147,7 +157,8 @@ export const makeSyncScenario = async ({
   const filesVersionDirs = new Map<bigint, Directory>();
   filesVersionDirs.set(1n, filesVersion1Dir);
 
-  if (gadgetFilesVersion === 2n) {
+  if (!isEqualHashes(await gadgetDir.hashes(), await filesVersion1Dir.hashes())) {
+    gadgetFilesVersion = 2n;
     await fs.copy(gadgetDir.path, testDirPath("fv-2"));
     filesVersionDirs.set(2n, await Directory.init(testDirPath("fv-2")));
   }
@@ -157,12 +168,14 @@ export const makeSyncScenario = async ({
     await writeDir(testDirPath("local"), localFiles);
     await localDir.loadIgnoreFile();
 
-    const syncJson: SyncJson = { app: testApp.slug, filesVersion: "1", mtime: Date.now() + 1 };
-    await fs.outputJSON(localDir.absolute(".gadget/sync.json"), syncJson, { spaces: 2 });
+    if (!force) {
+      const syncJson: SyncJson = { app: testApp.slug, filesVersion: "1", mtime: Date.now() + 1 };
+      await fs.outputJSON(localDir.absolute(".gadget/sync.json"), syncJson, { spaces: 2 });
+    }
   }
 
   FileSync.init.mockRestore?.();
-  const filesync = await FileSync.init({ user: testUser, dir: localDir.path, app: testApp.slug });
+  const filesync = await FileSync.init({ user: testUser, dir: localDir.path, app: testApp.slug, force });
   vi.spyOn(FileSync, "init").mockResolvedValue(filesync);
 
   const processGadgetChanges = async ({
@@ -203,11 +216,70 @@ export const makeSyncScenario = async ({
   void nockEditGraphQLResponse({
     optional: true,
     persist: true,
-    query: REMOTE_FILES_VERSION_QUERY,
-    result: () => {
+    query: FILE_SYNC_HASHES_QUERY,
+    expectVariables: z.object({ filesVersion: z.string().optional() }).optional(),
+    result: async (variables) => {
+      let filesVersion: bigint;
+      let hashes: Hashes;
+
+      if (isNil(variables?.filesVersion)) {
+        log.trace("sending gadget hashes", { gadgetFilesVersion, variables });
+        filesVersion = gadgetFilesVersion;
+        hashes = await gadgetDir.hashes();
+      } else {
+        filesVersion = BigInt(variables.filesVersion);
+        log.trace("sending files version hashes", { filesVersion, variables });
+        const filesVersionDir = filesVersionDirs.get(filesVersion);
+        assert(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
+        hashes = await filesVersionDir.hashes();
+      }
+
       return {
         data: {
-          remoteFilesVersion: String(gadgetFilesVersion),
+          fileSyncHashes: {
+            filesVersion: String(filesVersion),
+            hashes,
+          },
+        },
+      };
+    },
+  });
+
+  void nockEditGraphQLResponse({
+    optional: true,
+    persist: true,
+    query: FILE_SYNC_FILES_QUERY,
+    expectVariables: z.object({
+      filesVersion: z.string().optional(),
+      paths: z.array(z.string()),
+      encoding: z.nativeEnum(FileSyncEncoding).optional(),
+    }),
+    result: async ({ filesVersion, paths, encoding }) => {
+      filesVersion ??= String(gadgetFilesVersion);
+      encoding ??= FileSyncEncoding.Base64;
+
+      const filesVersionDir = filesVersionDirs.get(BigInt(filesVersion));
+      assert(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
+
+      return {
+        data: {
+          fileSyncFiles: {
+            filesVersion: filesVersion,
+            files: await pMap(paths, async (filepath) => {
+              const stats = await fs.stat(filesVersionDir.absolute(filepath));
+              let content = "";
+              if (stats.isFile()) {
+                content = (await fs.readFile(filesVersionDir.absolute(filepath), { encoding })) as string;
+              }
+
+              return {
+                path: filepath,
+                mode: stats.mode,
+                content,
+                encoding: FileSyncEncoding.Base64,
+              };
+            }),
+          },
         },
       };
     },
@@ -377,7 +449,44 @@ export const makeSyncScenario = async ({
         })(),
       );
     },
+
+    expectLocalAndGadgetHashesMatch: async () => {
+      const localHashes = await localDir.hashes();
+      const gadgetHashes = await gadgetDir.hashes();
+      expect(localHashes).toEqual(gadgetHashes);
+    },
   };
+};
+
+/**
+ * Creates hashes of the given files.
+ */
+export const makeHashes = async ({
+  filesVersionFiles,
+  localFiles,
+  gadgetFiles,
+}: {
+  filesVersionFiles: Files;
+  localFiles: Files;
+  gadgetFiles?: Files;
+}): Promise<{ filesVersionHashes: Hashes; localHashes: Hashes; gadgetHashes: Hashes }> => {
+  const [filesVersionHashes, localHashes, gadgetHashes] = await Promise.all([
+    writeDir(testDirPath("filesVersion"), filesVersionFiles)
+      .then(() => Directory.init(testDirPath("filesVersion")))
+      .then((dir) => dir.hashes()),
+
+    writeDir(testDirPath("local"), localFiles)
+      .then(() => Directory.init(testDirPath("local")))
+      .then((dir) => dir.hashes()),
+
+    !gadgetFiles
+      ? Promise.resolve({})
+      : writeDir(testDirPath("gadget"), gadgetFiles)
+          .then(() => Directory.init(testDirPath("gadget")))
+          .then((dir) => dir.hashes()),
+  ]);
+
+  return { filesVersionHashes, localHashes, gadgetHashes };
 };
 
 export const defaultFileMode = os.platform() === "win32" ? 0o100666 : 0o100644;

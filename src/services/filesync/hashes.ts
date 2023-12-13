@@ -34,11 +34,23 @@ export class ChangesWithHash extends Map<string, ChangeWithHash> {
 /**
  * Calculates the changes that were made to `from` to make it end up as `to`.
  *
- * @param from - The source `Hashes` object to compare.
- * @param to - The target `Hashes` object to compare.
- * @param ignore - An optional array of path prefixes to ignore during the comparison.
+ * If `existing` is provided, only the changes that are necessary to
+ * apply to `existing` are returned.
+ *
+ * If `ignore` is provided, any changes that were made to a path that
+ * starts with any of the `ignore` paths are skipped.
  */
-export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes; to: Hashes; ignore?: string[] }): ChangesWithHash => {
+export const getChanges = ({
+  from: source,
+  to: target,
+  existing,
+  ignore,
+}: {
+  from: Hashes;
+  to: Hashes;
+  existing?: Hashes;
+  ignore?: string[];
+}): ChangesWithHash => {
   const changes = new ChangesWithHash();
   const targetPaths = Object.keys(target);
 
@@ -80,15 +92,15 @@ export const getChanges = ({ from: source, to: target, ignore }: { from: Hashes;
     }
   }
 
-  return changes;
+  if (!existing) {
+    return changes;
+  }
+
+  return withoutUnnecessaryChanges({ changes, existing });
 };
 
 /**
  * Filters out changes that the existing filesystem already has.
- *
- * @param changes - The changes that are going to be applied to `existing`.
- * @param existing - The existing filesystem `Hashes`.
- * @returns Changes that are necessary to apply to `existing`.
  */
 export const withoutUnnecessaryChanges = ({ changes, existing }: { changes: ChangesWithHash; existing: Hashes }): ChangesWithHash => {
   const necessaryChanges = new ChangesWithHash();

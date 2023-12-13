@@ -82,6 +82,29 @@ describe("getChanges", () => {
       "some/nested/other-file.js": { type: "delete", sourceHash: filesVersionHashes["some/nested/other-file.js"] },
     });
   });
+
+  it("doesn't return changes for files that existing already has", async () => {
+    const { filesVersionHashes, localHashes, gadgetHashes } = await makeHashes({
+      filesVersionFiles: {
+        "foo.js": "// foo",
+        "bar.js": "// bar",
+      },
+      localFiles: {
+        "bar.js": "// bar changed",
+        "baz.js": "// baz",
+        "qux.js": "// qux",
+      },
+      gadgetFiles: {
+        "bar.js": "// bar changed",
+        "baz.js": "// baz",
+      },
+    });
+
+    const changes = getChanges({ from: filesVersionHashes, to: localHashes, existing: gadgetHashes });
+    expect(Object.fromEntries(changes)).toEqual({
+      "qux.js": { type: "create", targetHash: localHashes["qux.js"] },
+    });
+  });
 });
 
 describe("withoutUnnecessaryChanges", () => {

@@ -33,7 +33,7 @@ import { getConflicts, printConflicts, withoutConflictingChanges } from "./confl
 import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
 import { InvalidSyncFileError, TooManySyncAttemptsError } from "./error.js";
 import type { File } from "./file.js";
-import { getChanges, isEqualHashes, withoutUnnecessaryChanges, type ChangesWithHash } from "./hashes.js";
+import { getChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 
 export class FileSync {
   readonly editGraphQL: EditGraphQL;
@@ -342,8 +342,8 @@ export class FileSync {
       return;
     }
 
-    let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
-    let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes });
+    let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
+    let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
 
     if (localChanges.size === 0 && gadgetChanges.size === 0) {
       // the local filesystem is missing .gadget/ files
@@ -379,9 +379,6 @@ export class FileSync {
         }
       }
     }
-
-    localChanges = withoutUnnecessaryChanges({ changes: localChanges, existing: gadgetHashes });
-    gadgetChanges = withoutUnnecessaryChanges({ changes: gadgetChanges, existing: localHashes });
 
     assert(localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
 

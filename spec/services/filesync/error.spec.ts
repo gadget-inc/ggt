@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InvalidSyncFileError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
+import { InvalidSyncFileError, TooManySyncAttemptsError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
 
 describe("YarnNotFoundError", () => {
   it("renders correctly", () => {
@@ -34,6 +34,23 @@ describe("InvalidSyncFileError", () => {
       to Gadget, run 'ggt sync' again with the --force flag:
 
         ggt sync /Users/jane/doe/ --app test --force"
+    `);
+  });
+});
+
+describe("TooManySyncAttemptsError", () => {
+  it("renders correctly", () => {
+    const error = new TooManySyncAttemptsError(10);
+    expect(error.toString()).toMatchInlineSnapshot(`
+      "We synced your local files with Gadget 10 times, but
+      your local filesystem is still out of sync.
+
+      Make sure no one else is editing files in the Gadget editor
+      and try again.
+
+      If you think this is a bug, please submit an issue using the link below.
+
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
     `);
   });
 });

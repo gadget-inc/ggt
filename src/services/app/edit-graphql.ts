@@ -8,6 +8,12 @@ import type { JsonObject } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
 import type {
+  FileSyncComparisonHashesQuery,
+  FileSyncComparisonHashesQueryVariables,
+  FileSyncFilesQuery,
+  FileSyncFilesQueryVariables,
+  FileSyncHashesQuery,
+  FileSyncHashesQueryVariables,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
   RemoteFileSyncEventsSubscription,
@@ -389,3 +395,47 @@ export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = sprint(/* GraphQL */ `
 `) as GraphQLQuery<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;
 
 export type PUBLISH_FILE_SYNC_EVENTS_MUTATION = typeof PUBLISH_FILE_SYNC_EVENTS_MUTATION;
+
+export const FILE_SYNC_FILES_QUERY = sprint(/* GraphQL */ `
+  query FileSyncFiles($paths: [String!]!, $filesVersion: String, $encoding: FileSyncEncoding) {
+    fileSyncFiles(paths: $paths, filesVersion: $filesVersion, encoding: $encoding) {
+      filesVersion
+      files {
+        path
+        mode
+        content
+        encoding
+      }
+    }
+  }
+`) as GraphQLQuery<FileSyncFilesQuery, FileSyncFilesQueryVariables>;
+
+export type FILE_SYNC_FILES_QUERY = typeof FILE_SYNC_FILES_QUERY;
+
+export const FILE_SYNC_HASHES_QUERY = sprint(/* GraphQL */ `
+  query FileSyncHashes($filesVersion: String) {
+    fileSyncHashes(filesVersion: $filesVersion) {
+      filesVersion
+      hashes
+    }
+  }
+`) as GraphQLQuery<FileSyncHashesQuery, FileSyncHashesQueryVariables>;
+
+export type FILE_SYNC_HASHES_QUERY = typeof FILE_SYNC_HASHES_QUERY;
+
+export const FILE_SYNC_COMPARISON_HASHES_QUERY = sprint(/* GraphQL */ `
+  query FileSyncComparisonHashes($filesVersion: String!) {
+    fileSyncComparisonHashes(filesVersion: $filesVersion) {
+      filesVersionHashes {
+        filesVersion
+        hashes
+      }
+      latestFilesVersionHashes {
+        filesVersion
+        hashes
+      }
+    }
+  }
+`) as GraphQLQuery<FileSyncComparisonHashesQuery, FileSyncComparisonHashesQueryVariables>;
+
+export type FILE_SYNC_COMPARISON_HASHES_QUERY = typeof FILE_SYNC_COMPARISON_HASHES_QUERY;

@@ -15,8 +15,10 @@ import type { App } from "../app/app.js";
 import { getApps } from "../app/app.js";
 import {
   EditGraphQL,
+  FILE_SYNC_COMPARISON_HASHES_QUERY,
+  FILE_SYNC_FILES_QUERY,
+  FILE_SYNC_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-  REMOTE_FILES_VERSION_QUERY,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit-graphql.js";
 import { ArgError } from "../command/arg.js";
@@ -28,15 +30,11 @@ import type { User } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { Changes, printChanges } from "./changes.js";
-import { Directory, supportsPermissions, swallowEnoent } from "./directory.js";
-import { InvalidSyncFileError } from "./error.js";
+import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
+import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
+import { InvalidSyncFileError, TooManySyncAttemptsError } from "./error.js";
 import type { File } from "./file.js";
-
-export enum Action {
-  CANCEL = "Cancel (Ctrl+C)",
-  MERGE = "Merge local files with remote ones",
-  RESET = "Reset local files to remote ones",
-}
+import { getChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 
 export class FileSync {
   readonly editGraphQL: EditGraphQL;
@@ -325,97 +323,114 @@ export class FileSync {
   }
 
   /**
-   * Synchronizes local files with Gadget files. If there are local
-   * changes, prompts the user to either merge or reset them.
+   * Ensures the local filesystem is in sync with Gadget's filesystem.
+   * - All non-conflicting changes are automatically merged.
+   * - Conflicts are resolved by prompting the user to either keep their
+   *   local changes or keep Gadget's changes.
+   * - This function will not return until the filesystem is in sync.
    */
-  async sync(): Promise<void> {
-    const data = await this.editGraphQL.query({ query: REMOTE_FILES_VERSION_QUERY });
-    const remoteFilesVersion = BigInt(data.remoteFilesVersion);
-    const hasRemoteChanges = remoteFilesVersion > this.filesVersion;
+  async sync({ attempt = 0 }: { attempt?: number } = {}): Promise<void> {
+    if (attempt > 10) {
+      throw new TooManySyncAttemptsError(attempt);
+    }
 
-    const getLocalChanges = async (): Promise<Changes> => {
-      const changes = new Changes();
-      for await (const normalizedPath of this.directory.walk()) {
-        if (normalizedPath.startsWith(".gadget/")) {
-          // ignore changes to the .gadget/ directory
-          continue;
-        }
+    const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await this._getHashes();
+    this.log.debug("syncing", { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
 
-        const stats = await fs.stat(this.directory.absolute(normalizedPath));
-        if (stats.mtime.getTime() > this.mtime) {
-          this.log.trace("detected local change", { path: normalizedPath, mtime: stats.mtime.getTime() });
-          changes.set(normalizedPath, { type: "update" });
-        }
-      }
-      return changes;
-    };
+    if (isEqualHashes(localHashes, gadgetHashes)) {
+      this.log.info("filesystem is in sync");
+      await this._save(gadgetFilesVersion);
+      return;
+    }
 
-    let localChanges = await getLocalChanges();
-    const hasLocalChanges = localChanges.size > 0;
-    if (hasLocalChanges) {
-      printChanges({
-        changes: localChanges,
-        tense: "past",
-        message: sprint`{bold Local files have changed since you last synced}`,
-        spaceY: 1,
-        limit: Infinity,
+    let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
+    let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
+
+    if (localChanges.size === 0 && gadgetChanges.size === 0) {
+      // the local filesystem is missing .gadget/ files
+      gadgetChanges = getChanges({ from: localHashes, to: gadgetHashes });
+      assertAllGadgetFiles({ gadgetChanges });
+    }
+
+    const conflicts = getConflicts({ localChanges, gadgetChanges });
+    if (conflicts.size > 0) {
+      this.log.debug("conflicts detected", { conflicts });
+      printConflicts({
+        message: sprint`{bold You have conflicting changes with Gadget}`,
+        conflicts,
       });
-    }
 
-    let action: Action | undefined;
-    if (hasLocalChanges) {
-      action = await select({
-        message: hasRemoteChanges ? "Remote files have also changed. How would you like to proceed?" : "How would you like to proceed?",
-        choices: [Action.CANCEL, Action.MERGE, Action.RESET],
+      const preference = await select({
+        message: "How would you like to resolve these conflicts?",
+        choices: Object.values(ConflictPreference),
       });
-    }
 
-    if (action && action !== Action.CANCEL) {
-      // get all the changed files again in case more changed
-      localChanges = await getLocalChanges();
-    }
-
-    switch (action) {
-      case Action.MERGE: {
-        this.log.info("merging local changes", {
-          remoteFilesVersion,
-          hasRemoteChanges,
-          hasLocalChanges,
-          changed: Array.from(localChanges.keys()),
-        });
-
-        const currentFilesVersion = this.filesVersion;
-        await this._sendChangesToGadget({ changes: localChanges, expectedFilesVersion: remoteFilesVersion });
-
-        // We purposefully set the files version to the one we just had
-        // because we haven't received the remote files that changed yet
-        this._state.filesVersion = String(currentFilesVersion);
-        break;
-      }
-      case Action.RESET: {
-        this.log.info("resetting local changes", {
-          remoteFilesVersion,
-          hasRemoteChanges,
-          hasLocalChanges,
-          changed: Array.from(localChanges.keys()),
-        });
-
-        // delete the local files that have changed since the last sync
-        await this._writeToLocalFilesystem({
-          filesVersion: this.filesVersion,
-          files: [],
-          delete: Array.from(localChanges.keys()),
-        });
-
-        // set the files version to 0 so we receive all the remote files
-        // again, including any files that we deleted that still exist
-        this._state.filesVersion = "0";
-        break;
-      }
-      case Action.CANCEL: {
-        process.exit(0);
+      switch (preference) {
+        case ConflictPreference.CANCEL: {
+          process.exit(0);
+          break;
+        }
+        case ConflictPreference.LOCAL: {
+          gadgetChanges = withoutConflictingChanges({ conflicts, changes: gadgetChanges });
+          break;
+        }
+        case ConflictPreference.GADGET: {
+          localChanges = withoutConflictingChanges({ conflicts, changes: localChanges });
+          break;
+        }
       }
     }
+
+    assert(localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
+
+    if (gadgetChanges.size > 0) {
+      await this._getChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
+    }
+
+    if (localChanges.size > 0) {
+      await this._sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
+    }
+
+    // recursively call this function until we're in sync
+    return this.sync({ attempt: ++attempt });
+  }
+
+  private async _getChangesFromGadget({
+    filesVersion,
+    changes,
+  }: {
+    filesVersion: bigint;
+    changes: Changes | ChangesWithHash;
+  }): Promise<void> {
+    this.log.debug("getting changes from gadget", { filesVersion, changes });
+    const created = changes.created();
+    const updated = changes.updated();
+
+    let files: File[] = [];
+    if (created.length > 0 || updated.length > 0) {
+      const { fileSyncFiles } = await this.editGraphQL.query({
+        query: FILE_SYNC_FILES_QUERY,
+        variables: {
+          paths: [...created, ...updated],
+          filesVersion: String(filesVersion),
+          encoding: FileSyncEncoding.Base64,
+        },
+      });
+
+      files = fileSyncFiles.files;
+    }
+
+    await this._writeToLocalFilesystem({
+      filesVersion,
+      files,
+      delete: changes.deleted(),
+    });
+
+    printChanges({
+      changes,
+      tense: "past",
+      message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
+    });
   }
 
   private async _sendChangesToGadget({
@@ -573,6 +588,48 @@ export class FileSync {
     ]);
   }
 
+  private async _getHashes(): Promise<{
+    gadgetFilesVersion: bigint;
+    filesVersionHashes: Hashes;
+    localHashes: Hashes;
+    gadgetHashes: Hashes;
+  }> {
+    const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
+      // get the hashes of our local files
+      this.directory.hashes(),
+      // get the hashes of our local filesVersion and the latest filesVersion
+      (async () => {
+        let gadgetFilesVersion: bigint;
+        let gadgetHashes: Hashes;
+        let filesVersionHashes: Hashes;
+
+        if (this.filesVersion === 0n) {
+          // this is the first time we're syncing, so just get the
+          // hashes of the latest filesVersion
+          const { fileSyncHashes } = await this.editGraphQL.query({ query: FILE_SYNC_HASHES_QUERY });
+          gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
+          gadgetHashes = fileSyncHashes.hashes;
+          filesVersionHashes = {};
+        } else {
+          // this isn't the first time we're syncing, so get the hashes
+          // of the files at our local filesVersion and the latest
+          // filesVersion
+          const { fileSyncComparisonHashes } = await this.editGraphQL.query({
+            query: FILE_SYNC_COMPARISON_HASHES_QUERY,
+            variables: { filesVersion: String(this.filesVersion) },
+          });
+          gadgetFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
+          gadgetHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
+          filesVersionHashes = fileSyncComparisonHashes.filesVersionHashes.hashes;
+        }
+
+        return { filesVersionHashes, gadgetHashes, gadgetFilesVersion };
+      })(),
+    ]);
+
+    return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion };
+  }
+
   /**
    * Updates {@linkcode _state} and saves it to `.gadget/sync.json`.
    */
@@ -607,3 +664,18 @@ export const isEmptyOrNonExistentDir = async (dir: string): Promise<boolean> => 
     return true;
   }
 };
+
+export const assertAllGadgetFiles = ({ gadgetChanges }: { gadgetChanges: Changes }): void => {
+  assert(gadgetChanges.created().length > 0, "expected gadgetChanges to have created files");
+  assert(gadgetChanges.deleted().length === 0, "expected gadgetChanges to not have deleted files");
+  assert(gadgetChanges.updated().length === 0, "expected gadgetChanges to not have updated files");
+
+  const allGadgetFiles = Array.from(gadgetChanges.keys()).every((path) => path.startsWith(".gadget/"));
+  assert(allGadgetFiles, "expected all gadgetChanges to be .gadget/ files");
+};
+
+export const ConflictPreference = Object.freeze({
+  CANCEL: "Cancel (Ctrl+C)",
+  LOCAL: "Keep my conflicting changes",
+  GADGET: "Keep Gadget's conflicting changes",
+});

@@ -17,6 +17,16 @@ type APIUpgradeConvergePlanResult {
   success: Boolean!
 }
 
+type AddApplicationTagResult {
+  reason: String
+  success: Boolean!
+}
+
+type AddUserTagResult {
+  reason: String
+  success: Boolean!
+}
+
 type ChangeAppDomainResult {
   onlyValidate: Boolean
   reason: String
@@ -82,6 +92,11 @@ input FileSyncChangedEventInput {
   path: String!
 }
 
+type FileSyncComparisonHashes {
+  filesVersionHashes: FileSyncHashes!
+  latestFilesVersionHashes: FileSyncHashes!
+}
+
 type FileSyncDeletedEvent {
   path: String!
 }
@@ -93,6 +108,23 @@ input FileSyncDeletedEventInput {
 enum FileSyncEncoding {
   base64
   utf8
+}
+
+type FileSyncFile {
+  content: String!
+  encoding: FileSyncEncoding!
+  mode: Float!
+  path: String!
+}
+
+type FileSyncFiles {
+  files: [FileSyncFile!]!
+  filesVersion: String!
+}
+
+type FileSyncHashes {
+  filesVersion: String!
+  hashes: JSON!
 }
 
 type GadgetRole {
@@ -114,24 +146,38 @@ type LogSearchResult {
   status: String!
 }
 
+type MigrateAACResult {
+  reason: String
+  success: Boolean!
+}
+
 type MigrateEnvironmentsResult {
   success: Boolean!
 }
 
 type Mutation {
+  addApplicationTag(tag: String!): AddApplicationTagResult
+  addUserTag(replaceMatches: [String!], tag: String!): AddUserTagResult
   changeAppDomain(newSubdomain: String!, onlyValidate: Boolean): ChangeAppDomainResult
-  deleteApp: DeleteAppStatusResult
+  convergePackages: Boolean!
+  deleteApp(onlyProduction: Boolean): DeleteAppStatusResult
   enableFrontend(hasShopifyConnection: Boolean!): EnableFrontendResult
+  migrateAAC: MigrateAACResult
   migrateEnvironments(existingToProduction: Boolean!): MigrateEnvironmentsResult
   patchEnvironmentTree(clientID: EnvironmentTreeClientId!, patches: [JSON!]!): EnvironmentPatchResult
   publish: EnvironmentPublishResult
   publishFileSyncEvents(input: PublishFileSyncEventsInput!): PublishFileSyncEventsResult!
   refreshScopes(appConfigKey: String!, connectionKey: String!, shopId: String!): RefreshScopesResult
   registerWebhooks(connectionKey: String!, keepExtraTopics: Boolean, modelKeys: [String!], shopIds: [String!]!): RegisterWebhooksResult
-  removeContributor(email: String!, isInvitation: Boolean!): RemoveContributorResult
-  sendAppInvitation(email: String, emails: [String!], resend: Boolean): SendAppInvitationResult
+  removeContributor(email: String!, isInvitation: Boolean!): RemoveContributorResult @deprecated(reason: "use team")
+  sendAppInvitation(email: String, emails: [String!], resend: Boolean): SendAppInvitationResult @deprecated(reason: "app invitations are no longer supported")
+  setClientCurrentPath(clientID: EnvironmentTreeClientId!, currentPath: String!): EnvironmentPatchResult!
+  setFrameworkVersion(constraint: String!): SetFrameworkVersionResult!
+  syncToWebflow: Boolean!
+  uninstallShop(shopId: String!): UninstallShopResult
   unregisterWebhooks(apiKeys: [String!], connectionKey: String!, modelKeys: [String!]): UnregisterWebhooksResult
   uploadFiles(files: [UploadFile!]!): UploadFilesResult!
+  uploadTemplateAsset(file: Upload!): UploadTemplateAssetResult!
 }
 
 input PublishFileSyncEventsInput {
@@ -149,14 +195,17 @@ type Query {
   currentUser: User!
   environmentTreeChildKeys(path: String!): [String!]!
   environmentTreePath(hydrateChildrenGlobs: [String!], path: String!): JSON
+  fileSyncComparisonHashes(filesVersion: String!): FileSyncComparisonHashes!
+  fileSyncFiles(encoding: FileSyncEncoding, filesVersion: String, paths: [String!]!): FileSyncFiles!
+  fileSyncHashes(filesVersion: String): FileSyncHashes!
   identifySupportConversation: IdentifySupportConversationResult
-  listContributors: [ContributorResult!]!
+  listContributors: [ContributorResult!]! @deprecated(reason: "use team")
   logsSearch(direction: String, end: DateTime, limit: Int, query: String!, start: DateTime, step: Int): LogSearchResult!
   remoteFilesVersion: String!
   roles: [GadgetRole!]!
   runTestSupportFunction: JSON
   team: TeamResult!
-  typesManifest(dependenciesHash: String!): TypesManifest!
+  typesManifest(dependenciesHash: String!, environmentStatus: String): TypesManifest!
 }
 
 type RefreshScopesResult {
@@ -183,12 +232,20 @@ type SendAppInvitationResult {
   success: Boolean!
 }
 
+type SetFrameworkVersionResult {
+  installDependenciesOperationKey: String
+}
+
 type Subscription {
-  editorActive: Boolean
   environmentTreePathPatches(clientID: EnvironmentTreeClientId!, path: String!): EnvironmentSubscriptionResult
   logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
   remoteFileSyncEvents(encoding: FileSyncEncoding, localFilesVersion: String!): RemoteFileSyncEvents!
+  reportClientPresence(clientID: EnvironmentTreeClientId!): Boolean
   typesManifestStream: TypesManifest!
+}
+
+type TeamEntitlements {
+  openAICredits: Boolean
 }
 
 type TeamMember {
@@ -198,7 +255,13 @@ type TeamMember {
 
 type TeamResult {
   availableSeats: Int
+  canPublish: Boolean!
+  costPerApplication: String
   costPerSeat: String
+  includedApplications: Int
+  includedApplicationsRemaining: Int
+  maxApplications: Int
+  teamEntitlements: TeamEntitlements!
   teamMembers: [TeamMember!]!
 }
 
@@ -212,6 +275,11 @@ type TypesManifest {
   dependenciesHash: String!
   entries: [TypeManifestEntry!]!
   environmentVersion: Int!
+}
+
+type UninstallShopResult {
+  reason: String
+  success: Boolean!
 }
 
 type UnregisterWebhooksResult {
@@ -228,6 +296,11 @@ input UploadFile {
 
 type UploadFilesResult {
   success: Boolean!
+}
+
+type UploadTemplateAssetResult {
+  success: Boolean!
+  url: String
 }
 
 type User {

@@ -15,7 +15,7 @@ export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> =
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string | number; output: string; }
+  ID: { input: string; output: string; }
   String: { input: string; output: string; }
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
@@ -32,6 +32,18 @@ export type Scalars = {
 export type ApiUpgradeConvergePlanResult = {
   __typename?: 'APIUpgradeConvergePlanResult';
   items: Array<Scalars['JSON']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type AddApplicationTagResult = {
+  __typename?: 'AddApplicationTagResult';
+  reason?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type AddUserTagResult = {
+  __typename?: 'AddUserTagResult';
+  reason?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -98,6 +110,12 @@ export type FileSyncChangedEventInput = {
   path: Scalars['String']['input'];
 };
 
+export type FileSyncComparisonHashes = {
+  __typename?: 'FileSyncComparisonHashes';
+  filesVersionHashes: FileSyncHashes;
+  latestFilesVersionHashes: FileSyncHashes;
+};
+
 export type FileSyncDeletedEvent = {
   __typename?: 'FileSyncDeletedEvent';
   path: Scalars['String']['output'];
@@ -111,6 +129,26 @@ export enum FileSyncEncoding {
   Base64 = 'base64',
   Utf8 = 'utf8'
 }
+
+export type FileSyncFile = {
+  __typename?: 'FileSyncFile';
+  content: Scalars['String']['output'];
+  encoding: FileSyncEncoding;
+  mode: Scalars['Float']['output'];
+  path: Scalars['String']['output'];
+};
+
+export type FileSyncFiles = {
+  __typename?: 'FileSyncFiles';
+  files: Array<FileSyncFile>;
+  filesVersion: Scalars['String']['output'];
+};
+
+export type FileSyncHashes = {
+  __typename?: 'FileSyncHashes';
+  filesVersion: Scalars['String']['output'];
+  hashes: Scalars['JSON']['output'];
+};
 
 export type GadgetRole = {
   __typename?: 'GadgetRole';
@@ -132,6 +170,12 @@ export type LogSearchResult = {
   status: Scalars['String']['output'];
 };
 
+export type MigrateAacResult = {
+  __typename?: 'MigrateAACResult';
+  reason?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type MigrateEnvironmentsResult = {
   __typename?: 'MigrateEnvironmentsResult';
   success: Scalars['Boolean']['output'];
@@ -139,25 +183,52 @@ export type MigrateEnvironmentsResult = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addApplicationTag?: Maybe<AddApplicationTagResult>;
+  addUserTag?: Maybe<AddUserTagResult>;
   changeAppDomain?: Maybe<ChangeAppDomainResult>;
+  convergePackages: Scalars['Boolean']['output'];
   deleteApp?: Maybe<DeleteAppStatusResult>;
   enableFrontend?: Maybe<EnableFrontendResult>;
+  migrateAAC?: Maybe<MigrateAacResult>;
   migrateEnvironments?: Maybe<MigrateEnvironmentsResult>;
   patchEnvironmentTree?: Maybe<EnvironmentPatchResult>;
   publish?: Maybe<EnvironmentPublishResult>;
   publishFileSyncEvents: PublishFileSyncEventsResult;
   refreshScopes?: Maybe<RefreshScopesResult>;
   registerWebhooks?: Maybe<RegisterWebhooksResult>;
+  /** @deprecated use team */
   removeContributor?: Maybe<RemoveContributorResult>;
+  /** @deprecated app invitations are no longer supported */
   sendAppInvitation?: Maybe<SendAppInvitationResult>;
+  setClientCurrentPath: EnvironmentPatchResult;
+  setFrameworkVersion: SetFrameworkVersionResult;
+  syncToWebflow: Scalars['Boolean']['output'];
+  uninstallShop?: Maybe<UninstallShopResult>;
   unregisterWebhooks?: Maybe<UnregisterWebhooksResult>;
   uploadFiles: UploadFilesResult;
+  uploadTemplateAsset: UploadTemplateAssetResult;
+};
+
+
+export type MutationAddApplicationTagArgs = {
+  tag: Scalars['String']['input'];
+};
+
+
+export type MutationAddUserTagArgs = {
+  replaceMatches?: InputMaybe<Array<Scalars['String']['input']>>;
+  tag: Scalars['String']['input'];
 };
 
 
 export type MutationChangeAppDomainArgs = {
   newSubdomain: Scalars['String']['input'];
   onlyValidate?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
+export type MutationDeleteAppArgs = {
+  onlyProduction?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -210,6 +281,22 @@ export type MutationSendAppInvitationArgs = {
 };
 
 
+export type MutationSetClientCurrentPathArgs = {
+  clientID: EnvironmentTreeClientId;
+  currentPath: Scalars['String']['input'];
+};
+
+
+export type MutationSetFrameworkVersionArgs = {
+  constraint: Scalars['String']['input'];
+};
+
+
+export type MutationUninstallShopArgs = {
+  shopId: Scalars['String']['input'];
+};
+
+
 export type MutationUnregisterWebhooksArgs = {
   apiKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   connectionKey: Scalars['String']['input'];
@@ -219,6 +306,11 @@ export type MutationUnregisterWebhooksArgs = {
 
 export type MutationUploadFilesArgs = {
   files: Array<UploadFile>;
+};
+
+
+export type MutationUploadTemplateAssetArgs = {
+  file: Scalars['Upload']['input'];
 };
 
 export type PublishFileSyncEventsInput = {
@@ -238,7 +330,11 @@ export type Query = {
   currentUser: User;
   environmentTreeChildKeys: Array<Scalars['String']['output']>;
   environmentTreePath?: Maybe<Scalars['JSON']['output']>;
+  fileSyncComparisonHashes: FileSyncComparisonHashes;
+  fileSyncFiles: FileSyncFiles;
+  fileSyncHashes: FileSyncHashes;
   identifySupportConversation?: Maybe<IdentifySupportConversationResult>;
+  /** @deprecated use team */
   listContributors: Array<ContributorResult>;
   logsSearch: LogSearchResult;
   remoteFilesVersion: Scalars['String']['output'];
@@ -266,6 +362,23 @@ export type QueryEnvironmentTreePathArgs = {
 };
 
 
+export type QueryFileSyncComparisonHashesArgs = {
+  filesVersion: Scalars['String']['input'];
+};
+
+
+export type QueryFileSyncFilesArgs = {
+  encoding?: InputMaybe<FileSyncEncoding>;
+  filesVersion?: InputMaybe<Scalars['String']['input']>;
+  paths: Array<Scalars['String']['input']>;
+};
+
+
+export type QueryFileSyncHashesArgs = {
+  filesVersion?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type QueryLogsSearchArgs = {
   direction?: InputMaybe<Scalars['String']['input']>;
   end?: InputMaybe<Scalars['DateTime']['input']>;
@@ -278,6 +391,7 @@ export type QueryLogsSearchArgs = {
 
 export type QueryTypesManifestArgs = {
   dependenciesHash: Scalars['String']['input'];
+  environmentStatus?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RefreshScopesResult = {
@@ -309,12 +423,17 @@ export type SendAppInvitationResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type SetFrameworkVersionResult = {
+  __typename?: 'SetFrameworkVersionResult';
+  installDependenciesOperationKey?: Maybe<Scalars['String']['output']>;
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
-  editorActive?: Maybe<Scalars['Boolean']['output']>;
   environmentTreePathPatches?: Maybe<EnvironmentSubscriptionResult>;
   logsSearch: LogSearchResult;
   remoteFileSyncEvents: RemoteFileSyncEvents;
+  reportClientPresence?: Maybe<Scalars['Boolean']['output']>;
   typesManifestStream: TypesManifest;
 };
 
@@ -337,6 +456,16 @@ export type SubscriptionRemoteFileSyncEventsArgs = {
   localFilesVersion: Scalars['String']['input'];
 };
 
+
+export type SubscriptionReportClientPresenceArgs = {
+  clientID: EnvironmentTreeClientId;
+};
+
+export type TeamEntitlements = {
+  __typename?: 'TeamEntitlements';
+  openAICredits?: Maybe<Scalars['Boolean']['output']>;
+};
+
 export type TeamMember = {
   __typename?: 'TeamMember';
   contributesToApp: Scalars['Boolean']['output'];
@@ -346,7 +475,13 @@ export type TeamMember = {
 export type TeamResult = {
   __typename?: 'TeamResult';
   availableSeats?: Maybe<Scalars['Int']['output']>;
+  canPublish: Scalars['Boolean']['output'];
+  costPerApplication?: Maybe<Scalars['String']['output']>;
   costPerSeat?: Maybe<Scalars['String']['output']>;
+  includedApplications?: Maybe<Scalars['Int']['output']>;
+  includedApplicationsRemaining?: Maybe<Scalars['Int']['output']>;
+  maxApplications?: Maybe<Scalars['Int']['output']>;
+  teamEntitlements: TeamEntitlements;
   teamMembers: Array<TeamMember>;
 };
 
@@ -364,6 +499,12 @@ export type TypesManifest = {
   environmentVersion: Scalars['Int']['output'];
 };
 
+export type UninstallShopResult = {
+  __typename?: 'UninstallShopResult';
+  reason?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type UnregisterWebhooksResult = {
   __typename?: 'UnregisterWebhooksResult';
   success: Scalars['Boolean']['output'];
@@ -377,6 +518,12 @@ export type UploadFile = {
 export type UploadFilesResult = {
   __typename?: 'UploadFilesResult';
   success: Scalars['Boolean']['output'];
+};
+
+export type UploadTemplateAssetResult = {
+  __typename?: 'UploadTemplateAssetResult';
+  success: Scalars['Boolean']['output'];
+  url?: Maybe<Scalars['String']['output']>;
 };
 
 export type User = {
@@ -403,3 +550,26 @@ export type PublishFileSyncEventsMutationVariables = Exact<{
 
 
 export type PublishFileSyncEventsMutation = { __typename?: 'Mutation', publishFileSyncEvents: { __typename?: 'PublishFileSyncEventsResult', remoteFilesVersion: string } };
+
+export type FileSyncFilesQueryVariables = Exact<{
+  paths: Array<Scalars['String']['input']> | Scalars['String']['input'];
+  filesVersion?: InputMaybe<Scalars['String']['input']>;
+  encoding?: InputMaybe<FileSyncEncoding>;
+}>;
+
+
+export type FileSyncFilesQuery = { __typename?: 'Query', fileSyncFiles: { __typename?: 'FileSyncFiles', filesVersion: string, files: Array<{ __typename?: 'FileSyncFile', path: string, mode: number, content: string, encoding: FileSyncEncoding }> } };
+
+export type FileSyncHashesQueryVariables = Exact<{
+  filesVersion?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type FileSyncHashesQuery = { __typename?: 'Query', fileSyncHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } } };
+
+export type FileSyncComparisonHashesQueryVariables = Exact<{
+  filesVersion: Scalars['String']['input'];
+}>;
+
+
+export type FileSyncComparisonHashesQuery = { __typename?: 'Query', fileSyncComparisonHashes: { __typename?: 'FileSyncComparisonHashes', filesVersionHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } }, latestFilesVersionHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } } } };

@@ -8,7 +8,7 @@ import { relativeToThisFile } from "../util/paths.js";
 import type { ArgsSpec } from "./arg.js";
 import type { Context } from "./context.js";
 
-export const AvailableCommands = ["sync", "list", "login", "logout", "whoami", "version"] as const;
+export const AvailableCommands = ["sync", "list", "login", "logout", "whoami", "version", "deploy"] as const;
 
 export type AvailableCommand = (typeof AvailableCommands)[number];
 

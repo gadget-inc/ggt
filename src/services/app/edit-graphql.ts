@@ -16,6 +16,8 @@ import type {
   FileSyncHashesQueryVariables,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
+  PublishStatusSubscription,
+  PublishStatusSubscriptionVariables,
   RemoteFileSyncEventsSubscription,
   RemoteFileSyncEventsSubscriptionVariables,
   RemoteFilesVersionQuery,
@@ -141,7 +143,7 @@ export class EditGraphQL {
   }: {
     query: Query;
     variables?: Thunk<Query["Variables"]> | null;
-    onData: (data: Query["Data"]) => void;
+    onData: (data: Query["Data"]) => void | Promise<void>;
     onError: (error: EditGraphQLError) => void;
     onComplete?: () => void;
   }): () => void {
@@ -439,3 +441,26 @@ export const FILE_SYNC_COMPARISON_HASHES_QUERY = sprint(/* GraphQL */ `
 `) as GraphQLQuery<FileSyncComparisonHashesQuery, FileSyncComparisonHashesQueryVariables>;
 
 export type FILE_SYNC_COMPARISON_HASHES_QUERY = typeof FILE_SYNC_COMPARISON_HASHES_QUERY;
+
+export const REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION = sprint(/* GraphQL */ `
+  subscription publishStatus($localFilesVersion: String!, $force: Boolean) {
+    publishStatus(localFilesVersion: $localFilesVersion, force: $force) {
+      remoteFilesVersion
+      progress
+      issues {
+        severity
+        message
+        node {
+          type
+          key
+          name
+          fieldType
+          parentKey
+          parentApiIdentifier
+        }
+      }
+    }
+  }
+`) as GraphQLQuery<PublishStatusSubscription, PublishStatusSubscriptionVariables>;
+
+export type REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION = typeof REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION;

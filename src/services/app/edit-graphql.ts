@@ -8,6 +8,8 @@ import type { JsonObject } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
 import type {
+  FileSyncComparisonHashesQuery,
+  FileSyncComparisonHashesQueryVariables,
   FileSyncFilesQuery,
   FileSyncFilesQueryVariables,
   FileSyncHashesQuery,
@@ -420,3 +422,20 @@ export const FILE_SYNC_HASHES_QUERY = sprint(/* GraphQL */ `
 `) as GraphQLQuery<FileSyncHashesQuery, FileSyncHashesQueryVariables>;
 
 export type FILE_SYNC_HASHES_QUERY = typeof FILE_SYNC_HASHES_QUERY;
+
+export const FILE_SYNC_COMPARISON_HASHES_QUERY = sprint(/* GraphQL */ `
+  query FileSyncComparisonHashes($filesVersion: String!) {
+    fileSyncComparisonHashes(filesVersion: $filesVersion) {
+      filesVersionHashes {
+        filesVersion
+        hashes
+      }
+      latestFilesVersionHashes {
+        filesVersion
+        hashes
+      }
+    }
+  }
+`) as GraphQLQuery<FileSyncComparisonHashesQuery, FileSyncComparisonHashesQueryVariables>;
+
+export type FILE_SYNC_COMPARISON_HASHES_QUERY = typeof FILE_SYNC_COMPARISON_HASHES_QUERY;

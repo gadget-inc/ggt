@@ -15,6 +15,7 @@ import type { App } from "../app/app.js";
 import { getApps } from "../app/app.js";
 import {
   EditGraphQL,
+  FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
   FILE_SYNC_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
@@ -593,20 +594,37 @@ export class FileSync {
     localHashes: Hashes;
     gadgetHashes: Hashes;
   }> {
-    const [localHashes, filesVersionHashes, { gadgetFilesVersion, gadgetHashes }] = await Promise.all([
+    const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
       // get the hashes of our local files
       this.directory.hashes(),
-      // get the hashes of the files at our current filesVersion
-      this.filesVersion === 0n
-        ? {}
-        : this.editGraphQL
-            .query({ query: FILE_SYNC_HASHES_QUERY, variables: { filesVersion: String(this.filesVersion) } })
-            .then((data) => data.fileSyncHashes.hashes),
-      // get the hashes of the files at the latest filesVersion
-      this.editGraphQL.query({ query: FILE_SYNC_HASHES_QUERY }).then((data) => ({
-        gadgetFilesVersion: BigInt(data.fileSyncHashes.filesVersion),
-        gadgetHashes: data.fileSyncHashes.hashes,
-      })),
+      // get the hashes of our local filesVersion and the latest filesVersion
+      (async () => {
+        let gadgetFilesVersion: bigint;
+        let gadgetHashes: Hashes;
+        let filesVersionHashes: Hashes;
+
+        if (this.filesVersion === 0n) {
+          // this is the first time we're syncing, so just get the
+          // hashes of the latest filesVersion
+          const { fileSyncHashes } = await this.editGraphQL.query({ query: FILE_SYNC_HASHES_QUERY });
+          gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
+          gadgetHashes = fileSyncHashes.hashes;
+          filesVersionHashes = {};
+        } else {
+          // this isn't the first time we're syncing, so get the hashes
+          // of the files at our local filesVersion and the latest
+          // filesVersion
+          const { fileSyncComparisonHashes } = await this.editGraphQL.query({
+            query: FILE_SYNC_COMPARISON_HASHES_QUERY,
+            variables: { filesVersion: String(this.filesVersion) },
+          });
+          gadgetFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
+          gadgetHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
+          filesVersionHashes = fileSyncComparisonHashes.filesVersionHashes.hashes;
+        }
+
+        return { filesVersionHashes, gadgetHashes, gadgetFilesVersion };
+      })(),
     ]);
 
     return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion };

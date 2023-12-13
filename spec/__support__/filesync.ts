@@ -12,6 +12,7 @@ import {
   type FileSyncDeletedEventInput,
 } from "../../src/__generated__/graphql.js";
 import {
+  FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
   FILE_SYNC_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
@@ -239,6 +240,36 @@ export const makeSyncScenario = async ({
           fileSyncHashes: {
             filesVersion: String(filesVersion),
             hashes,
+          },
+        },
+      };
+    },
+  });
+
+  void nockEditGraphQLResponse({
+    optional: true,
+    persist: true,
+    query: FILE_SYNC_COMPARISON_HASHES_QUERY,
+    expectVariables: z.object({ filesVersion: z.string() }),
+    result: async (variables) => {
+      log.trace("sending comparison hashes", { gadgetFilesVersion, variables });
+
+      const filesVersionDir = filesVersionDirs.get(BigInt(variables.filesVersion));
+      assert(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
+
+      const [filesVersionHashes, gadgetHashes] = await Promise.all([filesVersionDir.hashes(), gadgetDir.hashes()]);
+
+      return {
+        data: {
+          fileSyncComparisonHashes: {
+            filesVersionHashes: {
+              filesVersion: variables.filesVersion,
+              hashes: filesVersionHashes,
+            },
+            latestFilesVersionHashes: {
+              filesVersion: String(gadgetFilesVersion),
+              hashes: gadgetHashes,
+            },
           },
         },
       };

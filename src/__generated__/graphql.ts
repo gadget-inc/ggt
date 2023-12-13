@@ -110,6 +110,12 @@ export type FileSyncChangedEventInput = {
   path: Scalars['String']['input'];
 };
 
+export type FileSyncComparisonHashes = {
+  __typename?: 'FileSyncComparisonHashes';
+  filesVersionHashes: FileSyncHashes;
+  latestFilesVersionHashes: FileSyncHashes;
+};
+
 export type FileSyncDeletedEvent = {
   __typename?: 'FileSyncDeletedEvent';
   path: Scalars['String']['output'];
@@ -190,8 +196,11 @@ export type Mutation = {
   publishFileSyncEvents: PublishFileSyncEventsResult;
   refreshScopes?: Maybe<RefreshScopesResult>;
   registerWebhooks?: Maybe<RegisterWebhooksResult>;
+  /** @deprecated use team */
   removeContributor?: Maybe<RemoveContributorResult>;
+  /** @deprecated app invitations are no longer supported */
   sendAppInvitation?: Maybe<SendAppInvitationResult>;
+  setClientCurrentPath: EnvironmentPatchResult;
   setFrameworkVersion: SetFrameworkVersionResult;
   syncToWebflow: Scalars['Boolean']['output'];
   uninstallShop?: Maybe<UninstallShopResult>;
@@ -272,6 +281,12 @@ export type MutationSendAppInvitationArgs = {
 };
 
 
+export type MutationSetClientCurrentPathArgs = {
+  clientID: EnvironmentTreeClientId;
+  currentPath: Scalars['String']['input'];
+};
+
+
 export type MutationSetFrameworkVersionArgs = {
   constraint: Scalars['String']['input'];
 };
@@ -315,9 +330,11 @@ export type Query = {
   currentUser: User;
   environmentTreeChildKeys: Array<Scalars['String']['output']>;
   environmentTreePath?: Maybe<Scalars['JSON']['output']>;
+  fileSyncComparisonHashes: FileSyncComparisonHashes;
   fileSyncFiles: FileSyncFiles;
   fileSyncHashes: FileSyncHashes;
   identifySupportConversation?: Maybe<IdentifySupportConversationResult>;
+  /** @deprecated use team */
   listContributors: Array<ContributorResult>;
   logsSearch: LogSearchResult;
   remoteFilesVersion: Scalars['String']['output'];
@@ -342,6 +359,11 @@ export type QueryEnvironmentTreeChildKeysArgs = {
 export type QueryEnvironmentTreePathArgs = {
   hydrateChildrenGlobs?: InputMaybe<Array<Scalars['String']['input']>>;
   path: Scalars['String']['input'];
+};
+
+
+export type QueryFileSyncComparisonHashesArgs = {
+  filesVersion: Scalars['String']['input'];
 };
 
 
@@ -408,10 +430,10 @@ export type SetFrameworkVersionResult = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  editorActive?: Maybe<Scalars['Boolean']['output']>;
   environmentTreePathPatches?: Maybe<EnvironmentSubscriptionResult>;
   logsSearch: LogSearchResult;
   remoteFileSyncEvents: RemoteFileSyncEvents;
+  reportClientPresence?: Maybe<Scalars['Boolean']['output']>;
   typesManifestStream: TypesManifest;
 };
 
@@ -432,6 +454,11 @@ export type SubscriptionLogsSearchArgs = {
 export type SubscriptionRemoteFileSyncEventsArgs = {
   encoding?: InputMaybe<FileSyncEncoding>;
   localFilesVersion: Scalars['String']['input'];
+};
+
+
+export type SubscriptionReportClientPresenceArgs = {
+  clientID: EnvironmentTreeClientId;
 };
 
 export type TeamEntitlements = {
@@ -539,3 +566,10 @@ export type FileSyncHashesQueryVariables = Exact<{
 
 
 export type FileSyncHashesQuery = { __typename?: 'Query', fileSyncHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } } };
+
+export type FileSyncComparisonHashesQueryVariables = Exact<{
+  filesVersion: Scalars['String']['input'];
+}>;
+
+
+export type FileSyncComparisonHashesQuery = { __typename?: 'Query', fileSyncComparisonHashes: { __typename?: 'FileSyncComparisonHashes', filesVersionHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } }, latestFilesVersionHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } } } };

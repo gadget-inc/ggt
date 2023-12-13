@@ -2,15 +2,15 @@ import arg from "arg";
 import boxen from "boxen";
 import chalk from "chalk";
 import ora from "ora";
-import { type Command, type Usage } from "../../src/services/command/command.js";
-import { isEqualHashes } from "../../src/services/filesync/hashes.js";
 import { AppArg } from "../../src/services/app/arg.js";
 import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
+import { type Command, type Usage } from "../../src/services/command/command.js";
 import { config } from "../../src/services/config/config.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
+import { isEqualHashes } from "../../src/services/filesync/hashes.js";
 import { select } from "../../src/services/output/prompt.js";
 import { sprint } from "../../src/services/output/sprint.js";
-import { PromiseSignal } from "../../src/services/util/promise.js";
+import { isGraphQLErrors } from "../../src/services/util/is.js";
 import { getUserOrLogin } from "../services/user/user.js";
 
 export const usage: Usage = () => sprint`
@@ -119,7 +119,6 @@ enum AppDeploymentSteps {
  */
 
 export const command: Command = async (ctx, firstRun = true) => {
-  const signal = new PromiseSignal();
   const spinner = ora();
   let prevProgress: string | undefined = AppDeploymentStepsToAppDeployState("NOT_STARTED");
   let action: string;
@@ -179,16 +178,16 @@ export const command: Command = async (ctx, firstRun = true) => {
 
     action = await select({
       message: "How would you like to proceed?",
-      choices: ["CANCEL", "SYNC_ONCE"],
+      choices: [Action.CANCEL, Action.SYNC_ONCE],
     });
 
     switch (action) {
-      case "SYNC_ONCE": {
+      case Action.SYNC_ONCE: {
         await filesync.sync();
 
         break;
       }
-      case "CANCEL": {
+      case Action.CANCEL: {
         process.exit(0);
       }
     }
@@ -199,13 +198,13 @@ export const command: Command = async (ctx, firstRun = true) => {
     query: REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION,
     variables: () => ({ localFilesVersion: String(filesync.filesVersion), force: args["--force"] }),
     onError: (error) => {
+      if (isGraphQLErrors(error.cause)) {
+        log.println(`${error.cause[0]?.message}`);
+      }
       log.error("failed to depoy", { error });
     },
     onData: async ({ publishServerContractStatus }) => {
-      const {
-        progress,
-        issues
-      } = publishServerContractStatus || {};
+      const { progress, issues } = publishServerContractStatus || {};
 
       if (progress === AppDeploymentSteps.ALREADY_DEPLOYING) {
         log.println(`
@@ -215,33 +214,58 @@ export const command: Command = async (ctx, firstRun = true) => {
         process.exit(0);
       }
 
-      const hasIssues = issues?.length 
+      const hasIssues = issues?.length;
 
       if (firstRun && hasIssues) {
-          log.println(`
+        log.println(`
                 ${""}
                 ${chalk.underline("Issues detected")}`);
 
-          for (const issue of issues) {
-            const message = issue.message.replace(/"/g, "");
-            const nodeType = issue.node?.type;
-            const nodeName = issue.node?.name;
-            const nodeParent = issue.node?.parentApiIdentifier;
+        for (const issue of issues) {
+          const message = issue.message.replace(/"/g, "");
+          const nodeType = issue.node?.type;
+          const nodeName = issue.node?.name;
+          const nodeParent = issue.node?.parentApiIdentifier;
 
-            log.printlns(`
+          log.printlns(
+            `
                     • ${message}                                       
-                      ${nodeType ? `${nodeType}: ${chalk.cyan(nodeName)}`:""}                 ${nodeParent ? `ParentResource: ${chalk.cyan(nodeParent)}` : ""}
-            `.trim());
-          }
+                      ${nodeType ? `${nodeType}: ${chalk.cyan(nodeName)}` : ""}                 ${
+                        nodeParent ? `ParentResource: ${chalk.cyan(nodeParent)}` : ""
+                      }
+            `.trim(),
+          );
+        }
 
-        !args["--force"] && signal.resolve();
+        if (!args["--force"]) {
+          unsubscribe();
+
+          action = await select({
+            message: "Detected some issues with your app. How would you like to proceed?",
+            choices: [Action.CANCEL, Action.DEPLOY_ANYWAYS],
+          });
+
+          switch (action) {
+            case Action.DEPLOY_ANYWAYS: {
+              args["--force"] = true;
+              ctx.rootArgs._.push("--force");
+              command(ctx, false);
+              break;
+            }
+            case Action.CANCEL: {
+              process.exit(0);
+            }
+          }
+        }
+
         firstRun = false;
       } else {
         if (progress === AppDeploymentSteps.COMPLETED) {
           spinner.succeed("DONE");
           log.println("");
           log.println(`Deploy completed. Good bye!`);
-          process.exit(0);
+          unsubscribe();
+          return;
         }
 
         const currentProgress = AppDeploymentStepsToAppDeployState(progress);
@@ -259,24 +283,4 @@ export const command: Command = async (ctx, firstRun = true) => {
       }
     },
   });
-
-  await signal;
-  unsubscribe();
-
-  action = await select({
-    message: "Detected some issues with your app. How would you like to proceed?",
-    choices: [Action.CANCEL, Action.DEPLOY_ANYWAYS],
-  });
-
-  switch (action) {
-    case Action.DEPLOY_ANYWAYS: {
-      args["--force"] = true;
-      ctx.rootArgs._.push("--force");
-      command(ctx, false);
-      break;
-    }
-    case Action.CANCEL: {
-      process.exit(0);
-    }
-  }
 };

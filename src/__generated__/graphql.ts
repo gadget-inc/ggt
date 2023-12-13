@@ -317,8 +317,8 @@ export type MutationUploadTemplateAssetArgs = {
   file: Scalars['Upload']['input'];
 };
 
-export type PublishContractState = {
-  __typename?: 'PublishContractState';
+export type publishStatusState = {
+  __typename?: 'publishStatusState';
   issues: Array<PublishIssue>;
   progress: Scalars['String']['output'];
   remoteFilesVersion: Scalars['String']['output'];
@@ -454,7 +454,7 @@ export type Subscription = {
   __typename?: 'Subscription';
   environmentTreePathPatches?: Maybe<EnvironmentSubscriptionResult>;
   logsSearch: LogSearchResult;
-  publishServerContractStatus?: Maybe<PublishContractState>;
+  publishStatus?: Maybe<publishStatusState>;
   remoteFileSyncEvents: RemoteFileSyncEvents;
   reportClientPresence?: Maybe<Scalars['Boolean']['output']>;
   typesManifestStream: TypesManifest;
@@ -474,7 +474,7 @@ export type SubscriptionLogsSearchArgs = {
 };
 
 
-export type SubscriptionPublishServerContractStatusArgs = {
+export type SubscriptionpublishStatusArgs = {
   force?: InputMaybe<Scalars['Boolean']['input']>;
   localFilesVersion: Scalars['String']['input'];
 };
@@ -596,10 +596,10 @@ export type FileSyncHashesQueryVariables = Exact<{
 
 export type FileSyncHashesQuery = { __typename?: 'Query', fileSyncHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } } };
 
-export type PublishServerContractStatusSubscriptionVariables = Exact<{
+export type publishStatusSubscriptionVariables = Exact<{
   localFilesVersion: Scalars['String']['input'];
   force?: InputMaybe<Scalars['Boolean']['input']>;
 }>;
 
 
-export type PublishServerContractStatusSubscription = { __typename?: 'Subscription', publishServerContractStatus?: { __typename?: 'PublishContractState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null }> } | null };
+export type publishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'publishStatusState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null }> } | null };

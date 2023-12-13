@@ -14,20 +14,17 @@ import { loginTestUser } from "../__support__/user.js";
 
 describe("deploy", () => {
   let ctx: Context;
-  let appDir: string;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     loginTestUser();
     nockTestApps();
-
-    appDir = testDirPath();
 
     ctx = new Context({
       _: [testDirPath("local"), "--app", testApp.slug].map(String),
     });
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     ctx.abort();
     expect(nock.pendingMocks()).toEqual([]);
   });
@@ -40,34 +37,208 @@ describe("deploy", () => {
     await expectProcessExit(() => deploy(ctx));
   });
 
-  it.only("does not deploy if any problems were detected", async () => {
-    vi.spyOn(prompt, "select").mockResolvedValueOnce(Action.CANCEL);
+  it("does not try to deploy if any problems were detected and displays the problems", async () => {
+    vi.spyOn(prompt, "select").mockResolvedValue("0");
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
 
-    mockEditGraphQL.mockInitialResult(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, {
+    await deploy(ctx);
+
+    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+
+    publishStatus.emitResult({
       data: {
-        publishServerContractStatus: {
+        publishStatus: {
           remoteFilesVersion: "1",
           progress: "NOT_STARTED",
           issues: [
             {
               severity: "Error",
               message: "Add google keys for production",
-              node: null,
+              node: undefined,
             },
           ],
         },
       },
     });
 
-    await expectProcessExit(() => deploy(ctx));
+    expectStdout().toMatchInlineSnapshot(`
+      "╭──────────────────────────────────────────────────────────────────────╮
+      │                                                                      │
+      │         ggt v0.3.3                                                   │
+      │                                                                      │
+      │         App         test                                             │
+      │         Editor      https://test.gadget.app/edit                     │
+      │         Playground  https://test.gadget.app/api/graphql/playground   │
+      │         Docs        https://docs.gadget.dev/api/test                 │
+      │                                                                      │
+      │         Endpoints                                                    │
+      │           • https://test.gadget.app                                  │
+      │           • https://test--development.gadget.app                     │
+      │                                                                      │
+      ╰──────────────────────────────────────────────────────────────────────╯
+
+      Issues detected
+
+      • Add google keys for production
+      "
+    `);
   });
 
-  it("deploys anyways even if there are problems if deploying with force flag", () => {
-    console.log("test");
+  it("deploys anyways even if there are problems if deploying with force flag", async () => {
+    vi.spyOn(prompt, "select").mockResolvedValue("0");
+
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
+
+    await deploy(ctx);
+
+    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+
+    publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "NOT_STARTED",
+          issues: [
+            {
+              severity: "Error",
+              message: "Add google keys for production",
+              node: undefined,
+            },
+          ],
+        },
+      },
+    });
+
+    expectStdout().toMatchInlineSnapshot(`
+      "╭──────────────────────────────────────────────────────────────────────╮
+      │                                                                      │
+      │         ggt v0.3.3                                                   │
+      │                                                                      │
+      │         App         test                                             │
+      │         Editor      https://test.gadget.app/edit                     │
+      │         Playground  https://test.gadget.app/api/graphql/playground   │
+      │         Docs        https://docs.gadget.dev/api/test                 │
+      │                                                                      │
+      │         Endpoints                                                    │
+      │           • https://test.gadget.app                                  │
+      │           • https://test--development.gadget.app                     │
+      │                                                                      │
+      ╰──────────────────────────────────────────────────────────────────────╯
+
+      Issues detected
+
+      • Add google keys for production
+      "
+    `);
+
+    vi.spyOn(prompt, "select").mockResolvedValue(Action.DEPLOY_ANYWAYS);
+
+    publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+        },
+      },
+    });
+
+    publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+        },
+      },
+    });
+
+    publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "UPLOADING_ASSETS",
+          issues: [],
+        },
+      },
+    });
+
+    publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "CONVERGING_STORAGE",
+          issues: [],
+        },
+      },
+    });
+
+    publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "PUBLISHING_TREE",
+          issues: [],
+        },
+      },
+    });
+
+    publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "RELOADING_SANDBOX",
+          issues: [],
+        },
+      },
+    });
+
+    publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "COMPLETED",
+          issues: [],
+        },
+      },
+    });
+
+    expectStdout().toMatchInlineSnapshot(`
+      "╭──────────────────────────────────────────────────────────────────────╮
+      │                                                                      │
+      │         ggt v0.3.3                                                   │
+      │                                                                      │
+      │         App         test                                             │
+      │         Editor      https://test.gadget.app/edit                     │
+      │         Playground  https://test.gadget.app/api/graphql/playground   │
+      │         Docs        https://docs.gadget.dev/api/test                 │
+      │                                                                      │
+      │         Endpoints                                                    │
+      │           • https://test.gadget.app                                  │
+      │           • https://test--development.gadget.app                     │
+      │                                                                      │
+      ╰──────────────────────────────────────────────────────────────────────╯
+
+      Issues detected
+
+      • Add google keys for production
+
+      Building frontend assets ...
+
+      Setting up database ...
+
+      Copying development ...
+
+      Restarting app ...
+
+      Deploy completed. Good bye!
+      "
+    `);
   });
 
   it("deploys if there are no problems with the app", async () => {
@@ -77,7 +248,7 @@ describe("deploy", () => {
 
     mockEditGraphQL.mockInitialResult(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, {
       data: {
-        publishServerContractStatus: {
+        publishStatus: {
           remoteFilesVersion: "1",
           progress: "NOT_STARTED",
           issues: [],
@@ -86,11 +257,11 @@ describe("deploy", () => {
     });
 
     await deploy(ctx);
-    const publishServerContractStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    publishServerContractStatus.emitResult({
+    publishStatus.emitResult({
       data: {
-        publishServerContractStatus: {
+        publishStatus: {
           remoteFilesVersion: "1",
           progress: "STARTING",
           issues: [],
@@ -98,9 +269,9 @@ describe("deploy", () => {
       },
     });
 
-    publishServerContractStatus.emitResult({
+    publishStatus.emitResult({
       data: {
-        publishServerContractStatus: {
+        publishStatus: {
           remoteFilesVersion: "1",
           progress: "BUILDING_ASSETS",
           issues: [],
@@ -108,9 +279,9 @@ describe("deploy", () => {
       },
     });
 
-    publishServerContractStatus.emitResult({
+    publishStatus.emitResult({
       data: {
-        publishServerContractStatus: {
+        publishStatus: {
           remoteFilesVersion: "1",
           progress: "UPLOADING_ASSETS",
           issues: [],
@@ -118,9 +289,9 @@ describe("deploy", () => {
       },
     });
 
-    publishServerContractStatus.emitResult({
+    publishStatus.emitResult({
       data: {
-        publishServerContractStatus: {
+        publishStatus: {
           remoteFilesVersion: "1",
           progress: "CONVERGING_STORAGE",
           issues: [],
@@ -128,9 +299,9 @@ describe("deploy", () => {
       },
     });
 
-    publishServerContractStatus.emitResult({
+    publishStatus.emitResult({
       data: {
-        publishServerContractStatus: {
+        publishStatus: {
           remoteFilesVersion: "1",
           progress: "PUBLISHING_TREE",
           issues: [],
@@ -138,9 +309,9 @@ describe("deploy", () => {
       },
     });
 
-    publishServerContractStatus.emitResult({
+    publishStatus.emitResult({
       data: {
-        publishServerContractStatus: {
+        publishStatus: {
           remoteFilesVersion: "1",
           progress: "RELOADING_SANDBOX",
           issues: [],
@@ -148,9 +319,9 @@ describe("deploy", () => {
       },
     });
 
-    publishServerContractStatus.emitResult({
+    publishStatus.emitResult({
       data: {
-        publishServerContractStatus: {
+        publishStatus: {
           remoteFilesVersion: "1",
           progress: "COMPLETED",
           issues: [],
@@ -186,4 +357,5 @@ describe("deploy", () => {
       "
     `);
   });
+
 });

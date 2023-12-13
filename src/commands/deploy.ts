@@ -79,7 +79,7 @@ export enum Action {
   CANCEL = "Cancel (Ctrl+C)",
 }
 
-const AppDeploymentStepsToAppDeployState = (step: string | undefined) => {
+const AppDeploymentStepsToAppDeployState = (step: string | undefined): string => {
   switch (step) {
     case "ALREADY_SYNCING":
       return "A deploy is already in progress";
@@ -121,7 +121,7 @@ enum AppDeploymentSteps {
 export const command: Command = async (ctx, firstRun = true) => {
   const spinner = ora();
   let prevProgress: string | undefined = AppDeploymentStepsToAppDeployState("NOT_STARTED");
-  let action: string;
+  let action: Action;
 
   const args = arg(argSpec, { argv: ctx.rootArgs._ });
 
@@ -203,8 +203,8 @@ export const command: Command = async (ctx, firstRun = true) => {
       }
       log.error("failed to depoy", { error });
     },
-    onData: async ({ publishServerContractStatus }) => {
-      const { progress, issues } = publishServerContractStatus || {};
+    onData: async ({ publishStatus }): Promise<void> => {
+      const { progress, issues } = publishStatus ?? {};
 
       if (progress === AppDeploymentSteps.ALREADY_DEPLOYING) {
         log.println(`
@@ -249,7 +249,7 @@ export const command: Command = async (ctx, firstRun = true) => {
             case Action.DEPLOY_ANYWAYS: {
               args["--force"] = true;
               ctx.rootArgs._.push("--force");
-              command(ctx, false);
+              await command(ctx, false);
               break;
             }
             case Action.CANCEL: {
@@ -263,7 +263,7 @@ export const command: Command = async (ctx, firstRun = true) => {
         if (progress === AppDeploymentSteps.COMPLETED) {
           spinner.succeed("DONE");
           log.println("");
-          log.println(`Deploy completed. Good bye!`);
+          log.println("Deploy completed. Good bye!");
           unsubscribe();
           return;
         }
@@ -271,14 +271,14 @@ export const command: Command = async (ctx, firstRun = true) => {
         const currentProgress = AppDeploymentStepsToAppDeployState(progress);
 
         if (progress && currentProgress !== prevProgress) {
-          if (progress !== AppDeploymentSteps.STARTING) {
+          if ((progress as AppDeploymentSteps) !== AppDeploymentSteps.STARTING) {
             spinner.succeed("DONE");
           }
 
           prevProgress = currentProgress;
           log.println("");
           log.println(`${currentProgress} ...`);
-          spinner.start(`Working ...`);
+          spinner.start("Working ...");
         }
       }
     },

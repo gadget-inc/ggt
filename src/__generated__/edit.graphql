@@ -172,7 +172,7 @@ type Mutation {
   uploadTemplateAsset(file: Upload!): UploadTemplateAssetResult!
 }
 
-type PublishContractState {
+type publishStatusState {
   issues: [PublishIssue!]!
   progress: String!
   remoteFilesVersion: String!
@@ -251,7 +251,7 @@ type SetFrameworkVersionResult {
 type Subscription {
   environmentTreePathPatches(clientID: EnvironmentTreeClientId!, path: String!): EnvironmentSubscriptionResult
   logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
-  publishServerContractStatus(force: Boolean, localFilesVersion: String!): PublishContractState
+  publishStatus(force: Boolean, localFilesVersion: String!): publishStatusState
   remoteFileSyncEvents(encoding: FileSyncEncoding, localFilesVersion: String!): RemoteFileSyncEvents!
   reportClientPresence(clientID: EnvironmentTreeClientId!): Boolean
   typesManifestStream: TypesManifest!

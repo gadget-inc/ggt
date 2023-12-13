@@ -11,6 +11,7 @@ import { nockTestApps, testApp } from "../__support__/app.js";
 import { makeMockEditGraphQLSubscriptions } from "../__support__/edit-graphql.js";
 import { testDirPath } from "../__support__/paths.js";
 import { loginTestUser } from "../__support__/user.js";
+import { EditGraphQLError } from "../../src/services/error/error.js";
 
 describe("deploy", () => {
   let ctx: Context;
@@ -358,4 +359,38 @@ describe("deploy", () => {
     `);
   });
 
+  it("can not deploy if the maximum number of applications has been reached", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
+    const error = new EditGraphQLError(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, [
+      {
+        message: "GGT_PAYMENT_REQUIRED: Payment is required for this application.",
+      },
+    ]);
+
+    await deploy(ctx);
+    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+
+    publishStatus.emitError(error);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "╭──────────────────────────────────────────────────────────────────────╮
+      │                                                                      │
+      │         ggt v0.3.3                                                   │
+      │                                                                      │
+      │         App         test                                             │
+      │         Editor      https://test.gadget.app/edit                     │
+      │         Playground  https://test.gadget.app/api/graphql/playground   │
+      │         Docs        https://docs.gadget.dev/api/test                 │
+      │                                                                      │
+      │         Endpoints                                                    │
+      │           • https://test.gadget.app                                  │
+      │           • https://test--development.gadget.app                     │
+      │                                                                      │
+      ╰──────────────────────────────────────────────────────────────────────╯
+      GGT_PAYMENT_REQUIRED: Payment is required for this application.
+      "
+    `);
+  });
 });

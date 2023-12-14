@@ -63,20 +63,8 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "╭──────────────────────────────────────────────────────────────────────╮
-      │                                                                      │
-      │         ggt v0.3.3                                                   │
-      │                                                                      │
-      │         App         test                                             │
-      │         Editor      https://test.gadget.app/edit                     │
-      │         Playground  https://test.gadget.app/api/graphql/playground   │
-      │         Docs        https://docs.gadget.dev/api/test                 │
-      │                                                                      │
-      │         Endpoints                                                    │
-      │           • https://test.gadget.app                                  │
-      │           • https://test--development.gadget.app                     │
-      │                                                                      │
-      ╰──────────────────────────────────────────────────────────────────────╯
+      "
+      App: test
 
       Issues detected
 
@@ -113,20 +101,8 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "╭──────────────────────────────────────────────────────────────────────╮
-      │                                                                      │
-      │         ggt v0.3.3                                                   │
-      │                                                                      │
-      │         App         test                                             │
-      │         Editor      https://test.gadget.app/edit                     │
-      │         Playground  https://test.gadget.app/api/graphql/playground   │
-      │         Docs        https://docs.gadget.dev/api/test                 │
-      │                                                                      │
-      │         Endpoints                                                    │
-      │           • https://test.gadget.app                                  │
-      │           • https://test--development.gadget.app                     │
-      │                                                                      │
-      ╰──────────────────────────────────────────────────────────────────────╯
+      "
+      App: test
 
       Issues detected
 
@@ -207,20 +183,8 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "╭──────────────────────────────────────────────────────────────────────╮
-      │                                                                      │
-      │         ggt v0.3.3                                                   │
-      │                                                                      │
-      │         App         test                                             │
-      │         Editor      https://test.gadget.app/edit                     │
-      │         Playground  https://test.gadget.app/api/graphql/playground   │
-      │         Docs        https://docs.gadget.dev/api/test                 │
-      │                                                                      │
-      │         Endpoints                                                    │
-      │           • https://test.gadget.app                                  │
-      │           • https://test--development.gadget.app                     │
-      │                                                                      │
-      ╰──────────────────────────────────────────────────────────────────────╯
+      "
+      App: test
 
       Issues detected
 
@@ -328,20 +292,8 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "╭──────────────────────────────────────────────────────────────────────╮
-      │                                                                      │
-      │         ggt v0.3.3                                                   │
-      │                                                                      │
-      │         App         test                                             │
-      │         Editor      https://test.gadget.app/edit                     │
-      │         Playground  https://test.gadget.app/api/graphql/playground   │
-      │         Docs        https://docs.gadget.dev/api/test                 │
-      │                                                                      │
-      │         Endpoints                                                    │
-      │           • https://test.gadget.app                                  │
-      │           • https://test--development.gadget.app                     │
-      │                                                                      │
-      ╰──────────────────────────────────────────────────────────────────────╯
+      "
+      App: test
 
       Building frontend assets ...
 
@@ -372,20 +324,8 @@ describe("deploy", () => {
     publishStatus.emitError(error);
 
     expectStdout().toMatchInlineSnapshot(`
-      "╭──────────────────────────────────────────────────────────────────────╮
-      │                                                                      │
-      │         ggt v0.3.3                                                   │
-      │                                                                      │
-      │         App         test                                             │
-      │         Editor      https://test.gadget.app/edit                     │
-      │         Playground  https://test.gadget.app/api/graphql/playground   │
-      │         Docs        https://docs.gadget.dev/api/test                 │
-      │                                                                      │
-      │         Endpoints                                                    │
-      │           • https://test.gadget.app                                  │
-      │           • https://test--development.gadget.app                     │
-      │                                                                      │
-      ╰──────────────────────────────────────────────────────────────────────╯
+      "
+      App: test
       Production environment limit reached. Upgrade your plan to deploy
       "
     `);

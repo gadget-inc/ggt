@@ -1,11 +1,9 @@
-import boxen from "boxen";
 import chalk from "chalk";
 import ora from "ora";
 import { AppArg } from "../services/app/arg.js";
 import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../services/app/edit-graphql.js";
 import type { ArgsSpec } from "../services/command/arg.js";
 import { type Command, type Usage } from "../services/command/command.js";
-import { config } from "../services/config/config.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { isEqualHashes } from "../services/filesync/hashes.js";
 import { select } from "../services/output/prompt.js";
@@ -131,32 +129,7 @@ export const command = (async (ctx, firstRun = true) => {
   const log = filesync.log.extend("deploy");
 
   if (firstRun) {
-    log.println(
-      boxen(
-        sprint`
-        ggt v${config.version}
-  
-        App         ${filesync.app.slug}
-        Editor      https://${filesync.app.slug}.gadget.app/edit
-        Playground  https://${filesync.app.slug}.gadget.app/api/graphql/playground
-        Docs        https://docs.gadget.dev/api/${filesync.app.slug}
-    
-        Endpoints ${
-          filesync.app.hasSplitEnvironments
-            ? `
-          • https://${filesync.app.primaryDomain}
-          • https://${filesync.app.slug}--development.gadget.app`
-            : `
-          • https://${filesync.app.primaryDomain}`
-        }
-        `,
-        {
-          padding: 1,
-          borderStyle: "round",
-          dimBorder: true,
-        },
-      ),
-    );
+    log.printlns`App: ${filesync.app.slug}`;
   }
 
   const { localHashes, gadgetHashes } = await filesync._getHashes();

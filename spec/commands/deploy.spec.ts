@@ -386,7 +386,7 @@ describe("deploy", () => {
       │           • https://test--development.gadget.app                     │
       │                                                                      │
       ╰──────────────────────────────────────────────────────────────────────╯
-      GGT_PAYMENT_REQUIRED: Payment is required for this application.
+      Production environment limit reached. Upgrade your plan to deploy
       "
     `);
   });

@@ -7,10 +7,10 @@ USAGE
   ggt deploy [DIRECTORY] [--app=<name>]
 
 ARGUMENTS
-  DIRECTORY         The directory to sync files to (default: \\".\\")
+  DIRECTORY         The directory to sync files to and deploy (default: \\".\\")
 
 FLAGS
-  -a, --app=<name>  The Gadget application to sync files to
+  -a, --app=<name>  The Gadget application to deploy
       --force       Deploy the Gadget application regardless of any issues it may have
 
 DESCRIPTION

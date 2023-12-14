@@ -20,10 +20,10 @@ export const usage: Usage = () => sprint`
       ggt deploy [DIRECTORY] [--app=<name>]
 
     {bold ARGUMENTS}
-      DIRECTORY         The directory to sync files to (default: ".")
+      DIRECTORY         The directory to sync files to and deploy (default: ".")
 
     {bold FLAGS}
-      -a, --app=<name>  The Gadget application to sync files to
+      -a, --app=<name>  The Gadget application to deploy
           --force       Deploy the Gadget application regardless of any issues it may have
 
     {bold DESCRIPTION}
@@ -83,8 +83,6 @@ export enum Action {
 
 const AppDeploymentStepsToAppDeployState = (step: string | undefined): string => {
   switch (step) {
-    case "ALREADY_SYNCING":
-      return "A deploy is already in progress";
     case "NOT_STARTED":
       return "Deploy not started";
     case "STARTING":
@@ -105,7 +103,6 @@ const AppDeploymentStepsToAppDeployState = (step: string | undefined): string =>
 };
 
 enum AppDeploymentSteps {
-  ALREADY_DEPLOYING = "ALREADY_DEPLOYING",
   NOT_STARTED = "NOT_STARTED",
   STARTING = "STARTING",
   BUILDING_ASSETS = "BUILDING_ASSETS",
@@ -199,20 +196,17 @@ export const command = (async (ctx, firstRun = true) => {
     variables: () => ({ localFilesVersion: String(filesync.filesVersion), force: ctx.args["--force"] }),
     onError: (error) => {
       if (isGraphQLErrors(error.cause)) {
-        log.println(`${error.cause[0]?.message}`);
+        const message = error.cause[0]?.message;
+        if (message && message.includes("GGT_PAYMENT_REQUIRED")) {
+          log.println("Production environment limit reached. Upgrade your plan to deploy");
+        } else {
+          log.println(`${message}`);
+        }
       }
       log.error("failed to deploy", { error });
     },
     onData: async ({ publishStatus }): Promise<void> => {
       const { progress, issues } = publishStatus ?? {};
-
-      if (progress === AppDeploymentSteps.ALREADY_DEPLOYING) {
-        log.println(`
-            ${""}
-            ${chalk.red("Detected a sync already in progress. Please try again later.")}
-            `);
-        process.exit(0);
-      }
 
       const hasIssues = issues?.length;
 

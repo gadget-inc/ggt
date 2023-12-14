@@ -153,17 +153,17 @@ export type MockEditGraphQLSubscription<Query extends GraphQLQuery = GraphQLQuer
   /**
    * Emits a result to the subscription.
    */
-  emitResult(value: Query["Result"]): void;
+  emitResult(value: Query["Result"]): Promisable<void>;
 
   /**
    * Emits an error to the subscription.
    */
-  emitError(error: EditGraphQLError): void;
+  emitError(error: EditGraphQLError): Promisable<void>;
 
   /**
    * Emits the onComplete event to the subscription.
    */
-  emitComplete(): void;
+  emitComplete(): Promisable<void>;
 };
 
 export const makeMockEditGraphQLSubscriptions = (): MockEditGraphQLSubscriptions => {

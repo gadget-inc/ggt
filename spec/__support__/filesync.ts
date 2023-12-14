@@ -446,7 +446,9 @@ export const makeSyncScenario = async ({
     emitGadgetChanges: async (changes) => {
       expect(changes.remoteFilesVersion).toBe(String(gadgetFilesVersion + 1n));
       await processGadgetChanges(changes);
-      mockEditGraphQLSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).emitResult({ data: { remoteFileSyncEvents: changes } });
+      await mockEditGraphQLSubs
+        .expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)
+        .emitResult({ data: { remoteFileSyncEvents: changes } });
     },
 
     expectGadgetChangesSubscription: () => mockEditGraphQLSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION),

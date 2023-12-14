@@ -46,7 +46,7 @@ describe("deploy", () => {
 
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -84,7 +84,7 @@ describe("deploy", () => {
 
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -112,7 +112,7 @@ describe("deploy", () => {
 
     vi.spyOn(prompt, "select").mockResolvedValue(Action.DEPLOY_ANYWAYS);
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -122,7 +122,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -132,7 +132,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -142,7 +142,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -152,7 +152,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -162,7 +162,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -172,7 +172,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -211,7 +211,7 @@ describe("deploy", () => {
     await deploy(ctx);
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -221,7 +221,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -231,7 +231,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -241,7 +241,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -251,7 +251,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -261,7 +261,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -271,7 +271,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -281,7 +281,7 @@ describe("deploy", () => {
       },
     });
 
-    publishStatus.emitResult({
+    await publishStatus.emitResult({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -321,7 +321,7 @@ describe("deploy", () => {
     await deploy(ctx);
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    publishStatus.emitError(error);
+    await publishStatus.emitError(error);
 
     expectStdout().toMatchInlineSnapshot(`
       "

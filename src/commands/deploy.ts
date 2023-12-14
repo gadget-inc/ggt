@@ -1,17 +1,17 @@
 import boxen from "boxen";
 import chalk from "chalk";
 import ora from "ora";
-import type { ArgsSpec } from "src/services/command/arg.js";
-import { AppArg } from "../../src/services/app/arg.js";
-import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
-import { type Command, type Usage } from "../../src/services/command/command.js";
-import { config } from "../../src/services/config/config.js";
-import { FileSync } from "../../src/services/filesync/filesync.js";
-import { isEqualHashes } from "../../src/services/filesync/hashes.js";
-import { select } from "../../src/services/output/prompt.js";
-import { sprint } from "../../src/services/output/sprint.js";
-import { isGraphQLErrors } from "../../src/services/util/is.js";
+import { AppArg } from "../services/app/arg.js";
+import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../services/app/edit-graphql.js";
+import type { ArgsSpec } from "../services/command/arg.js";
+import { type Command, type Usage } from "../services/command/command.js";
+import { config } from "../services/config/config.js";
+import { FileSync } from "../services/filesync/filesync.js";
+import { isEqualHashes } from "../services/filesync/hashes.js";
+import { select } from "../services/output/prompt.js";
+import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
+import { isGraphQLErrors } from "../services/util/is.js";
 
 export const usage: Usage = () => sprint`
     Deploy your Gadget application's development source code to production.

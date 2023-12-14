@@ -164,14 +164,9 @@ export const command = (async (ctx, firstRun = true) => {
   const upToDate = isEqualHashes(localHashes, gadgetHashes);
 
   if (!upToDate) {
-    log.println(`
-    ${""}
-    ${chalk.bold(
-      `Local files have diverged from remote. Run a sync once to converge your files or keep ${chalk.italic(
-        "ggt sync",
-      )} running in the background.`,
-    )}
-    `);
+    log.printlns`
+    Local files have diverged from remote. Run a sync once to converge your files or keep {italic ggt sync} running in the background.
+  `;
 
     action = await select({
       message: "How would you like to proceed?",
@@ -211,9 +206,7 @@ export const command = (async (ctx, firstRun = true) => {
       const hasIssues = issues?.length;
 
       if (firstRun && hasIssues) {
-        log.println(`
-                ${""}
-                ${chalk.underline("Issues detected")}`);
+        log.printlns`{underline Issues detected}`;
 
         for (const issue of issues) {
           const message = issue.message.replace(/"/g, "");
@@ -255,8 +248,7 @@ export const command = (async (ctx, firstRun = true) => {
       } else {
         if (progress === AppDeploymentSteps.COMPLETED) {
           spinner.succeed("DONE");
-          log.println("");
-          log.println("Deploy completed. Good bye!");
+          log.printlns("Deploy completed. Good bye!");
           unsubscribe();
           return;
         }
@@ -269,8 +261,7 @@ export const command = (async (ctx, firstRun = true) => {
           }
 
           prevProgress = currentProgress;
-          log.println("");
-          log.println(`${currentProgress} ...`);
+          log.printlns(`${currentProgress} ...`);
           spinner.start("Working ...");
         }
       }

@@ -3,8 +3,9 @@ import type { ExecutionResult } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import assert from "node:assert";
 import type { ClientRequestArgs } from "node:http";
+import PQueue from "p-queue";
 import pluralize from "pluralize";
-import type { JsonObject } from "type-fest";
+import type { JsonObject, Promisable } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import WebSocket from "ws";
 import type {
@@ -143,27 +144,26 @@ export class EditGraphQL {
   }: {
     query: Query;
     variables?: Thunk<Query["Variables"]> | null;
-    onData: (data: Query["Data"]) => void | Promise<void>;
-    onError: (error: EditGraphQLError) => void;
-    onComplete?: () => void;
+    onData: (data: Query["Data"]) => Promisable<void>;
+    onError: (error: EditGraphQLError) => Promisable<void>;
+    onComplete?: () => Promisable<void>;
   }): () => void {
     const unsubscribe = this._subscribe({
       ...options,
-      onResult: (result) => {
+      onResult: async (result) => {
         if (result.errors) {
           unsubscribe();
-          options.onError(new EditGraphQLError(options.query, result.errors));
+          await options.onError(new EditGraphQLError(options.query, result.errors));
           return;
         }
 
         if (!result.data) {
           unsubscribe();
-          options.onError(new EditGraphQLError(options.query, "Received a GraphQL response without errors or data"));
+          await options.onError(new EditGraphQLError(options.query, "Received a GraphQL response without errors or data"));
           return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        onData(result.data);
+        await onData(result.data);
       },
     });
 
@@ -210,14 +210,14 @@ export class EditGraphQL {
     query,
     variables,
     onResult,
-    onError,
+    onError: optionsOnError,
     onComplete = noop,
   }: {
     query: Query;
     variables?: Thunk<Query["Variables"]> | null;
-    onResult: (result: ExecutionResult<Query["Data"], Query["Extensions"]>) => void;
-    onError: (error: EditGraphQLError) => void;
-    onComplete?: () => void;
+    onResult: (result: ExecutionResult<Query["Data"], Query["Extensions"]>) => Promisable<void>;
+    onError: (error: EditGraphQLError) => Promisable<void>;
+    onComplete?: () => Promisable<void>;
   }): () => void {
     let payload = { query, variables: unthunk(variables) };
     const [type, operation] = payload.query.split(/ |\(/, 2);
@@ -229,11 +229,17 @@ export class EditGraphQL {
       }
     });
 
+    const queue = new PQueue({ concurrency: 1 });
+    const onError = (error: unknown): Promisable<void> => optionsOnError(new EditGraphQLError(query, error));
+
     log.info("sending graphql query via ws", { type, operation }, { variables: payload.variables });
     const unsubscribe = this._client.subscribe<Query["Data"], Query["Extensions"]>(payload, {
-      next: (result) => onResult(result),
-      error: (error) => onError(new EditGraphQLError(query, error)),
-      complete: onComplete,
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      next: (result) => queue.add(() => onResult(result)).catch(onError),
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      error: (error) => queue.add(() => onError(error)),
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      complete: () => queue.add(() => onComplete()).catch(onError),
     });
 
     return () => {

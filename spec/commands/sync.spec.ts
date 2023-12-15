@@ -1233,7 +1233,7 @@ describe("sync", () => {
     const error = new EditGraphQLError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
 
     const gadgetChangesSubscription = expectGadgetChangesSubscription();
-    gadgetChangesSubscription.emitError(error);
+    await gadgetChangesSubscription.emitError(error);
 
     await expectReportErrorAndExit(error);
 

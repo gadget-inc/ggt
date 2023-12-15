@@ -44,6 +44,7 @@ describe("root", () => {
 
       COMMANDS
         sync           Sync your Gadget application's source code
+        deploy         Deploy your app to production
         list           List your apps
         login          Log in to your account
         logout         Log out of your account

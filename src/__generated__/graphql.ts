@@ -324,6 +324,30 @@ export type PublishFileSyncEventsResult = {
   remoteFilesVersion: Scalars['String']['output'];
 };
 
+export type PublishIssue = {
+  __typename?: 'PublishIssue';
+  message: Scalars['String']['output'];
+  node?: Maybe<PublishIssueNode>;
+  severity: Scalars['String']['output'];
+};
+
+export type PublishIssueNode = {
+  __typename?: 'PublishIssueNode';
+  fieldType?: Maybe<Scalars['String']['output']>;
+  key: Scalars['String']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  parentApiIdentifier?: Maybe<Scalars['String']['output']>;
+  parentKey?: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
+};
+
+export type PublishStatusState = {
+  __typename?: 'PublishStatusState';
+  issues: Array<PublishIssue>;
+  progress: Scalars['String']['output'];
+  remoteFilesVersion: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   apiUpgradeConvergePlan?: Maybe<ApiUpgradeConvergePlanResult>;
@@ -432,6 +456,7 @@ export type Subscription = {
   __typename?: 'Subscription';
   environmentTreePathPatches?: Maybe<EnvironmentSubscriptionResult>;
   logsSearch: LogSearchResult;
+  publishStatus?: Maybe<PublishStatusState>;
   remoteFileSyncEvents: RemoteFileSyncEvents;
   reportClientPresence?: Maybe<Scalars['Boolean']['output']>;
   typesManifestStream: TypesManifest;
@@ -448,6 +473,12 @@ export type SubscriptionLogsSearchArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   query: Scalars['String']['input'];
   start?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+
+export type SubscriptionPublishStatusArgs = {
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+  localFilesVersion: Scalars['String']['input'];
 };
 
 
@@ -573,3 +604,11 @@ export type FileSyncComparisonHashesQueryVariables = Exact<{
 
 
 export type FileSyncComparisonHashesQuery = { __typename?: 'Query', fileSyncComparisonHashes: { __typename?: 'FileSyncComparisonHashes', filesVersionHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } }, latestFilesVersionHashes: { __typename?: 'FileSyncHashes', filesVersion: string, hashes: { [key: string]: any } } } };
+
+export type PublishStatusSubscriptionVariables = Exact<{
+  localFilesVersion: Scalars['String']['input'];
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+}>;
+
+
+export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null }> } | null };

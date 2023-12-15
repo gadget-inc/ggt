@@ -395,6 +395,48 @@ export class FileSync {
     return this.sync({ attempt: ++attempt });
   }
 
+  async _getHashes(): Promise<{
+    gadgetFilesVersion: bigint;
+    filesVersionHashes: Hashes;
+    localHashes: Hashes;
+    gadgetHashes: Hashes;
+  }> {
+    const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
+      // get the hashes of our local files
+      this.directory.hashes(),
+      // get the hashes of our local filesVersion and the latest filesVersion
+      (async () => {
+        let gadgetFilesVersion: bigint;
+        let gadgetHashes: Hashes;
+        let filesVersionHashes: Hashes;
+
+        if (this.filesVersion === 0n) {
+          // this is the first time we're syncing, so just get the
+          // hashes of the latest filesVersion
+          const { fileSyncHashes } = await this.editGraphQL.query({ query: FILE_SYNC_HASHES_QUERY });
+          gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
+          gadgetHashes = fileSyncHashes.hashes;
+          filesVersionHashes = {};
+        } else {
+          // this isn't the first time we're syncing, so get the hashes
+          // of the files at our local filesVersion and the latest
+          // filesVersion
+          const { fileSyncComparisonHashes } = await this.editGraphQL.query({
+            query: FILE_SYNC_COMPARISON_HASHES_QUERY,
+            variables: { filesVersion: String(this.filesVersion) },
+          });
+          gadgetFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
+          gadgetHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
+          filesVersionHashes = fileSyncComparisonHashes.filesVersionHashes.hashes;
+        }
+
+        return { filesVersionHashes, gadgetHashes, gadgetFilesVersion };
+      })(),
+    ]);
+
+    return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion };
+  }
+
   private async _getChangesFromGadget({
     filesVersion,
     changes,
@@ -586,48 +628,6 @@ export class FileSync {
       ...updated.map((path) => [path, { type: "update" }] as const),
       ...options.delete.map((path) => [path, { type: "delete" }] as const),
     ]);
-  }
-
-  private async _getHashes(): Promise<{
-    gadgetFilesVersion: bigint;
-    filesVersionHashes: Hashes;
-    localHashes: Hashes;
-    gadgetHashes: Hashes;
-  }> {
-    const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
-      // get the hashes of our local files
-      this.directory.hashes(),
-      // get the hashes of our local filesVersion and the latest filesVersion
-      (async () => {
-        let gadgetFilesVersion: bigint;
-        let gadgetHashes: Hashes;
-        let filesVersionHashes: Hashes;
-
-        if (this.filesVersion === 0n) {
-          // this is the first time we're syncing, so just get the
-          // hashes of the latest filesVersion
-          const { fileSyncHashes } = await this.editGraphQL.query({ query: FILE_SYNC_HASHES_QUERY });
-          gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
-          gadgetHashes = fileSyncHashes.hashes;
-          filesVersionHashes = {};
-        } else {
-          // this isn't the first time we're syncing, so get the hashes
-          // of the files at our local filesVersion and the latest
-          // filesVersion
-          const { fileSyncComparisonHashes } = await this.editGraphQL.query({
-            query: FILE_SYNC_COMPARISON_HASHES_QUERY,
-            variables: { filesVersion: String(this.filesVersion) },
-          });
-          gadgetFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
-          gadgetHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
-          filesVersionHashes = fileSyncComparisonHashes.filesVersionHashes.hashes;
-        }
-
-        return { filesVersionHashes, gadgetHashes, gadgetFilesVersion };
-      })(),
-    ]);
-
-    return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion };
   }
 
   /**

@@ -10,8 +10,6 @@
   expected gadgetChanges to have created files
   ```
 
-- 2dee049: Fixes a bug in which users get stuck waiting for deploy progress updates when the deploy has been interrupted.
-
 ## 0.4.0
 
 ### Minor Changes
@@ -33,15 +31,6 @@
   - `--json` to print out logs in JSON format
 
     This is useful if you want to pipe the logs to another tool, or if you want to parse the logs in a script.
-
-- ec1dcd7: We have added a new command to ggt - the deploy command!
-
-  Users can now run `ggt deploy` to deploy their app to production straight from the CLI. `ggt deploy` will:
-
-  - Check if an app is in a deployable state
-  - Alert the user if there are any issues with the app
-  - Prompt the user how they would like to continue with the deploy if there are issues (skipped if they pass along the `--force` flag)
-  - Send back deploy status updates once the deploy is started and until the deploy has completed
 
 - 346dfa6: Improvements to `ggt sync`!
 

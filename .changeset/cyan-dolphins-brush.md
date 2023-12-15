@@ -1,5 +1,5 @@
 ---
-"ggt": patch
+"ggt": minor
 ---
 
 We made some improvements to our debug logs!

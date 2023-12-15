@@ -1,8 +1,8 @@
 ---
-"ggt": patch
+"ggt": minor
 ---
 
-## We got the `ggt` npm package name! 🎉
+We got the `ggt` npm package name! 🎉
 
 Gadget now owns the `ggt` package on [NPM](https://www.npmjs.com/package/ggt)! This means you can turn this:
 

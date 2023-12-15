@@ -2,7 +2,7 @@
 "ggt": minor
 ---
 
-## Improvements to `ggt sync`!
+Improvements to `ggt sync`!
 
 ### Improved de-sync detection and conflict resolution:
 

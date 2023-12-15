@@ -329,7 +329,7 @@ export class FileSync {
    *   local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  async sync({ attempt = 0 }: { attempt?: number } = {}): Promise<void> {
+  async sync({ attempt = 0, preference }: { attempt?: number; preference?: ConflictPreference } = {}): Promise<void> {
     if (attempt > 10) {
       throw new TooManySyncAttemptsError(attempt);
     }
@@ -355,15 +355,18 @@ export class FileSync {
     const conflicts = getConflicts({ localChanges, gadgetChanges });
     if (conflicts.size > 0) {
       this.log.debug("conflicts detected", { conflicts });
-      printConflicts({
-        message: sprint`{bold You have conflicting changes with Gadget}`,
-        conflicts,
-      });
 
-      const preference = await select({
-        message: "How would you like to resolve these conflicts?",
-        choices: Object.values(ConflictPreference),
-      });
+      if (!preference) {
+        printConflicts({
+          message: sprint`{bold You have conflicting changes with Gadget}`,
+          conflicts,
+        });
+
+        preference = await select({
+          message: "How would you like to resolve these conflicts?",
+          choices: Object.values(ConflictPreference),
+        });
+      }
 
       switch (preference) {
         case ConflictPreference.CANCEL: {
@@ -392,7 +395,7 @@ export class FileSync {
     }
 
     // recursively call this function until we're in sync
-    return this.sync({ attempt: ++attempt });
+    return this.sync({ attempt: ++attempt, preference });
   }
 
   async _getHashes(): Promise<{
@@ -679,3 +682,19 @@ export const ConflictPreference = Object.freeze({
   LOCAL: "Keep my conflicting changes",
   GADGET: "Keep Gadget's conflicting changes",
 });
+
+export type ConflictPreference = (typeof ConflictPreference)[keyof typeof ConflictPreference];
+
+export const ConflictPreferenceArg = (value: string, name: string): ConflictPreference => {
+  if (["local", "gadget"].includes(value)) {
+    return ConflictPreference[value.toUpperCase() as keyof typeof ConflictPreference];
+  }
+
+  throw new ArgError(sprint`
+      ${name} must be {bold local} or {bold gadget}
+
+      {bold EXAMPLES:}
+        ${name} local
+        ${name} gadget
+    `);
+};

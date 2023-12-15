@@ -669,9 +669,10 @@ export const isEmptyOrNonExistentDir = async (dir: string): Promise<boolean> => 
 };
 
 export const assertAllGadgetFiles = ({ gadgetChanges }: { gadgetChanges: Changes }): void => {
-  assert(gadgetChanges.created().length > 0, "expected gadgetChanges to have created files");
-  assert(gadgetChanges.deleted().length === 0, "expected gadgetChanges to not have deleted files");
-  assert(gadgetChanges.updated().length === 0, "expected gadgetChanges to not have updated files");
+  assert(
+    gadgetChanges.created().length > 0 || gadgetChanges.deleted().length > 0 || gadgetChanges.updated().length > 0,
+    "expected gadgetChanges to have changes",
+  );
 
   const allGadgetFiles = Array.from(gadgetChanges.keys()).every((path) => path.startsWith(".gadget/"));
   assert(allGadgetFiles, "expected all gadgetChanges to be .gadget/ files");

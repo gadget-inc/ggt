@@ -88,6 +88,10 @@ export const mapValues = <Key extends string | number | symbol, Value, MappedVal
  * for Got HTTP errors
  */
 export const serializeError = (error: unknown): ErrorObject => {
+  if (Array.isArray(error) && error.length === 1) {
+    error = error[0];
+  }
+
   let serialized = baseSerializeError(Array.isArray(error) ? new AggregateError(error) : error);
   if (typeof serialized == "string") {
     serialized = { message: serialized };

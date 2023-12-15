@@ -1,5 +1,17 @@
 # @gadgetinc/ggt
 
+## 0.4.1
+
+### Patch Changes
+
+- 534e390: Fix an incorrect assertion in that causes `ggt sync` to crash with:
+
+  ```
+  expected gadgetChanges to have created files
+  ```
+
+- 2dee049: Fixes a bug in which users get stuck waiting for deploy progress updates when the deploy has been interrupted.
+
 ## 0.4.0
 
 ### Minor Changes

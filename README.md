@@ -29,10 +29,12 @@
 - [Usage](#usage)
 - [Commands](#commands)
   - [`ggt sync`](#ggt-sync)
+  - [`ggt deploy`](#ggt-deploy)
   - [`ggt list`](#ggt-list)
   - [`ggt login`](#ggt-login)
   - [`ggt logout`](#ggt-logout)
   - [`ggt whoami`](#ggt-whoami)
+  - [`ggt version`](#ggt-version)
 
 ## Intro
 
@@ -55,24 +57,24 @@ $ npm install -g @gadgetinc/ggt
 $ ggt
 The command-line interface for Gadget
 
-VERSION
-  ggt/0.3.3 linux-x64 node-v16.20.2
-
 USAGE
-  $ ggt [COMMAND]
+  ggt [COMMAND]
+
+COMMANDS
+  sync           Sync your Gadget application's source code
+  deploy         Deploy your app to production
+  list           List your apps
+  login          Log in to your account
+  logout         Log out of your account
+  whoami         Print the currently logged in account
+  version        Print the version of ggt
 
 FLAGS
   -h, --help     Print command's usage
-  -v, --version  Print version
-      --debug    Print debug output
+  -v, --verbose  Print verbose output
+      --json     Print output as JSON
 
-COMMANDS
-  sync    Sync your Gadget application's source code to and
-          from your local filesystem.
-  list    List your apps.
-  login   Log in to your account.
-  logout  Log out of your account.
-  whoami  Print the currently logged in account.
+For more information on a specific command, use 'ggt [COMMAND] --help'
 ```
 
 ## Commands
@@ -80,82 +82,130 @@ COMMANDS
 ### `ggt sync`
 
 ```
-Sync your Gadget application's source code to and from
-your local filesystem.
+Sync your Gadget environment's source code with your local filesystem.
 
 USAGE
-  $ ggt sync [DIRECTORY] [--app <name>]
+  ggt sync [DIRECTORY]
 
 ARGUMENTS
-  DIRECTORY  [default: .] The directory to sync files to.
-
-             If the directory doesn't exist, it will be created.
+  DIRECTORY                  The directory to sync files to (default: ".")
 
 FLAGS
-  -a, --app=<name>  The Gadget application to sync files to.
-
-  --force           Whether to sync even if we can't determine
-                    the state of your local files relative to
-                    your remote ones.
+  -a, --app=<name>           The Gadget application to sync files to
+      --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
+      --once                 Sync once and exit
+      --force                Sync regardless of local filesystem state
 
 DESCRIPTION
-  Sync provides the ability to sync your Gadget application's source
-  code to and from your local filesystem.
+  Sync allows you to synchronize your Gadget application's source
+  code with your local filesystem.
 
   While ggt sync is running, local file changes are immediately
-  reflected within Gadget, while files that are changed remotely are
+  reflected within Gadget, while files that are changed in Gadget are
   immediately saved to your local filesystem.
 
-  Use cases for this include:
-    • Developing locally with your own editor like VSCode
-    • Storing your source code in a Git repository like GitHub
+  Ideal for:
+    • Local development with editors like VSCode
+    • Storing source code in a Git repository like GitHub
 
-  Sync includes the concept of a .ignore file. This file may
-  contain a list of files and directories that won't be received or
-  sent to Gadget when syncing. The format of this file is identical
-  to the one used by Git (https://git-scm.com/docs/gitignore).
+  Sync looks for a ".ignore" file to exclude certain files/directories
+  from being synced. The format is identical to Git's.
 
-  The following files and directories are always ignored:
+  These files are always ignored:
     • .DS_Store
     • .gadget
     • .git
     • node_modules
 
   Note:
-    • If you have separate development and production environments,
-      ggt sync will only sync with your development environment
-    • Gadget applications only support installing dependencies
-      with Yarn 1 (https://classic.yarnpkg.com/lang/en/)
-    • Since file changes are immediately reflected in Gadget,
-      avoid the following while ggt sync is running:
-        • Deleting all your files
-        • Moving all your files to a different directory
+    • Sync only works with your development environment
+    • Avoid deleting/moving all your files while sync is running
+    • Gadget only supports Yarn v1 for dependency installation
 
-EXAMPLES
-  $ ggt sync --app my-app ~/gadget/my-app
+EXAMPLE
+  $ ggt sync ~/gadget/example --app example
 
-  App         my-app
-  Editor      https://my-app.gadget.app/edit
-  Playground  https://my-app.gadget.app/api/graphql/playground
-  Docs        https://docs.gadget.dev/api/my-app
+    App         example
+    Editor      https://example.gadget.app/edit
+    Playground  https://example.gadget.app/api/graphql/playground
+    Docs        https://docs.gadget.dev/api/example
+
+    Endpoints
+      • https://example.gadget.app
+      • https://example--development.gadget.app
+
+    Watching for file changes... Press Ctrl+C to stop
+
+    → Sent 09:06:25 AM
+    routes/GET-hello.js  + created
+
+    → Sent 09:06:49 AM
+    routes/GET-hello.js  ± updated
+
+    ← Received 09:06:54 AM
+    routes/GET-hello.js  ± updated
+
+    ← Received 09:06:56 AM
+    routes/GET-hello.js  - deleted
+    ^C Stopping... press Ctrl+C again to force
+
+    Goodbye!
+```
+
+### `ggt deploy`
+
+```
+Deploy your Gadget application's development source code to production.
+
+USAGE
+  ggt deploy [DIRECTORY] [--app=<name>]
+
+ARGUMENTS
+  DIRECTORY         The directory to sync files to and deploy (default: ".")
+
+FLAGS
+  -a, --app=<name>  The Gadget application to deploy
+      --force       Deploy the Gadget application regardless of any issues it may have
+
+DESCRIPTION
+  Deploy allows you to deploy your current Gadget application in development to production.
+
+  It detects if local files are up to date with remote and if the Gadget application
+  is in a deployable state. If there are any issues, it will display them and ask if
+  you would like to deploy anyways.
+
+  Note:
+    • If local files are not up to date or have not recently been synced with remote ones,
+      you will be prompted to run a one-time sync to ensure the files remain consistent with
+      what is on the remote.
+    • You may wish to keep ggt sync running in the background before trying to run ggt deploy
+
+EXAMPLE
+  $ ggt deploy ~/gadget/example --app example
+
+  App         example
+  Editor      https://example.gadget.app/edit
+  Playground  https://example.gadget.app/api/graphql/playground
+  Docs        https://docs.gadget.dev/api/example
 
   Endpoints
-    • https://my-app.gadget.app
-    • https://my-app--development.gadget.app
+    • https://example.gadget.app
+    • https://example--development.gadget.app
 
-  Watching for file changes... Press Ctrl+C to stop
 
-  Received 12:00:00 PM
-  ← routes/GET.js (changed)
-  ← user/signUp/signIn.js (changed)
-  2 files in total. 2 changed, 0 deleted.
+  Building frontend assets ...
+  ✔ DONE
 
-  Sent 12:00:03 PM
-  → routes/GET.ts (changed)
-  1 file in total. 1 changed, 0 deleted.
+  Setting up database ...
+  ✔ DONE
 
-  ^C Stopping... (press Ctrl+C again to force)
-  Goodbye!
+  Copying development ...
+  ✔ DONE
+
+  Restarting app ...
+  ✔ DONE
+
+  Deploy completed. Good bye!
 ```
 
 ### `ggt list`
@@ -164,15 +214,15 @@ EXAMPLES
 List the apps available to the currently logged in user.
 
 USAGE
-  $ ggt list
+  ggt list
 
 EXAMPLE
   $ ggt list
-  Slug    Domain
-  ─────── ──────────────────
-  my-app  my-app.gadget.app
-  example example.gadget.app
-  test    test.gadget.app
+    Slug    Domain
+    ─────── ──────────────────
+    my-app  my-app.gadget.app
+    example example.gadget.app
+    test    test.gadget.app
 ```
 
 ### `ggt login`
@@ -181,15 +231,15 @@ EXAMPLE
 Log in to your account.
 
 USAGE
-  $ ggt login
+  ggt login
 
 EXAMPLES
   $ ggt login
-  We've opened Gadget's login page using your default browser.
+    We've opened Gadget's login page using your default browser.
 
-  Please log in and then return to this terminal.
+    Please log in and then return to this terminal.
 
-  Hello, Jane Doe (jane@example.com)
+    Hello, Jane Doe (jane@example.com)
 ```
 
 ### `ggt logout`
@@ -198,22 +248,35 @@ EXAMPLES
 Log out of your account.
 
 USAGE
-  $ ggt logout
+  ggt logout
 
 EXAMPLES
   $ ggt logout
-  Goodbye
+    Goodbye
 ```
 
 ### `ggt whoami`
 
 ```
-Show the name and email address of the currently logged in user.
+Show the name and email address of the currently logged in user
 
 USAGE
-  $ ggt whoami
+  ggt whoami
 
 EXAMPLES
   $ ggt whoami
-  You are logged in as Jane Doe (jane@example.com)
+    You are logged in as Jane Doe (jane@example.com)
+```
+
+### `ggt version`
+
+```
+Print the version of ggt
+
+USAGE
+  ggt version
+
+EXAMPLES
+  $ ggt version
+    0.4.0
 ```

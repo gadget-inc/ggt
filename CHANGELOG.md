@@ -1,5 +1,137 @@
 # @gadgetinc/ggt
 
+## 0.4.0
+
+### Minor Changes
+
+- 770beb1: We made some improvements to our debug logs!
+
+  Previously, we were using the `debug` package to log messages. This was good at first, but now that we're adding more features to `ggt` we need more control over our logs. We want to be able to output structured logs, control the verbosity, and output them as JSON so that we can pipe them to another tool or parse them in a script.
+
+  To accomplish this, we've added 2 new flags:
+
+  - `-v, --verbose` to output structured logs
+
+    This replaces the `--debug` flag, which was a boolean flag that would print out all logs. This new flag is a counter, so you can use it multiple times to increase the verbosity of the logs. Currently, there are 3 levels of verbosity:
+
+    - `-v` = INFO
+    - `-vv` = DEBUG
+    - `-vvv` = TRACE
+
+  - `--json` to print out logs in JSON format
+
+    This is useful if you want to pipe the logs to another tool, or if you want to parse the logs in a script.
+
+- ec1dcd7: We have added a new command to ggt - the deploy command!
+
+  Users can now run `ggt deploy` to deploy their app to production straight from the CLI. `ggt deploy` will:
+
+  - Check if an app is in a deployable state
+  - Alert the user if there are any issues with the app
+  - Prompt the user how they would like to continue with the deploy if there are issues (skipped if they pass along the `--force` flag)
+  - Send back deploy status updates once the deploy is started and until the deploy has completed
+
+- 346dfa6: Improvements to `ggt sync`!
+
+  ### Improved de-sync detection and conflict resolution:
+
+  `ggt sync` can now detect all discrepancies between your local filesystem and your Gadget environment's filesystem. Previously, if a file was deleted locally while `ggt sync` was not running, `ggt sync` could not detect that the file was deleted and would not delete the file in your Gadget environment.
+
+  Now, `ggt sync` can detect the following discrepancies:
+
+  - Files that exist locally but not in your Gadget environment
+  - Files that exist in your Gadget environment but not locally
+  - Files that exist locally and in your Gadget environment but have different contents
+  - Files that exist locally and in your Gadget environment but have different permissions
+    - Only supported when the local filesystem is macOS or Linux
+
+  When `ggt sync` starts, it will compare your local filesystem to your Gadget environment's filesystem and calculate the changes that have occurred since the last time `ggt sync` was run.
+
+  You will be prompted to resolve conflicts if:
+
+  - Both filesystems updated the same file with different contents
+  - One filesystem updated a file and the other deleted it
+
+  Otherwise, `ggt sync` will automatically merge the changes from both filesystems and begin watching for changes.
+
+  With the new de-sync detection in place, we now _have the technology_ to solve the dreaded "Files version mismatch" error that causes `ggt sync` to crash so often. Be on the lookout for a fix to this error in the near future! 👀
+
+  ### New `--prefer` flag:
+
+  `ggt sync` has a new `--prefer` flag that will resolve conflicts in favor of the specified filesystem. This is useful if you always want to resolve conflicts in favor of your local filesystem or your Gadget environment's filesystem.
+
+  ```sh
+  # keep your local filesystem's conflicting changes
+  $ ggt sync --prefer=local
+
+  # keep your Gadget environment's conflicting changes
+  $ ggt sync --prefer=gadget
+  ```
+
+  ### New `--once` flag:
+
+  `ggt sync` has a new `--once` flag that will only sync local filesystem once and then exit. This flag in combination with `--prefer` is useful if you want to run `ggt sync` in a script or CI/CD pipeline and ensure that the sync will not hang waiting for user input.
+
+  ```sh
+  $ ggt sync --once --prefer=local
+  ```
+
+- 7dd74be: We got the `ggt` npm package name! 🎉
+
+  Gadget now owns the `ggt` package on [NPM](https://www.npmjs.com/package/ggt)! This means you can turn this:
+
+  ```sh
+  $ npx @gadgetinc/ggt@latest sync ~/gadget/example --app=example
+  ```
+
+  Into this:
+
+  ```sh
+  $ npx ggt@latest sync ~/gadget/example --app=example
+  ```
+
+  If you've already installed `@gadgetinc/ggt` globally, you'll need to uninstall it first:
+
+  ```sh
+  $ npm uninstall -g @gadgetinc/ggt
+  # or
+  $ yarn global remove @gadgetinc/ggt
+  ```
+
+  Then you can install the `ggt` package:
+
+  ```sh
+  $ npm install -g ggt@latest
+  # or
+  $ yarn global add ggt@latest
+  ```
+
+  It's a small change, but it's less typing and easier to remember. We hope you enjoy it!
+
+  We're going to keep the `@gadgetinc/ggt` package up-to-date with the `ggt` package, so you can continue to use `@gadgetinc/ggt` if you prefer. We'll let you know if we ever decide to deprecate `@gadgetinc/ggt`.
+
+### Patch Changes
+
+- 87e630b: Bump @sentry/node from 7.86.0 to 7.87.0
+- 628c24f: Bump @sentry/node from 7.80.1 to 7.81.0
+- 9871c6e: Bump @sentry/node from 7.84.0 to 7.85.0
+- 82536a8: Bump @sentry/node from 7.79.0 to 7.80.0
+- 9982d1d: Bump ws from 8.15.0 to 8.15.1
+- ae25c76: Bump @sentry/node from 7.75.1 to 7.76.0
+- dbbbc96: Bump @sentry/node from 7.81.1 to 7.82.0
+- f9385ea: Bump ignore from 5.2.4 to 5.3.0
+- 041cfe4: Bump fs-extra from 11.1.1 to 11.2.0
+- 197bec8: Bump serialize-error from 11.0.2 to 11.0.3
+- 0a555c0: Bump @sentry/node from 7.82.0 to 7.84.0
+- 29c6ed0: Bump @sentry/node from 7.80.0 to 7.80.1
+- bdc646d: Bump @sentry/node from 7.76.0 to 7.77.0
+- 8075a9b: Bump @sentry/node from 7.85.0 to 7.86.0
+- 4b67530: Bump @inquirer/select from 1.3.0 to 1.3.1
+- 188e22f: Bump @sentry/node from 7.77.0 to 7.79.0
+- e638ad0: Bump @sentry/node from 7.87.0 to 7.88.0
+- bfb6152: Bump ws from 8.14.2 to 8.15.0
+- d69f01f: Bump @sentry/node from 7.81.0 to 7.81.1
+
 ## 0.3.3
 
 ### Patch Changes

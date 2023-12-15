@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 0.4.2
+
+### Patch Changes
+
+- 59d9f68: Convert [error] -> error
+
 ## 0.4.1
 
 ### Patch Changes

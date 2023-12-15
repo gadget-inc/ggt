@@ -29,7 +29,6 @@
 - [Usage](#usage)
 - [Commands](#commands)
   - [`ggt sync`](#ggt-sync)
-  - [`ggt deploy`](#ggt-deploy)
   - [`ggt list`](#ggt-list)
   - [`ggt login`](#ggt-login)
   - [`ggt logout`](#ggt-logout)
@@ -62,7 +61,6 @@ USAGE
 
 COMMANDS
   sync           Sync your Gadget application's source code
-  deploy         Deploy your app to production
   list           List your apps
   login          Log in to your account
   logout         Log out of your account
@@ -152,62 +150,6 @@ EXAMPLE
     Goodbye!
 ```
 
-### `ggt deploy`
-
-```
-Deploy your Gadget application's development source code to production.
-
-USAGE
-  ggt deploy [DIRECTORY] [--app=<name>]
-
-ARGUMENTS
-  DIRECTORY         The directory to sync files to and deploy (default: ".")
-
-FLAGS
-  -a, --app=<name>  The Gadget application to deploy
-      --force       Deploy the Gadget application regardless of any issues it may have
-
-DESCRIPTION
-  Deploy allows you to deploy your current Gadget application in development to production.
-
-  It detects if local files are up to date with remote and if the Gadget application
-  is in a deployable state. If there are any issues, it will display them and ask if
-  you would like to deploy anyways.
-
-  Note:
-    • If local files are not up to date or have not recently been synced with remote ones,
-      you will be prompted to run a one-time sync to ensure the files remain consistent with
-      what is on the remote.
-    • You may wish to keep ggt sync running in the background before trying to run ggt deploy
-
-EXAMPLE
-  $ ggt deploy ~/gadget/example --app example
-
-  App         example
-  Editor      https://example.gadget.app/edit
-  Playground  https://example.gadget.app/api/graphql/playground
-  Docs        https://docs.gadget.dev/api/example
-
-  Endpoints
-    • https://example.gadget.app
-    • https://example--development.gadget.app
-
-
-  Building frontend assets ...
-  ✔ DONE
-
-  Setting up database ...
-  ✔ DONE
-
-  Copying development ...
-  ✔ DONE
-
-  Restarting app ...
-  ✔ DONE
-
-  Deploy completed. Good bye!
-```
-
 ### `ggt list`
 
 ```
@@ -278,5 +220,5 @@ USAGE
 
 EXAMPLES
   $ ggt version
-    0.4.1
+    0.4.2
 ```

@@ -9,7 +9,7 @@ import { isEqualHashes } from "../services/filesync/hashes.js";
 import { select } from "../services/output/prompt.js";
 import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
-import { isGraphQLErrors } from "../services/util/is.js";
+import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
 
 export const usage: Usage = () => sprint`
     Deploy your Gadget application's development source code to production.
@@ -163,7 +163,10 @@ export const command = (async (ctx, firstRun = true) => {
     query: REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION,
     variables: () => ({ localFilesVersion: String(filesync.filesVersion), force: ctx.args["--force"] }),
     onError: (error) => {
-      if (isGraphQLErrors(error.cause)) {
+      if (isCloseEvent(error.cause)) {
+        spinner.fail("Failed");
+        log.printlns(error.message);
+      } else if (isGraphQLErrors(error.cause)) {
         const message = error.cause[0]?.message;
         if (message && message.includes("GGT_PAYMENT_REQUIRED")) {
           log.println("Production environment limit reached. Upgrade your plan to deploy");
@@ -172,6 +175,8 @@ export const command = (async (ctx, firstRun = true) => {
         }
       }
       log.error("failed to deploy", { error });
+      unsubscribe();
+      return;
     },
     onData: async ({ publishStatus }): Promise<void> => {
       const { progress, issues } = publishStatus ?? {};

@@ -330,4 +330,64 @@ describe("deploy", () => {
       "
     `);
   });
+
+  it("exits if the deploy process was interrupted", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
+
+    const cause = {
+      type: "close",
+      code: 4500,
+      reason: "Internal Error",
+      wasClean: true,
+    };
+
+    const error = new EditGraphQLError(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, cause);
+
+    await deploy(ctx);
+    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "NOT_STARTED",
+          issues: [],
+        },
+      },
+    });
+
+    await publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+        },
+      },
+    });
+
+    await publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+        },
+      },
+    });
+
+    await publishStatus.emitError(error);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "
+      App: test
+
+      Building frontend assets ...
+
+      An error occurred while communicating with Gadget
+      "
+    `);
+  });
 });

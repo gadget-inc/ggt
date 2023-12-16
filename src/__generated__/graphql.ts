@@ -333,6 +333,7 @@ export type PublishIssue = {
 
 export type PublishIssueNode = {
   __typename?: 'PublishIssueNode';
+  apiIdentifier?: Maybe<Scalars['String']['output']>;
   fieldType?: Maybe<Scalars['String']['output']>;
   key: Scalars['String']['output'];
   name?: Maybe<Scalars['String']['output']>;
@@ -361,6 +362,7 @@ export type Query = {
   /** @deprecated use team */
   listContributors: Array<ContributorResult>;
   logsSearch: LogSearchResult;
+  publishIssues: Array<PublishIssue>;
   remoteFilesVersion: Scalars['String']['output'];
   roles: Array<GadgetRole>;
   runTestSupportFunction?: Maybe<Scalars['JSON']['output']>;
@@ -611,4 +613,4 @@ export type PublishStatusSubscriptionVariables = Exact<{
 }>;
 
 
-export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null }> } | null };
+export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null }> } | null };

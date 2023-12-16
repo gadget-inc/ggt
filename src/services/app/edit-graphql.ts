@@ -460,6 +460,7 @@ export const REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION = sprint(/* GraphQL */ `
         node {
           type
           key
+          apiIdentifier
           name
           fieldType
           parentKey

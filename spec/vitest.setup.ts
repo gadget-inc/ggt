@@ -43,14 +43,13 @@ beforeEach(async () => {
     throw new Error("prompt.select() should not be called");
   });
 
-  // allow logs to flush before exiting
+  // we don't ever want to actually exit the process during tests so
+  // print the current stack trace so we can see where the exit was
+  // called
   spyOnImplementing(process, "exit", (code) => {
-    setImmediate(() => {
-      process.exit.mockRestore?.();
-      process.exit(code);
-    });
-
-    throw new Error(`process.exit(${code}) called`);
+    process.stderr.write(new Error(`process.exit(${code})`).stack + "\n");
+    process.exit.mockRestore?.();
+    process.exit(code);
   });
 });
 

@@ -97,20 +97,21 @@ const formatFields = (fields: Record<string, unknown>, indent = 2): string => {
         continue;
       }
 
-      if (value.length > 10 && config.logLevel > Level.TRACE) {
-        // truncate arrays to 10 elements when not tracing
-        value = value.slice(0, 10);
-        assert(Array.isArray(value));
+      value = Object.fromEntries(value.entries());
+    }
+
+    if (isObject(value) || value instanceof Map) {
+      const entries = Object.entries(value);
+      if (entries.length === 0) {
+        buf.push(formatValue(" {}", gray, indent));
+        continue;
       }
 
-      value = Object.fromEntries(value.entries());
-    }
+      if (entries.length > 10 && config.logLevel > Level.TRACE) {
+        // truncate objects to 10 keys when not tracing
+        value = Object.fromEntries([...entries.slice(0, 10), ["…", `${entries.length - 10} more`]]);
+      }
 
-    if (value instanceof Map) {
-      value = Object.fromEntries(value.entries());
-    }
-
-    if (isObject(value)) {
       buf.push(formatFields(value as Record<string, unknown>, indent + 2));
       continue;
     }

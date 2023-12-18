@@ -196,7 +196,7 @@ export const command = (async (ctx, firstRun = true) => {
             `
                     • ${message}                                       
                       ${nodeType ? `${nodeType}: ${chalk.cyan(nodeName)}` : ""}                 ${
-                        nodeParent ? `ParentResource: ${chalk.cyan(nodeParent)}` : ""
+                        nodeParent ? `ParentApiIdentifier: ${chalk.cyan(nodeParent)}` : ""
                       }
             `.trim(),
           );

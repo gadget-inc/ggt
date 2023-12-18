@@ -1,8 +1,5 @@
-import assert from "node:assert";
 import stripAnsi from "strip-ansi";
-import { config } from "../../../config/config.js";
 import { isObject, isString } from "../../../util/is.js";
-import { Level } from "../level.js";
 import type { Formatter } from "./format.js";
 
 export const formatJson: Formatter = (level, name, msg, fields) => {
@@ -23,11 +20,6 @@ const serializeValue = (value: unknown): unknown => {
   }
 
   if (Array.isArray(value)) {
-    if (value.length > 10 && config.logLevel > Level.TRACE) {
-      // truncate arrays to 10 elements when not tracing
-      value = value.slice(0, 10);
-      assert(Array.isArray(value));
-    }
     return value.map(serializeValue);
   }
 

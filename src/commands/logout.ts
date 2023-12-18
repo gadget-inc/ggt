@@ -11,7 +11,7 @@ export const usage: Usage = () => sprint`
     {bold USAGE}
       ggt logout
 
-    {bold EXAMPLES}
+    {bold EXAMPLE}
       $ ggt logout
         Goodbye
 `;

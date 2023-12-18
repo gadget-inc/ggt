@@ -38,7 +38,7 @@ exports[`root > when login is given > prints the usage when --help is passed 1`]
 USAGE
   ggt login
 
-EXAMPLES
+EXAMPLE
   $ ggt login
     We've opened Gadget's login page using your default browser.
 
@@ -54,7 +54,7 @@ exports[`root > when login is given > prints the usage when -h is passed 1`] = `
 USAGE
   ggt login
 
-EXAMPLES
+EXAMPLE
   $ ggt login
     We've opened Gadget's login page using your default browser.
 
@@ -70,7 +70,7 @@ exports[`root > when logout is given > prints the usage when --help is passed 1`
 USAGE
   ggt logout
 
-EXAMPLES
+EXAMPLE
   $ ggt logout
     Goodbye
 "
@@ -82,7 +82,7 @@ exports[`root > when logout is given > prints the usage when -h is passed 1`] = 
 USAGE
   ggt logout
 
-EXAMPLES
+EXAMPLE
   $ ggt logout
     Goodbye
 "
@@ -238,7 +238,7 @@ exports[`root > when version is given > prints the usage when --help is passed 1
 USAGE
   ggt version
 
-EXAMPLES
+EXAMPLE
   $ ggt version
     1.2.3
 "
@@ -250,7 +250,7 @@ exports[`root > when version is given > prints the usage when -h is passed 1`] =
 USAGE
   ggt version
 
-EXAMPLES
+EXAMPLE
   $ ggt version
     1.2.3
 "
@@ -262,7 +262,7 @@ exports[`root > when whoami is given > prints the usage when --help is passed 1`
 USAGE
   ggt whoami
 
-EXAMPLES
+EXAMPLE
   $ ggt whoami
     You are logged in as Jane Doe (jane@example.com)
 "
@@ -274,7 +274,7 @@ exports[`root > when whoami is given > prints the usage when -h is passed 1`] = 
 USAGE
   ggt whoami
 
-EXAMPLES
+EXAMPLE
   $ ggt whoami
     You are logged in as Jane Doe (jane@example.com)
 "

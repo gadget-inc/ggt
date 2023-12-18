@@ -8,8 +8,8 @@
 <a href="https://github.com/gadget-inc/ggt/actions/workflows/ci.yml?query=branch%3Amain">
   <img alt="ci workflow status" src="https://img.shields.io/github/actions/workflow/status/gadget-inc/ggt/ci.yml?branch=main&label=ci">
 </a>
-<a href="https://www.npmjs.com/package/@gadgetinc/ggt">
-  <img alt="npm version" src="https://img.shields.io/npm/v/@gadgetinc/ggt">
+<a href="https://www.npmjs.com/package/ggt">
+  <img alt="npm version" src="https://img.shields.io/npm/v/ggt">
 </a>
 <a href="https://discord.gg/nAfNKMdwKh">
   <img alt="discord chat" src="https://img.shields.io/discord/836317518595096598">
@@ -44,7 +44,7 @@
 Run the following to sync a `my-app.gadget.app` application to the `~/gadget/my-app` on your local machine:
 
 ```sh
-npx @gadgetinc/ggt@latest sync --app my-app ~/gadget/my-app
+npx ggt@latest sync ~/gadget/my-app --app=my-app
 ```
 
 With this running in the background, your local `~/gadget/my-app` folder will become two-way synced with your application's filesystem in Gadget's cloud. Changes you make locally will be immediately reflected by your application's API and actions if you re-run them.
@@ -52,7 +52,7 @@ With this running in the background, your local `~/gadget/my-app` folder will be
 ## Usage
 
 ```sh-session
-$ npm install -g @gadgetinc/ggt
+$ npm install -g ggt
 $ ggt
 The command-line interface for Gadget
 

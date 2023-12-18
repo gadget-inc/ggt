@@ -32,7 +32,8 @@ for (const name of AvailableCommands) {
   commands.push(dedent`
     ### \`ggt ${name}\`
 
-    \`\`\`
+    \`\`\`sh-session
+    $ ggt ${name} --help
     ${cmd.usage()}
     \`\`\`
   `);

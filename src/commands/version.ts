@@ -11,7 +11,7 @@ export const usage: Usage = () => sprint`
   {bold USAGE}
     ggt version
 
-  {bold EXAMPLES}
+  {bold EXAMPLE}
     $ ggt version
       ${config.version}
 `;

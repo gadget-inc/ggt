@@ -11,7 +11,7 @@ export const usage: Usage = () => sprint`
     {bold USAGE}
       ggt whoami
 
-    {bold EXAMPLES}
+    {bold EXAMPLE}
       $ ggt whoami
         You are logged in as Jane Doe (jane@example.com)
 `;

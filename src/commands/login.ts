@@ -17,7 +17,7 @@ export const usage: Usage = () => sprint`
     {bold USAGE}
       ggt login
 
-    {bold EXAMPLES}
+    {bold EXAMPLE}
       $ ggt login
         We've opened Gadget's login page using your default browser.
 

@@ -2,4 +2,4 @@
 "ggt": patch
 ---
 
-Rename ParentResource in problems message to ParentApiIdentifier
+Rename ParentResource in problems message in ggt deploy to ParentApiIdentifier

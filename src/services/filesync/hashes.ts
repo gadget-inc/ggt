@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import { createLogger } from "../output/log/logger.js";
-import { isNil } from "../util/is.js";
 import { type Create, type Delete, type Update } from "./changes.js";
 import type { Hash, Hashes } from "./directory.js";
 
@@ -132,25 +131,29 @@ export const withoutUnnecessaryChanges = ({ changes, existing }: { changes: Chan
   return necessaryChanges;
 };
 
-export const isEqualHash = (path: string, aHash: Hash, bHash: Hash): boolean => {
-  if (aHash.sha1 !== bHash.sha1) {
-    // the contents are different
-    return false;
-  }
+export const isEqualHash = (_path: string, aHash: Hash, bHash: Hash): boolean => {
+  // FIXME: we're running into issues syncing permissions with Gadget
+  // so we're temporarily disabling this check until we can figure out
+  return aHash.sha1 === bHash.sha1;
 
-  if (path.endsWith("/")) {
-    // it's a directory, so we don't care about permissions
-    return true;
-  }
+  // if (aHash.sha1 !== bHash.sha1) {
+  //   // the contents are different
+  //   return false;
+  // }
 
-  if (isNil(aHash.permissions) || isNil(bHash.permissions)) {
-    // one of the filesystems doesn't support permissions, so ignore them
-    return true;
-  }
+  // if (path.endsWith("/")) {
+  //   // it's a directory, so we don't care about permissions
+  //   return true;
+  // }
 
-  // the contents are the same, and both filesystems support permissions
-  // so ensure the permissions are also the same
-  return aHash.permissions === bHash.permissions;
+  // if (isNil(aHash.permissions) || isNil(bHash.permissions)) {
+  //   // one of the filesystems doesn't support permissions, so ignore them
+  //   return true;
+  // }
+
+  // // the contents are the same, and both filesystems support permissions
+  // // so ensure the permissions are also the same
+  // return aHash.permissions === bHash.permissions;
 };
 
 export const isEqualHashes = (a: Hashes, b: Hashes): boolean => {

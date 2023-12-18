@@ -36,16 +36,26 @@ import { InvalidSyncFileError, TooManySyncAttemptsError } from "./error.js";
 import type { File } from "./file.js";
 import { getChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 
+const log = createLogger({ name: "filesync" });
+
+export type FileSyncHashes = {
+  inSync: boolean;
+  filesVersionHashes: Hashes;
+  localHashes: Hashes;
+  gadgetHashes: Hashes;
+  gadgetFilesVersion: bigint;
+};
+
 export class FileSync {
   readonly editGraphQL: EditGraphQL;
 
-  readonly log = createLogger({ name: "filesync", fields: () => ({ state: this._state }) });
+  readonly log = log.extend("filesync", () => ({ state: this._state }));
 
   /**
    * A FIFO async callback queue that ensures we process filesync events
    * in the order we receive them.
    */
-  private _queue = new PQueue({ concurrency: 1 });
+  private _syncOperations = new PQueue({ concurrency: 1 });
 
   private constructor(
     /**
@@ -230,7 +240,7 @@ export class FileSync {
    * Waits for all pending and ongoing filesync operations to complete.
    */
   async idle(): Promise<void> {
-    await this._queue.onIdle();
+    await this._syncOperations.onIdle();
   }
 
   /**
@@ -240,7 +250,7 @@ export class FileSync {
    * @returns A promise that resolves when the changes have been sent.
    */
   async sendChangesToGadget({ changes }: { changes: Changes }): Promise<void> {
-    await this._enqueue(() => this._sendChangesToGadget({ changes }));
+    await this._syncOperations.add(() => this._sendChangesToGadget({ changes }));
   }
 
   /**
@@ -268,56 +278,58 @@ export class FileSync {
       variables: () => ({ localFilesVersion: String(this.filesVersion) }),
       onError,
       onData: ({ remoteFileSyncEvents: { changed, deleted, remoteFilesVersion } }) => {
-        this._enqueue(async () => {
-          if (BigInt(remoteFilesVersion) < this.filesVersion) {
-            this.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
-            return;
-          }
-
-          this.log.debug("received files", {
-            remoteFilesVersion: remoteFilesVersion,
-            changed: changed.map((change) => change.path),
-            deleted: deleted.map((change) => change.path),
-          });
-
-          const filterIgnoredFiles = (file: { path: string }): boolean => {
-            const ignored = this.directory.ignores(file.path);
-            if (ignored) {
-              this.log.warn("skipping received change because file is ignored", { path: file.path });
+        this._syncOperations
+          .add(async () => {
+            if (BigInt(remoteFilesVersion) < this.filesVersion) {
+              this.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
+              return;
             }
-            return !ignored;
-          };
 
-          changed = changed.filter(filterIgnoredFiles);
-          deleted = deleted.filter(filterIgnoredFiles);
-
-          if (changed.length === 0 && deleted.length === 0) {
-            await this._save(remoteFilesVersion);
-            return;
-          }
-
-          await beforeChanges({
-            changed: changed.map((file) => file.path),
-            deleted: deleted.map((file) => file.path),
-          });
-
-          const changes = await this._writeToLocalFilesystem({
-            filesVersion: remoteFilesVersion,
-            files: changed,
-            delete: deleted.map((file) => file.path),
-          });
-
-          if (changes.size > 0) {
-            printChanges({
-              message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
-              changes,
-              tense: "past",
-              limit: 10,
+            this.log.debug("received files", {
+              remoteFilesVersion: remoteFilesVersion,
+              changed: changed.map((change) => change.path),
+              deleted: deleted.map((change) => change.path),
             });
-          }
 
-          await afterChanges({ changes });
-        }).catch(onError);
+            const filterIgnoredFiles = (file: { path: string }): boolean => {
+              const ignored = this.directory.ignores(file.path);
+              if (ignored) {
+                this.log.warn("skipping received change because file is ignored", { path: file.path });
+              }
+              return !ignored;
+            };
+
+            changed = changed.filter(filterIgnoredFiles);
+            deleted = deleted.filter(filterIgnoredFiles);
+
+            if (changed.length === 0 && deleted.length === 0) {
+              await this._save(remoteFilesVersion);
+              return;
+            }
+
+            await beforeChanges({
+              changed: changed.map((file) => file.path),
+              deleted: deleted.map((file) => file.path),
+            });
+
+            const changes = await this._writeToLocalFilesystem({
+              filesVersion: remoteFilesVersion,
+              files: changed,
+              delete: deleted.map((file) => file.path),
+            });
+
+            if (changes.size > 0) {
+              printChanges({
+                message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
+                changes,
+                tense: "past",
+                limit: 10,
+              });
+            }
+
+            await afterChanges({ changes });
+          })
+          .catch(onError);
       },
     });
   }
@@ -329,20 +341,36 @@ export class FileSync {
    *   local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  async sync({ attempt = 0, preference }: { attempt?: number; preference?: ConflictPreference } = {}): Promise<void> {
-    if (attempt > 10) {
-      throw new TooManySyncAttemptsError(attempt);
+  async sync({ preference, maxAttempts = 10 }: { preference?: ConflictPreference; maxAttempts?: number } = {}): Promise<void> {
+    this._syncOperations.pause();
+
+    try {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const { inSync, ...hashes } = await this.hashes();
+
+        if (inSync) {
+          this.log.info("filesystem is in sync");
+          await this._save(hashes.gadgetFilesVersion);
+          return;
+        }
+
+        await this._sync({ preference, ...hashes });
+      }
+    } finally {
+      this._syncOperations.start();
     }
 
-    const { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion } = await this._getHashes();
+    throw new TooManySyncAttemptsError(maxAttempts);
+  }
+
+  async _sync({
+    preference,
+    filesVersionHashes,
+    localHashes,
+    gadgetHashes,
+    gadgetFilesVersion,
+  }: { preference?: ConflictPreference } & Omit<FileSyncHashes, "inSync">): Promise<void> {
     this.log.debug("syncing", { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
-
-    if (isEqualHashes(localHashes, gadgetHashes)) {
-      this.log.info("filesystem is in sync");
-      await this._save(gadgetFilesVersion);
-      return;
-    }
-
     let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
     let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
 
@@ -351,6 +379,8 @@ export class FileSync {
       gadgetChanges = getChanges({ from: localHashes, to: gadgetHashes });
       assertAllGadgetFiles({ gadgetChanges });
     }
+
+    assert(localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
 
     const conflicts = getConflicts({ localChanges, gadgetChanges });
     if (conflicts.size > 0) {
@@ -384,8 +414,6 @@ export class FileSync {
       }
     }
 
-    assert(localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
-
     if (gadgetChanges.size > 0) {
       await this._getChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
     }
@@ -393,17 +421,9 @@ export class FileSync {
     if (localChanges.size > 0) {
       await this._sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
     }
-
-    // recursively call this function until we're in sync
-    return this.sync({ attempt: ++attempt, preference });
   }
 
-  async _getHashes(): Promise<{
-    gadgetFilesVersion: bigint;
-    filesVersionHashes: Hashes;
-    localHashes: Hashes;
-    gadgetHashes: Hashes;
-  }> {
+  async hashes(): Promise<FileSyncHashes> {
     const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
       // get the hashes of our local files
       this.directory.hashes(),
@@ -437,7 +457,7 @@ export class FileSync {
       })(),
     ]);
 
-    return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion };
+    return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion, inSync: isEqualHashes(localHashes, gadgetHashes) };
   }
 
   private async _getChangesFromGadget({
@@ -640,13 +660,6 @@ export class FileSync {
     this._state = { ...this._state, mtime: Date.now() + 1, filesVersion: String(filesVersion) };
     this.log.debug("saving state", { state: this._state });
     await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
-  }
-
-  /**
-   * Enqueues a function that handles filesync events onto the {@linkcode _queue}.
-   */
-  private _enqueue<T>(fn: () => Promise<T>): Promise<T> {
-    return this._queue.add(fn) as Promise<T>;
   }
 }
 

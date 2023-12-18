@@ -5,7 +5,6 @@ import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../services/app/edit
 import type { ArgsSpec } from "../services/command/arg.js";
 import { type Command, type Usage } from "../services/command/command.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { isEqualHashes } from "../services/filesync/hashes.js";
 import { select } from "../services/output/prompt.js";
 import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
@@ -132,11 +131,8 @@ export const command = (async (ctx, firstRun = true) => {
     log.printlns`App: ${filesync.app.slug}`;
   }
 
-  const { localHashes, gadgetHashes } = await filesync._getHashes();
-
-  const upToDate = isEqualHashes(localHashes, gadgetHashes);
-
-  if (!upToDate) {
+  const { inSync } = await filesync.hashes();
+  if (!inSync) {
     log.printlns`
     Local files have diverged from remote. Run a sync once to converge your files or keep {italic ggt sync} running in the background.
   `;

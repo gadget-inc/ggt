@@ -340,6 +340,7 @@ describe("HASHING_IGNORE_PATHS", () => {
       [
         ".gadget/sync.json",
         ".gadget/backup",
+        "yarn-error.log",
       ]
     `);
   });

@@ -69,7 +69,7 @@ export const getChanges = ({
         changes.set(sourcePath, { type: "delete", sourceHash });
         log.trace("file deleted", { path: sourcePath, sourceHash });
       }
-    } else if (!isEqualHash(sourceHash, targetHash)) {
+    } else if (!isEqualHash(sourcePath, sourceHash, targetHash)) {
       // the file or directory exists in target, but has a different
       // hash, so it's been updated
       changes.set(sourcePath, { type: "update", sourceHash, targetHash });
@@ -113,7 +113,7 @@ export const withoutUnnecessaryChanges = ({ changes, existing }: { changes: Chan
       continue;
     }
 
-    if (change.type !== "delete" && existingHash && isEqualHash(change.targetHash, existingHash)) {
+    if (change.type !== "delete" && existingHash && isEqualHash(path, change.targetHash, existingHash)) {
       // already created or updated
       log.trace("already created or updated", { path, existingHash, targetHash: change.targetHash });
       continue;
@@ -132,14 +132,31 @@ export const withoutUnnecessaryChanges = ({ changes, existing }: { changes: Chan
   return necessaryChanges;
 };
 
-export const isEqualHash = (a: Hash, b: Hash): boolean => {
-  return a.sha1 === b.sha1 && (isNil(a.permissions) || isNil(b.permissions) || a.permissions === b.permissions);
+export const isEqualHash = (path: string, aHash: Hash, bHash: Hash): boolean => {
+  if (aHash.sha1 !== bHash.sha1) {
+    // the contents are different
+    return false;
+  }
+
+  if (path.endsWith("/")) {
+    // it's a directory, so we don't care about permissions
+    return true;
+  }
+
+  if (isNil(aHash.permissions) || isNil(bHash.permissions)) {
+    // one of the filesystems doesn't support permissions, so ignore them
+    return true;
+  }
+
+  // the contents are the same, and both filesystems support permissions
+  // so ensure the permissions are also the same
+  return aHash.permissions === bHash.permissions;
 };
 
 export const isEqualHashes = (a: Hashes, b: Hashes): boolean => {
   for (const [aPath, aHash] of Object.entries(a)) {
     const bHash = b[aPath];
-    if (!bHash || !isEqualHash(aHash, bHash)) {
+    if (!bHash || !isEqualHash(aPath, aHash, bHash)) {
       log.trace("hashes are not equal", { path: aPath, aHash, bHash });
       return false;
     }

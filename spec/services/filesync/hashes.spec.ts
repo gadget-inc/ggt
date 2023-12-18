@@ -152,22 +152,28 @@ describe("isEqualHash", () => {
     const sha1 = randomUUID();
     const permissions = 0o777;
 
-    expect(isEqualHash({ sha1, permissions }, { sha1, permissions })).toBe(true);
+    expect(isEqualHash("file.txt", { sha1, permissions }, { sha1, permissions })).toBe(true);
   });
 
   it("returns false if hashes are not equal", () => {
     const sha1 = randomUUID();
     const permissions = 0o777;
 
-    expect(isEqualHash({ sha1, permissions }, { sha1: randomUUID(), permissions })).toBe(false);
-    expect(isEqualHash({ sha1, permissions }, { sha1, permissions: 0o755 })).toBe(false);
+    expect(isEqualHash("file.txt", { sha1, permissions }, { sha1: randomUUID(), permissions })).toBe(false);
+    expect(isEqualHash("file.txt", { sha1, permissions }, { sha1, permissions: 0o755 })).toBe(false);
   });
 
   it("ignores permissions if they are not set", () => {
     const sha1 = randomUUID();
 
-    expect(isEqualHash({ sha1 }, { sha1, permissions: 0o777 })).toBe(true);
-    expect(isEqualHash({ sha1, permissions: 0o777 }, { sha1 })).toBe(true);
+    expect(isEqualHash("file.txt", { sha1 }, { sha1, permissions: 0o777 })).toBe(true);
+    expect(isEqualHash("file.txt", { sha1, permissions: 0o777 }, { sha1 })).toBe(true);
+  });
+
+  it("ignores permissions if it's a directory", () => {
+    const sha1 = randomUUID();
+
+    expect(isEqualHash("dir/", { sha1, permissions: 0o766 }, { sha1, permissions: 0o777 })).toBe(true);
   });
 });
 

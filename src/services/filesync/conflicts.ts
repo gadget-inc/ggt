@@ -36,7 +36,11 @@ export const getConflicts = ({
       continue;
     }
 
-    if ("targetHash" in localChange && "targetHash" in gadgetChange && isEqualHash(localChange.targetHash, gadgetChange.targetHash)) {
+    if (
+      "targetHash" in localChange &&
+      "targetHash" in gadgetChange &&
+      isEqualHash(filepath, localChange.targetHash, gadgetChange.targetHash)
+    ) {
       // local and gadget both created/updated the same file with the same content
       continue;
     }

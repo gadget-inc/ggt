@@ -157,14 +157,14 @@ export const isEqualHashes = (a: Hashes, b: Hashes): boolean => {
   for (const [aPath, aHash] of Object.entries(a)) {
     const bHash = b[aPath];
     if (!bHash || !isEqualHash(aPath, aHash, bHash)) {
-      log.trace("hashes are not equal", { path: aPath, aHash, bHash });
+      log.debug("hashes are not equal", { path: aPath, aHash, bHash });
       return false;
     }
   }
 
   for (const bPath of Object.keys(b)) {
     if (!a[bPath]) {
-      log.trace("hashes are not equal", { path: bPath, aHash: undefined, bHash: b[bPath] });
+      log.debug("hashes are not equal", { path: bPath, aHash: undefined, bHash: b[bPath] });
       return false;
     }
   }

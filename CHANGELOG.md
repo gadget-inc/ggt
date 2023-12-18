@@ -1,5 +1,17 @@
 # @gadgetinc/ggt
 
+## 0.4.3
+
+### Patch Changes
+
+- c783efa: Fix `TooManySyncAttemptsError` when local directory's permissions don't match Gadget's
+- 340a5de: Fix errors serializing `bigint`s when `--json` is passed
+- 3de43d1: Logging improvements:
+
+  - No longer truncating arrays in logs when `--json` is passed
+  - Now truncating objects in logs unless log level is trace
+  - Showing number of truncated elements/properties when arrays/objects are truncated
+
 ## 0.4.2
 
 ### Patch Changes

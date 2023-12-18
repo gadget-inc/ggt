@@ -163,7 +163,8 @@ export const command = (async (ctx, firstRun = true) => {
       return;
     },
     onData: async ({ publishStatus }): Promise<void> => {
-      const { progress, issues } = publishStatus ?? {};
+      // console.log("[jenny] data", publishStatus);
+      const { progress, issues, status } = publishStatus ?? {};
 
       const hasIssues = issues?.length;
 
@@ -208,9 +209,17 @@ export const command = (async (ctx, firstRun = true) => {
 
         firstRun = false;
       } else {
+        if (status?.code === "Errored") {
+          spinner.fail("Failed");
+          log.printlns`{red ${status.message}}`;
+          log.println(`TraceID url: ${status.traceIdUrl}`);
+          unsubscribe();
+          return;
+        }
+
         if (progress === AppDeploymentSteps.COMPLETED) {
           spinner.succeed("DONE");
-          ctx.log.printlns("Deploy completed. Good bye!");
+          ctx.log.printlns`{green Deploy completed. Good bye!}`;
           unsubscribe();
           return;
         }

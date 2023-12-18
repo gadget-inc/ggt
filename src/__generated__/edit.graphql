@@ -207,10 +207,18 @@ type PublishIssueNode {
   type: String!
 }
 
+type PublishStatus {
+  code: String!
+  message: String
+  traceIdUrl: String!
+}
+
 type PublishStatusState {
   issues: [PublishIssue!]!
   progress: String!
+  publishStarted: Boolean!
   remoteFilesVersion: String!
+  status: PublishStatus
 }
 
 type Query {

@@ -342,11 +342,20 @@ export type PublishIssueNode = {
   type: Scalars['String']['output'];
 };
 
+export type PublishStatus = {
+  __typename?: 'PublishStatus';
+  code: Scalars['String']['output'];
+  message?: Maybe<Scalars['String']['output']>;
+  traceIdUrl: Scalars['String']['output'];
+};
+
 export type PublishStatusState = {
   __typename?: 'PublishStatusState';
   issues: Array<PublishIssue>;
   progress: Scalars['String']['output'];
+  publishStarted: Scalars['Boolean']['output'];
   remoteFilesVersion: Scalars['String']['output'];
+  status?: Maybe<PublishStatus>;
 };
 
 export type Query = {
@@ -613,4 +622,4 @@ export type PublishStatusSubscriptionVariables = Exact<{
 }>;
 
 
-export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null }> } | null };
+export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null }>, status?: { __typename?: 'PublishStatus', code: string, message?: string | null, traceIdUrl: string } | null } | null };

@@ -100,7 +100,11 @@ const formatFields = (fields: Record<string, unknown>, indent = 2): string => {
       value = Object.fromEntries(value.entries());
     }
 
-    if (isObject(value) || value instanceof Map) {
+    if (value instanceof Map) {
+      value = Object.fromEntries(value);
+    }
+
+    if (isObject(value)) {
       const entries = Object.entries(value);
       if (entries.length === 0) {
         buf.push(formatValue(" {}", gray, indent));

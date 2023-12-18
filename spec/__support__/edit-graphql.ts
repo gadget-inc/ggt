@@ -127,17 +127,6 @@ export type MockEditGraphQLSubscriptions = {
    * @param query The query to expect.
    */
   expectSubscription<Query extends GraphQLQuery>(query: Query): MockEditGraphQLSubscription<Query>;
-
-  /**
-   * Mocks the initial result when the given query is subscribed to.
-   *
-   * @param query The query to mock the initial result for.
-   * @param result The result to mock.
-   */
-  mockInitialResult<Query extends GraphQLQuery>(
-    query: Query,
-    result: Query["Result"] | ((variables: Query["Variables"]) => Promisable<Query["Result"]>),
-  ): void;
 };
 
 /**
@@ -168,10 +157,6 @@ export type MockEditGraphQLSubscription<Query extends GraphQLQuery = GraphQLQuer
 
 export const makeMockEditGraphQLSubscriptions = (): MockEditGraphQLSubscriptions => {
   const subscriptions = new Map<GraphQLQuery, MockEditGraphQLSubscription>();
-  const initialResults = new Map<
-    GraphQLQuery,
-    GraphQLQuery["Result"] | ((variables: GraphQLQuery["Variables"]) => Promisable<GraphQLQuery["Result"]>)
-  >();
 
   const mockEditGraphQL: MockEditGraphQLSubscriptions = {
     expectSubscription: (query) => {
@@ -179,9 +164,6 @@ export const makeMockEditGraphQLSubscriptions = (): MockEditGraphQLSubscriptions
       const sub = subscriptions.get(query);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return sub as any;
-    },
-    mockInitialResult: (query, result) => {
-      initialResults.set(query, result);
     },
   };
 
@@ -201,23 +183,6 @@ export const makeMockEditGraphQLSubscriptions = (): MockEditGraphQLSubscriptions
       emitError: options.onError,
       emitComplete: options.onComplete,
     });
-
-    const initialResult = initialResults.get(options.query);
-    if (initialResult) {
-      let getInitialResult: () => Promise<GraphQLQuery["Result"]>;
-      if (isFunction(initialResult)) {
-        getInitialResult = async () => initialResult(variables ?? {});
-      } else {
-        getInitialResult = () => Promise.resolve(initialResult);
-      }
-
-      // mimic network delay
-      setTimeout(() => {
-        void getInitialResult()
-          .then((result) => options.onResult(result))
-          .catch((error) => options.onError(error));
-      }, 1);
-    }
 
     return vi.fn();
   });

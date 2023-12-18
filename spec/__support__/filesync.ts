@@ -5,12 +5,7 @@ import pMap from "p-map";
 import pTimeout from "p-timeout";
 import { expect, vi, type Assertion } from "vitest";
 import { z } from "zod";
-import {
-  FileSyncEncoding,
-  type FileSyncChangedEvent,
-  type FileSyncChangedEventInput,
-  type FileSyncDeletedEventInput,
-} from "../../src/__generated__/graphql.js";
+import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../src/__generated__/graphql.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -357,37 +352,6 @@ export const makeSyncScenario = async ({
   });
 
   const mockEditGraphQLSubs = makeMockEditGraphQLSubscriptions();
-  mockEditGraphQLSubs.mockInitialResult(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, async ({ localFilesVersion }) => {
-    log.trace("mocking initial result for remote file sync events", { localFilesVersion });
-
-    const changed = [] as FileSyncChangedEvent[];
-    if (localFilesVersion === "0") {
-      const gadgetFiles = await readDir(gadgetDir.path);
-      for (const [path, content] of Object.entries(gadgetFiles)) {
-        changed.push({
-          path,
-          mode: path.endsWith("/") ? defaultDirMode : defaultFileMode,
-          content: Buffer.from(content).toString(FileSyncEncoding.Base64),
-          encoding: FileSyncEncoding.Base64,
-        });
-      }
-    } else if (localFilesVersion !== String(gadgetFilesVersion)) {
-      // tests should make local files start at version 0 (initial sync)
-      // or the same version as gadget (no changes) because we don't
-      // mimic sending file version diffs
-      throw new Error(`Unexpected local files version: ${localFilesVersion}, expected ${gadgetFilesVersion}`);
-    }
-
-    return {
-      data: {
-        remoteFileSyncEvents: {
-          remoteFilesVersion: String(gadgetFilesVersion),
-          changed,
-          deleted: [],
-        },
-      },
-    };
-  });
 
   return {
     filesync,

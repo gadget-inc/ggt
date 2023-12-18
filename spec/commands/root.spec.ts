@@ -150,7 +150,7 @@ describe("root", () => {
 
       await expectProcessExit(root);
 
-      expectStdout().toEqual(cmd.usage() + "\n");
+      expectStdout().toMatchSnapshot();
     });
 
     it("runs the command", async () => {

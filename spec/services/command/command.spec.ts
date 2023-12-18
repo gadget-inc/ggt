@@ -14,7 +14,7 @@ describe.each(AvailableCommands)("%s", (command) => {
   it("has a usage", () => {
     expect(cmd.usage).toBeDefined();
     expect(cmd.usage).toBeInstanceOf(Function);
-    expect(cmd.usage()).toMatchSnapshot();
+    expect(cmd.usage()).toBeTypeOf("string");
   });
 
   it("has a command", () => {

@@ -1,20 +1,13 @@
 import * as Sentry from "@sentry/node";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createStructuredLogger } from "../../../../src/services/output/log/structured.js";
 import { withEnv } from "../../../__support__/env.js";
 import { expectStderr, mockStderr } from "../../../__support__/stream.js";
+import { mockSystemTime } from "../../../__support__/time.js";
 
 describe("structured", () => {
   mockStderr();
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(0);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+  mockSystemTime();
 
   it.each(["trace", "debug", "info", "warn", "error"])("logs the expected output when GGT_LOG_LEVEL=%s", (level) => {
     const structuredLogger = createStructuredLogger({ name: "structured" });

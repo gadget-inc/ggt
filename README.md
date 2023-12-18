@@ -52,7 +52,7 @@ With this running in the background, your local `~/gadget/my-app` folder will be
 ## Usage
 
 ```sh-session
-$ npm install -g ggt
+$ npm install -g @gadgetinc/ggt
 $ ggt
 The command-line interface for Gadget
 
@@ -79,7 +79,8 @@ For more information on a specific command, use 'ggt [COMMAND] --help'
 
 ### `ggt sync`
 
-```
+```sh-session
+$ ggt sync --help
 Sync your Gadget environment's source code with your local filesystem.
 
 USAGE
@@ -152,7 +153,8 @@ EXAMPLE
 
 ### `ggt list`
 
-```
+```sh-session
+$ ggt list --help
 List the apps available to the currently logged in user.
 
 USAGE
@@ -169,13 +171,14 @@ EXAMPLE
 
 ### `ggt login`
 
-```
+```sh-session
+$ ggt login --help
 Log in to your account.
 
 USAGE
   ggt login
 
-EXAMPLES
+EXAMPLE
   $ ggt login
     We've opened Gadget's login page using your default browser.
 
@@ -186,39 +189,42 @@ EXAMPLES
 
 ### `ggt logout`
 
-```
+```sh-session
+$ ggt logout --help
 Log out of your account.
 
 USAGE
   ggt logout
 
-EXAMPLES
+EXAMPLE
   $ ggt logout
     Goodbye
 ```
 
 ### `ggt whoami`
 
-```
+```sh-session
+$ ggt whoami --help
 Show the name and email address of the currently logged in user
 
 USAGE
   ggt whoami
 
-EXAMPLES
+EXAMPLE
   $ ggt whoami
     You are logged in as Jane Doe (jane@example.com)
 ```
 
 ### `ggt version`
 
-```
+```sh-session
+$ ggt version --help
 Print the version of ggt
 
 USAGE
   ggt version
 
-EXAMPLES
+EXAMPLE
   $ ggt version
-    0.4.3
+    0.4.4
 ```

@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 0.4.4
+
+### Patch Changes
+
+- 4735996: Fix local `yarn-error.log` causing `TooManySyncAttemptsError`
+
 ## 0.4.3
 
 ### Patch Changes

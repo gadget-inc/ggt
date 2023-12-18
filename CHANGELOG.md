@@ -1,5 +1,12 @@
 # @gadgetinc/ggt
 
+## 0.4.5
+
+### Patch Changes
+
+- 07dc9a4: Bump "hashes are not equal" log level to debug
+- 86ffacd: Fix formatting of `Map` objects in pretty printed logs
+
 ## 0.4.4
 
 ### Patch Changes

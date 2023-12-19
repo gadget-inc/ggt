@@ -4,8 +4,13 @@ import os from "node:os";
 import pMap from "p-map";
 import pTimeout from "p-timeout";
 import { expect, vi, type Assertion } from "vitest";
-import { z } from "zod";
-import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../src/__generated__/graphql.js";
+import { z, type ZodSchema } from "zod";
+import {
+  FileSyncEncoding,
+  type FileSyncChangedEventInput,
+  type FileSyncDeletedEventInput,
+  type MutationPublishFileSyncEventsArgs,
+} from "../../src/__generated__/graphql.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -506,4 +511,34 @@ export const expectSyncJson = (filesync: FileSync, expected: PartialSyncJson = {
   const state = filesync._state;
   expect(state).toMatchObject(expected);
   return prettyJSON(state);
+};
+
+export const expectPublishVariables = (expected: MutationPublishFileSyncEventsArgs): ZodSchema<MutationPublishFileSyncEventsArgs> => {
+  return z
+    .strictObject({
+      input: z.strictObject({
+        expectedRemoteFilesVersion: z.string(),
+        changed: z.array(
+          z.strictObject({
+            path: z.string(),
+            oldPath: z.string().optional(),
+            mode: z.number(),
+            content: z.string(),
+            encoding: z.nativeEnum(FileSyncEncoding),
+          }),
+        ),
+        deleted: z.array(z.strictObject({ path: z.string() })),
+      }),
+    })
+    .refine((actual) => {
+      // sort the events by path so that toEqual() doesn't complain about the order
+      actual.input.changed = actual.input.changed.sort((a, b) => a.path.localeCompare(b.path));
+      actual.input.deleted = actual.input.deleted.sort((a, b) => a.path.localeCompare(b.path));
+      expected.input.changed = expected.input.changed.sort((a, b) => a.path.localeCompare(b.path));
+      expected.input.deleted = expected.input.deleted.sort((a, b) => a.path.localeCompare(b.path));
+
+      expect(actual).toEqual(expected);
+
+      return actual;
+    });
 };

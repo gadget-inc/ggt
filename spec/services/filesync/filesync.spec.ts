@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import * as app from "../../../src/services/app/app.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit-graphql.js";
 import { ArgError } from "../../../src/services/command/arg.js";
@@ -13,7 +14,7 @@ import { testApp } from "../../__support__/app.js";
 import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
-import { expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
+import { defaultFileMode, expectPublishVariables, expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { loginTestUser, testUser } from "../../__support__/user.js";
@@ -362,6 +363,53 @@ describe("FileSync._sendChangesToGadget", () => {
 
     // @ts-expect-error _sendChangesToGadget is private
     sendChangesToGadget = filesync._sendChangesToGadget.bind(filesync);
+  });
+
+  it("sends changed files to gadget", async () => {
+    await writeDir(appDir, {
+      "file.txt": "file",
+      "some/nested/file.txt": "some nested file",
+    });
+
+    const changes = new Changes();
+    changes.set("file.txt", { type: "create" });
+    changes.set("some/nested/file.txt", { type: "update" });
+    changes.set("some/nested/other-file.txt", { type: "delete" });
+
+    const scope = nockEditGraphQLResponse({
+      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      expectVariables: expectPublishVariables({
+        input: {
+          expectedRemoteFilesVersion: "0",
+          changed: [
+            {
+              path: "file.txt",
+              content: Buffer.from("file").toString("base64"),
+              mode: defaultFileMode,
+              encoding: FileSyncEncoding.Base64,
+            },
+            {
+              path: "some/nested/file.txt",
+              content: Buffer.from("some nested file").toString("base64"),
+              mode: defaultFileMode,
+              encoding: FileSyncEncoding.Base64,
+            },
+          ],
+          deleted: [{ path: "some/nested/other-file.txt" }],
+        },
+      }),
+      result: {
+        data: {
+          publishFileSyncEvents: {
+            remoteFilesVersion: "1",
+          },
+        },
+      },
+    });
+
+    await sendChangesToGadget({ changes });
+
+    expect(scope.isDone()).toBe(true);
   });
 
   it("doesn't send changed files to gadget if the changed files have been deleted", async () => {

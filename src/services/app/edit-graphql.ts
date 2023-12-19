@@ -26,7 +26,7 @@ import type {
 } from "../../__generated__/graphql.js";
 import { config } from "../config/config.js";
 import { loadCookie } from "../http/auth.js";
-import { http } from "../http/http.js";
+import { http, type HttpOptions } from "../http/http.js";
 import { createLogger } from "../output/log/logger.js";
 import { CLIError, IsBug } from "../output/report.js";
 import { sprint } from "../output/sprint.js";
@@ -179,11 +179,13 @@ export class EditGraphQL {
   async query<Query extends GraphQLQuery>({
     query,
     variables,
+    http,
   }: {
     query: Query;
     variables?: Thunk<Query["Variables"]> | null;
+    http?: HttpOptions;
   }): Promise<Query["Data"]> {
-    const result = await this._query({ query, variables });
+    const result = await this._query({ query, variables, http });
     if (result.errors) {
       throw new EditGraphQLError(query, result.errors);
     }
@@ -251,6 +253,7 @@ export class EditGraphQL {
   private async _query<Query extends GraphQLQuery>(input: {
     query: Query;
     variables?: Thunk<Query["Variables"]> | null;
+    http?: HttpOptions;
   }): Promise<ExecutionResult<Query["Data"], Query["Extensions"]>> {
     const cookie = loadCookie();
     assert(cookie, "missing cookie when connecting to GraphQL API");
@@ -273,6 +276,7 @@ export class EditGraphQL {
         responseType: "json",
         resolveBodyOnly: true,
         throwHttpErrors: false,
+        ...input.http,
       });
 
       if (!isObject(json) || (!("data" in json) && !("errors" in json))) {

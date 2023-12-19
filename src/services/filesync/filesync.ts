@@ -563,6 +563,13 @@ export class FileSync {
           deleted,
         },
       },
+      http: {
+        retry: {
+          // we can retry this request because
+          // expectedRemoteFilesVersion makes it idempotent
+          methods: ["POST"],
+        },
+      },
     });
 
     await this._save(remoteFilesVersion);

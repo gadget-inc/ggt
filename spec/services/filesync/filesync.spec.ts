@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as app from "../../../src/services/app/app.js";
+import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit-graphql.js";
 import { ArgError } from "../../../src/services/command/arg.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
@@ -9,6 +10,7 @@ import { InvalidSyncFileError } from "../../../src/services/filesync/error.js";
 import { ConflictPreference, FileSync } from "../../../src/services/filesync/filesync.js";
 import * as prompt from "../../../src/services/output/prompt.js";
 import { testApp } from "../../__support__/app.js";
+import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
 import { expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
@@ -130,7 +132,7 @@ describe("FileSync.init", () => {
   });
 });
 
-describe("FileSync.writeToLocalFilesystem", () => {
+describe("FileSync._writeToLocalFilesystem", () => {
   let filesync: FileSync;
 
   // @ts-expect-error _writeToLocalFilesystem is private
@@ -347,11 +349,19 @@ describe("FileSync.writeToLocalFilesystem", () => {
   });
 });
 
-describe("FileSync.sendChangesToGadget", () => {
+describe("FileSync._sendChangesToGadget", () => {
   let filesync: FileSync;
 
+  // @ts-expect-error _sendChangesToGadget is private
+  let sendChangesToGadget: typeof FileSync.prototype._sendChangesToGadget;
+
   beforeEach(async () => {
+    loginTestUser();
+
     filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
+
+    // @ts-expect-error _sendChangesToGadget is private
+    sendChangesToGadget = filesync._sendChangesToGadget.bind(filesync);
   });
 
   it("doesn't send changed files to gadget if the changed files have been deleted", async () => {
@@ -361,9 +371,37 @@ describe("FileSync.sendChangesToGadget", () => {
     changes.set("does/not/exist.js", { type: "create" });
     changes.set("also/does/not/exist.js", { type: "update" });
 
-    await filesync.sendChangesToGadget({ changes });
+    await sendChangesToGadget({ changes });
 
     expect(nock.pendingMocks()).toEqual([]);
+  });
+
+  it("retries failed graphql requests", async () => {
+    await writeDir(appDir, {
+      "foo.js": "// foo",
+    });
+
+    const changes = new Changes();
+    changes.set("foo.js", { type: "create" });
+
+    const scope = nockEditGraphQLResponse({
+      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      result: {},
+      expectVariables: expect.anything(),
+      times: 2,
+      statusCode: 500,
+    });
+
+    nockEditGraphQLResponse({
+      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      result: { data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } },
+      expectVariables: expect.anything(),
+      statusCode: 200,
+    });
+
+    await expect(sendChangesToGadget({ changes })).resolves.not.toThrow();
+
+    expect(scope.isDone()).toBe(true);
   });
 });
 

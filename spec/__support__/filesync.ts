@@ -209,7 +209,7 @@ export const makeSyncScenario = async ({
     log.trace("new files version", { gadgetFilesVersion });
   };
 
-  void nockEditGraphQLResponse({
+  nockEditGraphQLResponse({
     optional: true,
     persist: true,
     query: FILE_SYNC_HASHES_QUERY,
@@ -241,7 +241,7 @@ export const makeSyncScenario = async ({
     },
   });
 
-  void nockEditGraphQLResponse({
+  nockEditGraphQLResponse({
     optional: true,
     persist: true,
     query: FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -271,7 +271,7 @@ export const makeSyncScenario = async ({
     },
   });
 
-  void nockEditGraphQLResponse({
+  nockEditGraphQLResponse({
     optional: true,
     persist: true,
     query: FILE_SYNC_FILES_QUERY,
@@ -311,7 +311,7 @@ export const makeSyncScenario = async ({
     },
   });
 
-  void nockEditGraphQLResponse({
+  nockEditGraphQLResponse({
     optional: true,
     persist: true,
     query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,

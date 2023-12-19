@@ -29,6 +29,7 @@
   ],
   "scripts": {
     "build": "npm run clean && swc src -d lib",
+    "changeset": "changeset",
     "clean": "rimraf lib tmp/spec",
     "generate:graphql": "graphql-codegen --config graphql-codegen.yml",
     "lint": "concurrently --group --names --prefix-colors=auto 'npm:lint:*(!fix)'",

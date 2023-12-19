@@ -1,4 +1,4 @@
-import nock from "nock";
+import nock, { type Scope } from "nock";
 import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
 import { ZodSchema, z } from "zod";
@@ -49,6 +49,12 @@ export type NockEditGraphQLResponseOptions<Query extends GraphQLQuery> = {
   optional?: boolean;
 
   /**
+   * The number of times to respond to the request.
+   * @default 1
+   */
+  times?: number;
+
+  /**
    * The status code to respond with.
    * @default 200
    */
@@ -63,9 +69,10 @@ export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
   app = testApp,
   optional = false,
   persist = false,
+  times = 1,
   statusCode = 200,
   ...opts
-}: NockEditGraphQLResponseOptions<Query>): PromiseSignal => {
+}: NockEditGraphQLResponseOptions<Query>): Scope & { responded: PromiseSignal } => {
   let subdomain = app.slug;
   if (app.hasSplitEnvironments) {
     subdomain += "--development";
@@ -91,10 +98,11 @@ export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
 
   const responded = new PromiseSignal();
 
-  nock(`https://${subdomain}.${config.domains.app}`)
+  const scope = nock(`https://${subdomain}.${config.domains.app}`)
     .post("/edit/api/graphql", (body) => body.query === query)
     .matchHeader("cookie", (cookie) => loadCookie() === cookie)
     .optionally(optional)
+    .times(times)
     .reply(statusCode, async (_uri, rawBody) => {
       try {
         const body = z.object({ query: z.literal(query), variables: z.record(z.unknown()).optional() }).parse(rawBody);
@@ -108,9 +116,11 @@ export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
         responded.resolve();
       }
     })
-    .persist(persist);
+    .persist(persist) as ReturnType<typeof nockEditGraphQLResponse>;
 
-  return responded;
+  scope.responded = responded;
+
+  return scope;
 };
 
 /**

@@ -16,7 +16,7 @@ describe("EditGraphQL", () => {
   });
 
   it("throws EditGraphQLError when it receives errors", async () => {
-    void nockEditGraphQLResponse({
+    nockEditGraphQLResponse({
       query: REMOTE_FILES_VERSION_QUERY,
       result: {
         errors: [new GraphQLError("Something went wrong")],
@@ -31,7 +31,7 @@ describe("EditGraphQL", () => {
   });
 
   it("throws EditGraphQLError when it receives a 500", async () => {
-    void nockEditGraphQLResponse({
+    nockEditGraphQLResponse({
       query: REMOTE_FILES_VERSION_QUERY,
       result: {
         errors: [new GraphQLError("Something went wrong")],

@@ -212,7 +212,11 @@ export const command = (async (ctx, firstRun = true) => {
         if (status?.code === "Errored") {
           spinner.fail("Failed");
           log.printlns`{red ${status.message}}`;
-          log.println(`TraceID url: ${status.traceIdUrl}`);
+          log.printlns(
+            `
+            Cmd + Click: \u001b]8;;${status?.traceIdUrl}\u0007View Logs\u001b]8;;\u0007 
+            `,
+          );
           unsubscribe();
           return;
         }
@@ -220,6 +224,11 @@ export const command = (async (ctx, firstRun = true) => {
         if (progress === AppDeploymentSteps.COMPLETED) {
           spinner.succeed("DONE");
           ctx.log.printlns`{green Deploy completed. Good bye!}`;
+          ctx.log.printlns(
+            `
+            Cmd + Click: \u001b]8;;${status?.traceIdUrl}\u0007View Logs\u001b]8;;\u0007 
+            `,
+          );
           unsubscribe();
           return;
         }

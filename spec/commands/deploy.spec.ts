@@ -200,6 +200,8 @@ describe("deploy", () => {
       Restarting app ...
 
       Deploy completed. Good bye!
+
+      Cmd + Click: ]8;;undefinedView Logs]8;; 
       "
     `);
   });
@@ -305,6 +307,8 @@ describe("deploy", () => {
       Restarting app ...
 
       Deploy completed. Good bye!
+
+      Cmd + Click: ]8;;undefinedView Logs]8;; 
       "
     `);
   });

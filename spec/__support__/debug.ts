@@ -16,7 +16,7 @@ export const getCurrentTest = (): { name: string; describes: string[]; filepath:
 
   const [filepath, ...rest] = currentTestName.split(" > ");
   const describes = rest.length > 1 ? rest.slice(0, -1) : [];
-  const name = rest.at(-1)?.replace(/[^\s\w-]/g, "");
+  const name = rest.at(-1)?.replace(/[^\s\w+-]/g, "");
   assert(filepath && name, "expected test file and test name to be defined");
 
   return { name, describes, filepath };

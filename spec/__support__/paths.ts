@@ -13,7 +13,7 @@ import { getCurrentTest } from "./debug.js";
  */
 export const testDirPath = (...segments: string[]): string => {
   const test = getCurrentTest();
-  return workspacePath("tmp/", test.filepath, test.describes.join("/"), test.name.replace(/[^\s\w-]/g, ""), ...segments);
+  return workspacePath("tmp/", test.filepath, test.describes.join("/"), test.name.replace(/[^\s\w+-]/g, ""), ...segments);
 };
 
 const fixturesDirPath = (...segments: string[]): string => {

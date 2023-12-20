@@ -399,7 +399,7 @@ describe("deploy", () => {
     `);
   });
 
-  it.only("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
+  it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditGraphQLSubscriptions();

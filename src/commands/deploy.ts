@@ -219,7 +219,6 @@ export const command = (async (ctx, firstRun = true) => {
       return;
     },
     onData: async ({ publishStatus }): Promise<void> => {
-      console.log("[jenny] publishStatus", publishStatus);
       const { progress, issues, status } = publishStatus ?? {};
 
       const hasIssues = issues?.length;

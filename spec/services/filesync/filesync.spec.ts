@@ -1,15 +1,17 @@
 import fs from "fs-extra";
+import { GraphQLError } from "graphql";
 import nock from "nock";
+import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args } from "../../../src/commands/sync.js";
 import * as app from "../../../src/services/app/app.js";
-import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit-graphql.js";
+import { EditGraphQLError, PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../src/services/app/edit-graphql.js";
 import { ArgError } from "../../../src/services/command/arg.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
-import { InvalidSyncFileError } from "../../../src/services/filesync/error.js";
-import { ConflictPreference, FileSync } from "../../../src/services/filesync/filesync.js";
+import { InvalidSyncFileError, TooManySyncAttemptsError } from "../../../src/services/filesync/error.js";
+import { ConflictPreference, FileSync, isFilesVersionMismatchError } from "../../../src/services/filesync/filesync.js";
 import * as prompt from "../../../src/services/output/prompt.js";
 import { testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
@@ -460,6 +462,29 @@ describe("FileSync._sendChangesToGadget", () => {
     await expect(sendChangesToGadget({ changes })).resolves.not.toThrow();
 
     expect(scope.isDone()).toBe(true);
+  });
+
+  it('does not retry "Files version mismatch" errors', async () => {
+    await writeDir(appDir, {
+      "foo.js": "// foo",
+    });
+
+    const changes = new Changes();
+    changes.set("foo.js", { type: "create" });
+
+    const scope = nockEditGraphQLResponse({
+      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      result: { errors: [new GraphQLError("Files version mismatch")] },
+      expectVariables: expect.anything(),
+      times: 1,
+      statusCode: 500,
+    });
+
+    const error = await expectError(() => sendChangesToGadget({ changes }));
+
+    expect(scope.isDone()).toBe(true);
+
+    expect(isFilesVersionMismatchError(error)).toBe(true);
   });
 });
 
@@ -1290,5 +1315,88 @@ describe("FileSync.sync", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+  });
+
+  it(`throws ${TooManySyncAttemptsError.name} if the number of sync attempts exceeds the maximum`, async () => {
+    const { filesync, changeGadgetFiles } = await makeSyncScenario({
+      localFiles: { "local.txt": "// local" },
+      gadgetFiles: { "gadget.txt": "// gadget" },
+      afterPublishFileSyncEvents: async () => {
+        // simulate gadget constantly changing files in the background
+        await changeGadgetFiles({
+          change: [
+            {
+              path: "gadget.txt",
+              content: Buffer.from(randomUUID()).toString("base64"),
+              mode: defaultFileMode,
+              encoding: FileSyncEncoding.Base64,
+            },
+          ],
+          delete: [],
+        });
+      },
+    });
+
+    const changes = new Changes();
+    changes.set("local.txt", { type: "create" });
+
+    await expect(filesync.sync()).rejects.toThrow(TooManySyncAttemptsError);
+  });
+
+  it(`does not throw ${TooManySyncAttemptsError.name} if it succeeds on the last attempt`, async () => {
+    const maxAttempts = 3;
+    let attempt = 0;
+
+    const { filesync, changeGadgetFiles } = await makeSyncScenario({
+      localFiles: { "local.txt": "// local" },
+      gadgetFiles: { "gadget.txt": "// gadget" },
+      afterPublishFileSyncEvents: async () => {
+        if (maxAttempts === ++attempt) {
+          return;
+        }
+
+        // simulate gadget constantly changing files in the background
+        await changeGadgetFiles({
+          change: [
+            {
+              path: "gadget.txt",
+              content: Buffer.from(randomUUID()).toString("base64"),
+              mode: defaultFileMode,
+              encoding: FileSyncEncoding.Base64,
+            },
+          ],
+          delete: [],
+        });
+      },
+    });
+
+    const changes = new Changes();
+    changes.set("local.txt", { type: "create" });
+
+    await expect(filesync.sync({ maxAttempts })).resolves.not.toThrow();
+  });
+});
+
+describe("isFilesVersionMismatchError", () => {
+  it('returns true given an object with a message that starts with "Files version mismatch"', () => {
+    expect(isFilesVersionMismatchError({ message: "Files version mismatch" })).toBe(true);
+    expect(isFilesVersionMismatchError({ message: "Files version mismatch, expected 1 but got 2" })).toBe(true);
+  });
+
+  it("returns true given GraphQLErrors", () => {
+    expect(isFilesVersionMismatchError([{ message: "Files version mismatch" }])).toBe(true);
+  });
+
+  it("returns true given a GraphQLResult", () => {
+    expect(isFilesVersionMismatchError({ errors: [{ message: "Files version mismatch" }] })).toBe(true);
+  });
+
+  it("returns true given an EditGraphQLError", () => {
+    const query = "query { foo }" as GraphQLQuery;
+    expect(isFilesVersionMismatchError(new EditGraphQLError(query, [{ message: "Files version mismatch" }]))).toBe(true);
+  });
+
+  it("returns false given an object with a message that does not start with 'Files version mismatch'", () => {
+    expect(isFilesVersionMismatchError({ message: "Something else" })).toBe(false);
   });
 });

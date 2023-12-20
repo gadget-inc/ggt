@@ -3,6 +3,7 @@ import assert from "node:assert";
 import os from "node:os";
 import pMap from "p-map";
 import pTimeout from "p-timeout";
+import type { Promisable } from "type-fest";
 import { expect, vi, type Assertion } from "vitest";
 import { z, type ZodSchema } from "zod";
 import {
@@ -73,6 +74,18 @@ export type SyncScenarioOptions = {
    * @default { ".gadget/": "" }
    */
   gadgetFiles: Files;
+
+  /**
+   * A function to run before we update Gadget files from a
+   * {@linkcode PUBLISH_FILE_SYNC_EVENTS_MUTATION}.
+   */
+  beforePublishFileSyncEvents?: () => Promisable<void>;
+
+  /**
+   * A function to run after we update Gadget files from a
+   * {@linkcode PUBLISH_FILE_SYNC_EVENTS_MUTATION}.
+   */
+  afterPublishFileSyncEvents?: () => Promisable<void>;
 };
 
 export type SyncScenario = {
@@ -105,6 +118,21 @@ export type SyncScenario = {
    * Waits until the gadget directory's filesVersion is the given filesVersion.
    */
   waitUntilGadgetFilesVersion: (filesVersion: bigint) => Promise<void>;
+
+  /**
+   * Updates Gadget's files with the given changes.
+   */
+  changeGadgetFiles: (options: {
+    /**
+     * The files to change.
+     */
+    change: FileSyncChangedEventInput[];
+
+    /**
+     * The files to delete.
+     */
+    delete: FileSyncDeletedEventInput[];
+  }) => Promise<void>;
 
   /**
    * Updates Gadget's files with the given changes and emits them to the
@@ -149,6 +177,8 @@ export const makeSyncScenario = async ({
   localFiles,
   gadgetFiles,
   force,
+  beforePublishFileSyncEvents,
+  afterPublishFileSyncEvents,
 }: Partial<SyncScenarioOptions> = {}): Promise<SyncScenario> => {
   let gadgetFilesVersion = 1n;
   await writeDir(testDirPath("gadget"), { ".gadget/": "", ...gadgetFiles });
@@ -184,14 +214,8 @@ export const makeSyncScenario = async ({
   });
   vi.spyOn(FileSync, "init").mockResolvedValue(filesync);
 
-  const processGadgetChanges = async ({
-    changed,
-    deleted,
-  }: {
-    changed: FileSyncChangedEventInput[];
-    deleted: FileSyncDeletedEventInput[];
-  }): Promise<void> => {
-    for (const file of deleted) {
+  const changeGadgetFiles: SyncScenario["changeGadgetFiles"] = async (options) => {
+    for (const file of options.delete) {
       if (file.path.endsWith("/")) {
         // replicate dl and only delete the dir if it's empty
         await fs.rmdir(gadgetDir.absolute(file.path)).catch(noop);
@@ -200,7 +224,7 @@ export const makeSyncScenario = async ({
       }
     }
 
-    for (const file of changed) {
+    for (const file of options.change) {
       if (file.oldPath) {
         await fs.rename(gadgetDir.absolute(file.oldPath), gadgetDir.absolute(file.path));
       } else if (file.path.endsWith("/")) {
@@ -349,7 +373,9 @@ export const makeSyncScenario = async ({
         "changed and deleted files must not overlap",
       );
 
-      await processGadgetChanges({ changed, deleted });
+      await beforePublishFileSyncEvents?.();
+      await changeGadgetFiles({ change: changed, delete: deleted });
+      await afterPublishFileSyncEvents?.();
 
       return {
         data: {
@@ -368,6 +394,7 @@ export const makeSyncScenario = async ({
     filesVersionDirs,
     localDir,
     gadgetDir,
+    changeGadgetFiles,
 
     waitUntilLocalFilesVersion: async (filesVersion) => {
       log.trace("waiting for local files version", { filesVersion });
@@ -419,7 +446,7 @@ export const makeSyncScenario = async ({
 
     emitGadgetChanges: async (changes) => {
       expect(changes.remoteFilesVersion).toBe(String(gadgetFilesVersion + 1n));
-      await processGadgetChanges(changes);
+      await changeGadgetFiles({ change: changes.changed, delete: changes.deleted });
       await mockEditGraphQLSubs
         .expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)
         .emitResult({ data: { remoteFileSyncEvents: changes } });

@@ -1,4 +1,4 @@
-import type { GraphQLError } from "graphql";
+import type { ExecutionResult, GraphQLError } from "graphql";
 import type { SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import { z } from "zod";
@@ -12,7 +12,7 @@ export const isString = (val: unknown): val is string => {
 };
 
 export const isObject = (val: unknown): val is object => {
-  return val instanceof Object;
+  return typeof val === "object" && val !== null;
 };
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -30,6 +30,19 @@ export const isCloseEvent = (e: unknown): e is SetOptional<CloseEvent, "target">
 
 export const isErrorEvent = (e: unknown): e is SetOptional<ErrorEvent, "target"> => {
   return z.object({ type: z.string(), message: z.string(), error: z.any() }).safeParse(e).success;
+};
+
+export const isGraphQLResult = (val: unknown): val is ExecutionResult => {
+  return z
+    .union([
+      z.object({ data: z.record(z.unknown()) }),
+      z.object({ errors: z.array(z.object({ message: z.string() })) }),
+      z.object({
+        data: z.record(z.unknown()),
+        errors: z.array(z.object({ message: z.string() })),
+      }),
+    ])
+    .safeParse(val).success;
 };
 
 export const isGraphQLErrors = (e: unknown): e is readonly GraphQLError[] => {

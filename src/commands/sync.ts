@@ -105,7 +105,7 @@ export type SyncArgs = typeof args;
  */
 export const command: Command<typeof args> = async (ctx) => {
   const filesync = await FileSync.init({ ctx, user: await getUserOrLogin() });
-  await filesync.sync({ preference: ctx.args["--prefer"] });
+  await filesync.sync();
 
   if (ctx.args["--once"]) {
     ctx.log.println("Done!");

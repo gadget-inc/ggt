@@ -343,7 +343,7 @@ export class FileSync {
    *   local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  async sync({ preference, maxAttempts = 10 }: { preference?: ConflictPreference; maxAttempts?: number } = {}): Promise<void> {
+  async sync({ maxAttempts = 10 }: { maxAttempts?: number } = {}): Promise<void> {
     let attempt = 0;
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition
@@ -362,17 +362,11 @@ export class FileSync {
       }
 
       this.ctx.log.info("syncing", { attempt, ...hashes });
-      await this._sync({ preference, ...hashes });
+      await this._sync(hashes);
     }
   }
 
-  async _sync({
-    preference,
-    filesVersionHashes,
-    localHashes,
-    gadgetHashes,
-    gadgetFilesVersion,
-  }: { preference?: ConflictPreference } & Omit<FileSyncHashes, "inSync">): Promise<void> {
+  async _sync({ filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion }: Omit<FileSyncHashes, "inSync">): Promise<void> {
     let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
     let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
 
@@ -388,6 +382,7 @@ export class FileSync {
     if (conflicts.size > 0) {
       this.ctx.log.debug("conflicts detected", { conflicts });
 
+      let preference = this.ctx.args["--prefer"];
       if (!preference) {
         printConflicts({
           message: sprint`{bold You have conflicting changes with Gadget}`,

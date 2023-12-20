@@ -194,6 +194,7 @@ type PublishFileSyncEventsResult {
 type PublishIssue {
   message: String!
   node: PublishIssueNode
+  nodeLabels: [PublishIssueNodeLabel]
   severity: String!
 }
 
@@ -207,10 +208,15 @@ type PublishIssueNode {
   type: String!
 }
 
+type PublishIssueNodeLabel {
+  identifier: String
+  type: String
+}
+
 type PublishStatus {
-  code: String!
+  code: String
   message: String
-  traceIdUrl: String!
+  output: String
 }
 
 type PublishStatusState {

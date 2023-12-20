@@ -170,11 +170,15 @@ export const REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION = sprint(/* GraphQL */ `
           parentKey
           parentApiIdentifier
         }
+        nodeLabels {
+          type
+          identifier
+        }
       }
       status {
         code
         message
-        traceIdUrl
+        output
       }
     }
   }

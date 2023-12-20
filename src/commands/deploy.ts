@@ -110,7 +110,7 @@ type Node = {
   key: string;
   apiIdentifier?: string;
   name?: string;
-  fieldtype?: string;
+  fieldType?: string;
   parentKey?: string;
   parentApiIdentifier?: string;
 };
@@ -125,6 +125,12 @@ type NodeIssue = {
   message: string;
   node?: Node;
   nodeLabels?: NodeLabel[];
+};
+
+type PublishStatus = {
+  code?: string;
+  message?: string;
+  output?: string;
 };
 
 type GroupedIssues = Record<string, NodeIssue[]>;
@@ -213,6 +219,7 @@ export const command = (async (ctx, firstRun = true) => {
       return;
     },
     onData: async ({ publishStatus }): Promise<void> => {
+      console.log("[jenny] publishStatus", publishStatus);
       const { progress, issues, status } = publishStatus ?? {};
 
       const hasIssues = issues?.length;
@@ -220,7 +227,7 @@ export const command = (async (ctx, firstRun = true) => {
       if (firstRun && hasIssues) {
         ctx.log.printlns`{underline Issues detected}`;
 
-        const printIssues = (groupedIssues: GroupedIssues) => {
+        const printIssues = (groupedIssues: GroupedIssues): void => {
           for (const [name, nodeArray] of Object.entries(groupedIssues)) {
             log.println(
               `\n\n • ${chalk.cyan(name)} ${chalk.redBright(
@@ -232,7 +239,7 @@ export const command = (async (ctx, firstRun = true) => {
                   }
 
                   return `\n\t   ${chalk.red("✖")} ${titleFormatter(e)}: ${e.nodeLabels
-                    ?.map((label: NodeLabel) => `${chalk.bgWhite.black(label?.type?.toLowerCase())} ${chalk.white.bold(label?.identifier)}`)
+                    ?.map((label: NodeLabel) => `${chalk.bgWhite.black(label.type.toLowerCase())} ${chalk.white.bold(label.identifier)}`)
                     .join("")}`;
                 })
                 .join("")}`,
@@ -240,7 +247,7 @@ export const command = (async (ctx, firstRun = true) => {
           }
         };
 
-        const titleFormatter = (e: NodeIssue) => {
+        const titleFormatter = (e: NodeIssue): string => {
           if (e.node?.type === "SourceFile") {
             return `${chalk.magentaBright("Typescript")} ${e.message.replace(/[.,]+$/, "")}`;
           }
@@ -279,17 +286,18 @@ export const command = (async (ctx, firstRun = true) => {
       } else {
         const handleCompletion = (message: string | null | undefined, color: string): void => {
           spinner.stopAndPersist({
-            symbol: color === "red" ? `${chalk.red("✖")}` : `${chalk.green("✔")}`,
+            symbol: color === "red" ? `${chalk.red("✖")}` : `${chalk.greenBright("✔")}`,
             text: color === "red" ? "Failed" : "DONE",
           });
 
           log.printlns(color === "red" ? chalk.red(message) : chalk.green(message));
+
           log.printlns(`Cmd/Ctrl + Click: \u001b]8;;${status?.output}\u0007View Logs\u001b]8;;\u0007`);
           unsubscribe();
         };
 
-        if (status?.code === "Errored") {
-          handleCompletion(status?.message, "red");
+        if ((status as PublishStatus).code === "Errored") {
+          handleCompletion((status as PublishStatus).message, "red");
           return;
         }
 

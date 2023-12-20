@@ -69,7 +69,8 @@ describe("deploy", () => {
 
       Issues detected
 
-      • Add google keys for production
+      • Other Issues 1 issue 
+         ✖ Add google keys for production
       "
     `);
   });
@@ -107,7 +108,8 @@ describe("deploy", () => {
 
       Issues detected
 
-      • Add google keys for production
+      • Other Issues 1 issue 
+         ✖ Add google keys for production
       "
     `);
 
@@ -189,7 +191,8 @@ describe("deploy", () => {
 
       Issues detected
 
-      • Add google keys for production
+      • Other Issues 1 issue 
+         ✖ Add google keys for production
 
       Building frontend assets ...
 
@@ -201,7 +204,7 @@ describe("deploy", () => {
 
       Deploy completed. Good bye!
 
-      Cmd + Click: ]8;;undefinedView Logs]8;; 
+      Cmd/Ctrl + Click: ]8;;undefinedView Logs]8;;
       "
     `);
   });
@@ -308,7 +311,7 @@ describe("deploy", () => {
 
       Deploy completed. Good bye!
 
-      Cmd + Click: ]8;;undefinedView Logs]8;; 
+      Cmd/Ctrl + Click: ]8;;undefinedView Logs]8;;
       "
     `);
   });
@@ -336,7 +339,7 @@ describe("deploy", () => {
     `);
   });
 
-  it("exits if the deploy process was interrupted", async () => {
+  it("exits if the subscription unexpected closes due to an Internal Error", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
@@ -392,6 +395,83 @@ describe("deploy", () => {
       Building frontend assets ...
 
       An error occurred while communicating with Gadget
+      "
+    `);
+  });
+
+  it.only("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
+
+    await deploy(ctx);
+    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "NOT_STARTED",
+          issues: [],
+          status: undefined,
+        },
+      },
+    });
+
+    await publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/wjth/traceId",
+          },
+        },
+      },
+    });
+
+    await publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/wjth/traceId",
+          },
+        },
+      },
+    });
+
+    await publishStatus.emitResult({
+      data: {
+        publishStatus: {
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+          status: {
+            code: "Errored",
+            message: "GGT_ASSET_BUILD_FAILED: An error occurred while building production assets",
+            output: "https://test.gadget.app/url/to/logs/wjth/traceId",
+          },
+        },
+      },
+    });
+
+    expectStdout().toMatchInlineSnapshot(`
+      "
+      App: test
+
+      Building frontend assets ...
+
+      GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
+
+      Cmd/Ctrl + Click: ]8;;https://test.gadget.app/url/to/logs/wjth/traceIdView Logs]8;;
       "
     `);
   });

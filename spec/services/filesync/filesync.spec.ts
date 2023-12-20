@@ -1318,21 +1318,14 @@ describe("FileSync.sync", () => {
   });
 
   it(`throws ${TooManySyncAttemptsError.name} if the number of sync attempts exceeds the maximum`, async () => {
-    const { filesync, changeGadgetFiles } = await makeSyncScenario({
+    const { filesync, localDir } = await makeSyncScenario({
       localFiles: { "local.txt": "// local" },
       gadgetFiles: { "gadget.txt": "// gadget" },
       afterPublishFileSyncEvents: async () => {
-        // simulate gadget constantly changing files in the background
-        await changeGadgetFiles({
-          change: [
-            {
-              path: "gadget.txt",
-              content: Buffer.from(randomUUID()).toString("base64"),
-              mode: defaultFileMode,
-              encoding: FileSyncEncoding.Base64,
-            },
-          ],
-          delete: [],
+        // simulate the user constantly changing files while syncing
+        const uuid = randomUUID();
+        await writeDir(localDir.path, {
+          [`${uuid}.txt`]: uuid,
         });
       },
     });

@@ -11,6 +11,7 @@ import {
   type FileSyncDeletedEventInput,
   type MutationPublishFileSyncEventsArgs,
 } from "../../src/__generated__/graphql.js";
+import { args } from "../../src/commands/sync.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -26,8 +27,9 @@ import { noop } from "../../src/services/util/function.js";
 import { isNil } from "../../src/services/util/is.js";
 import { defaults, omit } from "../../src/services/util/object.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
-import type { PartialExcept } from "../types.js";
+import type { PartialExcept } from "../../src/services/util/types.js";
 import { testApp } from "./app.js";
+import { makeContext } from "./context.js";
 import { log } from "./debug.js";
 import { makeMockEditGraphQLSubscriptions, nockEditGraphQLResponse, type MockEditGraphQLSubscription } from "./edit-graphql.js";
 import { readDir, writeDir, type Files } from "./files.js";
@@ -176,7 +178,10 @@ export const makeSyncScenario = async ({
   }
 
   FileSync.init.mockRestore?.();
-  const filesync = await FileSync.init({ user: testUser, dir: localDir.path, app: testApp.slug, force });
+  const filesync = await FileSync.init({
+    user: testUser,
+    ctx: makeContext(args, ["sync", localDir.path, "--app", testApp.slug, `--force=${force}`]),
+  });
   vi.spyOn(FileSync, "init").mockResolvedValue(filesync);
 
   const processGadgetChanges = async ({

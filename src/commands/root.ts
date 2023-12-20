@@ -36,21 +36,15 @@ export const rootUsage: Usage = () => sprint`
 `;
 
 export const rootArgs = {
-  "--help": {
-    type: Boolean,
-    alias: "-h",
-  },
-  "--verbose": {
-    type: arg.COUNT,
-    alias: ["-v", "--debug"],
-  },
-  "--json": {
-    type: Boolean,
-  },
+  "--help": { type: Boolean, alias: "-h" },
+  "--verbose": { type: arg.COUNT, alias: ["-v", "--debug"] },
+  "--json": { type: Boolean },
 } satisfies ArgsSpec;
 
+export type RootArgs = typeof rootArgs;
+
 export const command = async (): Promise<void> => {
-  const ctx = new Context(rootArgs, { argv: process.argv.slice(2), permissive: true });
+  const ctx = Context.init({ args: rootArgs, argv: process.argv.slice(2), permissive: true });
 
   await warnIfUpdateAvailable();
 
@@ -80,7 +74,7 @@ export const command = async (): Promise<void> => {
     process.exit(1);
   }
 
-  const { usage, command, args } = await importCommand(cmd);
+  const { usage, command, args = {} } = await importCommand(cmd);
 
   if (ctx.args["--help"]) {
     log.println(usage());
@@ -88,7 +82,7 @@ export const command = async (): Promise<void> => {
   }
 
   try {
-    await command(ctx.extend({ args, logName: cmd }));
+    await command(ctx.extend({ args, name: cmd }));
   } catch (error) {
     await reportErrorAndExit(error);
   }

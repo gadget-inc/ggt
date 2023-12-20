@@ -4,8 +4,12 @@ import type { ArgsSpec } from "../../src/services/command/arg.js";
 import { AvailableCommands } from "../../src/services/command/command.js";
 import { Context } from "../../src/services/command/context.js";
 
-export const makeContext = <Args extends ArgsSpec>(args?: Args): Context<Args> => {
-  const ctx = new Context(rootArgs, { argv: process.argv.slice(2), permissive: true });
+export const makeContext = <Args extends ArgsSpec>(args: Args = {} as Args, argv?: string[]): Context<Args> => {
+  if (argv) {
+    process.argv = ["node", "ggt", ...argv];
+  }
+
+  const ctx = Context.init({ args: rootArgs, argv: process.argv.slice(2), permissive: true });
 
   // replicate the root command's behavior of shifting the command name
   // from the args
@@ -14,5 +18,5 @@ export const makeContext = <Args extends ArgsSpec>(args?: Args): Context<Args> =
     expect(AvailableCommands).toContain(cmd);
   }
 
-  return ctx.extend({ args, logName: cmd });
+  return ctx.extend({ args, name: cmd });
 };

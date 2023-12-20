@@ -5,7 +5,7 @@ import nock from "nock";
 import notifier from "node-notifier";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
-import { args, command as sync } from "../../src/commands/sync.js";
+import { args, command as sync, type SyncArgs } from "../../src/commands/sync.js";
 import { EditGraphQLError, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
 import { type Context } from "../../src/services/command/context.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
@@ -20,32 +20,31 @@ import { sleep, timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("sync", () => {
-  let ctx: Context<typeof args>;
+  let ctx: Context<SyncArgs>;
 
   beforeEach(() => {
     loginTestUser();
     nockTestApps();
 
-    process.argv = [
-      "node",
-      "ggt",
-      "sync",
-      testDirPath("local"),
-      "--app",
-      testApp.slug,
-      "--file-push-delay",
-      ms("10ms" /* default 100ms */),
-      "--file-watch-debounce",
-      ms("300ms" /* default 300ms */),
-      "--file-watch-poll-interval",
-      ms("30ms" /* default 3s */),
-      "--file-watch-poll-timeout",
-      ms("20ms" /* default 20s */),
-      "--file-watch-rename-timeout",
-      ms("50ms" /* default 1.25s */),
-    ].map(String);
-
-    ctx = makeContext(args);
+    ctx = makeContext(
+      args,
+      [
+        "sync",
+        testDirPath("local"),
+        "--app",
+        testApp.slug,
+        "--file-push-delay",
+        ms("10ms" /* default 100ms */),
+        "--file-watch-debounce",
+        ms("300ms" /* default 300ms */),
+        "--file-watch-poll-interval",
+        ms("30ms" /* default 3s */),
+        "--file-watch-poll-timeout",
+        ms("20ms" /* default 20s */),
+        "--file-watch-rename-timeout",
+        ms("50ms" /* default 1.25s */),
+      ].map(String),
+    );
   });
 
   afterEach(() => {

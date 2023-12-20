@@ -283,6 +283,8 @@ export const command = (async (ctx, firstRun = true) => {
 
         firstRun = false;
       } else {
+        const publishStatus = status ? (status as PublishStatus) : undefined;
+
         const handleCompletion = (message: string | null | undefined, color: string): void => {
           spinner.stopAndPersist({
             symbol: color === "red" ? `${chalk.red("✖")}` : `${chalk.greenBright("✔")}`,
@@ -290,12 +292,13 @@ export const command = (async (ctx, firstRun = true) => {
           });
 
           log.printlns(color === "red" ? chalk.red(message) : chalk.green(message));
-
-          log.printlns(`Cmd/Ctrl + Click: \u001b]8;;${status?.output}\u0007View Logs\u001b]8;;\u0007`);
+          if (publishStatus?.output) {
+            log.printlns(`Cmd/Ctrl + Click: \u001b]8;;${publishStatus.output}\u0007View Logs\u001b]8;;\u0007`);
+          }
           unsubscribe();
         };
 
-        if ((status as PublishStatus).code === "Errored") {
+        if (publishStatus && "code" in publishStatus && publishStatus.code === "Errored") {
           handleCompletion((status as PublishStatus).message, "red");
           return;
         }

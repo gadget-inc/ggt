@@ -59,6 +59,7 @@ describe("deploy", () => {
               node: undefined,
             },
           ],
+          status: undefined,
         },
       },
     });
@@ -98,6 +99,7 @@ describe("deploy", () => {
               node: undefined,
             },
           ],
+          status: undefined,
         },
       },
     });
@@ -121,6 +123,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "STARTING",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -131,6 +138,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "BUILDING_ASSETS",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -141,6 +153,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "UPLOADING_ASSETS",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -151,6 +168,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "CONVERGING_STORAGE",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -161,6 +183,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "PUBLISHING_TREE",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -171,6 +198,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "RELOADING_SANDBOX",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -181,6 +213,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "COMPLETED",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -204,7 +241,7 @@ describe("deploy", () => {
 
       Deploy completed. Good bye!
 
-      Cmd/Ctrl + Click: ]8;;undefinedView Logs]8;;
+      Cmd/Ctrl + Click: ]8;;https://test.gadget.app/url/to/logs/with/traceIdView Logs]8;;
       "
     `);
   });
@@ -223,6 +260,7 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "NOT_STARTED",
           issues: [],
+          status: undefined,
         },
       },
     });
@@ -233,6 +271,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "STARTING",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -243,6 +286,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "BUILDING_ASSETS",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -253,6 +301,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "UPLOADING_ASSETS",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -263,6 +316,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "CONVERGING_STORAGE",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -273,6 +331,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "PUBLISHING_TREE",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -283,6 +346,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "RELOADING_SANDBOX",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -293,6 +361,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "COMPLETED",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -311,7 +384,7 @@ describe("deploy", () => {
 
       Deploy completed. Good bye!
 
-      Cmd/Ctrl + Click: ]8;;undefinedView Logs]8;;
+      Cmd/Ctrl + Click: ]8;;https://test.gadget.app/url/to/logs/with/traceIdView Logs]8;;
       "
     `);
   });
@@ -362,6 +435,7 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "NOT_STARTED",
           issues: [],
+          status: undefined,
         },
       },
     });
@@ -372,6 +446,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "STARTING",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -382,6 +461,11 @@ describe("deploy", () => {
           remoteFilesVersion: "1",
           progress: "BUILDING_ASSETS",
           issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
         },
       },
     });
@@ -427,7 +511,7 @@ describe("deploy", () => {
           status: {
             code: "Pending",
             message: undefined,
-            output: "https://test.gadget.app/url/to/logs/wjth/traceId",
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
       },
@@ -442,7 +526,7 @@ describe("deploy", () => {
           status: {
             code: "Pending",
             message: undefined,
-            output: "https://test.gadget.app/url/to/logs/wjth/traceId",
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
       },
@@ -457,7 +541,7 @@ describe("deploy", () => {
           status: {
             code: "Errored",
             message: "GGT_ASSET_BUILD_FAILED: An error occurred while building production assets",
-            output: "https://test.gadget.app/url/to/logs/wjth/traceId",
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
       },
@@ -471,7 +555,7 @@ describe("deploy", () => {
 
       GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
 
-      Cmd/Ctrl + Click: ]8;;https://test.gadget.app/url/to/logs/wjth/traceIdView Logs]8;;
+      Cmd/Ctrl + Click: ]8;;https://test.gadget.app/url/to/logs/with/traceIdView Logs]8;;
       "
     `);
   });

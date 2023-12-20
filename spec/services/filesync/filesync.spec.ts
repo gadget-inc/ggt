@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import nock from "nock";
 import { randomUUID } from "node:crypto";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args } from "../../../src/commands/sync.js";
 import * as app from "../../../src/services/app/app.js";
@@ -13,7 +13,7 @@ import { supportsPermissions } from "../../../src/services/filesync/directory.js
 import { InvalidSyncFileError, TooManySyncAttemptsError } from "../../../src/services/filesync/error.js";
 import { ConflictPreference, FileSync, isFilesVersionMismatchError } from "../../../src/services/filesync/filesync.js";
 import * as prompt from "../../../src/services/output/prompt.js";
-import { testApp } from "../../__support__/app.js";
+import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
 import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
 import { expectError } from "../../__support__/error.js";
@@ -23,24 +23,18 @@ import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { loginTestUser, testUser } from "../../__support__/user.js";
 
-let appDir: string;
-let appDirPath: (...segments: string[]) => string;
-
-beforeEach(() => {
-  appDir = testDirPath("app");
-  appDirPath = (...segments) => testDirPath("app", ...segments);
-
-  vi.spyOn(app, "getApps").mockResolvedValue([
-    testApp,
-    { id: 2, slug: "not-test", primaryDomain: "not-test.gadget.app", hasSplitEnvironments: false, user: testUser },
-  ]);
-});
-
-afterEach(() => {
-  expect(nock.pendingMocks()).toEqual([]);
-});
-
 describe("FileSync.init", () => {
+  let appDir: string;
+  let appDirPath: (...segments: string[]) => string;
+
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
+
+    appDir = testDirPath("local");
+    appDirPath = (...segments) => testDirPath("local", ...segments);
+  });
+
   it("ensures `dir` exists", async () => {
     await expect(fs.exists(appDir)).resolves.toBe(false);
 
@@ -112,7 +106,7 @@ describe("FileSync.init", () => {
   });
 
   it("throws ArgError if the user doesn't have any available apps", async () => {
-    vi.spyOn(app, "getApps").mockResolvedValue([]);
+    vi.spyOn(app, "getApps").mockResolvedValueOnce([]);
 
     const error = await expectError(() => FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir]) }));
 
@@ -146,12 +140,19 @@ describe("FileSync.init", () => {
 });
 
 describe("FileSync._writeToLocalFilesystem", () => {
+  let appDir: string;
+  let appDirPath: (...segments: string[]) => string;
   let filesync: FileSync;
 
   // @ts-expect-error _writeToLocalFilesystem is private
   let writeToLocalFilesystem: typeof FileSync.prototype._writeToLocalFilesystem;
 
   beforeEach(async () => {
+    loginTestUser();
+    nockTestApps();
+
+    appDir = testDirPath("local");
+    appDirPath = (...segments) => testDirPath("local", ...segments);
     filesync = await FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) });
 
     // @ts-expect-error _writeToLocalFilesystem is private
@@ -363,6 +364,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
 });
 
 describe("FileSync._sendChangesToGadget", () => {
+  let appDir: string;
   let filesync: FileSync;
 
   // @ts-expect-error _sendChangesToGadget is private
@@ -370,7 +372,9 @@ describe("FileSync._sendChangesToGadget", () => {
 
   beforeEach(async () => {
     loginTestUser();
+    nockTestApps();
 
+    appDir = testDirPath("local");
     filesync = await FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) });
 
     // @ts-expect-error _sendChangesToGadget is private
@@ -489,12 +493,13 @@ describe("FileSync._sendChangesToGadget", () => {
 });
 
 describe("FileSync.sync", () => {
+  let appDir: string;
+
   beforeEach(() => {
     loginTestUser();
-  });
+    nockTestApps();
 
-  afterEach(() => {
-    expect(nock.pendingMocks()).toEqual([]);
+    appDir = testDirPath("local");
   });
 
   it("does nothing if there aren't any changes", async () => {
@@ -714,6 +719,7 @@ describe("FileSync.sync", () => {
 
   it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is passed as an argument`, async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug, "--prefer=local"]),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -725,7 +731,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync({ preference: ConflictPreference.LOCAL });
+    await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -817,6 +823,7 @@ describe("FileSync.sync", () => {
 
   it(`uses local conflicting changes and merges non-conflicting gadget changes when "${ConflictPreference.LOCAL}" is passed as an argument`, async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug, "--prefer=local"]),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -830,7 +837,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync({ preference: ConflictPreference.LOCAL });
+    await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -916,6 +923,7 @@ describe("FileSync.sync", () => {
 
   it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"]),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -927,7 +935,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync({ preference: ConflictPreference.GADGET });
+    await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1072,6 +1080,7 @@ describe("FileSync.sync", () => {
 
   it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"]),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -1085,7 +1094,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync({ preference: ConflictPreference.GADGET });
+    await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1261,13 +1270,14 @@ describe("FileSync.sync", () => {
 
   it("merges files when .gadget/sync.json doesn't exist and force = true", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      force: true,
+      ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug, "--force"]),
       filesVersion1Files: {
         ".gadget/client.js": "// client",
         ".gadget/server.js": "// server",
         "gadget-file.js": "// gadget",
       },
       localFiles: {
+        ".gadget/sync.json": "{}", // simulate .gadget/sync.json not existing
         "local-file.js": "// local",
       },
       gadgetFiles: {

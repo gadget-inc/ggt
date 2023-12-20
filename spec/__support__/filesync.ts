@@ -12,7 +12,7 @@ import {
   type FileSyncDeletedEventInput,
   type MutationPublishFileSyncEventsArgs,
 } from "../../src/__generated__/graphql.js";
-import { args } from "../../src/commands/sync.js";
+import { args, type SyncArgs } from "../../src/commands/sync.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -20,6 +20,7 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit-graphql.js";
+import type { Context } from "../../src/services/command/context.js";
 import { Directory, swallowEnoent, type Hashes } from "../../src/services/filesync/directory.js";
 import type { File } from "../../src/services/filesync/file.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
@@ -52,12 +53,6 @@ export type PartialSyncJson = Partial<Omit<SyncJson, "filesVersion"> & { filesVe
 
 export type SyncScenarioOptions = {
   /**
-   * The `force` option to {@linkcode FileSync.init}.
-   * @default false
-   */
-  force: boolean;
-
-  /**
    * The files at filesVersion 1.
    * @default { ".gadget/": "" }
    */
@@ -86,6 +81,12 @@ export type SyncScenarioOptions = {
    * {@linkcode PUBLISH_FILE_SYNC_EVENTS_MUTATION}.
    */
   afterPublishFileSyncEvents?: () => Promisable<void>;
+
+  /**
+   * The context to use for the FileSync instance.
+   * @default makeContext(args, ["sync", localDir.path, "--app", testApp.slug])
+   */
+  ctx?: Context<SyncArgs>;
 };
 
 export type SyncScenario = {
@@ -173,10 +174,10 @@ export type SyncScenario = {
  * @see {@linkcode SyncScenario}
  */
 export const makeSyncScenario = async ({
+  ctx = makeContext(args, ["sync", testDirPath("local"), "--app", testApp.slug]),
   filesVersion1Files,
   localFiles,
   gadgetFiles,
-  force,
   beforePublishFileSyncEvents,
   afterPublishFileSyncEvents,
 }: Partial<SyncScenarioOptions> = {}): Promise<SyncScenario> => {
@@ -201,17 +202,14 @@ export const makeSyncScenario = async ({
     await writeDir(testDirPath("local"), localFiles);
     await localDir.loadIgnoreFile();
 
-    if (!force) {
+    if (!localFiles[".gadget/sync.json"]) {
       const syncJson: SyncJson = { app: testApp.slug, filesVersion: "1", mtime: Date.now() + 1 };
       await fs.outputJSON(localDir.absolute(".gadget/sync.json"), syncJson, { spaces: 2 });
     }
   }
 
   FileSync.init.mockRestore?.();
-  const filesync = await FileSync.init({
-    user: testUser,
-    ctx: makeContext(args, ["sync", localDir.path, "--app", testApp.slug, `--force=${force}`]),
-  });
+  const filesync = await FileSync.init({ ctx, user: testUser });
   vi.spyOn(FileSync, "init").mockResolvedValue(filesync);
 
   const changeGadgetFiles: SyncScenario["changeGadgetFiles"] = async (options) => {

@@ -16,6 +16,7 @@ import { getApps } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
 import {
   EditGraphQL,
+  EditGraphQLError,
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
   FILE_SYNC_HASHES_QUERY,
@@ -30,6 +31,7 @@ import { sprint } from "../output/sprint.js";
 import type { User } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
+import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
 import { Changes, printChanges } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
@@ -342,25 +344,26 @@ export class FileSync {
    * - This function will not return until the filesystem is in sync.
    */
   async sync({ preference, maxAttempts = 10 }: { preference?: ConflictPreference; maxAttempts?: number } = {}): Promise<void> {
-    this._syncOperations.pause();
+    let attempt = 0;
 
-    try {
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const { inSync, ...hashes } = await this.hashes();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition
+    while (true) {
+      const { inSync, ...hashes } = await this.hashes();
 
-        if (inSync) {
-          this.ctx.log.info("filesystem is in sync");
-          await this._save(hashes.gadgetFilesVersion);
-          return;
-        }
-
-        await this._sync({ preference, ...hashes });
+      if (inSync) {
+        this._syncOperations.clear();
+        this.ctx.log.info("filesystem is in sync", { attempt });
+        await this._save(hashes.gadgetFilesVersion);
+        return;
       }
-    } finally {
-      this._syncOperations.start();
-    }
 
-    throw new TooManySyncAttemptsError(maxAttempts);
+      if (attempt++ >= maxAttempts) {
+        throw new TooManySyncAttemptsError(maxAttempts);
+      }
+
+      this.ctx.log.info("syncing", { attempt, ...hashes });
+      await this._sync({ preference, ...hashes });
+    }
   }
 
   async _sync({
@@ -370,7 +373,6 @@ export class FileSync {
     gadgetHashes,
     gadgetFilesVersion,
   }: { preference?: ConflictPreference } & Omit<FileSyncHashes, "inSync">): Promise<void> {
-    this.ctx.log.debug("syncing", { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
     let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
     let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
 
@@ -568,11 +570,16 @@ export class FileSync {
           // we can retry this request because
           // expectedRemoteFilesVersion makes it idempotent
           methods: ["POST"],
+          calculateDelay: ({ error, computedValue }) => {
+            if (isFilesVersionMismatchError(error.response?.body)) {
+              // don't retry if we get a files version mismatch error
+              return 0;
+            }
+            return computedValue;
+          },
         },
       },
     });
-
-    await this._save(remoteFilesVersion);
 
     printChanges({
       changes,
@@ -580,6 +587,8 @@ export class FileSync {
       message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,
       limit: printLimit,
     });
+
+    await this._save(remoteFilesVersion);
   }
 
   private async _writeToLocalFilesystem(options: { filesVersion: bigint | string; files: File[]; delete: string[] }): Promise<Changes> {
@@ -727,3 +736,16 @@ export const FileSyncArgs = {
 } satisfies ArgsSpec;
 
 export type FileSyncArgs = typeof FileSyncArgs;
+
+export const isFilesVersionMismatchError = (error: unknown): boolean => {
+  if (error instanceof EditGraphQLError) {
+    error = error.cause;
+  }
+  if (isGraphQLResult(error)) {
+    error = error.errors;
+  }
+  if (isGraphQLErrors(error)) {
+    error = error[0];
+  }
+  return isObject(error) && "message" in error && isString(error.message) && error.message.startsWith("Files version mismatch");
+};

@@ -299,7 +299,7 @@ export const command = (async (ctx, firstRun = true) => {
         };
 
         if (publishStatus && "code" in publishStatus && publishStatus.code === "Errored") {
-          handleCompletion((status as PublishStatus).message, "red");
+          handleCompletion(publishStatus.message, "red");
           return;
         }
 

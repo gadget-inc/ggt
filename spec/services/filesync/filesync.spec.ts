@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
+import { args } from "../../../src/commands/sync.js";
 import * as app from "../../../src/services/app/app.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit-graphql.js";
 import { ArgError } from "../../../src/services/command/arg.js";
@@ -11,6 +12,7 @@ import { InvalidSyncFileError } from "../../../src/services/filesync/error.js";
 import { ConflictPreference, FileSync } from "../../../src/services/filesync/filesync.js";
 import * as prompt from "../../../src/services/output/prompt.js";
 import { testApp } from "../../__support__/app.js";
+import { makeContext } from "../../__support__/context.js";
 import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
@@ -40,7 +42,7 @@ describe("FileSync.init", () => {
   it("ensures `dir` exists", async () => {
     await expect(fs.exists(appDir)).resolves.toBe(false);
 
-    await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
+    await FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) });
 
     expect(fs.existsSync(appDir)).toBe(true);
   });
@@ -49,14 +51,14 @@ describe("FileSync.init", () => {
     const state = { app: testApp.slug, filesVersion: "77", mtime: 1658153625236 };
     await fs.outputJSON(appDirPath(".gadget/sync.json"), state);
 
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
+    const filesync = await FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) });
 
     // @ts-expect-error _state is private
     expect(filesync._state).toEqual(state);
   });
 
   it("uses default state if .gadget/sync.json does not exist and `dir` is empty", async () => {
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
+    const filesync = await FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) });
 
     // @ts-expect-error _state is private
     expect(filesync._state).toEqual({ app: "test", filesVersion: "0", mtime: 0 });
@@ -65,28 +67,34 @@ describe("FileSync.init", () => {
   it("throws InvalidSyncFileError if .gadget/sync.json does not exist and `dir` is not empty", async () => {
     await fs.outputFile(appDirPath("foo.js"), "foo");
 
-    await expect(FileSync.init({ user: testUser, dir: appDir, app: testApp.slug })).rejects.toThrow(InvalidSyncFileError);
+    await expect(FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) })).rejects.toThrow(
+      InvalidSyncFileError,
+    );
   });
 
   it("throws InvalidSyncFileError if .gadget/sync.json is invalid", async () => {
     // has trailing comma
     await fs.outputFile(appDirPath(".gadget/sync.json"), '{"app":"test","filesVersion":"77","mtime":1658153625236,}');
 
-    await expect(FileSync.init({ user: testUser, dir: appDir, app: testApp.slug })).rejects.toThrow(InvalidSyncFileError);
+    await expect(FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) })).rejects.toThrow(
+      InvalidSyncFileError,
+    );
   });
 
   it("does not throw InvalidSyncFileError if .gadget/sync.json is invalid and `--force` is passed", async () => {
     // has trailing comma
     await fs.outputFile(appDirPath(".gadget/sync.json"), '{"app":"test","filesVersion":"77","mtime":1658153625236,}');
 
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug, force: true });
+    const filesync = await FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug, "--force"]) });
 
     // @ts-expect-error _state is private
     expect(filesync._state).toEqual({ app: testApp.slug, filesVersion: "0", mtime: 0 });
   });
 
   it("throws ArgError if the `--app` arg is passed a slug that does not exist within the user's available apps", async () => {
-    const error = await expectError(() => FileSync.init({ user: testUser, dir: appDir, app: "does-not-exist" }));
+    const error = await expectError(() =>
+      FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", "does-not-exist"]) }),
+    );
 
     expect(error).toBeInstanceOf(ArgError);
     expect(error.message).toMatchInlineSnapshot(`
@@ -104,7 +112,7 @@ describe("FileSync.init", () => {
   it("throws ArgError if the user doesn't have any available apps", async () => {
     vi.spyOn(app, "getApps").mockResolvedValue([]);
 
-    const error = await expectError(() => FileSync.init({ user: testUser, dir: appDir, app: "does-not-exist" }));
+    const error = await expectError(() => FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir]) }));
 
     expect(error).toBeInstanceOf(ArgError);
     expect(error.message).toMatchInlineSnapshot(`
@@ -117,7 +125,9 @@ describe("FileSync.init", () => {
   it("throws ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json", async () => {
     await fs.outputJson(appDirPath(".gadget/sync.json"), { app: "not-test", filesVersion: "77", mtime: 1658153625236 });
 
-    const error = await expectError(() => FileSync.init({ user: testUser, dir: appDir, app: testApp.slug }));
+    const error = await expectError(() =>
+      FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) }),
+    );
 
     expect(error).toBeInstanceOf(ArgError);
     expect(error.message).toMatch(/^You were about to sync the following app to the following directory:/);
@@ -126,7 +136,7 @@ describe("FileSync.init", () => {
   it("does not throw ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json and `--force` is passed", async () => {
     await fs.outputJson(appDirPath(".gadget/sync.json"), { app: "not-test", filesVersion: "77", mtime: 1658153625236 });
 
-    const filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug, force: true });
+    const filesync = await FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug, "--force"]) });
 
     // @ts-expect-error _state is private
     expect(filesync._state).toEqual({ app: testApp.slug, filesVersion: "0", mtime: 0 });
@@ -140,7 +150,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
   let writeToLocalFilesystem: typeof FileSync.prototype._writeToLocalFilesystem;
 
   beforeEach(async () => {
-    filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
+    filesync = await FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) });
 
     // @ts-expect-error _writeToLocalFilesystem is private
     writeToLocalFilesystem = filesync._writeToLocalFilesystem.bind(filesync);
@@ -359,7 +369,7 @@ describe("FileSync._sendChangesToGadget", () => {
   beforeEach(async () => {
     loginTestUser();
 
-    filesync = await FileSync.init({ user: testUser, dir: appDir, app: testApp.slug });
+    filesync = await FileSync.init({ user: testUser, ctx: makeContext(args, ["sync", appDir, "--app", testApp.slug]) });
 
     // @ts-expect-error _sendChangesToGadget is private
     sendChangesToGadget = filesync._sendChangesToGadget.bind(filesync);

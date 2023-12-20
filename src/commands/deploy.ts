@@ -1,10 +1,9 @@
 import chalk from "chalk";
 import ora from "ora";
-import { AppArg } from "../services/app/arg.js";
 import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../services/app/edit-graphql.js";
 import type { ArgsSpec } from "../services/command/arg.js";
 import { type Command, type Usage } from "../services/command/command.js";
-import { FileSync } from "../services/filesync/filesync.js";
+import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
 import { select } from "../services/output/prompt.js";
 import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
@@ -25,20 +24,20 @@ export const usage: Usage = () => sprint`
 
     {bold DESCRIPTION}
       Deploy allows you to deploy your current Gadget application in development to production.
-      
-      It detects if local files are up to date with remote and if the Gadget application 
-      is in a deployable state. If there are any issues, it will display them and ask if 
-      you would like to deploy anyways. 
-      
+
+      It detects if local files are up to date with remote and if the Gadget application
+      is in a deployable state. If there are any issues, it will display them and ask if
+      you would like to deploy anyways.
+
       Note:
         • If local files are not up to date or have not recently been synced with remote ones,
-          you will be prompted to run a one-time sync to ensure the files remain consistent with 
-          what is on the remote. 
+          you will be prompted to run a one-time sync to ensure the files remain consistent with
+          what is on the remote.
         • You may wish to keep ggt sync running in the background before trying to run ggt deploy
-    
-    {bold EXAMPLE}    
+
+    {bold EXAMPLE}
       $ ggt deploy ~/gadget/example --app example
-      
+
       App         example
       Editor      https://example.gadget.app/edit
       Playground  https://example.gadget.app/api/graphql/playground
@@ -47,29 +46,25 @@ export const usage: Usage = () => sprint`
       Endpoints
         • https://example.gadget.app
         • https://example--development.gadget.app
-      
-      
+
+
       Building frontend assets ...
       ✔ DONE
-      
+
       Setting up database ...
       ✔ DONE
-      
+
       Copying development ...
       ✔ DONE
-      
+
       Restarting app ...
       ✔ DONE
-      
+
       Deploy completed. Good bye!
 `;
 
 export const args = {
-  "--app": {
-    type: AppArg,
-    alias: "-a",
-  },
-  "--force": Boolean,
+  ...FileSyncArgs,
 } satisfies ArgsSpec;
 
 export enum Action {
@@ -120,22 +115,20 @@ export const command = (async (ctx, firstRun = true) => {
   let action: Action;
 
   const filesync = await FileSync.init({
+    // deploy --force != sync --force
+    ctx: ctx.clone({ args: { "--force": false } }),
     user: await getUserOrLogin(),
-    dir: ctx.args._[0],
-    app: ctx.args["--app"],
   });
 
-  const log = filesync.log.extend("deploy");
-
   if (firstRun) {
-    log.printlns`App: ${filesync.app.slug}`;
+    ctx.log.printlns`App: ${filesync.app.slug}`;
   }
 
   const { inSync } = await filesync.hashes();
   if (!inSync) {
-    log.printlns`
-    Local files have diverged from remote. Run a sync once to converge your files or keep {italic ggt sync} running in the background.
-  `;
+    ctx.log.printlns`
+      Local files have diverged from remote. Run a sync once to converge your files or keep {italic ggt sync} running in the background.
+    `;
 
     action = await select({
       message: "How would you like to proceed?",
@@ -161,16 +154,16 @@ export const command = (async (ctx, firstRun = true) => {
     onError: (error) => {
       if (isCloseEvent(error.cause)) {
         spinner.fail("Failed");
-        log.printlns(error.message);
+        ctx.log.printlns(error.message);
       } else if (isGraphQLErrors(error.cause)) {
         const message = error.cause[0]?.message;
         if (message && message.includes("GGT_PAYMENT_REQUIRED")) {
-          log.println("Production environment limit reached. Upgrade your plan to deploy");
+          ctx.log.println("Production environment limit reached. Upgrade your plan to deploy");
         } else {
-          log.println(`${message}`);
+          ctx.log.println(`${message}`);
         }
       }
-      log.error("failed to deploy", { error });
+      ctx.log.error("failed to deploy", { error });
       unsubscribe();
       return;
     },
@@ -180,7 +173,7 @@ export const command = (async (ctx, firstRun = true) => {
       const hasIssues = issues?.length;
 
       if (firstRun && hasIssues) {
-        log.printlns`{underline Issues detected}`;
+        ctx.log.printlns`{underline Issues detected}`;
 
         for (const issue of issues) {
           const message = issue.message.replace(/"/g, "");
@@ -188,9 +181,9 @@ export const command = (async (ctx, firstRun = true) => {
           const nodeName = issue.node?.name;
           const nodeParent = issue.node?.parentApiIdentifier;
 
-          log.printlns(
+          ctx.log.printlns(
             `
-                    • ${message}                                       
+                    • ${message}
                       ${nodeType ? `${nodeType}: ${chalk.cyan(nodeName)}` : ""}                 ${
                         nodeParent ? `ParentResource: ${chalk.cyan(nodeParent)}` : ""
                       }
@@ -222,7 +215,7 @@ export const command = (async (ctx, firstRun = true) => {
       } else {
         if (progress === AppDeploymentSteps.COMPLETED) {
           spinner.succeed("DONE");
-          log.printlns("Deploy completed. Good bye!");
+          ctx.log.printlns("Deploy completed. Good bye!");
           unsubscribe();
           return;
         }
@@ -235,7 +228,7 @@ export const command = (async (ctx, firstRun = true) => {
           }
 
           prevProgress = currentProgress;
-          log.printlns(`${currentProgress} ...`);
+          ctx.log.printlns(`${currentProgress} ...`);
           spinner.start("Working ...");
         }
       }

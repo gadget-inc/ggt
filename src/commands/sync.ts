@@ -4,13 +4,12 @@ import ms from "ms";
 import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
-import { AppArg } from "../services/app/arg.js";
 import type { ArgsSpec } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
 import { Changes } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
-import { ConflictPreferenceArg, FileSync } from "../services/filesync/filesync.js";
+import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
 import { notify } from "../services/output/notify.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
@@ -90,10 +89,8 @@ export const usage: Usage = () => sprint`
 `;
 
 export const args = {
-  "--app": { type: AppArg, alias: "-a" },
-  "--force": Boolean,
+  ...FileSyncArgs,
   "--once": Boolean,
-  "--prefer": ConflictPreferenceArg,
   "--file-push-delay": { type: Number, default: ms("100ms") },
   "--file-watch-debounce": { type: Number, default: ms("300ms") },
   "--file-watch-poll-interval": { type: Number, default: ms("3s") },
@@ -101,17 +98,13 @@ export const args = {
   "--file-watch-rename-timeout": { type: Number, default: ms("1.25s") },
 } satisfies ArgsSpec;
 
+export type SyncArgs = typeof args;
+
 /**
  * Runs the sync process until it is stopped or an error occurs.
  */
 export const command: Command<typeof args> = async (ctx) => {
-  const filesync = await FileSync.init({
-    user: await getUserOrLogin(),
-    dir: ctx.args._[0],
-    app: ctx.args["--app"],
-    force: ctx.args["--force"],
-  });
-
+  const filesync = await FileSync.init({ ctx, user: await getUserOrLogin() });
   await filesync.sync({ preference: ctx.args["--prefer"] });
 
   if (ctx.args["--once"]) {

@@ -13,6 +13,7 @@ import { z } from "zod";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
 import type { App } from "../app/app.js";
 import { getApps } from "../app/app.js";
+import { AppArg } from "../app/arg.js";
 import {
   EditGraphQL,
   FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -21,9 +22,9 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit-graphql.js";
-import { ArgError } from "../command/arg.js";
+import { ArgError, type ArgsSpec } from "../command/arg.js";
+import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
-import { createLogger } from "../output/log/logger.js";
 import { select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
 import type { User } from "../user/user.js";
@@ -36,8 +37,6 @@ import { InvalidSyncFileError, TooManySyncAttemptsError } from "./error.js";
 import type { File } from "./file.js";
 import { getChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 
-const log = createLogger({ name: "filesync" });
-
 export type FileSyncHashes = {
   inSync: boolean;
   filesVersionHashes: Hashes;
@@ -49,8 +48,6 @@ export type FileSyncHashes = {
 export class FileSync {
   readonly editGraphQL: EditGraphQL;
 
-  readonly log = log.extend("filesync", () => ({ state: this._state }));
-
   /**
    * A FIFO async callback queue that ensures we process filesync events
    * in the order we receive them.
@@ -59,14 +56,15 @@ export class FileSync {
 
   private constructor(
     /**
+     * The {@linkcode Context} that was used to initialize this
+     * {@linkcode FileSync} instance.
+     */
+    readonly ctx: Context<FileSyncArgs>,
+
+    /**
      * The directory that is being synced to.
      */
     readonly directory: Directory,
-
-    /**
-     * Whether the directory was empty or non-existent when we started.
-     */
-    readonly wasEmptyOrNonExistent: boolean,
 
     /**
      * The Gadget application that is being synced to.
@@ -110,19 +108,21 @@ export class FileSync {
    * - Ensures an app is specified (either via `options.app` or by prompting the user)
    * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
    */
-  static async init(options: { user: User; dir?: string; app?: string; force?: boolean }): Promise<FileSync> {
-    const apps = await getApps(options.user);
+  static async init({ ctx, user }: { ctx: Context<FileSyncArgs>; user: User }): Promise<FileSync> {
+    ctx = ctx.clone({ name: "filesync" });
+
+    const apps = await getApps(user);
     if (apps.length === 0) {
       throw new ArgError(
         sprint`
-          You (${options.user.email}) don't have have any Gadget applications.
+          You (${user.email}) don't have have any Gadget applications.
 
           Visit https://gadget.new to create one!
       `,
       );
     }
 
-    let dir = options.dir;
+    let dir = ctx.args._[0];
     if (!dir) {
       // the user didn't specify a directory
       const filepath = await findUp(".gadget/sync.json");
@@ -158,7 +158,7 @@ export class FileSync {
       )
       .catch(noop);
 
-    let appSlug = options.app || state?.app;
+    let appSlug = ctx.args["--app"] || state?.app;
     if (!appSlug) {
       // the user didn't specify an app, suggest some apps that they can sync to
       appSlug = await select({
@@ -196,10 +196,10 @@ export class FileSync {
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
-      if (wasEmptyOrNonExistent || options.force) {
+      if (wasEmptyOrNonExistent || ctx.args["--force"]) {
         // the directory was empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
-        return new FileSync(directory, wasEmptyOrNonExistent, app, { app: app.slug, filesVersion: "0", mtime: 0 });
+        return new FileSync(ctx, directory, app, { app: app.slug, filesVersion: "0", mtime: 0 });
       }
 
       // the directory isn't empty and the user didn't pass --force
@@ -209,13 +209,13 @@ export class FileSync {
     // the .gadget/sync.json file exists
     if (state.app === app.slug) {
       // the .gadget/sync.json file is for the same app that the user specified
-      return new FileSync(directory, wasEmptyOrNonExistent, app, state);
+      return new FileSync(ctx, directory, app, state);
     }
 
     // the .gadget/sync.json file is for a different app
-    if (options.force) {
+    if (ctx.args["--force"]) {
       // the user passed --force, so use the app they specified and overwrite everything
-      return new FileSync(directory, wasEmptyOrNonExistent, app, { app: app.slug, filesVersion: "0", mtime: 0 });
+      return new FileSync(ctx, directory, app, { app: app.slug, filesVersion: "0", mtime: 0 });
     }
 
     // the user didn't pass --force, so throw an error
@@ -281,11 +281,11 @@ export class FileSync {
         this._syncOperations
           .add(async () => {
             if (BigInt(remoteFilesVersion) < this.filesVersion) {
-              this.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
+              this.ctx.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
               return;
             }
 
-            this.log.debug("received files", {
+            this.ctx.log.debug("received files", {
               remoteFilesVersion: remoteFilesVersion,
               changed: changed.map((change) => change.path),
               deleted: deleted.map((change) => change.path),
@@ -294,7 +294,7 @@ export class FileSync {
             const filterIgnoredFiles = (file: { path: string }): boolean => {
               const ignored = this.directory.ignores(file.path);
               if (ignored) {
-                this.log.warn("skipping received change because file is ignored", { path: file.path });
+                this.ctx.log.warn("skipping received change because file is ignored", { path: file.path });
               }
               return !ignored;
             };
@@ -349,7 +349,7 @@ export class FileSync {
         const { inSync, ...hashes } = await this.hashes();
 
         if (inSync) {
-          this.log.info("filesystem is in sync");
+          this.ctx.log.info("filesystem is in sync");
           await this._save(hashes.gadgetFilesVersion);
           return;
         }
@@ -370,7 +370,7 @@ export class FileSync {
     gadgetHashes,
     gadgetFilesVersion,
   }: { preference?: ConflictPreference } & Omit<FileSyncHashes, "inSync">): Promise<void> {
-    this.log.debug("syncing", { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
+    this.ctx.log.debug("syncing", { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion });
     let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
     let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
 
@@ -384,7 +384,7 @@ export class FileSync {
 
     const conflicts = getConflicts({ localChanges, gadgetChanges });
     if (conflicts.size > 0) {
-      this.log.debug("conflicts detected", { conflicts });
+      this.ctx.log.debug("conflicts detected", { conflicts });
 
       if (!preference) {
         printConflicts({
@@ -467,7 +467,7 @@ export class FileSync {
     filesVersion: bigint;
     changes: Changes | ChangesWithHash;
   }): Promise<void> {
-    this.log.debug("getting changes from gadget", { filesVersion, changes });
+    this.ctx.log.debug("getting changes from gadget", { filesVersion, changes });
     const created = changes.created();
     const updated = changes.updated();
 
@@ -507,7 +507,7 @@ export class FileSync {
     changes: Changes;
     printLimit?: number;
   }): Promise<void> {
-    this.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
+    this.ctx.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
     const changed: FileSyncChangedEventInput[] = [];
     const deleted: FileSyncDeletedEventInput[] = [];
 
@@ -524,7 +524,7 @@ export class FileSync {
         stats = await fs.stat(absolutePath);
       } catch (error) {
         swallowEnoent(error);
-        this.log.debug("skipping change because file doesn't exist", { path: normalizedPath });
+        this.ctx.log.debug("skipping change because file doesn't exist", { path: normalizedPath });
         return;
       }
 
@@ -548,7 +548,7 @@ export class FileSync {
     });
 
     if (changed.length === 0 && deleted.length === 0) {
-      this.log.debug("skipping send because there are no changes");
+      this.ctx.log.debug("skipping send because there are no changes");
       return;
     }
 
@@ -586,7 +586,7 @@ export class FileSync {
     const filesVersion = BigInt(options.filesVersion);
     assert(filesVersion >= this.filesVersion, "filesVersion must be greater than or equal to current filesVersion");
 
-    this.log.debug("writing to local filesystem", {
+    this.ctx.log.debug("writing to local filesystem", {
       filesVersion,
       files: options.files.map((file) => file.path),
       delete: options.delete,
@@ -619,7 +619,7 @@ export class FileSync {
           retries: 2,
           minTimeout: ms("100ms"),
           onFailedAttempt: (error) => {
-            this.log.warn("failed to move file to backup", { error, currentPath, backupPath });
+            this.ctx.log.warn("failed to move file to backup", { error, currentPath, backupPath });
           },
         },
       );
@@ -665,7 +665,7 @@ export class FileSync {
    */
   private async _save(filesVersion: string | bigint): Promise<void> {
     this._state = { ...this._state, mtime: Date.now() + 1, filesVersion: String(filesVersion) };
-    this.log.debug("saving state", { state: this._state });
+    this.ctx.log.debug("saving state", { state: this._state });
     await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
   }
 }
@@ -719,3 +719,11 @@ export const ConflictPreferenceArg = (value: string, name: string): ConflictPref
         ${name} gadget
     `);
 };
+
+export const FileSyncArgs = {
+  "--app": { type: AppArg, alias: "-a" },
+  "--prefer": ConflictPreferenceArg,
+  "--force": Boolean,
+} satisfies ArgsSpec;
+
+export type FileSyncArgs = typeof FileSyncArgs;

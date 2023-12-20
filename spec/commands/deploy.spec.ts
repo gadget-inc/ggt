@@ -339,7 +339,7 @@ describe("deploy", () => {
     `);
   });
 
-  it("exits if the subscription unexpected closes due to an Internal Error", async () => {
+  it("exits if the subscription unexpectedly closes due to an Internal Error", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();

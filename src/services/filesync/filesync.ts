@@ -252,7 +252,17 @@ export class FileSync {
    * @returns A promise that resolves when the changes have been sent.
    */
   async sendChangesToGadget({ changes }: { changes: Changes }): Promise<void> {
-    await this._syncOperations.add(() => this._sendChangesToGadget({ changes }));
+    await this._syncOperations.add(async () => {
+      try {
+        await this._sendChangesToGadget({ changes });
+      } catch (error) {
+        swallowFilesVersionMismatch(this.ctx, error);
+        // we either sent the wrong expectedFilesVersion or we received
+        // a filesVersion that is greater than the expectedFilesVersion
+        // + 1, so we need to stop what we're doing and get in sync
+        await this.sync();
+      }
+    });
   }
 
   /**
@@ -361,8 +371,15 @@ export class FileSync {
         throw new TooManySyncAttemptsError(maxAttempts);
       }
 
-      this.ctx.log.info("syncing", { attempt, ...hashes });
-      await this._sync(hashes);
+      try {
+        this.ctx.log.info("syncing", { attempt, ...hashes });
+        await this._sync(hashes);
+      } catch (error) {
+        swallowFilesVersionMismatch(this.ctx, error);
+        // we either sent the wrong expectedFilesVersion or we received
+        // a filesVersion that is greater than the expectedFilesVersion
+        // + 1, so try again
+      }
     }
   }
 
@@ -583,6 +600,12 @@ export class FileSync {
       limit: printLimit,
     });
 
+    if (BigInt(remoteFilesVersion) > expectedFilesVersion + 1n) {
+      // we can't save the remoteFilesVersion because we haven't
+      // received the intermediate filesVersions yet
+      throw new Error("Files version mismatch");
+    }
+
     await this._save(remoteFilesVersion);
   }
 
@@ -743,4 +766,12 @@ export const isFilesVersionMismatchError = (error: unknown): boolean => {
     error = error[0];
   }
   return isObject(error) && "message" in error && isString(error.message) && error.message.startsWith("Files version mismatch");
+};
+
+const swallowFilesVersionMismatch = (ctx: Context, error: unknown): void => {
+  if (isFilesVersionMismatchError(error)) {
+    ctx.log.debug("swallowing files version mismatch", { error });
+    return;
+  }
+  throw error;
 };

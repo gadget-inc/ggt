@@ -490,6 +490,155 @@ describe("FileSync._sendChangesToGadget", () => {
 
     expect(isFilesVersionMismatchError(error)).toBe(true);
   });
+
+  it('throws "Files version mismatch" when it receives a files version greater than the expectedRemoteFilesVersion + 1', async () => {
+    const scope = nockEditGraphQLResponse({
+      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      result: { data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } },
+      expectVariables: expectPublishVariables({
+        input: {
+          expectedRemoteFilesVersion: "0",
+          changed: [
+            {
+              path: "foo.js",
+              content: Buffer.from("// foo").toString("base64"),
+              mode: defaultFileMode,
+              encoding: FileSyncEncoding.Base64,
+            },
+          ],
+          deleted: [],
+        },
+      }),
+    });
+
+    await writeDir(appDir, {
+      "foo.js": "// foo",
+    });
+
+    const changes = new Changes();
+    changes.set("foo.js", { type: "create" });
+
+    const error = await expectError(() => sendChangesToGadget({ changes }));
+
+    expect(scope.isDone()).toBe(true);
+
+    expect(isFilesVersionMismatchError(error)).toBe(true);
+  });
+});
+
+describe("FileSync.sendChangesToGadget", () => {
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
+  });
+
+  it('syncs when it receives "Files version mismatch" from Gadget', async () => {
+    const { filesync, expectDirs } = await makeSyncScenario({
+      localFiles: { "local.txt": "// local" },
+      gadgetFiles: { "gadget.txt": "// gadget" },
+    });
+
+    const changes = new Changes();
+    changes.set("local.txt", { type: "create" });
+
+    await filesync.sendChangesToGadget({ changes });
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "gadget.txt": "// gadget",
+          },
+          "3": {
+            ".gadget/": "",
+            "gadget.txt": "// gadget",
+            "local.txt": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget.txt": "// gadget",
+          "local.txt": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "gadget.txt": "// gadget",
+          "local.txt": "// local",
+        },
+      }
+    `);
+  });
+
+  it('syncs when it receives "Files version mismatch" from files version greater than the expectedRemoteFilesVersion + 1', async () => {
+    const { filesync, expectDirs, changeGadgetFiles } = await makeSyncScenario({
+      localFiles: { "local.txt": "// local" },
+      gadgetFiles: { "gadget.txt": "// gadget" },
+      beforePublishFileSyncEvents: async () => {
+        // simulate gadget generating files while receiving changes from
+        // ggt causing the resulting files version to end up being
+        // > expectedRemoteFilesVersion + 1
+        await changeGadgetFiles({
+          change: [
+            {
+              path: ".gadget/client.js",
+              content: Buffer.from("// client").toString("base64"),
+              mode: defaultFileMode,
+              encoding: FileSyncEncoding.Base64,
+            },
+          ],
+          delete: [],
+        });
+      },
+    });
+
+    const changes = new Changes();
+    changes.set("local.txt", { type: "create" });
+
+    await filesync.sendChangesToGadget({ changes });
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "gadget.txt": "// gadget",
+          },
+          "3": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            "gadget.txt": "// gadget",
+          },
+          "4": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            "gadget.txt": "// gadget",
+            "local.txt": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          "gadget.txt": "// gadget",
+          "local.txt": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\"}",
+          "gadget.txt": "// gadget",
+          "local.txt": "// local",
+        },
+      }
+    `);
+  });
 });
 
 describe("FileSync.sync", () => {
@@ -1325,6 +1474,58 @@ describe("FileSync.sync", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+  });
+
+  it('retries when it receives "Files version mismatch"', async () => {
+    const scope = nockEditGraphQLResponse({
+      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      result: { errors: [new GraphQLError("Files version mismatch")] },
+      expectVariables: expect.anything(),
+      times: 9, // 1 less than the max attempts
+      statusCode: 500,
+    });
+
+    const { filesync, expectDirs } = await makeSyncScenario({
+      localFiles: { "local.txt": "// local" },
+      gadgetFiles: { "gadget.txt": "// gadget" },
+    });
+
+    const changes = new Changes();
+    changes.set("local.txt", { type: "create" });
+
+    await filesync.sendChangesToGadget({ changes });
+
+    expect(scope.isDone()).toBe(true);
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "gadget.txt": "// gadget",
+          },
+          "3": {
+            ".gadget/": "",
+            "gadget.txt": "// gadget",
+            "local.txt": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget.txt": "// gadget",
+          "local.txt": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "gadget.txt": "// gadget",
+          "local.txt": "// local",
+        },
+      }
+    `);
   });
 
   it(`throws ${TooManySyncAttemptsError.name} if the number of sync attempts exceeds the maximum`, async () => {

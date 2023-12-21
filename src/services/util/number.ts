@@ -18,9 +18,9 @@ export const parseNumber = (value: string | null | undefined, defaultValue = 0):
  * If the number is greater than the maximum value, the maximum value is returned.
  * Otherwise, the number is returned as is.
  *
- * @param value The value to be clamped.
- * @param min The minimum value of the range.
- * @param max The maximum value of the range.
+ * @param value - The value to be clamped.
+ * @param min - The minimum value of the range.
+ * @param max - The maximum value of the range.
  * @returns The clamped value.
  */
 export const clamp = (value: number, min: number, max: number): number => {

@@ -54,7 +54,7 @@ export const getUser = async (): Promise<User | undefined> => {
  * Retrieves the current user or prompts the user to log in if not
  * already logged in.
  *
- * @param message The message to display when prompting the user to log in.
+ * @param message - The message to display when prompting the user to log in.
  * @returns A Promise that resolves to the current user.
  */
 export const getUserOrLogin = async (message = "You must be logged in to use this command. Would you like to log in?"): Promise<User> => {

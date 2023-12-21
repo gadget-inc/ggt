@@ -2,27 +2,61 @@
 /* eslint-disable func-style */
 import mimicFunction from "mimic-fn";
 import assert from "node:assert";
-import type { Promisable } from "type-fest";
 import { isFunction } from "./is.js";
-
-export type AnyFunction = (...args: never[]) => unknown;
-
-export type AnyVoid = Promisable<void>;
+import { type AnyFunction } from "./types.js";
 
 const memoizedFns = new Set<MemoizedFn>();
 
+/**
+ * A function that has been wrapped by {@linkcode memo}.
+ */
 export type MemoizedFn<Fn extends AnyFunction = AnyFunction> = Fn & {
   /**
-   * Clears the cache.
+   * Clears the cache of the memoized function.
    */
   clear: () => void;
 };
 
+/**
+ * A function that returns the first argument as a string.
+ *
+ * Used as the default key function for {@linkcode memo}.
+ */
 export const MemoFirstArg = (...args: any[]): string => String(args[0]);
+
+/**
+ * A function that returns all arguments as a string.
+ *
+ * Useful for memoizing functions that accept a variable number of
+ * arguments.
+ */
 export const MemoAllArgs = (...args: any[]): string => args.map(String).join(":");
 
+/**
+ * Creates a memoized version of the provided function.
+ *
+ * The memoized function caches the results of previous calls and
+ * returns the cached result when the first argument matches a previous
+ * call. Subsequent arguments are ignored.
+ *
+ * @param fn - The function to memoize.
+ * @see MemoFirstArg
+ */
 export function memo<Fn extends AnyFunction>(fn: Fn): MemoizedFn<Fn>;
+
+/**
+ * Creates a memoized version of the provided function.
+ *
+ * The memoized function caches the results of previous calls and
+ * returns the cached result when the key returned by `keyFn` matches
+ * a previous call.
+ *
+ * @param keyFn - A function that returns a key for the arguments.
+ * @param fn - The function to memoize.
+ */
 export function memo<Fn extends AnyFunction, KeyFn extends (...args: Parameters<Fn>) => string>(keyFn: KeyFn, fn: Fn): MemoizedFn<Fn>;
+
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function memo<Fn extends AnyFunction, KeyFn extends (...args: Parameters<Fn>) => string>(
   fnOrKeyFn: Fn | KeyFn,
   fn?: Fn,
@@ -59,12 +93,18 @@ export function memo<Fn extends AnyFunction, KeyFn extends (...args: Parameters<
   return memoized;
 }
 
+/**
+ * Clears the cache of all memoized functions.
+ */
 export const clearMemoized = (): void => {
   for (const memoized of memoizedFns) {
     memoized.clear();
   }
 };
 
+/**
+ * A function that has been wrapped by {@linkcode debounce}.
+ */
 export type DebouncedFunc<Fn extends (...args: unknown[]) => void> = Fn & {
   /**
    * Invokes the function if it is waiting to stop being called.
@@ -77,11 +117,11 @@ export type DebouncedFunc<Fn extends (...args: unknown[]) => void> = Fn & {
  * function until after `delayMS` milliseconds have elapsed since the
  * last time it was invoked.
  *
- * @param delayMS The number of milliseconds to delay.
- * @param f The function to be debounced.
+ * @param delayMS - The number of milliseconds to delay.
+ * @param fn - The function to be debounced.
  * @returns A debounced version of the provided function.
  */
-export const debounce = <F extends (...args: unknown[]) => void>(delayMS: number, f: F): DebouncedFunc<F> => {
+export const debounce = <F extends (...args: unknown[]) => void>(delayMS: number, fn: F): DebouncedFunc<F> => {
   let timerId: NodeJS.Timeout | undefined;
   let upcomingCall: (() => void) | undefined;
 
@@ -89,7 +129,7 @@ export const debounce = <F extends (...args: unknown[]) => void>(delayMS: number
     upcomingCall = () => {
       upcomingCall = undefined;
       timerId = undefined;
-      f(...args);
+      fn(...args);
     };
 
     clearTimeout(timerId);
@@ -102,16 +142,21 @@ export const debounce = <F extends (...args: unknown[]) => void>(delayMS: number
     }
   };
 
+  mimicFunction(debounced, fn);
+
   return debounced;
 };
 
+/**
+ * Either a value or a function that returns a value.
+ */
 export type Thunk<T> = T | (() => T);
 
 /**
  * Wraps a value in a thunk (a function that returns a value). If the
  * value is already a function, it is returned as is.
  *
- * @param val The value or function to wrap.
+ * @param val - The value or function to wrap.
  * @returns A function that returns the value.
  */
 export const thunk = <T>(val: T | (() => T)): (() => T) => {
@@ -125,7 +170,7 @@ export const thunk = <T>(val: T | (() => T)): (() => T) => {
  * Unwraps a value from a thunk (a function that returns a value). If the
  * value is not a function, it is returned as is.
  *
- * @param val The value or thunk to unwrap.
+ * @param val - The value or thunk to unwrap.
  * @returns The unwrapped value.
  */
 export const unthunk = <T>(val: T | (() => T)): T => {

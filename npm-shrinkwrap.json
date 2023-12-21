@@ -81,6 +81,7 @@
         "eslint-config-prettier": "^9.1.0",
         "eslint-import-resolver-typescript": "^3.6.1",
         "eslint-plugin-import": "^2.29.1",
+        "eslint-plugin-jsdoc": "^46.9.1",
         "eslint-plugin-lodash": "^7.4.0",
         "eslint-plugin-only-warn": "^1.1.0",
         "eslint-plugin-unicorn": "^50.0.1",
@@ -2576,6 +2577,20 @@
       "resolved": "https://registry.npmjs.org/@cspell/strong-weak-map/-/strong-weak-map-7.3.8.tgz",
       "integrity": "sha512-qNnt2wG45wb8JP54mENarnQgxfSYKPp3zlYID/2przbMNmVJRqUlcIBOdLI6plCgGeNkzJTl3T9T1ATbnN+LLw==",
       "dev": true,
+      "engines": {
+        "node": ">=16"
+      }
+    },
+    "node_modules/@es-joy/jsdoccomment": {
+      "version": "0.41.0",
+      "resolved": "https://registry.npmjs.org/@es-joy/jsdoccomment/-/jsdoccomment-0.41.0.tgz",
+      "integrity": "sha512-aKUhyn1QI5Ksbqcr3fFJj16p99QdjUxXAEuFst1Z47DRyoiMwivIH9MV/ARcJOCXVjPfjITciej8ZD2O/6qUmw==",
+      "dev": true,
+      "dependencies": {
+        "comment-parser": "1.4.1",
+        "esquery": "^1.5.0",
+        "jsdoc-type-pratt-parser": "~4.0.0"
+      },
       "engines": {
         "node": ">=16"
       }
@@ -5729,6 +5744,15 @@
         }
       ]
     },
+    "node_modules/are-docs-informative": {
+      "version": "0.0.2",
+      "resolved": "https://registry.npmjs.org/are-docs-informative/-/are-docs-informative-0.0.2.tgz",
+      "integrity": "sha512-ixiS0nLNNG5jNQzgZJNoUpBKdo9yTYZMGJ+QgT2jmjR7G7+QHRCc4v6LQ3NgE7EBJq+o0ams3waJwkrlBom8Ig==",
+      "dev": true,
+      "engines": {
+        "node": ">=14"
+      }
+    },
     "node_modules/arg": {
       "version": "5.0.2",
       "resolved": "https://registry.npmjs.org/arg/-/arg-5.0.2.tgz",
@@ -7030,6 +7054,15 @@
       },
       "engines": {
         "node": ">= 6"
+      }
+    },
+    "node_modules/comment-parser": {
+      "version": "1.4.1",
+      "resolved": "https://registry.npmjs.org/comment-parser/-/comment-parser-1.4.1.tgz",
+      "integrity": "sha512-buhp5kePrmda3vhc5B9t7pUQXAb2Tnd0qgpkIhPhkHXxJpiPJ11H0ZEU0oBpJ2QztSbzG/ZxMj/CHsYJqRHmyg==",
+      "dev": true,
+      "engines": {
+        "node": ">= 12.0.0"
       }
     },
     "node_modules/common-tags": {
@@ -8551,6 +8584,39 @@
       "dev": true,
       "bin": {
         "semver": "bin/semver.js"
+      }
+    },
+    "node_modules/eslint-plugin-jsdoc": {
+      "version": "46.9.1",
+      "resolved": "https://registry.npmjs.org/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-46.9.1.tgz",
+      "integrity": "sha512-11Ox5LCl2wY7gGkp9UOyew70o9qvii1daAH+h/MFobRVRNcy7sVlH+jm0HQdgcvcru6285GvpjpUyoa051j03Q==",
+      "dev": true,
+      "dependencies": {
+        "@es-joy/jsdoccomment": "~0.41.0",
+        "are-docs-informative": "^0.0.2",
+        "comment-parser": "1.4.1",
+        "debug": "^4.3.4",
+        "escape-string-regexp": "^4.0.0",
+        "esquery": "^1.5.0",
+        "is-builtin-module": "^3.2.1",
+        "semver": "^7.5.4",
+        "spdx-expression-parse": "^4.0.0"
+      },
+      "engines": {
+        "node": ">=16"
+      },
+      "peerDependencies": {
+        "eslint": "^7.0.0 || ^8.0.0"
+      }
+    },
+    "node_modules/eslint-plugin-jsdoc/node_modules/spdx-expression-parse": {
+      "version": "4.0.0",
+      "resolved": "https://registry.npmjs.org/spdx-expression-parse/-/spdx-expression-parse-4.0.0.tgz",
+      "integrity": "sha512-Clya5JIij/7C6bRR22+tnGXbc4VKlibKSVj2iHvVeX5iMW7s1SIQlqu699JkODJJIhh/pUu8L0/VLh8xflD+LQ==",
+      "dev": true,
+      "dependencies": {
+        "spdx-exceptions": "^2.1.0",
+        "spdx-license-ids": "^3.0.0"
       }
     },
     "node_modules/eslint-plugin-lodash": {
@@ -10787,6 +10853,15 @@
       },
       "bin": {
         "js-yaml": "bin/js-yaml.js"
+      }
+    },
+    "node_modules/jsdoc-type-pratt-parser": {
+      "version": "4.0.0",
+      "resolved": "https://registry.npmjs.org/jsdoc-type-pratt-parser/-/jsdoc-type-pratt-parser-4.0.0.tgz",
+      "integrity": "sha512-YtOli5Cmzy3q4dP26GraSOeAhqecewG04hoO8DY56CH4KJ9Fvv5qKWUCCo3HZob7esJQHCv6/+bnTy72xZZaVQ==",
+      "dev": true,
+      "engines": {
+        "node": ">=12.0.0"
       }
     },
     "node_modules/jsesc": {
@@ -18619,6 +18694,17 @@
       "integrity": "sha512-qNnt2wG45wb8JP54mENarnQgxfSYKPp3zlYID/2przbMNmVJRqUlcIBOdLI6plCgGeNkzJTl3T9T1ATbnN+LLw==",
       "dev": true
     },
+    "@es-joy/jsdoccomment": {
+      "version": "0.41.0",
+      "resolved": "https://registry.npmjs.org/@es-joy/jsdoccomment/-/jsdoccomment-0.41.0.tgz",
+      "integrity": "sha512-aKUhyn1QI5Ksbqcr3fFJj16p99QdjUxXAEuFst1Z47DRyoiMwivIH9MV/ARcJOCXVjPfjITciej8ZD2O/6qUmw==",
+      "dev": true,
+      "requires": {
+        "comment-parser": "1.4.1",
+        "esquery": "^1.5.0",
+        "jsdoc-type-pratt-parser": "~4.0.0"
+      }
+    },
     "@esbuild/android-arm": {
       "version": "0.18.20",
       "resolved": "https://registry.npmjs.org/@esbuild/android-arm/-/android-arm-0.18.20.tgz",
@@ -20785,6 +20871,12 @@
       "integrity": "sha512-Of/R0wqp83cgHozfIYLbBMnej79U/SVGOOyuB3VVFv1NRM/PSFMK12x9KVtiYzJqmnU5WR2qp0Z5rHb7sWGnFQ==",
       "dev": true
     },
+    "are-docs-informative": {
+      "version": "0.0.2",
+      "resolved": "https://registry.npmjs.org/are-docs-informative/-/are-docs-informative-0.0.2.tgz",
+      "integrity": "sha512-ixiS0nLNNG5jNQzgZJNoUpBKdo9yTYZMGJ+QgT2jmjR7G7+QHRCc4v6LQ3NgE7EBJq+o0ams3waJwkrlBom8Ig==",
+      "dev": true
+    },
     "arg": {
       "version": "5.0.2",
       "resolved": "https://registry.npmjs.org/arg/-/arg-5.0.2.tgz",
@@ -21699,6 +21791,12 @@
         "has-own-prop": "^2.0.0",
         "repeat-string": "^1.6.1"
       }
+    },
+    "comment-parser": {
+      "version": "1.4.1",
+      "resolved": "https://registry.npmjs.org/comment-parser/-/comment-parser-1.4.1.tgz",
+      "integrity": "sha512-buhp5kePrmda3vhc5B9t7pUQXAb2Tnd0qgpkIhPhkHXxJpiPJ11H0ZEU0oBpJ2QztSbzG/ZxMj/CHsYJqRHmyg==",
+      "dev": true
     },
     "common-tags": {
       "version": "1.8.2",
@@ -22917,6 +23015,35 @@
           "resolved": "https://registry.npmjs.org/semver/-/semver-6.3.1.tgz",
           "integrity": "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==",
           "dev": true
+        }
+      }
+    },
+    "eslint-plugin-jsdoc": {
+      "version": "46.9.1",
+      "resolved": "https://registry.npmjs.org/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-46.9.1.tgz",
+      "integrity": "sha512-11Ox5LCl2wY7gGkp9UOyew70o9qvii1daAH+h/MFobRVRNcy7sVlH+jm0HQdgcvcru6285GvpjpUyoa051j03Q==",
+      "dev": true,
+      "requires": {
+        "@es-joy/jsdoccomment": "~0.41.0",
+        "are-docs-informative": "^0.0.2",
+        "comment-parser": "1.4.1",
+        "debug": "^4.3.4",
+        "escape-string-regexp": "^4.0.0",
+        "esquery": "^1.5.0",
+        "is-builtin-module": "^3.2.1",
+        "semver": "^7.5.4",
+        "spdx-expression-parse": "^4.0.0"
+      },
+      "dependencies": {
+        "spdx-expression-parse": {
+          "version": "4.0.0",
+          "resolved": "https://registry.npmjs.org/spdx-expression-parse/-/spdx-expression-parse-4.0.0.tgz",
+          "integrity": "sha512-Clya5JIij/7C6bRR22+tnGXbc4VKlibKSVj2iHvVeX5iMW7s1SIQlqu699JkODJJIhh/pUu8L0/VLh8xflD+LQ==",
+          "dev": true,
+          "requires": {
+            "spdx-exceptions": "^2.1.0",
+            "spdx-license-ids": "^3.0.0"
+          }
         }
       }
     },
@@ -24354,6 +24481,12 @@
         "argparse": "^1.0.7",
         "esprima": "^4.0.0"
       }
+    },
+    "jsdoc-type-pratt-parser": {
+      "version": "4.0.0",
+      "resolved": "https://registry.npmjs.org/jsdoc-type-pratt-parser/-/jsdoc-type-pratt-parser-4.0.0.tgz",
+      "integrity": "sha512-YtOli5Cmzy3q4dP26GraSOeAhqecewG04hoO8DY56CH4KJ9Fvv5qKWUCCo3HZob7esJQHCv6/+bnTy72xZZaVQ==",
+      "dev": true
     },
     "jsesc": {
       "version": "2.5.2",

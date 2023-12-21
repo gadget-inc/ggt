@@ -8,9 +8,10 @@ import { importCommand, type CommandSpec } from "../../src/services/command/comm
 import { config } from "../../src/services/config/config.js";
 import { Level } from "../../src/services/output/log/level.js";
 import * as update from "../../src/services/output/update.js";
-import { noop, noopThis, type AnyFunction } from "../../src/services/util/function.js";
+import { noop, noopThis } from "../../src/services/util/function.js";
 import { isAbortError } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
+import { type AnyFunction } from "../../src/services/util/types.js";
 import { withEnv } from "../__support__/env.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
 import { expectProcessExit } from "../__support__/process.js";

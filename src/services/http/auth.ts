@@ -20,7 +20,6 @@ export const isGadgetServicesRequest = (options: OptionsInit): boolean => {
  *
  * @returns The cookie string or undefined if there is no session.
  */
-
 export const loadCookie = (): string | undefined => {
   const token = readSession();
   return token && `session=${encodeURIComponent(token)};`;
@@ -34,9 +33,8 @@ export const isUnauthorizedError = (error: unknown): error is HTTPError => {
  * Swallows unauthorized errors and logs a warning, rethrows all other
  * errors.
  *
- * @param error The error to handle.
+ * @param error - The error to handle.
  */
-
 export const swallowUnauthorized = (error: unknown): void => {
   if (isUnauthorizedError(error)) {
     log.warn("swallowing unauthorized error", { error });

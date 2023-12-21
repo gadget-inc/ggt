@@ -37,9 +37,10 @@ export class Changes extends Map<string, Change> {
 /**
  * Prints the changes to the console.
  *
- * @param changes - The changes to print.
- * @param tense - The tense to use for the change type.
- * @param limit - The maximum number of changes to print.
+ * @param options - The options to use.
+ * @param options.changes - The changes to print.
+ * @param options.tense - The tense to use for the change type.
+ * @param options.limit - The maximum number of changes to print.
  */
 export const printChanges = ({
   changes,

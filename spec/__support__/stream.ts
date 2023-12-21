@@ -4,6 +4,7 @@ const testStdout: string[] = [];
 
 /**
  * Returns an assertion that checks the contents of stdout.
+ *
  * @example
  * expectStdout().toEqual("Hello World!");
  * @example
@@ -36,6 +37,7 @@ const testStderr: string[] = [];
 
 /**
  * Returns an assertion that checks the contents of stderr.
+ *
  * @example
  * expectStderr().toEqual("Hello World!");
  * @example

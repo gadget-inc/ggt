@@ -108,7 +108,6 @@ enum AppDeploymentSteps {
 /**
  * Runs the deploy process.
  */
-
 export const command = (async (ctx, firstRun = true) => {
   const spinner = ora();
   let prevProgress: string | undefined = AppDeploymentStepsToAppDeployState("NOT_STARTED");

@@ -78,6 +78,7 @@ export type PrintTableOptions = {
 
   /**
    * The type of borders to use.
+   *
    * @default "none"
    */
   borders?: "none" | "thin" | "thick";
@@ -85,24 +86,28 @@ export type PrintTableOptions = {
   /**
    * The amount of empty lines to print between the message, table,
    * and footer.
+   *
    * @default 0
    */
   spaceY?: number;
 
   /**
    * The alignment of the content in each column.
+   *
    * @default [] (left-aligned)
    */
   colAligns?: ("left" | "center" | "right")[];
 
   /**
    * The width of each column.
+   *
    * @default [] (auto-sized)
    */
   colWidths?: number[];
 
   /**
    * The options to pass to `boxen`.
+   *
    * @default undefined (no box)
    */
   boxen?: BoxenOptions;

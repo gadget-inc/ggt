@@ -133,7 +133,9 @@ export abstract class CLIError extends Error {
   }
 
   /**
-   * Constructs a CLIError from a cause.
+   * Constructs a CLIError from an unknown cause.
+   *
+   * @param cause - The cause of the error.
    */
   static from(cause: unknown): CLIError {
     if (cause instanceof CLIError) {

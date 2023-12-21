@@ -83,7 +83,7 @@ export class Directory {
    * Returns the absolute path by resolving the given path segments
    * relative to the directory path.
    *
-   * @param pathSegments The path segments to resolve.
+   * @param pathSegments - The path segments to resolve.
    * @returns The absolute path.
    */
   absolute(...pathSegments: string[]): string {
@@ -253,7 +253,7 @@ export const supportsPermissions = process.platform === "linux" || process.platf
  * Calculates the {@linkcode Hash} of the file or directory at the
  * specified absolute path.
  *
- * @param absolutePath The absolute path to the file or directory.
+ * @param absolutePath - The absolute path to the file or directory.
  * @returns A Promise that resolves to the {@linkcode Hash} of the file
  * or directory.
  */

@@ -38,6 +38,12 @@ export class ChangesWithHash extends Map<string, ChangeWithHash> {
  *
  * If `ignore` is provided, any changes that were made to a path that
  * starts with any of the `ignore` paths are skipped.
+ *
+ * @param options - The options to use.
+ * @param options.from - The source hashes.
+ * @param options.to - The target hashes.
+ * @param options.existing - The existing hashes.
+ * @param options.ignore - The paths to ignore.
  */
 export const getChanges = ({
   from: source,

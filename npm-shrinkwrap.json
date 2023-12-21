@@ -1,12 +1,12 @@
 {
   "name": "ggt",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "lockfileVersion": 2,
   "requires": true,
   "packages": {
     "": {
       "name": "ggt",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "license": "MIT",
       "dependencies": {
         "@sentry/node": "^7.90.0",

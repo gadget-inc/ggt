@@ -10,6 +10,11 @@ import type { Context } from "./context.js";
 
 export const AvailableCommands = ["sync", "list", "login", "logout", "whoami", "version"] as const;
 
+// temporarily remove deploy command from available commands while we're working on it
+if (process.env["GGT_DEPLOY_PREVIEW"]) {
+  (AvailableCommands as unknown as string[]).push("deploy");
+}
+
 export type AvailableCommand = (typeof AvailableCommands)[number];
 
 export const isAvailableCommand = (command: string): command is AvailableCommand => {

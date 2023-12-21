@@ -2,7 +2,8 @@
 ======================================================
 THIS IS A GENERATED FILE! DO NOT EDIT IT MANUALLY!
 
-You can find the original file in the gadget repository
+This is copied from the gadget repository at packages/api/src/__generated__/edit.graphql
+We manually copy in new versions when we need to change it.
 ======================================================
 """
 
@@ -197,6 +198,7 @@ type PublishIssue {
 }
 
 type PublishIssueNode {
+  apiIdentifier: String
   fieldType: String
   key: String!
   name: String
@@ -222,6 +224,7 @@ type Query {
   identifySupportConversation: IdentifySupportConversationResult
   listContributors: [ContributorResult!]! @deprecated(reason: "use team")
   logsSearch(direction: String, end: DateTime, limit: Int, query: String!, start: DateTime, step: Int): LogSearchResult!
+  publishIssues: [PublishIssue!]!
   remoteFilesVersion: String!
   roles: [GadgetRole!]!
   runTestSupportFunction: JSON

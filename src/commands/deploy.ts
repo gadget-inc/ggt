@@ -178,7 +178,7 @@ export const command = (async (ctx, firstRun = true) => {
         for (const issue of issues) {
           const message = issue.message.replace(/"/g, "");
           const nodeType = issue.node?.type;
-          const nodeName = issue.node?.name;
+          const nodeName = issue.node?.apiIdentifier ?? issue.node?.name;
           const nodeParent = issue.node?.parentApiIdentifier;
 
           ctx.log.printlns(

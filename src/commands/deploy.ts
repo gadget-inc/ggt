@@ -226,6 +226,7 @@ export const command = (async (ctx, firstRun = true) => {
       if (firstRun && hasIssues) {
         ctx.log.printlns`{underline Issues detected}`;
 
+        // @typescript-eslint/no-useless-template-literals
         const printIssues = (groupedIssues: GroupedIssues): void => {
           for (const [name, nodeArray] of Object.entries(groupedIssues)) {
             ctx.log.println(

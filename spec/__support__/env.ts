@@ -1,5 +1,9 @@
 /**
  * Sets the given environment variables for the duration of the given function.
+ *
+ * @param env - The environment variables to set.
+ * @param fn - The function to run.
+ * @returns The result of the function.
  */
 export const withEnv = <T>(env: Record<string, string | undefined>, fn: () => T): T => {
   const keys = Object.keys(env);

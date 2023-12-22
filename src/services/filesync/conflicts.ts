@@ -65,9 +65,10 @@ export const getConflicts = ({
  * Returns a new `Changes` object that contains only the changes that do
  * not have conflicts.
  *
- * @param conflicts - The conflicts to check against.
- * @param changes - The changes to filter.
- * @returns A new `Changes` object without conflicts.
+ * @param options - The options to use.
+ * @param options.conflicts - The conflicts to check against.
+ * @param options.changes - The changes to filter.
+ * @returns A new {@linkcode Changes} object without conflicts.
  */
 export const withoutConflictingChanges = ({ conflicts, changes }: { conflicts: Conflicts; changes: ChangesWithHash }): ChangesWithHash => {
   const changesWithoutConflicts = new ChangesWithHash(changes);
@@ -83,6 +84,10 @@ export const withoutConflictingChanges = ({ conflicts, changes }: { conflicts: C
 
 /**
  * Prints a table of conflicts between local changes and gadget changes.
+ *
+ * @param options - The options to use.
+ * @param options.message - The message to print above the table.
+ * @param options.conflicts - The conflicts to print.
  */
 export const printConflicts = ({ message, conflicts }: { message: string; conflicts: Conflicts }): void => {
   const created = chalk.greenBright("+ created");

@@ -32,37 +32,44 @@ export type NockEditGraphQLResponseOptions<Query extends GraphQLQuery> = {
 
   /**
    * The app to respond to.
+   *
    * @default testApp
    */
   app?: App;
 
   /**
    * Whether to keep responding to requests after the first one.
+   *
    * @default false
    */
   persist?: boolean;
 
   /**
    * Whether the request has to be made.
+   *
    * @default true
    */
   optional?: boolean;
 
   /**
    * The number of times to respond to the request.
+   *
    * @default 1
    */
   times?: number;
 
   /**
    * The status code to respond with.
+   *
    * @default 200
    */
   statusCode?: number;
 };
 
 /**
- * Sets up a response to an {@linkcode EditGraphQL} query.
+ * Sets up a response to an {@linkcode EditGraphQL} query or mutation.
+ *
+ * @see {@linkcode NockEditGraphQLResponseOptions}
  */
 export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
   query,
@@ -134,7 +141,7 @@ export type MockEditGraphQLSubscriptions = {
    * returns an object that can be used to emit results and errors to
    * the subscription.
    *
-   * @param query The query to expect.
+   * @param query - The query to expect.
    */
   expectSubscription<Query extends GraphQLQuery>(query: Query): MockEditGraphQLSubscription<Query>;
 };

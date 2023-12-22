@@ -4,22 +4,22 @@ import { fileURLToPath } from "node:url";
 /**
  * Returns the filename of the current module.
  *
- * @returns {string} The filename of the current module.
+ * @returns The filename of the current module.
  */
 export const thisFilename = (): string => fileURLToPath(import.meta.url);
 
 /**
  * Returns the directory name of the current module.
  *
- * @returns {string} The directory name of the current module.
+ * @returns The directory name of the current module.
  */
 export const thisDirname = (): string => path.dirname(thisFilename());
 
 /**
  * Returns a path relative to the current module.
  *
- * @param {string[]} segments The segments of the path.
- * @returns {string} The path relative to the current module.
+ * @param segments - The segments of the path.
+ * @returns The path relative to the current module.
  */
 export const relativeToThisFile = (...segments: string[]): string => path.join(thisDirname(), ...segments);
 

@@ -248,7 +248,8 @@ export class FileSync {
   /**
    * Sends file changes to the Gadget.
    *
-   * @param changes - The changes to send.
+   * @param options - The options to use.
+   * @param options.changes - The changes to send.
    * @returns A promise that resolves when the changes have been sent.
    */
   async sendChangesToGadget({ changes }: { changes: Changes }): Promise<void> {
@@ -269,6 +270,10 @@ export class FileSync {
    * Subscribes to file changes on Gadget and executes the provided
    * callbacks before and after the changes occur.
    *
+   * @param options - The options to use.
+   * @param options.beforeChanges - A callback that is called before the changes occur.
+   * @param options.afterChanges - A callback that is called after the changes occur.
+   * @param options.onError - A callback that is called if an error occurs.
    * @returns A function that unsubscribes from changes on Gadget.
    */
   subscribeToGadgetChanges({
@@ -349,8 +354,7 @@ export class FileSync {
   /**
    * Ensures the local filesystem is in sync with Gadget's filesystem.
    * - All non-conflicting changes are automatically merged.
-   * - Conflicts are resolved by prompting the user to either keep their
-   *   local changes or keep Gadget's changes.
+   * - Conflicts are resolved by prompting the user to either keep their local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
   async sync({ maxAttempts = 10 }: { maxAttempts?: number } = {}): Promise<void> {

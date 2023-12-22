@@ -134,8 +134,12 @@ export class EditGraphQL {
    * subscription. If you want to execute a GraphQL query or mutation,
    * use {@link EditGraphQL.query} instead.
    *
-   * @param payload The query and variables to send to the server.
-   * @param sink The callbacks to invoke when the server responds.
+   * @param payload - The query and variables to send to the server.
+   * @param payload.query - The GraphQL query to subscribe to.
+   * @param payload.variables - The variables to send to the server.
+   * @param payload.onData - A callback that will be called with the data returned by the server.
+   * @param payload.onError - A callback that will be called with any errors returned by the server.
+   * @param payload.onComplete - A callback that will be called when the subscription is complete.
    * @returns A function to unsubscribe from the subscription.
    */
   subscribe<Query extends GraphQLQuery>({
@@ -173,7 +177,10 @@ export class EditGraphQL {
   /**
    * Execute a GraphQL query or mutation.
    *
-   * @param payload The query and variables to send to the server.
+   * @param payload - The query and variables to send to the server.
+   * @param payload.query - The GraphQL query to execute.
+   * @param payload.variables - The variables to send to the server.
+   * @param payload.http - {@linkcode HttpOptions} to pass to http.
    * @returns The data returned by the server.
    */
   async query<Query extends GraphQLQuery>({

@@ -54,18 +54,21 @@ export type PartialSyncJson = Partial<Omit<SyncJson, "filesVersion"> & { filesVe
 export type SyncScenarioOptions = {
   /**
    * The files at filesVersion 1.
+   *
    * @default { ".gadget/": "" }
    */
   filesVersion1Files: Files;
 
   /**
    * The files on the local filesystem.
+   *
    * @default { ".gadget/": "" }
    */
   localFiles: Files;
 
   /**
    * The files Gadget currently has.
+   *
    * @default { ".gadget/": "" }
    */
   gadgetFiles: Files;
@@ -84,6 +87,7 @@ export type SyncScenarioOptions = {
 
   /**
    * The context to use for the FileSync instance.
+   *
    * @default makeContext(args, ["sync", localDir.path, "--app", testApp.slug])
    */
   ctx?: Context<SyncArgs>;

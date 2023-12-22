@@ -33,7 +33,7 @@ export const writeDir = async (dir: string, files: Files): Promise<void> => {
  * their contents. If a directory is encountered, an empty string is
  * assigned as the value for that directory path.
  *
- * @param dir The directory path to read.
+ * @param dir - The directory path to read.
  * @returns A promise that resolves to a map of file paths to their
  * contents.
  */

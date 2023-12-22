@@ -15,7 +15,7 @@ export const compact = <T>(array: T[]): NonNullable<T>[] => {
 /**
  * Returns a new array with all duplicate elements removed.
  *
- * @param array The array to remove duplicates from.
+ * @param array - The array to remove duplicates from.
  * @returns A new array with all duplicate elements removed.
  */
 export const uniq = <T>(array: T[]): T[] => {

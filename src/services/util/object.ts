@@ -48,8 +48,8 @@ export const pick = <T extends Record<string, unknown>, K extends keyof T>(objec
 /**
  * Returns a new object with the specified keys omitted.
  *
- * @param record The input object.
- * @param keys The keys to omit.
+ * @param record - The input object.
+ * @param keys - The keys to omit.
  * @returns A new object with the specified keys omitted.
  */
 export const omit = <T extends Record<string, unknown>, K extends keyof T>(record: T, keys: readonly K[]): Omit<T, K> => {
@@ -65,8 +65,8 @@ export const omit = <T extends Record<string, unknown>, K extends keyof T>(recor
  * Maps the values of an object to a new set of values using the
  * provided function.
  *
- * @param obj The input object to map.
- * @param fn The function to apply to each value in the input object.
+ * @param obj - The input object to map.
+ * @param fn - The function to apply to each value in the input object.
  * @returns A new object with the same keys as the input object, but
  * with the values mapped to new values using the provided function.
  */

@@ -3,8 +3,8 @@ import assert from "node:assert";
 import type { EmptyObject } from "type-fest";
 import type { rootArgs } from "../../commands/root.js";
 import { createLogger, type Logger } from "../output/log/logger.js";
-import type { AnyVoid } from "../util/function.js";
 import { isFunction } from "../util/is.js";
+import type { AnyVoid } from "../util/types.js";
 import { parseArgs, type ArgsSpec, type ArgsSpecResult } from "./arg.js";
 
 /**
@@ -37,6 +37,10 @@ export class Context<
 
   /**
    * Initializes a new context.
+   *
+   * @param options - The options to use.
+   * @param options.args - The arguments to parse.
+   * @param options.name - The name of the command that is being executed.
    */
   static init<Args extends ArgsSpec = ArgsSpec>({
     args: spec,
@@ -49,6 +53,10 @@ export class Context<
 
   /**
    * Extends the current context with more arguments.
+   *
+   * @param options - The options to use.
+   * @param options.args - The arguments to parse.
+   * @param options.name - The name of the command that is being executed.
    */
   extend<Args extends ArgsSpec>({ args: spec, name, ...options }: { args: Args; name?: string } & arg.Options): Context<Args, AllArgs> {
     const args = { ...this.args, ...parseArgs(spec, { argv: this.args._, ...options }) };
@@ -60,6 +68,10 @@ export class Context<
   /**
    * Clones the current context and optionally overrides its name and
    * arguments.
+   *
+   * @param options - The options to use.
+   * @param options.args - The arguments to override.
+   * @param options.name - The name to override.
    */
   clone({ args, name }: { args?: Partial<ArgsSpecResult<AllArgs>>; name?: string }): Context<Args, ParentArgs, AllArgs> {
     const ctx = new Context<Args, ParentArgs, AllArgs>({ args: { ...args, ...this.args }, name });
@@ -71,7 +83,7 @@ export class Context<
    * Registers a callback that will be called when the context is
    * aborted (e.g. when the user presses Ctrl+C).
    *
-   * @param callback The callback to call when the context is aborted.
+   * @param callback - The callback to call when the context is aborted.
    */
   onAbort(callback: OnAbort): void;
 
@@ -79,8 +91,8 @@ export class Context<
    * Registers a callback that will be called when the context is
    * aborted (e.g. when the user presses Ctrl+C).
    *
-   * @param options.once Whether the callback should only be called once. Defaults to `true`.
-   * @param callback The callback to call when the context is aborted.
+   * @param options.once - Whether the callback should only be called once. Defaults to `true`.
+   * @param callback - The callback to call when the context is aborted.
    */
   onAbort(options: { once?: boolean }, callback: OnAbort): void;
 

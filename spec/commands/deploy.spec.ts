@@ -70,7 +70,7 @@ describe("deploy", () => {
 
       Issues detected
 
-      • Other Issues 1 issue 
+      • Other Issues 1 issue
          ✖ Add google keys for production
       "
     `);
@@ -110,7 +110,7 @@ describe("deploy", () => {
 
       Issues detected
 
-      • Other Issues 1 issue 
+      • Other Issues 1 issue
          ✖ Add google keys for production
       "
     `);
@@ -228,7 +228,7 @@ describe("deploy", () => {
 
       Issues detected
 
-      • Other Issues 1 issue 
+      • Other Issues 1 issue
          ✖ Add google keys for production
 
       Building frontend assets ...

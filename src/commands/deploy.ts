@@ -230,7 +230,7 @@ export const command = (async (ctx, firstRun = true) => {
           for (const [name, nodeArray] of Object.entries(groupedIssues)) {
             ctx.log.println(
               `\n\n • ${chalk.cyan(name)} ${chalk.redBright(
-                `${nodeArray.length === 1 ? `${nodeArray.length} issue` : `${nodeArray.length} issues`}`,
+                nodeArray.length === 1 ? `${nodeArray.length} issue` : `${nodeArray.length} issues`,
               )}${nodeArray
                 .map((e) => {
                   if (!e.node) {
@@ -250,7 +250,7 @@ export const command = (async (ctx, firstRun = true) => {
           if (e.node?.type === "SourceFile") {
             return `${chalk.magentaBright("Typescript")} ${e.message.replace(/[.,]+$/, "")}`;
           }
-          return `${e.message.replace(/[.,]+$/, "")}`;
+          return e.message.replace(/[.,]+$/, "");
         };
 
         const issuesWithNoNode = issues.filter((item) => item.node?.apiIdentifier) as NodeIssue[];

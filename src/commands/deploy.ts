@@ -226,13 +226,12 @@ export const command = (async (ctx, firstRun = true) => {
       if (firstRun && hasIssues) {
         ctx.log.printlns`{underline Issues detected}`;
 
-        // @typescript-eslint/no-useless-template-literals
         const printIssues = (groupedIssues: GroupedIssues): void => {
           for (const [name, nodeArray] of Object.entries(groupedIssues)) {
             ctx.log.println(
               `\n\n • ${chalk.cyan(name)} ${chalk.redBright(
                 `${nodeArray.length === 1 ? `${nodeArray.length} issue` : `${nodeArray.length} issues`}`,
-              )} ${nodeArray
+              )}${nodeArray
                 .map((e) => {
                   if (!e.node) {
                     return `\n\t   ${chalk.red("✖")} ${e.message}`;
@@ -288,7 +287,7 @@ export const command = (async (ctx, firstRun = true) => {
 
         const handleCompletion = (message: string | null | undefined, color: string): void => {
           spinner.stopAndPersist({
-            symbol: color === "red" ? `${chalk.red("✖")}` : `${chalk.greenBright("✔")}`,
+            symbol: color === "red" ? chalk.red("✖") : chalk.greenBright("✔"),
             text: color === "red" ? "Failed" : "DONE",
           });
 

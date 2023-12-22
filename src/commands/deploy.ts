@@ -228,7 +228,7 @@ export const command = (async (ctx, firstRun = true) => {
 
         const printIssues = (groupedIssues: GroupedIssues): void => {
           for (const [name, nodeArray] of Object.entries(groupedIssues)) {
-            log.println(
+            ctx.log.println(
               `\n\n • ${chalk.cyan(name)} ${chalk.redBright(
                 `${nodeArray.length === 1 ? `${nodeArray.length} issue` : `${nodeArray.length} issues`}`,
               )} ${nodeArray
@@ -291,9 +291,9 @@ export const command = (async (ctx, firstRun = true) => {
             text: color === "red" ? "Failed" : "DONE",
           });
 
-          log.printlns(color === "red" ? chalk.red(message) : chalk.green(message));
+          ctx.log.printlns(color === "red" ? chalk.red(message) : chalk.green(message));
           if (publishStatus?.output) {
-            log.printlns(`Cmd/Ctrl + Click: \u001b]8;;${publishStatus.output}\u0007View Logs\u001b]8;;\u0007`);
+            ctx.log.printlns(`Cmd/Ctrl + Click: \u001b]8;;${publishStatus.output}\u0007View Logs\u001b]8;;\u0007`);
           }
           unsubscribe();
         };

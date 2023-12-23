@@ -1,5 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/eslintrc",
+  "ignorePatterns": ["node_modules", "lib", "tmp", "__fixtures__", "__generated__", ".direnv", "bin/run.js"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": true
@@ -17,16 +18,23 @@
   "env": {
     "node": true
   },
+  "settings": {
+    "import/extensions": [".js", ".jsx", ".ts", ".tsx"],
+    "import/resolver": {
+      "node": true,
+      "typescript": true
+    }
+  },
   "rules": {
     "curly": ["warn", "all"],
     "eqeqeq": ["warn", "smart"],
     "func-style": ["warn", "expression"],
     "max-depth": ["warn", 3],
     "no-unneeded-ternary": ["warn"],
+    "object-shorthand": ["warn", "always"],
     "prefer-const": ["warn", { "destructuring": "all" }],
     "quotes": ["warn", "double", { "avoidEscape": true }],
     "spaced-comment": ["warn", "always"],
-    "no-restricted-imports": ["warn", { "paths": [{ "name": "node:test", "message": "Use 'vitest' instead" }] }],
 
     "jsdoc/require-hyphen-before-param-description": ["warn"],
     "jsdoc/require-jsdoc": ["warn", { "publicOnly": true }],
@@ -55,14 +63,65 @@
   },
   "overrides": [
     {
-      "files": "src/services/util/**",
+      "files": "src/**",
       "rules": {
-        "no-restricted-imports": ["error", { "patterns": [{ "group": ["../"], "message": "utilities can only import other utilities" }] }]
+        "no-restricted-imports": [
+          "warn",
+          {
+            "patterns": [
+              {
+                "group": ["/src"],
+                "message": "src files must be imported relatively (e.g. ../../src)"
+              },
+              {
+                "group": ["spec/"],
+                "message": "src files cannot import spec files"
+              }
+            ]
+          }
+        ],
+        "import/no-extraneous-dependencies": ["warn", { "devDependencies": false }]
       }
     },
     {
-      "files": "**/spec/**",
+      "files": "src/services/util/**",
       "rules": {
+        "no-restricted-imports": [
+          "warn",
+          {
+            "patterns": [
+              {
+                "group": ["/src"],
+                "message": "src files must be imported relatively (e.g. ../../src)"
+              },
+              {
+                "group": ["../"],
+                "message": "utilities can only import other utilities"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": "spec/**",
+      "rules": {
+        "no-restricted-imports": [
+          "warn",
+          {
+            "paths": [{ "name": "node:test", "message": "Use 'vitest' instead" }],
+            "patterns": [
+              {
+                "group": ["/src"],
+                "message": "src files must be imported relatively (e.g. ../../src)"
+              },
+              {
+                "group": ["/spec"],
+                "message": "spec files must be imported relatively (e.g. ../../spec)"
+              }
+            ]
+          }
+        ],
         "@typescript-eslint/no-dynamic-delete": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
@@ -75,13 +134,5 @@
         "unicorn/template-indent": ["off"]
       }
     }
-  ],
-  "settings": {
-    "import/extensions": [".js", ".jsx", ".ts", ".tsx"],
-    "import/resolver": {
-      "node": true,
-      "typescript": true
-    }
-  },
-  "ignorePatterns": ["node_modules", "lib", "tmp", "__fixtures__", "__generated__", ".direnv", "bin/run.js"]
+  ]
 }

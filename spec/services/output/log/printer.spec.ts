@@ -110,7 +110,7 @@ describe("printer", () => {
     for (const borders of ["none", "thin", "thick"] as const) {
       it(`writes a table with ${borders} borders to stdout`, () => {
         printer.printTable({
-          borders: borders,
+          borders,
           message: "Table Title",
           headers: ["Column 1", "Column 2"],
           rows: [

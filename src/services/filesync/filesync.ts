@@ -303,7 +303,7 @@ export class FileSync {
             }
 
             this.ctx.log.debug("received files", {
-              remoteFilesVersion: remoteFilesVersion,
+              remoteFilesVersion,
               changed: changed.map((change) => change.path),
               deleted: deleted.map((change) => change.path),
             });

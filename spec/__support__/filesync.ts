@@ -326,7 +326,7 @@ export const makeSyncScenario = async ({
       return {
         data: {
           fileSyncFiles: {
-            filesVersion: filesVersion,
+            filesVersion,
             files: await pMap(paths, async (filepath) => {
               const stats = await fs.stat(filesVersionDir.absolute(filepath));
               let content = "";

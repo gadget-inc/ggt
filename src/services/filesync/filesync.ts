@@ -111,7 +111,7 @@ export class FileSync {
    * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
    */
   static async init({ ctx, user }: { ctx: Context<FileSyncArgs>; user: User }): Promise<FileSync> {
-    ctx = ctx.clone({ name: "filesync" });
+    ctx = ctx.child({ name: "filesync" });
 
     const apps = await getApps(user);
     if (apps.length === 0) {

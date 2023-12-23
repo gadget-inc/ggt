@@ -9,7 +9,7 @@ export const makeContext = <Args extends ArgsSpec>(args: Args = {} as Args, argv
     process.argv = ["node", "ggt", ...argv];
   }
 
-  const ctx = Context.init({ args: rootArgs, argv: process.argv.slice(2), permissive: true });
+  const ctx = Context.init({ name: "test", parse: rootArgs, argv: process.argv.slice(2), permissive: true });
 
   // replicate the root command's behavior of shifting the command name
   // from the args
@@ -18,5 +18,5 @@ export const makeContext = <Args extends ArgsSpec>(args: Args = {} as Args, argv
     expect(AvailableCommands).toContain(cmd);
   }
 
-  return ctx.extend({ args, name: cmd });
+  return ctx.child({ name: cmd, parse: args });
 };

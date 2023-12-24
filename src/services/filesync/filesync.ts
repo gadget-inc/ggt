@@ -407,7 +407,7 @@ export class FileSync {
 
       let preference = this.ctx.args["--prefer"];
       if (!preference) {
-        printConflicts({
+        printConflicts(this.ctx, {
           message: sprint`{bold You have conflicting changes with Gadget}`,
           conflicts,
         });

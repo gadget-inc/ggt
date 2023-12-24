@@ -125,7 +125,7 @@ export const command = (async (ctx, firstRun = true) => {
       Local files have diverged from remote. Run a sync once to converge your files or keep {italic ggt sync} running in the background.
     `;
 
-    action = await select({
+    action = await select(ctx, {
       message: "How would you like to proceed?",
       choices: [Action.CANCEL, Action.SYNC_ONCE],
     });
@@ -189,7 +189,7 @@ export const command = (async (ctx, firstRun = true) => {
         if (!ctx.args["--force"]) {
           unsubscribe();
 
-          action = await select({
+          action = await select(ctx, {
             message: "Detected some issues with your app. How would you like to proceed?",
             choices: [Action.CANCEL, Action.DEPLOY_ANYWAYS],
           });

@@ -1,13 +1,11 @@
 import chalk from "chalk";
 import pluralize from "pluralize";
+import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";
-import { createLogger } from "../output/log/logger.js";
 import type { PrintTableOptions } from "../output/log/printer.js";
 import { sprint } from "../output/sprint.js";
 import { isNever, isString } from "../util/is.js";
-
-const log = createLogger({ name: "changes" });
 
 export type Create = { type: "create"; oldPath?: string };
 export type Update = { type: "update" };
@@ -37,21 +35,25 @@ export class Changes extends Map<string, Change> {
 /**
  * Prints the changes to the console.
  *
+ * @param ctx - The current context.
  * @param options - The options to use.
  * @param options.changes - The changes to print.
  * @param options.tense - The tense to use for the change type.
  * @param options.limit - The maximum number of changes to print.
  */
-export const printChanges = ({
-  changes,
-  tense,
-  limit = Infinity,
-  ...tableOptions
-}: {
-  changes: Changes;
-  tense: "past" | "present";
-  limit?: number;
-} & Partial<PrintTableOptions>): void => {
+export const printChanges = (
+  ctx: Context,
+  {
+    changes,
+    tense,
+    limit = Infinity,
+    ...tableOptions
+  }: {
+    changes: Changes;
+    tense: "past" | "present";
+    limit?: number;
+  } & Partial<PrintTableOptions>,
+): void => {
   if (config.logLevel <= Level.TRACE) {
     // print all changes when tracing
     limit = Infinity;
@@ -111,5 +113,5 @@ export const printChanges = ({
     footer += ".";
   }
 
-  log.printTable({ rows, footer, ...tableOptions });
+  ctx.log.printTable({ rows, footer, ...tableOptions });
 };

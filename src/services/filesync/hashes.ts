@@ -1,9 +1,7 @@
 import assert from "node:assert";
-import { createLogger } from "../output/log/logger.js";
+import type { Context } from "../command/context.js";
 import { type Create, type Delete, type Update } from "./changes.js";
 import type { Hash, Hashes } from "./directory.js";
-
-const log = createLogger({ name: "hashes" });
 
 export type CreateWithHash = Create & { targetHash: Hash };
 export type UpdateWithHash = Update & { sourceHash: Hash; targetHash: Hash };
@@ -39,23 +37,27 @@ export class ChangesWithHash extends Map<string, ChangeWithHash> {
  * If `ignore` is provided, any changes that were made to a path that
  * starts with any of the `ignore` paths are skipped.
  *
+ * @param ctx - The current context.
  * @param options - The options to use.
  * @param options.from - The source hashes.
  * @param options.to - The target hashes.
  * @param options.existing - The existing hashes.
  * @param options.ignore - The paths to ignore.
  */
-export const getChanges = ({
-  from: source,
-  to: target,
-  existing,
-  ignore,
-}: {
-  from: Hashes;
-  to: Hashes;
-  existing?: Hashes;
-  ignore?: string[];
-}): ChangesWithHash => {
+export const getChanges = (
+  ctx: Context,
+  {
+    from: source,
+    to: target,
+    existing,
+    ignore,
+  }: {
+    from: Hashes;
+    to: Hashes;
+    existing?: Hashes;
+    ignore?: string[];
+  },
+): ChangesWithHash => {
   const changes = new ChangesWithHash();
   const targetPaths = Object.keys(target);
 
@@ -72,13 +74,13 @@ export const getChanges = ({
         // existing files inside it, therefor the sourcePath has been
         // deleted
         changes.set(sourcePath, { type: "delete", sourceHash });
-        log.trace("file deleted", { path: sourcePath, sourceHash });
+        ctx.log.trace("file deleted", { path: sourcePath, sourceHash });
       }
     } else if (!isEqualHash(sourcePath, sourceHash, targetHash)) {
       // the file or directory exists in target, but has a different
       // hash, so it's been updated
       changes.set(sourcePath, { type: "update", sourceHash, targetHash });
-      log.trace("file updated", { path: sourcePath, sourceHash, targetHash });
+      ctx.log.trace("file updated", { path: sourcePath, sourceHash, targetHash });
     }
   }
 
@@ -93,7 +95,7 @@ export const getChanges = ({
       assert(targetHash, "targetHash should exist");
 
       changes.set(targetPath, { type: "create", targetHash });
-      log.trace("file created", { path: targetPath, targetHash });
+      ctx.log.trace("file created", { path: targetPath, targetHash });
     }
   }
 
@@ -101,26 +103,29 @@ export const getChanges = ({
     return changes;
   }
 
-  return withoutUnnecessaryChanges({ changes, existing });
+  return withoutUnnecessaryChanges(ctx, { changes, existing });
 };
 
 /**
  * Filters out changes that the existing filesystem already has.
  */
-export const withoutUnnecessaryChanges = ({ changes, existing }: { changes: ChangesWithHash; existing: Hashes }): ChangesWithHash => {
+export const withoutUnnecessaryChanges = (
+  ctx: Context,
+  { changes, existing }: { changes: ChangesWithHash; existing: Hashes },
+): ChangesWithHash => {
   const necessaryChanges = new ChangesWithHash();
 
   for (const [path, change] of changes) {
     const existingHash = existing[path];
     if (change.type === "delete" && !existingHash) {
       // already deleted
-      log.trace("already deleted", { path });
+      ctx.log.trace("already deleted", { path });
       continue;
     }
 
     if (change.type !== "delete" && existingHash && isEqualHash(path, change.targetHash, existingHash)) {
       // already created or updated
-      log.trace("already created or updated", { path, existingHash, targetHash: change.targetHash });
+      ctx.log.trace("already created or updated", { path, existingHash, targetHash: change.targetHash });
       continue;
     }
 
@@ -162,18 +167,18 @@ export const isEqualHash = (_path: string, aHash: Hash, bHash: Hash): boolean =>
   // return aHash.permissions === bHash.permissions;
 };
 
-export const isEqualHashes = (a: Hashes, b: Hashes): boolean => {
+export const isEqualHashes = (ctx: Context, a: Hashes, b: Hashes): boolean => {
   for (const [aPath, aHash] of Object.entries(a)) {
     const bHash = b[aPath];
     if (!bHash || !isEqualHash(aPath, aHash, bHash)) {
-      log.debug("hashes are not equal", { path: aPath, aHash, bHash });
+      ctx.log.debug("hashes are not equal", { path: aPath, aHash, bHash });
       return false;
     }
   }
 
   for (const bPath of Object.keys(b)) {
     if (!a[bPath]) {
-      log.debug("hashes are not equal", { path: bPath, aHash: undefined, bHash: b[bPath] });
+      ctx.log.debug("hashes are not equal", { path: bPath, aHash: undefined, bHash: b[bPath] });
       return false;
     }
   }

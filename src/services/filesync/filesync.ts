@@ -165,7 +165,7 @@ export class FileSync {
     let appSlug = ctx.args["--app"] || state?.app;
     if (!appSlug) {
       // the user didn't specify an app, suggest some apps that they can sync to
-      appSlug = await select({
+      appSlug = await select(ctx, {
         message: "Select the app to sync to",
         choices: apps.map((x) => x.slug),
       });
@@ -338,7 +338,7 @@ export class FileSync {
             });
 
             if (changes.size > 0) {
-              printChanges({
+              printChanges(this.ctx, {
                 message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
                 changes,
                 tense: "past",
@@ -390,12 +390,12 @@ export class FileSync {
   }
 
   async _sync({ filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion }: Omit<FileSyncHashes, "inSync">): Promise<void> {
-    let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
-    let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
+    let localChanges = getChanges(this.ctx, { from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
+    let gadgetChanges = getChanges(this.ctx, { from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
 
     if (localChanges.size === 0 && gadgetChanges.size === 0) {
       // the local filesystem is missing .gadget/ files
-      gadgetChanges = getChanges({ from: localHashes, to: gadgetHashes });
+      gadgetChanges = getChanges(this.ctx, { from: localHashes, to: gadgetHashes });
       assertAllGadgetFiles({ gadgetChanges });
     }
 
@@ -407,12 +407,12 @@ export class FileSync {
 
       let preference = this.ctx.args["--prefer"];
       if (!preference) {
-        printConflicts({
+        printConflicts(this.ctx, {
           message: sprint`{bold You have conflicting changes with Gadget}`,
           conflicts,
         });
 
-        preference = await select({
+        preference = await select(this.ctx, {
           message: "How would you like to resolve these conflicts?",
           choices: Object.values(ConflictPreference),
         });
@@ -477,7 +477,13 @@ export class FileSync {
       })(),
     ]);
 
-    return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion, inSync: isEqualHashes(localHashes, gadgetHashes) };
+    return {
+      filesVersionHashes,
+      localHashes,
+      gadgetHashes,
+      gadgetFilesVersion,
+      inSync: isEqualHashes(this.ctx, localHashes, gadgetHashes),
+    };
   }
 
   private async _getChangesFromGadget({
@@ -511,7 +517,7 @@ export class FileSync {
       delete: changes.deleted(),
     });
 
-    printChanges({
+    printChanges(this.ctx, {
       changes,
       tense: "past",
       message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
@@ -599,7 +605,7 @@ export class FileSync {
       },
     });
 
-    printChanges({
+    printChanges(this.ctx, {
       changes,
       tense: "past",
       message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,

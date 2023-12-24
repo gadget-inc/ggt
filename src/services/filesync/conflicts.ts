@@ -1,8 +1,6 @@
 import chalk from "chalk";
-import { createLogger } from "../output/log/logger.js";
+import type { Context } from "../command/context.js";
 import { ChangesWithHash, isEqualHash, type ChangeWithHash } from "./hashes.js";
-
-const log = createLogger({ name: "conflicts" });
 
 /**
  * A map of conflicting changes made between the user's local filesystem
@@ -85,16 +83,17 @@ export const withoutConflictingChanges = ({ conflicts, changes }: { conflicts: C
 /**
  * Prints a table of conflicts between local changes and gadget changes.
  *
+ * @param ctx - The current context.
  * @param options - The options to use.
  * @param options.message - The message to print above the table.
  * @param options.conflicts - The conflicts to print.
  */
-export const printConflicts = ({ message, conflicts }: { message: string; conflicts: Conflicts }): void => {
+export const printConflicts = (ctx: Context, { message, conflicts }: { message: string; conflicts: Conflicts }): void => {
   const created = chalk.greenBright("+ created");
   const updated = chalk.blueBright("± updated");
   const deleted = chalk.redBright("- deleted");
 
-  log.printTable({
+  ctx.log.printTable({
     message,
     colAligns: ["left", "center", "center"],
     headers: ["", "You", "Gadget"],

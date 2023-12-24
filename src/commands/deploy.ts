@@ -115,7 +115,7 @@ export const command = (async (ctx, firstRun = true) => {
 
   const filesync = await FileSync.init({
     // deploy --force != sync --force
-    ctx: ctx.clone({ args: { "--force": false } }),
+    ctx: ctx.child({ overwrite: { "--force": false } }),
     user: await getUserOrLogin(),
   });
 

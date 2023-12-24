@@ -44,7 +44,7 @@ export const rootArgs = {
 export type RootArgs = typeof rootArgs;
 
 export const command = async (): Promise<void> => {
-  const ctx = Context.init({ args: rootArgs, argv: process.argv.slice(2), permissive: true });
+  const ctx = Context.init({ name: "root", parse: rootArgs, argv: process.argv.slice(2), permissive: true });
 
   await warnIfUpdateAvailable();
 
@@ -82,7 +82,7 @@ export const command = async (): Promise<void> => {
   }
 
   try {
-    await command(ctx.extend({ args, name: cmd }));
+    await command(ctx.child({ parse: args, name: cmd }));
   } catch (error) {
     await reportErrorAndExit(error);
   }

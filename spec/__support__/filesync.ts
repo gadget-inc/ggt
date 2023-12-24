@@ -42,7 +42,7 @@ import { timeoutMs } from "./sleep.js";
 /**
  * Represents the state of a FileSync instance.
  */
-export type SyncJson = (typeof FileSync.prototype)["_state"];
+export type SyncJson = (typeof FileSync.prototype)["_syncJson"];
 
 /**
  * Represents the state of a FileSync instance, but with optional fields
@@ -540,10 +540,10 @@ export const makeFile = (options: PartialExcept<File, "path">): File => {
 };
 
 export const expectSyncJson = (filesync: FileSync, expected: PartialSyncJson = {}): string => {
-  // @ts-expect-error _state is private
-  const state = filesync._state;
-  expect(state).toMatchObject(expected);
-  return prettyJSON(state);
+  // @ts-expect-error _syncJson is private
+  const syncJson = filesync._syncJson;
+  expect(syncJson).toMatchObject(expected);
+  return prettyJSON(syncJson);
 };
 
 export const expectPublishVariables = (expected: MutationPublishFileSyncEventsArgs): ZodSchema<MutationPublishFileSyncEventsArgs> => {

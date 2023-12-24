@@ -5,7 +5,7 @@ import { createStructuredLogger, type StructuredLogger } from "./structured.js";
 
 export type Logger = StructuredLogger &
   Printer & {
-    extend(name: string, fields?: Thunk<Fields>): Logger;
+    child(options: { name?: string; fields?: Thunk<Fields> }): Logger;
   };
 
 /**
@@ -28,8 +28,8 @@ export const createLogger = ({ name, fields: loggerFields = {} }: { name: string
   return {
     ...createPrinter({ name }),
     ...createStructuredLogger({ name, fields: loggerFields }),
-    extend: (name, extendedLoggerFields?: Thunk<Fields>) => {
-      return createLogger({ name, fields: () => ({ ...unthunk(loggerFields), ...unthunk(extendedLoggerFields) }) });
+    child: ({ name: childName, fields: childFields }) => {
+      return createLogger({ name: childName || name, fields: () => ({ ...unthunk(loggerFields), ...unthunk(childFields) }) });
     },
   };
 };

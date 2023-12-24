@@ -1,15 +1,23 @@
-import { describe, it } from "vitest";
+import { beforeEach, describe, it } from "vitest";
+import type { Context } from "../../../src/services/command/context.js";
 import { Changes, printChanges } from "../../../src/services/filesync/changes.js";
+import { makeContext } from "../../__support__/context.js";
 import { expectStdout } from "../../__support__/stream.js";
 
 describe("printChanges", () => {
+  let ctx: Context;
+
+  beforeEach(() => {
+    ctx = makeContext();
+  });
+
   it("prints the changes in present tense", () => {
     const changes = new Changes();
     changes.set("foo", { type: "create" });
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges({ changes, tense: "present", message: "→ Sent 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "present", message: "→ Sent 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
       "→ Sent 12:00:00 PM
       bar  update ± 
@@ -26,7 +34,7 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges({ changes, tense: "past", message: "← Received 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "past", message: "← Received 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
       "← Received 12:00:00 PM
       bar  updated ± 
@@ -51,7 +59,7 @@ describe("printChanges", () => {
       changes.set(`file-${i}`, { type: "delete" });
     }
 
-    printChanges({ changes, tense: "present", message: "→ Sent 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "present", message: "→ Sent 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
       "→ Sent 12:00:00 PM
 

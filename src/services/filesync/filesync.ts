@@ -338,7 +338,7 @@ export class FileSync {
             });
 
             if (changes.size > 0) {
-              printChanges({
+              printChanges(this.ctx, {
                 message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
                 changes,
                 tense: "past",
@@ -511,7 +511,7 @@ export class FileSync {
       delete: changes.deleted(),
     });
 
-    printChanges({
+    printChanges(this.ctx, {
       changes,
       tense: "past",
       message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
@@ -599,7 +599,7 @@ export class FileSync {
       },
     });
 
-    printChanges({
+    printChanges(this.ctx, {
       changes,
       tense: "past",
       message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,

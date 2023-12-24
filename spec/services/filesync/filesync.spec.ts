@@ -49,15 +49,15 @@ describe("FileSync.init", () => {
 
     const filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }));
 
-    // @ts-expect-error _state is private
-    expect(filesync._state).toEqual(state);
+    // @ts-expect-error _syncJson is private
+    expect(filesync._syncJson).toEqual(state);
   });
 
   it("uses default state if .gadget/sync.json does not exist and `dir` is empty", async () => {
     const filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }));
 
-    // @ts-expect-error _state is private
-    expect(filesync._state).toEqual({ app: "test", filesVersion: "0", mtime: 0 });
+    // @ts-expect-error _syncJson is private
+    expect(filesync._syncJson).toEqual({ app: "test", filesVersion: "0", mtime: 0 });
   });
 
   it("throws InvalidSyncFileError if .gadget/sync.json does not exist and `dir` is not empty", async () => {
@@ -83,8 +83,8 @@ describe("FileSync.init", () => {
 
     const filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--force"] }));
 
-    // @ts-expect-error _state is private
-    expect(filesync._state).toEqual({ app: testApp.slug, filesVersion: "0", mtime: 0 });
+    // @ts-expect-error _syncJson is private
+    expect(filesync._syncJson).toEqual({ app: testApp.slug, filesVersion: "0", mtime: 0 });
   });
 
   it("throws ArgError if the `--app` arg is passed a slug that does not exist within the user's available apps", async () => {
@@ -130,8 +130,8 @@ describe("FileSync.init", () => {
 
     const filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--force"] }));
 
-    // @ts-expect-error _state is private
-    expect(filesync._state).toEqual({ app: testApp.slug, filesVersion: "0", mtime: 0 });
+    // @ts-expect-error _syncJson is private
+    expect(filesync._syncJson).toEqual({ app: testApp.slug, filesVersion: "0", mtime: 0 });
   });
 });
 

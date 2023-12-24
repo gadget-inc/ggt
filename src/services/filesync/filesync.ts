@@ -78,8 +78,9 @@ export class FileSync {
      *
      * This is persisted to `.gadget/sync.json` within the {@linkcode directory}.
      */
-    private _state: { app: string; filesVersion: string; mtime: number },
+    private _syncJson: { app: string; filesVersion: string; mtime: number },
   ) {
+    this.ctx = ctx.child({ fields: () => ({ syncJson: this._syncJson }) });
     this.editGraphQL = new EditGraphQL(this.ctx, this.app);
   }
 
@@ -90,7 +91,7 @@ export class FileSync {
    * filesystem on the local machine.
    */
   get filesVersion(): bigint {
-    return BigInt(this._state.filesVersion);
+    return BigInt(this._syncJson.filesVersion);
   }
 
   /**
@@ -100,7 +101,7 @@ export class FileSync {
    * sync. This does not include the mtime of files that are ignored.
    */
   get mtime(): number {
-    return this._state.mtime;
+    return this._syncJson.mtime;
   }
 
   /**
@@ -693,12 +694,12 @@ export class FileSync {
   }
 
   /**
-   * Updates {@linkcode _state} and saves it to `.gadget/sync.json`.
+   * Updates {@linkcode _syncJson} and saves it to `.gadget/sync.json`.
    */
   private async _save(filesVersion: string | bigint): Promise<void> {
-    this._state = { ...this._state, mtime: Date.now() + 1, filesVersion: String(filesVersion) };
-    this.ctx.log.debug("saving state", { state: this._state });
-    await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this._state, { spaces: 2 });
+    this._syncJson = { ...this._syncJson, mtime: Date.now() + 1, filesVersion: String(filesVersion) };
+    this.ctx.log.debug("saving .gadget/sync.json");
+    await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this._syncJson, { spaces: 2 });
   }
 }
 

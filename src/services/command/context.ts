@@ -1,7 +1,9 @@
 import assert from "node:assert";
 import type { EmptyObject } from "type-fest";
 import type { rootArgs } from "../../commands/root.js";
+import type { Fields } from "../output/log/field.js";
 import { createLogger, type Logger } from "../output/log/logger.js";
+import type { Thunk } from "../util/function.js";
 import type { AnyVoid } from "../util/types.js";
 import { parseArgs, type ArgsSpec, type ArgsSpecResult } from "./arg.js";
 
@@ -40,6 +42,11 @@ export type ContextInit<Args extends ArgsSpec> = {
    * @default false
    */
   stopAtPositional?: boolean;
+
+  /**
+   * Fields to add to the logger.
+   */
+  fields?: Thunk<Fields>;
 };
 
 /**
@@ -74,10 +81,10 @@ export class Context<
    */
   readonly log: Logger;
 
-  private constructor({ args, name = "context" }: { args: ArgsSpecResult<ThisArgs>; name?: string }) {
+  private constructor({ args, log }: { args: ArgsSpecResult<ThisArgs>; log: Logger }) {
     super();
     this.args = args;
-    this.log = createLogger({ name, fields: { args: this.args } });
+    this.log = log;
 
     // in case this context is ...spread into another object
     this.abort = this.abort.bind(this);
@@ -90,8 +97,13 @@ export class Context<
    *
    * @see {@linkcode ContextInit}
    */
-  static init<Args extends ArgsSpec = ArgsSpec>({ name, parse: spec, ...options }: ContextInit<Args>): Context<Args, EmptyObject> {
-    return new Context({ name, args: parseArgs(spec, options) });
+  static init<Args extends ArgsSpec = ArgsSpec>({
+    name,
+    parse: spec,
+    fields,
+    ...argOptions
+  }: ContextInit<Args>): Context<Args, EmptyObject> {
+    return new Context({ args: parseArgs(spec, argOptions), log: createLogger({ name, fields }) });
   }
 
   /**
@@ -100,14 +112,19 @@ export class Context<
    * @see {@linkcode ContextChildInit}
    */
   child<ChildArgs extends ArgsSpec>({
-    name,
     parse: spec = {} as ChildArgs,
     overwrite,
-    ...options
+    name,
+    fields,
+    ...argOptions
   }: ContextChildInit<ChildArgs, ArgsSpecResult<ThisArgs>>): Context<ChildArgs, ThisArgs> {
-    const args = { ...this.args, ...overwrite, ...parseArgs(spec, { argv: this.args._, ...options }) };
-    const ctx = new Context<ChildArgs, ThisArgs>({ name, args });
+    const ctx = new Context<ChildArgs, ThisArgs>({
+      args: { ...this.args, ...overwrite, ...parseArgs(spec, { argv: this.args._, ...argOptions }) },
+      log: this.log.child({ name, fields }),
+    });
+
     this.onAbort(() => ctx.abort());
+
     return ctx;
   }
 

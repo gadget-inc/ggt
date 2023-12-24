@@ -165,7 +165,7 @@ export class FileSync {
     let appSlug = ctx.args["--app"] || state?.app;
     if (!appSlug) {
       // the user didn't specify an app, suggest some apps that they can sync to
-      appSlug = await select({
+      appSlug = await select(ctx, {
         message: "Select the app to sync to",
         choices: apps.map((x) => x.slug),
       });
@@ -412,7 +412,7 @@ export class FileSync {
           conflicts,
         });
 
-        preference = await select({
+        preference = await select(this.ctx, {
           message: "How would you like to resolve these conflicts?",
           choices: Object.values(ConflictPreference),
         });

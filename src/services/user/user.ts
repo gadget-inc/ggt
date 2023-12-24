@@ -67,7 +67,7 @@ export const getUserOrLogin = async (
   }
 
   ctx.log.info("prompting user to log in");
-  await confirm({ message });
+  await confirm(ctx, { message });
 
   await login(ctx);
 

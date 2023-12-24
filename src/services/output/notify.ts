@@ -4,11 +4,9 @@ import type Growl from "node-notifier/notifiers/growl.js";
 import type NotificationCenter from "node-notifier/notifiers/notificationcenter.js";
 import type NotifySend from "node-notifier/notifiers/notifysend.js";
 import type WindowsToaster from "node-notifier/notifiers/toaster.js";
+import type { Context } from "../command/context.js";
 import { assetsPath } from "../util/paths.js";
 import type { Field } from "./log/field.js";
-import { createLogger } from "./log/logger.js";
-
-const log = createLogger({ name: "notify" });
 
 /**
  * Sends a native OS notification to the user.
@@ -16,6 +14,7 @@ const log = createLogger({ name: "notify" });
  * @see {@link https://www.npmjs.com/package/node-notifier node-notifier}
  */
 export const notify = (
+  ctx: Context,
   notification:
     | Notification
     | NotificationCenter.Notification
@@ -24,7 +23,7 @@ export const notify = (
     | WindowsBalloon.Notification
     | Growl.Notification,
 ): void => {
-  log.info("notifying user", { notification: notification as Field });
+  ctx.log.info("notifying user", { notification: notification as Field });
 
   notifier.notify(
     {
@@ -37,7 +36,7 @@ export const notify = (
     },
     (error) => {
       if (error) {
-        log.warn("error notifying user", { notification: notification as Field });
+        ctx.log.warn("error notifying user", { notification: notification as Field });
       }
     },
   );

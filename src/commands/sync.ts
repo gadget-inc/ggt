@@ -276,7 +276,7 @@ export const command: Command<typeof args> = async (ctx) => {
       return;
     }
 
-    notify({ subtitle: "Uh oh!", message: "An error occurred while syncing files" });
+    notify(ctx, { subtitle: "Uh oh!", message: "An error occurred while syncing files" });
     await reportErrorAndExit(reason);
   });
 };

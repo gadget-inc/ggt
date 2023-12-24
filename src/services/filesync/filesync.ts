@@ -390,12 +390,12 @@ export class FileSync {
   }
 
   async _sync({ filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion }: Omit<FileSyncHashes, "inSync">): Promise<void> {
-    let localChanges = getChanges({ from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
-    let gadgetChanges = getChanges({ from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
+    let localChanges = getChanges(this.ctx, { from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
+    let gadgetChanges = getChanges(this.ctx, { from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
 
     if (localChanges.size === 0 && gadgetChanges.size === 0) {
       // the local filesystem is missing .gadget/ files
-      gadgetChanges = getChanges({ from: localHashes, to: gadgetHashes });
+      gadgetChanges = getChanges(this.ctx, { from: localHashes, to: gadgetHashes });
       assertAllGadgetFiles({ gadgetChanges });
     }
 
@@ -477,7 +477,13 @@ export class FileSync {
       })(),
     ]);
 
-    return { filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion, inSync: isEqualHashes(localHashes, gadgetHashes) };
+    return {
+      filesVersionHashes,
+      localHashes,
+      gadgetHashes,
+      gadgetFilesVersion,
+      inSync: isEqualHashes(this.ctx, localHashes, gadgetHashes),
+    };
   }
 
   private async _getChangesFromGadget({

@@ -194,7 +194,7 @@ export const makeSyncScenario = async ({
   const filesVersionDirs = new Map<bigint, Directory>();
   filesVersionDirs.set(1n, filesVersion1Dir);
 
-  if (!isEqualHashes(await gadgetDir.hashes(), await filesVersion1Dir.hashes())) {
+  if (!isEqualHashes(ctx, await gadgetDir.hashes(), await filesVersion1Dir.hashes())) {
     gadgetFilesVersion = 2n;
     await fs.copy(gadgetDir.path, testDirPath("fv-2"));
     filesVersionDirs.set(2n, await Directory.init(testDirPath("fv-2")));

@@ -6,12 +6,10 @@ import assert from "node:assert";
 import path from "node:path";
 import semver from "semver";
 import { z } from "zod";
+import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { http } from "../http/http.js";
-import { createLogger } from "./log/logger.js";
 import { sprint } from "./sprint.js";
-
-const log = createLogger({ name: "update" });
 
 const UPDATE_CHECK_FREQUENCY = ms("12 hours");
 
@@ -24,8 +22,9 @@ const Registry = z.object({
 
 type Registry = z.infer<typeof Registry>;
 
-export const getDistTags = async (): Promise<Registry["dist-tags"]> => {
+export const getDistTags = async (ctx: Context): Promise<Registry["dist-tags"]> => {
   const json = await http({
+    context: { ctx },
     method: "GET",
     url: "https://registry.npmjs.org/ggt",
     responseType: "json",
@@ -55,7 +54,7 @@ export const shouldCheckForUpdate = async (): Promise<boolean> => {
  * @returns A Promise that resolves with void when the check is
  * complete.
  */
-export const warnIfUpdateAvailable = async (): Promise<void> => {
+export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
   try {
     const shouldCheck = await shouldCheckForUpdate();
     if (!shouldCheck) {
@@ -64,11 +63,11 @@ export const warnIfUpdateAvailable = async (): Promise<void> => {
 
     await fs.outputFile(path.join(config.cacheDir, "last-update-check"), String(Date.now()));
 
-    const tags = await getDistTags();
+    const tags = await getDistTags(ctx);
 
     if (semver.lt(config.version, tags.latest)) {
-      log.info("update available", { current: config.version, latest: tags.latest });
-      log.println(
+      ctx.log.info("update available", { current: config.version, latest: tags.latest });
+      ctx.log.println(
         boxen(
           sprint`
             Update available! {red ${config.version}} -> {green ${tags.latest}}.
@@ -84,6 +83,6 @@ export const warnIfUpdateAvailable = async (): Promise<void> => {
       );
     }
   } catch (error) {
-    log.error("failed to check for updates", { error });
+    ctx.log.error("failed to check for updates", { error });
   }
 };

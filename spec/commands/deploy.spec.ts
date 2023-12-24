@@ -19,7 +19,7 @@ describe("deploy", () => {
     loginTestUser();
     nockTestApps();
 
-    ctx = makeContext(args);
+    ctx = makeContext({ parse: args });
   });
 
   afterEach(() => {

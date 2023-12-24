@@ -38,7 +38,6 @@ import { readDir, writeDir, type Files } from "./files.js";
 import { prettyJSON } from "./json.js";
 import { testDirPath } from "./paths.js";
 import { timeoutMs } from "./sleep.js";
-import { testUser } from "./user.js";
 
 /**
  * Represents the state of a FileSync instance.
@@ -178,7 +177,7 @@ export type SyncScenario = {
  * @see {@linkcode SyncScenario}
  */
 export const makeSyncScenario = async ({
-  ctx = makeContext(args, ["sync", testDirPath("local"), "--app", testApp.slug]),
+  ctx = makeContext({ parse: args, argv: ["sync", testDirPath("local"), "--app", testApp.slug] }),
   filesVersion1Files,
   localFiles,
   gadgetFiles,
@@ -213,7 +212,7 @@ export const makeSyncScenario = async ({
   }
 
   FileSync.init.mockRestore?.();
-  const filesync = await FileSync.init({ ctx, user: testUser });
+  const filesync = await FileSync.init(ctx);
   vi.spyOn(FileSync, "init").mockResolvedValue(filesync);
 
   const changeGadgetFiles: SyncScenario["changeGadgetFiles"] = async (options) => {

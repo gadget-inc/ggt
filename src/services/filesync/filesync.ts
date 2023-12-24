@@ -28,7 +28,7 @@ import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
 import { select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
-import type { User } from "../user/user.js";
+import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
@@ -80,7 +80,7 @@ export class FileSync {
      */
     private _state: { app: string; filesVersion: string; mtime: number },
   ) {
-    this.editGraphQL = new EditGraphQL(this.app);
+    this.editGraphQL = new EditGraphQL(this.ctx, this.app);
   }
 
   /**
@@ -110,10 +110,11 @@ export class FileSync {
    * - Ensures an app is specified (either via `options.app` or by prompting the user)
    * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
    */
-  static async init({ ctx, user }: { ctx: Context<FileSyncArgs>; user: User }): Promise<FileSync> {
+  static async init(ctx: Context<FileSyncArgs>): Promise<FileSync> {
     ctx = ctx.child({ name: "filesync" });
 
-    const apps = await getApps(user);
+    const user = await getUserOrLogin(ctx);
+    const apps = await getApps(ctx, user);
     if (apps.length === 0) {
       throw new ArgError(
         sprint`

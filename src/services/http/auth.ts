@@ -1,7 +1,7 @@
 import { HTTPError, type OptionsInit } from "got";
+import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { readSession } from "../user/session.js";
-import { log } from "./http.js";
 
 /**
  * Determines whether the given request options are for a Gadget
@@ -33,11 +33,12 @@ export const isUnauthorizedError = (error: unknown): error is HTTPError => {
  * Swallows unauthorized errors and logs a warning, rethrows all other
  * errors.
  *
+ * @param ctx - The current context.
  * @param error - The error to handle.
  */
-export const swallowUnauthorized = (error: unknown): void => {
+export const swallowUnauthorized = (ctx: Context, error: unknown): void => {
   if (isUnauthorizedError(error)) {
-    log.warn("swallowing unauthorized error", { error });
+    ctx.log.warn("swallowing unauthorized error", { error });
     return;
   }
   throw error;

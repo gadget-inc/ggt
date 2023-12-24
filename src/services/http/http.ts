@@ -1,15 +1,31 @@
 import { got, type OptionsInit } from "got";
+import assert from "node:assert";
 import { Agent as HttpAgent } from "node:http";
 import { Agent as HttpsAgent } from "node:https";
+import { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { createLogger } from "../output/log/logger.js";
+import { sprint } from "../output/sprint.js";
 import { writeSession } from "../user/session.js";
 import { serializeError } from "../util/object.js";
 import { isGadgetServicesRequest } from "./auth.js";
 
-export const log = createLogger({ name: "http" });
-
 export type HttpOptions = OptionsInit;
+
+const getContext = (options: HttpOptions): Context => {
+  assert(
+    options.context?.["ctx"] instanceof Context,
+    sprint(`
+      ctx must be provided to http requests:
+
+      const response = await http({
+        context: { ctx },
+        ...options,
+      });
+    `),
+  );
+
+  return options.context["ctx"] as Context;
+};
 
 /**
  * An instance of the `got` library with hooks for logging and handling
@@ -23,8 +39,10 @@ export const http = got.extend({
   hooks: {
     beforeRequest: [
       (options) => {
+        const ctx = getContext(options);
+        options.signal = ctx.signal;
         options.headers["user-agent"] = config.versionFull;
-        log.debug("http request", {
+        ctx.log.debug("http request", {
           request: {
             method: options.method,
             url: options.url?.toString(),
@@ -34,7 +52,8 @@ export const http = got.extend({
     ],
     beforeRetry: [
       (error, retryCount) => {
-        log.warn("http request failed, retrying...", {
+        const ctx = getContext(error.request?.options ?? error.options.context);
+        ctx.log.warn("http request failed, retrying...", {
           retryCount,
           error: serializeError(error),
           request: error.request && {
@@ -46,7 +65,8 @@ export const http = got.extend({
     ],
     afterResponse: [
       (response) => {
-        log.debug("http response", {
+        const ctx = getContext(response.request.options);
+        ctx.log.debug("http response", {
           request: {
             method: response.request.options.method,
             url: response.request.options.url?.toString(),

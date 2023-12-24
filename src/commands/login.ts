@@ -4,12 +4,9 @@ import http, { type Server } from "node:http";
 import open from "open";
 import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
-import { createLogger } from "../services/output/log/logger.js";
 import { sprint } from "../services/output/sprint.js";
 import { writeSession } from "../services/user/session.js";
 import { getUser } from "../services/user/user.js";
-
-const log = createLogger({ name: "login" });
 
 export const usage: Usage = () => sprint`
     Log in to your account.
@@ -26,7 +23,7 @@ export const usage: Usage = () => sprint`
         Hello, Jane Doe (jane@example.com)
 `;
 
-export const login = async (): Promise<void> => {
+export const login: Command = async (ctx): Promise<void> => {
   let server: Server | undefined;
 
   try {
@@ -43,13 +40,13 @@ export const login = async (): Promise<void> => {
 
           writeSession(session);
 
-          const user = await getUser();
+          const user = await getUser(ctx);
           assert(user, "missing user after successful login");
 
           if (user.name) {
-            log.printlns`Hello, ${user.name} {gray (${user.email})}`;
+            ctx.log.printlns`Hello, ${user.name} {gray (${user.email})}`;
           } else {
-            log.printlns`Hello, ${user.email}`;
+            ctx.log.printlns`Hello, ${user.email}`;
           }
 
           landingPage.searchParams.set("success", "true");
@@ -64,7 +61,7 @@ export const login = async (): Promise<void> => {
         }
       });
 
-      log.info("starting login server", { port });
+      ctx.log.info("starting login server", { port });
       server.listen(port);
     });
 
@@ -76,14 +73,14 @@ export const login = async (): Promise<void> => {
 
     try {
       await open(url.toString());
-      log.printlns`
+      ctx.log.printlns`
         We've opened Gadget's login page using your default browser.
 
         Please log in and then return to this terminal.
     `;
     } catch (error) {
-      log.error("failed to open browser", { error });
-      log.printlns`
+      ctx.log.error("failed to open browser", { error });
+      ctx.log.printlns`
         Please open the following URL in your browser and log in:
 
           {gray ${url.toString()}}
@@ -98,4 +95,4 @@ export const login = async (): Promise<void> => {
   }
 };
 
-export const command: Command = login;
+export const command = login;

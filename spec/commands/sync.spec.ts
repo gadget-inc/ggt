@@ -26,9 +26,9 @@ describe("sync", () => {
     loginTestUser();
     nockTestApps();
 
-    ctx = makeContext(
-      args,
-      [
+    ctx = makeContext({
+      parse: args,
+      argv: [
         "sync",
         testDirPath("local"),
         "--app",
@@ -44,7 +44,7 @@ describe("sync", () => {
         "--file-watch-rename-timeout",
         ms("50ms" /* default 1.25s */),
       ].map(String),
-    );
+    });
   });
 
   afterEach(() => {
@@ -1264,7 +1264,7 @@ describe("sync", () => {
 
   it("returns after syncing when --once is passed", async () => {
     process.argv.push("--once");
-    ctx = makeContext(args);
+    ctx = makeContext({ parse: args });
 
     const { filesync } = await makeSyncScenario();
     vi.spyOn(filesync, "subscribeToGadgetChanges");

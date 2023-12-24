@@ -1,53 +1,22 @@
 import assert from "node:assert";
 import type { EmptyObject } from "type-fest";
 import type { rootArgs } from "../../commands/root.js";
-import type { Fields } from "../output/log/field.js";
 import { createLogger, type Logger } from "../output/log/logger.js";
-import type { Thunk } from "../util/function.js";
+import type { StructuredLoggerOptions } from "../output/log/structured.js";
+import { defaults, pick } from "../util/object.js";
 import type { AnyVoid } from "../util/types.js";
-import { parseArgs, type ArgsSpec, type ArgsSpecResult } from "./arg.js";
+import { parseArgs, type ArgsSpec, type ArgsSpecResult, type ParseArgsOptions } from "./arg.js";
 
 /**
  * Represents the options that can be passed to {@linkcode Context.init}.
  */
-export type ContextInit<Args extends ArgsSpec> = {
-  /**
-   * The name of context. This will be used as the name of the logger.
-   */
-  name: string;
-
-  /**
-   * The {@linkcode ArgsSpec} to use to parse the arguments (`argv`).
-   */
-  parse: Args;
-
-  /**
-   * A list of arguments to parse.
-   */
-  argv: string[];
-
-  /**
-   * When permissive set to `true`, arg will push any unknown arguments
-   * onto the "extra" argument array (`ctx.args._`) instead of throwing
-   * an error about an unknown flag.
-   *
-   * @default false
-   */
-  permissive?: boolean;
-
-  /**
-   * When stopAtPositional is set to true, context will stop parsing at
-   * the first positional argument.
-   *
-   * @default false
-   */
-  stopAtPositional?: boolean;
-
-  /**
-   * Fields to add to the logger.
-   */
-  fields?: Thunk<Fields>;
-};
+export type ContextInit<Args extends ArgsSpec> = ParseArgsOptions &
+  StructuredLoggerOptions & {
+    /**
+     * The {@linkcode ArgsSpec} to use to parse the arguments (`argv`).
+     */
+    parse: Args;
+  };
 
 /**
  * Represents the options that can be passed to {@linkcode Context.child}.
@@ -97,13 +66,11 @@ export class Context<
    *
    * @see {@linkcode ContextInit}
    */
-  static init<Args extends ArgsSpec = ArgsSpec>({
-    name,
-    parse: spec,
-    fields,
-    ...argOptions
-  }: ContextInit<Args>): Context<Args, EmptyObject> {
-    return new Context({ args: parseArgs(spec, argOptions), log: createLogger({ name, fields }) });
+  static init<Args extends ArgsSpec = ArgsSpec>({ parse: spec, ...options }: ContextInit<Args>): Context<Args, EmptyObject> {
+    return new Context({
+      args: parseArgs(spec, pick(options, ["argv", "permissive", "stopAtPositional"])),
+      log: createLogger(pick(options, ["name", "fields", "devFields"])),
+    });
   }
 
   /**
@@ -113,14 +80,15 @@ export class Context<
    */
   child<ChildArgs extends ArgsSpec>({
     parse: spec = {} as ChildArgs,
-    overwrite,
-    name,
-    fields,
-    ...argOptions
+    ...options
   }: ContextChildInit<ChildArgs, ArgsSpecResult<ThisArgs>>): Context<ChildArgs, ThisArgs> {
     const ctx = new Context<ChildArgs, ThisArgs>({
-      args: { ...this.args, ...overwrite, ...parseArgs(spec, { argv: this.args._, ...argOptions }) },
-      log: this.log.child({ name, fields }),
+      args: {
+        ...this.args,
+        ...options.overwrite,
+        ...parseArgs(spec, defaults(pick(options, ["argv", "permissive", "stopAtPositional"]), { argv: this.args._ })),
+      },
+      log: this.log.child(pick(options, ["name", "fields", "devFields"])),
     });
 
     this.onAbort(() => ctx.abort());

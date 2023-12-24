@@ -103,16 +103,16 @@ export type SyncArgs = typeof args;
  * Runs the sync process until it is stopped or an error occurs.
  */
 export const command: Command<typeof args> = async (ctx) => {
+  if (!which.sync("yarn", { nothrow: true })) {
+    throw new YarnNotFoundError();
+  }
+
   const filesync = await FileSync.init(ctx);
   await filesync.sync();
 
   if (ctx.args["--once"]) {
     ctx.log.println("Done!");
     return;
-  }
-
-  if (!which.sync("yarn", { nothrow: true })) {
-    throw new YarnNotFoundError();
   }
 
   /**

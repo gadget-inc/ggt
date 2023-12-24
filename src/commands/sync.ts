@@ -13,7 +13,6 @@ import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
 import { notify } from "../services/output/notify.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
-import { getUserOrLogin } from "../services/user/user.js";
 import { debounce } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 
@@ -104,7 +103,7 @@ export type SyncArgs = typeof args;
  * Runs the sync process until it is stopped or an error occurs.
  */
 export const command: Command<typeof args> = async (ctx) => {
-  const filesync = await FileSync.init({ ctx, user: await getUserOrLogin() });
+  const filesync = await FileSync.init(ctx);
   await filesync.sync();
 
   if (ctx.args["--once"]) {

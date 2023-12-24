@@ -3,16 +3,21 @@ import nock from "nock";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import { EditGraphQL, EditGraphQLError, REMOTE_FILES_VERSION_QUERY, type GraphQLQuery } from "../../../src/services/app/edit-graphql.js";
+import type { Context } from "../../../src/services/command/context.js";
 import { config } from "../../../src/services/config/config.js";
 import { loadCookie } from "../../../src/services/http/auth.js";
 import { testApp } from "../../__support__/app.js";
+import { makeContext } from "../../__support__/context.js";
 import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
 import { expectError } from "../../__support__/error.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe("EditGraphQL", () => {
+  let ctx: Context;
+
   beforeEach(() => {
     loginTestUser();
+    ctx = makeContext();
   });
 
   it("throws EditGraphQLError when it receives errors", async () => {
@@ -23,7 +28,7 @@ describe("EditGraphQL", () => {
       },
     });
 
-    const editGraphQL = new EditGraphQL(testApp);
+    const editGraphQL = new EditGraphQL(ctx, testApp);
 
     const error: EditGraphQLError = await expectError(() => editGraphQL.query({ query: REMOTE_FILES_VERSION_QUERY }));
     expect(error).toBeInstanceOf(EditGraphQLError);
@@ -39,7 +44,7 @@ describe("EditGraphQL", () => {
       statusCode: 500,
     });
 
-    const editGraphQL = new EditGraphQL(testApp);
+    const editGraphQL = new EditGraphQL(ctx, testApp);
 
     const error: EditGraphQLError = await expectError(() => editGraphQL.query({ query: REMOTE_FILES_VERSION_QUERY }));
     expect(error).toBeInstanceOf(EditGraphQLError);
@@ -52,7 +57,7 @@ describe("EditGraphQL", () => {
       .matchHeader("cookie", (cookie) => loadCookie() === cookie)
       .reply(503, "Service Unavailable", { "content-type": "text/plain" });
 
-    const editGraphQL = new EditGraphQL(testApp);
+    const editGraphQL = new EditGraphQL(ctx, testApp);
 
     const error: EditGraphQLError = await expectError(() => editGraphQL.query({ query: REMOTE_FILES_VERSION_QUERY }));
     expect(error).toBeInstanceOf(EditGraphQLError);

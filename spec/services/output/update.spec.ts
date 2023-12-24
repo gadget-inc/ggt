@@ -2,78 +2,91 @@ import fs from "fs-extra";
 import ms from "ms";
 import nock from "nock";
 import path from "node:path";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Context } from "../../../src/services/command/context.js";
 import { config } from "../../../src/services/config/config.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
+import { makeContext } from "../../__support__/context.js";
 import { expectStdout } from "../../__support__/stream.js";
 
-describe("version", () => {
-  describe("getDistTags", () => {
-    it("returns the dist tags", async () => {
-      const distTags = {
-        latest: "1.0.0",
-      };
+describe("getDistTags", () => {
+  let ctx: Context;
 
-      nock("https://registry.npmjs.org").get("/ggt").reply(200, {
-        name: "ggt",
-        "dist-tags": distTags,
+  beforeEach(() => {
+    ctx = makeContext();
+  });
+
+  it("returns the dist tags", async () => {
+    const distTags = {
+      latest: "1.0.0",
+    };
+
+    nock("https://registry.npmjs.org").get("/ggt").reply(200, {
+      name: "ggt",
+      "dist-tags": distTags,
+    });
+
+    await expect(getDistTags(ctx)).resolves.toEqual(distTags);
+  });
+
+  it("throws if the response is invalid", async () => {
+    nock("https://registry.npmjs.org")
+      .get("/ggt")
+      .reply(200, {
+        name: "not-ggt",
+        "dist-tags": {
+          latest: "1.0.0",
+        },
       });
 
-      await expect(getDistTags()).resolves.toEqual(distTags);
-    });
+    await expect(getDistTags(ctx)).rejects.toThrow();
+  });
+});
 
-    it("throws if the response is invalid", async () => {
-      nock("https://registry.npmjs.org")
-        .get("/ggt")
-        .reply(200, {
-          name: "not-ggt",
-          "dist-tags": {
-            latest: "1.0.0",
-          },
-        });
+describe("shouldCheckForUpdate", () => {
+  it("returns true if the last check was more than 12 hours ago", async () => {
+    const lastCheck = Date.now() - ms("13 hours");
 
-      await expect(getDistTags()).rejects.toThrow();
-    });
+    await fs.outputFile(path.join(config.cacheDir, "last-update-check"), String(lastCheck));
+
+    await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
   });
 
-  describe("shouldCheckForUpdate", () => {
-    it("returns true if the last check was more than 12 hours ago", async () => {
-      const lastCheck = Date.now() - ms("13 hours");
+  it("returns false if the last check was less than 12 hours ago", async () => {
+    const lastCheck = Date.now() - ms("11 hours");
 
-      await fs.outputFile(path.join(config.cacheDir, "last-update-check"), String(lastCheck));
+    await fs.outputFile(path.join(config.cacheDir, "last-update-check"), String(lastCheck));
 
-      await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
-    });
+    await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
+  });
+});
 
-    it("returns false if the last check was less than 12 hours ago", async () => {
-      const lastCheck = Date.now() - ms("11 hours");
+describe("warnIfUpdateAvailable", () => {
+  let ctx: Context;
 
-      await fs.outputFile(path.join(config.cacheDir, "last-update-check"), String(lastCheck));
-
-      await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
-    });
+  beforeEach(() => {
+    ctx = makeContext();
   });
 
-  describe("warnIfUpdateAvailable", () => {
-    it("logs a warning if an update is available", async () => {
-      vi.spyOn(config, "version", "get").mockReturnValue("1.0.0");
+  it("logs a warning if an update is available", async () => {
+    vi.spyOn(config, "version", "get").mockReturnValue("1.0.0");
 
-      nock("https://registry.npmjs.org")
-        .get("/ggt")
-        .reply(200, {
-          name: "ggt",
-          "dist-tags": {
-            latest: "1.0.1",
-          },
-        });
+    nock("https://registry.npmjs.org")
+      .get("/ggt")
+      .reply(200, {
+        name: "ggt",
+        "dist-tags": {
+          latest: "1.0.1",
+        },
+      });
 
-      await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
+    await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
 
-      await warnIfUpdateAvailable();
+    await warnIfUpdateAvailable(ctx);
 
-      await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
+    await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "╭──────────────────────────────────────────────────────────────────────╮
         │                                                                      │
         │                  Update available! 1.0.0 -> 1.0.1.                   │
@@ -83,27 +96,26 @@ describe("version", () => {
         ╰──────────────────────────────────────────────────────────────────────╯
         "
       `);
-    });
+  });
 
-    it("does nothing if already at latest version", async () => {
-      vi.spyOn(config, "version", "get").mockReturnValue("1.0.0");
+  it("does nothing if already at latest version", async () => {
+    vi.spyOn(config, "version", "get").mockReturnValue("1.0.0");
 
-      nock("https://registry.npmjs.org")
-        .get("/ggt")
-        .reply(200, {
-          name: "ggt",
-          "dist-tags": {
-            latest: "1.0.0",
-          },
-        });
+    nock("https://registry.npmjs.org")
+      .get("/ggt")
+      .reply(200, {
+        name: "ggt",
+        "dist-tags": {
+          latest: "1.0.0",
+        },
+      });
 
-      await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
+    await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
 
-      await warnIfUpdateAvailable();
+    await warnIfUpdateAvailable(ctx);
 
-      await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
+    await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
 
-      expectStdout().toBe("");
-    });
+    expectStdout().toBe("");
   });
 });

@@ -6,7 +6,6 @@ import { type Command, type Usage } from "../services/command/command.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
 import { select } from "../services/output/prompt.js";
 import { sprint } from "../services/output/sprint.js";
-import { getUserOrLogin } from "../services/user/user.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
 
 export const usage: Usage = () => sprint`
@@ -113,11 +112,8 @@ export const command = (async (ctx, firstRun = true) => {
   let prevProgress: string | undefined = AppDeploymentStepsToAppDeployState("NOT_STARTED");
   let action: Action;
 
-  const filesync = await FileSync.init({
-    // deploy --force != sync --force
-    ctx: ctx.child({ overwrite: { "--force": false } }),
-    user: await getUserOrLogin(),
-  });
+  // deploy --force != sync --force
+  const filesync = await FileSync.init(ctx.child({ overwrite: { "--force": false } }));
 
   if (firstRun) {
     ctx.log.printlns`App: ${filesync.app.slug}`;

@@ -1,15 +1,13 @@
 import assert from "node:assert";
 import z from "zod";
 import { login } from "../../commands/login.js";
+import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { loadCookie, swallowUnauthorized } from "../http/auth.js";
 import { http } from "../http/http.js";
-import { createLogger } from "../output/log/logger.js";
 import { confirm } from "../output/prompt.js";
 import { setUser } from "../output/report.js";
 import { pick } from "../util/object.js";
-
-const log = createLogger({ name: "user" });
 
 const User = z.object({
   id: z.union([z.string(), z.number()]).transform(Number),
@@ -25,7 +23,7 @@ export type User = z.infer<typeof User>;
  * @returns A Promise that resolves to a User object representing the
  * current user, or undefined if the user is not authenticated.
  */
-export const getUser = async (): Promise<User | undefined> => {
+export const getUser = async (ctx: Context): Promise<User | undefined> => {
   const cookie = loadCookie();
   if (!cookie) {
     return undefined;
@@ -33,6 +31,7 @@ export const getUser = async (): Promise<User | undefined> => {
 
   try {
     const json = await http({
+      context: { ctx },
       url: `https://${config.domains.services}/auth/api/current-user`,
       headers: { cookie },
       responseType: "json",
@@ -41,11 +40,11 @@ export const getUser = async (): Promise<User | undefined> => {
 
     const user = User.parse(json);
     setUser(user);
-    log.info("loaded current user", { user: pick(user, ["id", "name", "email"]) });
+    ctx.log.info("loaded current user", { user: pick(user, ["id", "name", "email"]) });
 
     return user;
   } catch (error) {
-    swallowUnauthorized(error);
+    swallowUnauthorized(ctx, error);
     return undefined;
   }
 };
@@ -54,21 +53,25 @@ export const getUser = async (): Promise<User | undefined> => {
  * Retrieves the current user or prompts the user to log in if not
  * already logged in.
  *
+ * @param ctx - The current context.
  * @param message - The message to display when prompting the user to log in.
  * @returns A Promise that resolves to the current user.
  */
-export const getUserOrLogin = async (message = "You must be logged in to use this command. Would you like to log in?"): Promise<User> => {
-  let user = await getUser();
+export const getUserOrLogin = async (
+  ctx: Context,
+  message = "You must be logged in to use this command. Would you like to log in?",
+): Promise<User> => {
+  let user = await getUser(ctx);
   if (user) {
     return user;
   }
 
-  log.info("prompting user to log in");
+  ctx.log.info("prompting user to log in");
   await confirm({ message });
 
-  await login();
+  await login(ctx);
 
-  user = await getUser();
+  user = await getUser(ctx);
   assert(user, "missing user after successful login");
 
   return user;

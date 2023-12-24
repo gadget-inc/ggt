@@ -78,6 +78,11 @@ export class Context<
     super();
     this.args = args;
     this.log = createLogger({ name, fields: { args: this.args } });
+
+    // in case this context is ...spread into another object
+    this.abort = this.abort.bind(this);
+    this.child = this.child.bind(this);
+    this.onAbort = this.onAbort.bind(this);
   }
 
   /**

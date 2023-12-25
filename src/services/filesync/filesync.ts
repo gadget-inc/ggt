@@ -80,7 +80,7 @@ export class FileSync {
      */
     private _syncJson: { app: string; filesVersion: string; mtime: number },
   ) {
-    this.ctx = ctx.child({ fields: () => ({ syncJson: this._syncJson }) });
+    this.ctx = ctx.child({ fields: () => ({ app, syncJson: this._syncJson }) });
     this.editGraphQL = new EditGraphQL(this.ctx, this.app);
   }
 
@@ -112,9 +112,9 @@ export class FileSync {
    * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
    */
   static async init(ctx: Context<FileSyncArgs>): Promise<FileSync> {
-    ctx = ctx.child({ name: "filesync" });
-
     const user = await getUserOrLogin(ctx);
+    ctx = ctx.child({ name: "filesync", fields: { user } });
+
     const apps = await getApps(ctx, user);
     if (apps.length === 0) {
       throw new ArgError(
@@ -197,6 +197,7 @@ export class FileSync {
     }
 
     const directory = await Directory.init(dir);
+    ctx = ctx.child({ fields: { directory: directory.path, app } });
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json

@@ -18,7 +18,29 @@ export type StructuredLogger = {
   error: StructuredLog;
 };
 
-export const createStructuredLogger = ({ name, fields: loggerFields = {} }: { name: string; fields?: Thunk<Fields> }): StructuredLogger => {
+export type StructuredLoggerOptions = {
+  /**
+   * The name of logger.
+   */
+  name: string;
+
+  /**
+   * Fields to add to every message logged by the logger.
+   */
+  fields?: Thunk<Fields>;
+
+  /**
+   * Fields to add to every message logged by the logger only in
+   * development or test environments.
+   */
+  devFields?: Thunk<Fields>;
+};
+
+export const createStructuredLogger = ({
+  name,
+  fields: loggerFields = {},
+  devFields: devLoggerFields = {},
+}: StructuredLoggerOptions): StructuredLogger => {
   const createStructuredLog = (level: Level): StructuredLog => {
     return (msg, messageFields, devMessageFields) => {
       const shouldLog = level >= config.logLevel;
@@ -29,7 +51,7 @@ export const createStructuredLogger = ({ name, fields: loggerFields = {} }: { na
 
       const fields = { ...unthunk(loggerFields), ...messageFields };
       if (env.developmentOrTestLike) {
-        Object.assign(fields, devMessageFields);
+        Object.assign(fields, unthunk(devLoggerFields), devMessageFields);
       }
 
       if ("error" in fields) {

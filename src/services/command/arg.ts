@@ -13,6 +13,30 @@ type ArgDefinition<Handler extends arg.Handler = arg.Handler> =
       default?: ReturnType<Handler>;
     };
 
+export type ParseArgsOptions = {
+  /**
+   * A list of arguments to parse.
+   */
+  argv?: string[];
+
+  /**
+   * When permissive set to `true`, arg will push any unknown arguments
+   * onto the "extra" argument array (`ctx.args._`) instead of throwing
+   * an error about an unknown flag.
+   *
+   * @default false
+   */
+  permissive?: boolean;
+
+  /**
+   * When stopAtPositional is set to true, context will stop parsing at
+   * the first positional argument.
+   *
+   * @default false
+   */
+  stopAtPositional?: boolean;
+};
+
 export const parseArgs = <Args extends ArgsSpec>(args: Args, options?: arg.Options): ArgsSpecResult<Args> => {
   const realSpec: arg.Spec = {};
   const defaultValues: Record<string, unknown> = {};

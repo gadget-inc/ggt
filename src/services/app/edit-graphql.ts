@@ -50,15 +50,15 @@ export class EditGraphQL {
   // assume the client is going to connect
   status = ConnectionStatus.CONNECTED;
 
-  private _client: ReturnType<typeof createClient>;
+  readonly ctx: Context;
 
-  private readonly _ctx: Context;
+  private _client: ReturnType<typeof createClient>;
 
   constructor(
     ctx: Context,
     readonly app: App,
   ) {
-    this._ctx = ctx.child({ name: "edit-graphql" });
+    this.ctx = ctx.child({ name: "edit-graphql", fields: { app } });
 
     let subdomain = this.app.slug;
     if (this.app.hasSplitEnvironments) {
@@ -90,21 +90,21 @@ export class EditGraphQL {
           switch (this.status) {
             case ConnectionStatus.DISCONNECTED:
               this.status = ConnectionStatus.RECONNECTING;
-              this._ctx.log.info("reconnecting");
+              this.ctx.log.info("reconnecting");
               break;
             case ConnectionStatus.RECONNECTING:
-              this._ctx.log.info("retrying");
+              this.ctx.log.info("retrying");
               break;
             default:
-              this._ctx.log.info("connecting");
+              this.ctx.log.info("connecting");
               break;
           }
         },
         connected: () => {
           if (this.status === ConnectionStatus.RECONNECTING) {
-            this._ctx.log.info("reconnected");
+            this.ctx.log.info("reconnected");
           } else {
-            this._ctx.log.info("connected");
+            this.ctx.log.info("connected");
           }
 
           // let the other on connected listeners see what status we're in
@@ -113,20 +113,20 @@ export class EditGraphQL {
         closed: (e) => {
           const event = e as CloseEvent;
           if (event.wasClean) {
-            this._ctx.log.info("connection closed");
+            this.ctx.log.info("connection closed");
             return;
           }
 
           if (this.status === ConnectionStatus.CONNECTED) {
             this.status = ConnectionStatus.DISCONNECTED;
-            this._ctx.log.info("disconnected");
+            this.ctx.log.info("disconnected");
           }
         },
         error: (error) => {
           if (this.status === ConnectionStatus.RECONNECTING) {
-            this._ctx.log.error("failed to reconnect", { error });
+            this.ctx.log.error("failed to reconnect", { error });
           } else {
-            this._ctx.log.error("connection error", { error });
+            this.ctx.log.error("connection error", { error });
           }
         },
       },
@@ -229,27 +229,34 @@ export class EditGraphQL {
     onResult,
     onError: optionsOnError,
     onComplete = noop,
+    ctx: optionsCtx,
   }: {
     query: Query;
     variables?: Thunk<Query["Variables"]> | null;
     onResult: (result: ExecutionResult<Query["Data"], Query["Extensions"]>) => Promisable<void>;
     onError: (error: EditGraphQLError) => Promisable<void>;
     onComplete?: () => Promisable<void>;
+    ctx?: Context;
   }): () => void {
     let payload = { query, variables: unthunk(variables) };
     const [type, operation] = payload.query.split(/ |\(/, 2);
 
+    const ctx = (optionsCtx ?? this.ctx).child({
+      fields: { type, operation },
+      devFields: { variables: unthunk(variables) },
+    });
+
     const removeConnectedListener = this._client.on("connected", () => {
       if (this.status === ConnectionStatus.RECONNECTING) {
         payload = { query, variables: unthunk(variables) };
-        this._ctx.log.info("re-sending graphql query via ws", { type, operation }, { variables: payload.variables });
+        ctx.log.info("re-sending graphql query via ws");
       }
     });
 
     const queue = new PQueue({ concurrency: 1 });
     const onError = (error: unknown): Promisable<void> => optionsOnError(new EditGraphQLError(query, error));
 
-    this._ctx.log.info("sending graphql query via ws", { type, operation }, { variables: payload.variables });
+    ctx.log.info("sending graphql query via ws");
     const unsubscribe = this._client.subscribe<Query["Data"], Query["Extensions"]>(payload, {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       next: (result) => queue.add(() => onResult(result)).catch(onError),
@@ -271,7 +278,12 @@ export class EditGraphQL {
     http?: HttpOptions;
     ctx?: Context;
   }): Promise<ExecutionResult<Query["Data"], Query["Extensions"]>> {
-    const ctx = input.ctx ?? this._ctx;
+    const [type, operation] = input.query.split(/ |\(/, 2);
+
+    const ctx = (input.ctx ?? this.ctx).child({
+      fields: { type, operation },
+      devFields: { variables: unthunk(input.variables) },
+    });
 
     const cookie = loadCookie();
     assert(cookie, "missing cookie when connecting to GraphQL API");
@@ -282,8 +294,7 @@ export class EditGraphQL {
     }
 
     const payload = { ...input, variables: unthunk(input.variables) };
-    const [type, operation] = payload.query.split(/ |\(/, 2);
-    this._ctx.log.info("sending graphql query via http", { type, operation }, { variables: payload.variables });
+    ctx.log.info("sending graphql query via http");
 
     try {
       const json = await http({
@@ -299,7 +310,7 @@ export class EditGraphQL {
       });
 
       if (!isObject(json) || (!("data" in json) && !("errors" in json))) {
-        this._ctx.log.error("received invalid graphql response", { error: json });
+        ctx.log.error("received invalid graphql response", { error: json });
         throw json;
       }
 

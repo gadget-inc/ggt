@@ -3,7 +3,6 @@ import { expect } from "vitest";
 import type { App } from "../../src/services/app/app.js";
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
-import { testUser } from "./user.js";
 
 /**
  * A test Gadget app to use in tests.
@@ -13,7 +12,6 @@ export const testApp: App = Object.freeze({
   slug: "test",
   primaryDomain: "test.gadget.app",
   hasSplitEnvironments: true,
-  user: testUser,
 });
 
 /**
@@ -26,7 +24,6 @@ export const notTestApp: App = Object.freeze({
   slug: "not-test",
   primaryDomain: "not-test.gadget.app",
   hasSplitEnvironments: false,
-  user: testUser,
 });
 
 /**

@@ -1,11 +1,10 @@
-import { unthunk, type Thunk } from "../../util/function.js";
-import type { Fields } from "./field.js";
+import { unthunk } from "../../util/function.js";
 import { createPrinter, type Printer } from "./printer.js";
-import { createStructuredLogger, type StructuredLogger } from "./structured.js";
+import { createStructuredLogger, type StructuredLogger, type StructuredLoggerOptions } from "./structured.js";
 
 export type Logger = StructuredLogger &
   Printer & {
-    child(options: { name?: string; fields?: Thunk<Fields> }): Logger;
+    child(options: Partial<StructuredLoggerOptions>): Logger;
   };
 
 /**
@@ -24,12 +23,16 @@ export type Logger = StructuredLogger &
  * logger.info("printing hello world", { foo: "bar" });
  * logger.print("Hello, world!");
  */
-export const createLogger = ({ name, fields: loggerFields = {} }: { name: string; fields?: Thunk<Fields> }): Logger => {
+export const createLogger = ({ name, fields: loggerFields, devFields: loggerDevFields }: StructuredLoggerOptions): Logger => {
   return {
     ...createPrinter({ name }),
-    ...createStructuredLogger({ name, fields: loggerFields }),
-    child: ({ name: childName, fields: childFields }) => {
-      return createLogger({ name: childName || name, fields: () => ({ ...unthunk(loggerFields), ...unthunk(childFields) }) });
+    ...createStructuredLogger({ name, fields: loggerFields, devFields: loggerDevFields }),
+    child: ({ name: childName, fields: childFields, devFields: childDevFields }) => {
+      return createLogger({
+        name: childName || name,
+        fields: () => ({ ...unthunk(loggerFields), ...unthunk(childFields) }),
+        devFields: { ...unthunk(loggerDevFields), ...unthunk(childDevFields) },
+      });
     },
   };
 };

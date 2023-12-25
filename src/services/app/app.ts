@@ -12,17 +12,17 @@ export const App = z.object({
   hasSplitEnvironments: z.boolean(),
 });
 
-export type App = z.infer<typeof App> & { user: User };
+export type App = z.infer<typeof App>;
 
 /**
  * Retrieves a list of apps for the given user. If the user is not
  * logged in, an empty array is returned instead.
  *
  * @param ctx - The current context.
- * @param user - The user for whom to retrieve the apps.
+ * @param _user - The user for whom to retrieve the apps.
  * @returns A promise that resolves to an array of App objects.
  */
-export const getApps = async (ctx: Context, user: User): Promise<App[]> => {
+export const getApps = async (ctx: Context, _user: User): Promise<App[]> => {
   const cookie = loadCookie();
   if (!cookie) {
     return [];
@@ -36,8 +36,5 @@ export const getApps = async (ctx: Context, user: User): Promise<App[]> => {
     resolveBodyOnly: true,
   });
 
-  return z
-    .array(App)
-    .parse(json)
-    .map((app) => ({ ...app, user }));
+  return z.array(App).parse(json);
 };

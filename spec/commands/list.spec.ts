@@ -5,7 +5,6 @@ import { type Context } from "../../src/services/command/context.js";
 import * as user from "../../src/services/user/user.js";
 import { makeContext } from "../__support__/context.js";
 import { expectStdout } from "../__support__/stream.js";
-import { testUser } from "../__support__/user.js";
 
 describe("list", () => {
   let ctx: Context;
@@ -17,8 +16,8 @@ describe("list", () => {
   it("lists apps", async () => {
     vi.spyOn(user, "getUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
     vi.spyOn(app, "getApps").mockResolvedValue([
-      { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true, user: testUser },
-      { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, user: testUser },
+      { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true },
+      { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true },
     ]);
 
     await command(ctx);

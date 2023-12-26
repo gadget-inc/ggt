@@ -4,7 +4,7 @@ import ms from "ms";
 import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
-import type { ArgsSpec } from "../services/command/arg.js";
+import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
 import { Changes } from "../services/filesync/changes.js";
@@ -95,14 +95,14 @@ export const args = {
   "--file-watch-poll-interval": { type: Number, default: ms("3s") },
   "--file-watch-poll-timeout": { type: Number, default: ms("20s") },
   "--file-watch-rename-timeout": { type: Number, default: ms("1.25s") },
-} satisfies ArgsSpec;
+} satisfies ArgsDefinition;
 
 export type SyncArgs = typeof args;
 
 /**
  * Runs the sync process until it is stopped or an error occurs.
  */
-export const command: Command<typeof args> = async (ctx) => {
+export const command: Command<SyncArgs> = async (ctx) => {
   if (!which.sync("yarn", { nothrow: true })) {
     throw new YarnNotFoundError();
   }
@@ -277,6 +277,6 @@ export const command: Command<typeof args> = async (ctx) => {
     }
 
     notify(ctx, { subtitle: "Uh oh!", message: "An error occurred while syncing files" });
-    await reportErrorAndExit(reason);
+    await reportErrorAndExit(ctx, reason);
   });
 };

@@ -3,81 +3,73 @@ import cleanStack from "clean-stack";
 import ms from "ms";
 import { randomUUID } from "node:crypto";
 import os from "node:os";
-import type { App } from "../app/app.js";
+import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { env } from "../config/env.js";
-import type { User } from "../user/user.js";
 import { parseBoolean } from "../util/boolean.js";
 import { serializeError } from "../util/object.js";
 import { workspaceRoot } from "../util/paths.js";
-import { createLogger } from "./log/logger.js";
 import { sprint } from "./sprint.js";
 
-const log = createLogger({ name: "report" });
-
-let user: User | undefined;
-export const setUser = (newUser: typeof user): void => {
-  log.trace("set user", { user: newUser });
-  user = newUser;
-  // eslint-disable-next-line unicorn/no-null
-  Sentry.setUser(newUser ?? null);
-};
-
-let app: App | undefined;
-export const setApp = (newApp: typeof app): void => {
-  log.trace("set app", { app: newApp });
-  app = newApp;
-};
-
-export const reportErrorAndExit = async (cause: unknown): Promise<never> => {
-  log.error("reporting error and exiting", { error: cause });
+export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<never> => {
+  ctx.log.error("reporting error and exiting", { error: cause });
 
   try {
     const error = CLIError.from(cause);
-    log.println(error.toString());
+    ctx.log.println(error.toString());
 
-    if (error.isBug !== IsBug.NO) {
-      Sentry.getCurrentHub().captureException(error, {
-        event_id: error.id,
-        captureContext: {
-          user: user ? { id: String(user.id), email: user.email, username: user.name ?? undefined } : undefined,
-          tags: {
-            applicationId: app ? app.id : undefined,
-            arch: config.arch,
-            bug: error.isBug,
-            environment: env.value,
-            platform: config.platform,
-            shell: config.shell,
-            version: config.version,
+    if (error.isBug === IsBug.NO) {
+      return undefined as never;
+    }
+
+    Sentry.getCurrentHub().captureException(error, {
+      event_id: error.id,
+      captureContext: {
+        user: ctx.user && {
+          id: String(ctx.user.id),
+          email: ctx.user.email,
+          username: ctx.user.name ?? undefined,
+        },
+        tags: {
+          application_id: ctx.app?.id,
+          arch: config.arch,
+          bug: error.isBug,
+          environment: env.value,
+          platform: config.platform,
+          shell: config.shell,
+          version: config.version,
+        },
+        contexts: {
+          ctx: {
+            argv: process.argv,
+            args: ctx.args,
           },
-          contexts: {
-            cause: error.cause ? serializeError(error.cause) : undefined,
-            app: {
-              command: `ggt ${process.argv.slice(2).join(" ")}`,
-              argv: process.argv,
-            },
-            device: {
-              name: os.hostname(),
-              family: os.type(),
-              arch: os.arch(),
-            },
-            runtime: {
-              name: process.release.name,
-              version: process.version,
-            },
+          cause: error.cause ? serializeError(error.cause) : undefined,
+          app: {
+            app_name: config.name,
+            app_version: config.version,
+          },
+          device: {
+            name: os.hostname(),
+            family: os.type(),
+            arch: os.arch(),
+          },
+          runtime: {
+            name: process.release.name,
+            version: process.version,
           },
         },
-      });
+      },
+    });
 
-      await Sentry.flush(ms("2s"));
-    }
+    await Sentry.flush(ms("2s"));
   } finally {
     process.exit(1);
   }
 };
 
-export const installErrorHandlers = (): void => {
-  log.debug("installing error handlers");
+export const installErrorHandlers = (ctx: Context): void => {
+  ctx.log.debug("installing error handlers");
 
   Sentry.init({
     dsn: "https://0c26e0d8afd94e77a88ee1c3aa9e7065@o250689.ingest.sentry.io/6703266",
@@ -85,13 +77,9 @@ export const installErrorHandlers = (): void => {
     enabled: env.productionLike && parseBoolean(process.env["GGT_SENTRY_ENABLED"] ?? "true"),
   });
 
-  process.once("uncaughtException", (error) => {
-    void reportErrorAndExit(error);
-  });
-
-  process.once("unhandledRejection", (error) => {
-    void reportErrorAndExit(error);
-  });
+  const handleError = (error: unknown) => void reportErrorAndExit(ctx, error);
+  process.once("uncaughtException", handleError);
+  process.once("unhandledRejection", handleError);
 };
 
 export const IsBug = Object.freeze({

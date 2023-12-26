@@ -6,8 +6,6 @@ import { config } from "../config/config.js";
 import { loadCookie, swallowUnauthorized } from "../http/auth.js";
 import { http } from "../http/http.js";
 import { confirm } from "../output/prompt.js";
-import { setUser } from "../output/report.js";
-import { pick } from "../util/object.js";
 
 const User = z.object({
   id: z.union([z.string(), z.number()]).transform(Number),
@@ -24,6 +22,10 @@ export type User = z.infer<typeof User>;
  * current user, or undefined if the user is not authenticated.
  */
 export const getUser = async (ctx: Context): Promise<User | undefined> => {
+  if (ctx.user) {
+    return ctx.user;
+  }
+
   const cookie = loadCookie();
   if (!cookie) {
     return undefined;
@@ -38,11 +40,10 @@ export const getUser = async (ctx: Context): Promise<User | undefined> => {
       resolveBodyOnly: true,
     });
 
-    const user = User.parse(json);
-    setUser(user);
-    ctx.log.info("loaded current user", { user: pick(user, ["id", "name", "email"]) });
+    ctx.user = User.parse(json);
+    ctx.log.info("loaded user");
 
-    return user;
+    return ctx.user;
   } catch (error) {
     swallowUnauthorized(ctx, error);
     return undefined;

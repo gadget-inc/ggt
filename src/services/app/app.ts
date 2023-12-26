@@ -1,9 +1,9 @@
+import assert from "node:assert";
 import { z } from "zod";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { loadCookie } from "../http/auth.js";
 import { http } from "../http/http.js";
-import type { User } from "../user/user.js";
 
 export const App = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]),
@@ -19,14 +19,15 @@ export type App = z.infer<typeof App>;
  * logged in, an empty array is returned instead.
  *
  * @param ctx - The current context.
- * @param _user - The user for whom to retrieve the apps.
  * @returns A promise that resolves to an array of App objects.
  */
-export const getApps = async (ctx: Context, _user: User): Promise<App[]> => {
+export const getApps = async (ctx: Context): Promise<App[]> => {
   const cookie = loadCookie();
   if (!cookie) {
     return [];
   }
+
+  assert(ctx.user, "must get user before getting apps");
 
   const json = await http({
     context: { ctx },

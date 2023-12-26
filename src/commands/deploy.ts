@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import ora from "ora";
 import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../services/app/edit-graphql.js";
-import type { ArgsSpec } from "../services/command/arg.js";
+import type { ArgsDefinition } from "../services/command/arg.js";
 import { type Command, type Usage } from "../services/command/command.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
 import { select } from "../services/output/prompt.js";
@@ -64,7 +64,7 @@ export const usage: Usage = () => sprint`
 
 export const args = {
   ...FileSyncArgs,
-} satisfies ArgsSpec;
+} satisfies ArgsDefinition;
 
 export enum Action {
   DEPLOY_ANYWAYS = "Deploy anyways",

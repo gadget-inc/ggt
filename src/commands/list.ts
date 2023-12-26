@@ -19,9 +19,9 @@ export const usage: Usage = () => sprint`
 `;
 
 export const command: Command = async (ctx) => {
-  const user = await getUserOrLogin(ctx);
+  await getUserOrLogin(ctx);
 
-  const apps = await getApps(ctx, user);
+  const apps = await getApps(ctx);
   if (apps.length === 0) {
     ctx.log.println`
         It doesn't look like you have any applications.

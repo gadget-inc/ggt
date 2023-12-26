@@ -19,7 +19,7 @@ import {
   FILE_SYNC_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-} from "../../src/services/app/edit-graphql.js";
+} from "../../src/services/app/edit/operation.js";
 import type { Context } from "../../src/services/command/context.js";
 import { Directory, swallowEnoent, type Hashes } from "../../src/services/filesync/directory.js";
 import type { File } from "../../src/services/filesync/file.js";
@@ -33,7 +33,7 @@ import type { PartialExcept } from "../../src/services/util/types.js";
 import { testApp } from "./app.js";
 import { makeContext } from "./context.js";
 import { log } from "./debug.js";
-import { makeMockEditGraphQLSubscriptions, nockEditGraphQLResponse, type MockEditGraphQLSubscription } from "./edit-graphql.js";
+import { makeMockEditSubscriptions, nockEditResponse, type MockEditSubscription } from "./edit.js";
 import { readDir, writeDir, type Files } from "./files.js";
 import { prettyJSON } from "./json.js";
 import { testDirPath } from "./paths.js";
@@ -147,7 +147,7 @@ export type SyncScenario = {
   /**
    * @returns A mock subscription for {@linkcode REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION}.
    */
-  expectGadgetChangesSubscription: () => MockEditGraphQLSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION>;
+  expectGadgetChangesSubscription: () => MockEditSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION>;
 
   /**
    * @returns An assertion on an object with the following properties:
@@ -244,12 +244,12 @@ export const makeSyncScenario = async ({
     log.trace("new files version", { gadgetFilesVersion });
   };
 
-  nockEditGraphQLResponse({
+  nockEditResponse({
     optional: true,
     persist: true,
-    query: FILE_SYNC_HASHES_QUERY,
+    operation: FILE_SYNC_HASHES_QUERY,
     expectVariables: z.object({ filesVersion: z.string().optional() }).optional(),
-    result: async (variables) => {
+    response: async (variables) => {
       let filesVersion: bigint;
       let hashes: Hashes;
 
@@ -276,12 +276,12 @@ export const makeSyncScenario = async ({
     },
   });
 
-  nockEditGraphQLResponse({
+  nockEditResponse({
     optional: true,
     persist: true,
-    query: FILE_SYNC_COMPARISON_HASHES_QUERY,
+    operation: FILE_SYNC_COMPARISON_HASHES_QUERY,
     expectVariables: z.object({ filesVersion: z.string() }),
-    result: async (variables) => {
+    response: async (variables) => {
       log.trace("sending comparison hashes", { gadgetFilesVersion, variables });
 
       const filesVersionDir = filesVersionDirs.get(BigInt(variables.filesVersion));
@@ -306,16 +306,16 @@ export const makeSyncScenario = async ({
     },
   });
 
-  nockEditGraphQLResponse({
+  nockEditResponse({
     optional: true,
     persist: true,
-    query: FILE_SYNC_FILES_QUERY,
+    operation: FILE_SYNC_FILES_QUERY,
     expectVariables: z.object({
       filesVersion: z.string().optional(),
       paths: z.array(z.string()),
       encoding: z.nativeEnum(FileSyncEncoding).optional(),
     }),
-    result: async ({ filesVersion, paths, encoding }) => {
+    response: async ({ filesVersion, paths, encoding }) => {
       filesVersion ??= String(gadgetFilesVersion);
       encoding ??= FileSyncEncoding.Base64;
 
@@ -346,10 +346,10 @@ export const makeSyncScenario = async ({
     },
   });
 
-  nockEditGraphQLResponse({
+  nockEditResponse({
     optional: true,
     persist: true,
-    query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+    operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
     expectVariables: z.object({
       input: z.object({
         expectedRemoteFilesVersion: z.string(),
@@ -365,7 +365,7 @@ export const makeSyncScenario = async ({
         deleted: z.array(z.object({ path: z.string() })),
       }),
     }),
-    result: async ({ input: { expectedRemoteFilesVersion, changed, deleted } }) => {
+    response: async ({ input: { expectedRemoteFilesVersion, changed, deleted } }) => {
       log.trace("mocking publish filesync events result", { expectedRemoteFilesVersion, changed, deleted });
 
       assert(expectedRemoteFilesVersion === String(gadgetFilesVersion), "Files version mismatch");
@@ -388,7 +388,7 @@ export const makeSyncScenario = async ({
     },
   });
 
-  const mockEditGraphQLSubs = makeMockEditGraphQLSubscriptions();
+  const mockEditSubscriptions = makeMockEditSubscriptions();
 
   return {
     filesync,
@@ -448,12 +448,12 @@ export const makeSyncScenario = async ({
     emitGadgetChanges: async (changes) => {
       expect(changes.remoteFilesVersion).toBe(String(gadgetFilesVersion + 1n));
       await changeGadgetFiles({ change: changes.changed, delete: changes.deleted });
-      await mockEditGraphQLSubs
+      await mockEditSubscriptions
         .expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)
-        .emitResult({ data: { remoteFileSyncEvents: changes } });
+        .emitResponse({ data: { remoteFileSyncEvents: changes } });
     },
 
-    expectGadgetChangesSubscription: () => mockEditGraphQLSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION),
+    expectGadgetChangesSubscription: () => mockEditSubscriptions.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION),
 
     expectDirs: (expectedSyncJson) => {
       return expect(

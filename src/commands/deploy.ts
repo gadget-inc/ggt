@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import ora from "ora";
-import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../services/app/edit-graphql.js";
+import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import { type Command, type Usage } from "../services/command/command.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
@@ -143,8 +143,8 @@ export const command = (async (ctx, firstRun = true) => {
   }
 
   // subscribes to the graphql subscription that will listen and send back the server contract status
-  const unsubscribe = filesync.editGraphQL.subscribe({
-    query: REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION,
+  const unsubscribe = filesync.edit.subscribe({
+    subscription: REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION,
     variables: () => ({ localFilesVersion: String(filesync.filesVersion), force: ctx.args["--force"] }),
     onError: (error) => {
       if (isCloseEvent(error.cause)) {

@@ -14,15 +14,15 @@ import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedE
 import type { App } from "../app/app.js";
 import { getApps } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
+import { Edit } from "../app/edit/edit.js";
+import { EditError } from "../app/edit/error.js";
 import {
-  EditGraphQL,
-  EditGraphQLError,
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
   FILE_SYNC_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-} from "../app/edit-graphql.js";
+} from "../app/edit/operation.js";
 import { ArgError, type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
@@ -48,7 +48,7 @@ export type FileSyncHashes = {
 };
 
 export class FileSync {
-  readonly editGraphQL: EditGraphQL;
+  readonly edit: Edit;
 
   /**
    * A FIFO async callback queue that ensures we process filesync events
@@ -81,7 +81,7 @@ export class FileSync {
     private _syncJson: { app: string; filesVersion: string; mtime: number },
   ) {
     this.ctx = ctx.child({ fields: () => ({ filesync: { directory: this.directory.path, filesVersion: this.filesVersion } }) });
-    this.editGraphQL = new EditGraphQL(this.ctx, this.app);
+    this.edit = new Edit(this.ctx);
   }
 
   /**
@@ -288,8 +288,8 @@ export class FileSync {
     afterChanges: (data: { changes: Changes }) => Promisable<void>;
     onError: (error: unknown) => void;
   }): () => void {
-    return this.editGraphQL.subscribe({
-      query: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+    return this.edit.subscribe({
+      subscription: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
       // the reason this is a function rather than a static value is
       // so that it will be re-evaluated if the connection is lost and
       // then re-established. this ensures that we send our current
@@ -457,7 +457,7 @@ export class FileSync {
         if (this.filesVersion === 0n) {
           // this is the first time we're syncing, so just get the
           // hashes of the latest filesVersion
-          const { fileSyncHashes } = await this.editGraphQL.query({ query: FILE_SYNC_HASHES_QUERY });
+          const { fileSyncHashes } = await this.edit.query({ query: FILE_SYNC_HASHES_QUERY });
           gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
           gadgetHashes = fileSyncHashes.hashes;
           filesVersionHashes = {};
@@ -465,7 +465,7 @@ export class FileSync {
           // this isn't the first time we're syncing, so get the hashes
           // of the files at our local filesVersion and the latest
           // filesVersion
-          const { fileSyncComparisonHashes } = await this.editGraphQL.query({
+          const { fileSyncComparisonHashes } = await this.edit.query({
             query: FILE_SYNC_COMPARISON_HASHES_QUERY,
             variables: { filesVersion: String(this.filesVersion) },
           });
@@ -500,7 +500,7 @@ export class FileSync {
 
     let files: File[] = [];
     if (created.length > 0 || updated.length > 0) {
-      const { fileSyncFiles } = await this.editGraphQL.query({
+      const { fileSyncFiles } = await this.edit.query({
         query: FILE_SYNC_FILES_QUERY,
         variables: {
           paths: [...created, ...updated],
@@ -581,8 +581,8 @@ export class FileSync {
 
     const {
       publishFileSyncEvents: { remoteFilesVersion },
-    } = await this.editGraphQL.query({
-      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+    } = await this.edit.mutate({
+      mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
         input: {
           expectedRemoteFilesVersion: String(expectedFilesVersion),
@@ -769,7 +769,7 @@ export const FileSyncArgs = {
 export type FileSyncArgs = typeof FileSyncArgs;
 
 export const isFilesVersionMismatchError = (error: unknown): boolean => {
-  if (error instanceof EditGraphQLError) {
+  if (error instanceof EditError) {
     error = error.cause;
   }
   if (isGraphQLResult(error)) {

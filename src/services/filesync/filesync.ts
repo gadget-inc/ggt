@@ -23,7 +23,7 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit-graphql.js";
-import { ArgError, type ArgsSpec } from "../command/arg.js";
+import { ArgError, type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
 import { select } from "../output/prompt.js";
@@ -80,7 +80,7 @@ export class FileSync {
      */
     private _syncJson: { app: string; filesVersion: string; mtime: number },
   ) {
-    this.ctx = ctx.child({ fields: () => ({ app, syncJson: this._syncJson }) });
+    this.ctx = ctx.child({ fields: () => ({ filesync: { directory: this.directory.path, filesVersion: this.filesVersion } }) });
     this.editGraphQL = new EditGraphQL(this.ctx, this.app);
   }
 
@@ -112,10 +112,10 @@ export class FileSync {
    * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
    */
   static async init(ctx: Context<FileSyncArgs>): Promise<FileSync> {
-    const user = await getUserOrLogin(ctx);
-    ctx = ctx.child({ name: "filesync", fields: { user } });
+    ctx = ctx.child({ name: "filesync" });
 
-    const apps = await getApps(ctx, user);
+    const user = await getUserOrLogin(ctx);
+    const apps = await getApps(ctx);
     if (apps.length === 0) {
       throw new ArgError(
         sprint`
@@ -196,8 +196,8 @@ export class FileSync {
       );
     }
 
+    ctx.app = app;
     const directory = await Directory.init(dir);
-    ctx = ctx.child({ fields: { directory: directory.path, app } });
 
     if (!state) {
       // the .gadget/sync.json file didn't exist or contained invalid json
@@ -764,7 +764,7 @@ export const FileSyncArgs = {
   "--app": { type: AppArg, alias: "-a" },
   "--prefer": ConflictPreferenceArg,
   "--force": Boolean,
-} satisfies ArgsSpec;
+} satisfies ArgsDefinition;
 
 export type FileSyncArgs = typeof FileSyncArgs;
 

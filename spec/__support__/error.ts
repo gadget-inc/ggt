@@ -30,7 +30,7 @@ export const expectError = async (fnThatThrows: () => unknown): Promise<any> => 
 export const expectReportErrorAndExit = async (expectedCause: unknown): Promise<void> => {
   const signal = new PromiseSignal();
 
-  spyOnImplementing(report, "reportErrorAndExit", (actualCause) => {
+  spyOnImplementing(report, "reportErrorAndExit", (_ctx, actualCause) => {
     expect(actualCause).toBe(expectedCause);
     signal.resolve();
     return Promise.resolve() as never;

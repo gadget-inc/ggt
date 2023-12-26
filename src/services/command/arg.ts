@@ -3,7 +3,7 @@ import type { Simplify } from "type-fest";
 import { CLIError, IsBug, UnexpectedError } from "../output/report.js";
 import { isNil } from "../util/is.js";
 
-export type ArgsSpec = Record<string, ArgDefinition>;
+export type ArgsDefinition = Record<string, ArgDefinition>;
 
 type ArgDefinition<Handler extends arg.Handler = arg.Handler> =
   | Handler
@@ -37,34 +37,34 @@ export type ParseArgsOptions = {
   stopAtPositional?: boolean;
 };
 
-export const parseArgs = <Args extends ArgsSpec>(args: Args, options?: arg.Options): ArgsSpecResult<Args> => {
-  const realSpec: arg.Spec = {};
+export const parseArgs = <Args extends ArgsDefinition>(args: Args, options?: arg.Options): ArgsDefinitionResult<Args> => {
+  const spec: arg.Spec = {};
   const defaultValues: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(args)) {
     if (!("type" in value)) {
-      realSpec[key] = value;
+      spec[key] = value;
       continue;
     }
 
-    realSpec[key] = value.type;
+    spec[key] = value.type;
     defaultValues[key] = value.default;
 
     if (value.alias) {
       for (const alias of Array.isArray(value.alias) ? value.alias : [value.alias]) {
-        realSpec[alias] = key;
+        spec[alias] = key;
       }
     }
   }
 
   try {
-    const parsed = arg(realSpec, options);
+    const parsed = arg(spec, options);
     for (const [key, value] of Object.entries(defaultValues)) {
       if (isNil(parsed[key])) {
         parsed[key] = value as never;
       }
     }
-    return parsed as ArgsSpecResult<Args>;
+    return parsed as ArgsDefinitionResult<Args>;
   } catch (error: unknown) {
     if (error instanceof arg.ArgError) {
       // convert arg.ArgError to CLIError
@@ -86,9 +86,26 @@ export class ArgError extends CLIError {
   }
 }
 
-export type ArgsSpecResult<Spec extends ArgsSpec, Args extends keyof Spec = keyof Spec> = Simplify<{
-  [Arg in Args]: Spec[Arg] extends ArgDefinition<infer Handler>
-    ? Spec[Arg] extends { default: unknown }
+/**
+ * Turns this:
+ * ```ts
+ * type Args = {
+ *   "--string": { type: String; alias: "s" };
+ *   "--number": { type: Number; default: 42 };
+ * };
+ * ```
+ *
+ * Into this:
+ * ```ts
+ * type Result = {
+ *  "--string": string | undefined;
+ *  "--number": number;
+ * };
+ * ```
+ */
+export type ArgsDefinitionResult<Args extends ArgsDefinition, Keys extends keyof Args = keyof Args> = Simplify<{
+  [Key in Keys]: Args[Key] extends ArgDefinition<infer Handler>
+    ? Args[Key] extends { default: unknown }
       ? NonNullable<ReturnType<Handler>>
       : ReturnType<Handler> | undefined
     : never;

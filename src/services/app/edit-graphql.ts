@@ -58,7 +58,7 @@ export class EditGraphQL {
     ctx: Context,
     readonly app: App,
   ) {
-    this.ctx = ctx.child({ name: "edit-graphql", fields: { app } });
+    this.ctx = ctx.child({ name: "edit" });
 
     let subdomain = this.app.slug;
     if (this.app.hasSplitEnvironments) {
@@ -96,7 +96,7 @@ export class EditGraphQL {
               this.ctx.log.info("retrying");
               break;
             default:
-              this.ctx.log.info("connecting");
+              this.ctx.log.debug("connecting");
               break;
           }
         },
@@ -104,23 +104,15 @@ export class EditGraphQL {
           if (this.status === ConnectionStatus.RECONNECTING) {
             this.ctx.log.info("reconnected");
           } else {
-            this.ctx.log.info("connected");
+            this.ctx.log.debug("connected");
           }
 
           // let the other on connected listeners see what status we're in
           setImmediate(() => (this.status = ConnectionStatus.CONNECTED));
         },
-        closed: (e) => {
-          const event = e as CloseEvent;
-          if (event.wasClean) {
-            this.ctx.log.info("connection closed");
-            return;
-          }
-
-          if (this.status === ConnectionStatus.CONNECTED) {
-            this.status = ConnectionStatus.DISCONNECTED;
-            this.ctx.log.info("disconnected");
-          }
+        closed: () => {
+          this.status = ConnectionStatus.DISCONNECTED;
+          this.ctx.log.debug("disconnected");
         },
         error: (error) => {
           if (this.status === ConnectionStatus.RECONNECTING) {
@@ -242,8 +234,8 @@ export class EditGraphQL {
     const [type, operation] = payload.query.split(/ |\(/, 2);
 
     const ctx = (optionsCtx ?? this.ctx).child({
-      fields: { type, operation },
-      devFields: { variables: unthunk(variables) },
+      fields: { edit: { type, operation } },
+      devFields: { edit: { type, operation, variables: unthunk(variables) } },
     });
 
     const removeConnectedListener = this._client.on("connected", () => {
@@ -281,8 +273,8 @@ export class EditGraphQL {
     const [type, operation] = input.query.split(/ |\(/, 2);
 
     const ctx = (input.ctx ?? this.ctx).child({
-      fields: { type, operation },
-      devFields: { variables: unthunk(input.variables) },
+      fields: { edit: { type, operation } },
+      devFields: { edit: { type, operation, variables: unthunk(input.variables) } },
     });
 
     const cookie = loadCookie();

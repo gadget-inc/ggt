@@ -1,21 +1,23 @@
 import assert from "node:assert";
 import type { EmptyObject } from "type-fest";
-import type { rootArgs } from "../../commands/root.js";
+import type { RootArgs } from "../../commands/root.js";
+import type { App } from "../app/app.js";
 import { createLogger, type Logger } from "../output/log/logger.js";
 import type { StructuredLoggerOptions } from "../output/log/structured.js";
+import type { User } from "../user/user.js";
 import { defaults, pick } from "../util/object.js";
 import type { AnyVoid } from "../util/types.js";
-import { parseArgs, type ArgsSpec, type ArgsSpecResult, type ParseArgsOptions } from "./arg.js";
+import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult, type ParseArgsOptions } from "./arg.js";
 
 /**
  * Represents the options that can be passed to {@linkcode Context.init}.
  */
-export type ContextInit<Args extends ArgsSpec> = ParseArgsOptions &
+export type ContextInit<Args extends ArgsDefinition> = ParseArgsOptions &
   StructuredLoggerOptions & {
     /**
-     * The {@linkcode ArgsSpec} to use to parse the arguments (`argv`).
+     * The {@linkcode ArgsDefinition} to use to parse the arguments (`argv`).
      */
-    parse: Args;
+    parse?: Args;
   };
 
 /**
@@ -24,7 +26,9 @@ export type ContextInit<Args extends ArgsSpec> = ParseArgsOptions &
  * @see {@linkcode Context.child}
  * @see {@linkcode ContextInit}
  */
-export type ContextChildInit<Args extends ArgsSpec, Parsed extends ArgsSpecResult<ArgsSpec>> = Partial<ContextInit<Args>> & {
+export type ChildContextInit<Args extends ArgsDefinition, Parsed extends ArgsDefinitionResult<ArgsDefinition>> = Partial<
+  ContextInit<Args>
+> & {
   /**
    * Replaces the parsed arguments of the parent context.
    */
@@ -35,25 +39,34 @@ export type ContextChildInit<Args extends ArgsSpec, Parsed extends ArgsSpecResul
  * Represents the context of a command-line operation.
  */
 export class Context<
-  Args extends ArgsSpec = ArgsSpec,
-  ParentArgs extends ArgsSpec = typeof rootArgs,
-  ThisArgs extends ArgsSpec = Args & ParentArgs,
+  Args extends ArgsDefinition = EmptyObject,
+  ParentArgs extends ArgsDefinition = RootArgs,
+  ThisArgs extends ArgsDefinition = ParentArgs & Args,
 > extends AbortController {
   /**
    * The parsed command-line arguments for the current context and any
    * parent contexts.
    */
-  readonly args: ArgsSpecResult<ThisArgs>;
+  readonly args: ArgsDefinitionResult<ThisArgs>;
 
-  /**
-   * A logger instance that can be used to log messages.
-   */
-  readonly log: Logger;
+  #log: Logger;
+  #parent?: Context<ArgsDefinition, ParentArgs>;
+  #user?: User;
+  #app?: App;
 
-  private constructor({ args, log }: { args: ArgsSpecResult<ThisArgs>; log: Logger }) {
+  private constructor({
+    args,
+    log,
+    parent,
+  }: {
+    parent?: Context<ArgsDefinition, ParentArgs>;
+    args: ArgsDefinitionResult<ThisArgs>;
+    log: Logger;
+  }) {
     super();
     this.args = args;
-    this.log = log;
+    this.#log = log;
+    this.#parent = parent;
 
     // in case this context is ...spread into another object
     this.abort = this.abort.bind(this);
@@ -62,13 +75,48 @@ export class Context<
   }
 
   /**
+   * A {@linkcode Logger} that can print to stdout and log structured
+   * messages to stderr.
+   */
+  get log(): Logger {
+    return this.#log;
+  }
+
+  get user(): User | undefined {
+    return this.#user ?? this.#parent?.user;
+  }
+
+  set user(user: User) {
+    this.#user = user;
+    if (this.#parent) {
+      this.#parent.user = user;
+    }
+
+    this.#log = this.#log.child({ fields: { user: pick(user, ["id", "name", "email"]) } });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  get app(): App | undefined {
+    return this.#app ?? this.#parent?.app;
+  }
+
+  set app(app: App) {
+    this.#app = app;
+    if (this.#parent) {
+      this.#parent.app = app;
+    }
+
+    this.#log = this.#log.child({ fields: { app } });
+  }
+
+  /**
    * Initializes a new context.
    *
    * @see {@linkcode ContextInit}
    */
-  static init<Args extends ArgsSpec = ArgsSpec>({ parse: spec, ...options }: ContextInit<Args>): Context<Args, EmptyObject> {
+  static init<Args extends ArgsDefinition = EmptyObject>({ parse: spec, ...options }: ContextInit<Args>): Context<Args> {
     return new Context({
-      args: parseArgs(spec, pick(options, ["argv", "permissive", "stopAtPositional"])),
+      args: spec ? parseArgs(spec, pick(options, ["argv", "permissive", "stopAtPositional"])) : ({} as ArgsDefinitionResult<Args>),
       log: createLogger(pick(options, ["name", "fields", "devFields"])),
     });
   }
@@ -76,17 +124,20 @@ export class Context<
   /**
    * Returns a new context that is a child of the current context.
    *
-   * @see {@linkcode ContextChildInit}
+   * @see {@linkcode ChildContextInit}
    */
-  child<ChildArgs extends ArgsSpec>({
-    parse: spec = {} as ChildArgs,
+  child<ChildArgs extends ArgsDefinition = EmptyObject>({
+    parse: spec,
     ...options
-  }: ContextChildInit<ChildArgs, ArgsSpecResult<ThisArgs>>): Context<ChildArgs, ThisArgs> {
+  }: ChildContextInit<ChildArgs, ArgsDefinitionResult<ThisArgs>>): Context<ChildArgs, ThisArgs> {
     const ctx = new Context<ChildArgs, ThisArgs>({
+      parent: this,
       args: {
         ...this.args,
         ...options.overwrite,
-        ...parseArgs(spec, defaults(pick(options, ["argv", "permissive", "stopAtPositional"]), { argv: this.args._ })),
+        ...(spec
+          ? parseArgs(spec, defaults(pick(options, ["argv", "permissive", "stopAtPositional"]), { argv: this.args._ }))
+          : ({} as ArgsDefinitionResult<ChildArgs>)),
       },
       log: this.log.child(pick(options, ["name", "fields", "devFields"])),
     });

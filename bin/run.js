@@ -1,3 +1,5 @@
 #!/usr/bin/env node
 
-import "../lib/main.js";
+import { ggt } from "../lib/ggt.js";
+
+await ggt();

@@ -43,9 +43,11 @@ export const http = got.extend({
         options.signal = ctx.signal;
         options.headers["user-agent"] = config.versionFull;
         ctx.log.debug("http request", {
-          request: {
-            method: options.method,
-            url: options.url?.toString(),
+          http: {
+            request: {
+              method: options.method,
+              url: options.url?.toString(),
+            },
           },
         });
       },
@@ -54,11 +56,13 @@ export const http = got.extend({
       (error, retryCount) => {
         const ctx = getContext(error.request?.options ?? error.options.context);
         ctx.log.warn("http request failed, retrying...", {
-          retryCount,
-          error: serializeError(error),
-          request: error.request && {
-            method: error.request.options.method,
-            url: error.request.options.url?.toString(),
+          http: {
+            retryCount,
+            error: serializeError(error),
+            request: error.request && {
+              method: error.request.options.method,
+              url: error.request.options.url?.toString(),
+            },
           },
         });
       },
@@ -67,14 +71,16 @@ export const http = got.extend({
       (response) => {
         const ctx = getContext(response.request.options);
         ctx.log.debug("http response", {
-          request: {
-            method: response.request.options.method,
-            url: response.request.options.url?.toString(),
-          },
-          response: {
-            statusCode: response.statusCode,
-            traceId: response.headers["x-trace-id"],
-            durationMs: response.timings.phases.total,
+          http: {
+            request: {
+              method: response.request.options.method,
+              url: response.request.options.url?.toString(),
+            },
+            response: {
+              statusCode: response.statusCode,
+              traceId: response.headers["x-trace-id"],
+              durationMs: response.timings.phases.total,
+            },
           },
         });
 

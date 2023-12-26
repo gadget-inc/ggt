@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/node";
 import { describe, expect, it, vi } from "vitest";
 import { CLIError, IsBug, UnexpectedError, reportErrorAndExit } from "../../../src/services/output/report.js";
+import { makeContext } from "../../__support__/context.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { expectStdout } from "../../__support__/stream.js";
 
@@ -23,7 +24,7 @@ describe("reportErrorAndExit", () => {
 
     const error = new TestError();
 
-    await expectProcessExit(() => reportErrorAndExit(error), 1);
+    await expectProcessExit(() => reportErrorAndExit(makeContext(), error), 1);
 
     expectStdout().toMatchInlineSnapshot(`
       "Boom!
@@ -47,7 +48,7 @@ describe("UnexpectedError", () => {
       "An unexpected error occurred
 
       Error: Whoops!
-          at spec/services/output/report.spec.ts:43:19
+          at spec/services/output/report.spec.ts:44:19
           at node_modules/@vitest/runner/dist/index.js:135:14
           at node_modules/@vitest/runner/dist/index.js:58:26
           at runTest (node_modules/@vitest/runner/dist/index.js:663:17)

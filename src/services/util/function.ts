@@ -184,11 +184,18 @@ export const unthunk = <T>(val: T | (() => T)): T => {
  * A function that does nothing and returns nothing.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-export const noop = (): void => {};
+export const noop = (..._args: any[]): void => {};
 
 /**
  * A function that does nothing and returns `this`.
  */
-export const noopThis = function <T>(this: T): T {
+export const noopThis = function <T>(this: T, ..._args: any[]): T {
   return this;
+};
+
+/**
+ * A function that does nothing and returns a function that does nothing.
+ */
+export const noopNoop = (..._args: any[]): typeof noop => {
+  return noop;
 };

@@ -6,7 +6,8 @@ import notifier from "node-notifier";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
 import { args, command as sync, type SyncArgs } from "../../src/commands/sync.js";
-import { EditGraphQLError, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
+import { EditError } from "../../src/services/app/edit/error.js";
+import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { type Context } from "../../src/services/command/context.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { assetsPath } from "../../src/services/util/paths.js";
@@ -1229,7 +1230,7 @@ describe("sync", () => {
 
     await sync(ctx);
 
-    const error = new EditGraphQLError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
+    const error = new EditError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
 
     const gadgetChangesSubscription = expectGadgetChangesSubscription();
     await gadgetChangesSubscription.emitError(error);

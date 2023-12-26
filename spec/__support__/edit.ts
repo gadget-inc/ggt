@@ -3,8 +3,9 @@ import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
 import { ZodSchema, z } from "zod";
 import type { App } from "../../src/services/app/app.js";
-import type { EditGraphQLError, GraphQLQuery } from "../../src/services/app/edit-graphql.js";
-import { EditGraphQL } from "../../src/services/app/edit-graphql.js";
+import { Client } from "../../src/services/app/edit/client.js";
+import type { EditError } from "../../src/services/app/edit/error.js";
+import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.js";
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
 import { noop, unthunk, type Thunk } from "../../src/services/util/function.js";
@@ -13,22 +14,24 @@ import { PromiseSignal } from "../../src/services/util/promise.js";
 import { testApp } from "./app.js";
 import { log } from "./debug.js";
 
-export type NockEditGraphQLResponseOptions<Query extends GraphQLQuery> = {
+export type NockEditResponseOptions<Operation extends GraphQLQuery | GraphQLMutation> = {
   /**
-   * The query to respond to.
+   * The GraphQL operation to nock.
    */
-  query: Query;
+  operation: Operation;
 
   /**
-   * The result to respond with. If a function is provided, it will be
-   * called with the variables from the request.
+   * The response to respond with.
+   *
+   * If a function is provided, it will be called with the variables
+   * from the request.
    */
-  result: Query["Result"] | ((variables: Query["Variables"]) => Promisable<Query["Result"]>);
+  response: Operation["Response"] | ((variables: Operation["Variables"]) => Promisable<Operation["Response"]>);
 
   /**
    * The variables to expect in the request.
    */
-  expectVariables?: Thunk<Query["Variables"] | ZodSchema> | null;
+  expectVariables?: Thunk<Operation["Variables"] | ZodSchema> | null;
 
   /**
    * The app to respond to.
@@ -67,19 +70,19 @@ export type NockEditGraphQLResponseOptions<Query extends GraphQLQuery> = {
 };
 
 /**
- * Sets up a response to an {@linkcode EditGraphQL} query or mutation.
+ * Sets up a response to an {@linkcode Edit} query or mutation.
  *
- * @see {@linkcode NockEditGraphQLResponseOptions}
+ * @see {@linkcode NockEditResponseOptions}
  */
-export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
-  query,
+export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
+  operation,
   app = testApp,
   optional = false,
   persist = false,
   times = 1,
   statusCode = 200,
   ...opts
-}: NockEditGraphQLResponseOptions<Query>): Scope & { responded: PromiseSignal } => {
+}: NockEditResponseOptions<Query>): Scope & { responded: PromiseSignal } => {
   let subdomain = app.slug;
   if (app.hasSplitEnvironments) {
     subdomain += "--development";
@@ -95,27 +98,27 @@ export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
     }
   };
 
-  const generateResult = (variables: Query["Variables"]): Promisable<Query["Result"]> => {
-    if (isFunction(opts.result)) {
-      return opts.result(variables);
+  const generateResponse = (variables: Query["Variables"]): Promisable<Query["Response"]> => {
+    if (isFunction(opts.response)) {
+      return opts.response(variables);
     } else {
-      return opts.result;
+      return opts.response;
     }
   };
 
   const responded = new PromiseSignal();
 
   const scope = nock(`https://${subdomain}.${config.domains.app}`)
-    .post("/edit/api/graphql", (body) => body.query === query)
+    .post("/edit/api/graphql", (body) => body.query === operation)
     .matchHeader("cookie", (cookie) => loadCookie() === cookie)
     .optionally(optional)
     .times(times)
     .reply(statusCode, async (_uri, rawBody) => {
       try {
-        const body = z.object({ query: z.literal(query), variables: z.record(z.unknown()).optional() }).parse(rawBody);
+        const body = z.object({ query: z.literal(operation), variables: z.record(z.unknown()).optional() }).parse(rawBody);
         const variables = expectVariables(body.variables);
-        const result = await generateResult(variables);
-        return result;
+        const response = await generateResponse(variables);
+        return response;
       } catch (error) {
         log.error("failed to generate response", { error });
         throw error;
@@ -123,7 +126,7 @@ export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
         responded.resolve();
       }
     })
-    .persist(persist) as ReturnType<typeof nockEditGraphQLResponse>;
+    .persist(persist) as ReturnType<typeof nockEditResponse>;
 
   scope.responded = responded;
 
@@ -131,40 +134,40 @@ export const nockEditGraphQLResponse = <Query extends GraphQLQuery>({
 };
 
 /**
- * An object that can be used to mock {@linkcode EditGraphQL} subscriptions.
+ * An object that can be used to mock {@linkcode Edit} subscriptions.
  *
- * @see {@linkcode makeMockEditGraphQLSubscriptions}
+ * @see {@linkcode makeMockEditSubscriptions}
  */
-export type MockEditGraphQLSubscriptions = {
+export type MockEditSubscriptions = {
   /**
    * Asserts that a subscription has been made for the given query and
-   * returns an object that can be used to emit results and errors to
+   * returns an object that can be used to emit responses and errors to
    * the subscription.
    *
-   * @param query - The query to expect.
+   * @param subscription - The query to expect.
    */
-  expectSubscription<Query extends GraphQLQuery>(query: Query): MockEditGraphQLSubscription<Query>;
+  expectSubscription<Subscription extends GraphQLSubscription>(subscription: Subscription): MockEditSubscription<Subscription>;
 };
 
 /**
- * An object that can be used to emit results and errors to an
- * EditGraphQL subscription.
+ * An object that can be used to emit responses and errors to an
+ * Edit GraphQL subscription.
  */
-export type MockEditGraphQLSubscription<Query extends GraphQLQuery = GraphQLQuery> = {
+export type MockEditSubscription<Query extends GraphQLSubscription = GraphQLSubscription> = {
   /**
    * The variables that were used to start the subscription.
    */
   variables?: Query["Variables"] | null;
 
   /**
-   * Emits a result to the subscription.
+   * Emits a response to the subscription.
    */
-  emitResult(value: Query["Result"]): Promisable<void>;
+  emitResponse(value: Query["Response"]): Promisable<void>;
 
   /**
    * Emits an error to the subscription.
    */
-  emitError(error: EditGraphQLError): Promisable<void>;
+  emitError(error: EditError): Promisable<void>;
 
   /**
    * Emits the onComplete event to the subscription.
@@ -172,10 +175,10 @@ export type MockEditGraphQLSubscription<Query extends GraphQLQuery = GraphQLQuer
   emitComplete(): Promisable<void>;
 };
 
-export const makeMockEditGraphQLSubscriptions = (): MockEditGraphQLSubscriptions => {
-  const subscriptions = new Map<GraphQLQuery, MockEditGraphQLSubscription>();
+export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
+  const subscriptions = new Map<GraphQLSubscription, MockEditSubscription>();
 
-  const mockEditGraphQL: MockEditGraphQLSubscriptions = {
+  const mockEditSubscriptions: MockEditSubscriptions = {
     expectSubscription: (query) => {
       expect(Array.from(subscriptions.keys())).toContain(query);
       const sub = subscriptions.get(query);
@@ -184,19 +187,19 @@ export const makeMockEditGraphQLSubscriptions = (): MockEditGraphQLSubscriptions
     },
   };
 
-  vi.spyOn(EditGraphQL.prototype, "dispose");
-  vi.spyOn(EditGraphQL.prototype, "_subscribe").mockImplementation((options) => {
+  vi.spyOn(Client.prototype, "dispose");
+  vi.spyOn(Client.prototype, "subscribe").mockImplementation((_ctx, options) => {
     options.onComplete ??= noop;
 
-    vi.spyOn(options, "onResult");
+    vi.spyOn(options, "onResponse");
     vi.spyOn(options, "onError");
     vi.spyOn(options, "onComplete");
 
     const variables = unthunk(options.variables);
 
-    subscriptions.set(options.query, {
+    subscriptions.set(options.subscription, {
       variables,
-      emitResult: options.onResult,
+      emitResponse: options.onResponse,
       emitError: options.onError,
       emitComplete: options.onComplete,
     });
@@ -204,5 +207,5 @@ export const makeMockEditGraphQLSubscriptions = (): MockEditGraphQLSubscriptions
     return vi.fn();
   });
 
-  return mockEditGraphQL;
+  return mockEditSubscriptions;
 };

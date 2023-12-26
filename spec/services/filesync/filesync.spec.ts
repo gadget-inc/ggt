@@ -6,7 +6,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args } from "../../../src/commands/sync.js";
 import * as app from "../../../src/services/app/app.js";
-import { EditGraphQLError, PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../src/services/app/edit-graphql.js";
+import { EditError } from "../../../src/services/app/edit/error.js";
+import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../src/services/app/edit/operation.js";
 import { ArgError } from "../../../src/services/command/arg.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
@@ -15,7 +16,7 @@ import { ConflictPreference, FileSync, isFilesVersionMismatchError } from "../..
 import * as prompt from "../../../src/services/output/prompt.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
-import { nockEditGraphQLResponse } from "../../__support__/edit-graphql.js";
+import { nockEditResponse } from "../../__support__/edit.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
 import { defaultFileMode, expectPublishVariables, expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
@@ -388,8 +389,8 @@ describe("FileSync._sendChangesToGadget", () => {
     changes.set("some/nested/file.txt", { type: "update" });
     changes.set("some/nested/other-file.txt", { type: "delete" });
 
-    const scope = nockEditGraphQLResponse({
-      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+    const scope = nockEditResponse({
+      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       expectVariables: expectPublishVariables({
         input: {
           expectedRemoteFilesVersion: "0",
@@ -410,7 +411,7 @@ describe("FileSync._sendChangesToGadget", () => {
           deleted: [{ path: "some/nested/other-file.txt" }],
         },
       }),
-      result: {
+      response: {
         data: {
           publishFileSyncEvents: {
             remoteFilesVersion: "1",
@@ -444,17 +445,17 @@ describe("FileSync._sendChangesToGadget", () => {
     const changes = new Changes();
     changes.set("foo.js", { type: "create" });
 
-    const scope = nockEditGraphQLResponse({
-      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      result: {},
+    const scope = nockEditResponse({
+      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      response: {},
       expectVariables: expect.anything(),
       times: 2,
       statusCode: 500,
     });
 
-    nockEditGraphQLResponse({
-      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      result: { data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } },
+    nockEditResponse({
+      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } },
       expectVariables: expect.anything(),
       statusCode: 200,
     });
@@ -472,9 +473,9 @@ describe("FileSync._sendChangesToGadget", () => {
     const changes = new Changes();
     changes.set("foo.js", { type: "create" });
 
-    const scope = nockEditGraphQLResponse({
-      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      result: { errors: [new GraphQLError("Files version mismatch")] },
+    const scope = nockEditResponse({
+      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      response: { errors: [new GraphQLError("Files version mismatch")] },
       expectVariables: expect.anything(),
       times: 1,
       statusCode: 500,
@@ -488,9 +489,9 @@ describe("FileSync._sendChangesToGadget", () => {
   });
 
   it('throws "Files version mismatch" when it receives a files version greater than the expectedRemoteFilesVersion + 1', async () => {
-    const scope = nockEditGraphQLResponse({
-      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      result: { data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } },
+    const scope = nockEditResponse({
+      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } },
       expectVariables: expectPublishVariables({
         input: {
           expectedRemoteFilesVersion: "0",
@@ -1473,9 +1474,9 @@ describe("FileSync.sync", () => {
   });
 
   it('retries when it receives "Files version mismatch"', async () => {
-    const scope = nockEditGraphQLResponse({
-      query: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      result: { errors: [new GraphQLError("Files version mismatch")] },
+    const scope = nockEditResponse({
+      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      response: { errors: [new GraphQLError("Files version mismatch")] },
       expectVariables: expect.anything(),
       times: 9, // 1 less than the max attempts
       statusCode: 500,
@@ -1593,7 +1594,7 @@ describe("isFilesVersionMismatchError", () => {
 
   it("returns true given an EditGraphQLError", () => {
     const query = "query { foo }" as GraphQLQuery;
-    expect(isFilesVersionMismatchError(new EditGraphQLError(query, [{ message: "Files version mismatch" }]))).toBe(true);
+    expect(isFilesVersionMismatchError(new EditError(query, [{ message: "Files version mismatch" }]))).toBe(true);
   });
 
   it("returns false given an object with a message that does not start with 'Files version mismatch'", () => {

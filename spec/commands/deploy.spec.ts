@@ -5,11 +5,12 @@ import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
 import { expectStdout } from "../../spec/__support__/stream.js";
 import { Action, args, command as deploy } from "../../src/commands/deploy.js";
-import { EditGraphQLError, REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit-graphql.js";
+import { EditError } from "../../src/services/app/edit/error.js";
+import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { type Context } from "../../src/services/command/context.js";
 import * as prompt from "../../src/services/output/prompt.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeMockEditGraphQLSubscriptions } from "../__support__/edit-graphql.js";
+import { makeMockEditSubscriptions } from "../__support__/edit.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("deploy", () => {
@@ -40,13 +41,13 @@ describe("deploy", () => {
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
+    const mockEditGraphQL = makeMockEditSubscriptions();
 
     await deploy(ctx);
 
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -78,13 +79,13 @@ describe("deploy", () => {
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
+    const mockEditGraphQL = makeMockEditSubscriptions();
 
     await deploy(ctx);
 
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -112,7 +113,7 @@ describe("deploy", () => {
 
     vi.spyOn(prompt, "select").mockResolvedValue(Action.DEPLOY_ANYWAYS);
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -122,7 +123,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -132,7 +133,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -142,7 +143,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -152,7 +153,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -162,7 +163,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -172,7 +173,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -206,12 +207,12 @@ describe("deploy", () => {
   it("deploys if there are no problems with the app", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
+    const mockEditGraphQL = makeMockEditSubscriptions();
 
     await deploy(ctx);
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -221,7 +222,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -231,7 +232,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -241,7 +242,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -251,7 +252,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -261,7 +262,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -271,7 +272,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -281,7 +282,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -311,8 +312,8 @@ describe("deploy", () => {
   it("can not deploy if the maximum number of applications has been reached", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
-    const error = new EditGraphQLError(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, [
+    const mockEditGraphQL = makeMockEditSubscriptions();
+    const error = new EditError(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, [
       {
         message: "GGT_PAYMENT_REQUIRED: Payment is required for this application.",
       },
@@ -334,7 +335,7 @@ describe("deploy", () => {
   it("exits if the deploy process was interrupted", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
+    const mockEditGraphQL = makeMockEditSubscriptions();
 
     const cause = {
       type: "close",
@@ -343,12 +344,12 @@ describe("deploy", () => {
       wasClean: true,
     };
 
-    const error = new EditGraphQLError(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, cause);
+    const error = new EditError(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, cause);
 
     await deploy(ctx);
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -358,7 +359,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -368,7 +369,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",

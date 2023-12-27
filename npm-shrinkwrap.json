@@ -88,7 +88,7 @@
         "nock": "^13.4.0",
         "prettier": "^3.1.1",
         "prettier-plugin-organize-imports": "^3.2.4",
-        "prettier-plugin-packagejson": "^2.4.7",
+        "prettier-plugin-packagejson": "^2.4.8",
         "remark": "^15.0.1",
         "remark-gfm": "^4.0.0",
         "remark-toc": "^9.0.0",
@@ -4533,31 +4533,17 @@
         "node": ">=14"
       }
     },
-    "node_modules/@pkgr/utils": {
-      "version": "2.4.2",
-      "resolved": "https://registry.npmjs.org/@pkgr/utils/-/utils-2.4.2.tgz",
-      "integrity": "sha512-POgTXhjrTfbTV63DiFXav4lBHiICLKKwDeaKn9Nphwj7WH6m0hMMCaJkMyRWjgtPFyRKRVoMXXjczsTQRDEhYw==",
+    "node_modules/@pkgr/core": {
+      "version": "0.1.0",
+      "resolved": "https://registry.npmjs.org/@pkgr/core/-/core-0.1.0.tgz",
+      "integrity": "sha512-Zwq5OCzuwJC2jwqmpEQt7Ds1DTi6BWSwoGkbb1n9pO3hzb35BoJELx7c0T23iDkBGkh2e7tvOtjF3tr3OaQHDQ==",
       "dev": true,
-      "dependencies": {
-        "cross-spawn": "^7.0.3",
-        "fast-glob": "^3.3.0",
-        "is-glob": "^4.0.3",
-        "open": "^9.1.0",
-        "picocolors": "^1.0.0",
-        "tslib": "^2.6.0"
-      },
       "engines": {
         "node": "^12.20.0 || ^14.18.0 || >=16.0.0"
       },
       "funding": {
         "url": "https://opencollective.com/unts"
       }
-    },
-    "node_modules/@pkgr/utils/node_modules/tslib": {
-      "version": "2.6.2",
-      "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz",
-      "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
-      "dev": true
     },
     "node_modules/@repeaterjs/repeater": {
       "version": "3.0.4",
@@ -13529,13 +13515,13 @@
       }
     },
     "node_modules/prettier-plugin-packagejson": {
-      "version": "2.4.7",
-      "resolved": "https://registry.npmjs.org/prettier-plugin-packagejson/-/prettier-plugin-packagejson-2.4.7.tgz",
-      "integrity": "sha512-/n1HGcBbuJyTlD3tb2/tW1mT5WIR6FCo+bAijHF6pNoSBf8YoxoskawjSY2ku9/8d6mdzci7oMchziI7CYEWYg==",
+      "version": "2.4.8",
+      "resolved": "https://registry.npmjs.org/prettier-plugin-packagejson/-/prettier-plugin-packagejson-2.4.8.tgz",
+      "integrity": "sha512-ZK37c6pRUKeUIpQWNEdMgNUiGSG5BTfeeAIA01mRjVGTfWxxVzM55Cs+LaHyweFJbEgkgCNsqMA3LGEAjfOPtA==",
       "dev": true,
       "dependencies": {
         "sort-package-json": "2.6.0",
-        "synckit": "0.8.6"
+        "synckit": "0.8.8"
       },
       "peerDependencies": {
         "prettier": ">= 1.16.0"
@@ -15403,12 +15389,12 @@
       }
     },
     "node_modules/synckit": {
-      "version": "0.8.6",
-      "resolved": "https://registry.npmjs.org/synckit/-/synckit-0.8.6.tgz",
-      "integrity": "sha512-laHF2savN6sMeHCjLRkheIU4wo3Zg9Ln5YOjOo7sZ5dVQW8yF5pPE5SIw1dsPhq3TRp1jisKRCdPhfs/1WMqDA==",
+      "version": "0.8.8",
+      "resolved": "https://registry.npmjs.org/synckit/-/synckit-0.8.8.tgz",
+      "integrity": "sha512-HwOKAP7Wc5aRGYdKH+dw0PRRpbO841v2DENBtjnR5HFWoiNByAl7vrx3p0G/rCyYXQsrxqtX48TImFtPcIHSpQ==",
       "dev": true,
       "dependencies": {
-        "@pkgr/utils": "^2.4.2",
+        "@pkgr/core": "^0.1.0",
         "tslib": "^2.6.2"
       },
       "engines": {
@@ -20047,27 +20033,11 @@
       "dev": true,
       "optional": true
     },
-    "@pkgr/utils": {
-      "version": "2.4.2",
-      "resolved": "https://registry.npmjs.org/@pkgr/utils/-/utils-2.4.2.tgz",
-      "integrity": "sha512-POgTXhjrTfbTV63DiFXav4lBHiICLKKwDeaKn9Nphwj7WH6m0hMMCaJkMyRWjgtPFyRKRVoMXXjczsTQRDEhYw==",
-      "dev": true,
-      "requires": {
-        "cross-spawn": "^7.0.3",
-        "fast-glob": "^3.3.0",
-        "is-glob": "^4.0.3",
-        "open": "^9.1.0",
-        "picocolors": "^1.0.0",
-        "tslib": "^2.6.0"
-      },
-      "dependencies": {
-        "tslib": {
-          "version": "2.6.2",
-          "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz",
-          "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
-          "dev": true
-        }
-      }
+    "@pkgr/core": {
+      "version": "0.1.0",
+      "resolved": "https://registry.npmjs.org/@pkgr/core/-/core-0.1.0.tgz",
+      "integrity": "sha512-Zwq5OCzuwJC2jwqmpEQt7Ds1DTi6BWSwoGkbb1n9pO3hzb35BoJELx7c0T23iDkBGkh2e7tvOtjF3tr3OaQHDQ==",
+      "dev": true
     },
     "@repeaterjs/repeater": {
       "version": "3.0.4",
@@ -26321,13 +26291,13 @@
       "requires": {}
     },
     "prettier-plugin-packagejson": {
-      "version": "2.4.7",
-      "resolved": "https://registry.npmjs.org/prettier-plugin-packagejson/-/prettier-plugin-packagejson-2.4.7.tgz",
-      "integrity": "sha512-/n1HGcBbuJyTlD3tb2/tW1mT5WIR6FCo+bAijHF6pNoSBf8YoxoskawjSY2ku9/8d6mdzci7oMchziI7CYEWYg==",
+      "version": "2.4.8",
+      "resolved": "https://registry.npmjs.org/prettier-plugin-packagejson/-/prettier-plugin-packagejson-2.4.8.tgz",
+      "integrity": "sha512-ZK37c6pRUKeUIpQWNEdMgNUiGSG5BTfeeAIA01mRjVGTfWxxVzM55Cs+LaHyweFJbEgkgCNsqMA3LGEAjfOPtA==",
       "dev": true,
       "requires": {
         "sort-package-json": "2.6.0",
-        "synckit": "0.8.6"
+        "synckit": "0.8.8"
       }
     },
     "pretty-format": {
@@ -27697,12 +27667,12 @@
       }
     },
     "synckit": {
-      "version": "0.8.6",
-      "resolved": "https://registry.npmjs.org/synckit/-/synckit-0.8.6.tgz",
-      "integrity": "sha512-laHF2savN6sMeHCjLRkheIU4wo3Zg9Ln5YOjOo7sZ5dVQW8yF5pPE5SIw1dsPhq3TRp1jisKRCdPhfs/1WMqDA==",
+      "version": "0.8.8",
+      "resolved": "https://registry.npmjs.org/synckit/-/synckit-0.8.8.tgz",
+      "integrity": "sha512-HwOKAP7Wc5aRGYdKH+dw0PRRpbO841v2DENBtjnR5HFWoiNByAl7vrx3p0G/rCyYXQsrxqtX48TImFtPcIHSpQ==",
       "dev": true,
       "requires": {
-        "@pkgr/utils": "^2.4.2",
+        "@pkgr/core": "^0.1.0",
         "tslib": "^2.6.2"
       },
       "dependencies": {

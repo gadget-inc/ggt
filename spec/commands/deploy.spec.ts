@@ -486,12 +486,12 @@ describe("deploy", () => {
   it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-    const mockEditGraphQL = makeMockEditGraphQLSubscriptions();
+    const mockEditGraphQL = makeMockEditSubscriptions();
 
     await deploy(ctx);
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -502,7 +502,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -517,7 +517,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",
@@ -532,7 +532,7 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitResult({
+    await publishStatus.emitResponse({
       data: {
         publishStatus: {
           remoteFilesVersion: "1",

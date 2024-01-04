@@ -75,13 +75,30 @@ export class FileSync {
     readonly app: App,
 
     /**
+     * The environment that is being synced to.
+     */
+    readonly environment: string,
+
+    /**
      * The state of the filesystem.
      *
      * This is persisted to `.gadget/sync.json` within the {@linkcode directory}.
      */
-    private _syncJson: { app: string; filesVersion: string; mtime: number },
+    private _syncJson: {
+      app: string;
+      filesVersion: string;
+      mtime?: number | null;
+      currentEnvironment: string;
+      environments: Record<string, { filesVersion: string }>;
+    },
   ) {
-    this.ctx = ctx.child({ fields: () => ({ filesync: { directory: this.directory.path, filesVersion: this.filesVersion } }) });
+    if (this._syncJson.environments[this.environment] === undefined) {
+      this._syncJson.environments[this.environment] = { filesVersion: "0" };
+    }
+
+    this.ctx = ctx.child({
+      fields: () => ({ filesync: { directory: this.directory.path, filesVersion: this.filesVersion } }),
+    });
     this.edit = new Edit(this.ctx);
   }
 
@@ -92,16 +109,18 @@ export class FileSync {
    * filesystem on the local machine.
    */
   get filesVersion(): bigint {
-    return BigInt(this._syncJson.filesVersion);
+    assert(this._syncJson.environments[this.environment], "environment doesn't exist in _syncJson");
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return BigInt(this._syncJson.environments[this.environment]!.filesVersion);
   }
 
   /**
    * The largest mtime that was seen on the filesystem.
    *
-   * This is used to determine if any files have changed since the last
-   * sync. This does not include the mtime of files that are ignored.
+   * @deprecated no longer used
    */
-  get mtime(): number {
+  get mtime(): number | null | undefined {
     return this._syncJson.mtime;
   }
 
@@ -152,16 +171,34 @@ export class FileSync {
     // try to load the .gadget/sync.json file
     const state = await fs
       .readJson(path.join(dir, ".gadget/sync.json"))
-      .then((json) =>
-        z
+      .then((json) => {
+        return z
           .object({
             app: z.string(),
-            filesVersion: z.string(),
-            mtime: z.number(),
+            mtime: z.number().nullish(),
+            filesVersion: z
+              .string()
+              .nullish()
+              .transform((x) => x ?? "0"), // Legacy support for old sync.json files
+            currentEnvironment: z
+              .string()
+              .nullish()
+              .transform((x) => x ?? "development"), // New support for multi environment, but old sync.json files don't have this
+            environments: z
+              .record(z.object({ filesVersion: z.string() }))
+              .nullish()
+              .transform((value, _ctx) => value ?? { development: { filesVersion: "0" } }),
           })
-          .parse(json),
-      )
-      .catch(noop);
+          .parse(json);
+      })
+      .catch((e) => ctx.log.warn("failed to load .gadget/sync.json", { error: e }));
+
+    // Basically a hack for reverse compatibility with old sync.json files
+    const devEnvironmentState = state?.environments["development"];
+    if (devEnvironmentState && state.filesVersion && devEnvironmentState.filesVersion !== state.filesVersion) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      state.environments["development"]!.filesVersion = state.filesVersion;
+    }
 
     let appSlug = ctx.args["--app"] || state?.app;
     if (!appSlug) {
@@ -197,7 +234,54 @@ export class FileSync {
       );
     }
 
+    let environment = ctx.args["--environment"]?.toLowerCase() || state?.currentEnvironment?.toLowerCase();
+    const filteredSelectableEnvironments = app.environments.filter((x) => x.type.toLowerCase() !== "production");
+
+    if (app.multiEnvironmentEnabled) {
+      if (!environment) {
+        // user didn't specify an environment, show them a list of valid environments
+        environment = await select(ctx, {
+          message: "Select the environment to sync to",
+          choices: filteredSelectableEnvironments.map((x) => x.name.toLowerCase()),
+        });
+      }
+
+      // if multi environment is enabled try to find the environment in the app's list
+      const env = filteredSelectableEnvironments.find((env) => env.name.toLowerCase() === environment);
+      if (!env) {
+        const similarEnvironments = sortBySimilar(
+          environment,
+          app.environments.map((env) => env.name.toLowerCase()),
+        ).slice(0, 5);
+
+        throw new ArgError(
+          sprint`
+          Unknown environment:
+
+            ${environment}
+          
+          Did you mean one of these?
+          
+          
+          `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
+        );
+      }
+    } else if (ctx.args["--environment"]?.toLowerCase()) {
+      // multi environment is not enabled but the user specified an environment
+      throw new ArgError(
+        sprint`
+        You specified an environment but your app doesn't have multiple environments.
+
+        Remove the {dim --environment} flag to sync to the {bold ${app.primaryDomain}} environment.
+      `,
+      );
+    } else {
+      // multi environment is not enabled and the user didn't specify an environment
+      environment = "development";
+    }
+
     ctx.app = app;
+    ctx.environment = environment;
     const directory = await Directory.init(dir);
 
     if (!state) {
@@ -205,7 +289,15 @@ export class FileSync {
       if (wasEmptyOrNonExistent || ctx.args["--force"]) {
         // the directory was empty or the user passed --force
         // either way, create a fresh .gadget/sync.json file
-        return new FileSync(ctx, directory, app, { app: app.slug, filesVersion: "0", mtime: 0 });
+        return new FileSync(ctx, directory, app, environment, {
+          app: app.slug,
+          filesVersion: "0",
+          mtime: 0,
+          currentEnvironment: environment,
+          environments: {
+            [environment]: { filesVersion: "0" },
+          },
+        });
       }
 
       // the directory isn't empty and the user didn't pass --force
@@ -215,28 +307,36 @@ export class FileSync {
     // the .gadget/sync.json file exists
     if (state.app === app.slug) {
       // the .gadget/sync.json file is for the same app that the user specified
-      return new FileSync(ctx, directory, app, state);
+      return new FileSync(ctx, directory, app, environment, { ...state, currentEnvironment: environment });
     }
 
-    // the .gadget/sync.json file is for a different app
+    // the .gadget/sync.json file is for a different app or environment
     if (ctx.args["--force"]) {
       // the user passed --force, so use the app they specified and overwrite everything
-      return new FileSync(ctx, directory, app, { app: app.slug, filesVersion: "0", mtime: 0 });
+      return new FileSync(ctx, directory, app, environment, {
+        app: app.slug,
+        filesVersion: "0",
+        mtime: 0,
+        currentEnvironment: environment,
+        environments: {
+          [environment]: { filesVersion: "0" },
+        },
+      });
     }
 
     // the user didn't pass --force, so throw an error
     throw new ArgError(sprint`
         You were about to sync the following app to the following directory:
 
-          {dim ${app.slug}} → {dim ${dir}}
+          {dim ${app.slug}} {dim ({green ${environment}}) → ${dir}}
 
         However, that directory has already been synced with this app:
 
-          {dim ${state.app}}
+          {dim ${state.app}} {dim ({red ${state.currentEnvironment}})}
 
         If you're sure that you want to sync:
 
-          {dim ${app.slug}} → {dim ${dir}}
+          {dim ${app.slug}} {dim ({green ${environment}}) → ${dir}}
 
         Then run {dim ggt sync} again with the {dim --force} flag.
       `);
@@ -736,9 +836,18 @@ export class FileSync {
    * Updates {@linkcode _syncJson} and saves it to `.gadget/sync.json`.
    */
   private async _save(filesVersion: string | bigint): Promise<void> {
-    this._syncJson = { ...this._syncJson, mtime: Date.now() + 1, filesVersion: String(filesVersion) };
+    assert(this._syncJson.environments[this.environment], "environment doesn't exist in _syncJson");
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    this._syncJson.environments[this.environment]!.filesVersion = String(filesVersion);
+
+    if (this.environment === "development") {
+      this._syncJson.filesVersion = String(filesVersion);
+    }
+
     this.ctx.log.debug("saving .gadget/sync.json");
-    await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this._syncJson, { spaces: 2 });
+
+    await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), { ...this._syncJson }, { spaces: 2 });
   }
 }
 
@@ -796,6 +905,7 @@ export const FileSyncArgs = {
   "--app": { type: AppArg, alias: "-a" },
   "--prefer": ConflictPreferenceArg,
   "--force": Boolean,
+  "--environment": { type: String, alias: "-e" },
 } satisfies ArgsDefinition;
 
 export type FileSyncArgs = typeof FileSyncArgs;

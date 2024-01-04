@@ -272,22 +272,32 @@ export const command: Command<SyncArgs> = async (ctx) => {
     },
   ).once("error", (error) => ctx.abort(error));
 
+  const editorLink = `https://${filesync.app.slug}.gadget.app/edit${
+    filesync.app.multiEnvironmentEnabled ? `/${filesync.ctx.environment}` : ""
+  }`;
+  const playgroundLink = `https://${filesync.app.slug}.gadget.app/api/graphql/playground`;
+
+  const endpointsLink = filesync.app.multiEnvironmentEnabled
+    ? `
+      • https://${filesync.app.primaryDomain}
+      • https://${filesync.app.slug}--${filesync.ctx.environment}.gadget.app
+      `
+    : filesync.app.hasSplitEnvironments
+      ? `
+      • https://${filesync.app.primaryDomain}
+      • https://${filesync.app.slug}--development.gadget.app`
+      : `
+      • https://${filesync.app.primaryDomain}`;
+
   ctx.log.printlns`
     ggt v${config.version}
 
     App         ${filesync.app.slug}
-    Editor      https://${filesync.app.primaryDomain}/edit
-    Playground  https://${filesync.app.primaryDomain}/api/graphql/playground
+    Editor      ${editorLink}
+    Playground  ${playgroundLink}
     Docs        https://docs.gadget.dev/api/${filesync.app.slug}
 
-    Endpoints ${
-      filesync.app.hasSplitEnvironments
-        ? `
-      • https://${filesync.app.primaryDomain}
-      • https://${filesync.app.slug}--development.gadget.app`
-        : `
-      • https://${filesync.app.primaryDomain}`
-    }
+    Endpoints ${endpointsLink}
 
     Watching for file changes... {gray Press Ctrl+C to stop}
   `;

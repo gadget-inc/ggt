@@ -77,7 +77,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
           "file.txt": "file v2",
         },
       }
@@ -113,7 +113,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
           "file.txt": "file v3",
         },
       }
@@ -153,7 +153,7 @@ describe("sync", () => {
           ".gadget/": "",
           ".gadget/backup/": "",
           ".gadget/backup/file.txt": "file v3",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"4\\"}}}",
         },
       }
     `);
@@ -197,7 +197,7 @@ describe("sync", () => {
           ".gadget/": "",
           ".gadget/backup/": "",
           ".gadget/backup/file.txt": "file v3",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"5\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"5\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"5\\"}}}",
           "directory/": "",
         },
       }
@@ -245,7 +245,7 @@ describe("sync", () => {
           ".gadget/backup/": "",
           ".gadget/backup/directory/": "",
           ".gadget/backup/file.txt": "file v3",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"6\\"}}}",
         },
       }
     `);
@@ -316,7 +316,7 @@ describe("sync", () => {
           ".gadget/backup/": "",
           ".gadget/backup/directory/": "",
           ".gadget/backup/file.txt": "file v3",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"7\\"}}}",
           "file1.txt": "file1.txt",
           "file10.txt": "file10.txt",
           "file2.txt": "file2.txt",
@@ -440,7 +440,7 @@ describe("sync", () => {
           ".gadget/backup/": "",
           ".gadget/backup/directory/": "",
           ".gadget/backup/file.txt": "file v3",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"7\\"}}}",
           "file1.txt": "file1.txt",
           "file10.txt": "file10.txt",
           "file2.txt": "file2.txt",
@@ -576,7 +576,7 @@ describe("sync", () => {
           ".gadget/backup/": "",
           ".gadget/backup/directory/": "",
           ".gadget/backup/file.txt": "file v3",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"7\\"}}}",
           "file.js": "file v2",
           "file1.txt": "file1.txt",
           "file10.txt": "file10.txt",
@@ -639,7 +639,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
           ".ignore": "**/tmp",
         },
       }
@@ -680,7 +680,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
           ".ignore": "**/tmp",
         },
       }
@@ -712,7 +712,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
           "file.txt": "file v2",
         },
       }
@@ -742,7 +742,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
           "file.txt": "file v3",
         },
       }
@@ -776,7 +776,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"4\\"}}}",
           "renamed-file.txt": "file v3",
         },
       }
@@ -812,7 +812,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"5\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"5\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"5\\"}}}",
         },
       }
     `);
@@ -852,7 +852,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"6\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"6\\"}}}",
           "directory/": "",
         },
       }
@@ -897,7 +897,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"7\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"7\\"}}}",
           "renamed-directory/": "",
         },
       }
@@ -944,7 +944,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"8\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"8\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"8\\"}}}",
         },
       }
     `);
@@ -1020,7 +1020,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"9\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"9\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"9\\"}}}",
           "file1.txt": "file1.txt",
           "file10.txt": "file10.txt",
           "file2.txt": "file2.txt",
@@ -1065,7 +1065,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
           "file.txt": "v10",
         },
       }
@@ -1131,7 +1131,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}}}",
           ".ignore": "**/tmp",
           "tmp/": "",
           "tmp/file1.txt": "file1.txt",
@@ -1176,7 +1176,7 @@ describe("sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
           ".ignore": "# watch it all",
         },
       }

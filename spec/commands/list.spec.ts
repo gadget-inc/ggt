@@ -17,8 +17,15 @@ describe("list", () => {
   it("lists apps", async () => {
     mock(user, "getUserOrLogin", () => ({ id: 1, email: "test@example.com", name: "Jane Doe" }));
     mock(app, "getApps", () => [
-      { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true },
-      { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true },
+      {
+        id: 1,
+        slug: "app-a",
+        primaryDomain: "app-a.example.com",
+        hasSplitEnvironments: true,
+        multiEnvironmentEnabled: true,
+        environments: [],
+      },
+      { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, multiEnvironmentEnabled: true, environments: [] },
     ]);
 
     await command(ctx);

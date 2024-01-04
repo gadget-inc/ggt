@@ -1,5 +1,15 @@
 # @gadgetinc/ggt
 
+## 0.4.8
+
+### Patch Changes
+
+- 346ceb8: Bump ws from 8.15.1 to 8.16.0
+- b1d54bb: Bump @sentry/node from 7.90.0 to 7.91.0
+- 2ce747e: Bump p-retry from 6.1.0 to 6.2.0
+- 9056880: Automatically retry GraphQL query errors
+- cc1151c: Run `yarn install` on initial sync
+
 ## 0.4.7
 
 ### Patch Changes

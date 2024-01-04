@@ -226,5 +226,5 @@ USAGE
 
 EXAMPLE
   $ ggt version
-    0.4.7
+    0.4.8
 ```

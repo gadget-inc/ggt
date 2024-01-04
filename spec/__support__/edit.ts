@@ -13,6 +13,7 @@ import { isFunction } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { testApp } from "./app.js";
 import { log } from "./debug.js";
+import { mock } from "./mock.js";
 
 export type NockEditResponseOptions<Operation extends GraphQLQuery | GraphQLMutation> = {
   /**
@@ -188,7 +189,7 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
   };
 
   vi.spyOn(Client.prototype, "dispose");
-  vi.spyOn(Client.prototype, "subscribe").mockImplementation((_ctx, options) => {
+  mock(Client.prototype, "subscribe", (_ctx, options) => {
     options.onComplete ??= noop;
 
     vi.spyOn(options, "onResponse");

@@ -1,6 +1,5 @@
 import process from "node:process";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { spyOnImplementing } from "vitest-mock-process";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { command as root } from "../../src/commands/root.js";
 import * as command from "../../src/services/command/command.js";
 import { importCommand, type CommandModule } from "../../src/services/command/command.js";
@@ -11,18 +10,16 @@ import { noop, noopThis } from "../../src/services/util/function.js";
 import { makeRootContext } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
+import { mock } from "../__support__/mock.js";
 import { expectProcessExit } from "../__support__/process.js";
 import { expectStdout } from "../__support__/stream.js";
-import { mockVersion } from "../__support__/version.js";
 
 describe("root", () => {
-  mockVersion();
-
   beforeEach(() => {
-    spyOnImplementing(process, "once", noopThis);
+    mock(process, "once", noopThis);
 
     // don't check for updates
-    vi.spyOn(update, "warnIfUpdateAvailable").mockResolvedValue();
+    mock(update, "warnIfUpdateAvailable", noop);
   });
 
   afterEach(() => {
@@ -106,7 +103,7 @@ describe("root", () => {
 
     beforeEach(async () => {
       cmd = await importCommand(name);
-      vi.spyOn(cmd, "command").mockImplementation(noop);
+      mock(cmd, "command", noop);
     });
 
     it.each(["--help", "-h"])("prints the usage when %s is passed", async (flag) => {
@@ -127,7 +124,9 @@ describe("root", () => {
 
     it("reports and exits if an error occurs", async () => {
       const error = new Error("boom!");
-      vi.spyOn(cmd, "command").mockRejectedValueOnce(error);
+      mock(cmd, "command", () => {
+        throw error;
+      });
 
       process.argv = ["node", "ggt", name];
 

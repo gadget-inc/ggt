@@ -1,10 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { Commands, importCommand, type CommandModule } from "../../../src/services/command/command.js";
-import { mockVersion } from "../../__support__/version.js";
 
 describe.each(Commands)("%s", (command) => {
-  mockVersion();
-
   let cmd: CommandModule;
 
   beforeAll(async () => {

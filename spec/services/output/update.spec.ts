@@ -2,11 +2,12 @@ import fs from "fs-extra";
 import ms from "ms";
 import nock from "nock";
 import path from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import type { Context } from "../../../src/services/command/context.js";
 import { config } from "../../../src/services/config/config.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
 import { makeContext } from "../../__support__/context.js";
+import { mock } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/stream.js";
 
 describe("getDistTags", () => {
@@ -69,7 +70,7 @@ describe("warnIfUpdateAvailable", () => {
   });
 
   it("logs a warning if an update is available", async () => {
-    vi.spyOn(config, "version", "get").mockReturnValue("1.0.0");
+    mock(config, "version", "get", () => "1.0.0");
 
     nock("https://registry.npmjs.org")
       .get("/ggt")
@@ -99,7 +100,7 @@ describe("warnIfUpdateAvailable", () => {
   });
 
   it("does nothing if already at latest version", async () => {
-    vi.spyOn(config, "version", "get").mockReturnValue("1.0.0");
+    mock(config, "version", "get", () => "1.0.0");
 
     nock("https://registry.npmjs.org")
       .get("/ggt")

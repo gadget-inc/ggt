@@ -1,5 +1,6 @@
 import { describe, expect, it, test, vi } from "vitest";
 import { Context, type OnAbort } from "../../../src/services/command/context.js";
+import { mockOnce } from "../../__support__/mock.js";
 
 describe("Context.init", () => {
   it("parses args", () => {
@@ -42,7 +43,7 @@ describe("Context.onAbort", () => {
   it("catches errors thrown in the callback", async () => {
     let onAbort: OnAbort | undefined = undefined;
 
-    vi.spyOn(AbortSignal.prototype, "addEventListener").mockImplementationOnce((_event, cb) => {
+    mockOnce(AbortSignal.prototype, "addEventListener", (_event, cb) => {
       onAbort = cb as OnAbort;
     });
 

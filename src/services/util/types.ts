@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Promisable, Simplify } from "type-fest";
 
 /**
@@ -16,3 +17,15 @@ export type AnyFunction = (...args: never[]) => unknown;
  * Represents void or Promise<void>.
  */
 export type AnyVoid = Promisable<void>;
+
+/**
+ * Returns all property names of an object whose values are functions.
+ */
+export type FunctionPropertyNames<T> = {
+  [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
+}[keyof T];
+
+/**
+ * Returns the arguments of a function.
+ */
+export type ArgsType<T> = T extends (...args: infer A) => any ? A : never;

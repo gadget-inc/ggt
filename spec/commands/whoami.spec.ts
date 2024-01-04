@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { command } from "../../src/commands/whoami.js";
 import { type Context } from "../../src/services/command/context.js";
 import * as user from "../../src/services/user/user.js";
 import { makeContext } from "../__support__/context.js";
+import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/stream.js";
 
 describe("whoami", () => {
@@ -13,7 +14,7 @@ describe("whoami", () => {
   });
 
   it("outputs the current user", async () => {
-    vi.spyOn(user, "getUser").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
+    mock(user, "getUser", () => ({ id: 1, email: "test@example.com", name: "Jane Doe" }));
 
     await command(ctx);
 
@@ -25,7 +26,7 @@ describe("whoami", () => {
   });
 
   it("outputs only the email if the current user's name is missing", async () => {
-    vi.spyOn(user, "getUser").mockResolvedValue({ id: 1, email: "test@example.com" });
+    mock(user, "getUser", () => ({ id: 1, email: "test@example.com" }));
 
     await command(ctx);
 
@@ -37,7 +38,7 @@ describe("whoami", () => {
   });
 
   it("outputs 'not logged in' if the current user is undefined", async () => {
-    vi.spyOn(user, "getUser").mockResolvedValue(undefined);
+    mock(user, "getUser", () => undefined);
 
     await command(ctx);
 

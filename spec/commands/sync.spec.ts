@@ -1,9 +1,8 @@
 import { execa } from "execa";
 import fs from "fs-extra";
 import ms from "ms";
-import nock from "nock";
 import notifier from "node-notifier";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
 import { args, command as sync, type SyncArgs } from "../../src/commands/sync.js";
 import { EditError } from "../../src/services/app/edit/error.js";
@@ -16,6 +15,7 @@ import { nockTestApps, testApp } from "../__support__/app.js";
 import { makeContext } from "../__support__/context.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
 import { makeFile, makeSyncScenario } from "../__support__/filesync.js";
+import { mock } from "../__support__/mock.js";
 import { testDirPath } from "../__support__/paths.js";
 import { sleep, timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
@@ -46,11 +46,6 @@ describe("sync", () => {
         ms("50ms" /* default 1.25s */),
       ].map(String),
     });
-  });
-
-  afterEach(() => {
-    ctx.abort();
-    expect(nock.pendingMocks()).toEqual([]);
   });
 
   it("writes changes from gadget to the local filesystem", async () => {
@@ -469,7 +464,7 @@ describe("sync", () => {
     const { emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
     let stop: (() => Promise<void>) | undefined = undefined;
-    vi.spyOn(ctx.signal, "addEventListener").mockImplementationOnce((_, listener) => {
+    mock(ctx.signal, "addEventListener", (_, listener) => {
       stop = listener as () => Promise<void>;
     });
 
@@ -1160,9 +1155,9 @@ describe("sync", () => {
     const { filesync, localDir, emitGadgetChanges } = await makeSyncScenario();
 
     const execaCalled = new PromiseSignal();
-    execa.mockImplementationOnce(() => {
+    mock(execa, () => {
       execaCalled.resolve();
-      return Promise.resolve({});
+      return Promise.resolve({}) as never;
     });
 
     await sync(ctx);
@@ -1176,6 +1171,8 @@ describe("sync", () => {
     await execaCalled;
 
     expect(filesync.filesVersion).toBe(2n);
+
+    assert(vi.isMockFunction(execa));
     expect(execa.mock.lastCall).toEqual(["yarn", ["install", "--check-files"], { cwd: localDir.path }]);
   });
 
@@ -1253,13 +1250,14 @@ describe("sync", () => {
 
   it("throws YarnNotFoundError if yarn is not found", async () => {
     await makeSyncScenario();
-    which.sync.mockReturnValue(undefined);
+    // eslint-disable-next-line unicorn/no-null
+    mock(which.sync, () => null);
     await expect(sync(ctx)).rejects.toThrow(YarnNotFoundError);
   });
 
   it("does not throw YarnNotFoundError if yarn is found", async () => {
     await makeSyncScenario();
-    which.sync.mockReturnValue("/path/to/yarn");
+    mock(which.sync, () => "/path/to/yarn");
     await sync(ctx);
   });
 

@@ -1,5 +1,5 @@
 import { expect } from "vitest";
-import { mockProcessExit } from "vitest-mock-process";
+import { mock } from "./mock.js";
 
 /**
  * Expects a process to exit with a specific code when the given
@@ -11,7 +11,9 @@ import { mockProcessExit } from "vitest-mock-process";
  */
 export const expectProcessExit = async (fnThatExits: () => unknown, expectedCode = 0): Promise<void> => {
   const exitError = new Error("process.exit() was called");
-  mockProcessExit(exitError);
+  mock(process, "exit", () => {
+    throw exitError;
+  });
 
   try {
     await fnThatExits();

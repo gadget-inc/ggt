@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, expect, vi, type Assertion } from "vitest";
+import { afterEach, beforeEach, expect, type Assertion } from "vitest";
+import { mock, mockRestore } from "./mock.js";
 
 const testStdout: string[] = [];
 
@@ -19,17 +20,13 @@ export const expectStdout = (): Assertion<string> => expect(testStdout.join(""))
  */
 export const mockStdout = (): void => {
   beforeEach(async () => {
+    testStdout.length = 0;
+
     const { stdout } = await import("../../src/services/output/stream.js");
-    vi.spyOn(stdout, "write").mockImplementation((data) => {
+    mock(stdout, "write", (data) => {
       testStdout.push(data);
       return true;
     });
-    testStdout.length = 0;
-  });
-
-  afterEach(async () => {
-    const { stdout } = await import("../../src/services/output/stream.js");
-    stdout.write.mockRestore();
   });
 };
 
@@ -51,7 +48,7 @@ export const expectStderr = (): Assertion<string> => expect(testStderr.join(""))
 export const mockStderr = (): void => {
   beforeEach(async () => {
     const { stderr } = await import("../../src/services/output/stream.js");
-    vi.spyOn(stderr, "write").mockImplementation((data) => {
+    mock(stderr, "write", (data) => {
       testStderr.push(data);
       return true;
     });
@@ -60,6 +57,6 @@ export const mockStderr = (): void => {
 
   afterEach(async () => {
     const { stderr } = await import("../../src/services/output/stream.js");
-    stderr.write.mockRestore();
+    mockRestore(stderr.write);
   });
 };

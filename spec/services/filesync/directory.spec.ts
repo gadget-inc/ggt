@@ -317,8 +317,6 @@ describe("Directory.hashes", () => {
     } else {
       expect(mapValues(hashes, (hash) => hash.permissions)).toEqual(mapValues(hashes, () => undefined));
     }
-
-    expect.assertions(2);
   });
 });
 

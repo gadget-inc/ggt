@@ -1,10 +1,9 @@
 import fs from "fs-extra";
-import assert from "node:assert";
 import os from "node:os";
 import pMap from "p-map";
 import pTimeout from "p-timeout";
 import type { Promisable } from "type-fest";
-import { expect, vi, type Assertion } from "vitest";
+import { assert, expect, type Assertion } from "vitest";
 import { z, type ZodSchema } from "zod";
 import {
   FileSyncEncoding,
@@ -32,10 +31,11 @@ import { PromiseSignal } from "../../src/services/util/promise.js";
 import type { PartialExcept } from "../../src/services/util/types.js";
 import { testApp } from "./app.js";
 import { makeContext } from "./context.js";
-import { log } from "./debug.js";
+import { assertOrFail, log } from "./debug.js";
 import { makeMockEditSubscriptions, nockEditResponse, type MockEditSubscription } from "./edit.js";
 import { readDir, writeDir, type Files } from "./files.js";
 import { prettyJSON } from "./json.js";
+import { mock, mockRestore } from "./mock.js";
 import { testDirPath } from "./paths.js";
 import { timeoutMs } from "./sleep.js";
 
@@ -211,9 +211,9 @@ export const makeSyncScenario = async ({
     }
   }
 
-  FileSync.init.mockRestore?.();
+  mockRestore(FileSync.init);
   const filesync = await FileSync.init(ctx);
-  vi.spyOn(FileSync, "init").mockResolvedValue(filesync);
+  mock(FileSync, "init", () => filesync);
 
   const changeGadgetFiles: SyncScenario["changeGadgetFiles"] = async (options) => {
     for (const file of options.delete) {
@@ -285,7 +285,7 @@ export const makeSyncScenario = async ({
       log.trace("sending comparison hashes", { gadgetFilesVersion, variables });
 
       const filesVersionDir = filesVersionDirs.get(BigInt(variables.filesVersion));
-      assert(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
+      assertOrFail(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
 
       const [filesVersionHashes, gadgetHashes] = await Promise.all([filesVersionDir.hashes(), gadgetDir.hashes()]);
 

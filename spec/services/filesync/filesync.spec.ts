@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import nock from "nock";
 import { randomUUID } from "node:crypto";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args } from "../../../src/commands/sync.js";
 import * as app from "../../../src/services/app/app.js";
@@ -13,13 +13,14 @@ import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
 import { InvalidSyncFileError, TooManySyncAttemptsError } from "../../../src/services/filesync/error.js";
 import { ConflictPreference, FileSync, isFilesVersionMismatchError } from "../../../src/services/filesync/filesync.js";
-import * as prompt from "../../../src/services/output/prompt.js";
+import { select } from "../../../src/services/output/prompt.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
 import { nockEditResponse } from "../../__support__/edit.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
 import { defaultFileMode, expectPublishVariables, expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
+import { mock, mockOnce } from "../../__support__/mock.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { loginTestUser } from "../../__support__/user.js";
@@ -105,7 +106,7 @@ describe("FileSync.init", () => {
   });
 
   it("throws ArgError if the user doesn't have any available apps", async () => {
-    vi.spyOn(app, "getApps").mockResolvedValueOnce([]);
+    mockOnce(app, "getApps", () => []);
 
     const error = await expectError(() => FileSync.init(makeContext({ parse: args, argv: ["sync", appDir] })));
 
@@ -786,7 +787,7 @@ describe("FileSync.sync", () => {
       gadgetFiles: { "foo.js": "foo (gadget)" },
     });
 
-    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.CANCEL);
+    mock(select, () => ConflictPreference.CANCEL);
 
     await expectProcessExit(() => filesync.sync());
 
@@ -828,7 +829,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
+    mock(select, () => ConflictPreference.LOCAL);
 
     await filesync.sync();
 
@@ -925,7 +926,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.LOCAL);
+    mock(select, () => ConflictPreference.LOCAL);
 
     await filesync.sync();
 
@@ -1036,7 +1037,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.GADGET);
+    mock(select, () => ConflictPreference.GADGET);
 
     await filesync.sync();
 
@@ -1125,7 +1126,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.GADGET);
+    mock(select, () => ConflictPreference.GADGET);
 
     await filesync.sync();
 
@@ -1182,7 +1183,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    vi.spyOn(prompt, "select").mockResolvedValue(ConflictPreference.GADGET);
+    mock(select, () => ConflictPreference.GADGET);
 
     await filesync.sync();
 
@@ -1338,7 +1339,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    vi.spyOn(prompt, "select").mockResolvedValueOnce(ConflictPreference.LOCAL);
+    mockOnce(select, () => ConflictPreference.LOCAL);
 
     await filesync.sync();
 

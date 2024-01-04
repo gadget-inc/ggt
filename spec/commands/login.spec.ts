@@ -10,6 +10,7 @@ import * as user from "../../src/services/user/user.js";
 import { noop } from "../../src/services/util/function.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { makeContext } from "../__support__/context.js";
+import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/stream.js";
 import { testUser } from "../__support__/user.js";
 
@@ -29,21 +30,21 @@ describe("login", () => {
     serverClosed = new PromiseSignal();
     server = { listen: vi.fn(serverListening.resolve), close: vi.fn(serverClosed.resolve) } as any;
 
-    vi.spyOn(http, "createServer").mockImplementation((opt, cb) => {
+    mock(http, "createServer", (opt, cb) => {
       requestListener = cb ?? (opt as http.RequestListener);
       return server;
     });
 
     openedBrowser = new PromiseSignal();
-    open.mockImplementationOnce(() => {
+    mock(open, () => {
       openedBrowser.resolve();
-      return Promise.resolve();
+      return undefined as never;
     });
   });
 
   it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
     writeSession(undefined);
-    vi.spyOn(user, "getUser").mockResolvedValue(testUser);
+    mock(user, "getUser", () => testUser);
 
     void command(ctx);
     await serverListening;
@@ -98,10 +99,9 @@ describe("login", () => {
 
   it("prints the login page when open fails, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
     writeSession(undefined);
-    vi.spyOn(user, "getUser").mockResolvedValue(testUser);
+    mock(user, "getUser", () => testUser);
 
-    open.mockReset();
-    open.mockImplementationOnce(() => {
+    mock(open, () => {
       openedBrowser.resolve();
       throw new Error("boom");
     });
@@ -163,7 +163,9 @@ describe("login", () => {
 
   it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
     writeSession(undefined);
-    vi.spyOn(user, "getUser").mockRejectedValue(new Error("boom"));
+    mock(user, "getUser", () => {
+      throw new Error("boom");
+    });
 
     void Promise.resolve(command(ctx)).catch(noop);
     await serverListening;

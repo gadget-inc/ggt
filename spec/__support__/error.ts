@@ -1,7 +1,7 @@
 import { expect } from "vitest";
-import { spyOnImplementing } from "vitest-mock-process";
 import * as report from "../../src/services/output/report.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
+import { mock } from "./mock.js";
 
 /**
  * Executes a function that is expected to throw an error and returns
@@ -30,7 +30,7 @@ export const expectError = async (fnThatThrows: () => unknown): Promise<any> => 
 export const expectReportErrorAndExit = async (expectedCause: unknown): Promise<void> => {
   const signal = new PromiseSignal();
 
-  spyOnImplementing(report, "reportErrorAndExit", (_ctx, actualCause) => {
+  mock(report, "reportErrorAndExit", (_ctx, actualCause) => {
     expect(actualCause).toBe(expectedCause);
     signal.resolve();
     return Promise.resolve() as never;

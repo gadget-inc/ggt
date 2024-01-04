@@ -95,8 +95,7 @@
         "rimraf": "^5.0.5",
         "type-fest": "^4.9.0",
         "typescript": "^5.3.3",
-        "vitest": "^0.34.6",
-        "vitest-mock-process": "^1.0.4"
+        "vitest": "^0.34.6"
       },
       "engines": {
         "node": ">=16.0.0"
@@ -7809,15 +7808,6 @@
       },
       "funding": {
         "url": "https://github.com/sponsors/sindresorhus"
-      }
-    },
-    "node_modules/deep-clone-fn": {
-      "version": "1.1.0",
-      "resolved": "https://registry.npmjs.org/deep-clone-fn/-/deep-clone-fn-1.1.0.tgz",
-      "integrity": "sha512-9EOa4OcoQhpBknAVdyVjlCFEtHD8lyC/P84NUy+FiJumMs9AQ39vNPvq8IySYjTqTqgO5ZAd2Bm+ATSjNKA/gw==",
-      "dev": true,
-      "dependencies": {
-        "rfdc": "^1.3.0"
       }
     },
     "node_modules/deep-eql": {
@@ -16302,18 +16292,6 @@
         }
       }
     },
-    "node_modules/vitest-mock-process": {
-      "version": "1.0.4",
-      "resolved": "https://registry.npmjs.org/vitest-mock-process/-/vitest-mock-process-1.0.4.tgz",
-      "integrity": "sha512-WFoSE8MLTanQJkZUZSEd2/9+O1RJKqYn5tUNh3mW/SAh1VL7D7cfcxkn2F7DlhsFI0ZPILxto0OI6XEmGYFyRA==",
-      "dev": true,
-      "dependencies": {
-        "deep-clone-fn": "^1.1.0"
-      },
-      "peerDependencies": {
-        "vitest": "<1"
-      }
-    },
     "node_modules/vscode-languageserver-textdocument": {
       "version": "1.0.11",
       "resolved": "https://registry.npmjs.org/vscode-languageserver-textdocument/-/vscode-languageserver-textdocument-1.0.11.tgz",
@@ -22362,15 +22340,6 @@
         }
       }
     },
-    "deep-clone-fn": {
-      "version": "1.1.0",
-      "resolved": "https://registry.npmjs.org/deep-clone-fn/-/deep-clone-fn-1.1.0.tgz",
-      "integrity": "sha512-9EOa4OcoQhpBknAVdyVjlCFEtHD8lyC/P84NUy+FiJumMs9AQ39vNPvq8IySYjTqTqgO5ZAd2Bm+ATSjNKA/gw==",
-      "dev": true,
-      "requires": {
-        "rfdc": "^1.3.0"
-      }
-    },
     "deep-eql": {
       "version": "4.1.3",
       "resolved": "https://registry.npmjs.org/deep-eql/-/deep-eql-4.1.3.tgz",
@@ -28266,15 +28235,6 @@
         "vite": "^3.1.0 || ^4.0.0 || ^5.0.0-0",
         "vite-node": "0.34.6",
         "why-is-node-running": "^2.2.2"
-      }
-    },
-    "vitest-mock-process": {
-      "version": "1.0.4",
-      "resolved": "https://registry.npmjs.org/vitest-mock-process/-/vitest-mock-process-1.0.4.tgz",
-      "integrity": "sha512-WFoSE8MLTanQJkZUZSEd2/9+O1RJKqYn5tUNh3mW/SAh1VL7D7cfcxkn2F7DlhsFI0ZPILxto0OI6XEmGYFyRA==",
-      "dev": true,
-      "requires": {
-        "deep-clone-fn": "^1.1.0"
       }
     },
     "vscode-languageserver-textdocument": {

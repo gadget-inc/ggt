@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { command } from "../../src/commands/list.js";
 import * as app from "../../src/services/app/app.js";
 import { type Context } from "../../src/services/command/context.js";
 import * as user from "../../src/services/user/user.js";
 import { makeContext } from "../__support__/context.js";
+import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/stream.js";
 
 describe("list", () => {
@@ -14,8 +15,8 @@ describe("list", () => {
   });
 
   it("lists apps", async () => {
-    vi.spyOn(user, "getUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    vi.spyOn(app, "getApps").mockResolvedValue([
+    mock(user, "getUserOrLogin", () => ({ id: 1, email: "test@example.com", name: "Jane Doe" }));
+    mock(app, "getApps", () => [
       { id: 1, slug: "app-a", primaryDomain: "app-a.example.com", hasSplitEnvironments: true },
       { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true },
     ]);
@@ -33,8 +34,8 @@ describe("list", () => {
   });
 
   it("lists no apps if the user doesn't have any", async () => {
-    vi.spyOn(user, "getUserOrLogin").mockResolvedValue({ id: 1, email: "test@example.com", name: "Jane Doe" });
-    vi.spyOn(app, "getApps").mockResolvedValue([]);
+    mock(user, "getUserOrLogin", () => ({ id: 1, email: "test@example.com", name: "Jane Doe" }));
+    mock(app, "getApps", () => []);
 
     await command(ctx);
 

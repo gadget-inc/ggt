@@ -1,5 +1,5 @@
 import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
@@ -8,9 +8,10 @@ import { Action, args, command as deploy } from "../../src/commands/deploy.js";
 import { EditError } from "../../src/services/app/edit/error.js";
 import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { type Context } from "../../src/services/command/context.js";
-import * as prompt from "../../src/services/output/prompt.js";
+import { select } from "../../src/services/output/prompt.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeMockEditSubscriptions } from "../__support__/edit.js";
+import { mock } from "../__support__/mock.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("deploy", () => {
@@ -29,7 +30,7 @@ describe("deploy", () => {
   });
 
   it("does not try to deploy if local files are not up to date with remote", async () => {
-    vi.spyOn(prompt, "select").mockResolvedValueOnce(Action.CANCEL);
+    mock(select, () => Action.CANCEL);
 
     await makeSyncScenario({ localFiles: { "file.txt": "test" } });
 
@@ -37,7 +38,7 @@ describe("deploy", () => {
   });
 
   it("does not try to deploy if any problems were detected and displays the problems", async () => {
-    vi.spyOn(prompt, "select").mockResolvedValue("0");
+    mock(select, () => "0");
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
@@ -75,7 +76,7 @@ describe("deploy", () => {
   });
 
   it("deploys anyways even if there are problems if deploying with force flag", async () => {
-    vi.spyOn(prompt, "select").mockResolvedValue("0");
+    mock(select, () => "0");
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
@@ -111,7 +112,7 @@ describe("deploy", () => {
       "
     `);
 
-    vi.spyOn(prompt, "select").mockResolvedValue(Action.DEPLOY_ANYWAYS);
+    mock(select, () => Action.DEPLOY_ANYWAYS);
 
     await publishStatus.emitResponse({
       data: {

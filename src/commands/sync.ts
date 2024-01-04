@@ -1,5 +1,4 @@
 import dayjs from "dayjs";
-import { execa } from "execa";
 import ms from "ms";
 import path from "node:path";
 import Watcher from "watcher";
@@ -149,13 +148,6 @@ export const command: Command<SyncArgs> = async (ctx) => {
           recentWritesToLocalFilesystem.set(dir + "/", Date.now());
           dir = path.dirname(dir);
         }
-      }
-    },
-    afterChanges: async ({ changes }) => {
-      if (changes.has("yarn.lock")) {
-        await execa("yarn", ["install", "--check-files"], { cwd: filesync.directory.path }).catch((error) => {
-          ctx.log.error("yarn install failed", { error });
-        });
       }
     },
   });

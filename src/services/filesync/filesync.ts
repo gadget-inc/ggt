@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { execa } from "execa";
 import { findUp } from "find-up";
 import fs from "fs-extra";
 import ms from "ms";
@@ -280,12 +281,12 @@ export class FileSync {
    * @returns A function that unsubscribes from changes on Gadget.
    */
   subscribeToGadgetChanges({
-    beforeChanges,
-    afterChanges,
+    beforeChanges = noop,
+    afterChanges = noop,
     onError,
   }: {
-    beforeChanges: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
-    afterChanges: (data: { changes: Changes }) => Promisable<void>;
+    beforeChanges?: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
+    afterChanges?: (data: { changes: Changes }) => Promisable<void>;
     onError: (error: unknown) => void;
   }): () => void {
     return this.edit.subscribe({
@@ -693,11 +694,20 @@ export class FileSync {
 
     await this._save(String(filesVersion));
 
-    return new Changes([
+    const changes = new Changes([
       ...created.map((path) => [path, { type: "create" }] as const),
       ...updated.map((path) => [path, { type: "update" }] as const),
       ...options.delete.map((path) => [path, { type: "delete" }] as const),
     ]);
+
+    if (changes.has("yarn.lock")) {
+      this.ctx.log.info("running yarn install --check-files");
+      await execa("yarn", ["install", "--check-files"], { cwd: this.directory.path })
+        .then(() => this.ctx.log.info("yarn install complete"))
+        .catch((error: unknown) => this.ctx.log.error("yarn install failed", { error }));
+    }
+
+    return changes;
   }
 
   /**

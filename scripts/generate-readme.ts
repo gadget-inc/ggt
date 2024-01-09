@@ -17,7 +17,7 @@ readme = readme.replace(
     ## Usage
 
     \`\`\`sh-session
-    $ npm install -g @gadgetinc/ggt
+    $ npm install -g ggt
     $ ggt
     ${usage()}
     \`\`\`

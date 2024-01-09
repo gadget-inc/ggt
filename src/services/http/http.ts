@@ -1,4 +1,5 @@
 import { got, type OptionsInit } from "got";
+import ms from "ms";
 import assert from "node:assert";
 import { Agent as HttpAgent } from "node:http";
 import { Agent as HttpsAgent } from "node:https";
@@ -35,6 +36,27 @@ export const http = got.extend({
   agent: {
     http: new HttpAgent({ keepAlive: true }),
     https: new HttpsAgent({ keepAlive: true }),
+  },
+  retry: {
+    limit: 10,
+    methods: ["GET", "PUT", "HEAD", "DELETE", "OPTIONS", "TRACE"],
+    statusCodes: [408, 413, 429, 500, 502, 503, 504, 521, 522, 524],
+    errorCodes: [
+      "ETIMEDOUT",
+      "ECONNRESET",
+      "EADDRINUSE",
+      "ECONNREFUSED",
+      "EPIPE",
+      "ENOTFOUND",
+      "ENETUNREACH",
+      "EAI_AGAIN",
+      "EADDRNOTAVAIL",
+      "EHOSTUNREACH",
+    ],
+    maxRetryAfter: undefined,
+    calculateDelay: ({ computedValue }) => computedValue,
+    backoffLimit: ms("5s"),
+    noise: 100,
   },
   hooks: {
     beforeRequest: [

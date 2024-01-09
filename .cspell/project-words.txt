@@ -3,6 +3,8 @@ codegen
 commandsstop
 dedenting
 direnv
+EADDRNOTAVAIL
+EHOSTUNREACH
 ENOENT
 execa
 filesync

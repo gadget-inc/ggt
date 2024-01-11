@@ -147,6 +147,13 @@ type LogSearchResult {
   status: String!
 }
 
+type Problem {
+  level: String!
+  message: String!
+  path: String!
+  type: String!
+}
+
 type MigrateAACResult {
   reason: String
   success: Boolean!
@@ -189,6 +196,7 @@ input PublishFileSyncEventsInput {
 
 type PublishFileSyncEventsResult {
   remoteFilesVersion: String!
+  problems: [Problem!]!
 }
 
 type PublishIssue {

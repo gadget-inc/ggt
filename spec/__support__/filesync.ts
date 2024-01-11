@@ -382,6 +382,7 @@ export const makeSyncScenario = async ({
         data: {
           publishFileSyncEvents: {
             remoteFilesVersion: String(gadgetFilesVersion),
+            problems: [],
           },
         },
       };

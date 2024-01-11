@@ -103,6 +103,12 @@ export const PUBLISH_FILE_SYNC_EVENTS_MUTATION = sprint(/* GraphQL */ `
   mutation PublishFileSyncEvents($input: PublishFileSyncEventsInput!) {
     publishFileSyncEvents(input: $input) {
       remoteFilesVersion
+      problems {
+        level
+        message
+        path
+        type
+      }
     }
   }
 `) as GraphQLMutation<PublishFileSyncEventsMutation, PublishFileSyncEventsMutationVariables>;

@@ -25,6 +25,7 @@ import { defaultFileMode, expectPublishVariables, expectSyncJson, makeFile, make
 import { mock, mockOnce } from "../../__support__/mock.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
+import { expectStdout } from "../../__support__/stream.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe("FileSync.init", () => {
@@ -469,6 +470,7 @@ describe("FileSync._sendChangesToGadget", () => {
         data: {
           publishFileSyncEvents: {
             remoteFilesVersion: "1",
+            problems: [],
           },
         },
       },
@@ -509,7 +511,7 @@ describe("FileSync._sendChangesToGadget", () => {
 
     nockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "1" } } },
+      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "1", problems: [] } } },
       expectVariables: expect.anything(),
       statusCode: 200,
     });
@@ -545,7 +547,7 @@ describe("FileSync._sendChangesToGadget", () => {
   it('throws "Files version mismatch" when it receives a files version greater than the expectedRemoteFilesVersion + 1', async () => {
     const scope = nockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "2" } } },
+      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "2", problems: [] } } },
       expectVariables: expectPublishVariables({
         input: {
           expectedRemoteFilesVersion: "0",
@@ -574,6 +576,63 @@ describe("FileSync._sendChangesToGadget", () => {
     expect(scope.isDone()).toBe(true);
 
     expect(isFilesVersionMismatchError(error)).toBe(true);
+  });
+
+  it("prints out fatal errors in the terminal", async () => {
+    await writeDir(appDir, {
+      "access-control.gadget.ts": "// foo",
+    });
+
+    nockEditResponse({
+      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      response: {
+        data: {
+          publishFileSyncEvents: {
+            remoteFilesVersion: "1",
+            problems: [
+              {
+                type: "SourceFile",
+                path: "access-control.gadget.ts",
+                message: "Something went wrong",
+                level: "Fatal",
+              },
+              {
+                type: "SourceFile",
+                path: "access-control.gadget.ts",
+                message: "Another message",
+                level: "Fatal",
+              },
+              {
+                type: "SourceFile",
+                path: "settings.gadget.ts",
+                message: "Message from another file",
+                level: "Fatal",
+              },
+            ],
+          },
+        },
+      },
+      expectVariables: expect.anything(),
+      times: 1,
+      statusCode: 200,
+    });
+
+    const changes = new Changes();
+    changes.set("access-control.gadget.ts", { type: "update" });
+
+    await sendChangesToGadget({ changes });
+
+    expectStdout().toContain(
+      `Gadget has detected the following fatal errors with your files:
+
+[access-control.gadget.ts]
+ - Something went wrong
+ - Another message
+[settings.gadget.ts]
+ - Message from another file
+
+Your app will not be operational until all fatal errors are fixed.`,
+    );
   });
 });
 

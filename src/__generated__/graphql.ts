@@ -313,6 +313,14 @@ export type MutationUploadTemplateAssetArgs = {
   file: Scalars['Upload']['input'];
 };
 
+export type Problem = {
+  __typename?: 'Problem';
+  level: Scalars['String']['output'];
+  message: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
 export type PublishFileSyncEventsInput = {
   changed: Array<FileSyncChangedEventInput>;
   deleted: Array<FileSyncDeletedEventInput>;
@@ -321,6 +329,7 @@ export type PublishFileSyncEventsInput = {
 
 export type PublishFileSyncEventsResult = {
   __typename?: 'PublishFileSyncEventsResult';
+  problems: Array<Problem>;
   remoteFilesVersion: Scalars['String']['output'];
 };
 
@@ -598,7 +607,7 @@ export type PublishFileSyncEventsMutationVariables = Exact<{
 }>;
 
 
-export type PublishFileSyncEventsMutation = { __typename?: 'Mutation', publishFileSyncEvents: { __typename?: 'PublishFileSyncEventsResult', remoteFilesVersion: string } };
+export type PublishFileSyncEventsMutation = { __typename?: 'Mutation', publishFileSyncEvents: { __typename?: 'PublishFileSyncEventsResult', remoteFilesVersion: string, problems: Array<{ __typename?: 'Problem', level: string, message: string, path: string, type: string }> } };
 
 export type FileSyncFilesQueryVariables = Exact<{
   paths: Array<Scalars['String']['input']> | Scalars['String']['input'];

@@ -52,7 +52,7 @@ With this running in the background, your local `~/gadget/my-app` folder will be
 ## Usage
 
 ```sh-session
-$ npm install -g @gadgetinc/ggt
+$ npm install -g ggt
 $ ggt
 The command-line interface for Gadget
 
@@ -226,5 +226,5 @@ USAGE
 
 EXAMPLE
   $ ggt version
-    0.4.8
+    0.4.9
 ```

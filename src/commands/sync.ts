@@ -233,8 +233,8 @@ export const command: Command<SyncArgs> = async (ctx) => {
     ggt v${config.version}
 
     App         ${filesync.app.slug}
-    Editor      https://${filesync.app.slug}.gadget.app/edit
-    Playground  https://${filesync.app.slug}.gadget.app/api/graphql/playground
+    Editor      https://${filesync.app.primaryDomain}/edit
+    Playground  https://${filesync.app.primaryDomain}/api/graphql/playground
     Docs        https://docs.gadget.dev/api/${filesync.app.slug}
 
     Endpoints ${

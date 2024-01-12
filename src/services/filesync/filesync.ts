@@ -657,7 +657,9 @@ export class FileSync {
           }
         },
         {
-          retries: 2,
+          // windows tends to run into these issues way more often than
+          // mac/linux, so we retry more times
+          retries: config.windows ? 4 : 2,
           minTimeout: ms("100ms"),
           onFailedAttempt: (error) => {
             this.ctx.log.warn("failed to move file to backup", { error, currentPath, backupPath });

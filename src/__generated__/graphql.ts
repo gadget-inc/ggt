@@ -328,6 +328,7 @@ export type PublishIssue = {
   __typename?: 'PublishIssue';
   message: Scalars['String']['output'];
   node?: Maybe<PublishIssueNode>;
+  nodeLabels?: Maybe<Array<Maybe<PublishIssueNodeLabel>>>;
   severity: Scalars['String']['output'];
 };
 
@@ -342,11 +343,26 @@ export type PublishIssueNode = {
   type: Scalars['String']['output'];
 };
 
+export type PublishIssueNodeLabel = {
+  __typename?: 'PublishIssueNodeLabel';
+  identifier?: Maybe<Scalars['String']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+};
+
+export type PublishStatus = {
+  __typename?: 'PublishStatus';
+  code?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  output?: Maybe<Scalars['String']['output']>;
+};
+
 export type PublishStatusState = {
   __typename?: 'PublishStatusState';
   issues: Array<PublishIssue>;
   progress: Scalars['String']['output'];
+  publishStarted: Scalars['Boolean']['output'];
   remoteFilesVersion: Scalars['String']['output'];
+  status?: Maybe<PublishStatus>;
 };
 
 export type Query = {
@@ -613,4 +629,4 @@ export type PublishStatusSubscriptionVariables = Exact<{
 }>;
 
 
-export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null }> } | null };
+export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null, nodeLabels?: Array<{ __typename?: 'PublishIssueNodeLabel', type?: string | null, identifier?: string | null } | null> | null }>, status?: { __typename?: 'PublishStatus', code?: string | null, message?: string | null, output?: string | null } | null } | null };

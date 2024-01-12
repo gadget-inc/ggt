@@ -194,6 +194,7 @@ type PublishFileSyncEventsResult {
 type PublishIssue {
   message: String!
   node: PublishIssueNode
+  nodeLabels: [PublishIssueNodeLabel]
   severity: String!
 }
 
@@ -207,10 +208,23 @@ type PublishIssueNode {
   type: String!
 }
 
+type PublishIssueNodeLabel {
+  identifier: String
+  type: String
+}
+
+type PublishStatus {
+  code: String
+  message: String
+  output: String
+}
+
 type PublishStatusState {
   issues: [PublishIssue!]!
   progress: String!
+  publishStarted: Boolean!
   remoteFilesVersion: String!
+  status: PublishStatus
 }
 
 type Query {

@@ -104,6 +104,62 @@ enum AppDeploymentSteps {
   COMPLETED = "COMPLETED",
 }
 
+type Node = {
+  [key: string]: string | undefined;
+  type: string;
+  key: string;
+  apiIdentifier?: string;
+  name?: string;
+  fieldType?: string;
+  parentKey?: string;
+  parentApiIdentifier?: string;
+};
+
+type NodeLabel = {
+  type: string;
+  identifier: string;
+};
+
+type NodeIssue = {
+  severity: string;
+  message: string;
+  node?: Node;
+  nodeLabels?: NodeLabel[];
+};
+
+type PublishStatus = {
+  code?: string;
+  message?: string;
+  output?: string;
+};
+
+type GroupedIssues = Record<string, NodeIssue[]>;
+
+const groupByProperty = (items: NodeIssue[], property: string): GroupedIssues => {
+  const grouped: GroupedIssues = {};
+  const defaultOtherIssues = "Other Issues";
+
+  for (const item of items) {
+    if (item.node) {
+      const value = item.node[property];
+
+      if (value && !grouped[value]) {
+        grouped[value] = [];
+        grouped[value]?.push(item);
+      } else if (value && grouped[value]) {
+        grouped[value]?.push(item);
+      }
+    } else {
+      if (!grouped[defaultOtherIssues]) {
+        grouped[defaultOtherIssues] = [];
+      }
+      grouped[defaultOtherIssues].push(item);
+    }
+  }
+
+  return grouped;
+};
+
 /**
  * Runs the deploy process.
  */
@@ -163,28 +219,47 @@ export const command = (async (ctx, firstRun = true) => {
       return;
     },
     onData: async ({ publishStatus }): Promise<void> => {
-      const { progress, issues } = publishStatus ?? {};
+      const { progress, issues, status } = publishStatus ?? {};
 
       const hasIssues = issues?.length;
 
       if (firstRun && hasIssues) {
         ctx.log.printlns`{underline Issues detected}`;
 
-        for (const issue of issues) {
-          const message = issue.message.replace(/"/g, "");
-          const nodeType = issue.node?.type;
-          const nodeName = issue.node?.apiIdentifier ?? issue.node?.name;
-          const nodeParent = issue.node?.parentApiIdentifier;
+        const printIssues = (groupedIssues: GroupedIssues): void => {
+          for (const [name, nodeArray] of Object.entries(groupedIssues)) {
+            ctx.log.println(
+              `\n\n • ${chalk.cyan(name)} ${chalk.redBright(
+                nodeArray.length === 1 ? `${nodeArray.length} issue` : `${nodeArray.length} issues`,
+              )}${nodeArray
+                .map((e) => {
+                  if (!e.node) {
+                    return `\n\t   ${chalk.red("✖")} ${e.message}`;
+                  }
 
-          ctx.log.printlns(
-            `
-                    • ${message}
-                      ${nodeType ? `${nodeType}: ${chalk.cyan(nodeName)}` : ""}                 ${
-                        nodeParent ? `ParentResource: ${chalk.cyan(nodeParent)}` : ""
-                      }
-            `.trim(),
-          );
-        }
+                  return `\n\t   ${chalk.red("✖")} ${titleFormatter(e)}: ${e.nodeLabels
+                    ?.map((label: NodeLabel) => `${chalk.bgWhite.black(label.type.toLowerCase())} ${chalk.white.bold(label.identifier)}`)
+                    .join("")}`;
+                })
+                .join("")}`,
+            );
+          }
+        };
+
+        const titleFormatter = (e: NodeIssue): string => {
+          if (e.node?.type === "SourceFile") {
+            return `${chalk.magentaBright("Typescript")} ${e.message.replace(/[.,]+$/, "")}`;
+          }
+          return e.message.replace(/[.,]+$/, "");
+        };
+
+        const issuesWithNoNode = issues.filter((item) => item.node?.apiIdentifier) as NodeIssue[];
+        const groupedByApiIdentifier = groupByProperty(issuesWithNoNode, "apiIdentifier");
+        printIssues(groupedByApiIdentifier);
+
+        const remainingItems = issues.filter((item) => !item.node?.apiIdentifier) as NodeIssue[];
+        const groupedByName = groupByProperty(remainingItems, "name");
+        printIssues(groupedByName);
 
         if (!ctx.args["--force"]) {
           unsubscribe();
@@ -208,10 +283,28 @@ export const command = (async (ctx, firstRun = true) => {
 
         firstRun = false;
       } else {
-        if (progress === AppDeploymentSteps.COMPLETED) {
-          spinner.succeed("DONE");
-          ctx.log.printlns("Deploy completed. Good bye!");
+        const publishStatus = status ? (status as PublishStatus) : undefined;
+
+        const handleCompletion = (message: string | null | undefined, color: string): void => {
+          spinner.stopAndPersist({
+            symbol: color === "red" ? chalk.red("✖") : chalk.greenBright("✔"),
+            text: color === "red" ? "Failed" : "DONE",
+          });
+
+          ctx.log.printlns(color === "red" ? chalk.red(message) : chalk.green(message));
+          if (publishStatus?.output) {
+            ctx.log.printlns(`Cmd/Ctrl + Click: \u001b]8;;${publishStatus.output}\u0007View Logs\u001b]8;;\u0007`);
+          }
           unsubscribe();
+        };
+
+        if (publishStatus && "code" in publishStatus && publishStatus.code === "Errored") {
+          handleCompletion(publishStatus.message, "red");
+          return;
+        }
+
+        if (progress === AppDeploymentSteps.COMPLETED) {
+          handleCompletion("Deploy completed. Good bye!", "green");
           return;
         }
 

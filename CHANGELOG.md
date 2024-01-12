@@ -1,5 +1,15 @@
 # @gadgetinc/ggt
 
+## 0.4.9
+
+### Patch Changes
+
+- adc1645: Bump @sentry/node from 7.91.0 to 7.92.0
+- fced7a6: Bump @sentry/node from 7.92.0 to 7.93.0
+- 5534551: Retry errors when backing up files on Windows more often.
+- bb06525: Retry `EADDRNOTAVAIL` and `EHOSTUNREACH` errors and retry failed http requests more often.
+- 3b34a05: Display the primary domain for the /edit + playground links
+
 ## 0.4.8
 
 ### Patch Changes

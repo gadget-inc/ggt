@@ -7,10 +7,13 @@ import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../services/app/edit
 import type { ArgsDefinition } from "../services/command/arg.js";
 import { type Command, type Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
+import { DeployDisallowedError } from "../services/filesync/error.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
 import { confirm } from "../services/output/prompt.js";
+import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
+import { groupProblemsByApiIdentifier } from "../services/util/problems-group.js";
 
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
@@ -152,6 +155,18 @@ export const command = (async (ctx, firstRun = true) => {
     },
     onData: async ({ publishStatus }): Promise<void> => {
       const { progress, issues, status } = publishStatus ?? {};
+
+      const fileFatalErrors = issues?.filter((issue) => issue.severity === "Fatal");
+
+      if (fileFatalErrors && fileFatalErrors.length > 0) {
+        ctx.log.printlns`{red.underline Fatal errors detected}`;
+
+        const problemsGroup = groupProblemsByApiIdentifier(
+          fileFatalErrors.map((error) => ({ apiIdentifier: error.node?.apiIdentifier ?? "", message: error.message })),
+        );
+
+        await reportErrorAndExit(ctx, new DeployDisallowedError(problemsGroup));
+      }
 
       if (firstRun && issues?.length) {
         ctx.log.printlns`{bold Issues found:}`;

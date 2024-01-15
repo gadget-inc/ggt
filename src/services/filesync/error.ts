@@ -66,3 +66,28 @@ export class TooManySyncAttemptsError extends CLIError {
     `;
   }
 }
+
+export class DeployDisallowedError extends CLIError {
+  isBug = IsBug.MAYBE;
+
+  constructor(readonly fatalErrors: Record<string, string[]>) {
+    super("This application is not allowed to be deployed due to fatal errors.");
+  }
+
+  protected render(): string {
+    const errorMessages: string[] = [];
+    for (const [path, messages] of Object.entries(this.fatalErrors)) {
+      errorMessages.push(`[${path}]`);
+      for (const message of messages) {
+        errorMessages.push(` - ${message}`);
+      }
+    }
+
+    return sprint`
+{red Gadget has detected the following fatal errors with your files:
+
+${errorMessages.join("\n")}
+
+Please fix these errors and try again.}`;
+  }
+}

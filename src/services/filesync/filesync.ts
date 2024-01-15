@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import dayjs from "dayjs";
 import { execa } from "execa";
 import { findUp } from "find-up";
@@ -630,15 +629,15 @@ export class FileSync {
         problemGroup[problem.path]?.push(problem.message);
       });
 
-      this.ctx.log.println2(chalk.red("Gadget has detected the following fatal errors with your files:"));
+      this.ctx.log.println2`{red Gadget has detected the following fatal errors with your files:}`;
       Object.entries(problemGroup).forEach(([path, messages]) => {
-        this.ctx.log.println(chalk.red(`[${path}]`));
+        this.ctx.log.println`{red [${path}]}`;
         messages.forEach((message) => {
-          this.ctx.log.println(chalk.red(` - ${message}`));
+          this.ctx.log.println`{red  - ${message}}`;
         });
       });
       this.ctx.log.println("");
-      this.ctx.log.println2(chalk.red("Your app will not be operational until all fatal errors are fixed."));
+      this.ctx.log.println2`{red Your app will not be operational until all fatal errors are fixed.}`;
     }
 
     await this._save(remoteFilesVersion);

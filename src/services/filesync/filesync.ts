@@ -581,7 +581,7 @@ export class FileSync {
     }
 
     const {
-      publishFileSyncEvents: { remoteFilesVersion },
+      publishFileSyncEvents: { remoteFilesVersion, problems },
     } = await this.edit.mutate({
       mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
@@ -618,6 +618,26 @@ export class FileSync {
       // we can't save the remoteFilesVersion because we haven't
       // received the intermediate filesVersions yet
       throw new Error("Files version mismatch");
+    }
+
+    if (problems.length > 0) {
+      const problemGroup: Record<string, string[]> = {};
+      problems.forEach((problem) => {
+        if (!(problem.path in problemGroup)) {
+          problemGroup[problem.path] = [];
+        }
+        problemGroup[problem.path]?.push(problem.message);
+      });
+
+      this.ctx.log.println2`{red Gadget has detected the following fatal errors with your files:}`;
+      Object.entries(problemGroup).forEach(([path, messages]) => {
+        this.ctx.log.println`{red [${path}]}`;
+        messages.forEach((message) => {
+          this.ctx.log.println`{red  - ${message}}`;
+        });
+      });
+      this.ctx.log.println("");
+      this.ctx.log.println2`{red Your app will not be operational until all fatal errors are fixed.}`;
     }
 
     await this._save(remoteFilesVersion);

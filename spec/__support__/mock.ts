@@ -1,6 +1,6 @@
 import { assert, beforeEach, expect, vi, type SpyInstance } from "vitest";
 import * as prompt from "../../src/services/output/prompt.js";
-import { sprint } from "../../src/services/output/sprint.js";
+import { sprintln } from "../../src/services/output/sprint.js";
 import type { ArgsType, FunctionPropertyNames } from "../../src/services/util/types.js";
 import { printStackTraceAndFail } from "./debug.js";
 
@@ -168,7 +168,7 @@ export const mockSideEffects = (): void => {
   beforeEach(() => {
     // alway opt in to confirm prompts
     mock(prompt, "confirm", () => {
-      printStackTraceAndFail(sprint`
+      printStackTraceAndFail(sprintln`
         confirm() was called unexpectedly.
 
         Use mock(confirm, () => value) before running your test to mock the user's response.
@@ -177,7 +177,7 @@ export const mockSideEffects = (): void => {
 
     // alway opt in to select prompts
     mock(prompt, "select", () => {
-      printStackTraceAndFail(sprint`
+      printStackTraceAndFail(sprintln`
         select() was called unexpectedly.
 
         Use mock(select, () => value) before running your test to mock the user's response.
@@ -186,7 +186,7 @@ export const mockSideEffects = (): void => {
 
     // alway opt in to process.exit
     mock(process, "exit", () => {
-      printStackTraceAndFail(sprint`
+      printStackTraceAndFail(sprintln`
         process.exit was called unexpectedly.
 
         If you expected process.exit to be called, use expectProcessExit(() => fn()) instead.

@@ -118,7 +118,7 @@
     "eslint-plugin-only-warn": "^1.1.0",
     "eslint-plugin-unicorn": "^50.0.1",
     "nock": "^13.5.0",
-    "prettier": "^3.1.1",
+    "prettier": "^3.2.2",
     "prettier-plugin-organize-imports": "^3.2.4",
     "prettier-plugin-packagejson": "^2.4.9",
     "remark": "^15.0.1",

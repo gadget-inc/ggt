@@ -1,7 +1,8 @@
+import cleanStack from "clean-stack";
 import assert from "node:assert";
 import { expect } from "vitest";
 import { createLogger } from "../../src/services/output/log/logger.js";
-import { CLIError } from "../../src/services/output/report.js";
+import { workspaceRoot } from "../../src/services/util/paths.js";
 import { mockRestore } from "./mock.js";
 
 /**
@@ -31,7 +32,13 @@ export const getCurrentTest = (): { name: string; describes: string[]; filepath:
  */
 // eslint-disable-next-line func-style
 export function printStackTraceAndFail(message: string): never {
-  process.stderr.write(CLIError.from(message).stack + "\n");
+  const carrier = { stack: "" };
+  Error.captureStackTrace(carrier, printStackTraceAndFail);
+  const stack = cleanStack(carrier.stack, { pretty: true, basePath: workspaceRoot })
+    // remove the first line, which is the error message
+    .slice(carrier.stack.indexOf("\n"));
+
+  process.stderr.write(message + stack + "\n");
   mockRestore(process.exit);
   process.exit(1);
 }

@@ -9,8 +9,9 @@ import { warnIfUpdateAvailable } from "../services/output/update.js";
 import { sortBySimilar } from "../services/util/collection.js";
 import { isNil } from "../services/util/is.js";
 
-export const usage: Usage = () => sprint`
-    The command-line interface for Gadget
+export const usage: Usage = () => {
+  return sprint`
+    The command-line interface for Gadget.
 
     {bold USAGE}
       ggt [COMMAND]
@@ -28,11 +29,13 @@ export const usage: Usage = () => sprint`
       -v, --verbose  Print verbose output
           --json     Print output as JSON
 
-    For more information on a specific command, use 'ggt [COMMAND] --help'
-`;
+    Use "ggt [COMMAND] --help" for more information about a specific command.
+  `;
+};
 
 export const args = {
-  "--help": { type: Boolean, alias: "-h" },
+  "-h": { type: Boolean },
+  "--help": { type: Boolean },
   "--verbose": { type: arg.COUNT, alias: ["-v", "--debug"] },
   "--json": { type: Boolean },
 } satisfies ArgsDefinition;
@@ -59,7 +62,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
 
   const cmd = ctx.args._.shift();
   if (isNil(cmd)) {
-    ctx.log.println(usage());
+    ctx.log.println(usage(ctx));
     process.exit(0);
   }
 
@@ -77,8 +80,8 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
 
   const subcommand = await importCommand(cmd);
 
-  if (ctx.args["--help"]) {
-    ctx.log.println(subcommand.usage());
+  if (ctx.args["-h"] ?? ctx.args["--help"]) {
+    ctx.log.println(subcommand.usage(ctx));
     process.exit(0);
   }
 

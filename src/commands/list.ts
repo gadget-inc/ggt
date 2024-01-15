@@ -9,13 +9,8 @@ export const usage: Usage = () => sprint`
     {bold USAGE}
       ggt list
 
-    {bold EXAMPLE}
+    {bold EXAMPLES}
       $ ggt list
-        Slug    Domain
-        ─────── ──────────────────
-        my-app  my-app.gadget.app
-        example example.gadget.app
-        test    test.gadget.app
 `;
 
 export const command: Command = async (ctx) => {

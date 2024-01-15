@@ -8,9 +8,8 @@ export const usage: Usage = () => sprint`
     {bold USAGE}
       ggt logout
 
-    {bold EXAMPLE}
+    {bold EXAMPLES}
       $ ggt logout
-        Goodbye
 `;
 
 export const command: Command = (ctx) => {

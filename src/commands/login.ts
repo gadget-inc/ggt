@@ -14,13 +14,8 @@ export const usage: Usage = () => sprint`
     {bold USAGE}
       ggt login
 
-    {bold EXAMPLE}
+    {bold EXAMPLES}
       $ ggt login
-        We've opened Gadget's login page using your default browser.
-
-        Please log in and then return to this terminal.
-
-        Hello, Jane Doe (jane@example.com)
 `;
 
 export const login: Command = async (ctx): Promise<void> => {

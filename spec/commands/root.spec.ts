@@ -60,7 +60,7 @@ describe("root", () => {
     await expectProcessExit(() => root(makeRootContext()));
 
     expectStdout().toMatchInlineSnapshot(`
-      "The command-line interface for Gadget
+      "The command-line interface for Gadget.
 
       USAGE
         ggt [COMMAND]
@@ -78,7 +78,7 @@ describe("root", () => {
         -v, --verbose  Print verbose output
             --json     Print output as JSON
 
-      For more information on a specific command, use 'ggt [COMMAND] --help'
+      Use \\"ggt [COMMAND] --help\\" for more information about a specific command.
       "
     `);
   });

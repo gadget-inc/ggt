@@ -15,24 +15,39 @@ import { sprint } from "../services/output/sprint.js";
 import { debounce } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 
-export const usage: Usage = () => sprint`
-  Sync your Gadget environment's source code with your local filesystem.
+export const usage: Usage = (ctx) => {
+  if (ctx.args["-h"]) {
+    return sprint`
+      Sync your local filesystem with your Gadget environment's
+      filesystem in real-time.
 
-  {bold USAGE}
-    ggt sync [DIRECTORY]
+      https://docs.gadget.dev/guides/development-tools/cli#filesync
 
-  {bold ARGUMENTS}
-    DIRECTORY                  The directory to sync files to (default: ".")
+      {bold USAGE}
+        ggt sync [DIRECTORY]
 
-  {bold FLAGS}
-    -a, --app=<name>           The Gadget application to sync files to
-        --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
-        --once                 Sync once and exit
-        --force                Sync regardless of local filesystem state
+      {bold EXAMPLES}
+        $ ggt sync
+        $ ggt sync ~/gadget/example
+        $ ggt sync ~/gadget/example --app=example
+        $ ggt sync ~/gadget/example --app=example --prefer=local --once
 
-  {bold DESCRIPTION}
-    Sync allows you to synchronize your Gadget application's source
-    code with your local filesystem.
+      {bold ARGUMENTS}
+        DIRECTORY                  The directory to sync files to (default: ".")
+
+      {bold FLAGS}
+        -a, --app=<name>           The Gadget application to sync files to
+            --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
+            --once                 Sync once and exit
+            --force                Sync regardless of local filesystem state
+
+        Run "ggt sync --help" for more information.
+    `;
+  }
+
+  return sprint`
+    Sync your local filesystem with your Gadget environment's
+    filesystem in real-time.
 
     While ggt sync is running, local file changes are immediately
     reflected within Gadget, while files that are changed in Gadget are
@@ -42,7 +57,7 @@ export const usage: Usage = () => sprint`
       • Local development with editors like VSCode
       • Storing source code in a Git repository like GitHub
 
-    Sync looks for a ".ignore" file to exclude certain files/directories
+    Sync looks for a ".ignore" file to exclude files and directories
     from being synced. The format is identical to Git's.
 
     These files are always ignored:
@@ -53,38 +68,66 @@ export const usage: Usage = () => sprint`
 
     Note:
       • Sync only works with your development environment
-      • Avoid deleting/moving all your files while sync is running
+      • Avoid deleting or moving all your files while sync is running
       • Gadget only supports Yarn v1 for dependency installation
 
-  {bold EXAMPLE}
-    $ ggt sync ~/gadget/example --app example
+    https://docs.gadget.dev/guides/development-tools/cli#filesync
 
-      App         example
-      Editor      https://example.gadget.app/edit
-      Playground  https://example.gadget.app/api/graphql/playground
-      Docs        https://docs.gadget.dev/api/example
+    {bold USAGE}
 
-      Endpoints
-        • https://example.gadget.app
-        • https://example--development.gadget.app
+      ggt sync [DIRECTORY] [--app=<name>] [--prefer=<filesystem>] [--once] [--force]
 
-      Watching for file changes... {gray Press Ctrl+C to stop}
+    {bold EXAMPLES}
 
-      → Sent {gray 09:06:25 AM}
-      {greenBright routes/GET-hello.js  + created}
+      $ ggt sync
+      $ ggt sync ~/gadget/example
+      $ ggt sync ~/gadget/example --app=example
+      $ ggt sync ~/gadget/example --app=example --prefer=local --once
+      $ ggt sync ~/gadget/example --app=example --prefer=local --once --force
 
-      → Sent {gray 09:06:49 AM}
-      {blueBright routes/GET-hello.js  ± updated}
+    {bold ARGUMENTS}
 
-      ← Received {gray 09:06:54 AM}
-      {blueBright routes/GET-hello.js  ± updated}
+      DIRECTORY
+        The path to the directory to sync files to. The directory will
+        be created if it does not exist.
 
-      ← Received {gray 09:06:56 AM}
-      {redBright routes/GET-hello.js  - deleted}
-      ^C Stopping... {gray press Ctrl+C again to force}
+        Defaults to the current working directory. (default: ".")
 
-      Goodbye!
-`;
+    {bold FLAGS}
+
+      -a, --app=<name>
+        The Gadget application to sync files to.
+
+        If not provided, the application will be inferred from the
+        ".gadget/sync.json" file in the chosen directory or any of its
+        parent directories.
+
+        If a ".gadget/sync.json" file is not found, you will be
+        prompted to choose an application from your list of apps.
+
+      --prefer=<filesystem>
+        Which filesystem's changes to automatically keep when
+        conflicting changes are detected.
+
+        If not provided, sync will pause when conflicting changes are
+        detected and you will be prompted to choose which changes to
+        keep before sync resumes.
+
+        Must be one of "local" or "gadget".
+
+      --once
+        When provided, sync will merge the changes from Gadget with
+        the changes from your local filesystem like it does when
+        started normally, but will then exit instead of continuing to
+        watch for changes.
+
+        Defaults to false.
+
+      --force
+        When provided, sync will run regardless of the state of the
+        local filesystem.
+  `;
+};
 
 export const args = {
   ...FileSyncArgs,

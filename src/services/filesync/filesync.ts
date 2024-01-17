@@ -810,7 +810,7 @@ export const isFilesVersionMismatchError = (error: unknown): boolean => {
   if (isGraphQLErrors(error)) {
     error = error[0];
   }
-  return isObject(error) && "message" in error && isString(error.message) && error.message.startsWith("Files version mismatch");
+  return isObject(error) && "message" in error && isString(error.message) && error.message.includes("Files version mismatch");
 };
 
 const swallowFilesVersionMismatch = (ctx: Context, error: unknown): void => {

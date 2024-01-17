@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 0.4.10
+
+### Patch Changes
+
+- 9ce8743: Handle new `GGT_FILES_VERSION_MISMATCH` error.
+
 ## 0.4.9
 
 ### Patch Changes

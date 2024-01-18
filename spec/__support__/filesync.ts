@@ -11,7 +11,7 @@ import {
   type FileSyncDeletedEventInput,
   type MutationPublishFileSyncEventsArgs,
 } from "../../src/__generated__/graphql.js";
-import { args, type SyncArgs } from "../../src/commands/sync.js";
+import { args } from "../../src/commands/sync.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -22,7 +22,7 @@ import {
 import type { Context } from "../../src/services/command/context.js";
 import { Directory, swallowEnoent, type Hashes } from "../../src/services/filesync/directory.js";
 import type { File } from "../../src/services/filesync/file.js";
-import { FileSync } from "../../src/services/filesync/filesync.js";
+import { FileSync, type FileSyncArgs } from "../../src/services/filesync/filesync.js";
 import { isEqualHashes } from "../../src/services/filesync/hashes.js";
 import { noop } from "../../src/services/util/function.js";
 import { isNil } from "../../src/services/util/is.js";
@@ -89,7 +89,7 @@ export type SyncScenarioOptions = {
    *
    * @default makeContext(args, ["sync", localDir.path, "--app", testApp.slug])
    */
-  ctx?: Context<SyncArgs>;
+  ctx?: Context<FileSyncArgs>;
 };
 
 export type SyncScenario = {

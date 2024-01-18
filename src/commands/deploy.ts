@@ -1,10 +1,14 @@
 import chalk from "chalk";
+import assert from "node:assert";
 import ora from "ora";
+import pluralize from "pluralize";
+import terminalLink from "terminal-link";
 import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import { type Command, type Usage } from "../services/command/command.js";
+import type { Context } from "../services/command/context.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
-import { select } from "../services/output/prompt.js";
+import { confirm } from "../services/output/prompt.js";
 import { sprint } from "../services/output/sprint.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
 
@@ -99,43 +103,157 @@ export const args = {
   ...FileSyncArgs,
 } satisfies ArgsDefinition;
 
-export enum Action {
-  DEPLOY_ANYWAYS = "Deploy anyways",
-  SYNC_ONCE = "Sync once",
-  CANCEL = "Cancel (Ctrl+C)",
-}
+export const command = (async (ctx, firstRun = true) => {
+  // deploy --force != sync --force
+  const filesync = await FileSync.init(ctx.child({ overwrite: { "--force": false } }));
+
+  if (firstRun) {
+    ctx.log.printlns`Deploying ${terminalLink(filesync.app.primaryDomain, `https://${filesync.app.primaryDomain}/`)}`;
+  }
+
+  const { inSync } = await filesync.hashes();
+  if (!inSync) {
+    ctx.log.printlns`
+      Your local filesystem must be in sync with your development
+      environment before you can deploy.
+    `;
+
+    await confirm(ctx, { message: "Would you like to sync now?" });
+    await filesync.sync();
+  }
+
+  const spinner = ora();
+  let prevProgress = AppDeploymentStepsToAppDeployState(AppDeploymentSteps.NOT_STARTED);
+
+  // subscribes to the graphql subscription that will listen and send
+  // back the server contract status
+  const unsubscribe = filesync.edit.subscribe({
+    subscription: REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION,
+    variables: () => ({ localFilesVersion: String(filesync.filesVersion), force: ctx.args["--force"] }),
+    onError: (error) => {
+      ctx.log.error("failed to deploy", { error });
+      spinner.fail();
+
+      if (isCloseEvent(error.cause)) {
+        ctx.log.printlns(error.message);
+      } else if (isGraphQLErrors(error.cause)) {
+        const message = error.cause[0]?.message;
+        assert(message, "expected message to be defined");
+
+        if (message.includes("GGT_PAYMENT_REQUIRED")) {
+          ctx.log.println("Production environment limit reached. Upgrade your plan to deploy");
+        } else {
+          ctx.log.println(message);
+        }
+      }
+
+      unsubscribe();
+      return;
+    },
+    onData: async ({ publishStatus }): Promise<void> => {
+      const { progress, issues, status } = publishStatus ?? {};
+
+      if (firstRun && issues?.length) {
+        ctx.log.printlns`{bold Issues found:}`;
+
+        const issuesWithNoNode = issues.filter((item) => item.node?.apiIdentifier) as NodeIssue[];
+        const groupedByApiIdentifier = groupByProperty(issuesWithNoNode, "apiIdentifier");
+        printIssues(ctx, groupedByApiIdentifier);
+
+        const remainingItems = issues.filter((item) => !item.node?.apiIdentifier) as NodeIssue[];
+        const groupedByName = groupByProperty(remainingItems, "name");
+        printIssues(ctx, groupedByName);
+
+        if (!ctx.args["--force"]) {
+          await confirm(ctx, { message: "Do you want to continue?" });
+        }
+
+        unsubscribe();
+        ctx.args["--force"] = true;
+        await command(ctx, false);
+        return;
+      }
+
+      const handleCompletion = (message: string | null | undefined, color: "red" | "green"): void => {
+        unsubscribe();
+
+        if (color === "red") {
+          spinner.fail();
+        } else {
+          spinner.succeed();
+        }
+
+        if (color === "green") {
+          message = chalk.green(message);
+          if (status?.output) {
+            message += ` ${terminalLink("View logs", status.output)}`;
+          }
+
+          ctx.log.printlns(message);
+        } else {
+          ctx.log.printlns`{red ${message}}`;
+          if (status?.output) {
+            ctx.log.printlns(terminalLink("View logs", status.output));
+          }
+        }
+      };
+
+      if (status && "code" in status && status.code === "Errored") {
+        handleCompletion(status.message, "red");
+        return;
+      }
+
+      if (progress === AppDeploymentSteps.COMPLETED) {
+        handleCompletion("Deploy successful!", "green");
+        return;
+      }
+
+      const currentProgress = AppDeploymentStepsToAppDeployState(progress);
+      if (progress && currentProgress !== prevProgress) {
+        if (progress !== AppDeploymentSteps.STARTING) {
+          spinner.succeed();
+        }
+
+        prevProgress = currentProgress;
+        spinner.start(currentProgress);
+      }
+    },
+  });
+}) satisfies Command<typeof args>;
 
 const AppDeploymentStepsToAppDeployState = (step: string | undefined): string => {
   switch (step) {
-    case "NOT_STARTED":
+    case AppDeploymentSteps.NOT_STARTED:
       return "Deploy not started";
-    case "STARTING":
-    case "BUILDING_ASSETS":
-    case "UPLOADING_ASSETS":
+    case AppDeploymentSteps.STARTING:
+    case AppDeploymentSteps.BUILDING_ASSETS:
+    case AppDeploymentSteps.UPLOADING_ASSETS:
       return "Building frontend assets";
-    case "CONVERGING_STORAGE":
+    case AppDeploymentSteps.CONVERGING_STORAGE:
       return "Setting up database";
-    case "PUBLISHING_TREE":
+    case AppDeploymentSteps.PUBLISHING_TREE:
       return "Copying development";
-    case "RELOADING_SANDBOX":
+    case AppDeploymentSteps.RELOADING_SANDBOX:
       return "Restarting app";
-    case "COMPLETED":
+    case AppDeploymentSteps.COMPLETED:
       return "Deploy completed";
     default:
       return "Unknown step";
   }
 };
 
-enum AppDeploymentSteps {
-  NOT_STARTED = "NOT_STARTED",
-  STARTING = "STARTING",
-  BUILDING_ASSETS = "BUILDING_ASSETS",
-  UPLOADING_ASSETS = "UPLOADING_ASSETS",
-  CONVERGING_STORAGE = "CONVERGING_STORAGE",
-  PUBLISHING_TREE = "PUBLISHING_TREE",
-  RELOADING_SANDBOX = "RELOADING_SANDBOX",
-  COMPLETED = "COMPLETED",
-}
+const AppDeploymentSteps = Object.freeze({
+  NOT_STARTED: "NOT_STARTED",
+  STARTING: "STARTING",
+  BUILDING_ASSETS: "BUILDING_ASSETS",
+  UPLOADING_ASSETS: "UPLOADING_ASSETS",
+  CONVERGING_STORAGE: "CONVERGING_STORAGE",
+  PUBLISHING_TREE: "PUBLISHING_TREE",
+  RELOADING_SANDBOX: "RELOADING_SANDBOX",
+  COMPLETED: "COMPLETED",
+});
+
+export type AppDeploymentSteps = (typeof AppDeploymentSteps)[keyof typeof AppDeploymentSteps];
 
 type Node = {
   [key: string]: string | undefined;
@@ -160,17 +278,11 @@ type NodeIssue = {
   nodeLabels?: NodeLabel[];
 };
 
-type PublishStatus = {
-  code?: string;
-  message?: string;
-  output?: string;
-};
-
 type GroupedIssues = Record<string, NodeIssue[]>;
 
 const groupByProperty = (items: NodeIssue[], property: string): GroupedIssues => {
   const grouped: GroupedIssues = {};
-  const defaultOtherIssues = "Other Issues";
+  const other = "Other";
 
   for (const item of items) {
     if (item.node) {
@@ -183,176 +295,64 @@ const groupByProperty = (items: NodeIssue[], property: string): GroupedIssues =>
         grouped[value]?.push(item);
       }
     } else {
-      if (!grouped[defaultOtherIssues]) {
-        grouped[defaultOtherIssues] = [];
+      if (!grouped[other]) {
+        grouped[other] = [];
       }
-      grouped[defaultOtherIssues].push(item);
+      grouped[other].push(item);
     }
   }
 
   return grouped;
 };
 
-/**
- * Runs the deploy process.
- */
-export const command = (async (ctx, firstRun = true) => {
-  const spinner = ora();
-  let prevProgress: string | undefined = AppDeploymentStepsToAppDeployState("NOT_STARTED");
-  let action: Action;
-
-  // deploy --force != sync --force
-  const filesync = await FileSync.init(ctx.child({ overwrite: { "--force": false } }));
-
-  if (firstRun) {
-    ctx.log.printlns`App: ${filesync.app.slug}`;
-  }
-
-  const { inSync } = await filesync.hashes();
-  if (!inSync) {
-    ctx.log.printlns`
-      Local files have diverged from remote. Run a sync once to converge your files or keep {italic ggt sync} running in the background.
-    `;
-
-    action = await select(ctx, {
-      message: "How would you like to proceed?",
-      choices: [Action.CANCEL, Action.SYNC_ONCE],
-    });
-
-    switch (action) {
-      case Action.SYNC_ONCE: {
-        await filesync.sync();
-
-        break;
+const printIssues = (ctx: Context, groupedIssues: GroupedIssues): void => {
+  for (const [name, issues] of Object.entries(groupedIssues)) {
+    ctx.log.printlns`• {cyan ${name}} {redBright ${pluralize("issue", issues.length, true)}}`;
+    for (const issue of issues) {
+      if (!issue.node) {
+        ctx.log.println`  {red ✖} ${issue.message}`;
+        continue;
       }
-      case Action.CANCEL: {
-        process.exit(0);
+
+      const [message, ...lines] = issue.message.split("\n") as [string, ...string[]];
+
+      ctx.log.print`  {red ✖} `;
+      if (issue.node.type === "SourceFile") {
+        ctx.log.print`${filetype(issue.node.key)} ${message}`;
+      } else {
+        ctx.log.print(message);
       }
+
+      for (const line of lines) {
+        ctx.log.println("");
+        ctx.log.print`    ${line}`;
+      }
+
+      for (const label of issue.nodeLabels ?? []) {
+        ctx.log.print` {dim ${label.identifier}}`;
+      }
+
+      ctx.log.println("");
     }
   }
+};
 
-  // subscribes to the graphql subscription that will listen and send back the server contract status
-  const unsubscribe = filesync.edit.subscribe({
-    subscription: REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION,
-    variables: () => ({ localFilesVersion: String(filesync.filesVersion), force: ctx.args["--force"] }),
-    onError: (error) => {
-      if (isCloseEvent(error.cause)) {
-        spinner.fail("Failed");
-        ctx.log.printlns(error.message);
-      } else if (isGraphQLErrors(error.cause)) {
-        const message = error.cause[0]?.message;
-        if (message && message.includes("GGT_PAYMENT_REQUIRED")) {
-          ctx.log.println("Production environment limit reached. Upgrade your plan to deploy");
-        } else {
-          ctx.log.println(`${message}`);
-        }
-      }
-      ctx.log.error("failed to deploy", { error });
-      unsubscribe();
-      return;
-    },
-    onData: async ({ publishStatus }): Promise<void> => {
-      const { progress, issues, status } = publishStatus ?? {};
+const jsExtensions = [".js", ".jsx", ".cjs", ".mjs"];
+const tsExtensions = [".ts", ".tsx", ".cts", ".mts"];
 
-      const hasIssues = issues?.length;
+export const isJSFile = (filepath: string): boolean => jsExtensions.some((e) => filepath.endsWith(e));
+export const isTSFile = (filepath: string): boolean => tsExtensions.some((e) => filepath.endsWith(e) && !filepath.endsWith(".d.ts"));
+export const isGellyFile = (filepath: string): boolean => filepath.endsWith(".gelly");
 
-      if (firstRun && hasIssues) {
-        ctx.log.printlns`{underline Issues detected}`;
-
-        const printIssues = (groupedIssues: GroupedIssues): void => {
-          for (const [name, nodeArray] of Object.entries(groupedIssues)) {
-            ctx.log.println(
-              `\n\n • ${chalk.cyan(name)} ${chalk.redBright(
-                nodeArray.length === 1 ? `${nodeArray.length} issue` : `${nodeArray.length} issues`,
-              )}${nodeArray
-                .map((e) => {
-                  if (!e.node) {
-                    return `\n\t   ${chalk.red("✖")} ${e.message}`;
-                  }
-
-                  return `\n\t   ${chalk.red("✖")} ${titleFormatter(e)}: ${e.nodeLabels
-                    ?.map((label: NodeLabel) => `${chalk.bgWhite.black(label.type.toLowerCase())} ${chalk.white.bold(label.identifier)}`)
-                    .join("")}`;
-                })
-                .join("")}`,
-            );
-          }
-        };
-
-        const titleFormatter = (e: NodeIssue): string => {
-          if (e.node?.type === "SourceFile") {
-            return `${chalk.magentaBright("Typescript")} ${e.message.replace(/[.,]+$/, "")}`;
-          }
-          return e.message.replace(/[.,]+$/, "");
-        };
-
-        const issuesWithNoNode = issues.filter((item) => item.node?.apiIdentifier) as NodeIssue[];
-        const groupedByApiIdentifier = groupByProperty(issuesWithNoNode, "apiIdentifier");
-        printIssues(groupedByApiIdentifier);
-
-        const remainingItems = issues.filter((item) => !item.node?.apiIdentifier) as NodeIssue[];
-        const groupedByName = groupByProperty(remainingItems, "name");
-        printIssues(groupedByName);
-
-        if (!ctx.args["--force"]) {
-          unsubscribe();
-
-          action = await select(ctx, {
-            message: "Detected some issues with your app. How would you like to proceed?",
-            choices: [Action.CANCEL, Action.DEPLOY_ANYWAYS],
-          });
-
-          switch (action) {
-            case Action.DEPLOY_ANYWAYS: {
-              ctx.args["--force"] = true;
-              await command(ctx, false);
-              break;
-            }
-            case Action.CANCEL: {
-              process.exit(0);
-            }
-          }
-        }
-
-        firstRun = false;
-      } else {
-        const publishStatus = status ? (status as PublishStatus) : undefined;
-
-        const handleCompletion = (message: string | null | undefined, color: string): void => {
-          spinner.stopAndPersist({
-            symbol: color === "red" ? chalk.red("✖") : chalk.greenBright("✔"),
-            text: color === "red" ? "Failed" : "DONE",
-          });
-
-          ctx.log.printlns(color === "red" ? chalk.red(message) : chalk.green(message));
-          if (publishStatus?.output) {
-            ctx.log.printlns(`Cmd/Ctrl + Click: \u001b]8;;${publishStatus.output}\u0007View Logs\u001b]8;;\u0007`);
-          }
-          unsubscribe();
-        };
-
-        if (publishStatus && "code" in publishStatus && publishStatus.code === "Errored") {
-          handleCompletion(publishStatus.message, "red");
-          return;
-        }
-
-        if (progress === AppDeploymentSteps.COMPLETED) {
-          handleCompletion("Deploy completed. Good bye!", "green");
-          return;
-        }
-
-        const currentProgress = AppDeploymentStepsToAppDeployState(progress);
-
-        if (progress && currentProgress !== prevProgress) {
-          if ((progress as AppDeploymentSteps) !== AppDeploymentSteps.STARTING) {
-            spinner.succeed("DONE");
-          }
-
-          prevProgress = currentProgress;
-          ctx.log.printlns(`${currentProgress} ...`);
-          spinner.start("Working ...");
-        }
-      }
-    },
-  });
-}) satisfies Command<typeof args>;
+const filetype = (filename: string): string => {
+  switch (true) {
+    case isJSFile(filename):
+      return chalk.yellowBright("JavaScript");
+    case isTSFile(filename):
+      return chalk.blue("TypeScript");
+    case isGellyFile(filename):
+      return chalk.magenta("Gelly");
+    default:
+      return chalk.gray("File");
+  }
+};

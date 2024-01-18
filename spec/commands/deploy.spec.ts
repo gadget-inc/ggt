@@ -1,14 +1,17 @@
+/* eslint-disable unicorn/no-null */
+/* eslint-disable no-irregular-whitespace */
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
 import { expectStdout } from "../../spec/__support__/stream.js";
-import { Action, args, command as deploy } from "../../src/commands/deploy.js";
+import { args, command as deploy } from "../../src/commands/deploy.js";
 import { EditError } from "../../src/services/app/edit/error.js";
 import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { type Context } from "../../src/services/command/context.js";
-import { select } from "../../src/services/output/prompt.js";
+import { confirm } from "../../src/services/output/prompt.js";
+import { noop } from "../../src/services/util/function.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeMockEditSubscriptions } from "../__support__/edit.js";
 import { mock } from "../__support__/mock.js";
@@ -30,7 +33,7 @@ describe("deploy", () => {
   });
 
   it("does not try to deploy if local files are not up to date with remote", async () => {
-    mock(select, () => Action.CANCEL);
+    mock(confirm, () => process.exit(0));
 
     await makeSyncScenario({ localFiles: { "file.txt": "test" } });
 
@@ -38,7 +41,7 @@ describe("deploy", () => {
   });
 
   it("does not try to deploy if any problems were detected and displays the problems", async () => {
-    mock(select, () => "0");
+    mock(confirm, () => process.exit(0));
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
@@ -48,39 +51,128 @@ describe("deploy", () => {
 
     const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
 
-    await publishStatus.emitResponse({
-      data: {
-        publishStatus: {
-          remoteFilesVersion: "1",
-          progress: "NOT_STARTED",
-          issues: [
-            {
-              severity: "Error",
-              message: "Add google keys for production",
-              node: undefined,
-            },
-          ],
-          status: undefined,
+    await expectProcessExit(() =>
+      publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            remoteFilesVersion: "1",
+            progress: "NOT_STARTED",
+            issues: [
+              {
+                severity: "Error",
+                message: "Unexpected keyword or identifier.",
+                node: {
+                  type: "SourceFile",
+                  key: "routes/GET-hello.js",
+                  apiIdentifier: "routes/GET-hello.js",
+                  name: null,
+                  fieldType: null,
+                  parentKey: null,
+                  parentApiIdentifier: null,
+                },
+                nodeLabels: [
+                  {
+                    type: "File",
+                    identifier: "line 13",
+                  },
+                ],
+              },
+              {
+                severity: "Error",
+                message: "Identifier expected.",
+                node: {
+                  type: "SourceFile",
+                  key: "routes/GET-test.ts",
+                  apiIdentifier: "routes/GET-test.ts",
+                  name: null,
+                  fieldType: null,
+                  parentKey: null,
+                  parentApiIdentifier: null,
+                },
+                nodeLabels: [
+                  {
+                    type: "File",
+                    identifier: "line 10",
+                  },
+                ],
+              },
+              {
+                severity: "Error",
+                message: "Expression expected.",
+                node: {
+                  type: "SourceFile",
+                  key: "routes/GET-test.ts",
+                  apiIdentifier: "routes/GET-test.ts",
+                  name: null,
+                  fieldType: null,
+                  parentKey: null,
+                  parentApiIdentifier: null,
+                },
+                nodeLabels: [
+                  {
+                    type: "File",
+                    identifier: "line 15",
+                  },
+                ],
+              },
+              {
+                severity: "Error",
+                message: 'Unknown identifier "tru"',
+                node: {
+                  type: "SourceFile",
+                  key: "models/example/comp.gelly",
+                  apiIdentifier: "models/example/comp.gelly",
+                  name: null,
+                  fieldType: null,
+                  parentKey: null,
+                  parentApiIdentifier: null,
+                },
+                nodeLabels: [
+                  {
+                    type: "File",
+                    identifier: "",
+                  },
+                ],
+              },
+              {
+                severity: "Error",
+                message: "Add google keys for production",
+                node: null,
+                nodeLabels: null,
+              },
+            ],
+            status: undefined,
+          },
         },
-      },
-    });
+      }),
+    );
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      App: test
+      Deploying test.gadget.app (​https://test.gadget.app/​)
 
-      Issues detected
+      Issues found:
 
-      • Other Issues 1 issue
-         ✖ Add google keys for production
+      • routes/GET-hello.js 1 issue
+        ✖ JavaScript Unexpected keyword or identifier. line 13
+
+      • routes/GET-test.ts 2 issues
+        ✖ TypeScript Identifier expected. line 10
+        ✖ TypeScript Expression expected. line 15
+
+      • models/example/comp.gelly 1 issue
+        ✖ Gelly Unknown identifier \\"tru\\" 
+
+      • Other 1 issue
+        ✖ Add google keys for production
       "
     `);
   });
 
   it("deploys anyways even if there are problems if deploying with force flag", async () => {
-    mock(select, () => "0");
+    ctx = ctx.child({ overwrite: { "--force": true } });
 
-    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+    await makeSyncScenario({ localFiles: { ".gadget/": "" }, ctx });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
 
@@ -107,16 +199,16 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      App: test
+      Deploying test.gadget.app (​https://test.gadget.app/​)
 
-      Issues detected
+      Issues found:
 
-      • Other Issues 1 issue
-         ✖ Add google keys for production
+      • Other 1 issue
+        ✖ Add google keys for production
       "
     `);
 
-    mock(select, () => Action.DEPLOY_ANYWAYS);
+    mock(confirm, noop);
 
     await publishStatus.emitResponse({
       data: {
@@ -225,24 +317,14 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      App: test
+      Deploying test.gadget.app (​https://test.gadget.app/​)
 
-      Issues detected
+      Issues found:
 
-      • Other Issues 1 issue
-         ✖ Add google keys for production
+      • Other 1 issue
+        ✖ Add google keys for production
 
-      Building frontend assets ...
-
-      Setting up database ...
-
-      Copying development ...
-
-      Restarting app ...
-
-      Deploy completed. Good bye!
-
-      Cmd/Ctrl + Click: ]8;;https://test.gadget.app/url/to/logs/with/traceIdView Logs]8;;
+      Deploy successful! View logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "
     `);
   });
@@ -373,19 +455,9 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      App: test
+      Deploying test.gadget.app (​https://test.gadget.app/​)
 
-      Building frontend assets ...
-
-      Setting up database ...
-
-      Copying development ...
-
-      Restarting app ...
-
-      Deploy completed. Good bye!
-
-      Cmd/Ctrl + Click: ]8;;https://test.gadget.app/url/to/logs/with/traceIdView Logs]8;;
+      Deploy successful! View logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "
     `);
   });
@@ -407,7 +479,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      App: test
+      Deploying test.gadget.app (​https://test.gadget.app/​)
       Production environment limit reached. Upgrade your plan to deploy
       "
     `);
@@ -475,9 +547,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      App: test
-
-      Building frontend assets ...
+      Deploying test.gadget.app (​https://test.gadget.app/​)
 
       An error occurred while communicating with Gadget
       "
@@ -550,13 +620,11 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      App: test
-
-      Building frontend assets ...
+      Deploying test.gadget.app (​https://test.gadget.app/​)
 
       GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
 
-      Cmd/Ctrl + Click: ]8;;https://test.gadget.app/url/to/logs/with/traceIdView Logs]8;;
+      View logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "
     `);
   });

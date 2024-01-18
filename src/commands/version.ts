@@ -3,14 +3,13 @@ import { config } from "../services/config/config.js";
 import { sprint } from "../services/output/sprint.js";
 
 export const usage: Usage = () => sprint`
-  Print the version of ggt
+  Print the current version of ggt.
 
   {bold USAGE}
     ggt version
 
-  {bold EXAMPLE}
+  {bold EXAMPLES}
     $ ggt version
-      ${config.version}
 `;
 
 export const command: Command = (ctx) => {

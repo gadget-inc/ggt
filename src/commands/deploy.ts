@@ -8,59 +8,92 @@ import { select } from "../services/output/prompt.js";
 import { sprint } from "../services/output/sprint.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
 
-export const usage: Usage = () => sprint`
-    Deploy your Gadget application's development source code to production.
+export const usage: Usage = (ctx) => {
+  if (ctx.args["-h"]) {
+    return sprint`
+      Deploy your development environment to production.
+
+      {bold USAGE}
+        ggt deploy [DIRECTORY]
+
+      {bold ARGUMENTS}
+        DIRECTORY         The directory to sync files from and deploy (default: ".")
+
+      {bold EXAMPLES}
+        $ ggt deploy
+        $ ggt deploy ~/gadget/example
+        $ ggt deploy ~/gadget/example --app=example
+        $ ggt deploy ~/gadget/example --app=example --prefer=local
+
+      {bold FLAGS}
+        -a, --app=<name>          The Gadget application to deploy
+            --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
+            --force                Deploy regardless of any issues found
+
+      Run "ggt deploy --help" for more information.
+    `;
+  }
+
+  return sprint`
+    Deploy your development environment to production.
+
+    Deploy ensures your directory is in sync with your development
+    environment and that it is in a deployable state. If there are any
+    issues, it will display them and ask if you would like to deploy
+    anyways.
 
     {bold USAGE}
-      ggt deploy [DIRECTORY] [--app=<name>]
+      ggt deploy [DIRECTORY] [--app=<name>] [--prefer=<filesystem>] [--force]
+
+    {bold EXAMPLES}
+
+      $ ggt deploy
+      $ ggt deploy ~/gadget/example
+      $ ggt deploy ~/gadget/example --app=example
+      $ ggt deploy ~/gadget/example --app=example --prefer=local
+      $ ggt deploy ~/gadget/example --app=example --prefer=local --force
 
     {bold ARGUMENTS}
-      DIRECTORY         The directory to sync files to and deploy (default: ".")
+
+      DIRECTORY
+        The path to the directory to sync your development environment's
+        files to before deploying it to your production environment.
+        The directory will be created if it does not exist.
+
+        Defaults to the current working directory. (default: ".")
 
     {bold FLAGS}
-      -a, --app=<name>  The Gadget application to deploy
-          --force       Deploy the Gadget application regardless of any issues it may have
 
-    {bold DESCRIPTION}
-      Deploy allows you to deploy your current Gadget application in development to production.
+      -a, --app=<name>
+        The Gadget application to deploy.
 
-      It detects if local files are up to date with remote and if the Gadget application
-      is in a deployable state. If there are any issues, it will display them and ask if
-      you would like to deploy anyways.
+        If not provided, the application will be inferred from the
+        ".gadget/sync.json" file in the chosen directory or any of its
+        parent directories.
 
-      Note:
-        • If local files are not up to date or have not recently been synced with remote ones,
-          you will be prompted to run a one-time sync to ensure the files remain consistent with
-          what is on the remote.
-        • You may wish to keep ggt sync running in the background before trying to run ggt deploy
+        If a ".gadget/sync.json" file is not found, you will be
+        prompted to choose an application from your list of apps.
 
-    {bold EXAMPLE}
-      $ ggt deploy ~/gadget/example --app example
+      --prefer=<filesystem>
+        Which filesystem's changes to automatically keep when
+        conflicting changes are detected.
 
-      App         example
-      Editor      https://example.gadget.app/edit
-      Playground  https://example.gadget.app/api/graphql/playground
-      Docs        https://docs.gadget.dev/api/example
+        If not provided, deploy will pause when conflicting changes are
+        detected and you will be prompted to choose which changes to
+        keep before deploy resumes.
 
-      Endpoints
-        • https://example.gadget.app
-        • https://example--development.gadget.app
+        Must be one of "local" or "gadget".
 
+      --force
+        Deploy your development environment to production regardless
+        of any issues it may have.
 
-      Building frontend assets ...
-      ✔ DONE
-
-      Setting up database ...
-      ✔ DONE
-
-      Copying development ...
-      ✔ DONE
-
-      Restarting app ...
-      ✔ DONE
-
-      Deploy completed. Good bye!
+        These issues may include:
+          • Syntax errors
+          • TypeScript errors
+          • Missing fields that should be present on models
 `;
+};
 
 export const args = {
   ...FileSyncArgs,

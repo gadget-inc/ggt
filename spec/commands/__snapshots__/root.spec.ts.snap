@@ -1,112 +1,87 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`root > when deploy is given > prints the usage when --help is passed 1`] = `
-"Deploy your Gadget application's development source code to production.
+"Deploy your development environment to production.
+
+Deploy ensures your directory is in sync with your development
+environment and that it is in a deployable state. If there are any
+issues, it will display them and ask if you would like to deploy
+anyways.
 
 USAGE
-  ggt deploy [DIRECTORY] [--app=<name>]
+  ggt deploy [DIRECTORY] [--app=<name>] [--prefer=<filesystem>] [--force]
+
+EXAMPLES
+
+  $ ggt deploy
+  $ ggt deploy ~/gadget/example
+  $ ggt deploy ~/gadget/example --app=example
+  $ ggt deploy ~/gadget/example --app=example --prefer=local
+  $ ggt deploy ~/gadget/example --app=example --prefer=local --force
 
 ARGUMENTS
-  DIRECTORY         The directory to sync files to and deploy (default: \\".\\")
+
+  DIRECTORY
+    The path to the directory to sync your development environment's
+    files to before deploying it to your production environment.
+    The directory will be created if it does not exist.
+
+    Defaults to the current working directory. (default: \\".\\")
 
 FLAGS
-  -a, --app=<name>  The Gadget application to deploy
-      --force       Deploy the Gadget application regardless of any issues it may have
 
-DESCRIPTION
-  Deploy allows you to deploy your current Gadget application in development to production.
+  -a, --app=<name>
+    The Gadget application to deploy.
 
-  It detects if local files are up to date with remote and if the Gadget application
-  is in a deployable state. If there are any issues, it will display them and ask if
-  you would like to deploy anyways.
+    If not provided, the application will be inferred from the
+    \\".gadget/sync.json\\" file in the chosen directory or any of its
+    parent directories.
 
-  Note:
-    • If local files are not up to date or have not recently been synced with remote ones,
-      you will be prompted to run a one-time sync to ensure the files remain consistent with
-      what is on the remote.
-    • You may wish to keep ggt sync running in the background before trying to run ggt deploy
+    If a \\".gadget/sync.json\\" file is not found, you will be
+    prompted to choose an application from your list of apps.
 
-EXAMPLE
-  $ ggt deploy ~/gadget/example --app example
+  --prefer=<filesystem>
+    Which filesystem's changes to automatically keep when
+    conflicting changes are detected.
 
-  App         example
-  Editor      https://example.gadget.app/edit
-  Playground  https://example.gadget.app/api/graphql/playground
-  Docs        https://docs.gadget.dev/api/example
+    If not provided, deploy will pause when conflicting changes are
+    detected and you will be prompted to choose which changes to
+    keep before deploy resumes.
 
-  Endpoints
-    • https://example.gadget.app
-    • https://example--development.gadget.app
+    Must be one of \\"local\\" or \\"gadget\\".
 
+  --force
+    Deploy your development environment to production regardless
+    of any issues it may have.
 
-  Building frontend assets ...
-  ✔ DONE
-
-  Setting up database ...
-  ✔ DONE
-
-  Copying development ...
-  ✔ DONE
-
-  Restarting app ...
-  ✔ DONE
-
-  Deploy completed. Good bye!
+    These issues may include:
+      • Syntax errors
+      • TypeScript errors
+      • Missing fields that should be present on models
 "
 `;
 
 exports[`root > when deploy is given > prints the usage when -h is passed 1`] = `
-"Deploy your Gadget application's development source code to production.
+"Deploy your development environment to production.
 
 USAGE
-  ggt deploy [DIRECTORY] [--app=<name>]
+  ggt deploy [DIRECTORY]
 
 ARGUMENTS
-  DIRECTORY         The directory to sync files to and deploy (default: \\".\\")
+  DIRECTORY         The directory to sync files from and deploy (default: \\".\\")
+
+EXAMPLES
+  $ ggt deploy
+  $ ggt deploy ~/gadget/example
+  $ ggt deploy ~/gadget/example --app=example
+  $ ggt deploy ~/gadget/example --app=example --prefer=local
 
 FLAGS
-  -a, --app=<name>  The Gadget application to deploy
-      --force       Deploy the Gadget application regardless of any issues it may have
+  -a, --app=<name>          The Gadget application to deploy
+      --prefer=<filesystem>  Prefer \\"local\\" or \\"gadget\\" conflicting changes
+      --force                Deploy regardless of any issues found
 
-DESCRIPTION
-  Deploy allows you to deploy your current Gadget application in development to production.
-
-  It detects if local files are up to date with remote and if the Gadget application
-  is in a deployable state. If there are any issues, it will display them and ask if
-  you would like to deploy anyways.
-
-  Note:
-    • If local files are not up to date or have not recently been synced with remote ones,
-      you will be prompted to run a one-time sync to ensure the files remain consistent with
-      what is on the remote.
-    • You may wish to keep ggt sync running in the background before trying to run ggt deploy
-
-EXAMPLE
-  $ ggt deploy ~/gadget/example --app example
-
-  App         example
-  Editor      https://example.gadget.app/edit
-  Playground  https://example.gadget.app/api/graphql/playground
-  Docs        https://docs.gadget.dev/api/example
-
-  Endpoints
-    • https://example.gadget.app
-    • https://example--development.gadget.app
-
-
-  Building frontend assets ...
-  ✔ DONE
-
-  Setting up database ...
-  ✔ DONE
-
-  Copying development ...
-  ✔ DONE
-
-  Restarting app ...
-  ✔ DONE
-
-  Deploy completed. Good bye!
+Run \\"ggt deploy --help\\" for more information.
 "
 `;
 
@@ -116,13 +91,8 @@ exports[`root > when list is given > prints the usage when --help is passed 1`] 
 USAGE
   ggt list
 
-EXAMPLE
+EXAMPLES
   $ ggt list
-    Slug    Domain
-    ─────── ──────────────────
-    my-app  my-app.gadget.app
-    example example.gadget.app
-    test    test.gadget.app
 "
 `;
 
@@ -132,13 +102,8 @@ exports[`root > when list is given > prints the usage when -h is passed 1`] = `
 USAGE
   ggt list
 
-EXAMPLE
+EXAMPLES
   $ ggt list
-    Slug    Domain
-    ─────── ──────────────────
-    my-app  my-app.gadget.app
-    example example.gadget.app
-    test    test.gadget.app
 "
 `;
 
@@ -148,13 +113,8 @@ exports[`root > when login is given > prints the usage when --help is passed 1`]
 USAGE
   ggt login
 
-EXAMPLE
+EXAMPLES
   $ ggt login
-    We've opened Gadget's login page using your default browser.
-
-    Please log in and then return to this terminal.
-
-    Hello, Jane Doe (jane@example.com)
 "
 `;
 
@@ -164,13 +124,8 @@ exports[`root > when login is given > prints the usage when -h is passed 1`] = `
 USAGE
   ggt login
 
-EXAMPLE
+EXAMPLES
   $ ggt login
-    We've opened Gadget's login page using your default browser.
-
-    Please log in and then return to this terminal.
-
-    Hello, Jane Doe (jane@example.com)
 "
 `;
 
@@ -180,9 +135,8 @@ exports[`root > when logout is given > prints the usage when --help is passed 1`
 USAGE
   ggt logout
 
-EXAMPLE
+EXAMPLES
   $ ggt logout
-    Goodbye
 "
 `;
 
@@ -192,89 +146,109 @@ exports[`root > when logout is given > prints the usage when -h is passed 1`] = 
 USAGE
   ggt logout
 
-EXAMPLE
+EXAMPLES
   $ ggt logout
-    Goodbye
 "
 `;
 
 exports[`root > when sync is given > prints the usage when --help is passed 1`] = `
-"Sync your Gadget environment's source code with your local filesystem.
+"Sync your local filesystem with your Gadget environment's
+filesystem in real-time.
+
+While ggt sync is running, local file changes are immediately
+reflected within Gadget, while files that are changed in Gadget are
+immediately saved to your local filesystem.
+
+Ideal for:
+  • Local development with editors like VSCode
+  • Storing source code in a Git repository like GitHub
+
+Sync looks for a \\".ignore\\" file to exclude files and directories
+from being synced. The format is identical to Git's.
+
+These files are always ignored:
+  • .DS_Store
+  • .gadget
+  • .git
+  • node_modules
+
+Note:
+  • Sync only works with your development environment
+  • Avoid deleting or moving all your files while sync is running
+  • Gadget only supports Yarn v1 for dependency installation
+
+https://docs.gadget.dev/guides/development-tools/cli#filesync
 
 USAGE
-  ggt sync [DIRECTORY]
+
+  ggt sync [DIRECTORY] [--app=<name>] [--prefer=<filesystem>] [--once] [--force]
+
+EXAMPLES
+
+  $ ggt sync
+  $ ggt sync ~/gadget/example
+  $ ggt sync ~/gadget/example --app=example
+  $ ggt sync ~/gadget/example --app=example --prefer=local --once
+  $ ggt sync ~/gadget/example --app=example --prefer=local --once --force
 
 ARGUMENTS
-  DIRECTORY                  The directory to sync files to (default: \\".\\")
+
+  DIRECTORY
+    The path to the directory to sync files to. The directory will
+    be created if it does not exist.
+
+    Defaults to the current working directory. (default: \\".\\")
 
 FLAGS
-  -a, --app=<name>           The Gadget application to sync files to
-      --prefer=<filesystem>  Prefer \\"local\\" or \\"gadget\\" conflicting changes
-      --once                 Sync once and exit
-      --force                Sync regardless of local filesystem state
 
-DESCRIPTION
-  Sync allows you to synchronize your Gadget application's source
-  code with your local filesystem.
+  -a, --app=<name>
+    The Gadget application to sync files to.
 
-  While ggt sync is running, local file changes are immediately
-  reflected within Gadget, while files that are changed in Gadget are
-  immediately saved to your local filesystem.
+    If not provided, the application will be inferred from the
+    \\".gadget/sync.json\\" file in the chosen directory or any of its
+    parent directories.
 
-  Ideal for:
-    • Local development with editors like VSCode
-    • Storing source code in a Git repository like GitHub
+    If a \\".gadget/sync.json\\" file is not found, you will be
+    prompted to choose an application from your list of apps.
 
-  Sync looks for a \\".ignore\\" file to exclude certain files/directories
-  from being synced. The format is identical to Git's.
+  --prefer=<filesystem>
+    Which filesystem's changes to automatically keep when
+    conflicting changes are detected.
 
-  These files are always ignored:
-    • .DS_Store
-    • .gadget
-    • .git
-    • node_modules
+    If not provided, sync will pause when conflicting changes are
+    detected and you will be prompted to choose which changes to
+    keep before sync resumes.
 
-  Note:
-    • Sync only works with your development environment
-    • Avoid deleting/moving all your files while sync is running
-    • Gadget only supports Yarn v1 for dependency installation
+    Must be one of \\"local\\" or \\"gadget\\".
 
-EXAMPLE
-  $ ggt sync ~/gadget/example --app example
+  --once
+    When provided, sync will merge the changes from Gadget with
+    the changes from your local filesystem like it does when
+    started normally, but will then exit instead of continuing to
+    watch for changes.
 
-    App         example
-    Editor      https://example.gadget.app/edit
-    Playground  https://example.gadget.app/api/graphql/playground
-    Docs        https://docs.gadget.dev/api/example
+    Defaults to false.
 
-    Endpoints
-      • https://example.gadget.app
-      • https://example--development.gadget.app
-
-    Watching for file changes... Press Ctrl+C to stop
-
-    → Sent 09:06:25 AM
-    routes/GET-hello.js  + created
-
-    → Sent 09:06:49 AM
-    routes/GET-hello.js  ± updated
-
-    ← Received 09:06:54 AM
-    routes/GET-hello.js  ± updated
-
-    ← Received 09:06:56 AM
-    routes/GET-hello.js  - deleted
-    ^C Stopping... press Ctrl+C again to force
-
-    Goodbye!
+  --force
+    When provided, sync will run regardless of the state of the
+    local filesystem.
 "
 `;
 
 exports[`root > when sync is given > prints the usage when -h is passed 1`] = `
-"Sync your Gadget environment's source code with your local filesystem.
+"Sync your local filesystem with your Gadget environment's
+filesystem in real-time.
+
+https://docs.gadget.dev/guides/development-tools/cli#filesync
 
 USAGE
   ggt sync [DIRECTORY]
+
+EXAMPLES
+  $ ggt sync
+  $ ggt sync ~/gadget/example
+  $ ggt sync ~/gadget/example --app=example
+  $ ggt sync ~/gadget/example --app=example --prefer=local --once
 
 ARGUMENTS
   DIRECTORY                  The directory to sync files to (default: \\".\\")
@@ -285,107 +259,50 @@ FLAGS
       --once                 Sync once and exit
       --force                Sync regardless of local filesystem state
 
-DESCRIPTION
-  Sync allows you to synchronize your Gadget application's source
-  code with your local filesystem.
-
-  While ggt sync is running, local file changes are immediately
-  reflected within Gadget, while files that are changed in Gadget are
-  immediately saved to your local filesystem.
-
-  Ideal for:
-    • Local development with editors like VSCode
-    • Storing source code in a Git repository like GitHub
-
-  Sync looks for a \\".ignore\\" file to exclude certain files/directories
-  from being synced. The format is identical to Git's.
-
-  These files are always ignored:
-    • .DS_Store
-    • .gadget
-    • .git
-    • node_modules
-
-  Note:
-    • Sync only works with your development environment
-    • Avoid deleting/moving all your files while sync is running
-    • Gadget only supports Yarn v1 for dependency installation
-
-EXAMPLE
-  $ ggt sync ~/gadget/example --app example
-
-    App         example
-    Editor      https://example.gadget.app/edit
-    Playground  https://example.gadget.app/api/graphql/playground
-    Docs        https://docs.gadget.dev/api/example
-
-    Endpoints
-      • https://example.gadget.app
-      • https://example--development.gadget.app
-
-    Watching for file changes... Press Ctrl+C to stop
-
-    → Sent 09:06:25 AM
-    routes/GET-hello.js  + created
-
-    → Sent 09:06:49 AM
-    routes/GET-hello.js  ± updated
-
-    ← Received 09:06:54 AM
-    routes/GET-hello.js  ± updated
-
-    ← Received 09:06:56 AM
-    routes/GET-hello.js  - deleted
-    ^C Stopping... press Ctrl+C again to force
-
-    Goodbye!
+  Run \\"ggt sync --help\\" for more information.
 "
 `;
 
 exports[`root > when version is given > prints the usage when --help is passed 1`] = `
-"Print the version of ggt
+"Print the current version of ggt.
 
 USAGE
   ggt version
 
-EXAMPLE
+EXAMPLES
   $ ggt version
-    1.2.3
 "
 `;
 
 exports[`root > when version is given > prints the usage when -h is passed 1`] = `
-"Print the version of ggt
+"Print the current version of ggt.
 
 USAGE
   ggt version
 
-EXAMPLE
+EXAMPLES
   $ ggt version
-    1.2.3
 "
 `;
 
 exports[`root > when whoami is given > prints the usage when --help is passed 1`] = `
-"Show the name and email address of the currently logged in user
+"Show the name and email address of the currently logged in user.
 
 USAGE
   ggt whoami
 
-EXAMPLE
+EXAMPLES
   $ ggt whoami
-    You are logged in as Jane Doe (jane@example.com)
 "
 `;
 
 exports[`root > when whoami is given > prints the usage when -h is passed 1`] = `
-"Show the name and email address of the currently logged in user
+"Show the name and email address of the currently logged in user.
 
 USAGE
   ggt whoami
 
-EXAMPLE
+EXAMPLES
   $ ggt whoami
-    You are logged in as Jane Doe (jane@example.com)
 "
 `;

@@ -57,7 +57,7 @@ export type CommandModule<Args extends ArgsDefinition = EmptyObject, ParentArgs 
 /**
  * A command's usage is a string that describes how to use the command.
  */
-export type Usage = () => string;
+export type Usage = (ctx: Context) => string;
 
 /**
  * The function that is run when the command is invoked.

@@ -138,8 +138,9 @@
     fastify-plugin "^3.0.0"
 
 "@gadget-client-development/test@link:.gadget/client":
-  version "0.0.0"
-  uid ""
+  version "1.4.0"
+  dependencies:
+    "@gadgetinc/api-client-core" "0.15.11"
 
 "@gadgetinc/api-client-core@0.15.11", "@gadgetinc/api-client-core@^0.15.11":
   version "0.15.11"
@@ -568,8 +569,13 @@ fsevents@~2.3.2:
   integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
 
 "gadget-server@link:.gadget/server":
-  version "0.0.0"
-  uid ""
+  version "1.4.0"
+  dependencies:
+    "@fastify/request-context" "^3.0.0"
+    "@gadget-client-development/test" "link:.gadget/client"
+    "@gadgetinc/api-client-core" "0.15.11"
+    "@types/node" "^18.11.9"
+    fastify "^3.29.0"
 
 graphql-ws@^5.13.1:
   version "5.14.2"
@@ -893,10 +899,10 @@ urql@^4.0.4:
     "@urql/core" "^4.1.0"
     wonka "^6.3.2"
 
-vite@^4.4.9:
-  version "4.5.0"
-  resolved "https://registry.yarnpkg.com/vite/-/vite-4.5.0.tgz#ec406295b4167ac3bc23e26f9c8ff559287cff26"
-  integrity sha512-ulr8rNLA6rkyFAlVWw2q5YJ91v098AFQ2R0PRFwPzREXOUJQPtFUG0t+/ZikhaOCDqFoDhN6/v8Sq0o4araFAw==
+vite@^4.5.2:
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/vite/-/vite-4.5.2.tgz#d6ea8610e099851dad8c7371599969e0f8b97e82"
+  integrity sha512-tBCZBNSBbHQkaGyhGCDUGqeo2ph8Fstyp6FMSvTtsXeZSPpSMGlviAOav2hxVTqFcx8Hj/twtWKsMJXNY0xI8w==
   dependencies:
     esbuild "^0.18.10"
     postcss "^8.4.27"

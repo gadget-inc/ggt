@@ -187,7 +187,7 @@ export class FileSync {
             environments: z
               .record(z.object({ filesVersion: z.string() }))
               .nullish()
-              .transform((value, _ctx) => value ?? { development: { filesVersion: "0" } }),
+              .transform((value) => value ?? { development: { filesVersion: "0" } }),
           })
           .parse(json);
       })

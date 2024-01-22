@@ -106,7 +106,7 @@
     "@types/prompts": "^2.4.9",
     "@types/which": "^3.0.3",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
     "@typescript-eslint/parser": "^6.19.1",
     "concurrently": "^8.2.2",
     "cspell": "^7.3.8",

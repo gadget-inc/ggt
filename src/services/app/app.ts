@@ -10,6 +10,14 @@ export const App = z.object({
   slug: z.string(),
   primaryDomain: z.string(),
   hasSplitEnvironments: z.boolean(),
+  multiEnvironmentEnabled: z.boolean(),
+  environments: z.array(
+    z.object({
+      id: z.union([z.string(), z.number(), z.bigint()]),
+      name: z.string(),
+      type: z.string(),
+    }),
+  ),
 });
 
 export type App = z.infer<typeof App>;

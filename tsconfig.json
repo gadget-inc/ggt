@@ -38,6 +38,7 @@
     "useDefineForClassFields": true,
 
     /* Completeness */
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "sourceMap": true
   }
 }

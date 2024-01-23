@@ -12,6 +12,7 @@ describe("AppArg", () => {
     "https://my-app--development.gadget.app",
     "https://my-app.gadget.app/edit",
     "https://my-app.gadget.app/edit/files/routes/GET.js",
+    "https://my-app.gadget.app/edit/cool-new-environment",
   ])("accepts %s", (value) => {
     expect(AppArg(value, "--app")).toEqual("my-app");
   });

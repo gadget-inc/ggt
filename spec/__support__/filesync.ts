@@ -206,7 +206,12 @@ export const makeSyncScenario = async ({
     await localDir.loadIgnoreFile();
 
     if (!localFiles[".gadget/sync.json"]) {
-      const syncJson: SyncJson = { app: testApp.slug, filesVersion: "1", mtime: Date.now() + 1 };
+      const syncJson: SyncJson = {
+        app: testApp.slug,
+        filesVersion: "1",
+        currentEnvironment: "development",
+        environments: { development: { filesVersion: "1" } },
+      };
       await fs.outputJSON(localDir.absolute(".gadget/sync.json"), syncJson, { spaces: 2 });
     }
   }
@@ -245,6 +250,7 @@ export const makeSyncScenario = async ({
   };
 
   nockEditResponse({
+    app: ctx.app,
     optional: true,
     persist: true,
     operation: FILE_SYNC_HASHES_QUERY,
@@ -277,6 +283,7 @@ export const makeSyncScenario = async ({
   });
 
   nockEditResponse({
+    app: ctx.app,
     optional: true,
     persist: true,
     operation: FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -307,6 +314,7 @@ export const makeSyncScenario = async ({
   });
 
   nockEditResponse({
+    app: ctx.app,
     optional: true,
     persist: true,
     operation: FILE_SYNC_FILES_QUERY,
@@ -347,6 +355,7 @@ export const makeSyncScenario = async ({
   });
 
   nockEditResponse({
+    app: ctx.app,
     optional: true,
     persist: true,
     operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,

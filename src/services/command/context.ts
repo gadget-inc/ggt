@@ -53,6 +53,7 @@ export class Context<
   #parent?: Context<ArgsDefinition, ParentArgs>;
   #user?: User;
   #app?: App;
+  #environment?: string;
 
   private constructor({
     args,
@@ -107,6 +108,21 @@ export class Context<
     }
 
     this.#log = this.#log.child({ fields: { app } });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  get environment(): string | undefined {
+    return this.#environment ?? this.#parent?.environment;
+  }
+
+  set environment(environment: string) {
+    const formattedEnvironment = environment.toLowerCase();
+    this.#environment = formattedEnvironment;
+    if (this.#parent) {
+      this.#parent.environment = formattedEnvironment;
+    }
+
+    this.#log = this.#log.child({ fields: { environment } });
   }
 
   /**

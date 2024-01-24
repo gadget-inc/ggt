@@ -33,6 +33,7 @@ import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
+import { groupProblemsByApiIdentifier } from "../util/problems-group.js";
 import { Changes, printChanges } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
@@ -721,16 +722,12 @@ export class FileSync {
     }
 
     if (problems.length > 0) {
-      const problemGroup: Record<string, string[]> = {};
-      problems.forEach((problem) => {
-        if (!(problem.path in problemGroup)) {
-          problemGroup[problem.path] = [];
-        }
-        problemGroup[problem.path]?.push(problem.message);
-      });
+      const problemsGroup = groupProblemsByApiIdentifier(
+        problems.map((problem) => ({ apiIdentifier: problem.path, message: problem.message })),
+      );
 
       this.ctx.log.println2`{red Gadget has detected the following fatal errors with your files:}`;
-      Object.entries(problemGroup).forEach(([path, messages]) => {
+      Object.entries(problemsGroup).forEach(([path, messages]) => {
         this.ctx.log.println`{red [${path}]}`;
         messages.forEach((message) => {
           this.ctx.log.println`{red  - ${message}}`;

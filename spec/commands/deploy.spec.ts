@@ -628,4 +628,78 @@ describe("deploy", () => {
       "
     `);
   });
+
+  it("prints out fatal errors in the terminal and exit with code 1 if there are fatal errors", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditSubscriptions();
+
+    await deploy(ctx);
+
+    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+
+    await expectProcessExit(
+      () =>
+        publishStatus.emitResponse({
+          data: {
+            publishStatus: {
+              remoteFilesVersion: "1",
+              progress: "NOT_STARTED",
+              issues: [
+                {
+                  severity: "Fatal",
+                  message: "Something went wrong",
+                  node: {
+                    type: "SourceFile",
+                    key: "access-control.gadget.ts",
+                    apiIdentifier: "access-control.gadget.ts",
+                  },
+                },
+                {
+                  severity: "Fatal",
+                  message: "Another message",
+                  node: {
+                    type: "SourceFile",
+                    key: "access-control.gadget.ts",
+                    apiIdentifier: "access-control.gadget.ts",
+                  },
+                },
+                {
+                  severity: "Fatal",
+                  message: "Message from another file",
+                  node: {
+                    type: "SourceFile",
+                    key: "settings.gadget.ts",
+                    apiIdentifier: "settings.gadget.ts",
+                  },
+                },
+              ],
+              status: undefined,
+            },
+          },
+        }),
+      1, // ggt should exit with code 1 if there are fatal errors
+    );
+
+    expectStdout().toMatchInlineSnapshot(`
+      "
+      Deploying test.gadget.app (​https://test.gadget.app/​)
+
+      Fatal errors detected
+      Gadget has detected the following fatal errors with your files:
+
+      [access-control.gadget.ts]
+       - Something went wrong
+       - Another message
+      [settings.gadget.ts]
+       - Message from another file
+
+      Please fix these errors and try again.
+
+      If you think this is a bug, please submit an issue using the link below.
+
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
+    `);
+  });
 });

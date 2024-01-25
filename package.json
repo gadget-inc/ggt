@@ -94,7 +94,7 @@
     "@graphql-codegen/typescript-operations": "^4.0.1",
     "@swc-node/register": "^1.6.8",
     "@swc/cli": "^0.1.65",
-    "@swc/core": "^1.3.105",
+    "@swc/core": "^1.3.106",
     "@types/eslint": "^8.56.2",
     "@types/fast-levenshtein": "^0.0.4",
     "@types/fs-extra": "^11.0.4",

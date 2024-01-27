@@ -130,7 +130,7 @@ export const command = (async (ctx, firstRun = true) => {
 
   // subscribes to the graphql subscription that will listen and send
   // back the server contract status
-  const unsubscribe = filesync.edit.subscribe({
+  const subscription = filesync.edit.subscribe({
     subscription: REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION,
     variables: () => ({ localFilesVersion: String(filesync.filesVersion), force: ctx.args["--force"] }),
     onError: (error) => {
@@ -150,7 +150,7 @@ export const command = (async (ctx, firstRun = true) => {
         }
       }
 
-      unsubscribe();
+      subscription.unsubscribe();
       return;
     },
     onData: async ({ publishStatus }): Promise<void> => {
@@ -183,14 +183,14 @@ export const command = (async (ctx, firstRun = true) => {
           await confirm(ctx, { message: "Do you want to continue?" });
         }
 
-        unsubscribe();
+        subscription.unsubscribe();
         ctx.args["--force"] = true;
         await command(ctx, false);
         return;
       }
 
       const handleCompletion = (message: string | null | undefined, color: "red" | "green"): void => {
-        unsubscribe();
+        subscription.unsubscribe();
 
         if (color === "red") {
           spinner.fail();

@@ -15,7 +15,7 @@ import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedE
 import type { App } from "../app/app.js";
 import { getApps } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
-import { Edit } from "../app/edit/edit.js";
+import { Edit, type EditSubscription } from "../app/edit/edit.js";
 import { EditError } from "../app/edit/error.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -260,10 +260,10 @@ export class FileSync {
           Unknown environment:
 
             ${environment}
-          
+
           Did you mean one of these?
-          
-          
+
+
           `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
         );
       }
@@ -389,7 +389,7 @@ export class FileSync {
     beforeChanges?: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
     afterChanges?: (data: { changes: Changes }) => Promisable<void>;
     onError: (error: unknown) => void;
-  }): () => void {
+  }): EditSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION> {
     return this.edit.subscribe({
       subscription: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
       // the reason this is a function rather than a static value is

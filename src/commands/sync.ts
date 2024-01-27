@@ -177,7 +177,7 @@ export const command: Command<SyncArgs> = async (ctx) => {
    * Subscribe to file changes on Gadget and apply them to the local
    * filesystem.
    */
-  const unsubscribeFromGadgetChanges = filesync.subscribeToGadgetChanges({
+  const filesyncSubscription = filesync.subscribeToGadgetChanges({
     onError: (error) => ctx.abort(error),
     beforeChanges: ({ changed, deleted }) => {
       // add all the files and directories we're about to touch to
@@ -305,7 +305,7 @@ export const command: Command<SyncArgs> = async (ctx) => {
   ctx.onAbort(async (reason) => {
     ctx.log.info("stopping", { reason });
 
-    unsubscribeFromGadgetChanges();
+    filesyncSubscription.unsubscribe();
     fileWatcher.close();
     clearInterval(clearRecentWritesInterval);
     sendChangesToGadget.flush();

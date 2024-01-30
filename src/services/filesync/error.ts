@@ -1,5 +1,6 @@
+import { sprintProblems, type Problems } from "../output/problems.js";
 import { CLIError, IsBug } from "../output/report.js";
-import { sprint } from "../output/sprint.js";
+import { sprint, sprintln, sprintlns } from "../output/sprint.js";
 
 export class YarnNotFoundError extends CLIError {
   isBug = IsBug.NO;
@@ -70,24 +71,16 @@ export class TooManySyncAttemptsError extends CLIError {
 export class DeployDisallowedError extends CLIError {
   isBug = IsBug.MAYBE;
 
-  constructor(readonly fatalErrors: Record<string, string[]>) {
+  constructor(readonly fatalErrors: Problems) {
     super("This application is not allowed to be deployed due to fatal errors.");
   }
 
   protected render(): string {
-    const errorMessages: string[] = [];
-    for (const [path, messages] of Object.entries(this.fatalErrors)) {
-      errorMessages.push(`[${path}]`);
-      for (const message of messages) {
-        errorMessages.push(` - ${message}`);
-      }
-    }
-
-    return sprint`
-{red Gadget has detected the following fatal errors with your files:
-
-${errorMessages.join("\n")}
-
-Please fix these errors and try again.}`;
+    let output = "\n";
+    output += sprintlns`{red Gadget has detected the following fatal errors with your files:}`;
+    output += sprintProblems(this.fatalErrors);
+    output += sprintln("");
+    output += sprint`{red Please fix these errors and try again.}`;
+    return output;
   }
 }

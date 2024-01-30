@@ -27,13 +27,13 @@ import {
 import { ArgError, type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
+import { filesyncProblemsToProblems, printProblems } from "../output/problems.js";
 import { select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
 import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
-import { groupProblemsByApiIdentifier } from "../util/problems-group.js";
 import { Changes, printChanges } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
@@ -682,7 +682,7 @@ export class FileSync {
     }
 
     const {
-      publishFileSyncEvents: { remoteFilesVersion, problems },
+      publishFileSyncEvents: { remoteFilesVersion, problems: filesyncProblems },
     } = await this.edit.mutate({
       mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
@@ -721,20 +721,10 @@ export class FileSync {
       throw new Error("Files version mismatch");
     }
 
-    if (problems.length > 0) {
-      const problemsGroup = groupProblemsByApiIdentifier(
-        problems.map((problem) => ({ apiIdentifier: problem.path, message: problem.message })),
-      );
-
-      this.ctx.log.println2`{red Gadget has detected the following fatal errors with your files:}`;
-      Object.entries(problemsGroup).forEach(([path, messages]) => {
-        this.ctx.log.println`{red [${path}]}`;
-        messages.forEach((message) => {
-          this.ctx.log.println`{red  - ${message}}`;
-        });
-      });
-      this.ctx.log.println("");
-      this.ctx.log.println2`{red Your app will not be operational until all fatal errors are fixed.}`;
+    if (filesyncProblems.length > 0) {
+      this.ctx.log.println`{red Gadget has detected the following fatal errors with your files:}`;
+      printProblems(this.ctx, filesyncProblemsToProblems(filesyncProblems));
+      this.ctx.log.printlns`{red Your app will not be operational until all fatal errors are fixed.}`;
     }
 
     await this._save(remoteFilesVersion);

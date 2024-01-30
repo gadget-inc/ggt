@@ -712,13 +712,15 @@ describe("deploy", () => {
     expectStdout().toMatchInlineSnapshot(`
       "
       Deploying test.gadget.app (​https://test.gadget.app/​)
+
       Gadget has detected the following fatal errors with your files:
 
-      [access-control.gadget.ts]
-       - Something went wrong
-       - Another message
-      [settings.gadget.ts]
-       - Message from another file
+      • access-control.gadget.ts 2 issues
+        ✖ Something went wrong
+        ✖ Another message
+
+      • settings.gadget.ts 1 issue
+        ✖ Message from another file
 
       Please fix these errors and try again.
 

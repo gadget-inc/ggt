@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import pluralize from "pluralize";
-import type { PublishIssue } from "../../__generated__/graphql.js";
+import type { Problem as FileSyncProblem, PublishIssue } from "../../__generated__/graphql.js";
 import type { Context } from "../command/context.js";
 import { compact } from "../util/collection.js";
 import { isGellyFile, isJavaScriptFile, isTypeScriptFile } from "../util/is.js";
@@ -29,9 +29,16 @@ export type PrintProblemsOptions = {
    * The problems to print.
    */
   problems: Problems;
+
+  /**
+   * Whether to show the file type in the output.
+   *
+   * @default problem.type === "SourceFile"
+   */
+  showFileTypes?: boolean;
 };
 
-export const sprintProblems = ({ problems: groupedProblems }: PrintProblemsOptions): string => {
+export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: PrintProblemsOptions): string => {
   let output = "";
 
   for (const [name, problems] of Object.entries(groupedProblems)) {
@@ -40,7 +47,7 @@ export const sprintProblems = ({ problems: groupedProblems }: PrintProblemsOptio
       const [message, ...lines] = problem.message.split("\n") as [string, ...string[]];
 
       output += sprint`  {red ✖} `;
-      if (problem.type === "SourceFile") {
+      if (showFileTypes ?? problem.type === "SourceFile") {
         output += sprint`${filetype(name)} `;
       }
       output += sprint(message);
@@ -90,6 +97,22 @@ export const issuesToProblems = (issues: PublishIssue[]): Problems => {
       severity: issue.severity as ProblemSeverity,
       message: issue.message,
       labels: compact(issue.nodeLabels?.map((label) => label?.identifier) ?? []),
+    });
+  }
+  return problems;
+};
+
+export const filesyncProblemsToProblems = (filesyncProblems: FileSyncProblem[]): Problems => {
+  const problems: Problems = {};
+  for (const filesyncProblem of filesyncProblems) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    problems[filesyncProblem.path] ??= [];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    problems[filesyncProblem.path]!.push({
+      type: filesyncProblem.type,
+      severity: filesyncProblem.level as ProblemSeverity,
+      message: filesyncProblem.message,
+      labels: [],
     });
   }
   return problems;

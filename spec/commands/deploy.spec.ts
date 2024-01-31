@@ -8,10 +8,9 @@ import { expectProcessExit } from "../../spec/__support__/process.js";
 import { expectStdout } from "../../spec/__support__/stream.js";
 import { args, command as deploy } from "../../src/commands/deploy.js";
 import { EditError } from "../../src/services/app/edit/error.js";
-import { REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
+import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { type Context } from "../../src/services/command/context.js";
 import { confirm } from "../../src/services/output/prompt.js";
-import { noop } from "../../src/services/util/function.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeMockEditSubscriptions } from "../__support__/edit.js";
 import { mock } from "../__support__/mock.js";
@@ -49,12 +48,13 @@ describe("deploy", () => {
 
     await deploy(ctx);
 
-    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
     await expectProcessExit(() =>
       publishStatus.emitResponse({
         data: {
           publishStatus: {
+            publishStarted: false,
             remoteFilesVersion: "1",
             progress: "NOT_STARTED",
             issues: [
@@ -151,7 +151,7 @@ describe("deploy", () => {
       "
       Deploying test.gadget.app (​https://test.gadget.app/​)
 
-      Issues found:
+      Issues found
 
       • routes/GET-hello.js 1 issue
         ✖ JavaScript Unexpected keyword or identifier. line 13
@@ -161,7 +161,7 @@ describe("deploy", () => {
         ✖ TypeScript Expression expected. line 15
 
       • models/example/comp.gelly 1 issue
-        ✖ Gelly Unknown identifier \\"tru\\" 
+        ✖ Gelly Unknown identifier \\"tru\\"
 
       • Other 1 issue
         ✖ Add google keys for production
@@ -178,11 +178,12 @@ describe("deploy", () => {
 
     await deploy(ctx);
 
-    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "NOT_STARTED",
           issues: [
@@ -201,18 +202,20 @@ describe("deploy", () => {
       "
       Deploying test.gadget.app (​https://test.gadget.app/​)
 
-      Issues found:
+      Issues found
 
       • Other 1 issue
         ✖ Add google keys for production
+
+      Deploying regardless of issues because \\"--force\\" was passed
+
       "
     `);
-
-    mock(confirm, noop);
 
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "STARTING",
           issues: [],
@@ -228,6 +231,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "BUILDING_ASSETS",
           issues: [],
@@ -243,6 +247,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "UPLOADING_ASSETS",
           issues: [],
@@ -258,6 +263,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "CONVERGING_STORAGE",
           issues: [],
@@ -273,6 +279,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "PUBLISHING_TREE",
           issues: [],
@@ -288,6 +295,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "RELOADING_SANDBOX",
           issues: [],
@@ -303,6 +311,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "COMPLETED",
           issues: [],
@@ -319,12 +328,15 @@ describe("deploy", () => {
       "
       Deploying test.gadget.app (​https://test.gadget.app/​)
 
-      Issues found:
+      Issues found
 
       • Other 1 issue
         ✖ Add google keys for production
 
-      Deploy successful! View logs (​https://test.gadget.app/url/to/logs/with/traceId​)
+      Deploying regardless of issues because \\"--force\\" was passed
+
+
+      Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "
     `);
   });
@@ -335,11 +347,12 @@ describe("deploy", () => {
     const mockEditGraphQL = makeMockEditSubscriptions();
 
     await deploy(ctx);
-    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "NOT_STARTED",
           issues: [],
@@ -351,6 +364,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "STARTING",
           issues: [],
@@ -366,6 +380,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "BUILDING_ASSETS",
           issues: [],
@@ -381,6 +396,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "UPLOADING_ASSETS",
           issues: [],
@@ -396,6 +412,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "CONVERGING_STORAGE",
           issues: [],
@@ -411,6 +428,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "PUBLISHING_TREE",
           issues: [],
@@ -426,6 +444,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "RELOADING_SANDBOX",
           issues: [],
@@ -441,6 +460,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "COMPLETED",
           issues: [],
@@ -457,7 +477,7 @@ describe("deploy", () => {
       "
       Deploying test.gadget.app (​https://test.gadget.app/​)
 
-      Deploy successful! View logs (​https://test.gadget.app/url/to/logs/with/traceId​)
+      Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "
     `);
   });
@@ -466,14 +486,14 @@ describe("deploy", () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
-    const error = new EditError(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, [
+    const error = new EditError(PUBLISH_STATUS_SUBSCRIPTION, [
       {
         message: "GGT_PAYMENT_REQUIRED: Payment is required for this application.",
       },
     ]);
 
     await deploy(ctx);
-    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
     await publishStatus.emitError(error);
 
@@ -497,14 +517,15 @@ describe("deploy", () => {
       wasClean: true,
     };
 
-    const error = new EditError(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION, cause);
+    const error = new EditError(PUBLISH_STATUS_SUBSCRIPTION, cause);
 
     await deploy(ctx);
-    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "NOT_STARTED",
           issues: [],
@@ -516,6 +537,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "STARTING",
           issues: [],
@@ -531,6 +553,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "BUILDING_ASSETS",
           issues: [],
@@ -560,11 +583,12 @@ describe("deploy", () => {
     const mockEditGraphQL = makeMockEditSubscriptions();
 
     await deploy(ctx);
-    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "NOT_STARTED",
           issues: [],
@@ -576,6 +600,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "STARTING",
           issues: [],
@@ -591,6 +616,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: true,
           remoteFilesVersion: "1",
           progress: "BUILDING_ASSETS",
           issues: [],
@@ -606,6 +632,7 @@ describe("deploy", () => {
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
+          publishStarted: false,
           remoteFilesVersion: "1",
           progress: "BUILDING_ASSETS",
           issues: [],
@@ -624,7 +651,7 @@ describe("deploy", () => {
 
       GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
 
-      View logs (​https://test.gadget.app/url/to/logs/with/traceId​)
+      Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "
     `);
   });
@@ -636,13 +663,14 @@ describe("deploy", () => {
 
     await deploy(ctx);
 
-    const publishStatus = mockEditGraphQL.expectSubscription(REMOTE_SERVER_CONTRACT_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
     await expectProcessExit(
       () =>
         publishStatus.emitResponse({
           data: {
             publishStatus: {
+              publishStarted: false,
               remoteFilesVersion: "1",
               progress: "NOT_STARTED",
               issues: [
@@ -684,8 +712,6 @@ describe("deploy", () => {
     expectStdout().toMatchInlineSnapshot(`
       "
       Deploying test.gadget.app (​https://test.gadget.app/​)
-
-      Fatal errors detected
       Gadget has detected the following fatal errors with your files:
 
       [access-control.gadget.ts]

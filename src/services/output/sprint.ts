@@ -23,3 +23,7 @@ export const sprintln2: Sprint = (template, ...values) => {
 export const sprintlns: Sprint = (template, ...values) => {
   return "\n" + sprintln(template, ...values);
 };
+
+export const sprintlns2: Sprint = (template, ...values) => {
+  return sprintlns(template, ...values) + "\n";
+};

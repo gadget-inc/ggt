@@ -57,3 +57,15 @@ export const isNever = (value: never): never => {
 export const isAbortError = (error: unknown): error is Error | Event => {
   return (error instanceof Error && error.name === "AbortError") || (error instanceof Event && error.type === "abort");
 };
+
+export const isJavaScriptFile = (filepath: string): boolean => {
+  return [".js", ".jsx", ".cjs", ".mjs"].some((ext) => filepath.endsWith(ext));
+};
+
+export const isTypeScriptFile = (filepath: string): boolean => {
+  return [".ts", ".tsx", ".cts", ".mts"].some((ext) => filepath.endsWith(ext) && !filepath.endsWith(".d.ts"));
+};
+
+export const isGellyFile = (filepath: string): boolean => {
+  return filepath.endsWith(".gelly");
+};

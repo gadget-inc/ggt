@@ -231,7 +231,6 @@ export type AppDeploymentSteps = (typeof AppDeploymentSteps)[keyof typeof AppDep
 export const stepToSpinnerText = (step: string): string => {
   switch (step) {
     case AppDeploymentSteps.NOT_STARTED:
-      return "Deploy not started";
     case AppDeploymentSteps.STARTING:
     case AppDeploymentSteps.BUILDING_ASSETS:
     case AppDeploymentSteps.UPLOADING_ASSETS:

@@ -26,6 +26,7 @@ import { mock, mockOnce } from "../../__support__/mock.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { expectStdout } from "../../__support__/stream.js";
+import { mockSystemTime } from "../../__support__/time.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe("FileSync.init", () => {
@@ -599,6 +600,8 @@ describe("FileSync._sendChangesToGadget", () => {
   let appDir: string;
   let filesync: FileSync;
 
+  mockSystemTime();
+
   // @ts-expect-error _sendChangesToGadget is private
   let sendChangesToGadget: typeof FileSync.prototype._sendChangesToGadget;
 
@@ -758,7 +761,7 @@ describe("FileSync._sendChangesToGadget", () => {
     expect(isFilesVersionMismatchError(error)).toBe(true);
   });
 
-  it("prints out fatal errors in the terminal", async () => {
+  it("prints fatal errors when they're received", async () => {
     await writeDir(appDir, {
       "access-control.gadget.ts": "// foo",
     });
@@ -802,17 +805,22 @@ describe("FileSync._sendChangesToGadget", () => {
 
     await sendChangesToGadget({ changes });
 
-    expectStdout().toContain(
-      `Gadget has detected the following fatal errors with your files:
+    expectStdout().toMatchInlineSnapshot(`
+      "→ Sent 12:00:00 AM
+      access-control.gadget.ts  updated ± 
 
-[access-control.gadget.ts]
- - Something went wrong
- - Another message
-[settings.gadget.ts]
- - Message from another file
+      Gadget has detected the following fatal errors with your files:
 
-Your app will not be operational until all fatal errors are fixed.`,
-    );
+      • access-control.gadget.ts 2 issues
+        ✖ Something went wrong
+        ✖ Another message
+
+      • settings.gadget.ts 1 issue
+        ✖ Message from another file
+
+      Your app will not be operational until all fatal errors are fixed.
+      "
+    `);
   });
 });
 

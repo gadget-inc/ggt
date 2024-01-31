@@ -12,7 +12,6 @@ import { confirm } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
-import { groupProblemsByApiIdentifier } from "../services/util/problems-group.js";
 
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
@@ -163,10 +162,7 @@ export const command: Command<typeof args> = async (ctx) => {
 
         const fatalIssues = issues.filter((issue) => issue.severity === ProblemSeverity.Fatal);
         if (fatalIssues.length > 0) {
-          const fatalErrors = groupProblemsByApiIdentifier(
-            fatalIssues.map((issue) => ({ apiIdentifier: issue.node?.apiIdentifier ?? "", message: issue.message })),
-          );
-          await reportErrorAndExit(ctx, new DeployDisallowedError(fatalErrors));
+          await reportErrorAndExit(ctx, new DeployDisallowedError(issuesToProblems(fatalIssues)));
         }
 
         ctx.log.printlns`{bold Issues found}`;

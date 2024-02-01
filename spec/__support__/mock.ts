@@ -121,7 +121,7 @@ export const mockOnce = ((target: any, property: any, accessor: any, impl: any) 
     expect(["get", "set"]).toContain(accessor);
     expect(impl).toBeInstanceOf(Function);
 
-    mockRestore(target[property]);
+    // mockRestore(target[property]);
     mocked = vi.spyOn(target, property, accessor).mockImplementationOnce(impl);
   } else if (accessor) {
     // (target, property, impl)
@@ -129,7 +129,7 @@ export const mockOnce = ((target: any, property: any, accessor: any, impl: any) 
     expect(target).toHaveProperty(property);
     expect(impl).toBeInstanceOf(Function);
 
-    mockRestore(target[property]);
+    // mockRestore(target[property]);
     mocked = vi.spyOn(target, property).mockImplementationOnce(impl);
   } else {
     // (fn, impl)
@@ -137,7 +137,7 @@ export const mockOnce = ((target: any, property: any, accessor: any, impl: any) 
     assert(vi.isMockFunction(target), "expected mocked function");
     expect(impl).toBeInstanceOf(Function);
 
-    target.mockClear();
+    // target.mockClear();
     target.mockImplementationOnce(impl);
     mocked = target;
   }

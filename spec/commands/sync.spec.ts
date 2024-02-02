@@ -8,7 +8,6 @@ import { EditError } from "../../src/services/app/edit/error.js";
 import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { type Context } from "../../src/services/command/context.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
-import { SyncStrategy } from "../../src/services/filesync/filesync.js";
 import { select } from "../../src/services/output/prompt.js";
 import { assetsPath } from "../../src/services/util/paths.js";
 import { nockTestApps, testApp } from "../__support__/app.js";

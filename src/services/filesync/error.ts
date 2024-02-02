@@ -1,6 +1,9 @@
+import { EditError } from "../app/edit/error.js";
+import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
 import { CLIError, IsBug } from "../output/report.js";
 import { sprint, sprintln, sprintlns } from "../output/sprint.js";
+import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
 
 export class YarnNotFoundError extends CLIError {
   isBug = IsBug.NO;
@@ -84,3 +87,24 @@ export class DeployDisallowedError extends CLIError {
     return output;
   }
 }
+
+export const isFilesVersionMismatchError = (error: unknown): boolean => {
+  if (error instanceof EditError) {
+    error = error.cause;
+  }
+  if (isGraphQLResult(error)) {
+    error = error.errors;
+  }
+  if (isGraphQLErrors(error)) {
+    error = error[0];
+  }
+  return isObject(error) && "message" in error && isString(error.message) && error.message.includes("Files version mismatch");
+};
+
+export const swallowFilesVersionMismatch = (ctx: Context, error: unknown): void => {
+  if (isFilesVersionMismatchError(error)) {
+    ctx.log.debug("swallowing files version mismatch", { error });
+    return;
+  }
+  throw error;
+};

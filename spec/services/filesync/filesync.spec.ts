@@ -3,6 +3,7 @@ import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import nock from "nock";
 import { randomUUID } from "node:crypto";
+import { MergeConflictPreference } from "src/services/filesync/strategy.js";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args } from "../../../src/commands/sync.js";
@@ -12,8 +13,8 @@ import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../s
 import { ArgError } from "../../../src/services/command/arg.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
-import { InvalidSyncFileError, TooManySyncAttemptsError } from "../../../src/services/filesync/error.js";
-import { ConflictPreference, FileSync, SyncStrategy, isFilesVersionMismatchError } from "../../../src/services/filesync/filesync.js";
+import { InvalidSyncFileError, TooManySyncAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
+import { FileSync } from "../../../src/services/filesync/filesync.js";
 import { select } from "../../../src/services/output/prompt.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
 import { multiEnvironmentTestApp, nockTestApps, testApp } from "../../__support__/app.js";
@@ -807,7 +808,7 @@ describe("FileSync._sendChangesToGadget", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "→ Sent 12:00:00 AM
-      access-control.gadget.ts  updated ± 
+      access-control.gadget.ts  updated ±
 
       Gadget has detected the following fatal errors with your files:
 
@@ -1307,14 +1308,14 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`exits the process when "${ConflictPreference.CANCEL}" is chosen`, async () => {
+    it(`exits the process when "${MergeConflictPreference.CANCEL}" is chosen`, async () => {
       const { filesync, expectDirs } = await makeSyncScenario({
         filesVersion1Files: { "foo.js": "foo" },
         localFiles: { "foo.js": "foo (local)" },
         gadgetFiles: { "foo.js": "foo (gadget)" },
       });
 
-      mockOnce(select, () => ConflictPreference.CANCEL);
+      mockOnce(select, () => MergeConflictPreference.CANCEL);
 
       await expectProcessExit(() => filesync.sync());
 
@@ -1343,7 +1344,7 @@ describe("FileSync.sync", () => {
       `);
     });
 
-    it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
+    it(`uses local conflicting changes when "${MergeConflictPreference.LOCAL}" is chosen`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         filesVersion1Files: {
           "foo.js": "// foo",
@@ -1356,7 +1357,7 @@ describe("FileSync.sync", () => {
         },
       });
 
-      mockOnce(select, () => ConflictPreference.LOCAL);
+      mockOnce(select, () => MergeConflictPreference.LOCAL);
 
       await filesync.sync();
 
@@ -1391,7 +1392,7 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is passed as an argument`, async () => {
+    it(`uses local conflicting changes when "${MergeConflictPreference.LOCAL}" is passed as an argument`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=local"] }),
         filesVersion1Files: {
@@ -1438,7 +1439,7 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`uses local conflicting changes and merges non-conflicting gadget changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
+    it(`uses local conflicting changes and merges non-conflicting gadget changes when "${MergeConflictPreference.LOCAL}" is chosen`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         filesVersion1Files: {
           "foo.js": "// foo",
@@ -1453,7 +1454,7 @@ describe("FileSync.sync", () => {
         },
       });
 
-      mockOnce(select, () => ConflictPreference.LOCAL);
+      mockOnce(select, () => MergeConflictPreference.LOCAL);
 
       await filesync.sync();
 
@@ -1495,7 +1496,7 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`uses local conflicting changes and merges non-conflicting gadget changes when "${ConflictPreference.LOCAL}" is passed as an argument`, async () => {
+    it(`uses local conflicting changes and merges non-conflicting gadget changes when "${MergeConflictPreference.LOCAL}" is passed as an argument`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=local"] }),
         filesVersion1Files: {
@@ -1551,7 +1552,7 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
+    it(`uses gadget's conflicting changes when "${MergeConflictPreference.GADGET}" is chosen`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         filesVersion1Files: {
           "foo.js": "// foo",
@@ -1564,7 +1565,7 @@ describe("FileSync.sync", () => {
         },
       });
 
-      mockOnce(select, () => ConflictPreference.GADGET);
+      mockOnce(select, () => MergeConflictPreference.GADGET);
 
       await filesync.sync();
 
@@ -1595,7 +1596,7 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
+    it(`uses gadget's conflicting changes when "${MergeConflictPreference.GADGET}" is passed as an argument`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
         filesVersion1Files: {
@@ -1638,7 +1639,7 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
+    it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${MergeConflictPreference.GADGET}" is chosen`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         filesVersion1Files: {
           "foo.js": "// foo",
@@ -1653,7 +1654,7 @@ describe("FileSync.sync", () => {
         },
       });
 
-      mockOnce(select, () => ConflictPreference.GADGET);
+      mockOnce(select, () => MergeConflictPreference.GADGET);
 
       await filesync.sync();
 
@@ -1695,7 +1696,7 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
+    it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${MergeConflictPreference.GADGET}" is chosen`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         filesVersion1Files: {
           "foo.js": "// foo",
@@ -1710,7 +1711,7 @@ describe("FileSync.sync", () => {
         },
       });
 
-      mockOnce(select, () => ConflictPreference.GADGET);
+      mockOnce(select, () => MergeConflictPreference.GADGET);
 
       await filesync.sync();
 
@@ -1752,7 +1753,7 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
+    it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${MergeConflictPreference.GADGET}" is passed as an argument`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
         filesVersion1Files: {
@@ -1850,7 +1851,7 @@ describe("FileSync.sync", () => {
       await expectLocalAndGadgetHashesMatch();
     });
 
-    it(`automatically uses gadget's conflicting changes in the .gadget directory even if "${ConflictPreference.LOCAL}" is chosen`, async () => {
+    it(`automatically uses gadget's conflicting changes in the .gadget directory even if "${MergeConflictPreference.LOCAL}" is chosen`, async () => {
       const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         filesVersion1Files: {
           ".gadget/client.js": "// client",
@@ -1866,7 +1867,7 @@ describe("FileSync.sync", () => {
         },
       });
 
-      mockOnce(select, () => ConflictPreference.LOCAL);
+      mockOnce(select, () => MergeConflictPreference.LOCAL);
 
       await filesync.sync();
 

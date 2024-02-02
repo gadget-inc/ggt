@@ -1,23 +1,24 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`root > when deploy is given > prints the usage when --help is passed 1`] = `
-"Deploy your development environment to production.
+"Deploy a development environment to production.
 
-Deploy ensures your directory is in sync with your development
-environment and that it is in a deployable state. If there are any
+Deploy ensures your directory is in sync with your current 
+development environment and that it is in a deployable state. If there are any
 issues, it will display them and ask if you would like to deploy
 anyways.
 
 USAGE
-  ggt deploy [DIRECTORY] [--app=<name>] [--prefer=<filesystem>] [--force]
+  ggt deploy [DIRECTORY] [--app=<name>] [--environment=<name>] [--prefer=<filesystem>] [--force]
 
 EXAMPLES
 
   $ ggt deploy
   $ ggt deploy ~/gadget/example
   $ ggt deploy ~/gadget/example --app=example
-  $ ggt deploy ~/gadget/example --app=example --prefer=local
-  $ ggt deploy ~/gadget/example --app=example --prefer=local --force
+  $ ggt deploy ~/gadget/example --app=example --environment=development
+  $ ggt deploy ~/gadget/example --app=example --environment=development --prefer=local
+  $ ggt deploy ~/gadget/example --app=example --environment=development --prefer=local --force
 
 ARGUMENTS
 
@@ -39,6 +40,16 @@ FLAGS
 
     If a \\".gadget/sync.json\\" file is not found, you will be
     prompted to choose an application from your list of apps.
+
+  -e, --environment=<name>
+    The environment to deploy from.
+
+    If not provided, the environment will be inferred from the
+    \\".gadget/sync.json\\" file in the chosen directory or any of its
+    parent directories.
+
+    If a \\".gadget/sync.json\\" file is not found, you will be
+    prompted to choose an environment from your list of environments.
 
   --prefer=<filesystem>
     Which filesystem's changes to automatically keep when
@@ -62,7 +73,7 @@ FLAGS
 `;
 
 exports[`root > when deploy is given > prints the usage when -h is passed 1`] = `
-"Deploy your development environment to production.
+"Deploy a development environment to production.
 
 USAGE
   ggt deploy [DIRECTORY]
@@ -74,10 +85,12 @@ EXAMPLES
   $ ggt deploy
   $ ggt deploy ~/gadget/example
   $ ggt deploy ~/gadget/example --app=example
-  $ ggt deploy ~/gadget/example --app=example --prefer=local
+  $ ggt deploy ~/gadget/example --app=example --environment=development
+  $ ggt deploy ~/gadget/example --app=example --environment=development --prefer=local
 
 FLAGS
-  -a, --app=<name>          The Gadget application to deploy
+  -a, --app=<name>           The Gadget application to deploy
+  -e, --environment=<name>   The environment to deploy from
       --prefer=<filesystem>  Prefer \\"local\\" or \\"gadget\\" conflicting changes
       --force                Deploy regardless of any issues found
 

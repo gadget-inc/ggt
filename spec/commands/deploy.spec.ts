@@ -149,7 +149,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      Deploying test.gadget.app (​https://test.gadget.app/​)
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       Issues found
 
@@ -200,7 +200,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      Deploying test.gadget.app (​https://test.gadget.app/​)
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       Issues found
 
@@ -326,7 +326,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      Deploying test.gadget.app (​https://test.gadget.app/​)
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       Issues found
 
@@ -475,7 +475,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      Deploying test.gadget.app (​https://test.gadget.app/​)
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "
@@ -499,7 +499,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      Deploying test.gadget.app (​https://test.gadget.app/​)
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
       Production environment limit reached. Upgrade your plan to deploy
       "
     `);
@@ -570,7 +570,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      Deploying test.gadget.app (​https://test.gadget.app/​)
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       An error occurred while communicating with Gadget
       "
@@ -647,7 +647,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      Deploying test.gadget.app (​https://test.gadget.app/​)
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
 
@@ -711,7 +711,7 @@ describe("deploy", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "
-      Deploying test.gadget.app (​https://test.gadget.app/​)
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       Gadget has detected the following fatal errors with your files:
 

@@ -8,6 +8,7 @@ import { EditError } from "../../src/services/app/edit/error.js";
 import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { type Context } from "../../src/services/command/context.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
+import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
 import { select } from "../../src/services/output/prompt.js";
 import { assetsPath } from "../../src/services/util/paths.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
@@ -46,7 +47,7 @@ describe("sync", () => {
       ].map(String),
     });
 
-    mockOnce(select, () => SyncStrategy.MERGE);
+    mockOnce(select, () => FileSyncStrategy.MERGE);
   });
 
   it("writes changes from gadget to the local filesystem", async () => {

@@ -3,7 +3,6 @@ import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import nock from "nock";
 import { randomUUID } from "node:crypto";
-import { MergeConflictPreference } from "src/services/filesync/strategy.js";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args } from "../../../src/commands/sync.js";
@@ -15,6 +14,7 @@ import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
 import { InvalidSyncFileError, TooManySyncAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
 import { FileSync } from "../../../src/services/filesync/filesync.js";
+import { FileSyncStrategy, MergeConflictPreference } from "../../../src/services/filesync/strategy.js";
 import { select } from "../../../src/services/output/prompt.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
 import { multiEnvironmentTestApp, nockTestApps, testApp } from "../../__support__/app.js";
@@ -1026,9 +1026,9 @@ describe("FileSync.sync", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
-  describe(`when "${SyncStrategy.PUSH}" is chosen`, () => {
+  describe(`when "${FileSyncStrategy.PUSH}" is chosen`, () => {
     beforeEach(() => {
-      mockOnce(select, () => SyncStrategy.PUSH);
+      mockOnce(select, () => FileSyncStrategy.PUSH);
     });
 
     it("sends local changes to gadget", async () => {
@@ -1164,9 +1164,9 @@ describe("FileSync.sync", () => {
     });
   });
 
-  describe(`when "${SyncStrategy.PULL}" is chosen`, () => {
+  describe(`when "${FileSyncStrategy.PULL}" is chosen`, () => {
     beforeEach(() => {
-      mockOnce(select, () => SyncStrategy.PULL);
+      mockOnce(select, () => FileSyncStrategy.PULL);
     });
 
     it("receives gadget's changes", async () => {
@@ -1248,9 +1248,9 @@ describe("FileSync.sync", () => {
     });
   });
 
-  describe(`when "${SyncStrategy.MERGE}" is chosen`, () => {
+  describe(`when "${FileSyncStrategy.MERGE}" is chosen`, () => {
     beforeEach(() => {
-      mockOnce(select, () => SyncStrategy.MERGE);
+      mockOnce(select, () => FileSyncStrategy.MERGE);
     });
 
     it("automatically merges changes if none are conflicting", async () => {

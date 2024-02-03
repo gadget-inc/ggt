@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Context } from "../../../src/services/command/context.js";
-import { getChanges, isEqualHash, isEqualHashes, withoutUnnecessaryChanges } from "../../../src/services/filesync/hashes.js";
+import { getNecessaryChanges, isEqualHash, isEqualHashes, withoutUnnecessaryChanges } from "../../../src/services/filesync/hashes.js";
 import { makeContext } from "../../__support__/context.js";
 import { makeHashes } from "../../__support__/filesync.js";
 
@@ -22,7 +22,7 @@ describe("getChanges", () => {
     };
 
     const { filesVersionHashes, localHashes } = await makeHashes({ filesVersionFiles: files, localFiles: files });
-    const changes = getChanges(ctx, { from: filesVersionHashes, to: localHashes });
+    const changes = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes });
     expect(Object.fromEntries(changes)).toEqual({});
     expect(changes.size).toBe(0);
   });
@@ -39,7 +39,7 @@ describe("getChanges", () => {
       },
     });
 
-    const changes = getChanges(ctx, { from: filesVersionHashes, to: localHashes });
+    const changes = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes });
     expect(Object.fromEntries(changes)).toEqual({
       "foo.js": { type: "delete", sourceHash: filesVersionHashes["foo.js"] },
       "bar.js": { type: "update", sourceHash: filesVersionHashes["bar.js"], targetHash: localHashes["bar.js"] },
@@ -62,7 +62,7 @@ describe("getChanges", () => {
       },
     });
 
-    const changes = getChanges(ctx, { from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
+    const changes = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes, ignore: [".gadget/"] });
     expect(Object.fromEntries(changes)).toEqual({
       "foo.js": { type: "delete", sourceHash: filesVersionHashes["foo.js"] },
       "bar.js": { type: "update", sourceHash: filesVersionHashes["bar.js"], targetHash: localHashes["bar.js"] },
@@ -85,7 +85,7 @@ describe("getChanges", () => {
     delete localHashes["some/"];
     delete localHashes["some/nested/"];
 
-    const changes = getChanges(ctx, { from: filesVersionHashes, to: localHashes });
+    const changes = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes });
     expect(Object.fromEntries(changes)).toEqual({
       "some/nested/other-file.js": { type: "delete", sourceHash: filesVersionHashes["some/nested/other-file.js"] },
     });
@@ -108,7 +108,7 @@ describe("getChanges", () => {
       },
     });
 
-    const changes = getChanges(ctx, { from: filesVersionHashes, to: localHashes, existing: gadgetHashes });
+    const changes = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes, existing: gadgetHashes });
     expect(Object.fromEntries(changes)).toEqual({
       "qux.js": { type: "create", targetHash: localHashes["qux.js"] },
     });
@@ -137,13 +137,13 @@ describe("withoutUnnecessaryChanges", () => {
       },
     });
 
-    const localChanges = getChanges(ctx, { from: filesVersionHashes, to: localHashes });
+    const localChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes });
     expect(Object.fromEntries(localChanges)).toEqual({
       "foo.js": { type: "update", sourceHash: filesVersionHashes["foo.js"], targetHash: localHashes["foo.js"] },
       "bar.js": { type: "create", targetHash: localHashes["bar.js"] },
     });
 
-    const gadgetChanges = getChanges(ctx, { from: filesVersionHashes, to: gadgetHashes });
+    const gadgetChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: gadgetHashes });
     expect(Object.fromEntries(gadgetChanges)).toEqual({
       "foo.js": { type: "update", sourceHash: filesVersionHashes["foo.js"], targetHash: gadgetHashes["foo.js"] },
       "bar.js": { type: "create", targetHash: gadgetHashes["bar.js"] },

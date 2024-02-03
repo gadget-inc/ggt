@@ -27,7 +27,7 @@ import { ArgError, type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
 import { filesyncProblemsToProblems, printProblems } from "../output/problems.js";
-import { select } from "../output/prompt.js";
+import { confirm, select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
 import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
@@ -37,7 +37,7 @@ import { getConflicts, printConflicts, withoutConflictingChanges } from "./confl
 import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
 import { InvalidSyncFileError, TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
 import type { File } from "./file.js";
-import { getChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
+import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 import { FileSyncStrategy, MergeConflictPreference, MergeConflictPreferenceArg, getFileSyncStrategy } from "./strategy.js";
 
 export const FileSyncArgs = {
@@ -567,8 +567,9 @@ export class FileSync {
         let filesVersionHashes: Hashes;
 
         if (this.filesVersion === 0n) {
-          // this is the first time we're syncing, so just get the
-          // hashes of the latest filesVersion
+          // we're either syncing for the first time or we're syncing a
+          // non-empty directory without a `.gadget/sync.json` file,
+          // regardless just get the hashes of the latest filesVersion
           const { fileSyncHashes } = await this.edit.query({ query: FILE_SYNC_HASHES_QUERY });
           gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
           gadgetHashes = fileSyncHashes.hashes;
@@ -592,14 +593,14 @@ export class FileSync {
 
     const inSync = isEqualHashes(this.ctx, localHashes, gadgetHashes);
 
-    const localChanges = getChanges(this.ctx, {
+    const localChanges = getNecessaryChanges(this.ctx, {
       from: filesVersionHashes,
       to: localHashes,
       existing: gadgetHashes,
       ignore: [".gadget/"],
     });
 
-    let gadgetChanges = getChanges(this.ctx, {
+    let gadgetChanges = getNecessaryChanges(this.ctx, {
       from: filesVersionHashes,
       to: gadgetHashes,
       existing: localHashes,
@@ -607,7 +608,7 @@ export class FileSync {
 
     if (!inSync && localChanges.size === 0 && gadgetChanges.size === 0) {
       // the local filesystem is missing .gadget/ files
-      gadgetChanges = getChanges(this.ctx, { from: localHashes, to: gadgetHashes });
+      gadgetChanges = getNecessaryChanges(this.ctx, { from: localHashes, to: gadgetHashes });
       assert(gadgetChanges.size > 0, "expected gadgetChanges to have changes");
       assert(
         Array.from(gadgetChanges.keys()).every((path) => path.startsWith(".gadget/")),
@@ -671,14 +672,24 @@ export class FileSync {
     }
   }
 
-  private async _push({ localHashes, gadgetHashes, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
-    const localChanges = getChanges(this.ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
+  private async _push({ localHashes, gadgetChanges, gadgetHashes, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
+    if (gadgetChanges.size > 0 && !this.ctx.args["--force"]) {
+      await confirm(this.ctx, {
+        message: sprint`
+          {bold Gadget's files have changed since you last synced.}
+
+          Are you sure you want to discard them?
+        `,
+      });
+    }
+
+    const localChanges = getNecessaryChanges(this.ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
     assert(localChanges.size > 0, "can't push if there are no local changes");
     await this._sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
   }
 
   private async _pull({ localHashes, gadgetHashes, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
-    const gadgetChanges = getChanges(this.ctx, { from: localHashes, to: gadgetHashes });
+    const gadgetChanges = getNecessaryChanges(this.ctx, { from: localHashes, to: gadgetHashes });
     assert(gadgetChanges.size > 0, "can't pull if there are no gadget changes");
     await this._getChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
   }

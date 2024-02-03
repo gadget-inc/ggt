@@ -412,9 +412,8 @@ export const makeSyncScenario = async ({
       const signal = new PromiseSignal();
       const localSyncJsonPath = localDir.absolute(".gadget/sync.json");
 
-      const interval = setInterval(() => void signalIfFilesVersion(), 100);
-
-      const signalIfFilesVersion = async (): Promise<void> => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      const interval = setInterval(async () => {
         try {
           log.trace("checking local files version", { filesVersion });
           const syncJson = await fs.readJSON(localSyncJsonPath);
@@ -426,7 +425,7 @@ export const makeSyncScenario = async ({
         } catch (error) {
           swallowEnoent(error);
         }
-      };
+      }, 100);
 
       await pTimeout(signal, {
         message: `Timed out waiting for gadget files version to become ${filesVersion}`,
@@ -438,16 +437,14 @@ export const makeSyncScenario = async ({
       log.trace("waiting for gadget files version", { filesVersion });
       const signal = new PromiseSignal();
 
-      const interval = setInterval(() => signalIfFilesVersion(), 100);
-
-      const signalIfFilesVersion = (): void => {
+      const interval = setInterval(() => {
         log.trace("checking gadget files version", { filesVersion });
         if (filesVersionDirs.has(filesVersion)) {
           log.trace("signaling gadget files version", { filesVersion });
           signal.resolve();
           clearInterval(interval);
         }
-      };
+      }, 100);
 
       await pTimeout(signal, {
         message: `Timed out waiting for gadget files version to become ${filesVersion}`,

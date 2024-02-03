@@ -673,18 +673,19 @@ export class FileSync {
   }
 
   private async _push({ localHashes, gadgetChanges, gadgetHashes, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
-    if (gadgetChanges.size > 0 && !this.ctx.args["--force"]) {
-      await confirm(this.ctx, {
-        message: sprint`
-          {bold Gadget's files have changed since you last synced.}
-
-          Are you sure you want to discard them?
-        `,
-      });
-    }
-
     const localChanges = getNecessaryChanges(this.ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
     assert(localChanges.size > 0, "can't push if there are no local changes");
+
+    if (gadgetChanges.size > 0 && !this.ctx.args["--force"]) {
+      printChanges(this.ctx, {
+        message: sprint`{bold Gadget's files have changed sync you last synced.}`,
+        changes: gadgetChanges,
+        tense: "past",
+      });
+
+      await confirm(this.ctx, { message: "Are you sure you want to discard them?" });
+    }
+
     await this._sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
   }
 

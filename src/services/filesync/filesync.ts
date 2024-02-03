@@ -38,14 +38,11 @@ import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./di
 import { InvalidSyncFileError, TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
 import type { File } from "./file.js";
 import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
-import { FileSyncStrategy, MergeConflictPreference, MergeConflictPreferenceArg, getFileSyncStrategy } from "./strategy.js";
+import { FileSyncStrategy, MergeConflictPreference, MergeConflictPreferenceArg } from "./strategy.js";
 
 export const FileSyncArgs = {
   "--app": { type: AppArg, alias: "-a" },
   "--environment": { type: String, alias: "-e" },
-  "--push": Boolean,
-  "--pull": Boolean,
-  "--merge": Boolean,
   "--prefer": MergeConflictPreferenceArg,
   "--force": Boolean,
 } satisfies ArgsDefinition;
@@ -477,83 +474,33 @@ export class FileSync {
    * - Conflicts are resolved by prompting the user to either keep their local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  async sync({ strategy, maxAttempts = 10 }: { strategy?: FileSyncStrategy; maxAttempts?: number } = {}): Promise<void> {
-    let hashes = await this.hashes();
-    if (hashes.inSync) {
-      this._syncOperations.clear();
-      this.ctx.log.info("filesystem is already in sync");
-      await this._save(hashes.gadgetFilesVersion);
-      return;
-    }
+  async sync({ maxAttempts = 10 }: { strategy?: FileSyncStrategy; maxAttempts?: number } = {}): Promise<void> {
+    let hashes: FileSyncHashes;
+    let attempt = 0;
 
-    strategy ??= getFileSyncStrategy(this.ctx);
-    if (!strategy) {
-      if (hashes.localChanges.size > 0) {
-        printChanges(this.ctx, {
-          message: sprint`{bold Your local files have changed}`,
-          changes: hashes.localChanges,
-          tense: "past",
-          spaceY: 1,
-        });
+    do {
+      hashes = await this.hashes();
+      if (hashes.inSync) {
+        this._syncOperations.clear();
+        this.ctx.log.info("filesystem in sync");
+        await this._save(hashes.gadgetFilesVersion);
+        return;
       }
 
-      if (hashes.gadgetChanges.size > 0) {
-        printChanges(this.ctx, {
-          message: sprint`{bold Gadget's files have changed}`,
-          changes: hashes.gadgetChanges,
-          tense: "past",
-          spaceY: 1,
-        });
+      attempt += 1;
+      this.ctx.log.info("merging", { attempt, ...hashes });
+
+      try {
+        await this._merge(hashes);
+      } catch (error) {
+        swallowFilesVersionMismatch(this.ctx, error);
+        // we either sent the wrong expectedFilesVersion or we received
+        // a filesVersion that is greater than the expectedFilesVersion
+        // + 1, so try again
       }
+    } while (attempt < maxAttempts);
 
-      strategy = await select(this.ctx, {
-        message: "What would you like to do?",
-        choices: Object.values(FileSyncStrategy),
-      });
-    }
-
-    switch (strategy) {
-      case FileSyncStrategy.CANCEL: {
-        process.exit(0);
-        break;
-      }
-      case FileSyncStrategy.PUSH: {
-        await this._push(hashes);
-        break;
-      }
-      case FileSyncStrategy.PULL: {
-        await this._pull(hashes);
-        break;
-      }
-      case FileSyncStrategy.MERGE: {
-        let attempt = 0;
-
-        do {
-          attempt += 1;
-          this.ctx.log.info("merging", { attempt, ...hashes });
-
-          try {
-            await this._merge(hashes);
-          } catch (error) {
-            swallowFilesVersionMismatch(this.ctx, error);
-            // we either sent the wrong expectedFilesVersion or we received
-            // a filesVersion that is greater than the expectedFilesVersion
-            // + 1, so try again
-          }
-
-          hashes = await this.hashes();
-
-          if (hashes.inSync) {
-            this._syncOperations.clear();
-            this.ctx.log.info("filesystem is in sync", { attempt });
-            await this._save(hashes.gadgetFilesVersion);
-            return;
-          }
-        } while (attempt < maxAttempts);
-
-        throw new TooManySyncAttemptsError(maxAttempts);
-      }
-    }
+    throw new TooManySyncAttemptsError(maxAttempts);
   }
 
   async hashes(): Promise<FileSyncHashes> {

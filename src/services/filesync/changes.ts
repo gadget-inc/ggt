@@ -92,7 +92,7 @@ export const printChanges = (
     });
 
   if (changesToPrint.length > limit) {
-    rows.push([sprint`{gray … ${changesToPrint.length - limit} more}`, ""]);
+    rows.push([chalk.gray("…"), sprint`{gray ${changesToPrint.length - limit} more}`, ""]);
   }
 
   let footer: string | undefined;

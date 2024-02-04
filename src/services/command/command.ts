@@ -9,8 +9,9 @@ import type { Context } from "./context.js";
 
 /**
  * The list of available commands.
- * - Each command is a separate file in src/commands.
- * - The order determines the order of commands in the README.
+ *
+ * 1. Every command corresponds to a file inside of src/commands/
+ * 2. The order determines the order of commands in the README
  */
 export const Commands = ["sync", "push", "pull", "list", "login", "logout", "whoami", "version"] as const;
 
@@ -35,32 +36,36 @@ export const isAvailableCommand = (command: string): command is AvailableCommand
 };
 
 /**
- * A command module is a file in the src/commands directory.
+ * A command module is a file in the src/commands/ directory.
  */
 export type CommandModule<Args extends ArgsDefinition = EmptyObject, ParentArgs extends ArgsDefinition = RootArgs> = {
   /**
-   * The command's {@link ArgsDefinition}.
+   * The command's {@link ArgsDefinition args}.
    */
   args?: Args;
 
   /**
-   * The command's {@link Usage}.
+   * The command's {@link Usage usage}.
    */
   usage: Usage;
 
   /**
-   * The command's {@link Command}.
+   * The command's {@link Command command}.
+   *
+   * TODO: rename this to `run`.
    */
   command: Command<Args, ParentArgs>;
 };
 
 /**
- * A command's usage is a string that describes how to use the command.
+ * A {@linkcode Command command}'s usage is a function that returns a
+ * string describing how to use the command. The function receives its
+ * parent command's context.
  */
 export type Usage = (ctx: Context) => string;
 
 /**
- * The function that is run when the command is invoked.
+ * The function that is run when the command is called.
  *
  * @param ctx - A {@linkcode Context} with the command's {@linkcode Args} and {@linkcode ParentArgs}.
  */

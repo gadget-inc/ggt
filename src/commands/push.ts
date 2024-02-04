@@ -1,13 +1,8 @@
-import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
 import { sprint } from "../services/output/sprint.js";
 
-export type PushArgs = typeof args;
-
-export const args = {
-  ...FileSyncArgs,
-} satisfies ArgsDefinition;
+export const args = FileSyncArgs;
 
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
@@ -21,15 +16,15 @@ export const usage: Usage = (ctx) => {
         $ ggt push
         $ ggt push ~/gadget/example
         $ ggt push ~/gadget/example --app=example
-        $ ggt push ~/gadget/example --app=example --environment=development
+        $ ggt push ~/gadget/example --app=example --env=development
 
       {bold ARGUMENTS}
-        DIRECTORY                  The directory to push files from (default: ".")
+        DIRECTORY          The directory to push files from (default: ".")
 
       {bold FLAGS}
-        -a, --app=<name>           The Gadget application to push files to
-        -e, --environment=<name>   The Gadget environment to push files to
-            --force                Discard Gadget's changes
+        -a, --app=<name>   The Gadget application to push files to
+        -e, --env=<name>   The Gadget environment to push files to
+            --force        Discard Gadget's changes
 
         Run "ggt push --help" for more information.
     `;
@@ -46,15 +41,15 @@ export const usage: Usage = (ctx) => {
 
     {bold USAGE}
 
-      ggt push [DIRECTORY] [--app=<name>] [--environment=<name>] [--force]
+      ggt push [DIRECTORY] [--app=<name>] [--env=<name>] [--force]
 
     {bold EXAMPLES}
 
       $ ggt push
       $ ggt push ~/gadget/example
       $ ggt push ~/gadget/example --app=example
-      $ ggt push ~/gadget/example --app=example --environment=development
-      $ ggt push ~/gadget/example --app=example --environment=development --force
+      $ ggt push ~/gadget/example --app=example --env=development
+      $ ggt push ~/gadget/example --app=example --env=development --force
 
     {bold ARGUMENTS}
 
@@ -81,7 +76,7 @@ export const usage: Usage = (ctx) => {
   `;
 };
 
-export const command: Command<PushArgs> = async (ctx) => {
+export const command: Command<typeof args> = async (ctx) => {
   const filesync = await FileSync.init(ctx);
   await filesync.push();
 };

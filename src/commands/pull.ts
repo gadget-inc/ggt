@@ -1,13 +1,8 @@
-import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
 import { sprint } from "../services/output/sprint.js";
 
-export type PullArgs = typeof args;
-
-export const args = {
-  ...FileSyncArgs,
-} satisfies ArgsDefinition;
+export const args = FileSyncArgs;
 
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
@@ -81,7 +76,7 @@ export const usage: Usage = (ctx) => {
   `;
 };
 
-export const command: Command<PullArgs> = async (ctx) => {
+export const command: Command<typeof args> = async (ctx) => {
   const filesync = await FileSync.init(ctx);
   await filesync.pull();
 };

@@ -5,6 +5,7 @@ import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import { type Command, type Usage } from "../services/command/command.js";
+import type { Context } from "../services/command/context.js";
 import { DeployDisallowedError } from "../services/filesync/error.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
 import { ProblemSeverity, issuesToProblems, printProblems } from "../services/output/problems.js";
@@ -16,7 +17,7 @@ import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Deploy your development environment to production.
+      Deploy a development environment to production.
 
       {bold USAGE}
         ggt deploy [DIRECTORY]
@@ -28,10 +29,12 @@ export const usage: Usage = (ctx) => {
         $ ggt deploy
         $ ggt deploy ~/gadget/example
         $ ggt deploy ~/gadget/example --app=example
-        $ ggt deploy ~/gadget/example --app=example --prefer=local
+        $ ggt deploy ~/gadget/example --app=example --environment=development
+        $ ggt deploy ~/gadget/example --app=example --environment=development --prefer=local
 
       {bold FLAGS}
-        -a, --app=<name>          The Gadget application to deploy
+        -a, --app=<name>           The Gadget application to deploy
+        -e, --environment=<name>   The environment to deploy from
             --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
             --force                Deploy regardless of any issues found
 
@@ -40,23 +43,24 @@ export const usage: Usage = (ctx) => {
   }
 
   return sprint`
-    Deploy your development environment to production.
+    Deploy a development environment to production.
 
-    Deploy ensures your directory is in sync with your development
-    environment and that it is in a deployable state. If there are any
+    Deploy ensures your directory is in sync with your current 
+    development environment and that it is in a deployable state. If there are any
     issues, it will display them and ask if you would like to deploy
     anyways.
 
     {bold USAGE}
-      ggt deploy [DIRECTORY] [--app=<name>] [--prefer=<filesystem>] [--force]
+      ggt deploy [DIRECTORY] [--app=<name>] [--environment=<name>] [--prefer=<filesystem>] [--force]
 
     {bold EXAMPLES}
 
       $ ggt deploy
       $ ggt deploy ~/gadget/example
       $ ggt deploy ~/gadget/example --app=example
-      $ ggt deploy ~/gadget/example --app=example --prefer=local
-      $ ggt deploy ~/gadget/example --app=example --prefer=local --force
+      $ ggt deploy ~/gadget/example --app=example --environment=development
+      $ ggt deploy ~/gadget/example --app=example --environment=development --prefer=local
+      $ ggt deploy ~/gadget/example --app=example --environment=development --prefer=local --force
 
     {bold ARGUMENTS}
 
@@ -78,6 +82,16 @@ export const usage: Usage = (ctx) => {
 
         If a ".gadget/sync.json" file is not found, you will be
         prompted to choose an application from your list of apps.
+
+      -e, --environment=<name>
+        The environment to deploy from.
+
+        If not provided, the environment will be inferred from the
+        ".gadget/sync.json" file in the chosen directory or any of its
+        parent directories.
+
+        If a ".gadget/sync.json" file is not found, you will be
+        prompted to choose an environment from your list of environments.
 
       --prefer=<filesystem>
         Which filesystem's changes to automatically keep when
@@ -107,9 +121,10 @@ export const args = {
 export const command: Command<typeof args> = async (ctx) => {
   // deploy --force != sync --force
   const filesync = await FileSync.init(ctx.child({ overwrite: { "--force": false } }));
+  assert(ctx.environment, "missing environment when deploying");
 
   ctx.log.printlns`
-    Deploying ${terminalLink(filesync.app.primaryDomain, `https://${filesync.app.primaryDomain}/`)}
+    Deploying ${ctx.environment} to ${terminalLink(filesync.app.primaryDomain, `https://${filesync.app.primaryDomain}/`)}
   `;
 
   const { inSync } = await filesync.hashes();
@@ -204,7 +219,7 @@ export const command: Command<typeof args> = async (ctx) => {
         return;
       }
 
-      const spinnerText = stepToSpinnerText(step);
+      const spinnerText = stepToSpinnerText(ctx, step);
       if (spinnerText !== spinner.text) {
         if (spinner.text) {
           spinner.succeed();
@@ -228,7 +243,7 @@ export const AppDeploymentSteps = Object.freeze({
 
 export type AppDeploymentSteps = (typeof AppDeploymentSteps)[keyof typeof AppDeploymentSteps];
 
-export const stepToSpinnerText = (step: string): string => {
+export const stepToSpinnerText = (ctx: Context, step: string): string => {
   switch (step) {
     case AppDeploymentSteps.NOT_STARTED:
     case AppDeploymentSteps.STARTING:
@@ -238,7 +253,7 @@ export const stepToSpinnerText = (step: string): string => {
     case AppDeploymentSteps.CONVERGING_STORAGE:
       return "Setting up database";
     case AppDeploymentSteps.PUBLISHING_TREE:
-      return "Copying development";
+      return `Copying ${ctx.environment}`;
     case AppDeploymentSteps.RELOADING_SANDBOX:
       return "Restarting app";
     case AppDeploymentSteps.COMPLETED:

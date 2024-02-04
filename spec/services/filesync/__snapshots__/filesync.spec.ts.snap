@@ -1,0 +1,18 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FileSync._sendChangesToGadget > prints fatal errors when they're received 1`] = `
+"→ Sent 12:00:00 AM
+±  access-control.gadget.ts  updated 
+
+Gadget has detected the following fatal errors with your files:
+
+• access-control.gadget.ts 2 issues
+  ✖ Something went wrong
+  ✖ Another message
+
+• settings.gadget.ts 1 issue
+  ✖ Message from another file
+
+Your app will not be operational until all fatal errors are fixed.
+"
+`;

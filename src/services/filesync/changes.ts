@@ -79,13 +79,13 @@ export const printChanges = (
     .map(([path, change]) => {
       switch (true) {
         case change.type === "create" && isString(change.oldPath):
-          return [" ", renamed, chalk.yellowBright(change.oldPath), renameSymbol, chalk.yellowBright(path)];
+          return [renameSymbol, chalk.yellowBright(change.oldPath), renamed, renameSymbol, chalk.yellowBright(path)];
         case change.type === "create":
-          return [createdSymbol, created, chalk.greenBright(path)];
+          return [createdSymbol, chalk.greenBright(path), created];
         case change.type === "update":
-          return [updatedSymbol, updated, chalk.blueBright(path)];
+          return [updatedSymbol, chalk.blueBright(path), updated];
         case change.type === "delete":
-          return [deletedSymbol, deleted, chalk.redBright(path)];
+          return [deletedSymbol, chalk.redBright(path), deleted];
         default:
           return isNever(change);
       }

@@ -18,6 +18,8 @@ export const usage: Usage = () => {
 
     {bold COMMANDS}
       sync           Sync your Gadget application's source code
+      push           Push your local file changes to Gadget
+      pull           Pull Gadget's file changes to your local filesystem
       list           List your apps
       login          Log in to your account
       logout         Log out of your account

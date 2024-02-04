@@ -1,7 +1,6 @@
 import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
-import { FileSyncStrategy } from "../services/filesync/strategy.js";
 import { sprint } from "../services/output/sprint.js";
 
 export type PushArgs = typeof args;
@@ -13,7 +12,7 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Push your local filesystem to your Gadget environment's filesystem.
+      Push your local file changes to Gadget.
 
       {bold USAGE}
         ggt push [DIRECTORY]
@@ -37,7 +36,13 @@ export const usage: Usage = (ctx) => {
   }
 
   return sprint`
-    Push your local filesystem to your Gadget environment's filesystem.
+    Push your local file changes to Gadget.
+
+    The changes will be calculated from the last time you ran
+    "ggt sync", "ggt push", or "ggt pull" in the chosen directory.
+
+    If Gadget has also made changes since the last sync,
+    you will be prompted to discard them or abort the push.
 
     {bold USAGE}
 
@@ -71,11 +76,12 @@ export const usage: Usage = (ctx) => {
         prompted to choose an application from your list of apps.
 
       --force
-        TODO
+        If Gadget has also made changes since the last sync, they
+        will be discarded without confirmation.
   `;
 };
 
 export const command: Command<PushArgs> = async (ctx) => {
   const filesync = await FileSync.init(ctx);
-  await filesync.sync({ strategy: FileSyncStrategy.PUSH });
+  await filesync.push();
 };

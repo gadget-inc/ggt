@@ -64,7 +64,9 @@ export const printChanges = (
   const updated = chalk.blueBright((tense === "past" ? "updated" : "update") + " ±");
   const deleted = chalk.redBright((tense === "past" ? "deleted" : "delete") + " -");
 
-  const rows = Array.from(changes.entries())
+  const changesToPrint = Array.from(changes.entries()).filter(([path]) => !path.startsWith(".gadget/"));
+
+  const rows = changesToPrint
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(0, limit)
     .map(([path, change]) => {
@@ -82,31 +84,31 @@ export const printChanges = (
       }
     });
 
-  if (changes.size > limit) {
-    rows.push([sprint`{gray … ${changes.size - limit} more}`, ""]);
+  if (changesToPrint.length > limit) {
+    rows.push([sprint`{gray … ${changesToPrint.length - limit} more}`, ""]);
   }
 
   let footer: string | undefined;
-  if (changes.size >= 10) {
+  if (changesToPrint.length >= 10) {
     tableOptions.spaceY = 1;
 
-    footer = sprint`${pluralize("change", changes.size, true)} in total. `;
+    footer = sprint`${pluralize("change", changesToPrint.length, true)} in total. `;
 
     const breakdown = [];
 
-    const created = changes.created();
-    if (created.length > 0) {
-      breakdown.push(sprint`{greenBright ${pluralize("create", created.length, true)}}`);
+    const createdCount = changesToPrint.filter(([, change]) => change.type === "create").length;
+    if (createdCount > 0) {
+      breakdown.push(sprint`{greenBright ${pluralize("create", createdCount, true)}}`);
     }
 
-    const updated = changes.updated();
-    if (updated.length > 0) {
-      breakdown.push(sprint`{blueBright ${pluralize("update", updated.length, true)}}`);
+    const updatedCount = changesToPrint.filter(([, change]) => change.type === "update").length;
+    if (updatedCount > 0) {
+      breakdown.push(sprint`{blueBright ${pluralize("update", updatedCount, true)}}`);
     }
 
-    const deleted = changes.deleted();
-    if (deleted.length > 0) {
-      breakdown.push(sprint`{redBright ${pluralize("delete", deleted.length, true)}}`);
+    const deletedCount = changesToPrint.filter(([, change]) => change.type === "delete").length;
+    if (deletedCount > 0) {
+      breakdown.push(sprint`{redBright ${pluralize("delete", deletedCount, true)}}`);
     }
 
     footer += breakdown.join(", ");

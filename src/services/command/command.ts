@@ -12,7 +12,7 @@ import type { Context } from "./context.js";
  * - Each command is a separate file in src/commands.
  * - The order determines the order of commands in the README.
  */
-export const Commands = ["sync", "list", "login", "logout", "whoami", "version"] as const;
+export const Commands = ["sync", "push", "pull", "list", "login", "logout", "whoami", "version"] as const;
 
 // deploy is still in preview
 if (process.env["GGT_DEPLOY_PREVIEW"]) {

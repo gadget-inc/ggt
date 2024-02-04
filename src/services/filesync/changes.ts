@@ -59,12 +59,19 @@ export const printChanges = (
     limit = Infinity;
   }
 
-  const renamed = chalk.yellowBright((tense === "past" ? "renamed" : "rename") + " →");
-  const created = chalk.greenBright((tense === "past" ? "created" : "create") + " +");
-  const updated = chalk.blueBright((tense === "past" ? "updated" : "update") + " ±");
-  const deleted = chalk.redBright((tense === "past" ? "deleted" : "delete") + " -");
-
   const changesToPrint = Array.from(changes.entries()).filter(([path]) => !path.startsWith(".gadget/"));
+
+  const renamed = chalk.yellowBright(tense === "past" ? "renamed" : "rename");
+  const renameSymbol = chalk.yellowBright("→");
+
+  const created = chalk.greenBright(tense === "past" ? "created" : "create");
+  const createdSymbol = chalk.greenBright("+");
+
+  const updated = chalk.blueBright(tense === "past" ? "updated" : "update");
+  const updatedSymbol = chalk.blueBright("±");
+
+  const deleted = chalk.redBright(tense === "past" ? "deleted" : "delete");
+  const deletedSymbol = chalk.redBright("-");
 
   const rows = changesToPrint
     .sort((a, b) => a[0].localeCompare(b[0]))
@@ -72,13 +79,13 @@ export const printChanges = (
     .map(([path, change]) => {
       switch (true) {
         case change.type === "create" && isString(change.oldPath):
-          return [chalk.yellowBright(change.oldPath), renamed, chalk.yellowBright(path)];
+          return [" ", renamed, chalk.yellowBright(change.oldPath), renameSymbol, chalk.yellowBright(path)];
         case change.type === "create":
-          return [chalk.greenBright(path), created];
+          return [createdSymbol, created, chalk.greenBright(path)];
         case change.type === "update":
-          return [chalk.blueBright(path), updated];
+          return [updatedSymbol, updated, chalk.blueBright(path)];
         case change.type === "delete":
-          return [chalk.redBright(path), deleted];
+          return [deletedSymbol, deleted, chalk.redBright(path)];
         default:
           return isNever(change);
       }

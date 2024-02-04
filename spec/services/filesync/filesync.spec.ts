@@ -809,7 +809,7 @@ describe("FileSync._sendChangesToGadget", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "→ Sent 12:00:00 AM
-      access-control.gadget.ts  updated ± 
+      ±  updated  access-control.gadget.ts
 
       Gadget has detected the following fatal errors with your files:
 

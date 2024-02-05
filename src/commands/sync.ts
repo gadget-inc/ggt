@@ -9,6 +9,7 @@ import { config } from "../services/config/config.js";
 import { Changes } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
+import { SyncJson } from "../services/filesync/sync-json.js";
 import { notify } from "../services/output/notify.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
@@ -30,16 +31,16 @@ export const usage: Usage = (ctx) => {
         $ ggt sync
         $ ggt sync ~/gadget/example
         $ ggt sync ~/gadget/example --app=example
-        $ ggt sync ~/gadget/example --app=example --prefer=local --once
+        $ ggt sync ~/gadget/example --app=example --env=development --prefer=local
 
       {bold ARGUMENTS}
-        DIRECTORY                  The directory to sync files to (default: ".")
+        DIRECTORY    The directory to sync files to (default: ".")
 
       {bold FLAGS}
         -a, --app=<name>           The Gadget application to sync files to
+        -e, --env=<name>           The environment to sync files to
             --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
             --once                 Sync once and exit
-            --force                Sync regardless of local filesystem state
 
         Run "ggt sync --help" for more information.
     `;
@@ -75,15 +76,18 @@ export const usage: Usage = (ctx) => {
 
     {bold USAGE}
 
-      ggt sync [DIRECTORY] [--app=<name>] [--prefer=<filesystem>] [--once] [--force]
+      ggt sync [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>] [--once]
+                           [--allow-unknown-directory] [--allow-different-app]
 
     {bold EXAMPLES}
 
       $ ggt sync
       $ ggt sync ~/gadget/example
       $ ggt sync ~/gadget/example --app=example
-      $ ggt sync ~/gadget/example --app=example --prefer=local --once
-      $ ggt sync ~/gadget/example --app=example --prefer=local --once --force
+      $ ggt sync ~/gadget/example --app=example --env=development
+      $ ggt sync ~/gadget/example --app=example --env=development --prefer=local --once
+      $ ggt sync ~/gadget/example --app=example --env=development --prefer=local --once --allow-unknown-directory
+      $ ggt sync ~/gadget/example --app=example --env=development --prefer=local --once --allow-unknown-directory --allow-different-app
 
     {bold ARGUMENTS}
 
@@ -95,7 +99,7 @@ export const usage: Usage = (ctx) => {
 
     {bold FLAGS}
 
-      -a, --app=<name>
+      -a, --app, --application=<name>
         The Gadget application to sync files to.
 
         If not provided, the application will be inferred from the
@@ -104,6 +108,17 @@ export const usage: Usage = (ctx) => {
 
         If a ".gadget/sync.json" file is not found, you will be
         prompted to choose an application from your list of apps.
+
+      -e, --env, --environment=<name>
+        The Gadget development environment to sync files to.
+
+        If not provided, the environment will be inferred from the
+        ".gadget/sync.json" file in the chosen directory or any of its
+        parent directories.
+
+        If a ".gadget/sync.json" file is not found or invalid, you will
+        be prompted to choose a development environment from your list
+        of environments.
 
       --prefer=<filesystem>
         Which filesystem's changes to automatically keep when
@@ -123,9 +138,19 @@ export const usage: Usage = (ctx) => {
 
         Defaults to false.
 
-      --force
-        When provided, sync will run regardless of the state of the
-        local filesystem.
+      --allow-unknown-directory
+        Allows sync to continue when the chosen directory already
+        contains files and does not contain a valid ".gadget/sync.json"
+        file within it, or any of its parent directories.
+
+        Defaults to false.
+
+      --allow-different-app
+        Allows sync to continue when the chosen directory contains a
+        valid ".gadget/sync.json" file, but the application within
+        it does not match the application provided by the --app flag.
+
+        Defaults to false.
 
     Run "ggt sync -h" for less information.
   `;
@@ -151,7 +176,8 @@ export const command: Command<SyncArgs> = async (ctx) => {
     throw new YarnNotFoundError();
   }
 
-  const filesync = await FileSync.init(ctx);
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory: ctx.args._[0] });
+  const filesync = new FileSync(ctx, syncJson);
   await filesync.sync();
 
   if (ctx.args["--once"]) {
@@ -211,18 +237,18 @@ export const command: Command<SyncArgs> = async (ctx) => {
     filesync.mergeChangesWithGadget({ changes }).catch((error) => ctx.abort(error));
   });
 
-  ctx.log.debug("watching", { path: filesync.directory.path });
+  ctx.log.debug("watching", { path: syncJson.directory.path });
 
   /**
    * Watches the local filesystem for changes.
    */
   const fileWatcher = new Watcher(
-    filesync.directory.path,
+    syncJson.directory.path,
     {
       // don't emit an event for every watched file on boot
       ignoreInitial: true,
       // don't emit changes to .gadget/ files because they're readonly (Gadget manages them)
-      ignore: (path: string) => filesync.directory.relative(path).startsWith(".gadget") || filesync.directory.ignores(path),
+      ignore: (path: string) => syncJson.directory.relative(path).startsWith(".gadget") || syncJson.directory.ignores(path),
       renameDetection: true,
       recursive: true,
       debounce: ctx.args["--file-watch-debounce"],
@@ -233,13 +259,13 @@ export const command: Command<SyncArgs> = async (ctx) => {
     (event: string, absolutePath: string, renamedPath: string) => {
       const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;
       const isDirectory = event === "renameDir" || event === "addDir" || event === "unlinkDir";
-      const normalizedPath = filesync.directory.normalize(filepath, isDirectory);
+      const normalizedPath = syncJson.directory.normalize(filepath, isDirectory);
 
       ctx.log.trace("file event", { event, isDirectory, path: normalizedPath });
 
-      if (filepath === filesync.directory.absolute(".ignore")) {
-        filesync.directory.loadIgnoreFile().catch((error) => ctx.abort(error));
-      } else if (filesync.directory.ignores(filepath)) {
+      if (filepath === syncJson.directory.absolute(".ignore")) {
+        syncJson.directory.loadIgnoreFile().catch((error) => ctx.abort(error));
+      } else if (syncJson.directory.ignores(filepath)) {
         return;
       }
 
@@ -255,7 +281,7 @@ export const command: Command<SyncArgs> = async (ctx) => {
           break;
         case "rename":
         case "renameDir": {
-          const oldNormalizedPath = filesync.directory.normalize(absolutePath, isDirectory);
+          const oldNormalizedPath = syncJson.directory.normalize(absolutePath, isDirectory);
           localChangesBuffer.set(normalizedPath, { type: "create", oldPath: oldNormalizedPath });
           break;
         }
@@ -274,30 +300,28 @@ export const command: Command<SyncArgs> = async (ctx) => {
     },
   ).once("error", (error) => ctx.abort(error));
 
-  const editorLink = `https://${filesync.app.slug}.gadget.app/edit${
-    filesync.app.multiEnvironmentEnabled ? `/${filesync.ctx.environment}` : ""
-  }`;
-  const playgroundLink = `https://${filesync.app.slug}.gadget.app/api/graphql/playground`;
+  const editorLink = `https://${syncJson.app.slug}.gadget.app/edit${syncJson.app.multiEnvironmentEnabled ? `/${syncJson.env.name}` : ""}`;
+  const playgroundLink = `https://${syncJson.app.slug}.gadget.app/api/graphql/playground`;
 
-  const endpointsLink = filesync.app.multiEnvironmentEnabled
+  const endpointsLink = syncJson.app.multiEnvironmentEnabled
     ? `
-      • https://${filesync.app.primaryDomain}
-      • https://${filesync.app.slug}--${filesync.ctx.environment}.gadget.app
+      • https://${syncJson.app.primaryDomain}
+      • https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
       `
-    : filesync.app.hasSplitEnvironments
+    : syncJson.app.hasSplitEnvironments
       ? `
-      • https://${filesync.app.primaryDomain}
-      • https://${filesync.app.slug}--development.gadget.app`
+      • https://${syncJson.app.primaryDomain}
+      • https://${syncJson.app.slug}--development.gadget.app`
       : `
-      • https://${filesync.app.primaryDomain}`;
+      • https://${syncJson.app.primaryDomain}`;
 
   ctx.log.printlns`
     ggt v${config.version}
 
-    App         ${filesync.app.slug}
+    App         ${syncJson.app.slug}
     Editor      ${editorLink}
     Playground  ${playgroundLink}
-    Docs        https://docs.gadget.dev/api/${filesync.app.slug}
+    Docs        https://docs.gadget.dev/api/${syncJson.app.slug}
 
     Endpoints ${endpointsLink}
 

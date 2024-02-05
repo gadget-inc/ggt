@@ -14,36 +14,42 @@ declare global {
   }
 }
 
+const bigintToJSON = function (this: bigint): string {
+  return String(this);
+};
+
+const mapToJSON = function <K, V>(this: Map<K, V>): Record<string, V> {
+  return Object.fromEntries(this);
+};
+
+const setToJSON = function <T>(this: Set<T>): T[] {
+  return Array.from(this);
+};
+
 export const installJsonExtensions = (): void => {
   if (!Object.prototype.hasOwnProperty.call(BigInt, "toJSON")) {
-    BigInt.prototype.toJSON = function () {
-      return String(this);
-    };
+    BigInt.prototype.toJSON = bigintToJSON;
   }
 
   if (!Object.prototype.hasOwnProperty.call(Map, "toJSON")) {
-    Map.prototype.toJSON = function () {
-      return Object.fromEntries(this);
-    };
+    Map.prototype.toJSON = mapToJSON;
   }
 
   if (!Object.prototype.hasOwnProperty.call(Set, "toJSON")) {
-    Set.prototype.toJSON = function () {
-      return Array.from(this);
-    };
+    Set.prototype.toJSON = setToJSON;
   }
 };
 
 export const uninstallJsonExtensions = (): void => {
-  if (Object.prototype.hasOwnProperty.call(BigInt, "toJSON")) {
+  if (BigInt.prototype.toJSON === bigintToJSON) {
     delete BigInt.prototype.toJSON;
   }
 
-  if (Object.prototype.hasOwnProperty.call(Map, "toJSON")) {
+  if (Map.prototype.toJSON === mapToJSON) {
     delete Map.prototype.toJSON;
   }
 
-  if (Object.prototype.hasOwnProperty.call(Set, "toJSON")) {
+  if (Set.prototype.toJSON === setToJSON) {
     delete Set.prototype.toJSON;
   }
 };

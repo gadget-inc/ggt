@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import type { EmptyObject } from "type-fest";
 import type { RootArgs } from "../../commands/root.js";
-import type { App } from "../app/app.js";
+import type { App, Environment } from "../app/app.js";
 import { createLogger, type Logger } from "../output/log/logger.js";
 import type { StructuredLoggerOptions } from "../output/log/structured.js";
 import type { User } from "../user/user.js";
@@ -53,7 +53,7 @@ export class Context<
   #parent?: Context<ArgsDefinition, ParentArgs>;
   #user?: User;
   #app?: App;
-  #environment?: string;
+  #env?: Environment;
 
   private constructor({
     args,
@@ -93,7 +93,10 @@ export class Context<
       this.#parent.user = user;
     }
 
-    this.#log = this.#log.child({ fields: { user: pick(user, ["id", "name", "email"]) } });
+    this.#log = this.#log.child({
+      fields: { user: { id: user.id } },
+      devFields: { user },
+    });
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
@@ -111,18 +114,17 @@ export class Context<
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  get environment(): string | undefined {
-    return this.#environment ?? this.#parent?.environment;
+  get env(): Environment | undefined {
+    return this.#env ?? this.#parent?.env;
   }
 
-  set environment(environment: string) {
-    const formattedEnvironment = environment.toLowerCase();
-    this.#environment = formattedEnvironment;
+  set env(env: Environment) {
+    this.#env = env;
     if (this.#parent) {
-      this.#parent.environment = formattedEnvironment;
+      this.#parent.env = env;
     }
 
-    this.#log = this.#log.child({ fields: { environment } });
+    this.#log = this.#log.child({ fields: { env } });
   }
 
   /**

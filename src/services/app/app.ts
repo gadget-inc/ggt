@@ -5,19 +5,29 @@ import { config } from "../config/config.js";
 import { loadCookie } from "../http/auth.js";
 import { http } from "../http/http.js";
 
+export const EnvironmentType = Object.freeze({
+  Development: "development",
+  Production: "production",
+  Test: "test",
+});
+
+export type EnvironmentType = keyof typeof EnvironmentType;
+
+export const Environment = z.object({
+  id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
+  name: z.string().transform((v) => v.toLowerCase()), // ensure their lowercase
+  type: z.nativeEnum(EnvironmentType),
+});
+
+export type Environment = z.infer<typeof Environment>;
+
 export const App = z.object({
-  id: z.union([z.string(), z.number(), z.bigint()]),
+  id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
   slug: z.string(),
   primaryDomain: z.string(),
   hasSplitEnvironments: z.boolean(),
   multiEnvironmentEnabled: z.boolean(),
-  environments: z.array(
-    z.object({
-      id: z.union([z.string(), z.number(), z.bigint()]),
-      name: z.string(),
-      type: z.string(),
-    }),
-  ),
+  environments: z.array(Environment),
 });
 
 export type App = z.infer<typeof App>;

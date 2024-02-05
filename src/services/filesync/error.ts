@@ -23,32 +23,29 @@ export class YarnNotFoundError extends CLIError {
   }
 }
 
-export class InvalidSyncFileError extends CLIError {
+export class UnknownDirectoryError extends CLIError {
   isBug = IsBug.NO;
 
-  constructor(
-    readonly dir: string,
-    readonly app: string | undefined,
-  ) {
+  constructor(readonly opts: { dir: string; app: string | undefined; syncJsonFile: string | undefined }) {
     super("The .gadget/sync.json file was invalid or not found");
-    this.app ??= "<name of app>";
+    this.opts.app ??= "<name of app>";
   }
 
   protected render(): string {
     return sprint`
       We failed to find a ".gadget/sync.json" file in this directory:
 
-        ${this.dir}
+        ${this.opts.dir}
 
-      If you're running 'ggt sync' for the first time, we recommend
+      If you're running "ggt sync" for the first time, we recommend
       using a gadget specific directory like this:
 
-        ggt sync ~/gadget/${this.app} --app ${this.app}
+        ggt sync ~/gadget/${this.opts.app} --app=${this.opts.app}
 
       If you're certain you want to sync the contents of that directory
-      to Gadget, run 'ggt sync' again with the {bold --force} flag:
+      to Gadget, run "ggt sync" again with the {bold --allow-unknown-directory} flag:
 
-        ggt sync ${this.dir} --app ${this.app} --force
+        ggt sync ${this.opts.dir} --app=${this.opts.app} --allow-unknown-directory
     `;
   }
 }

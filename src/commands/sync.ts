@@ -20,7 +20,7 @@ export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
       Sync your local filesystem with your Gadget environment's
-      filesystem in real-time.
+      filesystem, in real-time.
 
       https://docs.gadget.dev/guides/development-tools/cli#filesync
 

@@ -181,7 +181,7 @@ EXAMPLES
 `;
 
 exports[`root > when pull is given > prints the usage when --help is passed 1`] = `
-"Pull Gadget's file changes to your local filesystem.
+"Pull changes from Gadget's filesystem to your local filesystem.
 
 The changes will be calculated from the last time you ran
 \\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
@@ -191,15 +191,17 @@ you will be prompted to discard them or abort the pull.
 
 USAGE
 
-  ggt pull [DIRECTORY] [--app=<name>] [--environment=<name>] [--force]
+  ggt pull [DIRECTORY] [--app=<name>] [--env=<name>] [--force]
+                       [--allow-unknown-directory] [--allow-different-app]
 
 EXAMPLES
 
   $ ggt pull
   $ ggt pull ~/gadget/example
   $ ggt pull ~/gadget/example --app=example
-  $ ggt pull ~/gadget/example --app=example --environment=development
-  $ ggt pull ~/gadget/example --app=example --environment=development --force
+  $ ggt pull ~/gadget/example --app=example --env=development
+  $ ggt pull ~/gadget/example --app=example --env=development --allow-unknown-directory
+  $ ggt pull ~/gadget/example --app=example --env=development --allow-unknown-directory --allow-different-app
 
 ARGUMENTS
 
@@ -211,7 +213,7 @@ ARGUMENTS
 FLAGS
 
   -a, --app=<name>
-    The Gadget application to pull files to.
+    The Gadget application to pull files from.
 
     If not provided, the application will be inferred from the
     \\".gadget/sync.json\\" file in the chosen directory or any of its
@@ -220,14 +222,40 @@ FLAGS
     If a \\".gadget/sync.json\\" file is not found, you will be
     prompted to choose an application from your list of apps.
 
+  -e, --env, --env=<name>
+    The Gadget development environment to pull files from.
+
+    If not provided, the environment will be inferred from the
+    \\".gadget/sync.json\\" file in the chosen directory or any of its
+    parent directories.
+
+    If a \\".gadget/sync.json\\" file is not found or invalid, you will
+    be prompted to choose a development environment from your list
+    of environments.
+
   --force
-    If the Gadget environment made changes since the last sync, they
+    Any changes you have made to your local filesystem since the
+    last time you ran \\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\"
     will be discarded without confirmation.
+
+  --allow-unknown-directory
+    Allows pull to continue when the chosen directory already
+    contains files and does not contain a valid \\".gadget/sync.json\\"
+    file within it, or any of its parent directories.
+
+    Defaults to false.
+
+  --allow-different-app
+    Allows pull to continue when the chosen directory contains a
+    valid \\".gadget/sync.json\\" file, but the application within
+    it does not match the application provided by the --app flag.
+
+    Defaults to false.
 "
 `;
 
 exports[`root > when pull is given > prints the usage when -h is passed 1`] = `
-"Pull Gadget's file changes to your local filesystem.
+"Pull changes from Gadget's filesystem to your local filesystem.
 
 USAGE
   ggt pull [DIRECTORY]
@@ -236,22 +264,22 @@ EXAMPLES
   $ ggt pull
   $ ggt pull ~/gadget/example
   $ ggt pull ~/gadget/example --app=example
-  $ ggt pull ~/gadget/example --app=example --environment=development
+  $ ggt pull ~/gadget/example --app=example --env=development
 
 ARGUMENTS
-  DIRECTORY                  The directory to pull files to (default: \\".\\")
+  DIRECTORY          The directory to pull files to (default: \\".\\")
 
 FLAGS
-  -a, --app=<name>           The Gadget application to pull files from
-  -e, --environment=<name>   The Gadget environment to pull files from
-      --force                Discard Gadget's changes
+  -a, --app=<name>   The Gadget application to pull files from
+  -e, --env=<name>   The Gadget environment to pull files from
+      --force        Discard Gadget's changes
 
   Run \\"ggt pull --help\\" for more information.
 "
 `;
 
 exports[`root > when push is given > prints the usage when --help is passed 1`] = `
-"Push your local file changes to Gadget.
+"Push changes from your local filesystem to Gadget's filesystem.
 
 The changes will be calculated from the last time you ran
 \\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
@@ -262,6 +290,7 @@ you will be prompted to discard them or abort the push.
 USAGE
 
   ggt push [DIRECTORY] [--app=<name>] [--env=<name>] [--force]
+                       [--allow-unknown-directory] [--allow-different-app]
 
 EXAMPLES
 
@@ -269,7 +298,8 @@ EXAMPLES
   $ ggt push ~/gadget/example
   $ ggt push ~/gadget/example --app=example
   $ ggt push ~/gadget/example --app=example --env=development
-  $ ggt push ~/gadget/example --app=example --env=development --force
+  $ ggt push ~/gadget/example --app=example --env=development --allow-unknown-directory
+  $ ggt push ~/gadget/example --app=example --env=development --allow-unknown-directory --allow-different-app
 
 ARGUMENTS
 
@@ -290,14 +320,40 @@ FLAGS
     If a \\".gadget/sync.json\\" file is not found, you will be
     prompted to choose an application from your list of apps.
 
+  -e, --env, --environment=<name>
+    The Gadget development environment to push files to.
+
+    If not provided, the environment will be inferred from the
+    \\".gadget/sync.json\\" file in the chosen directory or any of its
+    parent directories.
+
+    If a \\".gadget/sync.json\\" file is not found or invalid, you will
+    be prompted to choose a development environment from your list
+    of environments.
+
   --force
-    If Gadget has also made changes since the last sync, they
-    will be discarded without confirmation.
+    Any changes Gadget has made changes since the last time you ran
+    \\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" will be discarded
+    without confirmation.
+
+  --allow-unknown-directory
+    Allows push to continue when the chosen directory already
+    contains files and does not contain a valid \\".gadget/sync.json\\"
+    file within it, or any of its parent directories.
+
+    Defaults to false.
+
+  --allow-different-app
+    Allows push to continue when the chosen directory contains a
+    valid \\".gadget/sync.json\\" file, but the application within
+    it does not match the application provided by the --app flag.
+
+    Defaults to false.
 "
 `;
 
 exports[`root > when push is given > prints the usage when -h is passed 1`] = `
-"Push your local file changes to Gadget.
+"Push changes from your local filesystem to Gadget's filesystem.
 
 USAGE
   ggt push [DIRECTORY]
@@ -432,7 +488,7 @@ Run \\"ggt sync -h\\" for less information.
 
 exports[`root > when sync is given > prints the usage when -h is passed 1`] = `
 "Sync your local filesystem with your Gadget environment's
-filesystem in real-time.
+filesystem, in real-time.
 
 https://docs.gadget.dev/guides/development-tools/cli#filesync
 

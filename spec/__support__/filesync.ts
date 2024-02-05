@@ -205,7 +205,17 @@ export const makeSyncScenario = async ({
         environments: { development: { filesVersion: "1" } },
       };
 
-      await fs.outputJSON(localDir.absolute(".gadget/sync.json"), syncJsonFile, { spaces: 2 });
+      await fs.outputJSON(
+        localDir.absolute(".gadget/sync.json"),
+        {
+          ...syncJsonFile,
+
+          // deprecated
+          app: syncJsonFile.application,
+          filesVersion: syncJsonFile.environments["development"]!.filesVersion,
+        },
+        { spaces: 2 },
+      );
     }
   }
 
@@ -475,7 +485,15 @@ export const makeSyncScenario = async ({
             })(),
           ]);
 
-          expect(local[".gadget/sync.json"]).toEqual(expectSyncJson(filesync, expectedSyncJson));
+          const actualSyncJsonFile = local[".gadget/sync.json"];
+          const expectedSyncJsonFile = expectSyncJson(filesync, expectedSyncJson);
+
+          try {
+            expect(actualSyncJsonFile).toEqual(expectedSyncJsonFile);
+          } catch (error) {
+            console.error("unexpected .gadget/sync.json", { expected: expectedSyncJsonFile, actual: actualSyncJsonFile });
+            throw error;
+          }
 
           // omit mtime from the snapshot
           const withoutMtime = omit(JSON.parse(local[".gadget/sync.json"]!), ["mtime"]);
@@ -546,7 +564,15 @@ export const makeFile = (options: PartialExcept<File, "path">): File => {
 
 export const expectSyncJson = (filesync: FileSync, expected: Partial<SyncJsonState> = {}): string => {
   expect(filesync.syncJson.state).toMatchObject(expected);
-  return prettyJSON(filesync.syncJson.state);
+  return prettyJSON({
+    ...filesync.syncJson.state,
+
+    // deprecated
+    app: filesync.syncJson.app.slug,
+    filesVersion: String(filesync.syncJson.filesVersion),
+    // @ts-expect-error - mtime is private
+    mtime: filesync.syncJson._mtime,
+  });
 };
 
 export const expectPublishVariables = (expected: MutationPublishFileSyncEventsArgs): ZodSchema<MutationPublishFileSyncEventsArgs> => {

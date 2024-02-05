@@ -42,7 +42,20 @@ export class SyncJson {
    */
   readonly env: Environment;
 
+  /**
+   * The {@linkcode Edit} client that can be used to send Gadget API
+   * requests to the environment that the directory is synced to.
+   */
   readonly edit: Edit;
+
+  /**
+   * The last time the `.gadget/sync.json` file was modified.
+   *
+   * @deprecated
+   * We don't use this anymore, it's only here because older versions
+   * of ggt expect it to be in the .gadget/sync.json file.
+   */
+  private _mtime: number | undefined;
 
   private constructor(
     /**
@@ -304,7 +317,19 @@ export class SyncJson {
     environment.filesVersion = String(filesVersion);
 
     this.ctx.log.debug("saving .gadget/sync.json");
-    await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this.state, { spaces: 2 });
+    this._mtime = Date.now();
+    await fs.outputJSON(
+      this.directory.absolute(".gadget/sync.json"),
+      {
+        ...this.state,
+
+        // v0.4
+        app: this.state.application,
+        filesVersion: String(filesVersion),
+        mtime: this._mtime,
+      },
+      { spaces: 2 },
+    );
   }
 }
 

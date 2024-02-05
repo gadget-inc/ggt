@@ -563,7 +563,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "gadget.txt": "// gadget",
           "local.txt": "// local",
         },
@@ -629,7 +629,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
         "localDir": {
           ".gadget/": "",
           ".gadget/client.js": "// client",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"4\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"4\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\"}",
           "gadget.txt": "// gadget",
           "local.txt": "// local",
         },
@@ -670,7 +670,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
           "foo.js": "// foo",
         },
       }
@@ -713,7 +713,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
           ".ignore": "foo.js",
           "foo.js": "// foo (local)",
         },
@@ -767,7 +767,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
@@ -807,7 +807,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
           "foo.js": "foo (local)",
         },
       }
@@ -853,7 +853,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo (local)",
         },
       }
@@ -900,7 +900,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo (local)",
         },
       }
@@ -955,7 +955,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo (local)",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
@@ -1011,7 +1011,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo (local)",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
@@ -1057,7 +1057,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "foo.js": "// foo (gadget)",
         },
       }
@@ -1100,7 +1100,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "foo.js": "// foo (gadget)",
         },
       }
@@ -1155,7 +1155,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo (gadget)",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
@@ -1212,7 +1212,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo (gadget)",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
@@ -1268,7 +1268,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo (gadget)",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
@@ -1313,7 +1313,7 @@ describe("FileSync.sync", () => {
         "localDir": {
           ".gadget/": "",
           ".gadget/client.js": "// client (gadget)",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
         },
       }
     `);
@@ -1368,7 +1368,7 @@ describe("FileSync.sync", () => {
         "localDir": {
           ".gadget/": "",
           ".gadget/client.js": "// client (gadget)",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo (local)",
         },
       }
@@ -1405,7 +1405,7 @@ describe("FileSync.sync", () => {
         "localDir": {
           ".gadget/": "",
           ".gadget/client.js": "// client",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
         },
       }
     `);
@@ -1465,7 +1465,7 @@ describe("FileSync.sync", () => {
           ".gadget/": "",
           ".gadget/client.js": "// client",
           ".gadget/server.js": "// server",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
         },
@@ -1519,7 +1519,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "gadget.txt": "// gadget",
           "local.txt": "// local",
         },
@@ -1636,7 +1636,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"cool-environment-development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"},\\"cool-environment-development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"cool-environment-development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"},\\"cool-environment-development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
@@ -1683,7 +1683,7 @@ describe("FileSync.push", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "local-file.js": "// local",
         },
       }
@@ -1728,7 +1728,7 @@ describe("FileSync.push", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "local-file.js": "// local",
         },
       }
@@ -1774,7 +1774,7 @@ describe("FileSync.push", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "local-file.js": "// local",
         },
       }
@@ -1827,7 +1827,7 @@ describe("FileSync.push", () => {
         "localDir": {
           ".gadget/": "",
           ".gadget/client.js": "// client",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "local-file.js": "// local",
         },
       }
@@ -1874,7 +1874,7 @@ describe("FileSync.pull", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "gadget-file.js": "// gadget",
         },
       }
@@ -1917,7 +1917,7 @@ describe("FileSync.pull", () => {
           ".gadget/": "",
           ".gadget/backup/": "",
           ".gadget/backup/local-file.js": "// local",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "gadget-file.js": "// gadget",
         },
       }
@@ -1961,7 +1961,7 @@ describe("FileSync.pull", () => {
           ".gadget/": "",
           ".gadget/backup/": "",
           ".gadget/backup/local-file.js": "// local",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "gadget-file.js": "// gadget",
         },
       }
@@ -2003,7 +2003,7 @@ describe("FileSync.pull", () => {
           ".gadget/backup/": "",
           ".gadget/backup/.gadget/": "",
           ".gadget/backup/.gadget/local.js": "// .gadget/local",
-          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "gadget-file.js": "// gadget",
         },
       }

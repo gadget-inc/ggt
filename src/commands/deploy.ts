@@ -4,14 +4,22 @@ import ora from "ora";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { type Command, type Usage } from "../services/command/command.js";
-import { DeployDisallowedError } from "../services/filesync/error.js";
-import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
-import { SyncJson } from "../services/filesync/sync-json.js";
+import { DeployDisallowedError, UnknownDirectoryError } from "../services/filesync/error.js";
+import { FileSync } from "../services/filesync/filesync.js";
+import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { ProblemSeverity, issuesToProblems, printProblems } from "../services/output/problems.js";
 import { confirm } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
+import { args as PushArgs } from "./push.js";
+
+export type DeployArgs = typeof args;
+
+export const args = {
+  ...PushArgs,
+  "--allow-problems": { type: Boolean, alias: "--allow-issues" },
+};
 
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
@@ -126,31 +134,32 @@ export const usage: Usage = (ctx) => {
           • Syntax errors
           • TypeScript errors
           • Missing fields that should be present on models
+
+    Run "ggt deploy -h" for less information.
 `;
 };
 
-// TODO: this should use --allow-problems or --allow-issues instead of --force
-export const args = FileSyncArgs;
-
-export const command: Command<typeof args> = async (ctx) => {
-  // TODO: this should use load instead of loadOrInit
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory: ctx.args._[0] });
-  const filesync = new FileSync(ctx, syncJson);
+export const command: Command<DeployArgs> = async (ctx) => {
+  const directory = await loadSyncJsonDirectory(process.cwd());
+  const syncJson = await SyncJson.load(ctx, { directory });
+  if (!syncJson) {
+    throw new UnknownDirectoryError(ctx, { directory });
+  }
 
   ctx.log.printlns`
     Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
   `;
 
-  const { inSync } = await filesync.hashes();
+  const filesync = new FileSync(syncJson);
+  const { inSync } = await filesync.hashes(ctx);
   if (!inSync) {
     ctx.log.printlns`
       Your local filesystem must be in sync with your development
       environment before you can deploy.
     `;
 
-    // TODO: this should use push instead of sync
-    await confirm(ctx, { message: "Would you like to sync now?" });
-    await filesync.sync();
+    await confirm(ctx, { message: "Would you like to push now?" });
+    await filesync.push(ctx);
   }
 
   const spinner = ora();
@@ -158,9 +167,9 @@ export const command: Command<typeof args> = async (ctx) => {
 
   // subscribes to the graphql subscription that will listen and send
   // back the server contract status
-  const subscription = filesync.edit.subscribe({
+  const subscription = syncJson.edit.subscribe({
     subscription: PUBLISH_STATUS_SUBSCRIPTION,
-    variables: { localFilesVersion: String(syncJson.filesVersion), force: ctx.args["--force"] },
+    variables: { localFilesVersion: String(syncJson.filesVersion), force: ctx.args["--allow-problems"] },
     onError: (error) => {
       ctx.log.error("failed to deploy", { error });
       spinner.fail();

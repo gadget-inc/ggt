@@ -8,8 +8,9 @@ import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
 import { Changes } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
-import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
-import { SyncJson } from "../services/filesync/sync-json.js";
+import { FileSync } from "../services/filesync/filesync.js";
+import { MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
+import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { notify } from "../services/output/notify.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
@@ -157,7 +158,8 @@ export const usage: Usage = (ctx) => {
 };
 
 export const args = {
-  ...FileSyncArgs,
+  ...SyncJsonArgs,
+  "--prefer": MergeConflictPreferenceArg,
   "--once": Boolean,
   "--file-push-delay": { type: Number, default: ms("100ms") },
   "--file-watch-debounce": { type: Number, default: ms("300ms") },
@@ -176,9 +178,10 @@ export const command: Command<SyncArgs> = async (ctx) => {
     throw new YarnNotFoundError();
   }
 
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory: ctx.args._[0] });
-  const filesync = new FileSync(ctx, syncJson);
-  await filesync.sync();
+  const directory = await loadSyncJsonDirectory(ctx.args._[0]);
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+  const filesync = new FileSync(syncJson);
+  await filesync.sync(ctx);
 
   if (ctx.args["--once"]) {
     ctx.log.println("Done!");
@@ -205,7 +208,7 @@ export const command: Command<SyncArgs> = async (ctx) => {
    * Subscribe to file changes on Gadget and apply them to the local
    * filesystem.
    */
-  const filesyncSubscription = filesync.subscribeToGadgetChanges({
+  const filesyncSubscription = filesync.subscribeToGadgetChanges(ctx, {
     onError: (error) => ctx.abort(error),
     beforeChanges: ({ changed, deleted }) => {
       // add all the files and directories we're about to touch to
@@ -234,7 +237,7 @@ export const command: Command<SyncArgs> = async (ctx) => {
   const sendChangesToGadget = debounce(ctx.args["--file-push-delay"], () => {
     const changes = new Changes(localChangesBuffer.entries());
     localChangesBuffer.clear();
-    filesync.mergeChangesWithGadget({ changes }).catch((error) => ctx.abort(error));
+    filesync.mergeChangesWithGadget(ctx, { changes }).catch((error) => ctx.abort(error));
   });
 
   ctx.log.debug("watching", { path: syncJson.directory.path });

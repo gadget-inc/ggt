@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as app from "../../../src/services/app/app.js";
 import { ArgError } from "../../../src/services/command/arg.js";
 import type { Context } from "../../../src/services/command/context.js";
+import { Directory } from "../../../src/services/filesync/directory.js";
 import { UnknownDirectoryError } from "../../../src/services/filesync/error.js";
 import { SyncJson, SyncJsonArgs, type AnySyncJsonState, type SyncJsonStateV05 } from "../../../src/services/filesync/sync-json.js";
 import { nockTestApps, testApp, testApp2, testAppWith2Environments } from "../../__support__/app.js";
@@ -13,31 +14,21 @@ import { testDirPath } from "../../__support__/paths.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe("SyncJson.loadOrInit", () => {
-  let appDir: string;
-  let appDirPath: (...segments: string[]) => string;
+  let localDir: Directory;
   let ctx: Context<SyncJsonArgs>;
   let outputSyncJson: <const State extends AnySyncJsonState>(state: State) => Promise<State>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     loginTestUser();
     nockTestApps();
 
-    appDir = testDirPath("local");
-    appDirPath = (...segments) => testDirPath("local", ...segments);
-
+    localDir = await Directory.init(testDirPath("local"));
     ctx = makeContext({ parse: SyncJsonArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+
     outputSyncJson = async (state) => {
-      await fs.outputJSON(appDirPath(".gadget/sync.json"), state);
+      await fs.outputJSON(localDir.absolute(".gadget/sync.json"), state);
       return state;
     };
-  });
-
-  it("ensures the directory exists", async () => {
-    await expect(fs.exists(appDir)).resolves.toBe(false);
-
-    await SyncJson.loadOrInit(ctx, { directory: appDir });
-
-    expect(fs.existsSync(appDir)).toBe(true);
   });
 
   it("loads state from .gadget/sync.json (latest)", async () => {
@@ -49,7 +40,7 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
 
     expect(syncJson.state).toEqual(state);
   });
@@ -61,7 +52,7 @@ describe("SyncJson.loadOrInit", () => {
       mtime: 1658153625236,
     });
 
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
 
     expect(syncJson.state).toEqual({
       application: testApp.slug,
@@ -73,7 +64,7 @@ describe("SyncJson.loadOrInit", () => {
   });
 
   it("uses default state if .gadget/sync.json does not exist and the directory is empty", async () => {
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
 
     expect(syncJson.state).toEqual({
       application: testApp.slug,
@@ -85,22 +76,22 @@ describe("SyncJson.loadOrInit", () => {
   });
 
   it(`throws ${UnknownDirectoryError.name} if .gadget/sync.json does not exist and the directory is not empty`, async () => {
-    await fs.outputFile(appDirPath("foo.js"), "// foo");
+    await fs.outputFile(localDir.absolute("foo.js"), "// foo");
 
-    await expect(SyncJson.loadOrInit(ctx, { directory: appDir })).rejects.toThrow(UnknownDirectoryError);
+    await expect(SyncJson.loadOrInit(ctx, { directory: localDir })).rejects.toThrow(UnknownDirectoryError);
   });
 
   it(`throws ${UnknownDirectoryError.name} if .gadget/sync.json has invalid json`, async () => {
-    await fs.outputFile(appDirPath(".gadget/sync.json"), '{"foo":"bar"}');
+    await fs.outputFile(localDir.absolute(".gadget/sync.json"), '{"foo":"bar"}');
 
-    await expect(SyncJson.loadOrInit(ctx, { directory: appDir })).rejects.toThrow(UnknownDirectoryError);
+    await expect(SyncJson.loadOrInit(ctx, { directory: localDir })).rejects.toThrow(UnknownDirectoryError);
   });
 
   it(`does not throw ${UnknownDirectoryError.name} if .gadget/sync.json has invalid json and --allow-unknown-directory is passed`, async () => {
-    await fs.outputFile(appDirPath(".gadget/sync.json"), '{"foo":"bar"}');
+    await fs.outputFile(localDir.absolute(".gadget/sync.json"), '{"foo":"bar"}');
 
     ctx = ctx.child({ overwrite: { "--allow-unknown-directory": true } });
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
 
     expect(syncJson.state).toEqual({
       application: testApp.slug,
@@ -113,7 +104,7 @@ describe("SyncJson.loadOrInit", () => {
 
   it(`throws ${ArgError.name} when --app is passed a slug that does not exist within the user's list of available apps`, async () => {
     ctx = ctx.child({ overwrite: { "--app": "does-not-exist" } });
-    const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: appDir }));
+    const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: localDir }));
 
     expect(error).toBeInstanceOf(ArgError);
     expect(error.message).toMatchInlineSnapshot(`
@@ -133,7 +124,7 @@ describe("SyncJson.loadOrInit", () => {
   it(`throws ${ArgError.name} if the user doesn't have any available apps`, async () => {
     mockOnce(app, "getApps", () => []);
 
-    const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: appDir }));
+    const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: localDir }));
 
     expect(error).toBeInstanceOf(ArgError);
     expect(error.message).toMatchInlineSnapshot(`
@@ -152,7 +143,7 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: appDir }));
+    const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: localDir }));
 
     expect(error).toBeInstanceOf(ArgError);
     expect(error.message).toMatch(/^You were about to sync the following app to the following directory:/);
@@ -168,7 +159,7 @@ describe("SyncJson.loadOrInit", () => {
     });
 
     ctx = ctx.child({ overwrite: { "--app": testApp2.slug, "--allow-different-app": true } });
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
 
     expect(syncJson.state).toEqual({
       application: testApp2.slug,
@@ -189,7 +180,7 @@ describe("SyncJson.loadOrInit", () => {
     });
 
     ctx = ctx.child({ overwrite: { "--env": testApp.environments[2]!.name } });
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
 
     expect(syncJson.state).toEqual({
       application: testApp.slug,
@@ -212,7 +203,7 @@ describe("SyncJson.loadOrInit", () => {
     });
 
     ctx = ctx.child({ overwrite: { "--env": testApp.environments[3]!.name } });
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
 
     expect(syncJson.state).toEqual({
       ...initialState,

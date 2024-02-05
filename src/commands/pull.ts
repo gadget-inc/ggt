@@ -1,9 +1,15 @@
+import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
-import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
-import { SyncJson } from "../services/filesync/sync-json.js";
+import { FileSync } from "../services/filesync/filesync.js";
+import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { sprint } from "../services/output/sprint.js";
 
-export const args = FileSyncArgs;
+export type PullArgs = typeof args;
+
+export const args = {
+  ...SyncJsonArgs,
+  "--force": { type: Boolean, alias: "-f" },
+} satisfies ArgsDefinition;
 
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
@@ -25,7 +31,7 @@ export const usage: Usage = (ctx) => {
       {bold FLAGS}
         -a, --app=<name>   The Gadget application to pull files from
         -e, --env=<name>   The Gadget environment to pull files from
-            --force        Discard Gadget's changes
+            --force        Discard local changes
 
         Run "ggt pull --help" for more information.
     `;
@@ -102,11 +108,14 @@ export const usage: Usage = (ctx) => {
         it does not match the application provided by the --app flag.
 
         Defaults to false.
+
+    Run "ggt pull -h" for less information.
   `;
 };
 
-export const command: Command<typeof args> = async (ctx) => {
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory: ctx.args._[0] });
-  const filesync = new FileSync(ctx, syncJson);
-  await filesync.pull();
+export const command: Command<PullArgs> = async (ctx) => {
+  const directory = await loadSyncJsonDirectory(ctx.args._[0]);
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+  const filesync = new FileSync(syncJson);
+  await filesync.pull(ctx);
 };

@@ -15,12 +15,13 @@ export type EnvironmentType = keyof typeof EnvironmentType;
 
 export const Environment = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
-  name: z.string().transform((v) => v.toLowerCase()), // ensure their lowercase
+  name: z.string(),
   type: z.nativeEnum(EnvironmentType),
 });
 
 export type Environment = z.infer<typeof Environment>;
 
+// TODO: rename to Application
 export const App = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
   slug: z.string(),
@@ -39,6 +40,7 @@ export type App = z.infer<typeof App>;
  * @param ctx - The current context.
  * @returns A promise that resolves to an array of App objects.
  */
+// TODO: cache this
 export const getApps = async (ctx: Context): Promise<App[]> => {
   const cookie = loadCookie();
   if (!cookie) {

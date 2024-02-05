@@ -1,9 +1,16 @@
+import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
-import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
-import { SyncJson } from "../services/filesync/sync-json.js";
+import { UnknownDirectoryError } from "../services/filesync/error.js";
+import { FileSync } from "../services/filesync/filesync.js";
+import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { sprint } from "../services/output/sprint.js";
 
-export const args = FileSyncArgs;
+export type PushArgs = typeof args;
+
+export const args = {
+  ...SyncJsonArgs,
+  "--force": { type: Boolean, alias: "-f" },
+} satisfies ArgsDefinition;
 
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
@@ -11,16 +18,13 @@ export const usage: Usage = (ctx) => {
       Push changes from your local filesystem to Gadget's filesystem.
 
       {bold USAGE}
-        ggt push [DIRECTORY]
+        ggt push
 
       {bold EXAMPLES}
         $ ggt push
-        $ ggt push ~/gadget/example
-        $ ggt push ~/gadget/example --app=example
-        $ ggt push ~/gadget/example --app=example --env=development
-
-      {bold ARGUMENTS}
-        DIRECTORY          The directory to push files from (default: ".")
+        $ ggt push
+        $ ggt push --app=example
+        $ ggt push --app=example --env=development
 
       {bold FLAGS}
         -a, --app=<name>   The Gadget application to push files to
@@ -48,11 +52,12 @@ export const usage: Usage = (ctx) => {
     {bold EXAMPLES}
 
       $ ggt push
-      $ ggt push ~/gadget/example
-      $ ggt push ~/gadget/example --app=example
-      $ ggt push ~/gadget/example --app=example --env=development
-      $ ggt push ~/gadget/example --app=example --env=development --allow-unknown-directory
-      $ ggt push ~/gadget/example --app=example --env=development --allow-unknown-directory --allow-different-app
+      $ ggt push
+      $ ggt push --app=example
+      $ ggt push --app=example --env=development
+      $ ggt push --app=example --env=development --force
+      $ ggt push --app=example --env=development --force --allow-unknown-directory
+      $ ggt push --app=example --env=development --force --allow-unknown-directory --allow-different-app
 
     {bold ARGUMENTS}
 
@@ -84,7 +89,7 @@ export const usage: Usage = (ctx) => {
         be prompted to choose a development environment from your list
         of environments.
 
-      --force
+      -f, --force
         Any changes Gadget has made changes since the last time you ran
         "ggt sync", "ggt push", or "ggt pull" will be discarded
         without confirmation.
@@ -102,12 +107,19 @@ export const usage: Usage = (ctx) => {
         it does not match the application provided by the --app flag.
 
         Defaults to false.
+
+    Run "ggt push -h" for less information.
   `;
 };
 
 export const command: Command<typeof args> = async (ctx) => {
-  // TODO: this should use load instead of loadOrInit
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory: ctx.args._[0] });
-  const filesync = new FileSync(ctx, syncJson);
-  await filesync.push();
+  const directory = await loadSyncJsonDirectory(process.cwd());
+
+  const syncJson = await SyncJson.load(ctx, { directory });
+  if (!syncJson) {
+    throw new UnknownDirectoryError(ctx, { directory });
+  }
+
+  const filesync = new FileSync(syncJson);
+  await filesync.push(ctx);
 };

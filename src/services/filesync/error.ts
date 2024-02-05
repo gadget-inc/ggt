@@ -4,6 +4,8 @@ import { sprintProblems, type Problems } from "../output/problems.js";
 import { CLIError, IsBug } from "../output/report.js";
 import { sprint, sprintln, sprintlns } from "../output/sprint.js";
 import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
+import type { Directory } from "./directory.js";
+import type { SyncJsonArgs } from "./sync-json.js";
 
 export class YarnNotFoundError extends CLIError {
   isBug = IsBug.NO;
@@ -26,26 +28,35 @@ export class YarnNotFoundError extends CLIError {
 export class UnknownDirectoryError extends CLIError {
   isBug = IsBug.NO;
 
-  constructor(readonly opts: { dir: string; app: string | undefined; syncJsonFile: string | undefined }) {
-    super("The .gadget/sync.json file was invalid or not found");
-    this.opts.app ??= "<name of app>";
+  constructor(
+    readonly ctx: Context<SyncJsonArgs>,
+    readonly opts: { directory: Directory },
+  ) {
+    super('The ".gadget/sync.json" file was invalid or not found');
   }
 
+  // TODO:
+  // - make this async and check if the file exists so we can
+  //   differentiate between invalid and missing
+  // - add ctx.command so we know which command caused this error
   protected render(): string {
+    const dirpath = this.opts.directory.path;
+    const appSlug = this.ctx.app?.slug || "<name of app>";
+
     return sprint`
       We failed to find a ".gadget/sync.json" file in this directory:
 
-        ${this.opts.dir}
+        ${dirpath}
 
       If you're running "ggt sync" for the first time, we recommend
       using a gadget specific directory like this:
 
-        ggt sync ~/gadget/${this.opts.app} --app=${this.opts.app}
+        ggt sync ~/gadget/${appSlug} --app=${appSlug}
 
       If you're certain you want to sync the contents of that directory
       to Gadget, run "ggt sync" again with the {bold --allow-unknown-directory} flag:
 
-        ggt sync ${this.opts.dir} --app=${this.opts.app} --allow-unknown-directory
+        ggt sync ${dirpath} --app=${appSlug} --allow-unknown-directory
     `;
   }
 }

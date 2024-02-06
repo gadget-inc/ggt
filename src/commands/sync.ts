@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import ms from "ms";
 import path from "node:path";
+import { setTimeout } from "node:timers/promises";
 import Watcher from "watcher";
 import which from "which";
 import type { ArgsDefinition } from "../services/command/arg.js";
@@ -14,7 +15,7 @@ import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/files
 import { notify } from "../services/output/notify.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
-import { debounce } from "../services/util/function.js";
+import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 
 export type SyncArgs = typeof args;
@@ -232,10 +233,30 @@ export const command: Command<SyncArgs> = async (ctx) => {
   /**
    * A debounced function that sends the local file changes to Gadget.
    */
-  const sendChangesToGadget = debounce(ctx.args["--file-push-delay"], () => {
-    const changes = new Changes(localChangesBuffer.entries());
-    localChangesBuffer.clear();
-    filesync.mergeChangesWithGadget(ctx, { changes }).catch((error) => ctx.abort(error));
+  const mergeChangesWithGadget = debounceAsync(ctx.args["--file-push-delay"], async (): Promise<void> => {
+    try {
+      const lastGitBranch = syncJson.gitBranch;
+      await syncJson.loadGitBranch();
+      if (lastGitBranch !== syncJson.gitBranch) {
+        // if the git branch changed, we need all the changes to be sent
+        // in a single batch, so wait a bit longer in case more changes
+        // come in
+        ctx.log.printlns2`
+          Your git branch changed from ${lastGitBranch} → ${syncJson.gitBranch}
+
+          Waiting for changes to settle before syncing...
+        `;
+
+        await setTimeout(ms("3s"));
+      }
+
+      const changes = new Changes(localChangesBuffer.entries());
+      localChangesBuffer.clear();
+      await filesync.mergeChangesWithGadget(ctx, { changes });
+    } catch (error) {
+      ctx.log.error("error sending changes to gadget", { error });
+      ctx.abort(error);
+    }
   });
 
   ctx.log.debug("watching", { path: syncJson.directory.path });
@@ -297,21 +318,21 @@ export const command: Command<SyncArgs> = async (ctx) => {
         }
       }
 
-      sendChangesToGadget();
+      mergeChangesWithGadget();
     },
   ).once("error", (error) => ctx.abort(error));
 
   ctx.log.println`
-    ggt v${config.version}
+ggt v${config.version}
 
-    ${await syncJson.sprintState()}
-    ------------------------
-    Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
-    Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
-    Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
-    Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
+${await syncJson.sprintState()}
+------------------------
+Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
+Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
+Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
+Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
 
-    Watching for file changes... {gray Press Ctrl+C to stop}
+Watching for file changes... {gray Press Ctrl+C to stop}
   `;
 
   ctx.onAbort(async (reason) => {
@@ -320,7 +341,7 @@ export const command: Command<SyncArgs> = async (ctx) => {
     filesyncSubscription.unsubscribe();
     fileWatcher.close();
     clearInterval(clearRecentWritesInterval);
-    sendChangesToGadget.flush();
+    await mergeChangesWithGadget.flush();
 
     try {
       await filesync.idle();

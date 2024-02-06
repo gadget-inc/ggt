@@ -43,6 +43,11 @@ export class SyncJson {
   readonly env: Environment;
 
   /**
+   * The last git branch that was checked out in the directory.
+   */
+  gitBranch: string | undefined;
+
+  /**
    * The {@linkcode Edit} client that can be used to send Gadget API
    * requests to the environment that the directory is synced to.
    */
@@ -262,26 +267,19 @@ export class SyncJson {
   }
 
   /**
-   * Returns the current git branch of the directory or undefined if
-   * the directory isn't a git repository.
+   * @returns true if the git branch has changed
    */
-  async branch(): Promise<string | undefined> {
-    try {
-      const branch = simpleGit(this.directory.path).revparse(["--abbrev-ref", "HEAD"]);
-      return branch;
-    } catch (error) {
-      this.ctx.log.warn("failed to read git branch", { error });
-      return undefined;
-    }
+  async loadGitBranch(): Promise<void> {
+    this.gitBranch = await loadBranch(this.ctx, { directory: this.directory });
   }
 
   async sprintState(): Promise<string> {
-    const branch = await this.branch();
-    if (branch) {
+    await this.loadGitBranch();
+    if (this.gitBranch) {
       return sprint`
         Application  ${this.app.slug}
         Environment  ${this.env.name}
-        Git Branch   ${branch}
+        Git Branch   ${this.gitBranch}
       `;
     }
 
@@ -406,6 +404,20 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
           Did you mean one of these?
         `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
   );
+};
+
+/**
+ * Returns the current git branch of the directory or undefined if
+ * the directory isn't a git repository.
+ */
+const loadBranch = async (ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<string | undefined> => {
+  try {
+    const branch = simpleGit(directory.path).revparse(["--abbrev-ref", "HEAD"]);
+    return branch;
+  } catch (error) {
+    ctx.log.warn("failed to read git branch", { error });
+    return undefined;
+  }
 };
 
 export const SyncJsonStateV05 = z.object({

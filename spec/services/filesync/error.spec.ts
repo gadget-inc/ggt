@@ -1,4 +1,5 @@
 import fs from "fs-extra";
+import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import { TooManySyncAttemptsError, UnknownDirectoryError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
@@ -30,7 +31,7 @@ describe(UnknownDirectoryError.name, () => {
     nockTestApps();
 
     const ctx = makeContext({ parse: SyncJsonArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
-    const directory = await Directory.init("/Users/jane/doe/");
+    const directory = await Directory.init(path.resolve("/Users/jane/doe/"));
 
     // mock fs.ensureDir so we don't actually create the /Users/jane/doe/ directory
     mockOnce(fs, "ensureDir", noop);
@@ -44,7 +45,7 @@ describe(UnknownDirectoryError.name, () => {
     expect(error.toString()).toMatchInlineSnapshot(`
       "We failed to find a \\".gadget/sync.json\\" file in this directory:
 
-        /Users/jane/doe/
+        /Users/jane/doe
 
       If you're running \\"ggt sync\\" for the first time, we recommend
       using a gadget specific directory like this:
@@ -54,7 +55,7 @@ describe(UnknownDirectoryError.name, () => {
       If you're certain you want to sync the contents of that directory
       to Gadget, run \\"ggt sync\\" again with the --allow-unknown-directory flag:
 
-        ggt sync /Users/jane/doe/ --app=test --allow-unknown-directory"
+        ggt sync /Users/jane/doe --app=test --allow-unknown-directory"
     `);
   });
 });

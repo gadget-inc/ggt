@@ -17,6 +17,7 @@ const Registry = z.object({
   name: z.literal("ggt"),
   "dist-tags": z.object({
     latest: z.string(),
+    experimental: z.string(),
   }),
 });
 
@@ -65,13 +66,24 @@ export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
 
     const tags = await getDistTags(ctx);
 
-    if (semver.lt(config.version, tags.latest)) {
-      ctx.log.info("update available", { current: config.version, latest: tags.latest });
+    let latest: string;
+    let updateAvailable: boolean;
+
+    if (config.version.includes("experimental")) {
+      latest = tags.experimental;
+      updateAvailable = config.version !== latest;
+    } else {
+      latest = tags.latest;
+      updateAvailable = semver.lt(config.version, latest);
+    }
+
+    if (updateAvailable) {
+      ctx.log.info("update available", { current: config.version, latest });
       ctx.log.println(
         boxen(
           sprint`
-            Update available! {red ${config.version}} -> {green ${tags.latest}}.
-            Changelog: https://github.com/gadget-inc/ggt/releases/tag/v${tags.latest}
+            Update available! {red ${config.version}} → {green ${latest}}
+            Changelog: https://github.com/gadget-inc/ggt/releases/tag/v${latest}
             Run "npm install -g ${config.name}" to update.
           `,
           {

@@ -12,8 +12,8 @@ export const args = SyncJsonArgs;
 
 export const usage: Usage = () => {
   return sprint`
-    Print the status of your local filesystem compared
-    to your environment's filesystem.
+    Show changes made to your local filesystem and
+    your environment's filesystem.
 
     Changes will be calculated from the last time you ran
     "ggt sync", "ggt push", or "ggt pull" in the chosen directory.
@@ -59,15 +59,19 @@ export const command: Command<StatusArgs> = async (ctx) => {
     printChanges(ctx, {
       changes: localChanges,
       tense: "past",
-      message: "The following files have been changed locally",
+      message: "Your local filesystem has un-synced changes",
     });
+  } else {
+    ctx.log.printlns`Your local filesystem hasn't changed.`;
   }
 
   if (gadgetChanges.size > 0) {
     printChanges(ctx, {
       changes: gadgetChanges,
       tense: "past",
-      message: "The following files have been changed on your environment",
+      message: "Your environment's filesystem has un-synced changes",
     });
+  } else {
+    ctx.log.printlns2`Your environment's filesystem hasn't changed.`;
   }
 };

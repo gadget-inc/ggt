@@ -331,8 +331,8 @@ FLAGS
 `;
 
 exports[`root > when status is given > prints the usage when --help is passed 1`] = `
-"Print the status of your local filesystem compared
-to your environment's filesystem.
+"Show changes made to your local filesystem and
+your environment's filesystem.
 
 Changes will be calculated from the last time you ran
 \\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
@@ -348,8 +348,8 @@ EXAMPLES
 `;
 
 exports[`root > when status is given > prints the usage when -h is passed 1`] = `
-"Print the status of your local filesystem compared
-to your environment's filesystem.
+"Show changes made to your local filesystem and
+your environment's filesystem.
 
 Changes will be calculated from the last time you ran
 \\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.

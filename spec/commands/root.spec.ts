@@ -67,9 +67,10 @@ describe("root", () => {
 
       COMMANDS
         sync           Sync your local filesystem with your environment's filesystem
-        deploy         Deploy your development environment to production
-        push           Push changes from your local filesystem to your environment's filesystem
-        pull           Pull changes from your environment's filesystem to your local filesystem
+        status         Show the status of your local and environment's filesystem
+        push           Push your local filesystem
+        pull           Pull your environment's filesystem
+        deploy         Deploy your environment to production
         list           List your available applications
         login          Log in to your account
         logout         Log out of your account

@@ -14,10 +14,9 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Pull changes from your Gadget environment's filesystem
-      to your local filesystem.
+      Pull changes from your environment's filesystem to your local filesystem.
 
-      The changes will be calculated from the last time you ran
+      Changes will be calculated from the last time you ran
       "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
 
       {bold USAGE}
@@ -32,17 +31,16 @@ export const usage: Usage = (ctx) => {
       {bold FLAGS}
         -a, --app=<name>   The application to pull files from
         -e, --env=<name>   The environment to pull files from
-            --force        Discard local un-synchronized changes
+            --force        Discard un-synchronized local changes
 
         Run "ggt pull --help" for more information.
     `;
   }
 
   return sprint`
-    Pull changes from your Gadget environment's filesystem
-    to your local filesystem.
+    Pull changes from your environment's filesystem to your local filesystem.
 
-    The changes will be calculated from the last time you ran
+    Changes will be calculated from the last time you ran
     "ggt sync", "ggt push", or "ggt pull" in the chosen directory.
 
     If your local filesystem has also made changes since the last sync,
@@ -56,29 +54,27 @@ export const usage: Usage = (ctx) => {
     {bold EXAMPLES}
 
       $ ggt pull
-      $ ggt pull ~/gadget/example
-      $ ggt pull ~/gadget/example --app=example
-      $ ggt pull ~/gadget/example --app=example --env=development
-      $ ggt pull ~/gadget/example --app=example --env=development --allow-unknown-directory
-      $ ggt pull ~/gadget/example --app=example --env=development --allow-unknown-directory --allow-different-app
+      $ ggt pull --force
+      $ ggt pull --force --env=staging
+      $ ggt pull --force --env=staging --app=example --allow-unknown-directory
 
     {bold FLAGS}
 
       -a, --app=<name>
-        The Gadget application to pull files from.
+        The application to pull files from.
 
         Defaults to the application within the ".gadget/sync.json"
         file in the current directory or any parent directories.
 
       -e, --env, --environment=<name>
-        The Gadget environment to pull files from.
+        The environment to pull files from.
 
         Defaults to the environment within the ".gadget/sync.json"
         file in the current directory or any parent directories.
 
       -f, --force
-        Changes to your Gadget environment's filesystem since the last
-        "ggt sync", "ggt push", or "ggt pull" will be lost without warning.
+        Discard any changes made to your local filesystem
+        since the last "ggt sync", "ggt push", or "ggt pull".
 
         Defaults to false.
 

@@ -1,9 +1,12 @@
+import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import { TooManySyncAttemptsError, UnknownDirectoryError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
 import { SyncJson, SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
+import { noop } from "../../../src/services/util/function.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
+import { mockOnce } from "../../__support__/mock.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe(YarnNotFoundError.name, () => {
@@ -28,7 +31,11 @@ describe(UnknownDirectoryError.name, () => {
 
     const ctx = makeContext({ parse: SyncJsonArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
     const directory = await Directory.init("/Users/jane/doe/");
+
+    // mock fs.ensureDir so we don't actually create the /Users/jane/doe/ directory
+    mockOnce(fs, "ensureDir", noop);
     syncJson = await SyncJson.loadOrInit(ctx, { directory });
+    expect(fs.ensureDir).toHaveBeenCalledOnce();
   });
 
   it("renders correctly", () => {

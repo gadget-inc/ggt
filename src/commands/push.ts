@@ -15,10 +15,9 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Push changes from your local filesystem to your
-      Gadget environment's filesystem.
+      Push changes from your local filesystem to your environment's filesystem.
 
-      The changes will be calculated from the last time you ran
+      Changes will be calculated from the last time you ran
       "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
 
       {bold USAGE}
@@ -40,14 +39,13 @@ export const usage: Usage = (ctx) => {
   }
 
   return sprint`
-    Push changes from your local filesystem to your
-    Gadget environment's filesystem.
+    Push changes from your local filesystem to your environment's filesystem.
 
-    The changes will be calculated from the last time you ran
+    Changes will be calculated from the last time you ran
     "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
 
-    If your Gadget environment has also made changes since the last
-    sync, you will be prompted to discard them or abort the push.
+    If your environment has also made changes since the last sync,
+    you will be prompted to discard them or abort the push.
 
     {bold USAGE}
 
@@ -64,20 +62,20 @@ export const usage: Usage = (ctx) => {
     {bold FLAGS}
 
       -a, --app, --application=<name>
-        The Gadget application to push files to.
+        The application to push files to.
 
         Defaults to the application within the ".gadget/sync.json"
         file in the current directory or any parent directories.
 
       -e, --env, --environment=<name>
-        The Gadget development environment to push files to.
+        The development environment to push files to.
 
         Defaults to the environment within the ".gadget/sync.json"
         file in the current directory or any parent directories.
 
       -f, --force
-        Changes to your Gadget environment's filesystem since the last
-        "ggt sync", "ggt push", or "ggt pull" will be lost without warning.
+        Discard any changes made to your environment's filesystem
+        since the last "ggt sync", "ggt push", or "ggt pull".
 
         Defaults to false.
 
@@ -106,7 +104,7 @@ export const command: Command<typeof args> = async (ctx) => {
       If you are trying to push changes from a specific directory,
       you must "cd" to that directory and then run "ggt push".
 
-       Run "ggt push -h" for more information.
+      Run "ggt push -h" for more information.
     `);
   }
 

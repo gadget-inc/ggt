@@ -292,7 +292,7 @@ export class FileSync {
    * was not passed, the user will be prompted to discard them.
    */
   async push(ctx: Context<PushArgs>): Promise<void> {
-    const { localHashes, gadgetChanges, gadgetHashes, gadgetFilesVersion } = await this.hashes(ctx);
+    const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = await this.hashes(ctx);
     const localChanges = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
     if (localChanges.size === 0) {
       ctx.log.println("Already in sync");

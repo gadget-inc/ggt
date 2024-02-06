@@ -33,10 +33,10 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Sync your local filesystem with your Gadget environment's
-      filesystem, in real-time.
+      Sync your local filesystem with your environment's filesystem,
+      in real-time.
 
-      The changes will be calculated from the last time you ran
+      Changes will be calculated from the last time you ran
       "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
 
       https://docs.gadget.dev/guides/development-tools/cli#filesync
@@ -57,29 +57,29 @@ export const usage: Usage = (ctx) => {
       {bold FLAGS}
         -a, --app=<name>           The application to sync files to
         -e, --env=<name>           The environment to sync files to
-            --once                 Sync once and exit
             --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
+            --once                 Sync once and exit
 
         Run "ggt sync --help" for more information.
     `;
   }
 
   return sprint`
-    Sync your local filesystem with your Gadget environment's
-    filesystem, in real-time.
+    Sync your local filesystem with your environment's filesystem,
+    in real-time.
 
-    The changes will be calculated from the last time you ran
+    Changes will be calculated from the last time you ran
     "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
 
-    If your Gadget environment has also made changes since the last
-    sync, they will be merged with your local changes.
+    If your environment has also made changes since the last sync,
+    they will be merged with your local changes.
 
     If conflicting changes are detected, you will be prompted to
     choose which changes to keep before sync resumes.
 
-    While ggt sync is running, local file changes are immediately
-    reflected within Gadget, while files that are changed in Gadget are
-    immediately reflected on your local filesystem.
+    While "ggt sync" is running, changes on your local filesystem are
+    immediately reflected on your environment, while file changes on
+    your environment are immediately reflected on your local filesystem.
 
     Ideal for:
       • Local development with editors like VSCode
@@ -97,7 +97,7 @@ export const usage: Usage = (ctx) => {
     Note:
       • Sync only works with development environments
       • Avoid deleting or moving all your files while sync is running
-      • Gadget only supports "yarn" v1 for installing dependencies
+      • only supports "yarn" v1 for installing dependencies
 
     https://docs.gadget.dev/guides/development-tools/cli#filesync
 
@@ -125,13 +125,13 @@ export const usage: Usage = (ctx) => {
     {bold FLAGS}
 
       -a, --app, --application=<name>
-        The Gadget application to sync files to.
+        The application to sync files to.
 
         Defaults to the application within the ".gadget/sync.json"
         file in the current directory or any parent directories.
 
       -e, --env, --environment=<name>
-        The Gadget development environment to sync files to.
+        The development environment to sync files to.
 
         Defaults to the environment within the ".gadget/sync.json"
         file in the current directory or any parent directories.
@@ -148,14 +148,14 @@ export const usage: Usage = (ctx) => {
 
       --once
         "ggt sync" will merge changes from your local filesystem
-        with changes from your Gadget environment's filesystem,
+        with changes from your environment's filesystem,
         the same way it does when started normally, but will then
         exit instead of continuing to watch for changes.
 
         Defaults to false.
 
       --allow-unknown-directory
-        Allows "ggt push" to continue when the chosen directory, nor
+        Allows "ggt sync" to continue when the chosen directory, nor
         any parent directories, contain a ".gadget/sync.json" file
         within it.
 

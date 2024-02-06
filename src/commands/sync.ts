@@ -304,9 +304,7 @@ export const command: Command<SyncArgs> = async (ctx) => {
   ctx.log.println`
     ggt v${config.version}
 
-    Application  ${syncJson.app.slug}
-    Environment  ${syncJson.env.name}
-    Branch       sc/slack-notifications
+    ${await syncJson.sprintState()}
     ------------------------
     Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
     Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}

@@ -330,6 +330,40 @@ FLAGS
 "
 `;
 
+exports[`root > when status is given > prints the usage when --help is passed 1`] = `
+"Print the status of your local filesystem compared
+to your environment's filesystem.
+
+Changes will be calculated from the last time you ran
+\\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
+
+USAGE
+
+  ggt status
+
+EXAMPLES
+
+  $ ggt status
+"
+`;
+
+exports[`root > when status is given > prints the usage when -h is passed 1`] = `
+"Print the status of your local filesystem compared
+to your environment's filesystem.
+
+Changes will be calculated from the last time you ran
+\\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
+
+USAGE
+
+  ggt status
+
+EXAMPLES
+
+  $ ggt status
+"
+`;
+
 exports[`root > when sync is given > prints the usage when --help is passed 1`] = `
 "Sync your local filesystem with your environment's filesystem,
 in real-time.

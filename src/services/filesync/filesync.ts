@@ -299,9 +299,7 @@ export class FileSync {
       ctx.log.println`
         Your filesystem is already in sync.
 
-        Application  ${this.syncJson.app.slug}
-        Environment  ${this.syncJson.env.name}
-        Branch       sc/slack-notifications
+        ${await this.syncJson.sprintState()}
       `;
       return;
     }
@@ -332,9 +330,7 @@ export class FileSync {
       ctx.log.println`
         Your filesystem is already in sync.
 
-        Application  ${this.syncJson.app.slug}
-        Environment  ${this.syncJson.env.name}
-        Branch       sc/slack-notifications
+        ${await this.syncJson.sprintState()}
       `;
       return;
     }

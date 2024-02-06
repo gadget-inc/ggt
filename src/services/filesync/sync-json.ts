@@ -2,6 +2,7 @@ import { findUp } from "find-up";
 import fs from "fs-extra";
 import assert from "node:assert";
 import path from "node:path";
+import { simpleGit } from "simple-git";
 import { z } from "zod";
 import { EnvironmentType, getApps, type App, type Environment } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
@@ -258,6 +259,40 @@ export class SyncJson {
       },
       { spaces: 2 },
     );
+  }
+
+  /**
+   * Returns the current git branch of the directory or undefined if
+   * the directory isn't a git repository.
+   */
+  async branch(): Promise<string | undefined> {
+    try {
+      const branch = simpleGit(this.directory.path).revparse(["--abbrev-ref", "HEAD"]);
+      return branch;
+    } catch (error) {
+      this.ctx.log.warn("failed to read git branch", { error });
+      return undefined;
+    }
+  }
+
+  async sprintState(): Promise<string> {
+    const branch = await this.branch();
+    if (branch) {
+      return sprint`
+        Application  ${this.app.slug}
+        Environment  ${this.env.name}
+        Git Branch   ${branch}
+      `;
+    }
+
+    return sprint`
+      Application  ${this.app.slug}
+      Environment  ${this.env.name}
+    `;
+  }
+
+  async printState(): Promise<void> {
+    this.ctx.log.println(await this.sprintState());
   }
 }
 

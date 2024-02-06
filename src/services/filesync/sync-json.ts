@@ -183,6 +183,7 @@ export class SyncJson {
     }
 
     if (state.environment !== ctx.env.name) {
+      ctx.log.printlns2`Changing environment from ${state.environment} → ${ctx.env.name}`;
       // the user specified a different environment, update the state
       state.environment = ctx.env.name;
       if (!state.environments[ctx.env.name]) {
@@ -358,7 +359,7 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
   // specified
   const similarEnvironments = sortBySimilar(
     envName,
-    app.environments.map((env) => env.name),
+    app.environments.filter((env) => env.type === EnvironmentType.Development).map((env) => env.name),
   ).slice(0, 5);
 
   throw new ArgError(

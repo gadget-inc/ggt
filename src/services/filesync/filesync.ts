@@ -26,7 +26,7 @@ import { filesyncProblemsToProblems, printProblems } from "../output/problems.js
 import { confirm, select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
 import { noop } from "../util/function.js";
-import { Changes, printChanges } from "./changes.js";
+import { Changes, printChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
 import { TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
@@ -161,10 +161,11 @@ export class FileSync {
             });
 
             if (changes.size > 0) {
+              const now = dayjs().format("hh:mm:ss A");
               printChanges(ctx, {
-                message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
                 changes,
                 tense: "past",
+                message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${now}}`,
                 limit: 10,
               });
             }
@@ -295,7 +296,13 @@ export class FileSync {
     const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = await this.hashes(ctx);
     const localChanges = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
     if (localChanges.size === 0) {
-      ctx.log.println("Already in sync");
+      ctx.log.println`
+        Your filesystem is already in sync.
+
+        Application  ${this.syncJson.app.slug}
+        Environment  ${this.syncJson.env.name}
+        Branch       sc/slack-notifications
+      `;
       return;
     }
 
@@ -303,20 +310,32 @@ export class FileSync {
       printChanges(ctx, {
         changes: gadgetChanges,
         tense: "past",
-        message: sprint`{bold Gadget's files have changed sync you last synced.}`,
+        message: sprint`{bold ${this.syncJson.app.slug} (${this.syncJson.env.name})'s files have changed sync you last synced.}`,
       });
 
       await confirm(ctx, { message: "Are you sure you want to discard them?" });
     }
 
-    await this._sendChangesToGadget(ctx, { changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
+    await this._sendChangesToGadget(ctx, {
+      changes: localChanges,
+      expectedFilesVersion: gadgetFilesVersion,
+      print: {
+        tense: "present",
+      },
+    });
   }
 
   async pull(ctx: Context<PullArgs>): Promise<void> {
     const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = await this.hashes(ctx);
     const gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
     if (gadgetChanges.size === 0) {
-      ctx.log.println("Already in sync");
+      ctx.log.println`
+        Your filesystem is already in sync.
+
+        Application  ${this.syncJson.app.slug}
+        Environment  ${this.syncJson.env.name}
+        Branch       sc/slack-notifications
+      `;
       return;
     }
 
@@ -324,13 +343,19 @@ export class FileSync {
       printChanges(ctx, {
         changes: localChanges,
         tense: "past",
-        message: sprint`{bold Your files have changed since you last synced.}`,
+        message: sprint`{bold Your local files have changed since you last synced.}`,
       });
 
       await confirm(ctx, { message: "Do you want to discard your local changes?" });
     }
 
-    await this._getChangesFromGadget(ctx, { changes: gadgetChanges, filesVersion: gadgetFilesVersion });
+    await this._getChangesFromGadget(ctx, {
+      changes: gadgetChanges,
+      filesVersion: gadgetFilesVersion,
+      print: {
+        tense: "present",
+      },
+    });
   }
 
   private async _merge(ctx: Context<SyncArgs>, { localChanges, gadgetChanges, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
@@ -381,9 +406,11 @@ export class FileSync {
     {
       filesVersion,
       changes,
+      print,
     }: {
       filesVersion: bigint;
       changes: Changes | ChangesWithHash;
+      print?: Partial<Omit<PrintChangesOptions, "changes">>;
     },
   ): Promise<void> {
     ctx.log.debug("getting changes from gadget", { filesVersion, changes });
@@ -413,20 +440,21 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
+      message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+      ...print,
     });
   }
 
   private async _sendChangesToGadget(
     ctx: Context<SyncJsonArgs>,
     {
-      expectedFilesVersion = this.syncJson.filesVersion,
       changes,
-      printLimit,
+      expectedFilesVersion = this.syncJson.filesVersion,
+      print,
     }: {
-      expectedFilesVersion?: bigint;
       changes: Changes;
-      printLimit?: number;
+      expectedFilesVersion?: bigint;
+      print?: Partial<Omit<PrintChangesOptions, "changes">>;
     },
   ): Promise<void> {
     ctx.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
@@ -504,8 +532,8 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,
-      limit: printLimit,
+      message: sprint`→ Sent to ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+      ...print,
     });
 
     if (BigInt(remoteFilesVersion) > expectedFilesVersion + 1n) {

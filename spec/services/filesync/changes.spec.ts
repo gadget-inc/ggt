@@ -17,9 +17,9 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "present", message: "→ Sent 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "present", message: "→ Sent to example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
-      "→ Sent 12:00:00 PM
+      "→ Sent to example (staging) 12:00:00 PM
       ±  bar  update 
       -  baz  delete 
       +  foo  create 
@@ -34,9 +34,9 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "past", message: "← Received 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "past", message: "← Received from example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
-      "← Received 12:00:00 PM
+      "← Received from example (staging) 12:00:00 PM
       ±  bar  updated 
       -  baz  deleted 
       +  foo  created 
@@ -60,9 +60,9 @@ describe("printChanges", () => {
       changes.set(`file-${i}`, { type: "delete" });
     }
 
-    printChanges(ctx, { changes, tense: "present", message: "→ Sent 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "present", message: "→ Sent to example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
-      "→ Sent 12:00:00 PM
+      "→ Sent to example (staging) 12:00:00 PM
 
       +  file-00  create 
       +  file-01  create 

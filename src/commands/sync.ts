@@ -301,30 +301,17 @@ export const command: Command<SyncArgs> = async (ctx) => {
     },
   ).once("error", (error) => ctx.abort(error));
 
-  const editorLink = `https://${syncJson.app.slug}.gadget.app/edit${syncJson.app.multiEnvironmentEnabled ? `/${syncJson.env.name}` : ""}`;
-  const playgroundLink = `https://${syncJson.app.slug}.gadget.app/api/graphql/playground`;
-
-  const endpointsLink = syncJson.app.multiEnvironmentEnabled
-    ? `
-      • https://${syncJson.app.primaryDomain}
-      • https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
-      `
-    : syncJson.app.hasSplitEnvironments
-      ? `
-      • https://${syncJson.app.primaryDomain}
-      • https://${syncJson.app.slug}--development.gadget.app`
-      : `
-      • https://${syncJson.app.primaryDomain}`;
-
-  ctx.log.printlns`
+  ctx.log.println`
     ggt v${config.version}
 
-    App         ${syncJson.app.slug}
-    Editor      ${editorLink}
-    Playground  ${playgroundLink}
-    Docs        https://docs.gadget.dev/api/${syncJson.app.slug}
-
-    Endpoints ${endpointsLink}
+    Application  ${syncJson.app.slug}
+    Environment  ${syncJson.env.name}
+    Branch       sc/slack-notifications
+    ------------------------
+    Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
+    Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
+    Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
+    Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
 
     Watching for file changes... {gray Press Ctrl+C to stop}
   `;

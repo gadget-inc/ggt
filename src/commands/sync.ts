@@ -2,21 +2,26 @@ import dayjs from "dayjs";
 import ms from "ms";
 import path from "node:path";
 import { setTimeout } from "node:timers/promises";
+import { oraPromise } from "ora";
 import Watcher from "watcher";
 import which from "which";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
+import type { Context } from "../services/command/context.js";
 import { config } from "../services/config/config.js";
-import { Changes } from "../services/filesync/changes.js";
+import { Changes, printChanges } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
+import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { notify } from "../services/output/notify.js";
+import { select } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
+import type { PullArgs } from "./pull.js";
+import type { PushArgs } from "./push.js";
 
 export type SyncArgs = typeof args;
 
@@ -180,7 +185,52 @@ export const command: Command<SyncArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(ctx.args._[0]);
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
   const filesync = new FileSync(syncJson);
-  await filesync.sync(ctx);
+  const hashes = await filesync.hashes(ctx);
+
+  if (!hashes.inSync) {
+    if (syncJson.previousEnvironment) {
+      // the environment changed and the local filesystem is not in sync
+      if (hashes.localChanges.size > 0) {
+        printChanges(ctx, {
+          message: sprint`{bold Your local filesystem has changed}`,
+          changes: hashes.localChanges,
+          tense: "past",
+          spaceY: 1,
+        });
+      }
+
+      if (hashes.gadgetChanges.size > 0) {
+        printChanges(ctx, {
+          message: sprint`{bold Your environment's filesystem has changed}`,
+          changes: hashes.gadgetChanges,
+          tense: "past",
+          spaceY: 1,
+        });
+      }
+
+      const strategy = await select(ctx, {
+        message: "What would you like to do?",
+        choices: Object.values(FileSyncStrategy),
+      });
+
+      switch (strategy) {
+        case FileSyncStrategy.CANCEL:
+          process.exit(0);
+          break;
+        case FileSyncStrategy.MERGE:
+          await filesync.sync(ctx, { hashes });
+          break;
+        case FileSyncStrategy.PUSH:
+          await filesync.push(ctx as unknown as Context<PushArgs>, { hashes, force: true });
+          break;
+        case FileSyncStrategy.PULL:
+          await filesync.pull(ctx as unknown as Context<PullArgs>, { hashes, force: true });
+          break;
+      }
+    } else {
+      await filesync.sync(ctx, { hashes });
+    }
+  }
 
   if (ctx.args["--once"]) {
     ctx.log.println("Done!");
@@ -243,11 +293,9 @@ export const command: Command<SyncArgs> = async (ctx) => {
         // come in
         ctx.log.printlns2`
           Your git branch changed from ${lastGitBranch} → ${syncJson.gitBranch}
-
-          Waiting for changes to settle before syncing...
         `;
 
-        await setTimeout(ms("3s"));
+        await oraPromise(setTimeout(ms("3s")), "Waiting for file changes to settle");
       }
 
       const changes = new Changes(localChangesBuffer.entries());

@@ -76,6 +76,12 @@ export class SyncJson {
     readonly directory: Directory,
 
     /**
+     * Indicates whether the environment was changed when this instance
+     * was loaded or initialized.
+     */
+    readonly previousEnvironment: string | undefined,
+
+    /**
      * The state of the `.gadget/sync.json` file on the local
      * filesystem.
      */
@@ -161,7 +167,7 @@ export class SyncJson {
       if (ctx.args["--allow-different-app"]) {
         // the user passed --allow-different-app, so use the application
         // and environment they specified and clobber everything
-        return new SyncJson(ctx, directory, {
+        return new SyncJson(ctx, directory, undefined, {
           application: ctx.app.slug,
           environment: ctx.env.name,
           environments: {
@@ -188,9 +194,11 @@ export class SyncJson {
       `);
     }
 
+    let previousEnvironment: string | undefined;
     if (state.environment !== ctx.env.name) {
-      ctx.log.printlns2`Changing environment from ${state.environment} → ${ctx.env.name}`;
       // the user specified a different environment, update the state
+      ctx.log.printlns2`Changing environment from ${state.environment} → ${ctx.env.name}`;
+      previousEnvironment = state.environment;
       state.environment = ctx.env.name;
       if (!state.environments[ctx.env.name]) {
         // the user has never synced to this environment before
@@ -198,7 +206,7 @@ export class SyncJson {
       }
     }
 
-    return new SyncJson(ctx, directory, state);
+    return new SyncJson(ctx, directory, previousEnvironment, state);
   }
 
   /**
@@ -229,7 +237,7 @@ export class SyncJson {
       // exists and create a fresh .gadget/sync.json file
       await fs.ensureDir(directory.path);
 
-      return new SyncJson(ctx, directory, {
+      return new SyncJson(ctx, directory, undefined, {
         application: ctx.app.slug,
         environment: ctx.env.name,
         environments: {

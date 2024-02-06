@@ -256,12 +256,16 @@ export class FileSync {
    * - Conflicts are resolved by prompting the user to either keep their local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  async sync(ctx: Context<SyncArgs>, { maxAttempts = 10 }: { maxAttempts?: number } = {}): Promise<void> {
-    let hashes: FileSyncHashes;
+  async sync(ctx: Context<SyncArgs>, { hashes, maxAttempts = 10 }: { hashes?: FileSyncHashes; maxAttempts?: number } = {}): Promise<void> {
     let attempt = 0;
 
     do {
-      hashes = await this.hashes(ctx);
+      if (attempt === 0) {
+        hashes ??= await this.hashes(ctx);
+      } else {
+        hashes = await this.hashes(ctx);
+      }
+
       if (hashes.inSync) {
         this._syncOperations.clear();
         ctx.log.info("filesystem in sync");
@@ -292,23 +296,23 @@ export class FileSync {
    * If Gadget has also made changes since the last sync, and --force
    * was not passed, the user will be prompted to discard them.
    */
-  async push(ctx: Context<PushArgs>): Promise<void> {
-    const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = await this.hashes(ctx);
+  async push(ctx: Context<PushArgs>, { hashes, force }: { hashes?: FileSyncHashes; force?: boolean } = {}): Promise<void> {
+    const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const localChanges = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
     if (localChanges.size === 0) {
       ctx.log.println`
-        Your filesystem is already in sync.
+${await this.syncJson.sprintState()}
 
-        ${await this.syncJson.sprintState()}
-      `;
+Your filesystem is already in sync.
+`;
       return;
     }
 
-    if (gadgetChanges.size > 0 && !ctx.args["--force"]) {
+    if (gadgetChanges.size > 0 && !(force ?? ctx.args["--force"])) {
       printChanges(ctx, {
         changes: gadgetChanges,
         tense: "past",
-        message: sprint`{bold ${this.syncJson.app.slug} (${this.syncJson.env.name})'s files have changed sync you last synced.}`,
+        message: sprint`{bold ${this.syncJson.app.slug} (${this.syncJson.env.name})'s files have changed since you last synced.}`,
       });
 
       await confirm(ctx, { message: "Are you sure you want to discard them?" });
@@ -323,19 +327,19 @@ export class FileSync {
     });
   }
 
-  async pull(ctx: Context<PullArgs>): Promise<void> {
-    const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = await this.hashes(ctx);
+  async pull(ctx: Context<PullArgs>, { hashes, force }: { hashes?: FileSyncHashes; force?: boolean } = {}): Promise<void> {
+    const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
     if (gadgetChanges.size === 0) {
       ctx.log.println`
-        Your filesystem is already in sync.
+${await this.syncJson.sprintState()}
 
-        ${await this.syncJson.sprintState()}
-      `;
+Your filesystem is already in sync.
+`;
       return;
     }
 
-    if (localChanges.size > 0 && !ctx.args["--force"]) {
+    if (localChanges.size > 0 && !(force ?? ctx.args["--force"])) {
       printChanges(ctx, {
         changes: localChanges,
         tense: "past",

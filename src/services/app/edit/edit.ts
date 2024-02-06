@@ -8,7 +8,15 @@ import { EditError } from "./error.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
 
 export class Edit {
+  /**
+   * The {@linkcode Context} that was used to create this instance.
+   */
   readonly ctx: Context;
+
+  /**
+   * The client used to make requests to Gadget's /edit/api/graphql
+   * endpoint.
+   */
   #client: Client;
 
   constructor(ctx: Context) {

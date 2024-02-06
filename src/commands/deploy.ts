@@ -18,7 +18,7 @@ export type DeployArgs = typeof args;
 
 export const args = {
   ...PushArgs,
-  "--allow-problems": { type: Boolean, alias: "--allow-issues" },
+  "--allow-issues": { type: Boolean, alias: "--allow-problems" },
 };
 
 export const usage: Usage = (ctx) => {
@@ -27,25 +27,21 @@ export const usage: Usage = (ctx) => {
       Deploy a development environment to production.
 
       {bold USAGE}
-        ggt deploy [DIRECTORY]
+        ggt deploy
 
       {bold EXAMPLES}
         $ ggt deploy
-        $ ggt deploy ~/gadget/example
-        $ ggt deploy ~/gadget/example --app=example
-        $ ggt deploy ~/gadget/example --app=example --env=development
-        $ ggt deploy ~/gadget/example --app=example --env=development --prefer=local
-
-      {bold ARGUMENTS}
-        DIRECTORY    The directory to sync files from and deploy (default: ".")
+        $ ggt deploy --env=staging
+        $ ggt deploy --env=staging --force
+        $ ggt deploy --env=staging --force --allow-issues
 
       {bold FLAGS}
-        -a, --app=<name>           The Gadget application to deploy
-        -e, --env=<name>           The environment to deploy from
-            --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
-            --force                Deploy regardless of any issues found
+        -a, --app=<name>      The Gadget application to deploy
+        -e, --env=<name>      The Gadget environment to deploy from
+            --force           Discard Gadget's changes
+            --allow-issues    Deploy regardless of any issues found
 
-      Run "ggt deploy --help" for more information.
+        Run "ggt deploy --help" for more information.
     `;
   }
 
@@ -60,25 +56,15 @@ export const usage: Usage = (ctx) => {
 
     {bold USAGE}
 
-      ggt deploy [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>] [--once]
-                             [--allow-unknown-directory] [--allow-different-app]
+      ggt deploy [--app=<name>] [--env=<name>] [--force]
+                 [--allow-issues]
 
     {bold EXAMPLES}
 
       $ ggt deploy
-      $ ggt deploy ~/gadget/example
-      $ ggt deploy ~/gadget/example --app=example
-      $ ggt deploy ~/gadget/example --app=example --env=development
-      $ ggt deploy ~/gadget/example --app=example --env=development --prefer=local
-
-    {bold ARGUMENTS}
-
-      DIRECTORY
-        The path to the directory to sync your development environment's
-        files to before deploying it to your production environment.
-        The directory will be created if it does not exist.
-
-        Defaults to the current working directory. (default: ".")
+      $ ggt deploy --env=staging
+      $ ggt deploy --env=staging --force
+      $ ggt deploy --env=staging --force --allow-issues
 
     {bold FLAGS}
 
@@ -169,7 +155,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
   // back the server contract status
   const subscription = syncJson.edit.subscribe({
     subscription: PUBLISH_STATUS_SUBSCRIPTION,
-    variables: { localFilesVersion: String(syncJson.filesVersion), force: ctx.args["--allow-problems"] },
+    variables: { localFilesVersion: String(syncJson.filesVersion), force: ctx.args["--allow-issues"] },
     onError: (error) => {
       ctx.log.error("failed to deploy", { error });
       spinner.fail();

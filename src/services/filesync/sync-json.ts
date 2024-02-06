@@ -64,13 +64,14 @@ export class SyncJson {
     readonly ctx: Context<SyncJsonArgs>,
 
     /**
-     * the root directory of the Gadget project, or in other words, the
-     * directory that contains the `.gadget/sync.json` file.
+     * the root directory of the local filesystem, or in other words,
+     * the directory that contains the `.gadget/sync.json` file.
      */
     readonly directory: Directory,
 
     /**
-     * The state of the `.gadget/sync.json` file on the filesystem.
+     * The state of the `.gadget/sync.json` file on the local
+     * filesystem.
      */
     readonly state: SyncJsonState,
   ) {
@@ -83,10 +84,10 @@ export class SyncJson {
       }),
     });
 
-    assert(this.ctx.app, "app must be set on context");
+    assert(this.ctx.app, "app must be set on syncJson context");
     this.app = this.ctx.app;
 
-    assert(this.ctx.env, "env must be set on context");
+    assert(this.ctx.env, "env must be set on syncJson context");
     this.env = this.ctx.env;
 
     this.edit = new Edit(this.ctx);
@@ -216,8 +217,11 @@ export class SyncJson {
     ctx.env = await loadEnv(ctx, { app: ctx.app });
 
     if ((await directory.isEmptyOrNonExistent()) || ctx.args["--allow-unknown-directory"]) {
-      // the directory is empty or the user passed --allow-unknown-directory
-      // regardless, create a fresh .gadget/sync.json file
+      // the directory is empty or the user passed
+      // --allow-unknown-directory, either way ensure the directory
+      // exists and create a fresh .gadget/sync.json file
+      await fs.ensureDir(directory.path);
+
       return new SyncJson(ctx, directory, {
         application: ctx.app.slug,
         environment: ctx.env.name,

@@ -17,11 +17,27 @@ import { sprint } from "../services/output/sprint.js";
 import { debounce } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 
+export type SyncArgs = typeof args;
+
+export const args = {
+  ...SyncJsonArgs,
+  "--prefer": MergeConflictPreferenceArg,
+  "--once": Boolean,
+  "--file-push-delay": { type: Number, default: ms("100ms") },
+  "--file-watch-debounce": { type: Number, default: ms("300ms") },
+  "--file-watch-poll-interval": { type: Number, default: ms("3s") },
+  "--file-watch-poll-timeout": { type: Number, default: ms("20s") },
+  "--file-watch-rename-timeout": { type: Number, default: ms("1.25s") },
+} satisfies ArgsDefinition;
+
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
       Sync your local filesystem with your Gadget environment's
       filesystem, in real-time.
+
+      The changes will be calculated from the last time you ran
+      "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
 
       https://docs.gadget.dev/guides/development-tools/cli#filesync
 
@@ -31,17 +47,18 @@ export const usage: Usage = (ctx) => {
       {bold EXAMPLES}
         $ ggt sync
         $ ggt sync ~/gadget/example
-        $ ggt sync ~/gadget/example --app=example
-        $ ggt sync ~/gadget/example --app=example --env=development --prefer=local
+        $ ggt sync ~/gadget/example --once
+        $ ggt sync ~/gadget/example --once --app=example
+        $ ggt sync ~/gadget/example --once --app=example --env=development --prefer=local
 
       {bold ARGUMENTS}
         DIRECTORY    The directory to sync files to (default: ".")
 
       {bold FLAGS}
-        -a, --app=<name>           The Gadget application to sync files to
+        -a, --app=<name>           The application to sync files to
         -e, --env=<name>           The environment to sync files to
-            --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
             --once                 Sync once and exit
+            --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
 
         Run "ggt sync --help" for more information.
     `;
@@ -49,11 +66,20 @@ export const usage: Usage = (ctx) => {
 
   return sprint`
     Sync your local filesystem with your Gadget environment's
-    filesystem in real-time.
+    filesystem, in real-time.
+
+    The changes will be calculated from the last time you ran
+    "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
+
+    If your Gadget environment has also made changes since the last
+    sync, they will be merged with your local changes.
+
+    If conflicting changes are detected, you will be prompted to
+    choose which changes to keep before sync resumes.
 
     While ggt sync is running, local file changes are immediately
     reflected within Gadget, while files that are changed in Gadget are
-    immediately saved to your local filesystem.
+    immediately reflected on your local filesystem.
 
     Ideal for:
       • Local development with editors like VSCode
@@ -69,9 +95,9 @@ export const usage: Usage = (ctx) => {
       • node_modules
 
     Note:
-      • Sync only works with your development environment
+      • Sync only works with development environments
       • Avoid deleting or moving all your files while sync is running
-      • Gadget only supports Yarn v1 for dependency installation
+      • Gadget only supports "yarn" v1 for installing dependencies
 
     https://docs.gadget.dev/guides/development-tools/cli#filesync
 
@@ -84,17 +110,15 @@ export const usage: Usage = (ctx) => {
 
       $ ggt sync
       $ ggt sync ~/gadget/example
-      $ ggt sync ~/gadget/example --app=example
-      $ ggt sync ~/gadget/example --app=example --env=development
-      $ ggt sync ~/gadget/example --app=example --env=development --prefer=local --once
-      $ ggt sync ~/gadget/example --app=example --env=development --prefer=local --once --allow-unknown-directory
-      $ ggt sync ~/gadget/example --app=example --env=development --prefer=local --once --allow-unknown-directory --allow-different-app
+      $ ggt sync ~/gadget/example --once
+      $ ggt sync ~/gadget/example --once --app=example
+      $ ggt sync ~/gadget/example --once --app=example --env=development --prefer=local
 
     {bold ARGUMENTS}
 
       DIRECTORY
-        The path to the directory to sync files to. The directory will
-        be created if it does not exist.
+        The path to the directory to sync files to.
+        The directory will be created if it does not exist.
 
         Defaults to the current working directory. (default: ".")
 
@@ -103,53 +127,43 @@ export const usage: Usage = (ctx) => {
       -a, --app, --application=<name>
         The Gadget application to sync files to.
 
-        If not provided, the application will be inferred from the
-        ".gadget/sync.json" file in the chosen directory or any of its
-        parent directories.
-
-        If a ".gadget/sync.json" file is not found, you will be
-        prompted to choose an application from your list of apps.
+        Defaults to the application within the ".gadget/sync.json"
+        file in the current directory or any parent directories.
 
       -e, --env, --environment=<name>
         The Gadget development environment to sync files to.
 
-        If not provided, the environment will be inferred from the
-        ".gadget/sync.json" file in the chosen directory or any of its
-        parent directories.
-
-        If a ".gadget/sync.json" file is not found or invalid, you will
-        be prompted to choose a development environment from your list
-        of environments.
+        Defaults to the environment within the ".gadget/sync.json"
+        file in the current directory or any parent directories.
 
       --prefer=<filesystem>
         Which filesystem's changes to automatically keep when
         conflicting changes are detected.
 
+        Must be one of "local" or "gadget".
+
         If not provided, sync will pause when conflicting changes are
         detected and you will be prompted to choose which changes to
         keep before sync resumes.
 
-        Must be one of "local" or "gadget".
-
       --once
-        When provided, sync will merge the changes from Gadget with
-        the changes from your local filesystem like it does when
-        started normally, but will then exit instead of continuing to
-        watch for changes.
+        "ggt sync" will merge changes from your local filesystem
+        with changes from your Gadget environment's filesystem,
+        the same way it does when started normally, but will then
+        exit instead of continuing to watch for changes.
 
         Defaults to false.
 
       --allow-unknown-directory
-        Allows sync to continue when the chosen directory already
-        contains files and does not contain a valid ".gadget/sync.json"
-        file within it, or any of its parent directories.
+        Allows "ggt push" to continue when the chosen directory, nor
+        any parent directories, contain a ".gadget/sync.json" file
+        within it.
 
         Defaults to false.
 
       --allow-different-app
-        Allows sync to continue when the chosen directory contains a
-        valid ".gadget/sync.json" file, but the application within
-        it does not match the application provided by the --app flag.
+        Allows "ggt sync" to continue with a different --app than the
+        one found within the ".gadget/sync.json" file.
 
         Defaults to false.
 
@@ -157,22 +171,6 @@ export const usage: Usage = (ctx) => {
   `;
 };
 
-export const args = {
-  ...SyncJsonArgs,
-  "--prefer": MergeConflictPreferenceArg,
-  "--once": Boolean,
-  "--file-push-delay": { type: Number, default: ms("100ms") },
-  "--file-watch-debounce": { type: Number, default: ms("300ms") },
-  "--file-watch-poll-interval": { type: Number, default: ms("3s") },
-  "--file-watch-poll-timeout": { type: Number, default: ms("20s") },
-  "--file-watch-rename-timeout": { type: Number, default: ms("1.25s") },
-} satisfies ArgsDefinition;
-
-export type SyncArgs = typeof args;
-
-/**
- * Runs the sync process until it is stopped or an error occurs.
- */
 export const command: Command<SyncArgs> = async (ctx) => {
   if (!which.sync("yarn", { nothrow: true })) {
     throw new YarnNotFoundError();

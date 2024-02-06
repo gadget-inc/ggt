@@ -296,22 +296,22 @@ export class SyncJson {
   }
 }
 
-export const loadSyncJsonDirectory = async (dirpath: string | undefined = process.cwd()): Promise<Directory> => {
-  if (config.windows && dirpath.startsWith("~/")) {
+export const loadSyncJsonDirectory = async (dir: string | undefined = process.cwd()): Promise<Directory> => {
+  if (config.windows && dir.startsWith("~/")) {
     // "~" doesn't expand to the home directory on Windows
-    dirpath = homePath(dirpath.slice(2));
+    dir = homePath(dir.slice(2));
   }
 
-  const syncJsonPath = await findUp(".gadget/sync.json", { cwd: dirpath });
+  const syncJsonPath = await findUp(".gadget/sync.json", { cwd: dir });
   if (syncJsonPath) {
     // we found a .gadget/sync.json file, use its parent directory
-    dirpath = path.join(syncJsonPath, "../..");
+    dir = path.join(syncJsonPath, "../..");
   }
 
   // ensure the directory path is absolute
-  dirpath = path.resolve(dirpath);
+  dir = path.resolve(dir);
 
-  return await Directory.init(dirpath);
+  return await Directory.init(dir);
 };
 
 // ensure the selected app is valid

@@ -1,4 +1,5 @@
 import fs from "fs-extra";
+import os from "node:os";
 import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Directory } from "../../../src/services/filesync/directory.js";
@@ -39,7 +40,8 @@ describe(UnknownDirectoryError.name, () => {
     expect(fs.ensureDir).toHaveBeenCalledOnce();
   });
 
-  it("renders correctly", () => {
+  // this test is skipped on Windows because the snapshot contains a Unix path
+  it.skipIf(os.platform() === "win32")("renders correctly", () => {
     const error = new UnknownDirectoryError(syncJson.ctx, { directory: syncJson.directory });
 
     expect(error.toString()).toMatchInlineSnapshot(`

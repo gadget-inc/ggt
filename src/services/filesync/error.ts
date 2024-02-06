@@ -40,13 +40,13 @@ export class UnknownDirectoryError extends CLIError {
   //   differentiate between invalid and missing
   // - add ctx.command so we know which command caused this error
   protected render(): string {
-    const dirpath = this.opts.directory.path;
+    const dir = this.opts.directory.path;
     const appSlug = this.ctx.app?.slug || "<name of app>";
 
     return sprint`
       We failed to find a ".gadget/sync.json" file in this directory:
 
-        ${dirpath}
+        ${dir}
 
       If you're running "ggt sync" for the first time, we recommend
       using a gadget specific directory like this:
@@ -56,7 +56,7 @@ export class UnknownDirectoryError extends CLIError {
       If you're certain you want to sync the contents of that directory
       to Gadget, run "ggt sync" again with the {bold --allow-unknown-directory} flag:
 
-        ggt sync ${dirpath} --app=${appSlug} --allow-unknown-directory
+        ggt sync ${dir} --app=${appSlug} --allow-unknown-directory
     `;
   }
 }

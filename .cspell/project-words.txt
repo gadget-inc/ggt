@@ -3,7 +3,6 @@ codegen
 commandsstop
 dedenting
 direnv
-dirpath
 EADDRNOTAVAIL
 EHOSTUNREACH
 ENOENT

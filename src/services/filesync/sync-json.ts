@@ -412,7 +412,7 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
  */
 const loadBranch = async (ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<string | undefined> => {
   try {
-    const branch = simpleGit(directory.path).revparse(["--abbrev-ref", "HEAD"]);
+    const branch = await simpleGit(directory.path).revparse(["--abbrev-ref", "HEAD"]);
     return branch;
   } catch (error) {
     ctx.log.warn("failed to read git branch", { error });

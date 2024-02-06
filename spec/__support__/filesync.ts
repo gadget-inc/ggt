@@ -48,8 +48,6 @@ export type SyncScenarioOptions<Args extends SyncJsonArgs = SyncArgs> = {
    */
   ctx?: Context<Args>;
 
-  syncJson?: SyncJson;
-
   /**
    * The files at filesVersion 1.
    *
@@ -268,6 +266,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = SyncArgs>({
 
   nockEditResponse({
     app: ctx.app,
+    env: ctx.env,
     optional: true,
     persist: true,
     operation: FILE_SYNC_HASHES_QUERY,
@@ -301,6 +300,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = SyncArgs>({
 
   nockEditResponse({
     app: ctx.app,
+    env: ctx.env,
     optional: true,
     persist: true,
     operation: FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -332,6 +332,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = SyncArgs>({
 
   nockEditResponse({
     app: ctx.app,
+    env: ctx.env,
     optional: true,
     persist: true,
     operation: FILE_SYNC_FILES_QUERY,
@@ -373,6 +374,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = SyncArgs>({
 
   nockEditResponse({
     app: ctx.app,
+    env: ctx.env,
     optional: true,
     persist: true,
     operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,

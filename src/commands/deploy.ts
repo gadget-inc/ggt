@@ -24,7 +24,7 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Deploy changes from your development environment to production.
+      Deploy your development environment to production.
 
       Your local filesystem must be in sync with your development
       environment before you can deploy.
@@ -51,7 +51,7 @@ export const usage: Usage = (ctx) => {
   }
 
   return sprint`
-    Deploy changes from a development environment to production.
+    Deploy your development environment to production.
 
     Your local filesystem must be in sync with your development
     environment before you can deploy.

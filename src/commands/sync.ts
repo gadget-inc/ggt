@@ -182,14 +182,20 @@ export const command: Command<SyncArgs> = async (ctx) => {
     throw new YarnNotFoundError();
   }
 
-  const directory = await loadSyncJsonDirectory(ctx.args._[0]);
+  const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
 
   if (!hashes.inSync) {
-    if (syncJson.previousEnvironment) {
-      // the environment changed and the local filesystem is not in sync
+    // we're not in sync
+    if (!syncJson.previousEnvironment) {
+      // we're either syncing for the first time, or we're syncing to
+      // the same environment as last time, so get in sync and continue
+      await filesync.sync(ctx, { hashes });
+    } else {
+      // we're syncing to a different environment than last time, so
+      // ask the user what to do
       if (hashes.localChanges.size > 0) {
         printChanges(ctx, {
           message: sprint`{bold Your local filesystem has changed}`,
@@ -227,8 +233,6 @@ export const command: Command<SyncArgs> = async (ctx) => {
           await filesync.pull(ctx as unknown as Context<PullArgs>, { hashes, force: true });
           break;
       }
-    } else {
-      await filesync.sync(ctx, { hashes });
     }
   }
 

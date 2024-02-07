@@ -302,7 +302,7 @@ export class SyncJson {
   }
 }
 
-export const loadSyncJsonDirectory = async (dir: string | undefined = process.cwd()): Promise<Directory> => {
+export const loadSyncJsonDirectory = async (dir: string): Promise<Directory> => {
   if (config.windows && dir.startsWith("~/")) {
     // "~" doesn't expand to the home directory on Windows
     dir = homePath(dir.slice(2));

@@ -28,7 +28,6 @@ export type DevArgs = typeof args;
 export const args = {
   ...SyncJsonArgs,
   "--prefer": MergeConflictPreferenceArg,
-  "--once": Boolean,
   "--file-push-delay": { type: Number, default: ms("100ms") },
   "--file-watch-debounce": { type: Number, default: ms("300ms") },
   "--file-watch-poll-interval": { type: Number, default: ms("3s") },
@@ -53,9 +52,9 @@ export const usage: Usage = (ctx) => {
       {bold EXAMPLES}
         $ ggt dev
         $ ggt dev ~/gadget/example
-        $ ggt dev ~/gadget/example --once
-        $ ggt dev ~/gadget/example --once --app=example
-        $ ggt dev ~/gadget/example --once --app=example --env=development --prefer=local
+        $ ggt dev ~/gadget/example
+        $ ggt dev ~/gadget/example --app=example
+        $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
 
       {bold ARGUMENTS}
         DIRECTORY    The directory to sync files to (default: ".")
@@ -64,7 +63,6 @@ export const usage: Usage = (ctx) => {
         -a, --app=<name>           The application to sync files to
         -e, --env=<name>           The environment to sync files to
             --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
-            --once                 Sync once and exit
 
         Run "ggt dev --help" for more information.
     `;
@@ -107,16 +105,16 @@ export const usage: Usage = (ctx) => {
 
     {bold USAGE}
 
-      ggt dev [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>] [--once]
-                           [--allow-unknown-directory] [--allow-different-app]
+      ggt dev [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>]
+                          [--allow-unknown-directory] [--allow-different-app]
 
     {bold EXAMPLES}
 
       $ ggt dev
       $ ggt dev ~/gadget/example
-      $ ggt dev ~/gadget/example --once
-      $ ggt dev ~/gadget/example --once --app=example
-      $ ggt dev ~/gadget/example --once --app=example --env=development --prefer=local
+      $ ggt dev ~/gadget/example
+      $ ggt dev ~/gadget/example --app=example
+      $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
 
     {bold ARGUMENTS}
 
@@ -149,14 +147,6 @@ export const usage: Usage = (ctx) => {
         If not provided, sync will pause when conflicting changes are
         detected and you will be prompted to choose which changes to
         keep before sync resumes.
-
-      --once
-        "ggt dev" will merge changes from your local filesystem
-        with changes from your environment's filesystem,
-        the same way it does when started normally, but will then
-        exit instead of continuing to watch for changes.
-
-        Defaults to false.
 
       --allow-unknown-directory
         Allows "ggt dev" to continue when the chosen directory, nor
@@ -232,11 +222,6 @@ export const command: Command<DevArgs> = async (ctx) => {
           break;
       }
     }
-  }
-
-  if (ctx.args["--once"]) {
-    ctx.log.println("Done!");
-    return;
   }
 
   /**

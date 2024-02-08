@@ -131,24 +131,22 @@ These files are always ignored:
   • node_modules
 
 Note:
-  • Sync only works with development environments
+  • \\"ggt dev\\" only works with development environments
   • Avoid deleting or moving all your files while sync is running
   • only supports \\"yarn\\" v1 for installing dependencies
 
-https://docs.gadget.dev/guides/development-tools/cli#filesync
-
 USAGE
 
-  ggt dev [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>] [--once]
-                       [--allow-unknown-directory] [--allow-different-app]
+  ggt dev [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>]
+                      [--allow-unknown-directory] [--allow-different-app]
 
 EXAMPLES
 
   $ ggt dev
   $ ggt dev ~/gadget/example
-  $ ggt dev ~/gadget/example --once
-  $ ggt dev ~/gadget/example --once --app=example
-  $ ggt dev ~/gadget/example --once --app=example --env=development --prefer=local
+  $ ggt dev ~/gadget/example
+  $ ggt dev ~/gadget/example --app=example
+  $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
 
 ARGUMENTS
 
@@ -182,14 +180,6 @@ FLAGS
     detected and you will be prompted to choose which changes to
     keep before sync resumes.
 
-  --once
-    \\"ggt dev\\" will merge changes from your local filesystem
-    with changes from your environment's filesystem,
-    the same way it does when started normally, but will then
-    exit instead of continuing to watch for changes.
-
-    Defaults to false.
-
   --allow-unknown-directory
     Allows \\"ggt dev\\" to continue when the chosen directory, nor
     any parent directories, contain a \\".gadget/sync.json\\" file
@@ -222,9 +212,9 @@ USAGE
 EXAMPLES
   $ ggt dev
   $ ggt dev ~/gadget/example
-  $ ggt dev ~/gadget/example --once
-  $ ggt dev ~/gadget/example --once --app=example
-  $ ggt dev ~/gadget/example --once --app=example --env=development --prefer=local
+  $ ggt dev ~/gadget/example
+  $ ggt dev ~/gadget/example --app=example
+  $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
 
 ARGUMENTS
   DIRECTORY    The directory to sync files to (default: \\".\\")
@@ -233,7 +223,6 @@ FLAGS
   -a, --app=<name>           The application to sync files to
   -e, --env=<name>           The environment to sync files to
       --prefer=<filesystem>  Prefer \\"local\\" or \\"gadget\\" conflicting changes
-      --once                 Sync once and exit
 
   Run \\"ggt dev --help\\" for more information.
 "

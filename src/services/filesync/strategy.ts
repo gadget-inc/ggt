@@ -3,9 +3,9 @@ import { sprint } from "../output/sprint.js";
 
 export const FileSyncStrategy = Object.freeze({
   CANCEL: "Cancel (Ctrl+C)",
-  MERGE: "Merge my changes with Gadget's changes",
-  PUSH: "Keep my changes and discard Gadget's changes",
-  PULL: "Keep Gadget's changes and discard my changes",
+  MERGE: "Merge my changes with Gadget's",
+  PUSH: "Push my changes and discard Gadget's",
+  PULL: "Pull Gadget's changes and discard mine",
 });
 
 export type FileSyncStrategy = (typeof FileSyncStrategy)[keyof typeof FileSyncStrategy];

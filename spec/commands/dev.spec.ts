@@ -1237,16 +1237,4 @@ describe("dev", () => {
     mock(which.sync, () => "/path/to/yarn");
     await sync(ctx);
   });
-
-  it("returns after syncing when --once is passed", async () => {
-    process.argv.push("--once");
-    ctx = makeContext({ parse: args });
-
-    const { filesync } = await makeSyncScenario();
-    vi.spyOn(filesync, "subscribeToGadgetChanges");
-
-    await sync(ctx);
-
-    expect(filesync.subscribeToGadgetChanges).not.toHaveBeenCalled();
-  });
 });

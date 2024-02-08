@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import type { EmptyObject } from "type-fest";
 import type { RootArgs } from "../../commands/root.js";
 import type { App, Environment } from "../app/app.js";
@@ -6,6 +5,7 @@ import { createLogger, type Logger } from "../output/log/logger.js";
 import type { StructuredLoggerOptions } from "../output/log/structured.js";
 import type { User } from "../user/user.js";
 import { defaults, pick } from "../util/object.js";
+import { PromiseSignal } from "../util/promise.js";
 import type { AnyVoid } from "../util/types.js";
 import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult, type ParseArgsOptions } from "./arg.js";
 
@@ -49,10 +49,40 @@ export class Context<
    */
   readonly args: ArgsDefinitionResult<ThisArgs>;
 
+  /**
+   * A promise that resolves when the context is aborted and all the
+   * registered onAbort callbacks have finished.
+   */
+  readonly done = new PromiseSignal<void>();
+
+  /**
+   * The logger for the current context.
+   */
   #log: Logger;
+
+  /**
+   * The callbacks that will be called when this context is aborted.
+   */
+  #onAborts: OnAbort[] = [];
+
+  /**
+   * The parent context, if any.
+   */
   #parent?: Context<ArgsDefinition, ParentArgs>;
+
+  /**
+   * The user who is running this command, if any.
+   */
   #user?: User;
+
+  /**
+   * The app this command is running against, if any.
+   */
   #app?: App;
+
+  /**
+   * The environment this command is running against, if any.
+   */
   #env?: Environment;
 
   private constructor({
@@ -73,6 +103,25 @@ export class Context<
     this.abort = this.abort.bind(this);
     this.child = this.child.bind(this);
     this.onAbort = this.onAbort.bind(this);
+
+    // when the context is aborted, call all the registered callbacks
+    this.signal.addEventListener(
+      "abort",
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      async () => {
+        // call the callbacks in reverse order, like go's defer
+        for (const callback of this.#onAborts.reverse()) {
+          try {
+            await callback(this.signal.reason);
+          } catch (error: unknown) {
+            this.log.error("error during abort", { error });
+          }
+        }
+
+        // signal that the context is done
+        this.done.resolve();
+      },
+    );
   }
 
   /**
@@ -172,18 +221,7 @@ export class Context<
    * @param callback - The callback to call when the context is aborted.
    */
   onAbort(callback: OnAbort): void {
-    this.signal.addEventListener(
-      "abort",
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      async () => {
-        try {
-          assert(callback, "callback must have been provided");
-          await callback(this.signal.reason);
-        } catch (error: unknown) {
-          this.log.error("error during abort", { error });
-        }
-      },
-    );
+    this.#onAborts.push(callback);
   }
 }
 

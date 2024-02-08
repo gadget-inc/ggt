@@ -465,11 +465,6 @@ describe("dev", () => {
     // wait for stop() to finish and expect the same result
     const { emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
-    let stop: (() => Promise<void>) | undefined = undefined;
-    mock(ctx.signal, "addEventListener", (_, listener) => {
-      stop = listener as () => Promise<void>;
-    });
-
     await sync(ctx);
 
     // receive a new file
@@ -516,7 +511,7 @@ describe("dev", () => {
     });
 
     ctx.abort();
-    await stop!();
+    await ctx.done;
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {

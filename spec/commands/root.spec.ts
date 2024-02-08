@@ -66,8 +66,8 @@ describe("root", () => {
         ggt [COMMAND]
 
       COMMANDS
-        sync           Sync your local filesystem with your environment's filesystem
-        status         Show the status of your local and environment's filesystem
+        sync           Sync your local and environment's filesystem
+        status         Show your local and environment's filesystem status
         push           Push your local filesystem
         pull           Pull your environment's filesystem
         deploy         Deploy your environment to production

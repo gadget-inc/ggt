@@ -3,7 +3,6 @@ codegen
 commandsstop
 dedenting
 direnv
-dirpath
 EADDRNOTAVAIL
 EHOSTUNREACH
 ENOENT
@@ -27,6 +26,7 @@ packagejson
 postbuild
 printlns
 Promisable
+revparse
 sourcemaps
 sprintln
 sprintlns

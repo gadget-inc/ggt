@@ -24,7 +24,7 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Deploy changes from your development environment to production.
+      Deploy your development environment to production.
 
       Your local filesystem must be in sync with your development
       environment before you can deploy.
@@ -51,7 +51,7 @@ export const usage: Usage = (ctx) => {
   }
 
   return sprint`
-    Deploy changes from a development environment to production.
+    Deploy your development environment to production.
 
     Your local filesystem must be in sync with your development
     environment before you can deploy.
@@ -135,15 +135,15 @@ export const command: Command<DeployArgs> = async (ctx) => {
   `;
 
   const filesync = new FileSync(syncJson);
-  const { inSync } = await filesync.hashes(ctx);
-  if (!inSync) {
+  const hashes = await filesync.hashes(ctx);
+  if (!hashes.inSync) {
     ctx.log.printlns`
       Your local filesystem must be in sync with your development
       environment before you can deploy.
     `;
 
     await confirm(ctx, { message: "Would you like to push now?" });
-    await filesync.push(ctx);
+    await filesync.push(ctx, { hashes });
   }
 
   const spinner = ora();

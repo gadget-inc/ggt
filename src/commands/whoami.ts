@@ -20,7 +20,7 @@ export const command: Command = async (ctx) => {
   }
 
   if (user.name) {
-    ctx.log.println`You are logged in as ${user.name} {gray (${user.email})}`;
+    ctx.log.println`You are logged in as ${user.name} (${user.email})`;
   } else {
     ctx.log.println`You are logged in as ${user.email}`;
   }

@@ -2,7 +2,7 @@ import nock, { type Scope } from "nock";
 import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
 import { ZodSchema, z } from "zod";
-import type { App } from "../../src/services/app/app.js";
+import type { App, Environment } from "../../src/services/app/app.js";
 import { Client } from "../../src/services/app/edit/client.js";
 import type { EditError } from "../../src/services/app/edit/error.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.js";
@@ -42,6 +42,13 @@ export type NockEditResponseOptions<Operation extends GraphQLQuery | GraphQLMuta
   app?: App;
 
   /**
+   * The environment to respond to.
+   *
+   * @default testApp.environments[0]
+   */
+  env?: Environment;
+
+  /**
    * Whether to keep responding to requests after the first one.
    *
    * @default false
@@ -78,6 +85,7 @@ export type NockEditResponseOptions<Operation extends GraphQLQuery | GraphQLMuta
 export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   operation,
   app = testApp,
+  env = app.environments[0]!,
   optional = false,
   persist = false,
   times = 1,
@@ -112,6 +120,7 @@ export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   const scope = nock(`https://${subdomain}.${config.domains.app}`)
     .post("/edit/api/graphql", (body) => body.query === operation)
     .matchHeader("cookie", (cookie) => loadCookie() === cookie)
+    .matchHeader("x-gadget-environment", env.name)
     .optionally(optional)
     .times(times)
     .reply(statusCode, async (_uri, rawBody) => {

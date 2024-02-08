@@ -9,31 +9,7 @@ import { warnIfUpdateAvailable } from "../services/output/update.js";
 import { sortBySimilar } from "../services/util/collection.js";
 import { isNil } from "../services/util/is.js";
 
-export const usage: Usage = () => {
-  return sprint`
-    The command-line interface for Gadget.
-
-    {bold USAGE}
-      ggt [COMMAND]
-
-    {bold COMMANDS}
-      sync           Sync your local filesystem with Gadget
-      push           Push your local filesystem to Gadget
-      pull           Pull Gadget's filesystem
-      list           List your apps
-      login          Log in to your account
-      logout         Log out of your account
-      whoami         Print the currently logged in account
-      version        Print the version of ggt
-
-    {bold FLAGS}
-      -h, --help     Print command's usage
-      -v, --verbose  Print verbose output
-          --json     Print output as JSON
-
-    Use "ggt [COMMAND] --help" for more information about a specific command.
-  `;
-};
+export type RootArgs = typeof args;
 
 export const args = {
   "-h": { type: Boolean },
@@ -42,7 +18,33 @@ export const args = {
   "--json": { type: Boolean },
 } satisfies ArgsDefinition;
 
-export type RootArgs = typeof args;
+export const usage: Usage = () => {
+  return sprint`
+    The command-line interface for Gadget.
+
+    {bold USAGE}
+      ggt [COMMAND]
+
+    {bold COMMANDS}
+      sync           Sync your local and environment's filesystem
+      status         Show your local and environment's filesystem status
+      push           Push your local filesystem
+      pull           Pull your environment's filesystem
+      deploy         Deploy your environment to production
+      list           List your available applications
+      login          Log in to your account
+      logout         Log out of your account
+      whoami         Print the currently logged in account
+      version        Print this version of ggt
+
+    {bold FLAGS}
+      -h, --help     Print how to use the command
+      -v, --verbose  Print more verbose output
+          --json     Print all output as newline-delimited JSON
+
+    Run "ggt [COMMAND] -h" for more information about a specific command.
+  `;
+};
 
 export const command: Command<EmptyObject, EmptyObject> = async (parent): Promise<void> => {
   const ctx = parent.child({

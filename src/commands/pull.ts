@@ -1,5 +1,6 @@
 import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
+import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { sprint } from "../services/output/sprint.js";
@@ -107,8 +108,12 @@ export const command: Command<PullArgs> = async (ctx) => {
     `);
   }
 
-  const directory = await loadSyncJsonDirectory(ctx.args._[0]);
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+  const directory = await loadSyncJsonDirectory(process.cwd());
+  const syncJson = await SyncJson.load(ctx, { directory });
+  if (!syncJson) {
+    throw new UnknownDirectoryError(ctx, { directory });
+  }
+
   const filesync = new FileSync(syncJson);
   await filesync.pull(ctx);
 };

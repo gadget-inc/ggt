@@ -26,7 +26,7 @@ import { filesyncProblemsToProblems, printProblems } from "../output/problems.js
 import { confirm, select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
 import { noop } from "../util/function.js";
-import { Changes, printChanges } from "./changes.js";
+import { Changes, printChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
 import { TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
@@ -161,10 +161,11 @@ export class FileSync {
             });
 
             if (changes.size > 0) {
+              const now = dayjs().format("hh:mm:ss A");
               printChanges(ctx, {
-                message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
                 changes,
                 tense: "past",
+                message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${now}}`,
                 limit: 10,
               });
             }
@@ -255,12 +256,16 @@ export class FileSync {
    * - Conflicts are resolved by prompting the user to either keep their local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  async sync(ctx: Context<SyncArgs>, { maxAttempts = 10 }: { maxAttempts?: number } = {}): Promise<void> {
-    let hashes: FileSyncHashes;
+  async sync(ctx: Context<SyncArgs>, { hashes, maxAttempts = 10 }: { hashes?: FileSyncHashes; maxAttempts?: number } = {}): Promise<void> {
     let attempt = 0;
 
     do {
-      hashes = await this.hashes(ctx);
+      if (attempt === 0) {
+        hashes ??= await this.hashes(ctx);
+      } else {
+        hashes = await this.hashes(ctx);
+      }
+
       if (hashes.inSync) {
         this._syncOperations.clear();
         ctx.log.info("filesystem in sync");
@@ -291,46 +296,66 @@ export class FileSync {
    * If Gadget has also made changes since the last sync, and --force
    * was not passed, the user will be prompted to discard them.
    */
-  async push(ctx: Context<PushArgs>): Promise<void> {
-    const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = await this.hashes(ctx);
+  async push(ctx: Context<PushArgs>, { hashes, force }: { hashes?: FileSyncHashes; force?: boolean } = {}): Promise<void> {
+    const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const localChanges = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
     if (localChanges.size === 0) {
-      ctx.log.println("Already in sync");
+      ctx.log.println`
+${await this.syncJson.sprintState()}
+
+Your filesystem is already in sync.
+`;
       return;
     }
 
-    if (gadgetChanges.size > 0 && !ctx.args["--force"]) {
+    if (gadgetChanges.size > 0 && !(force ?? ctx.args["--force"])) {
       printChanges(ctx, {
         changes: gadgetChanges,
         tense: "past",
-        message: sprint`{bold Gadget's files have changed sync you last synced.}`,
+        message: sprint`{bold ${this.syncJson.app.slug} (${this.syncJson.env.name})'s files have changed since you last synced.}`,
       });
 
       await confirm(ctx, { message: "Are you sure you want to discard them?" });
     }
 
-    await this._sendChangesToGadget(ctx, { changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
+    await this._sendChangesToGadget(ctx, {
+      changes: localChanges,
+      expectedFilesVersion: gadgetFilesVersion,
+      print: {
+        tense: "present",
+      },
+    });
   }
 
-  async pull(ctx: Context<PullArgs>): Promise<void> {
-    const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = await this.hashes(ctx);
+  async pull(ctx: Context<PullArgs>, { hashes, force }: { hashes?: FileSyncHashes; force?: boolean } = {}): Promise<void> {
+    const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
     if (gadgetChanges.size === 0) {
-      ctx.log.println("Already in sync");
+      ctx.log.println`
+${await this.syncJson.sprintState()}
+
+Your filesystem is already in sync.
+`;
       return;
     }
 
-    if (localChanges.size > 0 && !ctx.args["--force"]) {
+    if (localChanges.size > 0 && !(force ?? ctx.args["--force"])) {
       printChanges(ctx, {
         changes: localChanges,
         tense: "past",
-        message: sprint`{bold Your files have changed since you last synced.}`,
+        message: sprint`{bold Your local files have changed since you last synced.}`,
       });
 
       await confirm(ctx, { message: "Do you want to discard your local changes?" });
     }
 
-    await this._getChangesFromGadget(ctx, { changes: gadgetChanges, filesVersion: gadgetFilesVersion });
+    await this._getChangesFromGadget(ctx, {
+      changes: gadgetChanges,
+      filesVersion: gadgetFilesVersion,
+      print: {
+        tense: "present",
+      },
+    });
   }
 
   private async _merge(ctx: Context<SyncArgs>, { localChanges, gadgetChanges, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
@@ -381,9 +406,11 @@ export class FileSync {
     {
       filesVersion,
       changes,
+      print,
     }: {
       filesVersion: bigint;
       changes: Changes | ChangesWithHash;
+      print?: Partial<Omit<PrintChangesOptions, "changes">>;
     },
   ): Promise<void> {
     ctx.log.debug("getting changes from gadget", { filesVersion, changes });
@@ -413,20 +440,21 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
+      message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+      ...print,
     });
   }
 
   private async _sendChangesToGadget(
     ctx: Context<SyncJsonArgs>,
     {
-      expectedFilesVersion = this.syncJson.filesVersion,
       changes,
-      printLimit,
+      expectedFilesVersion = this.syncJson.filesVersion,
+      print,
     }: {
-      expectedFilesVersion?: bigint;
       changes: Changes;
-      printLimit?: number;
+      expectedFilesVersion?: bigint;
+      print?: Partial<Omit<PrintChangesOptions, "changes">>;
     },
   ): Promise<void> {
     ctx.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
@@ -504,8 +532,8 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,
-      limit: printLimit,
+      message: sprint`→ Sent to ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+      ...print,
     });
 
     if (BigInt(remoteFilesVersion) > expectedFilesVersion + 1n) {

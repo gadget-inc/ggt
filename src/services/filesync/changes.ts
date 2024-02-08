@@ -32,34 +32,44 @@ export class Changes extends Map<string, Change> {
   }
 }
 
+export type PrintChangesOptions = {
+  /**
+   * The changes to print.
+   */
+  changes: Changes;
+
+  /**
+   * The tense to use for the change type.
+   */
+  tense: "past" | "present";
+
+  /**
+   * The maximum number of changes to print.
+   *
+   * @default Infinity
+   */
+  limit?: number;
+} & Partial<PrintTableOptions>;
+
 /**
  * Prints the changes to the console.
  *
  * @param ctx - The current context.
- * @param options - The options to use.
- * @param options.changes - The changes to print.
- * @param options.tense - The tense to use for the change type.
- * @param options.limit - The maximum number of changes to print.
+ * @see {@linkcode PrintChangesOptions}
  */
-export const printChanges = (
-  ctx: Context,
-  {
-    changes,
-    tense,
-    limit = Infinity,
-    ...tableOptions
-  }: {
-    changes: Changes;
-    tense: "past" | "present";
-    limit?: number;
-  } & Partial<PrintTableOptions>,
-): void => {
+export const printChanges = (ctx: Context, { changes, tense, limit = Infinity, ...tableOptions }: PrintChangesOptions): void => {
+  ctx.log.trace("printing changes", { changes, tense, limit });
+
   if (config.logLevel <= Level.TRACE) {
     // print all changes when tracing
     limit = Infinity;
   }
 
   const changesToPrint = Array.from(changes.entries()).filter(([path]) => !path.startsWith(".gadget/"));
+  if (changesToPrint.length === 0) {
+    ctx.log.debug("no changes to print");
+    return;
+  }
 
   const renamed = chalk.yellowBright(tense === "past" ? "renamed" : "rename");
   const renameSymbol = chalk.yellowBright("→");

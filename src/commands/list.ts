@@ -4,7 +4,7 @@ import { sprint } from "../services/output/sprint.js";
 import { getUserOrLogin } from "../services/user/user.js";
 
 export const usage: Usage = () => sprint`
-    List the apps available to the currently logged in user.
+    List your available applications.
 
     {bold USAGE}
       ggt list

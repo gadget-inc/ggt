@@ -15,7 +15,7 @@ export type EnvironmentType = keyof typeof EnvironmentType;
 
 export const Environment = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
-  name: z.string(),
+  name: z.string().transform((name) => name.toLowerCase()),
   type: z.nativeEnum(EnvironmentType),
 });
 

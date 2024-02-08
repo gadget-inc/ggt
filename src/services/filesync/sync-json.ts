@@ -2,6 +2,7 @@ import { findUp } from "find-up";
 import fs from "fs-extra";
 import assert from "node:assert";
 import path from "node:path";
+import { simpleGit } from "simple-git";
 import { z } from "zod";
 import { EnvironmentType, getApps, type App, type Environment } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
@@ -42,6 +43,11 @@ export class SyncJson {
   readonly env: Environment;
 
   /**
+   * The last git branch that was checked out in the directory.
+   */
+  gitBranch: string | undefined;
+
+  /**
    * The {@linkcode Edit} client that can be used to send Gadget API
    * requests to the environment that the directory is synced to.
    */
@@ -68,6 +74,12 @@ export class SyncJson {
      * the directory that contains the `.gadget/sync.json` file.
      */
     readonly directory: Directory,
+
+    /**
+     * Indicates whether the environment was changed when this instance
+     * was loaded or initialized.
+     */
+    readonly previousEnvironment: string | undefined,
 
     /**
      * The state of the `.gadget/sync.json` file on the local
@@ -155,7 +167,7 @@ export class SyncJson {
       if (ctx.args["--allow-different-app"]) {
         // the user passed --allow-different-app, so use the application
         // and environment they specified and clobber everything
-        return new SyncJson(ctx, directory, {
+        return new SyncJson(ctx, directory, undefined, {
           application: ctx.app.slug,
           environment: ctx.env.name,
           environments: {
@@ -182,8 +194,11 @@ export class SyncJson {
       `);
     }
 
+    let previousEnvironment: string | undefined;
     if (state.environment !== ctx.env.name) {
       // the user specified a different environment, update the state
+      ctx.log.printlns2`Changing environment from ${state.environment} → ${ctx.env.name}`;
+      previousEnvironment = state.environment;
       state.environment = ctx.env.name;
       if (!state.environments[ctx.env.name]) {
         // the user has never synced to this environment before
@@ -191,7 +206,7 @@ export class SyncJson {
       }
     }
 
-    return new SyncJson(ctx, directory, state);
+    return new SyncJson(ctx, directory, previousEnvironment, state);
   }
 
   /**
@@ -222,7 +237,7 @@ export class SyncJson {
       // exists and create a fresh .gadget/sync.json file
       await fs.ensureDir(directory.path);
 
-      return new SyncJson(ctx, directory, {
+      return new SyncJson(ctx, directory, undefined, {
         application: ctx.app.slug,
         environment: ctx.env.name,
         environments: {
@@ -258,24 +273,51 @@ export class SyncJson {
       { spaces: 2 },
     );
   }
-}
 
-export const loadSyncJsonDirectory = async (dirpath: string | undefined = process.cwd()): Promise<Directory> => {
-  if (config.windows && dirpath.startsWith("~/")) {
-    // "~" doesn't expand to the home directory on Windows
-    dirpath = homePath(dirpath.slice(2));
+  /**
+   * @returns true if the git branch has changed
+   */
+  async loadGitBranch(): Promise<void> {
+    this.gitBranch = await loadBranch(this.ctx, { directory: this.directory });
   }
 
-  const syncJsonPath = await findUp(".gadget/sync.json", { cwd: dirpath });
+  async sprintState(): Promise<string> {
+    await this.loadGitBranch();
+    if (this.gitBranch) {
+      return sprint`
+        Application  ${this.app.slug}
+        Environment  ${this.env.name}
+        Git Branch   ${this.gitBranch}
+      `;
+    }
+
+    return sprint`
+      Application  ${this.app.slug}
+      Environment  ${this.env.name}
+    `;
+  }
+
+  async printState(): Promise<void> {
+    this.ctx.log.println(await this.sprintState());
+  }
+}
+
+export const loadSyncJsonDirectory = async (dir: string): Promise<Directory> => {
+  if (config.windows && dir.startsWith("~/")) {
+    // "~" doesn't expand to the home directory on Windows
+    dir = homePath(dir.slice(2));
+  }
+
+  const syncJsonPath = await findUp(".gadget/sync.json", { cwd: dir });
   if (syncJsonPath) {
     // we found a .gadget/sync.json file, use its parent directory
-    dirpath = path.join(syncJsonPath, "../..");
+    dir = path.join(syncJsonPath, "../..");
   }
 
   // ensure the directory path is absolute
-  dirpath = path.resolve(dirpath);
+  dir = path.resolve(dir);
 
-  return await Directory.init(dirpath);
+  return await Directory.init(dir);
 };
 
 // ensure the selected app is valid
@@ -358,7 +400,7 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
   // specified
   const similarEnvironments = sortBySimilar(
     envName,
-    app.environments.map((env) => env.name),
+    app.environments.filter((env) => env.type === EnvironmentType.Development).map((env) => env.name),
   ).slice(0, 5);
 
   throw new ArgError(
@@ -370,6 +412,20 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
           Did you mean one of these?
         `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
   );
+};
+
+/**
+ * Returns the current git branch of the directory or undefined if
+ * the directory isn't a git repository.
+ */
+const loadBranch = async (ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<string | undefined> => {
+  try {
+    const branch = await simpleGit(directory.path).revparse(["--abbrev-ref", "HEAD"]);
+    return branch;
+  } catch (error) {
+    ctx.log.warn("failed to read git branch", { error });
+    return undefined;
+  }
 };
 
 export const SyncJsonStateV05 = z.object({

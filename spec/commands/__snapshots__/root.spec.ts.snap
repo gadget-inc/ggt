@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`root > when deploy is given > prints the usage when --help is passed 1`] = `
-"Deploy changes from a development environment to production.
+"Deploy your development environment to production.
 
 Your local filesystem must be in sync with your development
 environment before you can deploy.
@@ -74,7 +74,7 @@ Run \\"ggt deploy -h\\" for less information.
 `;
 
 exports[`root > when deploy is given > prints the usage when -h is passed 1`] = `
-"Deploy changes from your development environment to production.
+"Deploy your development environment to production.
 
 Your local filesystem must be in sync with your development
 environment before you can deploy.
@@ -101,7 +101,7 @@ Run \\"ggt deploy --help\\" for more information.
 `;
 
 exports[`root > when list is given > prints the usage when --help is passed 1`] = `
-"List the apps available to the currently logged in user.
+"List your available applications.
 
 USAGE
   ggt list
@@ -112,7 +112,7 @@ EXAMPLES
 `;
 
 exports[`root > when list is given > prints the usage when -h is passed 1`] = `
-"List the apps available to the currently logged in user.
+"List your available applications.
 
 USAGE
   ggt list
@@ -330,6 +330,40 @@ FLAGS
 "
 `;
 
+exports[`root > when status is given > prints the usage when --help is passed 1`] = `
+"Show changes made to your local filesystem and
+your environment's filesystem.
+
+Changes will be calculated from the last time you ran
+\\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
+
+USAGE
+
+  ggt status
+
+EXAMPLES
+
+  $ ggt status
+"
+`;
+
+exports[`root > when status is given > prints the usage when -h is passed 1`] = `
+"Show changes made to your local filesystem and
+your environment's filesystem.
+
+Changes will be calculated from the last time you ran
+\\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
+
+USAGE
+
+  ggt status
+
+EXAMPLES
+
+  $ ggt status
+"
+`;
+
 exports[`root > when sync is given > prints the usage when --help is passed 1`] = `
 "Sync your local filesystem with your environment's filesystem,
 in real-time.
@@ -470,7 +504,7 @@ FLAGS
 `;
 
 exports[`root > when version is given > prints the usage when --help is passed 1`] = `
-"Print the current version of ggt.
+"Print this version of ggt.
 
 USAGE
   ggt version
@@ -481,7 +515,7 @@ EXAMPLES
 `;
 
 exports[`root > when version is given > prints the usage when -h is passed 1`] = `
-"Print the current version of ggt.
+"Print this version of ggt.
 
 USAGE
   ggt version

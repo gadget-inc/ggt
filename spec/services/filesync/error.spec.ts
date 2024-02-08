@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { InvalidSyncFileError, TooManySyncAttemptsError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
+import { TooManySyncAttemptsError, UnknownDirectoryError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
 
-describe("YarnNotFoundError", () => {
+describe(YarnNotFoundError.name, () => {
   it("renders correctly", () => {
     const error = new YarnNotFoundError();
     expect(error.toString()).toMatchInlineSnapshot(`
@@ -14,31 +14,31 @@ describe("YarnNotFoundError", () => {
   });
 });
 
-describe("InvalidSyncFileError", () => {
+describe(UnknownDirectoryError.name, () => {
   it("renders correctly", () => {
     const dir = "/Users/jane/doe/";
     const app = "test";
 
-    const error = new InvalidSyncFileError(dir, app);
+    const error = new UnknownDirectoryError({ dir, app, syncJsonFile: undefined });
     expect(error.toString()).toMatchInlineSnapshot(`
       "We failed to find a \\".gadget/sync.json\\" file in this directory:
 
         /Users/jane/doe/
 
-      If you're running 'ggt sync' for the first time, we recommend
+      If you're running \\"ggt sync\\" for the first time, we recommend
       using a gadget specific directory like this:
 
-        ggt sync ~/gadget/test --app test
+        ggt sync ~/gadget/test --app=test
 
       If you're certain you want to sync the contents of that directory
-      to Gadget, run 'ggt sync' again with the --force flag:
+      to Gadget, run \\"ggt sync\\" again with the --allow-unknown-directory flag:
 
-        ggt sync /Users/jane/doe/ --app test --force"
+        ggt sync /Users/jane/doe/ --app=test --allow-unknown-directory"
     `);
   });
 });
 
-describe("TooManySyncAttemptsError", () => {
+describe(TooManySyncAttemptsError.name, () => {
   it("renders correctly", () => {
     const error = new TooManySyncAttemptsError(10);
     expect(error.toString()).toMatchInlineSnapshot(`

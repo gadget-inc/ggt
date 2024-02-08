@@ -1,20 +1,14 @@
 import dayjs from "dayjs";
 import { execa } from "execa";
-import { findUp } from "find-up";
 import fs from "fs-extra";
 import ms from "ms";
 import assert from "node:assert";
-import path from "node:path";
 import process from "node:process";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import pRetry from "p-retry";
 import type { Promisable } from "type-fest";
-import { z } from "zod";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
-import type { App } from "../app/app.js";
-import { getApps } from "../app/app.js";
-import { AppArg } from "../app/arg.js";
 import { Edit, type EditSubscription } from "../app/edit/edit.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -23,26 +17,24 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit/operation.js";
-import { ArgError, type ArgsDefinition } from "../command/arg.js";
+import { type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
-import { config, homePath } from "../config/config.js";
+import { config } from "../config/config.js";
 import { filesyncProblemsToProblems, printProblems } from "../output/problems.js";
 import { confirm, select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
-import { getUserOrLogin } from "../user/user.js";
-import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
 import { Changes, printChanges } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
-import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
-import { InvalidSyncFileError, TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
+import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
+import { TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
 import type { File } from "./file.js";
 import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 import { FileSyncStrategy, MergeConflictPreference, MergeConflictPreferenceArg } from "./strategy.js";
+import { SyncJsonArgs, type SyncJson } from "./sync-json.js";
 
 export const FileSyncArgs = {
-  "--app": { type: AppArg, alias: "-a" },
-  "--environment": { type: String, alias: "-e" },
+  ...SyncJsonArgs,
   "--prefer": MergeConflictPreferenceArg,
   "--force": Boolean,
 } satisfies ArgsDefinition;
@@ -68,289 +60,17 @@ export class FileSync {
    */
   private _syncOperations = new PQueue({ concurrency: 1 });
 
-  private constructor(
+  constructor(
     /**
      * The {@linkcode Context} that was used to initialize this
      * {@linkcode FileSync} instance.
      */
     readonly ctx: Context<FileSyncArgs>,
 
-    /**
-     * The directory that is being synced to.
-     */
-    readonly directory: Directory,
-
-    /**
-     * The Gadget application that is being synced to.
-     */
-    readonly app: App,
-
-    /**
-     * The environment that is being synced to.
-     */
-    readonly environment: string,
-
-    /**
-     * The state of the filesystem.
-     *
-     * This is persisted to `.gadget/sync.json` within the {@linkcode directory}.
-     */
-    private _syncJson: {
-      app: string;
-      filesVersion: string;
-      mtime?: number | null;
-      currentEnvironment: string;
-      environments: Record<string, { filesVersion: string }>;
-    },
+    readonly syncJson: SyncJson,
   ) {
-    if (this._syncJson.environments[this.environment] === undefined) {
-      this._syncJson.environments[this.environment] = { filesVersion: "0" };
-    }
-
-    this.ctx = ctx.child({
-      fields: () => ({ filesync: { directory: this.directory.path, filesVersion: this.filesVersion } }),
-    });
+    this.ctx = ctx.child({ name: "filesync" });
     this.edit = new Edit(this.ctx);
-  }
-
-  /**
-   * The last filesVersion that was written to the filesystem.
-   *
-   * This determines if the filesystem in Gadget is ahead of the
-   * filesystem on the local machine.
-   */
-  get filesVersion(): bigint {
-    assert(this._syncJson.environments[this.environment], "environment doesn't exist in _syncJson");
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return BigInt(this._syncJson.environments[this.environment]!.filesVersion);
-  }
-
-  /**
-   * The largest mtime that was seen on the filesystem.
-   *
-   * @deprecated no longer used
-   */
-  get mtime(): number | null | undefined {
-    return this._syncJson.mtime;
-  }
-
-  /**
-   * Initializes a {@linkcode FileSync} instance.
-   * - Ensures the directory exists.
-   * - Ensures the directory is empty or contains a `.gadget/sync.json` file (unless `options.force` is `true`)
-   * - Ensures an app is specified (either via `options.app` or by prompting the user)
-   * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
-   */
-  static async init(ctx: Context<FileSyncArgs>): Promise<FileSync> {
-    ctx = ctx.child({ name: "filesync" });
-
-    const user = await getUserOrLogin(ctx);
-    const apps = await getApps(ctx);
-    if (apps.length === 0) {
-      throw new ArgError(
-        sprint`
-          You (${user.email}) don't have have any Gadget applications.
-
-          Visit https://gadget.new to create one!
-      `,
-      );
-    }
-
-    let dir = ctx.args._[0];
-    if (!dir) {
-      // the user didn't specify a directory
-      const filepath = await findUp(".gadget/sync.json");
-      if (filepath) {
-        // we found a .gadget/sync.json file, use its parent directory
-        dir = path.join(filepath, "../..");
-      } else {
-        // we didn't find a .gadget/sync.json file, use the current directory
-        dir = process.cwd();
-      }
-    }
-
-    if (config.windows && dir.startsWith("~/")) {
-      // `~` doesn't expand to the home directory on Windows
-      dir = homePath(dir.slice(2));
-    }
-
-    // ensure the root directory is an absolute path and exists
-    const wasEmptyOrNonExistent = await isEmptyOrNonExistentDir(dir);
-    await fs.ensureDir((dir = path.resolve(dir)));
-
-    // try to load the .gadget/sync.json file
-    const state = await fs
-      .readJson(path.join(dir, ".gadget/sync.json"))
-      .then((json) => {
-        return z
-          .object({
-            app: z.string(),
-            mtime: z.number().nullish(),
-            filesVersion: z
-              .string()
-              .nullish()
-              .transform((x) => x ?? "0"), // Legacy support for old sync.json files
-            currentEnvironment: z
-              .string()
-              .nullish()
-              .transform((x) => x ?? "development"), // New support for multi environment, but old sync.json files don't have this
-            environments: z
-              .record(z.object({ filesVersion: z.string() }))
-              .nullish()
-              .transform((value) => value ?? { development: { filesVersion: "0" } }),
-          })
-          .parse(json);
-      })
-      .catch((e) => ctx.log.warn("failed to load .gadget/sync.json", { error: e }));
-
-    // Basically a hack for reverse compatibility with old sync.json files
-    const devEnvironmentState = state?.environments["development"];
-    if (devEnvironmentState && state.filesVersion && devEnvironmentState.filesVersion !== state.filesVersion) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      state.environments["development"]!.filesVersion = state.filesVersion;
-    }
-
-    let appSlug = ctx.args["--app"] || state?.app;
-    if (!appSlug) {
-      // the user didn't specify an app, suggest some apps that they can sync to
-      appSlug = await select(ctx, {
-        message: "Select the app to sync to",
-        choices: apps.map((x) => x.slug),
-      });
-    }
-
-    // try to find the appSlug in their list of apps
-    const app = apps.find((app) => app.slug === appSlug);
-    if (!app) {
-      // the specified appSlug doesn't exist in their list of apps,
-      // either they misspelled it or they don't have access to it
-      // anymore, suggest some apps that are similar to the one they
-      // specified
-      const similarAppSlugs = sortBySimilar(
-        appSlug,
-        apps.map((app) => app.slug),
-      ).slice(0, 5);
-
-      throw new ArgError(
-        sprint`
-        Unknown application:
-
-          ${appSlug}
-
-        Did you mean one of these?
-
-
-      `.concat(`  • ${similarAppSlugs.join("\n  • ")}`),
-      );
-    }
-
-    let environment = ctx.args["--environment"]?.toLowerCase() || state?.currentEnvironment?.toLowerCase();
-    const filteredSelectableEnvironments = app.environments.filter((x) => x.type.toLowerCase() !== "production");
-
-    if (app.multiEnvironmentEnabled) {
-      if (!environment) {
-        // user didn't specify an environment, show them a list of valid environments
-        environment = await select(ctx, {
-          message: "Select the environment to sync to",
-          choices: filteredSelectableEnvironments.map((x) => x.name.toLowerCase()),
-        });
-      }
-
-      // if multi environment is enabled try to find the environment in the app's list
-      const env = filteredSelectableEnvironments.find((env) => env.name.toLowerCase() === environment);
-      if (!env) {
-        const similarEnvironments = sortBySimilar(
-          environment,
-          app.environments.map((env) => env.name.toLowerCase()),
-        ).slice(0, 5);
-
-        throw new ArgError(
-          sprint`
-          Unknown environment:
-
-            ${environment}
-
-          Did you mean one of these?
-
-
-          `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
-        );
-      }
-    } else if (ctx.args["--environment"]?.toLowerCase()) {
-      // multi environment is not enabled but the user specified an environment
-      throw new ArgError(
-        sprint`
-        You specified an environment but your app doesn't have multiple environments.
-
-        Remove the {dim --environment} flag to sync to the {bold ${app.primaryDomain}} environment.
-      `,
-      );
-    } else {
-      // multi environment is not enabled and the user didn't specify an environment
-      environment = "development";
-    }
-
-    ctx.app = app;
-    ctx.environment = environment;
-    const directory = await Directory.init(dir);
-
-    if (!state) {
-      // the .gadget/sync.json file didn't exist or contained invalid json
-      if (wasEmptyOrNonExistent || ctx.args["--force"]) {
-        // the directory was empty or the user passed --force
-        // either way, create a fresh .gadget/sync.json file
-        return new FileSync(ctx, directory, app, environment, {
-          app: app.slug,
-          filesVersion: "0",
-          mtime: 0,
-          currentEnvironment: environment,
-          environments: {
-            [environment]: { filesVersion: "0" },
-          },
-        });
-      }
-
-      // the directory isn't empty and the user didn't pass --force
-      throw new InvalidSyncFileError(dir, app.slug);
-    }
-
-    // the .gadget/sync.json file exists
-    if (state.app === app.slug) {
-      // the .gadget/sync.json file is for the same app that the user specified
-      return new FileSync(ctx, directory, app, environment, { ...state, currentEnvironment: environment });
-    }
-
-    // the .gadget/sync.json file is for a different app or environment
-    if (ctx.args["--force"]) {
-      // the user passed --force, so use the app they specified and overwrite everything
-      return new FileSync(ctx, directory, app, environment, {
-        app: app.slug,
-        filesVersion: "0",
-        mtime: 0,
-        currentEnvironment: environment,
-        environments: {
-          [environment]: { filesVersion: "0" },
-        },
-      });
-    }
-
-    // the user didn't pass --force, so throw an error
-    throw new ArgError(sprint`
-        You were about to sync the following app to the following directory:
-
-          {dim ${app.slug}} {dim ({green ${environment}}) → ${dir}}
-
-        However, that directory has already been synced with this app:
-
-          {dim ${state.app}} {dim ({red ${state.currentEnvironment}})}
-
-        If you're sure that you want to sync:
-
-          {dim ${app.slug}} {dim ({green ${environment}}) → ${dir}}
-
-        Then run {dim ggt sync} again with the {dim --force} flag.
-      `);
   }
 
   /**
@@ -409,12 +129,12 @@ export class FileSync {
       // then re-established. this ensures that we send our current
       // filesVersion rather than the one that was sent when we first
       // subscribed
-      variables: () => ({ localFilesVersion: String(this.filesVersion) }),
+      variables: () => ({ localFilesVersion: String(this.syncJson.filesVersion) }),
       onError,
       onData: ({ remoteFileSyncEvents: { changed, deleted, remoteFilesVersion } }) => {
         this._syncOperations
           .add(async () => {
-            if (BigInt(remoteFilesVersion) < this.filesVersion) {
+            if (BigInt(remoteFilesVersion) < this.syncJson.filesVersion) {
               this.ctx.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
               return;
             }
@@ -426,7 +146,7 @@ export class FileSync {
             });
 
             const filterIgnoredFiles = (file: { path: string }): boolean => {
-              const ignored = this.directory.ignores(file.path);
+              const ignored = this.syncJson.directory.ignores(file.path);
               if (ignored) {
                 this.ctx.log.warn("skipping received change because file is ignored", { path: file.path });
               }
@@ -437,7 +157,7 @@ export class FileSync {
             deleted = deleted.filter(filterIgnoredFiles);
 
             if (changed.length === 0 && deleted.length === 0) {
-              await this._save(remoteFilesVersion);
+              await this.syncJson.save(remoteFilesVersion);
               return;
             }
 
@@ -471,14 +191,14 @@ export class FileSync {
   async hashes(): Promise<FileSyncHashes> {
     const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
       // get the hashes of our local files
-      this.directory.hashes(),
+      this.syncJson.directory.hashes(),
       // get the hashes of our local filesVersion and the latest filesVersion
       (async () => {
         let gadgetFilesVersion: bigint;
         let gadgetHashes: Hashes;
         let filesVersionHashes: Hashes;
 
-        if (this.filesVersion === 0n) {
+        if (this.syncJson.filesVersion === 0n) {
           // we're either syncing for the first time or we're syncing a
           // non-empty directory without a `.gadget/sync.json` file,
           // regardless just get the hashes of the latest filesVersion
@@ -492,7 +212,7 @@ export class FileSync {
           // filesVersion
           const { fileSyncComparisonHashes } = await this.edit.query({
             query: FILE_SYNC_COMPARISON_HASHES_QUERY,
-            variables: { filesVersion: String(this.filesVersion) },
+            variables: { filesVersion: String(this.syncJson.filesVersion) },
           });
           gadgetFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
           gadgetHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
@@ -556,7 +276,7 @@ export class FileSync {
       if (hashes.inSync) {
         this._syncOperations.clear();
         this.ctx.log.info("filesystem in sync");
-        await this._save(hashes.gadgetFilesVersion);
+        await this.syncJson.save(hashes.gadgetFilesVersion);
         return;
       }
 
@@ -707,7 +427,7 @@ export class FileSync {
   }
 
   private async _sendChangesToGadget({
-    expectedFilesVersion = this.filesVersion,
+    expectedFilesVersion = this.syncJson.filesVersion,
     changes,
     printLimit,
   }: {
@@ -725,7 +445,7 @@ export class FileSync {
         return;
       }
 
-      const absolutePath = this.directory.absolute(normalizedPath);
+      const absolutePath = this.syncJson.directory.absolute(normalizedPath);
 
       let stats;
       try {
@@ -800,7 +520,7 @@ export class FileSync {
       throw new Error("Files version mismatch");
     }
 
-    await this._save(remoteFilesVersion);
+    await this.syncJson.save(remoteFilesVersion);
 
     if (filesyncProblems.length > 0) {
       this.ctx.log.println`{red Gadget has detected the following fatal errors with your files:}`;
@@ -811,7 +531,7 @@ export class FileSync {
 
   private async _writeToLocalFilesystem(options: { filesVersion: bigint | string; files: File[]; delete: string[] }): Promise<Changes> {
     const filesVersion = BigInt(options.filesVersion);
-    assert(filesVersion >= this.filesVersion, "filesVersion must be greater than or equal to current filesVersion");
+    assert(filesVersion >= this.syncJson.filesVersion, "filesVersion must be greater than or equal to current filesVersion");
 
     this.ctx.log.debug("writing to local filesystem", {
       filesVersion,
@@ -823,8 +543,8 @@ export class FileSync {
     const updated: string[] = [];
 
     await pMap(options.delete, async (filepath) => {
-      const currentPath = this.directory.absolute(filepath);
-      const backupPath = this.directory.absolute(".gadget/backup", this.directory.relative(filepath));
+      const currentPath = this.syncJson.directory.absolute(filepath);
+      const backupPath = this.syncJson.directory.absolute(".gadget/backup", this.syncJson.directory.relative(filepath));
 
       // rather than `rm -rf`ing files, we move them to
       // `.gadget/backup/` so that users can recover them if something
@@ -855,7 +575,7 @@ export class FileSync {
     });
 
     await pMap(options.files, async (file) => {
-      const absolutePath = this.directory.absolute(file.path);
+      const absolutePath = this.syncJson.directory.absolute(file.path);
       if (await fs.pathExists(absolutePath)) {
         updated.push(file.path);
       } else {
@@ -875,12 +595,12 @@ export class FileSync {
         await fs.chmod(absolutePath, file.mode & 0o777);
       }
 
-      if (absolutePath === this.directory.absolute(".ignore")) {
-        await this.directory.loadIgnoreFile();
+      if (absolutePath === this.syncJson.directory.absolute(".ignore")) {
+        await this.syncJson.directory.loadIgnoreFile();
       }
     });
 
-    await this._save(String(filesVersion));
+    await this.syncJson.save(String(filesVersion));
 
     const changes = new Changes([
       ...created.map((path) => [path, { type: "create" }] as const),
@@ -890,30 +610,12 @@ export class FileSync {
 
     if (changes.has("yarn.lock")) {
       this.ctx.log.info("running yarn install --check-files");
-      await execa("yarn", ["install", "--check-files"], { cwd: this.directory.path })
+      await execa("yarn", ["install", "--check-files"], { cwd: this.syncJson.directory.path })
         .then(() => this.ctx.log.info("yarn install complete"))
         .catch((error: unknown) => this.ctx.log.error("yarn install failed", { error }));
     }
 
     return changes;
-  }
-
-  /**
-   * Updates {@linkcode _syncJson} and saves it to `.gadget/sync.json`.
-   */
-  private async _save(filesVersion: string | bigint): Promise<void> {
-    assert(this._syncJson.environments[this.environment], "environment doesn't exist in _syncJson");
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this._syncJson.environments[this.environment]!.filesVersion = String(filesVersion);
-
-    if (this.environment === "development") {
-      this._syncJson.filesVersion = String(filesVersion);
-    }
-
-    this.ctx.log.debug("saving .gadget/sync.json");
-
-    await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), { ...this._syncJson }, { spaces: 2 });
   }
 }
 

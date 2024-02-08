@@ -3,11 +3,10 @@ import assert from "node:assert";
 import ora from "ora";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
-import type { ArgsDefinition } from "../services/command/arg.js";
 import { type Command, type Usage } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
 import { DeployDisallowedError } from "../services/filesync/error.js";
 import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
+import { SyncJson } from "../services/filesync/sync-json.js";
 import { ProblemSeverity, issuesToProblems, printProblems } from "../services/output/problems.js";
 import { confirm } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
@@ -22,19 +21,19 @@ export const usage: Usage = (ctx) => {
       {bold USAGE}
         ggt deploy [DIRECTORY]
 
-      {bold ARGUMENTS}
-        DIRECTORY         The directory to sync files from and deploy (default: ".")
-
       {bold EXAMPLES}
         $ ggt deploy
         $ ggt deploy ~/gadget/example
         $ ggt deploy ~/gadget/example --app=example
-        $ ggt deploy ~/gadget/example --app=example --environment=development
-        $ ggt deploy ~/gadget/example --app=example --environment=development --prefer=local
+        $ ggt deploy ~/gadget/example --app=example --env=development
+        $ ggt deploy ~/gadget/example --app=example --env=development --prefer=local
+
+      {bold ARGUMENTS}
+        DIRECTORY    The directory to sync files from and deploy (default: ".")
 
       {bold FLAGS}
         -a, --app=<name>           The Gadget application to deploy
-        -e, --environment=<name>   The environment to deploy from
+        -e, --env=<name>           The environment to deploy from
             --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
             --force                Deploy regardless of any issues found
 
@@ -45,22 +44,24 @@ export const usage: Usage = (ctx) => {
   return sprint`
     Deploy a development environment to production.
 
-    Deploy ensures your directory is in sync with your current 
-    development environment and that it is in a deployable state. If there are any
-    issues, it will display them and ask if you would like to deploy
-    anyways.
+    Deploy ensures your directory is in sync with your current
+    development environment and that it is in a deployable state.
+
+    If there are any issues, it will first display them and ask
+    if you would like to deploy anyways.
 
     {bold USAGE}
-      ggt deploy [DIRECTORY] [--app=<name>] [--environment=<name>] [--prefer=<filesystem>] [--force]
+
+      ggt deploy [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>] [--once]
+                             [--allow-unknown-directory] [--allow-different-app]
 
     {bold EXAMPLES}
 
       $ ggt deploy
       $ ggt deploy ~/gadget/example
       $ ggt deploy ~/gadget/example --app=example
-      $ ggt deploy ~/gadget/example --app=example --environment=development
-      $ ggt deploy ~/gadget/example --app=example --environment=development --prefer=local
-      $ ggt deploy ~/gadget/example --app=example --environment=development --prefer=local --force
+      $ ggt deploy ~/gadget/example --app=example --env=development
+      $ ggt deploy ~/gadget/example --app=example --env=development --prefer=local
 
     {bold ARGUMENTS}
 
@@ -73,7 +74,7 @@ export const usage: Usage = (ctx) => {
 
     {bold FLAGS}
 
-      -a, --app=<name>
+      -a, --app, --application=<name>
         The Gadget application to deploy.
 
         If not provided, the application will be inferred from the
@@ -83,7 +84,7 @@ export const usage: Usage = (ctx) => {
         If a ".gadget/sync.json" file is not found, you will be
         prompted to choose an application from your list of apps.
 
-      -e, --environment=<name>
+      -e, --env, --environment=<name>
         The environment to deploy from.
 
         If not provided, the environment will be inferred from the
@@ -103,6 +104,20 @@ export const usage: Usage = (ctx) => {
 
         Must be one of "local" or "gadget".
 
+      --allow-unknown-directory
+        Allows deploy to continue when the chosen directory already
+        contains files and does not contain a valid ".gadget/sync.json"
+        file within it, or any of its parent directories.
+
+        Defaults to false.
+
+      --allow-different-app
+        Allows deploy to continue when the chosen directory contains a
+        valid ".gadget/sync.json" file, but the application within
+        it does not match the application provided by the --app flag.
+
+        Defaults to false.
+
       --force
         Deploy your development environment to production regardless
         of any issues it may have.
@@ -114,17 +129,16 @@ export const usage: Usage = (ctx) => {
 `;
 };
 
-export const args = {
-  ...FileSyncArgs,
-} satisfies ArgsDefinition;
+// TODO: this should use --allow-problems or --allow-issues instead of --force
+export const args = FileSyncArgs;
 
 export const command: Command<typeof args> = async (ctx) => {
-  // deploy --force != sync --force
-  const filesync = await FileSync.init(ctx.child({ overwrite: { "--force": false } }));
-  assert(ctx.environment, "missing environment when deploying");
+  // TODO: this should use load instead of loadOrInit
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory: ctx.args._[0] });
+  const filesync = new FileSync(ctx, syncJson);
 
   ctx.log.printlns`
-    Deploying ${ctx.environment} to ${terminalLink(filesync.app.primaryDomain, `https://${filesync.app.primaryDomain}/`)}
+    Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
   `;
 
   const { inSync } = await filesync.hashes();
@@ -134,6 +148,7 @@ export const command: Command<typeof args> = async (ctx) => {
       environment before you can deploy.
     `;
 
+    // TODO: this should use push instead of sync
     await confirm(ctx, { message: "Would you like to sync now?" });
     await filesync.sync();
   }
@@ -145,7 +160,7 @@ export const command: Command<typeof args> = async (ctx) => {
   // back the server contract status
   const subscription = filesync.edit.subscribe({
     subscription: PUBLISH_STATUS_SUBSCRIPTION,
-    variables: { localFilesVersion: String(filesync.filesVersion), force: ctx.args["--force"] },
+    variables: { localFilesVersion: String(syncJson.filesVersion), force: ctx.args["--force"] },
     onError: (error) => {
       ctx.log.error("failed to deploy", { error });
       spinner.fail();
@@ -185,7 +200,7 @@ export const command: Command<typeof args> = async (ctx) => {
 
         if (!publishStarted) {
           await confirm(ctx, { message: "Do you want to continue?" });
-          subscription.resubscribe({ localFilesVersion: String(filesync.filesVersion), force: true });
+          subscription.resubscribe({ localFilesVersion: String(syncJson.filesVersion), force: true });
         } else {
           assert(ctx.args["--force"], "expected --force to be true");
           ctx.log.printlns2`
@@ -219,7 +234,7 @@ export const command: Command<typeof args> = async (ctx) => {
         return;
       }
 
-      const spinnerText = stepToSpinnerText(ctx, step);
+      const spinnerText = stepToSpinnerText(syncJson, step);
       if (spinnerText !== spinner.text) {
         if (spinner.text) {
           spinner.succeed();
@@ -243,7 +258,7 @@ export const AppDeploymentSteps = Object.freeze({
 
 export type AppDeploymentSteps = (typeof AppDeploymentSteps)[keyof typeof AppDeploymentSteps];
 
-export const stepToSpinnerText = (ctx: Context, step: string): string => {
+export const stepToSpinnerText = (syncJson: SyncJson, step: string): string => {
   switch (step) {
     case AppDeploymentSteps.NOT_STARTED:
     case AppDeploymentSteps.STARTING:
@@ -253,7 +268,7 @@ export const stepToSpinnerText = (ctx: Context, step: string): string => {
     case AppDeploymentSteps.CONVERGING_STORAGE:
       return "Setting up database";
     case AppDeploymentSteps.PUBLISHING_TREE:
-      return `Copying ${ctx.environment}`;
+      return `Copying ${syncJson.env.name}`;
     case AppDeploymentSteps.RELOADING_SANDBOX:
       return "Restarting app";
     case AppDeploymentSteps.COMPLETED:

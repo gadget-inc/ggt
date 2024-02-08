@@ -1,6 +1,6 @@
 import { assert, beforeEach, expect, vi, type SpyInstance } from "vitest";
 import * as prompt from "../../src/services/output/prompt.js";
-import { sprintln } from "../../src/services/output/sprint.js";
+import { sprintln, sprintlns } from "../../src/services/output/sprint.js";
 import type { ArgsType, FunctionPropertyNames } from "../../src/services/util/types.js";
 import { printStackTraceAndFail } from "./debug.js";
 
@@ -164,20 +164,34 @@ export const mockSideEffects = (): void => {
 
   beforeEach(() => {
     // alway opt in to confirm prompts
-    mock(prompt, "confirm", () => {
+    mock(prompt, "confirm", (_, { message }) => {
       printStackTraceAndFail(sprintln`
-        confirm() was called unexpectedly.
+        confirm("${message}") was called unexpectedly.
 
-        Use mock(confirm, () => value) before running your test to mock the user's response.
+        If this was expected, mock the user's response:
+
+          // mock all confirmations
+          mock(confirm, noop);
+
+          // mock sequential confirmations
+          mockOnce(confirm, noop)
+          mockOnce(confirm, noop)
       `);
     });
 
     // alway opt in to select prompts
-    mock(prompt, "select", () => {
-      printStackTraceAndFail(sprintln`
-        select() was called unexpectedly.
+    mock(prompt, "select", (_, { message }) => {
+      printStackTraceAndFail(sprintlns`
+        select("${message}") was called unexpectedly.
 
-        Use mock(select, () => value) before running your test to mock the user's response.
+        If this was expected, do the following to mock the user's response:
+
+          // mock all selects
+          mock(select, () => value);
+
+          // mock sequential selects
+          mockOnce(select, () => firstValue)
+          mockOnce(select, () => secondValue)
       `);
     });
 

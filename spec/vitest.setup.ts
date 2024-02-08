@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import nock from "nock";
 import process from "node:process";
 import { beforeEach, expect } from "vitest";
+import { installJsonExtensions, uninstallJsonExtensions } from "../src/services/util/json.js";
 import { mockConfig } from "./__support__/config.js";
 import { mockContext } from "./__support__/context.js";
 import { mockSideEffects } from "./__support__/mock.js";
@@ -15,6 +16,9 @@ beforeEach(async () => {
   // always clear the test directory
   await fs.emptyDir(testDirPath());
 
+  // always install JSON extensions
+  installJsonExtensions();
+
   // don't memoize anything between tests
   const { clearMemoized } = await import("../src/services/util/function.js");
   clearMemoized();
@@ -25,6 +29,8 @@ beforeEach(async () => {
   return () => {
     // always assert that all nock'd requests were made
     expect(nock.pendingMocks()).toEqual([]);
+
+    uninstallJsonExtensions();
   };
 });
 

@@ -17,9 +17,9 @@ export const usage: Usage = () => {
       ggt [COMMAND]
 
     {bold COMMANDS}
-      sync           Sync your Gadget application's source code
-      push           Push your local file changes to Gadget
-      pull           Pull Gadget's file changes to your local filesystem
+      sync           Sync your local filesystem with Gadget
+      push           Push your local filesystem to Gadget
+      pull           Pull Gadget's filesystem
       list           List your apps
       login          Log in to your account
       logout         Log out of your account

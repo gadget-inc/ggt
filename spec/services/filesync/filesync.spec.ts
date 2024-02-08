@@ -6,19 +6,18 @@ import { randomUUID } from "node:crypto";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args } from "../../../src/commands/sync.js";
-import * as app from "../../../src/services/app/app.js";
 import { EditError } from "../../../src/services/app/edit/error.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../src/services/app/edit/operation.js";
-import { ArgError } from "../../../src/services/command/arg.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions } from "../../../src/services/filesync/directory.js";
-import { InvalidSyncFileError, TooManySyncAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
+import { TooManySyncAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
 import { FileSync } from "../../../src/services/filesync/filesync.js";
 import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.js";
+import { SyncJson } from "../../../src/services/filesync/sync-json.js";
 import { confirm, select } from "../../../src/services/output/prompt.js";
 import { noop } from "../../../src/services/util/function.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
-import { multiEnvironmentTestApp, nockTestApps, testApp } from "../../__support__/app.js";
+import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
 import { nockEditResponse } from "../../__support__/edit.js";
 import { expectError } from "../../__support__/error.js";
@@ -30,298 +29,6 @@ import { expectProcessExit } from "../../__support__/process.js";
 import { expectStdout } from "../../__support__/stream.js";
 import { mockSystemTime } from "../../__support__/time.js";
 import { loginTestUser } from "../../__support__/user.js";
-
-describe("FileSync.init", () => {
-  let appDir: string;
-  let appDirPath: (...segments: string[]) => string;
-
-  beforeEach(() => {
-    loginTestUser();
-    nockTestApps();
-
-    appDir = testDirPath("local");
-    appDirPath = (...segments) => testDirPath("local", ...segments);
-  });
-
-  it("ensures `dir` exists", async () => {
-    await expect(fs.exists(appDir)).resolves.toBe(false);
-
-    await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }));
-
-    expect(fs.existsSync(appDir)).toBe(true);
-  });
-
-  it("loads state from .gadget/sync.json", async () => {
-    const state = {
-      app: testApp.slug,
-      filesVersion: "77",
-      currentEnvironment: "development",
-      environments: {
-        development: { filesVersion: "77" },
-      },
-    };
-    await fs.outputJSON(appDirPath(".gadget/sync.json"), state);
-
-    const filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }));
-
-    // @ts-expect-error _syncJson is private
-    expect(filesync._syncJson).toEqual(state);
-  });
-
-  it("loads state from an old .gadget/sync.json and ignores mtime", async () => {
-    const state = {
-      app: testApp.slug,
-      filesVersion: "77",
-      mtime: 1658153625236,
-    };
-
-    await fs.outputJSON(appDirPath(".gadget/sync.json"), state);
-
-    const filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }));
-
-    // @ts-expect-error _syncJson is private
-    expect(filesync._syncJson).toEqual({
-      ...state,
-      currentEnvironment: "development",
-      environments: {
-        development: { filesVersion: "77" },
-      },
-    });
-  });
-
-  it("uses default state if .gadget/sync.json does not exist and `dir` is empty", async () => {
-    const filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }));
-
-    // @ts-expect-error _syncJson is private
-    expect(filesync._syncJson).toEqual({
-      app: "test",
-      filesVersion: "0",
-      mtime: 0,
-      currentEnvironment: "development",
-      environments: {
-        development: { filesVersion: "0" },
-      },
-    });
-  });
-
-  it("throws InvalidSyncFileError if .gadget/sync.json does not exist and `dir` is not empty", async () => {
-    await fs.outputFile(appDirPath("foo.js"), "foo");
-
-    await expect(FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }))).rejects.toThrow(
-      InvalidSyncFileError,
-    );
-  });
-
-  it("throws InvalidSyncFileError if .gadget/sync.json is invalid", async () => {
-    // has trailing comma
-    await fs.outputFile(appDirPath(".gadget/sync.json"), '{"app":"test","filesVersion":"77","mtime":1658153625236,}');
-
-    await expect(FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }))).rejects.toThrow(
-      InvalidSyncFileError,
-    );
-  });
-
-  it("does not throw InvalidSyncFileError if .gadget/sync.json is invalid and `--force` is passed", async () => {
-    // has trailing comma
-    await fs.outputFile(
-      appDirPath(".gadget/sync.json"),
-      '{"app":"test","filesVersion":"77", "currentEnvironment": "development", "environments": {"development": {"filesVersion": "77"}},}',
-    );
-
-    const filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--force"] }));
-
-    // @ts-expect-error _syncJson is private
-    expect(filesync._syncJson).toEqual({
-      app: testApp.slug,
-      currentEnvironment: "development",
-      filesVersion: "0",
-      mtime: 0,
-      environments: {
-        development: { filesVersion: "0" },
-      },
-    });
-  });
-
-  it("throws ArgError if the `--app` arg is passed a slug that does not exist within the user's available apps", async () => {
-    const error = await expectError(() => FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", "does-not-exist"] })));
-
-    expect(error).toBeInstanceOf(ArgError);
-    expect(error.message).toMatchInlineSnapshot(`
-      "Unknown application:
-
-        does-not-exist
-
-      Did you mean one of these?
-
-        • not-test
-        • test
-        • test-multi-environment"
-    `);
-  });
-
-  it("throws ArgError if the user doesn't have any available apps", async () => {
-    mockOnce(app, "getApps", () => []);
-
-    const error = await expectError(() => FileSync.init(makeContext({ parse: args, argv: ["sync", appDir] })));
-
-    expect(error).toBeInstanceOf(ArgError);
-    expect(error.message).toMatchInlineSnapshot(`
-      "You (test@example.com) don't have have any Gadget applications.
-
-      Visit https://gadget.new to create one!"
-    `);
-  });
-
-  it("throws ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json", async () => {
-    await fs.outputJson(appDirPath(".gadget/sync.json"), { app: "not-test", filesVersion: "77", mtime: 1658153625236 });
-
-    const error = await expectError(() => FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] })));
-
-    expect(error).toBeInstanceOf(ArgError);
-    expect(error.message).toMatch(/^You were about to sync the following app to the following directory:/);
-  });
-
-  it("does not throw ArgError if the `--environment` flag is passed a different environment than the one in .gadget/sync.json", async () => {
-    await fs.outputJson(appDirPath(".gadget/sync.json"), {
-      app: multiEnvironmentTestApp.slug,
-      currentEnvironment: "development",
-      filesVersion: "0",
-      environments: {
-        development: { filesVersion: "0" },
-      },
-    });
-
-    const filesync = await FileSync.init(
-      makeContext({
-        parse: args,
-        argv: ["sync", appDir, "--app", multiEnvironmentTestApp.slug, "--environment", "other-environment-development"],
-      }),
-    );
-
-    // @ts-expect-error _syncJson is private
-    expect(filesync._syncJson).toEqual({
-      app: multiEnvironmentTestApp.slug,
-      currentEnvironment: "other-environment-development",
-      filesVersion: "0",
-      environments: {
-        development: { filesVersion: "0" },
-        "other-environment-development": { filesVersion: "0" },
-      },
-    });
-  });
-
-  it("does not throw ArgError if the `--app` flag is passed a different app name than the one in .gadget/sync.json and `--force` is passed", async () => {
-    await fs.outputJson(appDirPath(".gadget/sync.json"), {
-      app: "not-test",
-      currentEnvironment: "development",
-      filesVersion: "77",
-      environments: {
-        development: { filesVersion: "77" },
-      },
-    });
-
-    const filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--force"] }));
-
-    // @ts-expect-error _syncJson is private
-    expect(filesync._syncJson).toEqual({
-      app: testApp.slug,
-      filesVersion: "0",
-      mtime: 0,
-      currentEnvironment: "development",
-      environments: { development: { filesVersion: "0" } },
-    });
-  });
-
-  it("does not throw ArgError if the `--environment` flag is passed a different environment than the one in .gadget/sync.json and `--force` is passed", async () => {
-    await fs.outputJson(appDirPath(".gadget/sync.json"), {
-      app: multiEnvironmentTestApp.slug,
-      filesVersion: "77",
-      currentEnvironment: "development",
-      environments: {
-        development: {
-          filesVersion: "77",
-        },
-      },
-    });
-
-    const filesync = await FileSync.init(
-      makeContext({
-        parse: args,
-        argv: ["sync", appDir, "--app", multiEnvironmentTestApp.slug, "--environment", "cool-environment-development", "--force"],
-      }),
-    );
-
-    // @ts-expect-error _syncJson is private
-    expect(filesync._syncJson).toEqual({
-      app: multiEnvironmentTestApp.slug,
-      currentEnvironment: "cool-environment-development",
-      filesVersion: "77",
-      environments: {
-        development: {
-          filesVersion: "77",
-        },
-        "cool-environment-development": {
-          filesVersion: "0",
-        },
-      },
-    });
-  });
-
-  it("retains environments state when `--environment` flag is passed", async () => {
-    const initialState = {
-      app: multiEnvironmentTestApp.slug,
-      filesVersion: "10",
-      currentEnvironment: "development",
-      environments: {
-        development: { filesVersion: "10" },
-      },
-    };
-
-    await fs.outputJSON(appDirPath(".gadget/sync.json"), initialState);
-
-    const filesync = await FileSync.init(
-      makeContext({ parse: args, argv: ["sync", appDir, "--environment", "cool-environment-development"] }),
-    );
-
-    // @ts-expect-error _syncJson is private
-    expect(filesync._syncJson).toEqual({
-      ...initialState,
-      currentEnvironment: "cool-environment-development",
-      environments: {
-        ...initialState.environments,
-        "cool-environment-development": { filesVersion: "0" },
-      },
-    });
-  });
-
-  it("retains multiple environment state when `--environment` flag is passed", async () => {
-    const initialState = {
-      app: multiEnvironmentTestApp.slug,
-      filesVersion: "10",
-      currentEnvironment: "development",
-      environments: {
-        development: { filesVersion: "10" },
-        "cool-environment-development": { filesVersion: "14" },
-      },
-    };
-
-    await fs.outputJSON(appDirPath(".gadget/sync.json"), initialState);
-
-    const filesync = await FileSync.init(
-      makeContext({ parse: args, argv: ["sync", appDir, "--environment", "other-environment-development"] }),
-    );
-
-    // @ts-expect-error _syncJson is private
-    expect(filesync._syncJson).toEqual({
-      ...initialState,
-      currentEnvironment: "other-environment-development",
-      environments: {
-        ...initialState.environments,
-        "other-environment-development": { filesVersion: "0" },
-      },
-    });
-  });
-});
 
 describe("FileSync._writeToLocalFilesystem", () => {
   let appDir: string;
@@ -337,7 +44,10 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     appDir = testDirPath("local");
     appDirPath = (...segments) => testDirPath("local", ...segments);
-    filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }));
+
+    const ctx = makeContext({ parse: args, argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
+    filesync = new FileSync(ctx, syncJson);
 
     // @ts-expect-error _writeToLocalFilesystem is private
     writeToLocalFilesystem = filesync._writeToLocalFilesystem.bind(filesync);
@@ -363,7 +73,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       "some/deeply/nested/file.js": "bar",
     });
 
-    expect(filesync.filesVersion).toBe(1n);
+    expect(filesync.syncJson.filesVersion).toBe(1n);
 
     if (supportsPermissions) {
       const fileStat = await fs.stat(appDirPath("file.js"));
@@ -389,7 +99,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       "some/deeply/nested/": "",
     });
 
-    expect(filesync.filesVersion).toBe(1n);
+    expect(filesync.syncJson.filesVersion).toBe(1n);
   });
 
   it("deletes files", async () => {
@@ -426,11 +136,11 @@ describe("FileSync._writeToLocalFilesystem", () => {
       "some/deeply/nested/": "",
     });
 
-    expect(filesync.filesVersion).toBe(1n);
+    expect(filesync.syncJson.filesVersion).toBe(1n);
   });
 
   it("updates `state.filesVersion` even if nothing changed", async () => {
-    expect(filesync.filesVersion).toBe(0n);
+    expect(filesync.syncJson.filesVersion).toBe(0n);
 
     await writeToLocalFilesystem({
       filesVersion: 1n,
@@ -438,7 +148,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       delete: [],
     });
 
-    expect(filesync.filesVersion).toBe(1n);
+    expect(filesync.syncJson.filesVersion).toBe(1n);
   });
 
   it("does not throw ENOENT errors when deleting files", async () => {
@@ -448,7 +158,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       delete: ["does/not/exist.js"],
     });
 
-    expect(filesync.filesVersion).toBe(1n);
+    expect(filesync.syncJson.filesVersion).toBe(1n);
   });
 
   it("deletes files before writing files", async () => {
@@ -475,7 +185,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       "foo/baz.js": "// baz.js",
     });
 
-    expect(filesync.filesVersion).toBe(1n);
+    expect(filesync.syncJson.filesVersion).toBe(1n);
   });
 
   it("reloads the ignore file when it changes", async () => {
@@ -485,9 +195,9 @@ describe("FileSync._writeToLocalFilesystem", () => {
       "file3.js": "three",
     });
 
-    await filesync.directory.loadIgnoreFile();
+    await filesync.syncJson.directory.loadIgnoreFile();
 
-    expect(filesync.directory.ignores("file2.js")).toBe(true);
+    expect(filesync.syncJson.directory.ignores("file2.js")).toBe(true);
 
     await writeToLocalFilesystem({
       filesVersion: 1n,
@@ -495,15 +205,15 @@ describe("FileSync._writeToLocalFilesystem", () => {
       delete: [],
     });
 
-    expect(filesync.directory.ignores("file2.js")).toBe(false);
+    expect(filesync.syncJson.directory.ignores("file2.js")).toBe(false);
   });
 
   it("removes old backup files before moving new files into place", async () => {
     // create a file named `foo.js`
-    await fs.outputFile(filesync.directory.absolute("foo.js"), "// foo");
+    await fs.outputFile(filesync.syncJson.directory.absolute("foo.js"), "// foo");
 
     // create a directory named `.gadget/backup/foo.js`
-    await fs.mkdirp(filesync.directory.absolute(".gadget/backup/foo.js"));
+    await fs.mkdirp(filesync.syncJson.directory.absolute(".gadget/backup/foo.js"));
 
     // tell filesync to delete foo.js, which should move it to
     // .gadget/backup/foo.js if the backup file is not removed first,
@@ -519,7 +229,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
   });
 
   it("ensures the filesVersion is greater than or equal to the current filesVersion", async () => {
-    expect(filesync.filesVersion).toBe(0n);
+    expect(filesync.syncJson.filesVersion).toBe(0n);
 
     await writeToLocalFilesystem({
       filesVersion: 1n,
@@ -527,7 +237,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       delete: [],
     });
 
-    expect(filesync.filesVersion).toBe(1n);
+    expect(filesync.syncJson.filesVersion).toBe(1n);
 
     await writeToLocalFilesystem({
       filesVersion: 1n,
@@ -535,7 +245,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       delete: [],
     });
 
-    expect(filesync.filesVersion).toBe(1n);
+    expect(filesync.syncJson.filesVersion).toBe(1n);
 
     await expect(() =>
       writeToLocalFilesystem({
@@ -612,7 +322,9 @@ describe("FileSync._sendChangesToGadget", () => {
     loginTestUser();
     nockTestApps();
 
-    filesync = await FileSync.init(makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug] }));
+    const ctx = makeContext({ parse: args, argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
+    filesync = new FileSync(ctx, syncJson);
 
     // @ts-expect-error _sendChangesToGadget is private
     sendChangesToGadget = filesync._sendChangesToGadget.bind(filesync);
@@ -851,7 +563,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "gadget.txt": "// gadget",
           "local.txt": "// local",
         },
@@ -917,7 +629,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
         "localDir": {
           ".gadget/": "",
           ".gadget/client.js": "// client",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"4\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"4\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"4\\"}",
           "gadget.txt": "// gadget",
           "local.txt": "// local",
         },
@@ -958,7 +670,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
           "foo.js": "// foo",
         },
       }
@@ -1001,7 +713,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
           ".ignore": "foo.js",
           "foo.js": "// foo (local)",
         },
@@ -1029,39 +741,39 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-              "gadget-file.js": "// gadget",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
             ".gadget/": "",
             "foo.js": "// foo",
             "gadget-file.js": "// gadget",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "foo.js": "// foo",
-            "gadget-file.js": "// gadget",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1078,28 +790,28 @@ describe("FileSync.sync", () => {
     await expectProcessExit(() => filesync.sync());
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "foo (gadget)",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "foo",
           },
-          "gadgetDir": {
+          "2": {
             ".gadget/": "",
             "foo.js": "foo (gadget)",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}}}",
-            "foo.js": "foo (local)",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "foo (gadget)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+          "foo.js": "foo (local)",
+        },
+      }
+    `);
   });
 
   it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
@@ -1120,32 +832,32 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-            },
-            "3": {
-              ".gadget/": "",
-              "foo.js": "// foo (local)",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+          },
+          "3": {
             ".gadget/": "",
             "foo.js": "// foo (local)",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "foo.js": "// foo (local)",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (local)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (local)",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1167,32 +879,32 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-            },
-            "3": {
-              ".gadget/": "",
-              "foo.js": "// foo (local)",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+          },
+          "3": {
             ".gadget/": "",
             "foo.js": "// foo (local)",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "foo.js": "// foo (local)",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (local)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (local)",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1217,39 +929,39 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              "foo.js": "// foo (local)",
-              "gadget-file.js": "// gadget",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
             ".gadget/": "",
             "foo.js": "// foo (local)",
             "gadget-file.js": "// gadget",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "foo.js": "// foo (local)",
-            "gadget-file.js": "// gadget",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (local)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (local)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1273,39 +985,39 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              "foo.js": "// foo (local)",
-              "gadget-file.js": "// gadget",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
             ".gadget/": "",
             "foo.js": "// foo (local)",
             "gadget-file.js": "// gadget",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "foo.js": "// foo (local)",
-            "gadget-file.js": "// gadget",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (local)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (local)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1328,28 +1040,28 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
             ".gadget/": "",
             "foo.js": "// foo (gadget)",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
-            "foo.js": "// foo (gadget)",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (gadget)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "foo.js": "// foo (gadget)",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1371,28 +1083,28 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
             ".gadget/": "",
             "foo.js": "// foo (gadget)",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
-            "foo.js": "// foo (gadget)",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (gadget)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "foo.js": "// foo (gadget)",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1417,39 +1129,39 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-              "gadget-file.js": "// gadget",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
             ".gadget/": "",
             "foo.js": "// foo (gadget)",
             "gadget-file.js": "// gadget",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "foo.js": "// foo (gadget)",
-            "gadget-file.js": "// gadget",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (gadget)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (gadget)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1474,39 +1186,39 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-              "gadget-file.js": "// gadget",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
             ".gadget/": "",
             "foo.js": "// foo (gadget)",
             "gadget-file.js": "// gadget",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "foo.js": "// foo (gadget)",
-            "gadget-file.js": "// gadget",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (gadget)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (gadget)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1530,39 +1242,39 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              "foo.js": "// foo (gadget)",
-              "gadget-file.js": "// gadget",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "foo.js": "// foo (gadget)",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
             ".gadget/": "",
             "foo.js": "// foo (gadget)",
             "gadget-file.js": "// gadget",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "foo.js": "// foo (gadget)",
-            "gadget-file.js": "// gadget",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "foo.js": "// foo (gadget)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (gadget)",
+          "gadget-file.js": "// gadget",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1583,28 +1295,28 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              ".gadget/client.js": "// client",
-            },
-            "2": {
-              ".gadget/": "",
-              ".gadget/client.js": "// client (gadget)",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
           },
-          "gadgetDir": {
+          "2": {
             ".gadget/": "",
             ".gadget/client.js": "// client (gadget)",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/client.js": "// client (gadget)",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client (gadget)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client (gadget)",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1630,37 +1342,37 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              ".gadget/client.js": "// client",
-              "foo.js": "// foo",
-            },
-            "2": {
-              ".gadget/": "",
-              ".gadget/client.js": "// client (gadget)",
-              "foo.js": "// foo (gadget)",
-            },
-            "3": {
-              ".gadget/": "",
-              ".gadget/client.js": "// client (gadget)",
-              "foo.js": "// foo (local)",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            "foo.js": "// foo",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client (gadget)",
+            "foo.js": "// foo (gadget)",
+          },
+          "3": {
             ".gadget/": "",
             ".gadget/client.js": "// client (gadget)",
             "foo.js": "// foo (local)",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/client.js": "// client (gadget)",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "foo.js": "// foo (local)",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client (gadget)",
+          "foo.js": "// foo (local)",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client (gadget)",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "foo.js": "// foo (local)",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1679,31 +1391,34 @@ describe("FileSync.sync", () => {
     await filesync.sync();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              ".gadget/client.js": "// client",
-            },
-          },
-          "gadgetDir": {
+      {
+        "filesVersionDirs": {
+          "1": {
             ".gadget/": "",
             ".gadget/client.js": "// client",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/client.js": "// client",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}}}",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
 
-  it("merges files when .gadget/sync.json doesn't exist and force = true", async () => {
+  it("merges files when .gadget/sync.json doesn't exist and --allow-unknown-directory is passed", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--force"] }),
+      ctx: makeContext({
+        parse: args,
+        argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`, "--allow-unknown-directory"],
+      }),
       filesVersion1Files: {
         ".gadget/client.js": "// client",
         ".gadget/server.js": "// server",
@@ -1750,7 +1465,7 @@ describe("FileSync.sync", () => {
           ".gadget/": "",
           ".gadget/client.js": "// client",
           ".gadget/server.js": "// server",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
         },
@@ -1782,34 +1497,34 @@ describe("FileSync.sync", () => {
     expect(scope.isDone()).toBe(true);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-          {
-            "filesVersionDirs": {
-              "1": {
-                ".gadget/": "",
-              },
-              "2": {
-                ".gadget/": "",
-                "gadget.txt": "// gadget",
-              },
-              "3": {
-                ".gadget/": "",
-                "gadget.txt": "// gadget",
-                "local.txt": "// local",
-              },
-            },
-            "gadgetDir": {
-              ".gadget/": "",
-              "gadget.txt": "// gadget",
-              "local.txt": "// local",
-            },
-            "localDir": {
-              ".gadget/": "",
-              ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-              "gadget.txt": "// gadget",
-              "local.txt": "// local",
-            },
-          }
-        `);
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "gadget.txt": "// gadget",
+          },
+          "3": {
+            ".gadget/": "",
+            "gadget.txt": "// gadget",
+            "local.txt": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget.txt": "// gadget",
+          "local.txt": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "gadget.txt": "// gadget",
+          "local.txt": "// local",
+        },
+      }
+    `);
   });
 
   it(`throws ${TooManySyncAttemptsError.name} if the number of sync attempts exceeds the maximum`, async () => {
@@ -1864,11 +1579,11 @@ describe("FileSync.sync", () => {
     await expect(filesync.sync({ maxAttempts })).resolves.not.toThrow();
   });
 
-  it("bumps the correct environment version when multi-environment is enabled", async () => {
+  it("bumps the correct environment filesVersion when multi-environment is enabled", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       ctx: makeContext({
         parse: args,
-        argv: ["sync", appDir, "--app", multiEnvironmentTestApp.slug, "--environment", "cool-environment-development"],
+        argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[2]!.name}`],
       }),
       filesVersion1Files: {
         "foo.js": "// foo",
@@ -1877,10 +1592,10 @@ describe("FileSync.sync", () => {
         "foo.js": "// foo",
         "local-file.js": "// local",
         ".gadget/sync.json": JSON.stringify({
-          app: multiEnvironmentTestApp.slug,
-          filesVersion: "1",
+          application: testApp.slug,
+          environment: testApp.environments[0]!.name,
           environments: {
-            development: {
+            [testApp.environments[0]!.name]: {
               filesVersion: "1",
             },
           },
@@ -1921,7 +1636,7 @@ describe("FileSync.sync", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/sync.json": "{\\"app\\":\\"test-multi-environment\\",\\"filesVersion\\":\\"1\\",\\"currentEnvironment\\":\\"cool-environment-development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"},\\"cool-environment-development\\":{\\"filesVersion\\":\\"3\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"cool-environment-development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"},\\"cool-environment-development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
           "foo.js": "// foo",
           "gadget-file.js": "// gadget",
           "local-file.js": "// local",
@@ -1952,27 +1667,27 @@ describe("FileSync.push", () => {
     await filesync.push();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
             ".gadget/": "",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -1993,31 +1708,31 @@ describe("FileSync.push", () => {
     await filesync.push();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
             ".gadget/": "",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
 
@@ -2039,31 +1754,31 @@ describe("FileSync.push", () => {
     await filesync.push();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
             ".gadget/": "",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -2087,36 +1802,36 @@ describe("FileSync.push", () => {
     await filesync.push();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-              ".gadget/client.js": "// client",
-            },
-            "2": {
-              ".gadget/": "",
-              ".gadget/client.js": "// client v2",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              ".gadget/client.js": "// client v2",
-              "local-file.js": "// local",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client v2",
+            "gadget-file.js": "// gadget",
+          },
+          "3": {
             ".gadget/": "",
             ".gadget/client.js": "// client v2",
             "local-file.js": "// local",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/client.js": "// client",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}}}",
-            "local-file.js": "// local",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client v2",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"3\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"3\\"}",
+          "local-file.js": "// local",
+        },
+      }
+    `);
 
     await expect(expectLocalAndGadgetHashesMatch()).rejects.toThrowError();
   });
@@ -2143,27 +1858,27 @@ describe("FileSync.pull", () => {
     await filesync.pull();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "gadget-file.js": "// gadget",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
             ".gadget/": "",
             "gadget-file.js": "// gadget",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
-            "gadget-file.js": "// gadget",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget-file.js": "// gadget",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "gadget-file.js": "// gadget",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -2184,29 +1899,29 @@ describe("FileSync.pull", () => {
     await filesync.pull();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "gadget-file.js": "// gadget",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
             ".gadget/": "",
             "gadget-file.js": "// gadget",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/backup/": "",
-            ".gadget/backup/local-file.js": "// local",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
-            "gadget-file.js": "// gadget",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget-file.js": "// gadget",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/local-file.js": "// local",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "gadget-file.js": "// gadget",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
 
@@ -2228,29 +1943,29 @@ describe("FileSync.pull", () => {
     await filesync.pull();
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "gadget-file.js": "// gadget",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
             ".gadget/": "",
             "gadget-file.js": "// gadget",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/backup/": "",
-            ".gadget/backup/local-file.js": "// local",
-            ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
-            "gadget-file.js": "// gadget",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget-file.js": "// gadget",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/local-file.js": "// local",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+          "gadget-file.js": "// gadget",
+        },
+      }
+    `);
 
     await expectLocalAndGadgetHashesMatch();
   });
@@ -2288,7 +2003,7 @@ describe("FileSync.pull", () => {
           ".gadget/backup/": "",
           ".gadget/backup/.gadget/": "",
           ".gadget/backup/.gadget/local.js": "// .gadget/local",
-          ".gadget/sync.json": "{\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\",\\"currentEnvironment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}}}",
+          ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
           "gadget-file.js": "// gadget",
         },
       }

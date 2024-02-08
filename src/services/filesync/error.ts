@@ -48,15 +48,15 @@ export class UnknownDirectoryError extends CLIError {
 
         ${dir}
 
-      If you're running "ggt sync" for the first time, we recommend
+      If you're running "ggt dev" for the first time, we recommend
       using a gadget specific directory like this:
 
-        ggt sync ~/gadget/${appSlug} --app=${appSlug}
+        ggt dev ~/gadget/${appSlug} --app=${appSlug}
 
       If you're certain you want to sync the contents of that directory
-      to Gadget, run "ggt sync" again with the {bold --allow-unknown-directory} flag:
+      to Gadget, run "ggt dev" again with the {bold --allow-unknown-directory} flag:
 
-        ggt sync ${dir} --app=${appSlug} --allow-unknown-directory
+        ggt dev ${dir} --app=${appSlug} --allow-unknown-directory
     `;
   }
 }

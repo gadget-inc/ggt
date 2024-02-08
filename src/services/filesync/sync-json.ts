@@ -190,7 +190,7 @@ export class SyncJson {
 
               ${ctx.app.slug} (${ctx.env.name}) → ${directory.path}
 
-          Run "ggt sync" with the {bold --allow-different-app} flag.
+          Run "ggt dev" with the {bold --allow-different-app} flag.
       `);
     }
 

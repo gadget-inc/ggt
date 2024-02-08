@@ -26,7 +26,7 @@ export const usage: Usage = () => {
       ggt [COMMAND]
 
     {bold COMMANDS}
-      sync           Sync your local and environment's filesystem
+      dev            Sync your local and environment's filesystem
       status         Show your local and environment's filesystem status
       push           Push your local filesystem
       pull           Pull your environment's filesystem
@@ -64,10 +64,15 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
 
   await warnIfUpdateAvailable(ctx);
 
-  const cmd = ctx.args._.shift();
+  let cmd = ctx.args._.shift();
   if (isNil(cmd)) {
     ctx.log.println(usage(ctx));
     process.exit(0);
+  }
+
+  if (cmd === "sync") {
+    ctx.log.debug('renaming "sync" to "dev" for backwards compatibility');
+    cmd = "dev";
   }
 
   if (!isAvailableCommand(cmd)) {

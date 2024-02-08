@@ -18,7 +18,7 @@ export const usage: Usage = (ctx) => {
       Pull changes from your environment's filesystem to your local filesystem.
 
       Changes will be calculated from the last time you ran
-      "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
+      "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
       {bold USAGE}
         ggt pull
@@ -42,7 +42,7 @@ export const usage: Usage = (ctx) => {
     Pull changes from your environment's filesystem to your local filesystem.
 
     Changes will be calculated from the last time you ran
-    "ggt sync", "ggt push", or "ggt pull" in the chosen directory.
+    "ggt dev", "ggt push", or "ggt pull" in the chosen directory.
 
     If your local filesystem has also made changes since the last sync,
     you will be prompted to discard them or abort the pull.
@@ -75,7 +75,7 @@ export const usage: Usage = (ctx) => {
 
       -f, --force
         Discard any changes made to your local filesystem
-        since the last "ggt sync", "ggt push", or "ggt pull".
+        since the last "ggt dev", "ggt push", or "ggt pull".
 
         Defaults to false.
 

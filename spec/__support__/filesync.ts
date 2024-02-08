@@ -11,7 +11,7 @@ import {
   type FileSyncDeletedEventInput,
   type MutationPublishFileSyncEventsArgs,
 } from "../../src/__generated__/graphql.js";
-import { args, type SyncArgs } from "../../src/commands/sync.js";
+import { args, type DevArgs } from "../../src/commands/dev.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -40,11 +40,11 @@ import { mock, mockRestore } from "./mock.js";
 import { testDirPath } from "./paths.js";
 import { timeoutMs } from "./sleep.js";
 
-export type SyncScenarioOptions<Args extends SyncJsonArgs = SyncArgs> = {
+export type FileSyncScenarioOptions<Args extends SyncJsonArgs = DevArgs> = {
   /**
    * The context to use for the {@linkcode SyncJson} instance.
    *
-   * @default makeContext(args, ["sync", localDir.path, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`])
+   * @default makeContext(args, ["dev", localDir.path, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`])
    */
   ctx?: Context<Args>;
 
@@ -82,7 +82,7 @@ export type SyncScenarioOptions<Args extends SyncJsonArgs = SyncArgs> = {
   afterPublishFileSyncEvents?: () => Promisable<void>;
 };
 
-export type SyncScenario<Args extends SyncJsonArgs = SyncArgs> = {
+export type SyncScenario<Args extends SyncJsonArgs = DevArgs> = {
   ctx: Context<Args>;
 
   /**
@@ -171,20 +171,20 @@ export type SyncScenario<Args extends SyncJsonArgs = SyncArgs> = {
 /**
  * Creates a filesync scenario for testing purposes.
  *
- * @see {@linkcode SyncScenarioOptions}
+ * @see {@linkcode FileSyncScenarioOptions}
  * @see {@linkcode SyncScenario}
  */
-export const makeSyncScenario = async <Args extends SyncJsonArgs = SyncArgs>({
+export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
   ctx,
   filesVersion1Files,
   localFiles,
   gadgetFiles,
   beforePublishFileSyncEvents,
   afterPublishFileSyncEvents,
-}: Partial<SyncScenarioOptions<Args>> = {}): Promise<SyncScenario<Args>> => {
+}: Partial<FileSyncScenarioOptions<Args>> = {}): Promise<SyncScenario<Args>> => {
   ctx ??= makeContext({
     parse: args,
-    argv: ["sync", testDirPath("local"), `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`],
+    argv: ["dev", testDirPath("local"), `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`],
   }) as Context<Args>;
 
   let gadgetFilesVersion = 1n;

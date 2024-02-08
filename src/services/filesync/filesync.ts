@@ -9,9 +9,9 @@ import PQueue from "p-queue";
 import pRetry from "p-retry";
 import type { Promisable } from "type-fest";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
+import type { DevArgs } from "../../commands/dev.js";
 import type { PullArgs } from "../../commands/pull.js";
 import type { PushArgs } from "../../commands/push.js";
-import type { SyncArgs } from "../../commands/sync.js";
 import { type EditSubscription } from "../app/edit/edit.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -35,7 +35,7 @@ import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hash
 import { MergeConflictPreference } from "./strategy.js";
 import { type SyncJson, type SyncJsonArgs } from "./sync-json.js";
 
-export type FileSyncArgs = SyncArgs | PushArgs | PullArgs;
+export type FileSyncArgs = DevArgs | PushArgs | PullArgs;
 
 export type FileSyncHashes = {
   inSync: boolean;
@@ -73,7 +73,7 @@ export class FileSync {
    * @param options.changes - The changes to send.
    * @returns A promise that resolves when the changes have been sent.
    */
-  async mergeChangesWithGadget(ctx: Context<SyncArgs>, { changes }: { changes: Changes }): Promise<void> {
+  async mergeChangesWithGadget(ctx: Context<DevArgs>, { changes }: { changes: Changes }): Promise<void> {
     await this._syncOperations.add(async () => {
       try {
         await this._sendChangesToGadget(ctx, { changes });
@@ -99,7 +99,7 @@ export class FileSync {
    * @returns A function that unsubscribes from changes on Gadget.
    */
   subscribeToGadgetChanges(
-    ctx: Context<SyncArgs>,
+    ctx: Context<DevArgs>,
     {
       beforeChanges = noop,
       afterChanges = noop,
@@ -256,7 +256,7 @@ export class FileSync {
    * - Conflicts are resolved by prompting the user to either keep their local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  async sync(ctx: Context<SyncArgs>, { hashes, maxAttempts = 10 }: { hashes?: FileSyncHashes; maxAttempts?: number } = {}): Promise<void> {
+  async sync(ctx: Context<DevArgs>, { hashes, maxAttempts = 10 }: { hashes?: FileSyncHashes; maxAttempts?: number } = {}): Promise<void> {
     let attempt = 0;
 
     do {
@@ -358,7 +358,7 @@ Your filesystem is already in sync.
     });
   }
 
-  private async _merge(ctx: Context<SyncArgs>, { localChanges, gadgetChanges, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
+  private async _merge(ctx: Context<DevArgs>, { localChanges, gadgetChanges, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
     const conflicts = getConflicts({ localChanges, gadgetChanges });
     if (conflicts.size > 0) {
       ctx.log.debug("conflicts detected", { conflicts });

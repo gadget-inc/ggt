@@ -23,7 +23,7 @@ describe("SyncJson.loadOrInit", () => {
     nockTestApps();
 
     localDir = await Directory.init(testDirPath("local"));
-    ctx = makeContext({ parse: SyncJsonArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    ctx = makeContext({ parse: SyncJsonArgs, argv: ["dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
 
     outputSyncJson = async (state) => {
       await fs.outputJSON(localDir.absolute(".gadget/sync.json"), state);

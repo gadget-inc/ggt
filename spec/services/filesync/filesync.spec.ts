@@ -5,9 +5,9 @@ import nock from "nock";
 import { randomUUID } from "node:crypto";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
+import { args as DevArgs } from "../../../src/commands/dev.js";
 import { args as PullArgs } from "../../../src/commands/pull.js";
 import { args as PushArgs } from "../../../src/commands/push.js";
-import { args as SyncArgs } from "../../../src/commands/sync.js";
 import { EditError } from "../../../src/services/app/edit/error.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../src/services/app/edit/operation.js";
 import type { Context } from "../../../src/services/command/context.js";
@@ -46,7 +46,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
     loginTestUser();
     nockTestApps();
 
-    ctx = makeContext({ parse: SyncArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    ctx = makeContext({ parse: DevArgs, argv: ["dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
     filesync = new FileSync(syncJson);
@@ -325,7 +325,7 @@ describe("FileSync._sendChangesToGadget", () => {
     loginTestUser();
     nockTestApps();
 
-    ctx = makeContext({ parse: SyncArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    ctx = makeContext({ parse: DevArgs, argv: ["dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
     filesync = new FileSync(syncJson);
@@ -868,7 +868,7 @@ describe("FileSync.sync", () => {
 
   it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is passed as an argument`, async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: SyncArgs, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=local"] }),
+      ctx: makeContext({ parse: DevArgs, argv: ["dev", appDir, "--app", testApp.slug, "--prefer=local"] }),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -972,7 +972,7 @@ describe("FileSync.sync", () => {
 
   it(`uses local conflicting changes and merges non-conflicting gadget changes when "${ConflictPreference.LOCAL}" is passed as an argument`, async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: SyncArgs, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=local"] }),
+      ctx: makeContext({ parse: DevArgs, argv: ["dev", appDir, "--app", testApp.slug, "--prefer=local"] }),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -1072,7 +1072,7 @@ describe("FileSync.sync", () => {
 
   it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: SyncArgs, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
+      ctx: makeContext({ parse: DevArgs, argv: ["dev", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -1229,7 +1229,7 @@ describe("FileSync.sync", () => {
 
   it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: SyncArgs, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
+      ctx: makeContext({ parse: DevArgs, argv: ["dev", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -1420,8 +1420,8 @@ describe("FileSync.sync", () => {
   it("merges files when .gadget/sync.json doesn't exist and --allow-unknown-directory is passed", async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       ctx: makeContext({
-        parse: SyncArgs,
-        argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`, "--allow-unknown-directory"],
+        parse: DevArgs,
+        argv: ["dev", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`, "--allow-unknown-directory"],
       }),
       filesVersion1Files: {
         ".gadget/client.js": "// client",
@@ -1586,8 +1586,8 @@ describe("FileSync.sync", () => {
   it("bumps the correct environment filesVersion when multi-environment is enabled", async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       ctx: makeContext({
-        parse: SyncArgs,
-        argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[2]!.name}`],
+        parse: DevArgs,
+        argv: ["dev", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[2]!.name}`],
       }),
       filesVersion1Files: {
         "foo.js": "// foo",

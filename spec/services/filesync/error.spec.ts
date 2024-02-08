@@ -31,7 +31,7 @@ describe(UnknownDirectoryError.name, () => {
     loginTestUser();
     nockTestApps();
 
-    const ctx = makeContext({ parse: SyncJsonArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    const ctx = makeContext({ parse: SyncJsonArgs, argv: ["dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
     const directory = await Directory.init(path.resolve("/Users/jane/doe/"));
 
     // mock fs.ensureDir so we don't actually create the /Users/jane/doe/ directory
@@ -49,15 +49,15 @@ describe(UnknownDirectoryError.name, () => {
 
         /Users/jane/doe
 
-      If you're running \\"ggt sync\\" for the first time, we recommend
+      If you're running \\"ggt dev\\" for the first time, we recommend
       using a gadget specific directory like this:
 
-        ggt sync ~/gadget/test --app=test
+        ggt dev ~/gadget/test --app=test
 
       If you're certain you want to sync the contents of that directory
-      to Gadget, run \\"ggt sync\\" again with the --allow-unknown-directory flag:
+      to Gadget, run \\"ggt dev\\" again with the --allow-unknown-directory flag:
 
-        ggt sync /Users/jane/doe --app=test --allow-unknown-directory"
+        ggt dev /Users/jane/doe --app=test --allow-unknown-directory"
     `);
   });
 });

@@ -16,7 +16,7 @@ export const usage: Usage = () => {
     your environment's filesystem.
 
     Changes will be calculated from the last time you ran
-    "ggt sync", "ggt push", or "ggt pull" in the chosen directory.
+    "ggt dev", "ggt push", or "ggt pull" in the chosen directory.
 
     {bold USAGE}
 

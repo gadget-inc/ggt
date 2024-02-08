@@ -18,7 +18,7 @@ export const usage: Usage = (ctx) => {
       Push changes from your local filesystem to your environment's filesystem.
 
       Changes will be calculated from the last time you ran
-      "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
+      "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
       {bold USAGE}
         ggt push
@@ -42,7 +42,7 @@ export const usage: Usage = (ctx) => {
     Push changes from your local filesystem to your environment's filesystem.
 
     Changes will be calculated from the last time you ran
-    "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
+    "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
     If your environment has also made changes since the last sync,
     you will be prompted to discard them or abort the push.
@@ -75,7 +75,7 @@ export const usage: Usage = (ctx) => {
 
       -f, --force
         Discard any changes made to your environment's filesystem
-        since the last "ggt sync", "ggt push", or "ggt pull".
+        since the last "ggt dev", "ggt push", or "ggt pull".
 
         Defaults to false.
 

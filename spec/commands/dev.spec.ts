@@ -3,7 +3,7 @@ import ms from "ms";
 import notifier from "node-notifier";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
-import { args, command as sync, type SyncArgs } from "../../src/commands/sync.js";
+import { args, command as sync, type DevArgs } from "../../src/commands/dev.js";
 import { EditError } from "../../src/services/app/edit/error.js";
 import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { type Context } from "../../src/services/command/context.js";
@@ -20,8 +20,8 @@ import { testDirPath } from "../__support__/paths.js";
 import { sleep, timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
 
-describe("sync", () => {
-  let ctx: Context<SyncArgs>;
+describe("dev", () => {
+  let ctx: Context<DevArgs>;
 
   beforeEach(() => {
     loginTestUser();
@@ -30,7 +30,7 @@ describe("sync", () => {
     ctx = makeContext({
       parse: args,
       argv: [
-        "sync",
+        "dev",
         testDirPath("local"),
         "--app",
         testApp.slug,

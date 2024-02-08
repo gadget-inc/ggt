@@ -23,7 +23,7 @@ import { isAbortError } from "../services/util/is.js";
 import type { PullArgs } from "./pull.js";
 import type { PushArgs } from "./push.js";
 
-export type SyncArgs = typeof args;
+export type DevArgs = typeof args;
 
 export const args = {
   ...SyncJsonArgs,
@@ -43,19 +43,19 @@ export const usage: Usage = (ctx) => {
       in real-time.
 
       Changes will be calculated from the last time you ran
-      "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
+      "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
       https://docs.gadget.dev/guides/development-tools/cli#filesync
 
       {bold USAGE}
-        ggt sync [DIRECTORY]
+        ggt dev [DIRECTORY]
 
       {bold EXAMPLES}
-        $ ggt sync
-        $ ggt sync ~/gadget/example
-        $ ggt sync ~/gadget/example --once
-        $ ggt sync ~/gadget/example --once --app=example
-        $ ggt sync ~/gadget/example --once --app=example --env=development --prefer=local
+        $ ggt dev
+        $ ggt dev ~/gadget/example
+        $ ggt dev ~/gadget/example --once
+        $ ggt dev ~/gadget/example --once --app=example
+        $ ggt dev ~/gadget/example --once --app=example --env=development --prefer=local
 
       {bold ARGUMENTS}
         DIRECTORY    The directory to sync files to (default: ".")
@@ -66,7 +66,7 @@ export const usage: Usage = (ctx) => {
             --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
             --once                 Sync once and exit
 
-        Run "ggt sync --help" for more information.
+        Run "ggt dev --help" for more information.
     `;
   }
 
@@ -75,7 +75,7 @@ export const usage: Usage = (ctx) => {
     in real-time.
 
     Changes will be calculated from the last time you ran
-    "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
+    "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
     If your environment has also made changes since the last sync,
     they will be merged with your local changes.
@@ -83,7 +83,7 @@ export const usage: Usage = (ctx) => {
     If conflicting changes are detected, you will be prompted to
     choose which changes to keep before sync resumes.
 
-    While "ggt sync" is running, changes on your local filesystem are
+    While "ggt dev" is running, changes on your local filesystem are
     immediately reflected on your environment, while file changes on
     your environment are immediately reflected on your local filesystem.
 
@@ -101,24 +101,22 @@ export const usage: Usage = (ctx) => {
       • node_modules
 
     Note:
-      • Sync only works with development environments
+      • "ggt dev" only works with development environments
       • Avoid deleting or moving all your files while sync is running
       • only supports "yarn" v1 for installing dependencies
 
-    https://docs.gadget.dev/guides/development-tools/cli#filesync
-
     {bold USAGE}
 
-      ggt sync [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>] [--once]
+      ggt dev [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>] [--once]
                            [--allow-unknown-directory] [--allow-different-app]
 
     {bold EXAMPLES}
 
-      $ ggt sync
-      $ ggt sync ~/gadget/example
-      $ ggt sync ~/gadget/example --once
-      $ ggt sync ~/gadget/example --once --app=example
-      $ ggt sync ~/gadget/example --once --app=example --env=development --prefer=local
+      $ ggt dev
+      $ ggt dev ~/gadget/example
+      $ ggt dev ~/gadget/example --once
+      $ ggt dev ~/gadget/example --once --app=example
+      $ ggt dev ~/gadget/example --once --app=example --env=development --prefer=local
 
     {bold ARGUMENTS}
 
@@ -153,7 +151,7 @@ export const usage: Usage = (ctx) => {
         keep before sync resumes.
 
       --once
-        "ggt sync" will merge changes from your local filesystem
+        "ggt dev" will merge changes from your local filesystem
         with changes from your environment's filesystem,
         the same way it does when started normally, but will then
         exit instead of continuing to watch for changes.
@@ -161,23 +159,23 @@ export const usage: Usage = (ctx) => {
         Defaults to false.
 
       --allow-unknown-directory
-        Allows "ggt sync" to continue when the chosen directory, nor
+        Allows "ggt dev" to continue when the chosen directory, nor
         any parent directories, contain a ".gadget/sync.json" file
         within it.
 
         Defaults to false.
 
       --allow-different-app
-        Allows "ggt sync" to continue with a different --app than the
+        Allows "ggt dev" to continue with a different --app than the
         one found within the ".gadget/sync.json" file.
 
         Defaults to false.
 
-    Run "ggt sync -h" for less information.
+    Run "ggt dev -h" for less information.
   `;
 };
 
-export const command: Command<SyncArgs> = async (ctx) => {
+export const command: Command<DevArgs> = async (ctx) => {
   if (!which.sync("yarn", { nothrow: true })) {
     throw new YarnNotFoundError();
   }

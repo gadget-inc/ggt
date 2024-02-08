@@ -34,8 +34,8 @@ export class Client {
 
   constructor(ctx: Context) {
     this.ctx = ctx.child({ name: "client" });
-    assert(ctx.app, "missing app when creating edit client");
-    assert(ctx.env, "missing environment when creating edit client");
+    assert(ctx.app, "app must be set on Client context");
+    assert(ctx.env, "env must be set on Client context");
 
     let subdomain = ctx.app.slug;
     if (ctx.app.hasSplitEnvironments) {
@@ -46,7 +46,7 @@ export class Client {
       url: `wss://${subdomain}.${config.domains.app}/edit/api/graphql-ws`,
       shouldRetry: () => true,
       connectionParams: {
-        environment: ctx.env,
+        environment: ctx.env.name,
       },
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
@@ -163,7 +163,7 @@ export class Client {
     },
   ): Promise<ExecutionResult<Operation["Data"], Operation["Extensions"]>> {
     assert(ctx.app, "missing app when executing GraphQL query");
-    assert(ctx.env, "missing environment when executing GraphQL query");
+    assert(ctx.env, "missing env when executing GraphQL query");
 
     const cookie = loadCookie();
     assert(cookie, "missing cookie when executing GraphQL request");
@@ -178,7 +178,7 @@ export class Client {
         context: { ctx },
         method: "POST",
         url: `https://${subdomain}.${config.domains.app}/edit/api/graphql`,
-        headers: { cookie, "x-gadget-environment": ctx.env },
+        headers: { cookie, "x-gadget-environment": ctx.env.name },
         json: { query: request.operation, variables: unthunk(request.variables) },
         responseType: "json",
         resolveBodyOnly: true,

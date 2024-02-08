@@ -211,6 +211,19 @@ export class Directory {
       this._isHashing = false;
     }
   }
+
+  async isEmptyOrNonExistent(): Promise<boolean> {
+    let isEmptyOrNonExistent = true;
+    try {
+      for await (const _ of this.walk()) {
+        isEmptyOrNonExistent = false;
+        break;
+      }
+    } catch (error) {
+      swallowEnoent(error);
+    }
+    return isEmptyOrNonExistent;
+  }
 }
 
 /**

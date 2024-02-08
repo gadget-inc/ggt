@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
+import fs from "fs-extra";
+import { beforeEach, describe, expect, it } from "vitest";
+import { Directory } from "../../../src/services/filesync/directory.js";
 import { TooManySyncAttemptsError, UnknownDirectoryError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
+import { SyncJson, SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
+import { noop } from "../../../src/services/util/function.js";
+import { nockTestApps, testApp } from "../../__support__/app.js";
+import { makeContext } from "../../__support__/context.js";
+import { mockOnce } from "../../__support__/mock.js";
+import { loginTestUser } from "../../__support__/user.js";
 
 describe(YarnNotFoundError.name, () => {
   it("renders correctly", () => {
@@ -15,11 +23,24 @@ describe(YarnNotFoundError.name, () => {
 });
 
 describe(UnknownDirectoryError.name, () => {
-  it("renders correctly", () => {
-    const dir = "/Users/jane/doe/";
-    const app = "test";
+  let syncJson: SyncJson;
 
-    const error = new UnknownDirectoryError({ dir, app, syncJsonFile: undefined });
+  beforeEach(async () => {
+    loginTestUser();
+    nockTestApps();
+
+    const ctx = makeContext({ parse: SyncJsonArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    const directory = await Directory.init("/Users/jane/doe/");
+
+    // mock fs.ensureDir so we don't actually create the /Users/jane/doe/ directory
+    mockOnce(fs, "ensureDir", noop);
+    syncJson = await SyncJson.loadOrInit(ctx, { directory });
+    expect(fs.ensureDir).toHaveBeenCalledOnce();
+  });
+
+  it("renders correctly", () => {
+    const error = new UnknownDirectoryError(syncJson.ctx, { directory: syncJson.directory });
+
     expect(error.toString()).toMatchInlineSnapshot(`
       "We failed to find a \\".gadget/sync.json\\" file in this directory:
 

@@ -151,26 +151,26 @@ describe("deploy", () => {
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
-      Issues found
+      Problems found
 
-      • routes/GET-hello.js 1 issue
+      • routes/GET-hello.js 1 problem
         ✖ JavaScript Unexpected keyword or identifier. line 13
 
-      • routes/GET-test.ts 2 issues
+      • routes/GET-test.ts 2 problems
         ✖ TypeScript Identifier expected. line 10
         ✖ TypeScript Expression expected. line 15
 
-      • models/example/comp.gelly 1 issue
+      • models/example/comp.gelly 1 problem
         ✖ Gelly Unknown identifier \\"tru\\"
 
-      • Other 1 issue
+      • Other 1 problem
         ✖ Add google keys for production
       "
     `);
   });
 
-  it("deploys anyways even if there are problems if deploying with force flag", async () => {
-    ctx = ctx.child({ overwrite: { "--force": true } });
+  it("deploys even if there are problems when --allow-problems is passed", async () => {
+    ctx = ctx.child({ overwrite: { "--allow-problems": true } });
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" }, ctx });
 
@@ -202,12 +202,12 @@ describe("deploy", () => {
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
-      Issues found
+      Problems found
 
-      • Other 1 issue
+      • Other 1 problem
         ✖ Add google keys for production
 
-      Deploying regardless of issues because \\"--force\\" was passed
+      Deploying regardless of problems because \\"--allow-problems\\" was passed.
 
       "
     `);
@@ -328,12 +328,12 @@ describe("deploy", () => {
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
-      Issues found
+      Problems found
 
-      • Other 1 issue
+      • Other 1 problem
         ✖ Add google keys for production
 
-      Deploying regardless of issues because \\"--force\\" was passed
+      Deploying regardless of problems because \\"--allow-problems\\" was passed.
 
 
       Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
@@ -715,11 +715,11 @@ describe("deploy", () => {
 
       Gadget has detected the following fatal errors with your files:
 
-      • access-control.gadget.ts 2 issues
+      • access-control.gadget.ts 2 problems
         ✖ Something went wrong
         ✖ Another message
 
-      • settings.gadget.ts 1 issue
+      • settings.gadget.ts 1 problem
         ✖ Message from another file
 
       Please fix these errors and try again.

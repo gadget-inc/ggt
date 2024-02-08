@@ -5,15 +5,18 @@ import nock from "nock";
 import { randomUUID } from "node:crypto";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
-import { args } from "../../../src/commands/sync.js";
+import { args as PullArgs } from "../../../src/commands/pull.js";
+import { args as PushArgs } from "../../../src/commands/push.js";
+import { args as SyncArgs } from "../../../src/commands/sync.js";
 import { EditError } from "../../../src/services/app/edit/error.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../src/services/app/edit/operation.js";
+import type { Context } from "../../../src/services/command/context.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
-import { supportsPermissions } from "../../../src/services/filesync/directory.js";
+import { supportsPermissions, type Directory } from "../../../src/services/filesync/directory.js";
 import { TooManySyncAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
 import { FileSync } from "../../../src/services/filesync/filesync.js";
 import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.js";
-import { SyncJson } from "../../../src/services/filesync/sync-json.js";
+import { SyncJson, loadSyncJsonDirectory, type SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
 import { confirm, select } from "../../../src/services/output/prompt.js";
 import { noop } from "../../../src/services/util/function.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
@@ -31,8 +34,9 @@ import { mockSystemTime } from "../../__support__/time.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe("FileSync._writeToLocalFilesystem", () => {
-  let appDir: string;
-  let appDirPath: (...segments: string[]) => string;
+  let ctx: Context<SyncJsonArgs>;
+  let localDir: Directory;
+  let syncJson: SyncJson;
   let filesync: FileSync;
 
   // @ts-expect-error _writeToLocalFilesystem is private
@@ -42,19 +46,17 @@ describe("FileSync._writeToLocalFilesystem", () => {
     loginTestUser();
     nockTestApps();
 
-    appDir = testDirPath("local");
-    appDirPath = (...segments) => testDirPath("local", ...segments);
-
-    const ctx = makeContext({ parse: args, argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
-    filesync = new FileSync(ctx, syncJson);
+    ctx = makeContext({ parse: SyncArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    localDir = await loadSyncJsonDirectory(testDirPath("local"));
+    syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
+    filesync = new FileSync(syncJson);
 
     // @ts-expect-error _writeToLocalFilesystem is private
     writeToLocalFilesystem = filesync._writeToLocalFilesystem.bind(filesync);
   });
 
   it("writes files", async () => {
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [
         makeFile({ path: "file.js", content: "foo", mode: 0o644 }),
@@ -63,7 +65,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       delete: [],
     });
 
-    await expectDir(appDir, {
+    await expectDir(localDir, {
       ".gadget/": "",
       ".gadget/sync.json": expectSyncJson(filesync),
       "file.js": "foo",
@@ -76,22 +78,22 @@ describe("FileSync._writeToLocalFilesystem", () => {
     expect(filesync.syncJson.filesVersion).toBe(1n);
 
     if (supportsPermissions) {
-      const fileStat = await fs.stat(appDirPath("file.js"));
+      const fileStat = await fs.stat(localDir.absolute("file.js"));
       expect(fileStat.mode & 0o777).toBe(0o644);
 
-      const nestedFileStat = await fs.stat(appDirPath("some/deeply/nested/file.js"));
+      const nestedFileStat = await fs.stat(localDir.absolute("some/deeply/nested/file.js"));
       expect(nestedFileStat.mode & 0o777).toBe(0o755);
     }
   });
 
   it("writes empty directories", async () => {
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [makeFile({ path: "some/deeply/nested/" })],
       delete: [],
     });
 
-    await expectDir(appDir, {
+    await expectDir(localDir, {
       ".gadget/": "",
       ".gadget/sync.json": expectSyncJson(filesync),
       "some/": "",
@@ -103,12 +105,12 @@ describe("FileSync._writeToLocalFilesystem", () => {
   });
 
   it("deletes files", async () => {
-    await writeDir(appDir, {
+    await writeDir(localDir, {
       "file.js": "foo",
       "some/deeply/nested/file.js": "bar",
     });
 
-    await expectDir(appDir, {
+    await expectDir(localDir, {
       "file.js": "foo",
       "some/": "",
       "some/deeply/": "",
@@ -116,13 +118,13 @@ describe("FileSync._writeToLocalFilesystem", () => {
       "some/deeply/nested/file.js": "bar",
     });
 
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [],
       delete: ["file.js", "some/deeply/nested/file.js"],
     });
 
-    await expectDir(appDir, {
+    await expectDir(localDir, {
       ".gadget/": "",
       ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
@@ -142,7 +144,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
   it("updates `state.filesVersion` even if nothing changed", async () => {
     expect(filesync.syncJson.filesVersion).toBe(0n);
 
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [],
       delete: [],
@@ -152,7 +154,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
   });
 
   it("does not throw ENOENT errors when deleting files", async () => {
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [],
       delete: ["does/not/exist.js"],
@@ -162,19 +164,19 @@ describe("FileSync._writeToLocalFilesystem", () => {
   });
 
   it("deletes files before writing files", async () => {
-    await writeDir(appDir, {
+    await writeDir(localDir, {
       "foo/": "",
     });
 
     // emit an event that both deletes a directory and changes a file in
     // that directory
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [makeFile({ path: "foo/baz.js", content: "// baz.js" })],
       delete: ["foo/"],
     });
 
-    await expectDir(appDir, {
+    await expectDir(localDir, {
       ".gadget/": "",
       ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
@@ -189,7 +191,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
   });
 
   it("reloads the ignore file when it changes", async () => {
-    await writeDir(appDir, {
+    await writeDir(localDir, {
       ".ignore": "file2.js",
       "file1.js": "one",
       "file3.js": "three",
@@ -199,7 +201,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     expect(filesync.syncJson.directory.ignores("file2.js")).toBe(true);
 
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [makeFile({ path: ".ignore", content: "" })],
       delete: [],
@@ -218,9 +220,9 @@ describe("FileSync._writeToLocalFilesystem", () => {
     // tell filesync to delete foo.js, which should move it to
     // .gadget/backup/foo.js if the backup file is not removed first,
     // this will fail with "Error: Cannot overwrite directory"
-    await writeToLocalFilesystem({ filesVersion: 1n, files: [], delete: ["foo.js"] });
+    await writeToLocalFilesystem(ctx, { filesVersion: 1n, files: [], delete: ["foo.js"] });
 
-    await expectDir(appDir, {
+    await expectDir(localDir, {
       ".gadget/": "",
       ".gadget/sync.json": expectSyncJson(filesync),
       ".gadget/backup/": "",
@@ -231,7 +233,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
   it("ensures the filesVersion is greater than or equal to the current filesVersion", async () => {
     expect(filesync.syncJson.filesVersion).toBe(0n);
 
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [],
       delete: [],
@@ -239,7 +241,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     expect(filesync.syncJson.filesVersion).toBe(1n);
 
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [],
       delete: [],
@@ -248,7 +250,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
     expect(filesync.syncJson.filesVersion).toBe(1n);
 
     await expect(() =>
-      writeToLocalFilesystem({
+      writeToLocalFilesystem(ctx, {
         filesVersion: 0n,
         files: [],
         delete: [],
@@ -263,7 +265,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       return Promise.resolve({}) as never;
     });
 
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [makeFile({ path: "yarn.lock", content: "# THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY." })],
       delete: [],
@@ -272,11 +274,11 @@ describe("FileSync._writeToLocalFilesystem", () => {
     await execaCalled;
 
     assert(vi.isMockFunction(execa));
-    expect(execa.mock.lastCall).toEqual(["yarn", ["install", "--check-files"], { cwd: appDir }]);
+    expect(execa.mock.lastCall).toEqual(["yarn", ["install", "--check-files"], { cwd: localDir.path }]);
   });
 
   it("does not run `yarn install --check-files` when yarn.lock does not change", async () => {
-    await writeToLocalFilesystem({
+    await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
       files: [],
       delete: [],
@@ -294,7 +296,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
     });
 
     await expect(
-      writeToLocalFilesystem({
+      writeToLocalFilesystem(ctx, {
         filesVersion: 1n,
         files: [makeFile({ path: "yarn.lock", content: "# THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY." })],
         delete: [],
@@ -304,34 +306,36 @@ describe("FileSync._writeToLocalFilesystem", () => {
     await execaCalled;
 
     assert(vi.isMockFunction(execa));
-    expect(execa.mock.lastCall).toEqual(["yarn", ["install", "--check-files"], { cwd: appDir }]);
+    expect(execa.mock.lastCall).toEqual(["yarn", ["install", "--check-files"], { cwd: localDir.path }]);
   });
 });
 
 describe("FileSync._sendChangesToGadget", () => {
-  let appDir: string;
-  let filesync: FileSync;
-
   mockSystemTime();
+
+  let ctx: Context<SyncJsonArgs>;
+  let localDir: Directory;
+  let syncJson: SyncJson;
+  let filesync: FileSync;
 
   // @ts-expect-error _sendChangesToGadget is private
   let sendChangesToGadget: typeof FileSync.prototype._sendChangesToGadget;
 
   beforeEach(async () => {
-    appDir = testDirPath("local");
     loginTestUser();
     nockTestApps();
 
-    const ctx = makeContext({ parse: args, argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory: appDir });
-    filesync = new FileSync(ctx, syncJson);
+    ctx = makeContext({ parse: SyncArgs, argv: ["sync", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    localDir = await loadSyncJsonDirectory(testDirPath("local"));
+    syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
+    filesync = new FileSync(syncJson);
 
     // @ts-expect-error _sendChangesToGadget is private
     sendChangesToGadget = filesync._sendChangesToGadget.bind(filesync);
   });
 
   it("sends changed files to gadget", async () => {
-    await writeDir(appDir, {
+    await writeDir(localDir, {
       "file.txt": "file",
       "some/nested/file.txt": "some nested file",
     });
@@ -373,7 +377,7 @@ describe("FileSync._sendChangesToGadget", () => {
       },
     });
 
-    await sendChangesToGadget({ changes });
+    await sendChangesToGadget(ctx, { changes });
 
     expect(scope.isDone()).toBe(true);
   });
@@ -385,13 +389,13 @@ describe("FileSync._sendChangesToGadget", () => {
     changes.set("does/not/exist.js", { type: "create" });
     changes.set("also/does/not/exist.js", { type: "update" });
 
-    await sendChangesToGadget({ changes });
+    await sendChangesToGadget(ctx, { changes });
 
     expect(nock.pendingMocks()).toEqual([]);
   });
 
   it("retries failed graphql requests", async () => {
-    await writeDir(appDir, {
+    await writeDir(localDir, {
       "foo.js": "// foo",
     });
 
@@ -413,13 +417,13 @@ describe("FileSync._sendChangesToGadget", () => {
       statusCode: 200,
     });
 
-    await expect(sendChangesToGadget({ changes })).resolves.not.toThrow();
+    await expect(sendChangesToGadget(ctx, { changes })).resolves.not.toThrow();
 
     expect(scope.isDone()).toBe(true);
   });
 
   it('does not retry "Files version mismatch" errors', async () => {
-    await writeDir(appDir, {
+    await writeDir(localDir, {
       "foo.js": "// foo",
     });
 
@@ -434,7 +438,7 @@ describe("FileSync._sendChangesToGadget", () => {
       statusCode: 500,
     });
 
-    const error = await expectError(() => sendChangesToGadget({ changes }));
+    const error = await expectError(() => sendChangesToGadget(ctx, { changes }));
 
     expect(scope.isDone()).toBe(true);
 
@@ -461,14 +465,14 @@ describe("FileSync._sendChangesToGadget", () => {
       }),
     });
 
-    await writeDir(appDir, {
+    await writeDir(localDir, {
       "foo.js": "// foo",
     });
 
     const changes = new Changes();
     changes.set("foo.js", { type: "create" });
 
-    const error = await expectError(() => sendChangesToGadget({ changes }));
+    const error = await expectError(() => sendChangesToGadget(ctx, { changes }));
 
     expect(scope.isDone()).toBe(true);
 
@@ -476,7 +480,7 @@ describe("FileSync._sendChangesToGadget", () => {
   });
 
   it("prints fatal errors when they're received", async () => {
-    await writeDir(appDir, {
+    await writeDir(localDir, {
       "access-control.gadget.ts": "// foo",
     });
 
@@ -517,7 +521,7 @@ describe("FileSync._sendChangesToGadget", () => {
     const changes = new Changes();
     changes.set("access-control.gadget.ts", { type: "update" });
 
-    await sendChangesToGadget({ changes });
+    await sendChangesToGadget(ctx, { changes });
 
     expectStdout().toMatchSnapshot();
   });
@@ -530,7 +534,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
   });
 
   it('syncs when it receives "Files version mismatch" from Gadget', async () => {
-    const { filesync, expectDirs } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs } = await makeSyncScenario({
       localFiles: { "local.txt": "// local" },
       gadgetFiles: { "gadget.txt": "// gadget" },
     });
@@ -538,7 +542,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await filesync.mergeChangesWithGadget({ changes });
+    await filesync.mergeChangesWithGadget(ctx, { changes });
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -572,7 +576,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
   });
 
   it('syncs when it receives "Files version mismatch" from files version greater than the expectedRemoteFilesVersion + 1', async () => {
-    const { filesync, expectDirs, changeGadgetFiles } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, changeGadgetFiles } = await makeSyncScenario({
       localFiles: { "local.txt": "// local" },
       gadgetFiles: { "gadget.txt": "// gadget" },
       beforePublishFileSyncEvents: async () => {
@@ -596,7 +600,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await filesync.mergeChangesWithGadget({ changes });
+    await filesync.mergeChangesWithGadget(ctx, { changes });
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -648,13 +652,13 @@ describe("FileSync.sync", () => {
   });
 
   it("does nothing if there aren't any changes", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: { "foo.js": "// foo" },
       localFiles: { "foo.js": "// foo" },
       gadgetFiles: { "foo.js": "// foo" },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -680,7 +684,7 @@ describe("FileSync.sync", () => {
   });
 
   it("does nothing if only ignored files have changed", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         ".ignore": "foo.js",
         "foo.js": "// foo",
@@ -695,7 +699,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -724,7 +728,7 @@ describe("FileSync.sync", () => {
   });
 
   it("automatically merges changes if none are conflicting", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -738,7 +742,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -779,7 +783,7 @@ describe("FileSync.sync", () => {
   });
 
   it(`exits the process when "${ConflictPreference.CANCEL}" is chosen`, async () => {
-    const { filesync, expectDirs } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs } = await makeSyncScenario({
       filesVersion1Files: { "foo.js": "foo" },
       localFiles: { "foo.js": "foo (local)" },
       gadgetFiles: { "foo.js": "foo (gadget)" },
@@ -787,7 +791,7 @@ describe("FileSync.sync", () => {
 
     mockOnce(select, () => ConflictPreference.CANCEL);
 
-    await expectProcessExit(() => filesync.sync());
+    await expectProcessExit(() => filesync.sync(ctx));
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -815,7 +819,7 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -829,7 +833,7 @@ describe("FileSync.sync", () => {
 
     mockOnce(select, () => ConflictPreference.LOCAL);
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -863,8 +867,8 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses local conflicting changes when "${ConflictPreference.LOCAL}" is passed as an argument`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=local"] }),
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: SyncArgs, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=local"] }),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -876,7 +880,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -910,7 +914,7 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses local conflicting changes and merges non-conflicting gadget changes when "${ConflictPreference.LOCAL}" is chosen`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -926,7 +930,7 @@ describe("FileSync.sync", () => {
 
     mockOnce(select, () => ConflictPreference.LOCAL);
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -967,8 +971,8 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses local conflicting changes and merges non-conflicting gadget changes when "${ConflictPreference.LOCAL}" is passed as an argument`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=local"] }),
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: SyncArgs, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=local"] }),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -982,7 +986,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1023,7 +1027,7 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -1037,7 +1041,7 @@ describe("FileSync.sync", () => {
 
     mockOnce(select, () => ConflictPreference.GADGET);
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1067,8 +1071,8 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: SyncArgs, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -1080,7 +1084,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1110,7 +1114,7 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -1126,7 +1130,7 @@ describe("FileSync.sync", () => {
 
     mockOnce(select, () => ConflictPreference.GADGET);
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1167,7 +1171,7 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -1183,7 +1187,7 @@ describe("FileSync.sync", () => {
 
     mockOnce(select, () => ConflictPreference.GADGET);
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1224,8 +1228,8 @@ describe("FileSync.sync", () => {
   });
 
   it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: SyncArgs, argv: ["sync", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
       filesVersion1Files: {
         "foo.js": "// foo",
       },
@@ -1239,7 +1243,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1280,7 +1284,7 @@ describe("FileSync.sync", () => {
   });
 
   it("automatically uses gadget's conflicting changes if the conflicts are in the .gadget directory", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         ".gadget/client.js": "// client",
       },
@@ -1292,7 +1296,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1322,7 +1326,7 @@ describe("FileSync.sync", () => {
   });
 
   it(`automatically uses gadget's conflicting changes in the .gadget directory even if "${ConflictPreference.LOCAL}" is chosen`, async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         ".gadget/client.js": "// client",
         "foo.js": "// foo",
@@ -1339,7 +1343,7 @@ describe("FileSync.sync", () => {
 
     mockOnce(select, () => ConflictPreference.LOCAL);
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1378,7 +1382,7 @@ describe("FileSync.sync", () => {
   });
 
   it("fetches .gadget/ files when the local filesystem doesn't have them", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         ".gadget/client.js": "// client",
       },
@@ -1388,7 +1392,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1414,9 +1418,9 @@ describe("FileSync.sync", () => {
   });
 
   it("merges files when .gadget/sync.json doesn't exist and --allow-unknown-directory is passed", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       ctx: makeContext({
-        parse: args,
+        parse: SyncArgs,
         argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`, "--allow-unknown-directory"],
       }),
       filesVersion1Files: {
@@ -1435,7 +1439,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1484,7 +1488,7 @@ describe("FileSync.sync", () => {
       statusCode: 500,
     });
 
-    const { filesync, expectDirs } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs } = await makeSyncScenario({
       localFiles: { "local.txt": "// local" },
       gadgetFiles: { "gadget.txt": "// gadget" },
     });
@@ -1492,7 +1496,7 @@ describe("FileSync.sync", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await filesync.mergeChangesWithGadget({ changes });
+    await filesync.mergeChangesWithGadget(ctx, { changes });
 
     expect(scope.isDone()).toBe(true);
 
@@ -1528,7 +1532,7 @@ describe("FileSync.sync", () => {
   });
 
   it(`throws ${TooManySyncAttemptsError.name} if the number of sync attempts exceeds the maximum`, async () => {
-    const { filesync, localDir } = await makeSyncScenario({
+    const { ctx, filesync, localDir } = await makeSyncScenario({
       localFiles: { "local.txt": "// local" },
       gadgetFiles: { "gadget.txt": "// gadget" },
       afterPublishFileSyncEvents: async () => {
@@ -1543,14 +1547,14 @@ describe("FileSync.sync", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await expect(filesync.sync()).rejects.toThrow(TooManySyncAttemptsError);
+    await expect(filesync.sync(ctx)).rejects.toThrow(TooManySyncAttemptsError);
   });
 
   it(`does not throw ${TooManySyncAttemptsError.name} if it succeeds on the last attempt`, async () => {
     const maxAttempts = 3;
     let attempt = 0;
 
-    const { filesync, changeGadgetFiles } = await makeSyncScenario({
+    const { ctx, filesync, changeGadgetFiles } = await makeSyncScenario({
       localFiles: { "local.txt": "// local" },
       gadgetFiles: { "gadget.txt": "// gadget" },
       afterPublishFileSyncEvents: async () => {
@@ -1576,13 +1580,13 @@ describe("FileSync.sync", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await expect(filesync.sync({ maxAttempts })).resolves.not.toThrow();
+    await expect(filesync.sync(ctx, { maxAttempts })).resolves.not.toThrow();
   });
 
   it("bumps the correct environment filesVersion when multi-environment is enabled", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       ctx: makeContext({
-        parse: args,
+        parse: SyncArgs,
         argv: ["sync", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[2]!.name}`],
       }),
       filesVersion1Files: {
@@ -1607,7 +1611,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync();
+    await filesync.sync(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1649,22 +1653,20 @@ describe("FileSync.sync", () => {
 });
 
 describe("FileSync.push", () => {
-  let appDir: string;
-
   beforeEach(() => {
-    appDir = testDirPath("local");
     loginTestUser();
     nockTestApps();
   });
 
   it("automatically sends local changes to gadget when gadget hasn't made any changes", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: PushArgs, argv: ["push", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] }),
       localFiles: {
         "local-file.js": "// local",
       },
     });
 
-    await filesync.push();
+    await filesync.push(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1693,7 +1695,8 @@ describe("FileSync.push", () => {
   });
 
   it("discards gadget changes and sends local changes to gadget after confirmation", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: PushArgs, argv: ["push", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] }),
       filesVersion1Files: {},
       localFiles: {
         "local-file.js": "// local",
@@ -1705,7 +1708,7 @@ describe("FileSync.push", () => {
 
     mockOnce(confirm, noop);
 
-    await filesync.push();
+    await filesync.push(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1740,8 +1743,8 @@ describe("FileSync.push", () => {
   });
 
   it("discards gadget changes and sends local changes to gadget if --force is passed", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--force"] }),
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: PushArgs, argv: ["push", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`, "--force"] }),
       filesVersion1Files: {},
       localFiles: {
         "local-file.js": "// local",
@@ -1751,7 +1754,7 @@ describe("FileSync.push", () => {
       },
     });
 
-    await filesync.push();
+    await filesync.push(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1784,8 +1787,8 @@ describe("FileSync.push", () => {
   });
 
   it("discards gadget changes and sends local changes to gadget if --force is passed, except for .gadget/ files", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--force"] }),
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: PushArgs, argv: ["push", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`, "--force"] }),
       filesVersion1Files: {
         ".gadget/client.js": "// client",
       },
@@ -1799,7 +1802,7 @@ describe("FileSync.push", () => {
       },
     });
 
-    await filesync.push();
+    await filesync.push(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1838,16 +1841,14 @@ describe("FileSync.push", () => {
 });
 
 describe("FileSync.pull", () => {
-  let appDir: string;
-
   beforeEach(() => {
-    appDir = testDirPath("local");
     loginTestUser();
     nockTestApps();
   });
 
   it("receives gadget's changes", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: PullArgs, argv: ["pull", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] }),
       filesVersion1Files: {},
       localFiles: {},
       gadgetFiles: {
@@ -1855,7 +1856,7 @@ describe("FileSync.pull", () => {
       },
     });
 
-    await filesync.pull();
+    await filesync.pull(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1884,7 +1885,8 @@ describe("FileSync.pull", () => {
   });
 
   it("receives gadget's changes and discards local changes after confirmation", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: PullArgs, argv: ["pull", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] }),
       filesVersion1Files: {},
       localFiles: {
         "local-file.js": "// local",
@@ -1896,7 +1898,7 @@ describe("FileSync.pull", () => {
 
     mockOnce(confirm, noop);
 
-    await filesync.pull();
+    await filesync.pull(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1929,8 +1931,8 @@ describe("FileSync.pull", () => {
   });
 
   it("receives gadget's changes and discards local changes if --force is passed", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      ctx: makeContext({ parse: args, argv: ["sync", appDir, "--app", testApp.slug, "--force"] }),
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: PullArgs, argv: ["pull", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`, "--force"] }),
       filesVersion1Files: {},
       localFiles: {
         "local-file.js": "// local",
@@ -1940,7 +1942,7 @@ describe("FileSync.pull", () => {
       },
     });
 
-    await filesync.pull();
+    await filesync.pull(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1971,7 +1973,8 @@ describe("FileSync.pull", () => {
   });
 
   it("discards local .gadget/ changes without confirmation", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+    const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      ctx: makeContext({ parse: PullArgs, argv: ["pull", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] }),
       filesVersion1Files: {},
       localFiles: {
         ".gadget/local.js": "// .gadget/local",
@@ -1981,7 +1984,7 @@ describe("FileSync.pull", () => {
       },
     });
 
-    await filesync.pull();
+    await filesync.pull(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {

@@ -1,40 +1,46 @@
+import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
-import { FileSync, FileSyncArgs } from "../services/filesync/filesync.js";
-import { SyncJson } from "../services/filesync/sync-json.js";
+import { FileSync } from "../services/filesync/filesync.js";
+import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { sprint } from "../services/output/sprint.js";
 
-export const args = FileSyncArgs;
+export type PullArgs = typeof args;
+
+export const args = {
+  ...SyncJsonArgs,
+  "--force": { type: Boolean, alias: "-f" },
+} satisfies ArgsDefinition;
 
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Pull changes from Gadget's filesystem to your local filesystem.
+      Pull changes from your environment's filesystem to your local filesystem.
+
+      Changes will be calculated from the last time you ran
+      "ggt sync", "ggt push", or "ggt pull" on your local filesystem.
 
       {bold USAGE}
-        ggt pull [DIRECTORY]
+        ggt pull
 
       {bold EXAMPLES}
         $ ggt pull
-        $ ggt pull ~/gadget/example
-        $ ggt pull ~/gadget/example --app=example
-        $ ggt pull ~/gadget/example --app=example --env=development
-
-      {bold ARGUMENTS}
-        DIRECTORY          The directory to pull files to (default: ".")
+        $ ggt pull --force
+        $ ggt pull --force --env=staging
+        $ ggt pull --force --env=staging --app=example --allow-unknown-directory
 
       {bold FLAGS}
-        -a, --app=<name>   The Gadget application to pull files from
-        -e, --env=<name>   The Gadget environment to pull files from
-            --force        Discard Gadget's changes
+        -a, --app=<name>   The application to pull files from
+        -e, --env=<name>   The environment to pull files from
+            --force        Discard un-synchronized local changes
 
         Run "ggt pull --help" for more information.
     `;
   }
 
   return sprint`
-    Pull changes from Gadget's filesystem to your local filesystem.
+    Pull changes from your environment's filesystem to your local filesystem.
 
-    The changes will be calculated from the last time you ran
+    Changes will be calculated from the last time you ran
     "ggt sync", "ggt push", or "ggt pull" in the chosen directory.
 
     If your local filesystem has also made changes since the last sync,
@@ -48,65 +54,61 @@ export const usage: Usage = (ctx) => {
     {bold EXAMPLES}
 
       $ ggt pull
-      $ ggt pull ~/gadget/example
-      $ ggt pull ~/gadget/example --app=example
-      $ ggt pull ~/gadget/example --app=example --env=development
-      $ ggt pull ~/gadget/example --app=example --env=development --allow-unknown-directory
-      $ ggt pull ~/gadget/example --app=example --env=development --allow-unknown-directory --allow-different-app
-
-    {bold ARGUMENTS}
-
-      DIRECTORY
-        The path to the directory to pull files to.
-
-        Defaults to the current working directory. (default: ".")
+      $ ggt pull --force
+      $ ggt pull --force --env=staging
+      $ ggt pull --force --env=staging --app=example --allow-unknown-directory
 
     {bold FLAGS}
 
       -a, --app=<name>
-        The Gadget application to pull files from.
+        The application to pull files from.
 
-        If not provided, the application will be inferred from the
-        ".gadget/sync.json" file in the chosen directory or any of its
-        parent directories.
+        Defaults to the application within the ".gadget/sync.json"
+        file in the current directory or any parent directories.
 
-        If a ".gadget/sync.json" file is not found, you will be
-        prompted to choose an application from your list of apps.
+      -e, --env, --environment=<name>
+        The environment to pull files from.
 
-      -e, --env, --env=<name>
-        The Gadget development environment to pull files from.
+        Defaults to the environment within the ".gadget/sync.json"
+        file in the current directory or any parent directories.
 
-        If not provided, the environment will be inferred from the
-        ".gadget/sync.json" file in the chosen directory or any of its
-        parent directories.
+      -f, --force
+        Discard any changes made to your local filesystem
+        since the last "ggt sync", "ggt push", or "ggt pull".
 
-        If a ".gadget/sync.json" file is not found or invalid, you will
-        be prompted to choose a development environment from your list
-        of environments.
-
-      --force
-        Any changes you have made to your local filesystem since the
-        last time you ran "ggt sync", "ggt push", or "ggt pull"
-        will be discarded without confirmation.
+        Defaults to false.
 
       --allow-unknown-directory
-        Allows pull to continue when the chosen directory already
-        contains files and does not contain a valid ".gadget/sync.json"
-        file within it, or any of its parent directories.
+        Allows "ggt pull" to continue when the current directory, nor
+        any parent directories, contain a ".gadget/sync.json" file
+        within it.
 
         Defaults to false.
 
       --allow-different-app
-        Allows pull to continue when the chosen directory contains a
-        valid ".gadget/sync.json" file, but the application within
-        it does not match the application provided by the --app flag.
+        Allows "ggt pull" to continue with a different --app than the
+        one found within the ".gadget/sync.json" file.
 
         Defaults to false.
+
+    Run "ggt pull -h" for less information.
   `;
 };
 
-export const command: Command<typeof args> = async (ctx) => {
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory: ctx.args._[0] });
-  const filesync = new FileSync(ctx, syncJson);
-  await filesync.pull();
+export const command: Command<PullArgs> = async (ctx) => {
+  if (ctx.args._.length > 0) {
+    throw new ArgError(sprint`
+      "ggt pull" does not take any positional arguments.
+
+      If you are trying to pull changes to a specific directory,
+      you must "cd" to that directory and then run "ggt push".
+
+       Run "ggt pull -h" for more information.
+    `);
+  }
+
+  const directory = await loadSyncJsonDirectory(ctx.args._[0]);
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+  const filesync = new FileSync(syncJson);
+  await filesync.pull(ctx);
 };

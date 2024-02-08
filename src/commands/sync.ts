@@ -206,7 +206,7 @@ export const command: Command<SyncArgs> = async (ctx) => {
   const sendChangesToGadget = debounce(ctx.args["--file-push-delay"], () => {
     const changes = new Changes(localChangesBuffer.entries());
     localChangesBuffer.clear();
-    filesync.sendChangesToGadget({ changes }).catch((error) => ctx.abort(error));
+    filesync.mergeChangesWithGadget({ changes }).catch((error) => ctx.abort(error));
   });
 
   ctx.log.debug("watching", { path: filesync.directory.path });

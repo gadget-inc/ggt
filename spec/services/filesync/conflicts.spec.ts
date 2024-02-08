@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Context } from "../../../src/services/command/context.js";
 import { getConflicts } from "../../../src/services/filesync/conflicts.js";
-import { getChanges } from "../../../src/services/filesync/hashes.js";
+import { getNecessaryChanges } from "../../../src/services/filesync/hashes.js";
 import { makeContext } from "../../__support__/context.js";
 import { makeHashes } from "../../__support__/filesync.js";
 
@@ -31,8 +31,8 @@ describe("getConflicts", () => {
       },
     });
 
-    const localChanges = getChanges(ctx, { from: filesVersionHashes, to: localHashes });
-    const gadgetChanges = getChanges(ctx, { from: filesVersionHashes, to: gadgetHashes });
+    const localChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes });
+    const gadgetChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: gadgetHashes });
     const conflicts = getConflicts({ localChanges, gadgetChanges });
 
     expect(Object.fromEntries(conflicts)).toEqual({
@@ -76,8 +76,8 @@ describe("getConflicts", () => {
       },
     });
 
-    const localChanges = getChanges(ctx, { from: filesVersionHashes, to: localHashes });
-    const gadgetChanges = getChanges(ctx, { from: filesVersionHashes, to: gadgetHashes });
+    const localChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes });
+    const gadgetChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: gadgetHashes });
     const conflicts = getConflicts({ localChanges, gadgetChanges });
 
     expect(Object.fromEntries(conflicts)).toEqual({});

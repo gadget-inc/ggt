@@ -164,6 +164,146 @@ EXAMPLES
 "
 `;
 
+exports[`root > when pull is given > prints the usage when --help is passed 1`] = `
+"Pull Gadget's file changes to your local filesystem.
+
+The changes will be calculated from the last time you ran
+\\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
+
+If your local filesystem has also made changes since the last sync,
+you will be prompted to discard them or abort the pull.
+
+USAGE
+
+  ggt pull [DIRECTORY] [--app=<name>] [--environment=<name>] [--force]
+
+EXAMPLES
+
+  $ ggt pull
+  $ ggt pull ~/gadget/example
+  $ ggt pull ~/gadget/example --app=example
+  $ ggt pull ~/gadget/example --app=example --environment=development
+  $ ggt pull ~/gadget/example --app=example --environment=development --force
+
+ARGUMENTS
+
+  DIRECTORY
+    The path to the directory to pull files to.
+
+    Defaults to the current working directory. (default: \\".\\")
+
+FLAGS
+
+  -a, --app=<name>
+    The Gadget application to pull files to.
+
+    If not provided, the application will be inferred from the
+    \\".gadget/sync.json\\" file in the chosen directory or any of its
+    parent directories.
+
+    If a \\".gadget/sync.json\\" file is not found, you will be
+    prompted to choose an application from your list of apps.
+
+  --force
+    If the Gadget environment made changes since the last sync, they
+    will be discarded without confirmation.
+"
+`;
+
+exports[`root > when pull is given > prints the usage when -h is passed 1`] = `
+"Pull Gadget's file changes to your local filesystem.
+
+USAGE
+  ggt pull [DIRECTORY]
+
+EXAMPLES
+  $ ggt pull
+  $ ggt pull ~/gadget/example
+  $ ggt pull ~/gadget/example --app=example
+  $ ggt pull ~/gadget/example --app=example --environment=development
+
+ARGUMENTS
+  DIRECTORY                  The directory to pull files to (default: \\".\\")
+
+FLAGS
+  -a, --app=<name>           The Gadget application to pull files from
+  -e, --environment=<name>   The Gadget environment to pull files from
+      --force                Discard Gadget's changes
+
+  Run \\"ggt pull --help\\" for more information.
+"
+`;
+
+exports[`root > when push is given > prints the usage when --help is passed 1`] = `
+"Push your local file changes to Gadget.
+
+The changes will be calculated from the last time you ran
+\\"ggt sync\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
+
+If Gadget has also made changes since the last sync,
+you will be prompted to discard them or abort the push.
+
+USAGE
+
+  ggt push [DIRECTORY] [--app=<name>] [--env=<name>] [--force]
+
+EXAMPLES
+
+  $ ggt push
+  $ ggt push ~/gadget/example
+  $ ggt push ~/gadget/example --app=example
+  $ ggt push ~/gadget/example --app=example --env=development
+  $ ggt push ~/gadget/example --app=example --env=development --force
+
+ARGUMENTS
+
+  DIRECTORY
+    The path to the directory to push files from.
+
+    Defaults to the current working directory. (default: \\".\\")
+
+FLAGS
+
+  -a, --app=<name>
+    The Gadget application to push files to.
+
+    If not provided, the application will be inferred from the
+    \\".gadget/sync.json\\" file in the chosen directory or any of its
+    parent directories.
+
+    If a \\".gadget/sync.json\\" file is not found, you will be
+    prompted to choose an application from your list of apps.
+
+  --force
+    If Gadget has also made changes since the last sync, they
+    will be discarded without confirmation.
+"
+`;
+
+exports[`root > when push is given > prints the usage when -h is passed 1`] = `
+"Push your local file changes to Gadget.
+
+USAGE
+  ggt push [DIRECTORY]
+
+EXAMPLES
+  $ ggt push
+  $ ggt push ~/gadget/example
+  $ ggt push ~/gadget/example --app=example
+  $ ggt push ~/gadget/example --app=example --env=development
+
+ARGUMENTS
+  DIRECTORY          The directory to push files from (default: \\".\\")
+
+FLAGS
+  -a, --app=<name>   The Gadget application to push files to
+  -e, --env=<name>   The Gadget environment to push files to
+      --force        Discard Gadget's changes
+
+  Run \\"ggt push --help\\" for more information.
+"
+`;
+
 exports[`root > when sync is given > prints the usage when --help is passed 1`] = `
 "Sync your local filesystem with your Gadget environment's
 filesystem in real-time.
@@ -245,6 +385,8 @@ FLAGS
   --force
     When provided, sync will run regardless of the state of the
     local filesystem.
+
+Run \\"ggt sync -h\\" for less information.
 "
 `;
 

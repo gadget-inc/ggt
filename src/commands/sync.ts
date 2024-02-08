@@ -126,6 +126,8 @@ export const usage: Usage = (ctx) => {
       --force
         When provided, sync will run regardless of the state of the
         local filesystem.
+
+    Run "ggt sync -h" for less information.
   `;
 };
 

@@ -44,8 +44,6 @@ export const usage: Usage = (ctx) => {
       Changes will be calculated from the last time you ran
       "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
-      https://docs.gadget.dev/guides/development-tools/cli#filesync
-
       {bold USAGE}
         ggt dev [DIRECTORY]
 
@@ -99,9 +97,9 @@ export const usage: Usage = (ctx) => {
       • node_modules
 
     Note:
-      • "ggt dev" only works with development environments
-      • Avoid deleting or moving all your files while sync is running
-      • only supports "yarn" v1 for installing dependencies
+      • Only works with development environments
+      • Only supports "yarn" v1 for installing dependencies
+      • Avoid deleting or moving all your files while "ggt dev" is running
 
     {bold USAGE}
 

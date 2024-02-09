@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import os from "node:os";
 import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
+import type { AvailableCommand } from "../../../src/services/command/command.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import { TooManySyncAttemptsError, UnknownDirectoryError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
 import { SyncJson, SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
@@ -24,41 +25,37 @@ describe(YarnNotFoundError.name, () => {
   });
 });
 
-describe(UnknownDirectoryError.name, () => {
-  let syncJson: SyncJson;
-
-  beforeEach(async () => {
-    loginTestUser();
-    nockTestApps();
-
-    const ctx = makeContext({ parse: SyncJsonArgs, argv: ["dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+// these tests are skipped on Windows because the snapshot contains a
+// Unix path that keeps failing in CI
+describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
+  const makeSyncJson = async (command: AvailableCommand): Promise<SyncJson> => {
+    const ctx = makeContext({ parse: SyncJsonArgs, argv: [command, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
     const directory = await Directory.init(path.resolve("/Users/jane/doe/"));
 
     // mock fs.ensureDir so we don't actually create the /Users/jane/doe/ directory
     mockOnce(fs, "ensureDir", noop);
-    syncJson = await SyncJson.loadOrInit(ctx, { directory });
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory });
     expect(fs.ensureDir).toHaveBeenCalledOnce();
+
+    return syncJson;
+  };
+
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
   });
 
-  // this test is skipped on Windows because the snapshot contains a Unix path
-  it.skipIf(os.platform() === "win32")("renders correctly", () => {
+  it.each(["dev", "deploy", "push", "pull", "status"] as const)("renders correctly when %s is passed", async (command) => {
+    const syncJson = await makeSyncJson(command);
     const error = new UnknownDirectoryError(syncJson.ctx, { directory: syncJson.directory });
+    expect(error.toString()).toMatchSnapshot();
+  });
 
-    expect(error.toString()).toMatchInlineSnapshot(`
-      "We failed to find a \\".gadget/sync.json\\" file in this directory:
-
-        /Users/jane/doe
-
-      If you're running \\"ggt dev\\" for the first time, we recommend
-      using a gadget specific directory like this:
-
-        ggt dev ~/gadget/test --app=test
-
-      If you're certain you want to sync the contents of that directory
-      to Gadget, run \\"ggt dev\\" again with the --allow-unknown-directory flag:
-
-        ggt dev /Users/jane/doe --app=test --allow-unknown-directory"
-    `);
+  it("renders correctly when the file exists but is invalid", async () => {
+    mockOnce(fs, "existsSync", () => true);
+    const syncJson = await makeSyncJson("dev");
+    const error = new UnknownDirectoryError(syncJson.ctx, { directory: syncJson.directory });
+    expect(error.toString()).toMatchSnapshot();
   });
 });
 

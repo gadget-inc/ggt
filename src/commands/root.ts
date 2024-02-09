@@ -95,7 +95,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
   }
 
   try {
-    await subcommand.command(ctx.child({ name: cmd, parse: subcommand.args }));
+    await subcommand.command(ctx.child({ command: cmd, name: cmd, parse: subcommand.args }));
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

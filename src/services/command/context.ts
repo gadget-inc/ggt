@@ -8,12 +8,18 @@ import { defaults, pick } from "../util/object.js";
 import { PromiseSignal } from "../util/promise.js";
 import type { AnyVoid } from "../util/types.js";
 import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult, type ParseArgsOptions } from "./arg.js";
+import type { AvailableCommand } from "./command.js";
 
 /**
  * Represents the options that can be passed to {@linkcode Context.init}.
  */
 export type ContextInit<Args extends ArgsDefinition> = ParseArgsOptions &
   StructuredLoggerOptions & {
+    /**
+     * The command that this context is running.
+     */
+    command?: AvailableCommand;
+
     /**
      * The {@linkcode ArgsDefinition} to use to parse the arguments (`argv`).
      */
@@ -71,6 +77,11 @@ export class Context<
   #parent?: Context<ArgsDefinition, ParentArgs>;
 
   /**
+   * The command that this context is running.
+   */
+  #command?: AvailableCommand;
+
+  /**
    * The user who is running this command, if any.
    */
   #user?: User;
@@ -86,11 +97,13 @@ export class Context<
   #env?: Environment;
 
   private constructor({
+    parent,
+    command,
     args,
     log,
-    parent,
   }: {
     parent?: Context<ArgsDefinition, ParentArgs>;
+    command?: AvailableCommand;
     args: ArgsDefinitionResult<ThisArgs>;
     log: Logger;
   }) {
@@ -98,6 +111,7 @@ export class Context<
     this.args = args;
     this.#log = log;
     this.#parent = parent;
+    this.#command = command;
 
     // in case this context is ...spread into another object
     this.abort = this.abort.bind(this);
@@ -130,6 +144,10 @@ export class Context<
    */
   get log(): Logger {
     return this.#log;
+  }
+
+  get command(): AvailableCommand | "root" {
+    return this.#command ?? this.#parent?.command ?? "root";
   }
 
   get user(): User | undefined {
@@ -195,10 +213,12 @@ export class Context<
    */
   child<ChildArgs extends ArgsDefinition = EmptyObject>({
     parse: spec,
+    command = this.#command,
     ...options
   }: ChildContextInit<ChildArgs, ArgsDefinitionResult<ThisArgs>>): Context<ChildArgs, ThisArgs> {
     const ctx = new Context<ChildArgs, ThisArgs>({
       parent: this,
+      command,
       args: {
         ...this.args,
         ...options.overwrite,

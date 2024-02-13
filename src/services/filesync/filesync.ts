@@ -252,7 +252,7 @@ export class FileSync {
       if (!env) {
         const similarEnvironments = sortBySimilar(
           environment,
-          app.environments.map((env) => env.name.toLowerCase()),
+          filteredSelectableEnvironments.map((env) => env.name.toLowerCase()),
         ).slice(0, 5);
 
         throw new ArgError(

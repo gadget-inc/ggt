@@ -93,7 +93,9 @@ export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   ...opts
 }: NockEditResponseOptions<Query>): Scope & { responded: PromiseSignal } => {
   let subdomain = app.slug;
-  if (app.hasSplitEnvironments) {
+  if (app.multiEnvironmentEnabled) {
+    subdomain += `--${env.name}`;
+  } else if (app.hasSplitEnvironments) {
     subdomain += "--development";
   }
 

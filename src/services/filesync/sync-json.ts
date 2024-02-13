@@ -386,8 +386,10 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
   }
 
   // we've ensured envName is defined
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const env = app.environments.find((env) => env.name.toLowerCase() === envName!.toLowerCase());
+  const env = app.environments
+    .filter((x) => x.type === EnvironmentType.Development)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    .find((env) => env.name.toLowerCase() === envName!.toLowerCase());
   if (env) {
     // the user specified an environment or we loaded it from the state,
     // and it exists in the app's list of environments, so return it

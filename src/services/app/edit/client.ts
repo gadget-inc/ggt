@@ -169,7 +169,9 @@ export class Client {
     assert(cookie, "missing cookie when executing GraphQL request");
 
     let subdomain = ctx.app.slug;
-    if (ctx.app.hasSplitEnvironments) {
+    if (ctx.app.multiEnvironmentEnabled) {
+      subdomain += `--${ctx.env.name}`;
+    } else if (ctx.app.hasSplitEnvironments) {
       subdomain += "--development";
     }
 

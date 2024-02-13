@@ -121,6 +121,42 @@ describe("SyncJson.loadOrInit", () => {
     `);
   });
 
+  it(`throws ${ArgError.name} when --env is passed production`, async () => {
+    ctx = ctx.child({ overwrite: { "--env": "production" } });
+    const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: localDir }));
+
+    expect(error).toBeInstanceOf(ArgError);
+    expect(error.message).toMatchInlineSnapshot(`
+      "Unknown environment:
+
+        production
+
+      Did you mean one of these?
+
+        • development
+        • cool-environment-development
+        • other-environment-development"
+    `);
+  });
+
+  it(`throws ${ArgError.name} when --env is passed an environment that is not in the list of valid environments for the app`, async () => {
+    ctx = ctx.child({ overwrite: { "--env": "does-not-exist" } });
+    const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: localDir }));
+
+    expect(error).toBeInstanceOf(ArgError);
+    expect(error.message).toMatchInlineSnapshot(`
+      "Unknown environment:
+
+        does-not-exist
+
+      Did you mean one of these?
+
+        • development
+        • cool-environment-development
+        • other-environment-development"
+    `);
+  });
+
   it(`throws ${ArgError.name} if the user doesn't have any available apps`, async () => {
     mockOnce(app, "getApps", () => []);
 

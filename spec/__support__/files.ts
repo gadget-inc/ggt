@@ -3,6 +3,7 @@ import assert from "node:assert";
 import path from "node:path";
 import normalizePath from "normalize-path";
 import { expect } from "vitest";
+import { Directory } from "../../src/services/filesync/directory.js";
 
 /**
  * A map of file paths to file contents.
@@ -16,7 +17,11 @@ export type Files = Record<string, string>;
  * @param files - An object containing file paths as keys and file contents as values.
  * @returns A promise that resolves when the directory and files have been written successfully.
  */
-export const writeDir = async (dir: string, files: Files): Promise<void> => {
+export const writeDir = async (dir: string | Directory, files: Files): Promise<void> => {
+  if (dir instanceof Directory) {
+    dir = dir.path;
+  }
+
   await fs.ensureDir(dir);
 
   for (const [filepath, content] of Object.entries(files)) {
@@ -63,7 +68,11 @@ export const readDir = async (dir: string): Promise<Files> => {
  * contents.
  * @returns A promise that resolves when the assertion is complete.
  */
-export const expectDir = async (dir: string, expected: Record<string, string>): Promise<void> => {
+export const expectDir = async (dir: string | Directory, expected: Record<string, string>): Promise<void> => {
+  if (dir instanceof Directory) {
+    dir = dir.path;
+  }
+
   const actual = await readDir(dir);
   expect(actual).toEqual(expected);
 };

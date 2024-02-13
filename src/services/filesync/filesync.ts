@@ -1,22 +1,18 @@
 import dayjs from "dayjs";
 import { execa } from "execa";
-import { findUp } from "find-up";
 import fs from "fs-extra";
 import ms from "ms";
 import assert from "node:assert";
-import path from "node:path";
 import process from "node:process";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import pRetry from "p-retry";
 import type { Promisable } from "type-fest";
-import { z } from "zod";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
-import type { App } from "../app/app.js";
-import { getApps } from "../app/app.js";
-import { AppArg } from "../app/arg.js";
-import { Edit, type EditSubscription } from "../app/edit/edit.js";
-import { EditError } from "../app/edit/error.js";
+import type { DevArgs } from "../../commands/dev.js";
+import type { PullArgs } from "../../commands/pull.js";
+import type { PushArgs } from "../../commands/push.js";
+import { type EditSubscription } from "../app/edit/edit.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -24,324 +20,41 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit/operation.js";
-import { ArgError, type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
-import { config, homePath } from "../config/config.js";
+import { config } from "../config/config.js";
 import { filesyncProblemsToProblems, printProblems } from "../output/problems.js";
-import { select } from "../output/prompt.js";
+import { confirm, select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
-import { getUserOrLogin } from "../user/user.js";
-import { sortBySimilar } from "../util/collection.js";
 import { noop } from "../util/function.js";
-import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
-import { Changes, printChanges } from "./changes.js";
+import { Changes, printChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
-import { Directory, supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
-import { InvalidSyncFileError, TooManySyncAttemptsError } from "./error.js";
+import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
+import { TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
 import type { File } from "./file.js";
-import { getChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
+import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
+import { MergeConflictPreference } from "./strategy.js";
+import { type SyncJson, type SyncJsonArgs } from "./sync-json.js";
+
+export type FileSyncArgs = DevArgs | PushArgs | PullArgs;
 
 export type FileSyncHashes = {
   inSync: boolean;
   filesVersionHashes: Hashes;
   localHashes: Hashes;
+  localChanges: ChangesWithHash;
   gadgetHashes: Hashes;
+  gadgetChanges: ChangesWithHash;
   gadgetFilesVersion: bigint;
 };
 
 export class FileSync {
-  readonly edit: Edit;
-
   /**
    * A FIFO async callback queue that ensures we process filesync events
    * in the order we receive them.
    */
   private _syncOperations = new PQueue({ concurrency: 1 });
 
-  private constructor(
-    /**
-     * The {@linkcode Context} that was used to initialize this
-     * {@linkcode FileSync} instance.
-     */
-    readonly ctx: Context<FileSyncArgs>,
-
-    /**
-     * The directory that is being synced to.
-     */
-    readonly directory: Directory,
-
-    /**
-     * The Gadget application that is being synced to.
-     */
-    readonly app: App,
-
-    /**
-     * The environment that is being synced to.
-     */
-    readonly environment: string,
-
-    /**
-     * The state of the filesystem.
-     *
-     * This is persisted to `.gadget/sync.json` within the {@linkcode directory}.
-     */
-    private _syncJson: {
-      app: string;
-      filesVersion: string;
-      mtime?: number | null;
-      currentEnvironment: string;
-      environments: Record<string, { filesVersion: string }>;
-    },
-  ) {
-    if (this._syncJson.environments[this.environment] === undefined) {
-      this._syncJson.environments[this.environment] = { filesVersion: "0" };
-    }
-
-    this.ctx = ctx.child({
-      fields: () => ({ filesync: { directory: this.directory.path, filesVersion: this.filesVersion } }),
-    });
-    this.edit = new Edit(this.ctx);
-  }
-
-  /**
-   * The last filesVersion that was written to the filesystem.
-   *
-   * This determines if the filesystem in Gadget is ahead of the
-   * filesystem on the local machine.
-   */
-  get filesVersion(): bigint {
-    assert(this._syncJson.environments[this.environment], "environment doesn't exist in _syncJson");
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return BigInt(this._syncJson.environments[this.environment]!.filesVersion);
-  }
-
-  /**
-   * The largest mtime that was seen on the filesystem.
-   *
-   * @deprecated no longer used
-   */
-  get mtime(): number | null | undefined {
-    return this._syncJson.mtime;
-  }
-
-  /**
-   * Initializes a {@linkcode FileSync} instance.
-   * - Ensures the directory exists.
-   * - Ensures the directory is empty or contains a `.gadget/sync.json` file (unless `options.force` is `true`)
-   * - Ensures an app is specified (either via `options.app` or by prompting the user)
-   * - Ensures the specified app matches the app the directory was previously synced to (unless `options.force` is `true`)
-   */
-  static async init(ctx: Context<FileSyncArgs>): Promise<FileSync> {
-    ctx = ctx.child({ name: "filesync" });
-
-    const user = await getUserOrLogin(ctx);
-    const apps = await getApps(ctx);
-    if (apps.length === 0) {
-      throw new ArgError(
-        sprint`
-          You (${user.email}) don't have have any Gadget applications.
-
-          Visit https://gadget.new to create one!
-      `,
-      );
-    }
-
-    let dir = ctx.args._[0];
-    if (!dir) {
-      // the user didn't specify a directory
-      const filepath = await findUp(".gadget/sync.json");
-      if (filepath) {
-        // we found a .gadget/sync.json file, use its parent directory
-        dir = path.join(filepath, "../..");
-      } else {
-        // we didn't find a .gadget/sync.json file, use the current directory
-        dir = process.cwd();
-      }
-    }
-
-    if (config.windows && dir.startsWith("~/")) {
-      // `~` doesn't expand to the home directory on Windows
-      dir = homePath(dir.slice(2));
-    }
-
-    // ensure the root directory is an absolute path and exists
-    const wasEmptyOrNonExistent = await isEmptyOrNonExistentDir(dir);
-    await fs.ensureDir((dir = path.resolve(dir)));
-
-    // try to load the .gadget/sync.json file
-    const state = await fs
-      .readJson(path.join(dir, ".gadget/sync.json"))
-      .then((json) => {
-        return z
-          .object({
-            app: z.string(),
-            mtime: z.number().nullish(),
-            filesVersion: z
-              .string()
-              .nullish()
-              .transform((x) => x ?? "0"), // Legacy support for old sync.json files
-            currentEnvironment: z
-              .string()
-              .nullish()
-              .transform((x) => x ?? "development"), // New support for multi environment, but old sync.json files don't have this
-            environments: z
-              .record(z.object({ filesVersion: z.string() }))
-              .nullish()
-              .transform((value) => value ?? { development: { filesVersion: "0" } }),
-          })
-          .parse(json);
-      })
-      .catch((e) => ctx.log.warn("failed to load .gadget/sync.json", { error: e }));
-
-    // Basically a hack for reverse compatibility with old sync.json files
-    const devEnvironmentState = state?.environments["development"];
-    if (devEnvironmentState && state.filesVersion && devEnvironmentState.filesVersion !== state.filesVersion) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      state.environments["development"]!.filesVersion = state.filesVersion;
-    }
-
-    let appSlug = ctx.args["--app"] || state?.app;
-    if (!appSlug) {
-      // the user didn't specify an app, suggest some apps that they can sync to
-      appSlug = await select(ctx, {
-        message: "Select the app to sync to",
-        choices: apps.map((x) => x.slug),
-      });
-    }
-
-    // try to find the appSlug in their list of apps
-    const app = apps.find((app) => app.slug === appSlug);
-    if (!app) {
-      // the specified appSlug doesn't exist in their list of apps,
-      // either they misspelled it or they don't have access to it
-      // anymore, suggest some apps that are similar to the one they
-      // specified
-      const similarAppSlugs = sortBySimilar(
-        appSlug,
-        apps.map((app) => app.slug),
-      ).slice(0, 5);
-
-      throw new ArgError(
-        sprint`
-        Unknown application:
-
-          ${appSlug}
-
-        Did you mean one of these?
-
-
-      `.concat(`  • ${similarAppSlugs.join("\n  • ")}`),
-      );
-    }
-
-    let environment = ctx.args["--environment"]?.toLowerCase() || state?.currentEnvironment?.toLowerCase();
-    const filteredSelectableEnvironments = app.environments.filter((x) => x.type.toLowerCase() !== "production");
-
-    if (app.multiEnvironmentEnabled) {
-      if (!environment) {
-        // user didn't specify an environment, show them a list of valid environments
-        environment = await select(ctx, {
-          message: "Select the environment to sync to",
-          choices: filteredSelectableEnvironments.map((x) => x.name.toLowerCase()),
-        });
-      }
-
-      // if multi environment is enabled try to find the environment in the app's list
-      const env = filteredSelectableEnvironments.find((env) => env.name.toLowerCase() === environment);
-      if (!env) {
-        const similarEnvironments = sortBySimilar(
-          environment,
-          app.environments.map((env) => env.name.toLowerCase()),
-        ).slice(0, 5);
-
-        throw new ArgError(
-          sprint`
-          Unknown environment:
-
-            ${environment}
-
-          Did you mean one of these?
-
-
-          `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
-        );
-      }
-    } else if (ctx.args["--environment"]?.toLowerCase()) {
-      // multi environment is not enabled but the user specified an environment
-      throw new ArgError(
-        sprint`
-        You specified an environment but your app doesn't have multiple environments.
-
-        Remove the {dim --environment} flag to sync to the {bold ${app.primaryDomain}} environment.
-      `,
-      );
-    } else {
-      // multi environment is not enabled and the user didn't specify an environment
-      environment = "development";
-    }
-
-    ctx.app = app;
-    ctx.environment = environment;
-    const directory = await Directory.init(dir);
-
-    if (!state) {
-      // the .gadget/sync.json file didn't exist or contained invalid json
-      if (wasEmptyOrNonExistent || ctx.args["--force"]) {
-        // the directory was empty or the user passed --force
-        // either way, create a fresh .gadget/sync.json file
-        return new FileSync(ctx, directory, app, environment, {
-          app: app.slug,
-          filesVersion: "0",
-          mtime: 0,
-          currentEnvironment: environment,
-          environments: {
-            [environment]: { filesVersion: "0" },
-          },
-        });
-      }
-
-      // the directory isn't empty and the user didn't pass --force
-      throw new InvalidSyncFileError(dir, app.slug);
-    }
-
-    // the .gadget/sync.json file exists
-    if (state.app === app.slug) {
-      // the .gadget/sync.json file is for the same app that the user specified
-      return new FileSync(ctx, directory, app, environment, { ...state, currentEnvironment: environment });
-    }
-
-    // the .gadget/sync.json file is for a different app or environment
-    if (ctx.args["--force"]) {
-      // the user passed --force, so use the app they specified and overwrite everything
-      return new FileSync(ctx, directory, app, environment, {
-        app: app.slug,
-        filesVersion: "0",
-        mtime: 0,
-        currentEnvironment: environment,
-        environments: {
-          [environment]: { filesVersion: "0" },
-        },
-      });
-    }
-
-    // the user didn't pass --force, so throw an error
-    throw new ArgError(sprint`
-        You were about to sync the following app to the following directory:
-
-          {dim ${app.slug}} {dim ({green ${environment}}) → ${dir}}
-
-        However, that directory has already been synced with this app:
-
-          {dim ${state.app}} {dim ({red ${state.currentEnvironment}})}
-
-        If you're sure that you want to sync:
-
-          {dim ${app.slug}} {dim ({green ${environment}}) → ${dir}}
-
-        Then run {dim ggt sync} again with the {dim --force} flag.
-      `);
-  }
+  constructor(readonly syncJson: SyncJson) {}
 
   /**
    * Waits for all pending and ongoing filesync operations to complete.
@@ -351,22 +64,25 @@ export class FileSync {
   }
 
   /**
-   * Sends file changes to the Gadget.
+   * Attempts to send file changes to the Gadget. If a files version
+   * mismatch error occurs, this function will merge the changes with
+   * Gadget instead.
    *
+   * @param ctx - The context to use.
    * @param options - The options to use.
    * @param options.changes - The changes to send.
    * @returns A promise that resolves when the changes have been sent.
    */
-  async sendChangesToGadget({ changes }: { changes: Changes }): Promise<void> {
+  async mergeChangesWithGadget(ctx: Context<DevArgs>, { changes }: { changes: Changes }): Promise<void> {
     await this._syncOperations.add(async () => {
       try {
-        await this._sendChangesToGadget({ changes });
+        await this._sendChangesToGadget(ctx, { changes });
       } catch (error) {
-        swallowFilesVersionMismatch(this.ctx, error);
+        swallowFilesVersionMismatch(ctx, error);
         // we either sent the wrong expectedFilesVersion or we received
         // a filesVersion that is greater than the expectedFilesVersion
         // + 1, so we need to stop what we're doing and get in sync
-        await this.sync();
+        await this.sync(ctx);
       }
     });
   }
@@ -375,48 +91,52 @@ export class FileSync {
    * Subscribes to file changes on Gadget and executes the provided
    * callbacks before and after the changes occur.
    *
+   * @param ctx - The context to use.
    * @param options - The options to use.
    * @param options.beforeChanges - A callback that is called before the changes occur.
    * @param options.afterChanges - A callback that is called after the changes occur.
    * @param options.onError - A callback that is called if an error occurs.
    * @returns A function that unsubscribes from changes on Gadget.
    */
-  subscribeToGadgetChanges({
-    beforeChanges = noop,
-    afterChanges = noop,
-    onError,
-  }: {
-    beforeChanges?: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
-    afterChanges?: (data: { changes: Changes }) => Promisable<void>;
-    onError: (error: unknown) => void;
-  }): EditSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION> {
-    return this.edit.subscribe({
+  subscribeToGadgetChanges(
+    ctx: Context<DevArgs>,
+    {
+      beforeChanges = noop,
+      afterChanges = noop,
+      onError,
+    }: {
+      beforeChanges?: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
+      afterChanges?: (data: { changes: Changes }) => Promisable<void>;
+      onError: (error: unknown) => void;
+    },
+  ): EditSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION> {
+    return this.syncJson.edit.subscribe({
       subscription: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
       // the reason this is a function rather than a static value is
       // so that it will be re-evaluated if the connection is lost and
       // then re-established. this ensures that we send our current
       // filesVersion rather than the one that was sent when we first
       // subscribed
-      variables: () => ({ localFilesVersion: String(this.filesVersion) }),
+      variables: () => ({ localFilesVersion: String(this.syncJson.filesVersion) }),
       onError,
       onData: ({ remoteFileSyncEvents: { changed, deleted, remoteFilesVersion } }) => {
         this._syncOperations
           .add(async () => {
-            if (BigInt(remoteFilesVersion) < this.filesVersion) {
-              this.ctx.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
+            if (BigInt(remoteFilesVersion) < this.syncJson.filesVersion) {
+              ctx.log.warn("skipping received changes because files version is outdated", { filesVersion: remoteFilesVersion });
               return;
             }
 
-            this.ctx.log.debug("received files", {
+            ctx.log.debug("received files", {
               remoteFilesVersion,
               changed: changed.map((change) => change.path),
               deleted: deleted.map((change) => change.path),
             });
 
             const filterIgnoredFiles = (file: { path: string }): boolean => {
-              const ignored = this.directory.ignores(file.path);
+              const ignored = this.syncJson.directory.ignores(file.path);
               if (ignored) {
-                this.ctx.log.warn("skipping received change because file is ignored", { path: file.path });
+                ctx.log.warn("skipping received change because file is ignored", { path: file.path });
               }
               return !ignored;
             };
@@ -425,7 +145,7 @@ export class FileSync {
             deleted = deleted.filter(filterIgnoredFiles);
 
             if (changed.length === 0 && deleted.length === 0) {
-              await this._save(remoteFilesVersion);
+              await this.syncJson.save(remoteFilesVersion);
               return;
             }
 
@@ -434,17 +154,18 @@ export class FileSync {
               deleted: deleted.map((file) => file.path),
             });
 
-            const changes = await this._writeToLocalFilesystem({
+            const changes = await this._writeToLocalFilesystem(ctx, {
               filesVersion: remoteFilesVersion,
               files: changed,
               delete: deleted.map((file) => file.path),
             });
 
             if (changes.size > 0) {
-              printChanges(this.ctx, {
-                message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
+              const now = dayjs().format("hh:mm:ss A");
+              printChanges(ctx, {
                 changes,
                 tense: "past",
+                message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${now}}`,
                 limit: 10,
               });
             }
@@ -456,110 +177,21 @@ export class FileSync {
     });
   }
 
-  /**
-   * Ensures the local filesystem is in sync with Gadget's filesystem.
-   * - All non-conflicting changes are automatically merged.
-   * - Conflicts are resolved by prompting the user to either keep their local changes or keep Gadget's changes.
-   * - This function will not return until the filesystem is in sync.
-   */
-  async sync({ maxAttempts = 10 }: { maxAttempts?: number } = {}): Promise<void> {
-    let attempt = 0;
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition
-    while (true) {
-      const { inSync, ...hashes } = await this.hashes();
-
-      if (inSync) {
-        this._syncOperations.clear();
-        this.ctx.log.info("filesystem is in sync", { attempt });
-        await this._save(hashes.gadgetFilesVersion);
-        return;
-      }
-
-      if (attempt++ >= maxAttempts) {
-        throw new TooManySyncAttemptsError(maxAttempts);
-      }
-
-      try {
-        this.ctx.log.info("syncing", { attempt, ...hashes });
-        await this._sync(hashes);
-      } catch (error) {
-        swallowFilesVersionMismatch(this.ctx, error);
-        // we either sent the wrong expectedFilesVersion or we received
-        // a filesVersion that is greater than the expectedFilesVersion
-        // + 1, so try again
-      }
-    }
-  }
-
-  async _sync({ filesVersionHashes, localHashes, gadgetHashes, gadgetFilesVersion }: Omit<FileSyncHashes, "inSync">): Promise<void> {
-    let localChanges = getChanges(this.ctx, { from: filesVersionHashes, to: localHashes, existing: gadgetHashes, ignore: [".gadget/"] });
-    let gadgetChanges = getChanges(this.ctx, { from: filesVersionHashes, to: gadgetHashes, existing: localHashes });
-
-    if (localChanges.size === 0 && gadgetChanges.size === 0) {
-      // the local filesystem is missing .gadget/ files
-      gadgetChanges = getChanges(this.ctx, { from: localHashes, to: gadgetHashes });
-      assertAllGadgetFiles({ gadgetChanges });
-    }
-
-    assert(localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
-
-    const conflicts = getConflicts({ localChanges, gadgetChanges });
-    if (conflicts.size > 0) {
-      this.ctx.log.debug("conflicts detected", { conflicts });
-
-      let preference = this.ctx.args["--prefer"];
-      if (!preference) {
-        printConflicts(this.ctx, {
-          message: sprint`{bold You have conflicting changes with Gadget}`,
-          conflicts,
-        });
-
-        preference = await select(this.ctx, {
-          message: "How would you like to resolve these conflicts?",
-          choices: Object.values(ConflictPreference),
-        });
-      }
-
-      switch (preference) {
-        case ConflictPreference.CANCEL: {
-          process.exit(0);
-          break;
-        }
-        case ConflictPreference.LOCAL: {
-          gadgetChanges = withoutConflictingChanges({ conflicts, changes: gadgetChanges });
-          break;
-        }
-        case ConflictPreference.GADGET: {
-          localChanges = withoutConflictingChanges({ conflicts, changes: localChanges });
-          break;
-        }
-      }
-    }
-
-    if (gadgetChanges.size > 0) {
-      await this._getChangesFromGadget({ changes: gadgetChanges, filesVersion: gadgetFilesVersion });
-    }
-
-    if (localChanges.size > 0) {
-      await this._sendChangesToGadget({ changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
-    }
-  }
-
-  async hashes(): Promise<FileSyncHashes> {
+  async hashes(ctx: Context<SyncJsonArgs>): Promise<FileSyncHashes> {
     const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
       // get the hashes of our local files
-      this.directory.hashes(),
+      this.syncJson.directory.hashes(),
       // get the hashes of our local filesVersion and the latest filesVersion
       (async () => {
         let gadgetFilesVersion: bigint;
         let gadgetHashes: Hashes;
         let filesVersionHashes: Hashes;
 
-        if (this.filesVersion === 0n) {
-          // this is the first time we're syncing, so just get the
-          // hashes of the latest filesVersion
-          const { fileSyncHashes } = await this.edit.query({ query: FILE_SYNC_HASHES_QUERY });
+        if (this.syncJson.filesVersion === 0n) {
+          // we're either syncing for the first time or we're syncing a
+          // non-empty directory without a `.gadget/sync.json` file,
+          // regardless just get the hashes of the latest filesVersion
+          const { fileSyncHashes } = await this.syncJson.edit.query({ query: FILE_SYNC_HASHES_QUERY });
           gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
           gadgetHashes = fileSyncHashes.hashes;
           filesVersionHashes = {};
@@ -567,9 +199,9 @@ export class FileSync {
           // this isn't the first time we're syncing, so get the hashes
           // of the files at our local filesVersion and the latest
           // filesVersion
-          const { fileSyncComparisonHashes } = await this.edit.query({
+          const { fileSyncComparisonHashes } = await this.syncJson.edit.query({
             query: FILE_SYNC_COMPARISON_HASHES_QUERY,
-            variables: { filesVersion: String(this.filesVersion) },
+            variables: { filesVersion: String(this.syncJson.filesVersion) },
           });
           gadgetFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
           gadgetHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
@@ -580,29 +212,214 @@ export class FileSync {
       })(),
     ]);
 
+    const inSync = isEqualHashes(ctx, localHashes, gadgetHashes);
+
+    const localChanges = getNecessaryChanges(ctx, {
+      from: filesVersionHashes,
+      to: localHashes,
+      existing: gadgetHashes,
+      ignore: [".gadget/"],
+    });
+
+    let gadgetChanges = getNecessaryChanges(ctx, {
+      from: filesVersionHashes,
+      to: gadgetHashes,
+      existing: localHashes,
+    });
+
+    if (!inSync && localChanges.size === 0 && gadgetChanges.size === 0) {
+      // the local filesystem is missing .gadget/ files
+      gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
+      assert(gadgetChanges.size > 0, "expected gadgetChanges to have changes");
+      assert(
+        Array.from(gadgetChanges.keys()).every((path) => path.startsWith(".gadget/")),
+        "expected all gadgetChanges to be .gadget/ files",
+      );
+    }
+
+    assert(inSync || localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
+
     return {
+      inSync,
       filesVersionHashes,
       localHashes,
+      localChanges,
       gadgetHashes,
+      gadgetChanges,
       gadgetFilesVersion,
-      inSync: isEqualHashes(this.ctx, localHashes, gadgetHashes),
     };
   }
 
-  private async _getChangesFromGadget({
-    filesVersion,
-    changes,
-  }: {
-    filesVersion: bigint;
-    changes: Changes | ChangesWithHash;
-  }): Promise<void> {
-    this.ctx.log.debug("getting changes from gadget", { filesVersion, changes });
+  /**
+   * Ensures the local filesystem is in sync with Gadget's filesystem.
+   * - All non-conflicting changes are automatically merged.
+   * - Conflicts are resolved by prompting the user to either keep their local changes or keep Gadget's changes.
+   * - This function will not return until the filesystem is in sync.
+   */
+  async sync(ctx: Context<DevArgs>, { hashes, maxAttempts = 10 }: { hashes?: FileSyncHashes; maxAttempts?: number } = {}): Promise<void> {
+    let attempt = 0;
+
+    do {
+      if (attempt === 0) {
+        hashes ??= await this.hashes(ctx);
+      } else {
+        hashes = await this.hashes(ctx);
+      }
+
+      if (hashes.inSync) {
+        this._syncOperations.clear();
+        ctx.log.info("filesystem in sync");
+        await this.syncJson.save(hashes.gadgetFilesVersion);
+        return;
+      }
+
+      attempt += 1;
+      ctx.log.info("merging", { attempt, ...hashes });
+
+      try {
+        await this._merge(ctx, hashes);
+      } catch (error) {
+        swallowFilesVersionMismatch(ctx, error);
+        // we either sent the wrong expectedFilesVersion or we received
+        // a filesVersion that is greater than the expectedFilesVersion
+        // + 1, so try again
+      }
+    } while (attempt < maxAttempts);
+
+    throw new TooManySyncAttemptsError(maxAttempts);
+  }
+
+  /**
+   * Pushes any changes made to the local filesystem since the last sync
+   * to Gadget.
+   *
+   * If Gadget has also made changes since the last sync, and --force
+   * was not passed, the user will be prompted to discard them.
+   */
+  async push(ctx: Context<PushArgs>, { hashes, force }: { hashes?: FileSyncHashes; force?: boolean } = {}): Promise<void> {
+    const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
+    const localChanges = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
+    if (localChanges.size === 0) {
+      ctx.log.println`
+${await this.syncJson.sprintState()}
+
+Your filesystem is already in sync.
+`;
+      return;
+    }
+
+    if (gadgetChanges.size > 0 && !(force ?? ctx.args["--force"])) {
+      printChanges(ctx, {
+        changes: gadgetChanges,
+        tense: "past",
+        message: sprint`{bold ${this.syncJson.app.slug} (${this.syncJson.env.name})'s files have changed since you last synced.}`,
+      });
+
+      await confirm(ctx, { message: "Are you sure you want to discard them?" });
+    }
+
+    await this._sendChangesToGadget(ctx, {
+      changes: localChanges,
+      expectedFilesVersion: gadgetFilesVersion,
+      print: {
+        tense: "present",
+      },
+    });
+  }
+
+  async pull(ctx: Context<PullArgs>, { hashes, force }: { hashes?: FileSyncHashes; force?: boolean } = {}): Promise<void> {
+    const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
+    const gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
+    if (gadgetChanges.size === 0) {
+      ctx.log.println`
+${await this.syncJson.sprintState()}
+
+Your filesystem is already in sync.
+`;
+      return;
+    }
+
+    if (localChanges.size > 0 && !(force ?? ctx.args["--force"])) {
+      printChanges(ctx, {
+        changes: localChanges,
+        tense: "past",
+        message: sprint`{bold Your local files have changed since you last synced.}`,
+      });
+
+      await confirm(ctx, { message: "Do you want to discard your local changes?" });
+    }
+
+    await this._getChangesFromGadget(ctx, {
+      changes: gadgetChanges,
+      filesVersion: gadgetFilesVersion,
+      print: {
+        tense: "present",
+      },
+    });
+  }
+
+  private async _merge(ctx: Context<DevArgs>, { localChanges, gadgetChanges, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
+    const conflicts = getConflicts({ localChanges, gadgetChanges });
+    if (conflicts.size > 0) {
+      ctx.log.debug("conflicts detected", { conflicts });
+
+      let preference = ctx.args["--prefer"];
+      if (!preference) {
+        printConflicts(ctx, {
+          message: sprint`{bold You have conflicting changes with Gadget}`,
+          conflicts,
+        });
+
+        preference = await select(ctx, {
+          message: "How would you like to resolve these conflicts?",
+          choices: Object.values(MergeConflictPreference),
+        });
+      }
+
+      switch (preference) {
+        case MergeConflictPreference.CANCEL: {
+          process.exit(0);
+          break;
+        }
+        case MergeConflictPreference.LOCAL: {
+          gadgetChanges = withoutConflictingChanges({ conflicts, changes: gadgetChanges });
+          break;
+        }
+        case MergeConflictPreference.GADGET: {
+          localChanges = withoutConflictingChanges({ conflicts, changes: localChanges });
+          break;
+        }
+      }
+    }
+
+    if (gadgetChanges.size > 0) {
+      await this._getChangesFromGadget(ctx, { changes: gadgetChanges, filesVersion: gadgetFilesVersion });
+    }
+
+    if (localChanges.size > 0) {
+      await this._sendChangesToGadget(ctx, { changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
+    }
+  }
+
+  private async _getChangesFromGadget(
+    ctx: Context<SyncJsonArgs>,
+    {
+      filesVersion,
+      changes,
+      print,
+    }: {
+      filesVersion: bigint;
+      changes: Changes | ChangesWithHash;
+      print?: Partial<Omit<PrintChangesOptions, "changes">>;
+    },
+  ): Promise<void> {
+    ctx.log.debug("getting changes from gadget", { filesVersion, changes });
     const created = changes.created();
     const updated = changes.updated();
 
     let files: File[] = [];
     if (created.length > 0 || updated.length > 0) {
-      const { fileSyncFiles } = await this.edit.query({
+      const { fileSyncFiles } = await this.syncJson.edit.query({
         query: FILE_SYNC_FILES_QUERY,
         variables: {
           paths: [...created, ...updated],
@@ -614,29 +431,33 @@ export class FileSync {
       files = fileSyncFiles.files;
     }
 
-    await this._writeToLocalFilesystem({
+    await this._writeToLocalFilesystem(ctx, {
       filesVersion,
       files,
       delete: changes.deleted(),
     });
 
-    printChanges(this.ctx, {
+    printChanges(ctx, {
       changes,
       tense: "past",
-      message: sprint`← Received {gray ${dayjs().format("hh:mm:ss A")}}`,
+      message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+      ...print,
     });
   }
 
-  private async _sendChangesToGadget({
-    expectedFilesVersion = this.filesVersion,
-    changes,
-    printLimit,
-  }: {
-    expectedFilesVersion?: bigint;
-    changes: Changes;
-    printLimit?: number;
-  }): Promise<void> {
-    this.ctx.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
+  private async _sendChangesToGadget(
+    ctx: Context<SyncJsonArgs>,
+    {
+      changes,
+      expectedFilesVersion = this.syncJson.filesVersion,
+      print,
+    }: {
+      changes: Changes;
+      expectedFilesVersion?: bigint;
+      print?: Partial<Omit<PrintChangesOptions, "changes">>;
+    },
+  ): Promise<void> {
+    ctx.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
     const changed: FileSyncChangedEventInput[] = [];
     const deleted: FileSyncDeletedEventInput[] = [];
 
@@ -646,14 +467,14 @@ export class FileSync {
         return;
       }
 
-      const absolutePath = this.directory.absolute(normalizedPath);
+      const absolutePath = this.syncJson.directory.absolute(normalizedPath);
 
       let stats;
       try {
         stats = await fs.stat(absolutePath);
       } catch (error) {
         swallowEnoent(error);
-        this.ctx.log.debug("skipping change because file doesn't exist", { path: normalizedPath });
+        ctx.log.debug("skipping change because file doesn't exist", { path: normalizedPath });
         return;
       }
 
@@ -677,13 +498,13 @@ export class FileSync {
     });
 
     if (changed.length === 0 && deleted.length === 0) {
-      this.ctx.log.debug("skipping send because there are no changes");
+      ctx.log.debug("skipping send because there are no changes");
       return;
     }
 
     const {
       publishFileSyncEvents: { remoteFilesVersion, problems: filesyncProblems },
-    } = await this.edit.mutate({
+    } = await this.syncJson.edit.mutate({
       mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       variables: {
         input: {
@@ -708,11 +529,11 @@ export class FileSync {
       },
     });
 
-    printChanges(this.ctx, {
+    printChanges(ctx, {
       changes,
       tense: "past",
-      message: sprint`→ Sent {gray ${dayjs().format("hh:mm:ss A")}}`,
-      limit: printLimit,
+      message: sprint`→ Sent to ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+      ...print,
     });
 
     if (BigInt(remoteFilesVersion) > expectedFilesVersion + 1n) {
@@ -721,20 +542,23 @@ export class FileSync {
       throw new Error("Files version mismatch");
     }
 
-    if (filesyncProblems.length > 0) {
-      this.ctx.log.println`{red Gadget has detected the following fatal errors with your files:}`;
-      printProblems(this.ctx, { problems: filesyncProblemsToProblems(filesyncProblems), showFileTypes: false });
-      this.ctx.log.printlns`{red Your app will not be operational until all fatal errors are fixed.}`;
-    }
+    await this.syncJson.save(remoteFilesVersion);
 
-    await this._save(remoteFilesVersion);
+    if (filesyncProblems.length > 0) {
+      ctx.log.println`{red Gadget has detected the following fatal errors with your files:}`;
+      printProblems(ctx, { problems: filesyncProblemsToProblems(filesyncProblems), showFileTypes: false });
+      ctx.log.printlns`{red Your app will not be operational until all fatal errors are fixed.}`;
+    }
   }
 
-  private async _writeToLocalFilesystem(options: { filesVersion: bigint | string; files: File[]; delete: string[] }): Promise<Changes> {
+  private async _writeToLocalFilesystem(
+    ctx: Context<SyncJsonArgs>,
+    options: { filesVersion: bigint | string; files: File[]; delete: string[] },
+  ): Promise<Changes> {
     const filesVersion = BigInt(options.filesVersion);
-    assert(filesVersion >= this.filesVersion, "filesVersion must be greater than or equal to current filesVersion");
+    assert(filesVersion >= this.syncJson.filesVersion, "filesVersion must be greater than or equal to current filesVersion");
 
-    this.ctx.log.debug("writing to local filesystem", {
+    ctx.log.debug("writing to local filesystem", {
       filesVersion,
       files: options.files.map((file) => file.path),
       delete: options.delete,
@@ -744,8 +568,8 @@ export class FileSync {
     const updated: string[] = [];
 
     await pMap(options.delete, async (filepath) => {
-      const currentPath = this.directory.absolute(filepath);
-      const backupPath = this.directory.absolute(".gadget/backup", this.directory.relative(filepath));
+      const currentPath = this.syncJson.directory.absolute(filepath);
+      const backupPath = this.syncJson.directory.absolute(".gadget/backup", this.syncJson.directory.relative(filepath));
 
       // rather than `rm -rf`ing files, we move them to
       // `.gadget/backup/` so that users can recover them if something
@@ -769,14 +593,14 @@ export class FileSync {
           retries: config.windows ? 4 : 2,
           minTimeout: ms("100ms"),
           onFailedAttempt: (error) => {
-            this.ctx.log.warn("failed to move file to backup", { error, currentPath, backupPath });
+            ctx.log.warn("failed to move file to backup", { error, currentPath, backupPath });
           },
         },
       );
     });
 
     await pMap(options.files, async (file) => {
-      const absolutePath = this.directory.absolute(file.path);
+      const absolutePath = this.syncJson.directory.absolute(file.path);
       if (await fs.pathExists(absolutePath)) {
         updated.push(file.path);
       } else {
@@ -796,12 +620,12 @@ export class FileSync {
         await fs.chmod(absolutePath, file.mode & 0o777);
       }
 
-      if (absolutePath === this.directory.absolute(".ignore")) {
-        await this.directory.loadIgnoreFile();
+      if (absolutePath === this.syncJson.directory.absolute(".ignore")) {
+        await this.syncJson.directory.loadIgnoreFile();
       }
     });
 
-    await this._save(String(filesVersion));
+    await this.syncJson.save(String(filesVersion));
 
     const changes = new Changes([
       ...created.map((path) => [path, { type: "create" }] as const),
@@ -810,110 +634,12 @@ export class FileSync {
     ]);
 
     if (changes.has("yarn.lock")) {
-      this.ctx.log.info("running yarn install --check-files");
-      await execa("yarn", ["install", "--check-files"], { cwd: this.directory.path })
-        .then(() => this.ctx.log.info("yarn install complete"))
-        .catch((error: unknown) => this.ctx.log.error("yarn install failed", { error }));
+      ctx.log.info("running yarn install --check-files");
+      await execa("yarn", ["install", "--check-files"], { cwd: this.syncJson.directory.path })
+        .then(() => ctx.log.info("yarn install complete"))
+        .catch((error: unknown) => ctx.log.error("yarn install failed", { error }));
     }
 
     return changes;
   }
-
-  /**
-   * Updates {@linkcode _syncJson} and saves it to `.gadget/sync.json`.
-   */
-  private async _save(filesVersion: string | bigint): Promise<void> {
-    assert(this._syncJson.environments[this.environment], "environment doesn't exist in _syncJson");
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this._syncJson.environments[this.environment]!.filesVersion = String(filesVersion);
-
-    if (this.environment === "development") {
-      this._syncJson.filesVersion = String(filesVersion);
-    }
-
-    this.ctx.log.debug("saving .gadget/sync.json");
-
-    await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), { ...this._syncJson }, { spaces: 2 });
-  }
 }
-
-/**
- * Checks if a directory is empty or non-existent.
- *
- * @param dir - The directory path to check.
- * @returns A Promise that resolves to a boolean indicating whether the directory is empty or non-existent.
- */
-export const isEmptyOrNonExistentDir = async (dir: string): Promise<boolean> => {
-  try {
-    for await (const _ of await fs.opendir(dir, { bufferSize: 1 })) {
-      return false;
-    }
-    return true;
-  } catch (error) {
-    swallowEnoent(error);
-    return true;
-  }
-};
-
-export const assertAllGadgetFiles = ({ gadgetChanges }: { gadgetChanges: Changes }): void => {
-  assert(
-    gadgetChanges.created().length > 0 || gadgetChanges.deleted().length > 0 || gadgetChanges.updated().length > 0,
-    "expected gadgetChanges to have changes",
-  );
-
-  const allGadgetFiles = Array.from(gadgetChanges.keys()).every((path) => path.startsWith(".gadget/"));
-  assert(allGadgetFiles, "expected all gadgetChanges to be .gadget/ files");
-};
-
-export const ConflictPreference = Object.freeze({
-  CANCEL: "Cancel (Ctrl+C)",
-  LOCAL: "Keep my conflicting changes",
-  GADGET: "Keep Gadget's conflicting changes",
-});
-
-export type ConflictPreference = (typeof ConflictPreference)[keyof typeof ConflictPreference];
-
-export const ConflictPreferenceArg = (value: string, name: string): ConflictPreference => {
-  if (["local", "gadget"].includes(value)) {
-    return ConflictPreference[value.toUpperCase() as keyof typeof ConflictPreference];
-  }
-
-  throw new ArgError(sprint`
-      ${name} must be {bold local} or {bold gadget}
-
-      {bold EXAMPLES:}
-        ${name} local
-        ${name} gadget
-    `);
-};
-
-export const FileSyncArgs = {
-  "--app": { type: AppArg, alias: "-a" },
-  "--prefer": ConflictPreferenceArg,
-  "--force": Boolean,
-  "--environment": { type: String, alias: "-e" },
-} satisfies ArgsDefinition;
-
-export type FileSyncArgs = typeof FileSyncArgs;
-
-export const isFilesVersionMismatchError = (error: unknown): boolean => {
-  if (error instanceof EditError) {
-    error = error.cause;
-  }
-  if (isGraphQLResult(error)) {
-    error = error.errors;
-  }
-  if (isGraphQLErrors(error)) {
-    error = error[0];
-  }
-  return isObject(error) && "message" in error && isString(error.message) && error.message.includes("Files version mismatch");
-};
-
-const swallowFilesVersionMismatch = (ctx: Context, error: unknown): void => {
-  if (isFilesVersionMismatchError(error)) {
-    ctx.log.debug("swallowing files version mismatch", { error });
-    return;
-  }
-  throw error;
-};

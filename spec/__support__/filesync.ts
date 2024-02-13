@@ -11,7 +11,7 @@ import {
   type FileSyncDeletedEventInput,
   type MutationPublishFileSyncEventsArgs,
 } from "../../src/__generated__/graphql.js";
-import { args } from "../../src/commands/sync.js";
+import { args, type DevArgs } from "../../src/commands/dev.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -22,8 +22,9 @@ import {
 import type { Context } from "../../src/services/command/context.js";
 import { Directory, swallowEnoent, type Hashes } from "../../src/services/filesync/directory.js";
 import type { File } from "../../src/services/filesync/file.js";
-import { FileSync, type FileSyncArgs } from "../../src/services/filesync/filesync.js";
+import { FileSync } from "../../src/services/filesync/filesync.js";
 import { isEqualHashes } from "../../src/services/filesync/hashes.js";
+import { SyncJson, type SyncJsonArgs, type SyncJsonState } from "../../src/services/filesync/sync-json.js";
 import { noop } from "../../src/services/util/function.js";
 import { isNil } from "../../src/services/util/is.js";
 import { defaults, omit } from "../../src/services/util/object.js";
@@ -39,18 +40,14 @@ import { mock, mockRestore } from "./mock.js";
 import { testDirPath } from "./paths.js";
 import { timeoutMs } from "./sleep.js";
 
-/**
- * Represents the state of a FileSync instance.
- */
-export type SyncJson = (typeof FileSync.prototype)["_syncJson"];
+export type FileSyncScenarioOptions<Args extends SyncJsonArgs = DevArgs> = {
+  /**
+   * The context to use for the {@linkcode SyncJson} instance.
+   *
+   * @default makeContext(args, ["dev", localDir.path, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`])
+   */
+  ctx?: Context<Args>;
 
-/**
- * Represents the state of a FileSync instance, but with optional fields
- * and the filesVersion field as a string or bigint.
- */
-export type PartialSyncJson = Partial<Omit<SyncJson, "filesVersion"> & { filesVersion?: string | bigint }>;
-
-export type SyncScenarioOptions = {
   /**
    * The files at filesVersion 1.
    *
@@ -83,16 +80,17 @@ export type SyncScenarioOptions = {
    * {@linkcode PUBLISH_FILE_SYNC_EVENTS_MUTATION}.
    */
   afterPublishFileSyncEvents?: () => Promisable<void>;
-
-  /**
-   * The context to use for the FileSync instance.
-   *
-   * @default makeContext(args, ["sync", localDir.path, "--app", testApp.slug])
-   */
-  ctx?: Context<FileSyncArgs>;
 };
 
-export type SyncScenario = {
+export type SyncScenario<Args extends SyncJsonArgs = DevArgs> = {
+  ctx: Context<Args>;
+
+  /**
+   * The {@linkcode SyncJson} instance the {@linkcode FileSync} instance
+   * is using.
+   */
+  syncJson: SyncJson;
+
   /**
    * A FileSync instance that is initialized to the `localDir`.
    */
@@ -156,7 +154,7 @@ export type SyncScenario = {
    * - `filesVersionDirs`: A record where the keys are filesVersions and
    *   the values are the {@linkcode Files} for that filesVersion.
    */
-  expectDirs: (expectedSyncJson?: PartialSyncJson) => Assertion<
+  expectDirs: (expectedSyncJson?: Partial<SyncJsonState>) => Assertion<
     Promise<{
       localDir: Files;
       gadgetDir: Files;
@@ -173,17 +171,22 @@ export type SyncScenario = {
 /**
  * Creates a filesync scenario for testing purposes.
  *
- * @see {@linkcode SyncScenarioOptions}
+ * @see {@linkcode FileSyncScenarioOptions}
  * @see {@linkcode SyncScenario}
  */
-export const makeSyncScenario = async ({
-  ctx = makeContext({ parse: args, argv: ["sync", testDirPath("local"), "--app", testApp.slug] }),
+export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
+  ctx,
   filesVersion1Files,
   localFiles,
   gadgetFiles,
   beforePublishFileSyncEvents,
   afterPublishFileSyncEvents,
-}: Partial<SyncScenarioOptions> = {}): Promise<SyncScenario> => {
+}: Partial<FileSyncScenarioOptions<Args>> = {}): Promise<SyncScenario<Args>> => {
+  ctx ??= makeContext({
+    parse: args,
+    argv: ["dev", testDirPath("local"), `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`],
+  }) as Context<Args>;
+
   let gadgetFilesVersion = 1n;
   await writeDir(testDirPath("gadget"), { ".gadget/": "", ...gadgetFiles });
   const gadgetDir = await Directory.init(testDirPath("gadget"));
@@ -206,19 +209,31 @@ export const makeSyncScenario = async ({
     await localDir.loadIgnoreFile();
 
     if (!localFiles[".gadget/sync.json"]) {
-      const syncJson: SyncJson = {
-        app: testApp.slug,
-        filesVersion: "1",
-        currentEnvironment: "development",
+      const syncJsonFile: SyncJsonState = {
+        application: testApp.slug,
+        environment: "development",
         environments: { development: { filesVersion: "1" } },
       };
-      await fs.outputJSON(localDir.absolute(".gadget/sync.json"), syncJson, { spaces: 2 });
+
+      await fs.outputJSON(
+        localDir.absolute(".gadget/sync.json"),
+        {
+          ...syncJsonFile,
+
+          // deprecated
+          app: syncJsonFile.application,
+          filesVersion: syncJsonFile.environments["development"]!.filesVersion,
+        },
+        { spaces: 2 },
+      );
     }
   }
 
-  mockRestore(FileSync.init);
-  const filesync = await FileSync.init(ctx);
-  mock(FileSync, "init", () => filesync);
+  mockRestore(SyncJson.load);
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
+  mock(SyncJson, "load", () => syncJson);
+
+  const filesync = new FileSync(syncJson);
 
   const changeGadgetFiles: SyncScenario["changeGadgetFiles"] = async (options) => {
     for (const file of options.delete) {
@@ -251,6 +266,7 @@ export const makeSyncScenario = async ({
 
   nockEditResponse({
     app: ctx.app,
+    env: ctx.env,
     optional: true,
     persist: true,
     operation: FILE_SYNC_HASHES_QUERY,
@@ -267,7 +283,7 @@ export const makeSyncScenario = async ({
         filesVersion = BigInt(variables.filesVersion);
         log.trace("sending files version hashes", { filesVersion, variables });
         const filesVersionDir = filesVersionDirs.get(filesVersion);
-        assert(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
+        assert(filesVersionDir, `filesVersionDir ${filesync.syncJson.filesVersion} doesn't exist`);
         hashes = await filesVersionDir.hashes();
       }
 
@@ -284,6 +300,7 @@ export const makeSyncScenario = async ({
 
   nockEditResponse({
     app: ctx.app,
+    env: ctx.env,
     optional: true,
     persist: true,
     operation: FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -292,7 +309,7 @@ export const makeSyncScenario = async ({
       log.trace("sending comparison hashes", { gadgetFilesVersion, variables });
 
       const filesVersionDir = filesVersionDirs.get(BigInt(variables.filesVersion));
-      assertOrFail(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
+      assertOrFail(filesVersionDir, `filesVersionDir ${filesync.syncJson.filesVersion} doesn't exist`);
 
       const [filesVersionHashes, gadgetHashes] = await Promise.all([filesVersionDir.hashes(), gadgetDir.hashes()]);
 
@@ -315,6 +332,7 @@ export const makeSyncScenario = async ({
 
   nockEditResponse({
     app: ctx.app,
+    env: ctx.env,
     optional: true,
     persist: true,
     operation: FILE_SYNC_FILES_QUERY,
@@ -328,7 +346,7 @@ export const makeSyncScenario = async ({
       encoding ??= FileSyncEncoding.Base64;
 
       const filesVersionDir = filesVersionDirs.get(BigInt(filesVersion));
-      assert(filesVersionDir, `filesVersionDir ${filesync.filesVersion} doesn't exist`);
+      assert(filesVersionDir, `filesVersionDir ${filesync.syncJson.filesVersion} doesn't exist`);
 
       return {
         data: {
@@ -356,6 +374,7 @@ export const makeSyncScenario = async ({
 
   nockEditResponse({
     app: ctx.app,
+    env: ctx.env,
     optional: true,
     persist: true,
     operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
@@ -401,6 +420,8 @@ export const makeSyncScenario = async ({
   const mockEditSubscriptions = makeMockEditSubscriptions();
 
   return {
+    ctx,
+    syncJson,
     filesync,
     filesVersionDirs,
     localDir,
@@ -412,13 +433,15 @@ export const makeSyncScenario = async ({
       const signal = new PromiseSignal();
       const localSyncJsonPath = localDir.absolute(".gadget/sync.json");
 
-      const interval = setInterval(() => void signalIfFilesVersion(), 100);
-
-      const signalIfFilesVersion = async (): Promise<void> => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      const interval = setInterval(async () => {
         try {
           log.trace("checking local files version", { filesVersion });
-          const syncJson = await fs.readJSON(localSyncJsonPath);
-          if (BigInt(syncJson.filesVersion) === filesVersion) {
+          const state = (await fs.readJSON(localSyncJsonPath)) as SyncJsonState;
+          const environment = state.environments[state.environment];
+          assertOrFail(environment, "environment must exist");
+
+          if (BigInt(state.environments[state.environment]!.filesVersion) === filesVersion) {
             log.trace("signaling local files version", { filesVersion });
             signal.resolve();
             clearInterval(interval);
@@ -426,7 +449,7 @@ export const makeSyncScenario = async ({
         } catch (error) {
           swallowEnoent(error);
         }
-      };
+      }, 100);
 
       await pTimeout(signal, {
         message: `Timed out waiting for gadget files version to become ${filesVersion}`,
@@ -438,16 +461,14 @@ export const makeSyncScenario = async ({
       log.trace("waiting for gadget files version", { filesVersion });
       const signal = new PromiseSignal();
 
-      const interval = setInterval(() => signalIfFilesVersion(), 100);
-
-      const signalIfFilesVersion = (): void => {
+      const interval = setInterval(() => {
         log.trace("checking gadget files version", { filesVersion });
         if (filesVersionDirs.has(filesVersion)) {
           log.trace("signaling gadget files version", { filesVersion });
           signal.resolve();
           clearInterval(interval);
         }
-      };
+      }, 100);
 
       await pTimeout(signal, {
         message: `Timed out waiting for gadget files version to become ${filesVersion}`,
@@ -480,7 +501,15 @@ export const makeSyncScenario = async ({
             })(),
           ]);
 
-          expect(local[".gadget/sync.json"]).toEqual(expectSyncJson(filesync, expectedSyncJson));
+          const actualSyncJsonFile = local[".gadget/sync.json"];
+          const expectedSyncJsonFile = expectSyncJson(filesync, expectedSyncJson);
+
+          try {
+            expect(actualSyncJsonFile).toEqual(expectedSyncJsonFile);
+          } catch (error) {
+            console.error("unexpected .gadget/sync.json", { expected: expectedSyncJsonFile, actual: actualSyncJsonFile });
+            throw error;
+          }
 
           // omit mtime from the snapshot
           const withoutMtime = omit(JSON.parse(local[".gadget/sync.json"]!), ["mtime"]);
@@ -549,11 +578,17 @@ export const makeFile = (options: PartialExcept<File, "path">): File => {
   return f;
 };
 
-export const expectSyncJson = (filesync: FileSync, expected: PartialSyncJson = {}): string => {
-  // @ts-expect-error _syncJson is private
-  const syncJson = filesync._syncJson;
-  expect(syncJson).toMatchObject(expected);
-  return prettyJSON(syncJson);
+export const expectSyncJson = (filesync: FileSync, expected: Partial<SyncJsonState> = {}): string => {
+  expect(filesync.syncJson.state).toMatchObject(expected);
+  return prettyJSON({
+    ...filesync.syncJson.state,
+
+    // deprecated
+    app: filesync.syncJson.app.slug,
+    filesVersion: String(filesync.syncJson.filesVersion),
+    // @ts-expect-error - mtime is private
+    mtime: filesync.syncJson._mtime,
+  });
 };
 
 export const expectPublishVariables = (expected: MutationPublishFileSyncEventsArgs): ZodSchema<MutationPublishFileSyncEventsArgs> => {

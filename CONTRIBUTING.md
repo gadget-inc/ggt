@@ -150,7 +150,7 @@ The other differences between `bin/dev.js` and `ggt` are:
   - `-vv` = `"debug"`
   - `-vvv` = `"trace"`
 
-- If you're working on file sync, you can `ggt sync` apps into the `tmp/apps` directory. This way, you can have your synced files and `ggt` code in the same directory without worrying about them interfering with each other.
+- If you're working on file sync, you can `ggt dev` apps into the `tmp/apps` directory. This way, you can have your synced files and `ggt` code in the same directory without worrying about them interfering with each other.
 
 ## Testing
 

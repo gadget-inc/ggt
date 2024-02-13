@@ -42,7 +42,7 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: Pri
   let output = "";
 
   for (const [name, problems] of Object.entries(groupedProblems)) {
-    output += sprintlns`• {cyan ${name}} {redBright ${pluralize("issue", problems.length, true)}}`;
+    output += sprintlns`• {cyan ${name}} {redBright ${pluralize("problem", problems.length, true)}}`;
     for (const problem of problems) {
       const [message, ...lines] = problem.message.split("\n") as [string, ...string[]];
 
@@ -85,7 +85,7 @@ export const filetype = (filename: string): string => {
   }
 };
 
-export const issuesToProblems = (issues: PublishIssue[]): Problems => {
+export const publishIssuesToProblems = (issues: PublishIssue[]): Problems => {
   const problems: Problems = {};
   for (const issue of issues) {
     const name = issue.node?.apiIdentifier ?? issue.node?.name ?? "Other";

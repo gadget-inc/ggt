@@ -5,19 +5,30 @@ import { config } from "../config/config.js";
 import { loadCookie } from "../http/auth.js";
 import { http } from "../http/http.js";
 
+export const EnvironmentType = Object.freeze({
+  Development: "development",
+  Production: "production",
+  Test: "test",
+});
+
+export type EnvironmentType = keyof typeof EnvironmentType;
+
+export const Environment = z.object({
+  id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
+  name: z.string().transform((name) => name.toLowerCase()),
+  type: z.nativeEnum(EnvironmentType),
+});
+
+export type Environment = z.infer<typeof Environment>;
+
+// TODO: rename to Application
 export const App = z.object({
-  id: z.union([z.string(), z.number(), z.bigint()]),
+  id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
   slug: z.string(),
   primaryDomain: z.string(),
   hasSplitEnvironments: z.boolean(),
   multiEnvironmentEnabled: z.boolean(),
-  environments: z.array(
-    z.object({
-      id: z.union([z.string(), z.number(), z.bigint()]),
-      name: z.string(),
-      type: z.string(),
-    }),
-  ),
+  environments: z.array(Environment),
 });
 
 export type App = z.infer<typeof App>;
@@ -29,6 +40,7 @@ export type App = z.infer<typeof App>;
  * @param ctx - The current context.
  * @returns A promise that resolves to an array of App objects.
  */
+// TODO: cache this
 export const getApps = async (ctx: Context): Promise<App[]> => {
   const cookie = loadCookie();
   if (!cookie) {

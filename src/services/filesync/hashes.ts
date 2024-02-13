@@ -29,13 +29,16 @@ export class ChangesWithHash extends Map<string, ChangeWithHash> {
 }
 
 /**
- * Calculates the changes that were made to `from` to make it end up as `to`.
+ * Depending on the callers perspective, this either calculates the
+ * changes that were made to `from` to make it end up as `to`, or it
+ * calculates the changes that need to be made to `from` to make it end
+ * up as `to`.
  *
- * If `existing` is provided, only the changes that are necessary to
- * apply to `existing` are returned.
+ * If `existing` is provided, any changes that `existing` already has
+ * are skipped.
  *
  * If `ignore` is provided, any changes that were made to a path that
- * starts with any of the `ignore` paths are skipped.
+ * starts with any of the `ignore`ed paths are skipped.
  *
  * @param ctx - The current context.
  * @param options - The options to use.
@@ -44,7 +47,7 @@ export class ChangesWithHash extends Map<string, ChangeWithHash> {
  * @param options.existing - The existing hashes.
  * @param options.ignore - The paths to ignore.
  */
-export const getChanges = (
+export const getNecessaryChanges = (
   ctx: Context,
   {
     from: source,

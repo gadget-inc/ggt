@@ -26,6 +26,7 @@ packagejson
 postbuild
 printlns
 Promisable
+revparse
 sourcemaps
 sprintln
 sprintlns

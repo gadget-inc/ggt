@@ -32,81 +32,100 @@ export class Changes extends Map<string, Change> {
   }
 }
 
+export type PrintChangesOptions = {
+  /**
+   * The changes to print.
+   */
+  changes: Changes;
+
+  /**
+   * The tense to use for the change type.
+   */
+  tense: "past" | "present";
+
+  /**
+   * The maximum number of changes to print.
+   *
+   * @default Infinity
+   */
+  limit?: number;
+} & Partial<PrintTableOptions>;
+
 /**
  * Prints the changes to the console.
  *
  * @param ctx - The current context.
- * @param options - The options to use.
- * @param options.changes - The changes to print.
- * @param options.tense - The tense to use for the change type.
- * @param options.limit - The maximum number of changes to print.
+ * @see {@linkcode PrintChangesOptions}
  */
-export const printChanges = (
-  ctx: Context,
-  {
-    changes,
-    tense,
-    limit = Infinity,
-    ...tableOptions
-  }: {
-    changes: Changes;
-    tense: "past" | "present";
-    limit?: number;
-  } & Partial<PrintTableOptions>,
-): void => {
+export const printChanges = (ctx: Context, { changes, tense, limit = Infinity, ...tableOptions }: PrintChangesOptions): void => {
+  ctx.log.trace("printing changes", { changes, tense, limit });
+
   if (config.logLevel <= Level.TRACE) {
     // print all changes when tracing
     limit = Infinity;
   }
 
-  const renamed = chalk.yellowBright((tense === "past" ? "renamed" : "rename") + " →");
-  const created = chalk.greenBright((tense === "past" ? "created" : "create") + " +");
-  const updated = chalk.blueBright((tense === "past" ? "updated" : "update") + " ±");
-  const deleted = chalk.redBright((tense === "past" ? "deleted" : "delete") + " -");
+  const changesToPrint = Array.from(changes.entries()).filter(([path]) => !path.startsWith(".gadget/"));
+  if (changesToPrint.length === 0) {
+    ctx.log.debug("no changes to print");
+    return;
+  }
 
-  const rows = Array.from(changes.entries())
+  const renamed = chalk.yellowBright(tense === "past" ? "renamed" : "rename");
+  const renameSymbol = chalk.yellowBright("→");
+
+  const created = chalk.greenBright(tense === "past" ? "created" : "create");
+  const createdSymbol = chalk.greenBright("+");
+
+  const updated = chalk.blueBright(tense === "past" ? "updated" : "update");
+  const updatedSymbol = chalk.blueBright("±");
+
+  const deleted = chalk.redBright(tense === "past" ? "deleted" : "delete");
+  const deletedSymbol = chalk.redBright("-");
+
+  const rows = changesToPrint
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(0, limit)
     .map(([path, change]) => {
       switch (true) {
         case change.type === "create" && isString(change.oldPath):
-          return [chalk.yellowBright(change.oldPath), renamed, chalk.yellowBright(path)];
+          return [renameSymbol, chalk.yellowBright(change.oldPath), renamed, renameSymbol, chalk.yellowBright(path)];
         case change.type === "create":
-          return [chalk.greenBright(path), created];
+          return [createdSymbol, chalk.greenBright(path), created];
         case change.type === "update":
-          return [chalk.blueBright(path), updated];
+          return [updatedSymbol, chalk.blueBright(path), updated];
         case change.type === "delete":
-          return [chalk.redBright(path), deleted];
+          return [deletedSymbol, chalk.redBright(path), deleted];
         default:
           return isNever(change);
       }
     });
 
-  if (changes.size > limit) {
-    rows.push([sprint`{gray … ${changes.size - limit} more}`, ""]);
+  if (changesToPrint.length > limit) {
+    rows.push([chalk.gray("…"), sprint`{gray ${changesToPrint.length - limit} more}`, ""]);
   }
 
   let footer: string | undefined;
-  if (changes.size >= 10) {
+  if (changesToPrint.length >= 10) {
     tableOptions.spaceY = 1;
 
-    footer = sprint`${pluralize("change", changes.size, true)} in total. `;
+    footer = sprint`${pluralize("change", changesToPrint.length, true)} in total. `;
 
     const breakdown = [];
 
-    const created = changes.created();
-    if (created.length > 0) {
-      breakdown.push(sprint`{greenBright ${pluralize("create", created.length, true)}}`);
+    const createdCount = changesToPrint.filter(([, change]) => change.type === "create").length;
+    if (createdCount > 0) {
+      breakdown.push(sprint`{greenBright ${pluralize("create", createdCount, true)}}`);
     }
 
-    const updated = changes.updated();
-    if (updated.length > 0) {
-      breakdown.push(sprint`{blueBright ${pluralize("update", updated.length, true)}}`);
+    const updatedCount = changesToPrint.filter(([, change]) => change.type === "update").length;
+    if (updatedCount > 0) {
+      breakdown.push(sprint`{blueBright ${pluralize("update", updatedCount, true)}}`);
     }
 
-    const deleted = changes.deleted();
-    if (deleted.length > 0) {
-      breakdown.push(sprint`{redBright ${pluralize("delete", deleted.length, true)}}`);
+    const deletedCount = changesToPrint.filter(([, change]) => change.type === "delete").length;
+    if (deletedCount > 0) {
+      breakdown.push(sprint`{redBright ${pluralize("delete", deletedCount, true)}}`);
     }
 
     footer += breakdown.join(", ");

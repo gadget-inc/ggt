@@ -25,7 +25,7 @@ describe("Edit", () => {
     loginTestUser();
     ctx = makeContext();
     ctx.app = testApp;
-    ctx.environment = "development";
+    ctx.env = testApp.environments[0]!;
   });
 
   it("retries queries when it receives a 500", async () => {

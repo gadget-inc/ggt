@@ -18,14 +18,14 @@ describe("list", () => {
     mock(user, "getUserOrLogin", () => ({ id: 1, email: "test@example.com", name: "Jane Doe" }));
     mock(app, "getApps", () => [
       {
-        id: 1,
+        id: 1n,
         slug: "app-a",
         primaryDomain: "app-a.example.com",
         hasSplitEnvironments: true,
         multiEnvironmentEnabled: true,
         environments: [],
       },
-      { id: 2, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, multiEnvironmentEnabled: true, environments: [] },
+      { id: 2n, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, multiEnvironmentEnabled: true, environments: [] },
     ]);
 
     await command(ctx);

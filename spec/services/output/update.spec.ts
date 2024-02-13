@@ -20,6 +20,7 @@ describe("getDistTags", () => {
   it("returns the dist tags", async () => {
     const distTags = {
       latest: "1.0.0",
+      experimental: "0.0.0-experimental.41b05e2",
     };
 
     nock("https://registry.npmjs.org").get("/ggt").reply(200, {
@@ -37,6 +38,7 @@ describe("getDistTags", () => {
         name: "not-ggt",
         "dist-tags": {
           latest: "1.0.0",
+          experimental: "0.0.0-experimental.41b05e2",
         },
       });
 
@@ -78,6 +80,7 @@ describe("warnIfUpdateAvailable", () => {
         name: "ggt",
         "dist-tags": {
           latest: "1.0.1",
+          experimental: "0.0.0-experimental.41b05e2",
         },
       });
 
@@ -88,15 +91,15 @@ describe("warnIfUpdateAvailable", () => {
     await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
 
     expectStdout().toMatchInlineSnapshot(`
-        "╭──────────────────────────────────────────────────────────────────────╮
-        │                                                                      │
-        │                  Update available! 1.0.0 -> 1.0.1.                   │
-        │   Changelog: https://github.com/gadget-inc/ggt/releases/tag/v1.0.1   │
-        │                 Run \\"npm install -g ggt\\" to update.                  │
-        │                                                                      │
-        ╰──────────────────────────────────────────────────────────────────────╯
-        "
-      `);
+      "╭──────────────────────────────────────────────────────────────────────╮
+      │                                                                      │
+      │                   Update available! 1.0.0 → 1.0.1                    │
+      │   Changelog: https://github.com/gadget-inc/ggt/releases/tag/v1.0.1   │
+      │                 Run \\"npm install -g ggt\\" to update.                  │
+      │                                                                      │
+      ╰──────────────────────────────────────────────────────────────────────╯
+      "
+    `);
   });
 
   it("does nothing if already at latest version", async () => {
@@ -108,6 +111,7 @@ describe("warnIfUpdateAvailable", () => {
         name: "ggt",
         "dist-tags": {
           latest: "1.0.0",
+          experimental: "0.0.0-experimental.41b05e2",
         },
       });
 

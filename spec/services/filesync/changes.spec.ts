@@ -17,12 +17,12 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "present", message: "→ Sent 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "present", message: "→ Sent to example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
-      "→ Sent 12:00:00 PM
-      bar  update ± 
-      baz  delete - 
-      foo  create + 
+      "→ Sent to example (staging) 12:00:00 PM
+      ±  bar  update 
+      -  baz  delete 
+      +  foo  create 
 
       "
     `);
@@ -34,12 +34,12 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "past", message: "← Received 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "past", message: "← Received from example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
-      "← Received 12:00:00 PM
-      bar  updated ± 
-      baz  deleted - 
-      foo  created + 
+      "← Received from example (staging) 12:00:00 PM
+      ±  bar  updated 
+      -  baz  deleted 
+      +  foo  created 
 
       "
     `);
@@ -47,9 +47,10 @@ describe("printChanges", () => {
 
   it("prints differently when there are 10+ changes", () => {
     const changes = new Changes();
-    for (let i = 0; i < 10; i++) {
-      changes.set(`file-${i}`, { type: "create" });
+    for (let i = 0; i < 9; i++) {
+      changes.set(`file-0${i}`, { type: "create" });
     }
+    changes.set("file-10", { type: "create" });
 
     for (let i = 10; i < 20; i++) {
       changes.set(`file-${i}`, { type: "update" });
@@ -59,42 +60,41 @@ describe("printChanges", () => {
       changes.set(`file-${i}`, { type: "delete" });
     }
 
-    printChanges(ctx, { changes, tense: "present", message: "→ Sent 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "present", message: "→ Sent to example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
-      "→ Sent 12:00:00 PM
+      "→ Sent to example (staging) 12:00:00 PM
 
-      file-0   create + 
-      file-1   create + 
-      file-10  update ± 
-      file-11  update ± 
-      file-12  update ± 
-      file-13  update ± 
-      file-14  update ± 
-      file-15  update ± 
-      file-16  update ± 
-      file-17  update ± 
-      file-18  update ± 
-      file-19  update ± 
-      file-2   create + 
-      file-20  delete - 
-      file-21  delete - 
-      file-22  delete - 
-      file-23  delete - 
-      file-24  delete - 
-      file-25  delete - 
-      file-26  delete - 
-      file-27  delete - 
-      file-28  delete - 
-      file-29  delete - 
-      file-3   create + 
-      file-4   create + 
-      file-5   create + 
-      file-6   create + 
-      file-7   create + 
-      file-8   create + 
-      file-9   create + 
+      +  file-00  create 
+      +  file-01  create 
+      +  file-02  create 
+      +  file-03  create 
+      +  file-04  create 
+      +  file-05  create 
+      +  file-06  create 
+      +  file-07  create 
+      +  file-08  create 
+      ±  file-10  update 
+      ±  file-11  update 
+      ±  file-12  update 
+      ±  file-13  update 
+      ±  file-14  update 
+      ±  file-15  update 
+      ±  file-16  update 
+      ±  file-17  update 
+      ±  file-18  update 
+      ±  file-19  update 
+      -  file-20  delete 
+      -  file-21  delete 
+      -  file-22  delete 
+      -  file-23  delete 
+      -  file-24  delete 
+      -  file-25  delete 
+      -  file-26  delete 
+      -  file-27  delete 
+      -  file-28  delete 
+      -  file-29  delete 
 
-      30 changes in total. 10 creates, 10 updates, 10 deletes.
+      29 changes in total. 9 creates, 10 updates, 10 deletes.
 
       "
     `);

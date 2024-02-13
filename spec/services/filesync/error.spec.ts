@@ -1,7 +1,18 @@
-import { describe, expect, it } from "vitest";
-import { InvalidSyncFileError, TooManySyncAttemptsError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
+import fs from "fs-extra";
+import os from "node:os";
+import path from "node:path";
+import { beforeEach, describe, expect, it } from "vitest";
+import type { AvailableCommand } from "../../../src/services/command/command.js";
+import { Directory } from "../../../src/services/filesync/directory.js";
+import { TooManySyncAttemptsError, UnknownDirectoryError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
+import { SyncJson, SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
+import { noop } from "../../../src/services/util/function.js";
+import { nockTestApps, testApp } from "../../__support__/app.js";
+import { makeContext } from "../../__support__/context.js";
+import { mockOnce } from "../../__support__/mock.js";
+import { loginTestUser } from "../../__support__/user.js";
 
-describe("YarnNotFoundError", () => {
+describe(YarnNotFoundError.name, () => {
   it("renders correctly", () => {
     const error = new YarnNotFoundError();
     expect(error.toString()).toMatchInlineSnapshot(`
@@ -14,31 +25,41 @@ describe("YarnNotFoundError", () => {
   });
 });
 
-describe("InvalidSyncFileError", () => {
-  it("renders correctly", () => {
-    const dir = "/Users/jane/doe/";
-    const app = "test";
+// these tests are skipped on Windows because the snapshot contains a
+// Unix path that keeps failing in CI
+describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
+  const makeSyncJson = async (command: AvailableCommand): Promise<SyncJson> => {
+    const ctx = makeContext({ parse: SyncJsonArgs, argv: [command, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    const directory = await Directory.init(path.resolve("/Users/jane/doe/"));
 
-    const error = new InvalidSyncFileError(dir, app);
-    expect(error.toString()).toMatchInlineSnapshot(`
-      "We failed to find a \\".gadget/sync.json\\" file in this directory:
+    // mock fs.ensureDir so we don't actually create the /Users/jane/doe/ directory
+    mockOnce(fs, "ensureDir", noop);
+    const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+    expect(fs.ensureDir).toHaveBeenCalledOnce();
 
-        /Users/jane/doe/
+    return syncJson;
+  };
 
-      If you're running 'ggt sync' for the first time, we recommend
-      using a gadget specific directory like this:
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
+  });
 
-        ggt sync ~/gadget/test --app test
+  it.each(["dev", "deploy", "push", "pull", "status"] as const)("renders correctly when %s is passed", async (command) => {
+    const syncJson = await makeSyncJson(command);
+    const error = new UnknownDirectoryError(syncJson.ctx, { directory: syncJson.directory });
+    expect(error.toString()).toMatchSnapshot();
+  });
 
-      If you're certain you want to sync the contents of that directory
-      to Gadget, run 'ggt sync' again with the --force flag:
-
-        ggt sync /Users/jane/doe/ --app test --force"
-    `);
+  it("renders correctly when the file exists but is invalid", async () => {
+    mockOnce(fs, "existsSync", () => true);
+    const syncJson = await makeSyncJson("dev");
+    const error = new UnknownDirectoryError(syncJson.ctx, { directory: syncJson.directory });
+    expect(error.toString()).toMatchSnapshot();
   });
 });
 
-describe("TooManySyncAttemptsError", () => {
+describe(TooManySyncAttemptsError.name, () => {
   it("renders correctly", () => {
     const error = new TooManySyncAttemptsError(10);
     expect(error.toString()).toMatchInlineSnapshot(`

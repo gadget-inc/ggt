@@ -1,7 +1,7 @@
 import { beforeEach, expect } from "vitest";
 import { args } from "../../src/commands/root.js";
 import type { ArgsDefinition } from "../../src/services/command/arg.js";
-import { Commands } from "../../src/services/command/command.js";
+import { Commands, type AvailableCommand } from "../../src/services/command/command.js";
 import { Context } from "../../src/services/command/context.js";
 
 /**
@@ -40,6 +40,7 @@ export const makeRootContext = (): Context => {
  * Makes a context the same way the root command would before passing it
  * to a subcommand.
  */
+// TODO: make this take an AvailableCommand and use it to type which `parse` must be passed
 export const makeContext = <Args extends ArgsDefinition>({
   parse = {} as Args,
   argv,
@@ -51,11 +52,11 @@ export const makeContext = <Args extends ArgsDefinition>({
   const ctx = makeRootContext();
 
   // replicate the root command's behavior of shifting the command name
-  const cmd = ctx.args._.shift();
+  const cmd = ctx.args._.shift() as AvailableCommand | undefined;
   if (cmd) {
     // ensure the command was valid
     expect(Commands).toContain(cmd);
   }
 
-  return ctx.child({ name: cmd, parse });
+  return ctx.child({ command: cmd, name: cmd, parse });
 };

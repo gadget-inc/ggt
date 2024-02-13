@@ -21,7 +21,19 @@ export type Logger = StructuredLogger &
  * @example
  * const logger = createLogger({ name: "my-logger" });
  * logger.info("printing hello world", { foo: "bar" });
- * logger.print("Hello, world!");
+ * // stderr
+ * // 12:00:00 INFO my-logger: printing hello world
+ * //   foo: "bar"
+ * //
+ * // stderr w/ --json
+ * // {"level":3,"name":"my-logger","msg":"printing hello world","fields":{"foo":"bar"}}
+ *
+ * logger.println("Hello, world!");
+ * // stdout
+ * // Hello, world!
+ * //
+ * // stdout w/ --json
+ * // {"level":6,"name":"my-logger","msg":"Hello, world!"}
  */
 export const createLogger = ({ name, fields: loggerFields, devFields: loggerDevFields }: StructuredLoggerOptions): Logger => {
   return {

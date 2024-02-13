@@ -2,6 +2,7 @@
 /* eslint-disable func-style */
 import mimicFunction from "mimic-fn";
 import assert from "node:assert";
+import type { SetReturnType } from "type-fest";
 import { isFunction } from "./is.js";
 import { type AnyFunction } from "./types.js";
 
@@ -145,6 +146,65 @@ export const debounce = <F extends (...args: unknown[]) => void>(delayMS: number
   mimicFunction(debounced, fn);
 
   return debounced;
+};
+
+/**
+ * A function that has been wrapped by {@linkcode debounce}.
+ */
+export type DebouncedAsyncFunc<Fn extends (...args: unknown[]) => Promise<void>> = SetReturnType<Fn, void> & {
+  /**
+   * Invokes the function if it is waiting to stop being called.
+   */
+  flush: () => Promise<void>;
+};
+
+/**
+ * Creates a debounced function that delays invoking the provided
+ * function until after `delayMS` milliseconds have elapsed since the
+ * last time it was invoked.
+ *
+ * @param delayMS - The number of milliseconds to delay.
+ * @param fn - The function to be debounced.
+ * @returns A debounced version of the provided function.
+ */
+export const debounceAsync = <F extends (...args: unknown[]) => Promise<void>>(delayMS: number, fn: F): DebouncedAsyncFunc<F> => {
+  let timerId: NodeJS.Timeout | undefined;
+  let nextCall: (() => Promise<void>) | undefined;
+  let pendingPromise: Promise<void> | undefined;
+
+  const debouncedAsync = ((...args) => {
+    nextCall = () => {
+      nextCall = undefined;
+      timerId = undefined;
+
+      if (pendingPromise) {
+        pendingPromise = pendingPromise
+          .then(() => fn(...args))
+          .catch(noop)
+          .finally(() => (pendingPromise = undefined));
+      } else {
+        pendingPromise = fn(...args)
+          .catch(noop)
+          .finally(() => (pendingPromise = undefined));
+      }
+
+      return pendingPromise;
+    };
+
+    clearTimeout(timerId);
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    timerId = setTimeout(nextCall, delayMS);
+  }) as DebouncedAsyncFunc<F>;
+
+  debouncedAsync.flush = async () => {
+    if (nextCall) {
+      await nextCall();
+    }
+  };
+
+  mimicFunction(debouncedAsync, fn);
+
+  return debouncedAsync;
 };
 
 /**

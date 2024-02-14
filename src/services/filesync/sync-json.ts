@@ -91,6 +91,7 @@ export class SyncJson {
       fields: () => ({
         syncJson: {
           directory: this.directory.path,
+          branch: this.gitBranch,
           ...this.state,
         },
       }),
@@ -134,7 +135,7 @@ export class SyncJson {
           You (${user.email}) don't have have any Gadget applications.
 
           Visit https://gadget.new to create one!
-      `,
+        `,
       );
     }
 
@@ -287,7 +288,7 @@ export class SyncJson {
       return sprint`
         Application  ${this.app.slug}
         Environment  ${this.env.name}
-        Git Branch   ${this.gitBranch}
+         Git Branch  ${this.gitBranch}
       `;
     }
 
@@ -376,20 +377,29 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
     );
   }
 
+  const devEnvs = app.environments.filter((env) => env.type === EnvironmentType.Development);
+
   let envName = ctx.args["--env"] || state?.environment;
   if (!envName) {
     // user didn't specify an environment, ask them to select one
     envName = await select(ctx, {
       message: "Which environment do you want to sync to?",
-      choices: app.environments.filter((x) => x.type === EnvironmentType.Development).map((x) => x.name),
+      choices: devEnvs.map((x) => x.name),
     });
   }
 
+  if (envName.toLowerCase() === "production") {
+    // specifically call out that they can't dev, push, or pull to prod
+    throw new ArgError(
+      sprint`
+        You cannot "ggt ${ctx.command}" your {bold production} environment.
+      `,
+    );
+  }
+
   // we've ensured envName is defined
-  const env = app.environments
-    .filter((x) => x.type === EnvironmentType.Development)
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    .find((env) => env.name.toLowerCase() === envName!.toLowerCase());
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const env = devEnvs.find((env) => env.name === envName!.toLowerCase());
   if (env) {
     // the user specified an environment or we loaded it from the state,
     // and it exists in the app's list of environments, so return it
@@ -402,17 +412,17 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
   // specified
   const similarEnvironments = sortBySimilar(
     envName,
-    app.environments.filter((env) => env.type === EnvironmentType.Development).map((env) => env.name),
+    devEnvs.map((env) => env.name),
   ).slice(0, 5);
 
   throw new ArgError(
     sprintln2`
-          Unknown environment:
+      Unknown environment:
 
-            ${envName}
+        ${envName}
 
-          Did you mean one of these?
-        `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
+      Did you mean one of these?
+    `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
   );
 };
 

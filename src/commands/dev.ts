@@ -41,7 +41,7 @@ export const usage: Usage = (ctx) => {
       Sync your local filesystem with your environment's filesystem,
       in real-time.
 
-      Changes will be calculated from the last time you ran
+      Changes are calculated from the last time you ran
       "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
       {bold USAGE}
@@ -70,7 +70,7 @@ export const usage: Usage = (ctx) => {
     Sync your local filesystem with your environment's filesystem,
     in real-time.
 
-    Changes will be calculated from the last time you ran
+    Changes are calculated from the last time you ran
     "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
     If your environment has also made changes since the last sync,
@@ -355,18 +355,19 @@ export const command: Command<DevArgs> = async (ctx) => {
     },
   ).once("error", (error) => ctx.abort(error));
 
-  ctx.log.println`
-ggt v${config.version}
+  const buffer = ctx.log.buffer();
+  buffer.println2`ggt v${config.version}`;
+  buffer.println(await syncJson.sprintState());
+  buffer.println`
+    ------------------------
+    Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
+    Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
+    Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
+    Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
 
-${await syncJson.sprintState()}
-------------------------
-Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
-Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
-Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
-Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
-
-Watching for file changes... {gray Press Ctrl+C to stop}
+    Watching for file changes... {gray Press Ctrl+C to stop}
   `;
+  buffer.flush();
 
   ctx.onAbort(async (reason) => {
     ctx.log.info("stopping", { reason });

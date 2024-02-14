@@ -6,7 +6,7 @@ exports[`root > when deploy is given > prints the usage when --help is passed 1`
 Your local filesystem must be in sync with your development
 environment before you can deploy.
 
-Changes will be calculated from the last time you ran
+Changes are calculated from the last time you ran
 \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
 
 If your environment has also made changes since the last sync,
@@ -79,7 +79,7 @@ exports[`root > when deploy is given > prints the usage when -h is passed 1`] = 
 Your local filesystem must be in sync with your development
 environment before you can deploy.
 
-Changes will be calculated from the last time you ran
+Changes are calculated from the last time you ran
 \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
 
 USAGE
@@ -104,7 +104,7 @@ exports[`root > when dev is given > prints the usage when --help is passed 1`] =
 "Sync your local filesystem with your environment's filesystem,
 in real-time.
 
-Changes will be calculated from the last time you ran
+Changes are calculated from the last time you ran
 \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
 
 If your environment has also made changes since the last sync,
@@ -201,7 +201,7 @@ exports[`root > when dev is given > prints the usage when -h is passed 1`] = `
 "Sync your local filesystem with your environment's filesystem,
 in real-time.
 
-Changes will be calculated from the last time you ran
+Changes are calculated from the last time you ran
 \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
 
 USAGE
@@ -295,7 +295,7 @@ EXAMPLES
 exports[`root > when pull is given > prints the usage when --help is passed 1`] = `
 "Pull changes from your environment's filesystem to your local filesystem.
 
-Changes will be calculated from the last time you ran
+Changes are calculated from the last time you ran
 \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
 
 If your local filesystem has also made changes since the last sync,
@@ -353,7 +353,7 @@ Run \\"ggt pull -h\\" for less information.
 exports[`root > when pull is given > prints the usage when -h is passed 1`] = `
 "Pull changes from your environment's filesystem to your local filesystem.
 
-Changes will be calculated from the last time you ran
+Changes are calculated from the last time you ran
 \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
 
 USAGE
@@ -377,7 +377,7 @@ FLAGS
 exports[`root > when push is given > prints the usage when --help is passed 1`] = `
 "Push changes from your local filesystem to your environment's filesystem.
 
-Changes will be calculated from the last time you ran
+Changes are calculated from the last time you ran
 \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
 
 If your environment has also made changes since the last sync,
@@ -435,7 +435,7 @@ Run \\"ggt push -h\\" for less information.
 exports[`root > when push is given > prints the usage when -h is passed 1`] = `
 "Push changes from your local filesystem to your environment's filesystem.
 
-Changes will be calculated from the last time you ran
+Changes are calculated from the last time you ran
 \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
 
 USAGE
@@ -457,11 +457,11 @@ FLAGS
 `;
 
 exports[`root > when status is given > prints the usage when --help is passed 1`] = `
-"Show changes made to your local filesystem and
-your environment's filesystem.
+"Show changes made to your local filesystem and your
+environment's filesystem.
 
-Changes will be calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
+Changes are calculated from the last time you ran
+\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\".
 
 USAGE
 
@@ -474,11 +474,11 @@ EXAMPLES
 `;
 
 exports[`root > when status is given > prints the usage when -h is passed 1`] = `
-"Show changes made to your local filesystem and
-your environment's filesystem.
+"Show changes made to your local filesystem and your
+environment's filesystem.
 
-Changes will be calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
+Changes are calculated from the last time you ran
+\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\".
 
 USAGE
 

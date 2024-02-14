@@ -18,6 +18,7 @@ export type DeployArgs = typeof args;
 
 export const args = {
   ...PushArgs,
+  "--env": { type: String, alias: ["-e", "--from", "--environment"] },
   "--allow-problems": { type: Boolean, alias: "--allow-issues" },
 };
 
@@ -29,7 +30,7 @@ export const usage: Usage = (ctx) => {
       Your local filesystem must be in sync with your development
       environment before you can deploy.
 
-      Changes will be calculated from the last time you ran
+      Changes are calculated from the last time you ran
       "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
       {bold USAGE}
@@ -56,7 +57,7 @@ export const usage: Usage = (ctx) => {
     Your local filesystem must be in sync with your development
     environment before you can deploy.
 
-    Changes will be calculated from the last time you ran
+    Changes are calculated from the last time you ran
     "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
     If your environment has also made changes since the last sync,

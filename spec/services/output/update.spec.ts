@@ -71,7 +71,7 @@ describe("warnIfUpdateAvailable", () => {
     ctx = makeContext();
   });
 
-  it("logs a warning if an update is available", async () => {
+  it("logs a warning if an update is available (latest)", async () => {
     mock(config, "version", "get", () => "1.0.0");
 
     nock("https://registry.npmjs.org")
@@ -98,6 +98,37 @@ describe("warnIfUpdateAvailable", () => {
       │                 Run \\"npm install -g ggt\\" to update.                  │
       │                                                                      │
       ╰──────────────────────────────────────────────────────────────────────╯
+      "
+    `);
+  });
+
+  it("logs a warning if an update is available (experimental)", async () => {
+    mock(config, "version", "get", () => "0.0.0-experimental.bf3e4a3");
+
+    nock("https://registry.npmjs.org")
+      .get("/ggt")
+      .reply(200, {
+        name: "ggt",
+        "dist-tags": {
+          latest: "1.0.1",
+          experimental: "0.0.0-experimental.41b05e2",
+        },
+      });
+
+    await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
+
+    await warnIfUpdateAvailable(ctx);
+
+    await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
+
+    expectStdout().toMatchInlineSnapshot(`
+      "╭──────────────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │                Update available! 0.0.0-experimental.bf3e4a3 →                │
+      │                          0.0.0-experimental.41b05e2                          │
+      │               Run \\"npm install -g ggt@experimental\\" to update.               │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `);
   });

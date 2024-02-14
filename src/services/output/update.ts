@@ -68,30 +68,35 @@ export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
 
     let latest: string;
     let updateAvailable: boolean;
+    let updateMessage: string;
 
     if (config.version.includes("experimental")) {
+      // this is an experimental release
       latest = tags.experimental;
       updateAvailable = config.version !== latest;
+      updateMessage = sprint`
+        Update available! {red ${config.version}} → {green ${latest}}
+        Run "npm install -g ${config.name}@experimental" to update.
+      `;
     } else {
+      // this is a stable release
       latest = tags.latest;
       updateAvailable = semver.lt(config.version, latest);
+      updateMessage = sprint`
+        Update available! {red ${config.version}} → {green ${latest}}
+        Changelog: https://github.com/gadget-inc/ggt/releases/tag/v${latest}
+        Run "npm install -g ${config.name}" to update.
+      `;
     }
 
     if (updateAvailable) {
       ctx.log.info("update available", { current: config.version, latest });
       ctx.log.println(
-        boxen(
-          sprint`
-            Update available! {red ${config.version}} → {green ${latest}}
-            Changelog: https://github.com/gadget-inc/ggt/releases/tag/v${latest}
-            Run "npm install -g ${config.name}" to update.
-          `,
-          {
-            padding: 1,
-            borderStyle: "round",
-            textAlignment: "center",
-          },
-        ),
+        boxen(updateMessage, {
+          padding: 1,
+          borderStyle: "round",
+          textAlignment: "center",
+        }),
       );
     }
   } catch (error) {

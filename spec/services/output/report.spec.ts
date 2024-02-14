@@ -7,8 +7,7 @@ import { expectStdout } from "../../__support__/stream.js";
 
 describe("reportErrorAndExit", () => {
   it("renders and reports errors then exits", async () => {
-    const hub = Sentry.getCurrentHub();
-    vi.spyOn(hub, "captureException");
+    vi.spyOn(Sentry, "captureException");
 
     class TestError extends CLIError {
       override isBug = IsBug.MAYBE;
@@ -35,7 +34,7 @@ describe("reportErrorAndExit", () => {
       "
     `);
 
-    expect(hub.captureException).toHaveBeenCalledWith(error, expect.objectContaining({ event_id: error.id }));
+    expect(Sentry.captureException).toHaveBeenCalledWith(error, expect.objectContaining({ event_id: error.id }));
   });
 });
 

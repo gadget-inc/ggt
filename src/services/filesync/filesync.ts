@@ -26,7 +26,7 @@ import { filesyncProblemsToProblems, printProblems } from "../output/problems.js
 import { confirm, select } from "../output/prompt.js";
 import { sprint } from "../output/sprint.js";
 import { noop } from "../util/function.js";
-import { Changes, printChanges, type PrintChangesOptions } from "./changes.js";
+import { Changes, printChanges, type SprintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
 import { TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
@@ -300,15 +300,20 @@ export class FileSync {
     const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const localChanges = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
     if (localChanges.size === 0) {
-      ctx.log.println`
-${await this.syncJson.sprintState()}
-
-Your filesystem is already in sync.
-`;
+      const buffer = ctx.log.buffer();
+      buffer.println(await this.syncJson.sprintState());
+      buffer.println("");
+      buffer.println("There are no changes to push.");
+      buffer.flush();
       return;
     }
 
-    if (gadgetChanges.size > 0 && !(force ?? ctx.args["--force"])) {
+    if (
+      gadgetChanges.size > 0 &&
+      // don't prompt if the only changes are .gadget/ files
+      Array.from(gadgetChanges.keys()).some((path) => !path.startsWith(".gadget/")) &&
+      !(force ?? ctx.args["--force"])
+    ) {
       printChanges(ctx, {
         changes: gadgetChanges,
         tense: "past",
@@ -331,11 +336,11 @@ Your filesystem is already in sync.
     const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
     if (gadgetChanges.size === 0) {
-      ctx.log.println`
-${await this.syncJson.sprintState()}
-
-Your filesystem is already in sync.
-`;
+      const buffer = ctx.log.buffer();
+      buffer.println(await this.syncJson.sprintState());
+      buffer.println("");
+      buffer.println("There are no changes to pull.");
+      buffer.flush();
       return;
     }
 
@@ -410,7 +415,7 @@ Your filesystem is already in sync.
     }: {
       filesVersion: bigint;
       changes: Changes | ChangesWithHash;
-      print?: Partial<Omit<PrintChangesOptions, "changes">>;
+      print?: Partial<Omit<SprintChangesOptions, "changes">>;
     },
   ): Promise<void> {
     ctx.log.debug("getting changes from gadget", { filesVersion, changes });
@@ -454,7 +459,7 @@ Your filesystem is already in sync.
     }: {
       changes: Changes;
       expectedFilesVersion?: bigint;
-      print?: Partial<Omit<PrintChangesOptions, "changes">>;
+      print?: Partial<Omit<SprintChangesOptions, "changes">>;
     },
   ): Promise<void> {
     ctx.log.debug("sending changes to gadget", { expectedFilesVersion, changes });

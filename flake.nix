@@ -17,6 +17,10 @@
           mkcert = pkgs.mkcert;
           nix-direnv = pkgs.nix-direnv.override { enableFlakes = true; };
           nodejs = pkgs.nodejs-16_x;
+
+          dggt = pkgs.writeShellScriptBin "dggt" ''
+            GGT_ENV=production "$WORKSPACE_ROOT"/bin/dev.js "$@"
+          '';
         };
 
         devShell = pkgs.mkShell {

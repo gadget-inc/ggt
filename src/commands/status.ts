@@ -1,6 +1,6 @@
 import { ArgError } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
-import { printChanges } from "../services/filesync/changes.js";
+import { sprintChanges } from "../services/filesync/changes.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
@@ -12,11 +12,11 @@ export const args = SyncJsonArgs;
 
 export const usage: Usage = () => {
   return sprint`
-    Show changes made to your local filesystem and
-    your environment's filesystem.
+    Show changes made to your local filesystem and your
+    environment's filesystem.
 
-    Changes will be calculated from the last time you ran
-    "ggt dev", "ggt push", or "ggt pull" in the chosen directory.
+    Changes are calculated from the last time you ran
+    "ggt dev", "ggt push", or "ggt pull".
 
     {bold USAGE}
 
@@ -46,32 +46,40 @@ export const command: Command<StatusArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  await syncJson.printState();
+  const buffer = ctx.log.buffer();
+
+  buffer.println(await syncJson.sprintState());
+  buffer.println("");
 
   const filesync = new FileSync(syncJson);
-  const { inSync, localChanges, gadgetChanges } = await filesync.hashes(ctx);
-  if (inSync) {
-    ctx.log.printlns`Your filesystem is in sync.`;
-    return;
-  }
+  const { localChanges, gadgetChanges } = await filesync.hashes(ctx);
 
   if (localChanges.size > 0) {
-    printChanges(ctx, {
-      changes: localChanges,
-      tense: "past",
-      message: "Your local filesystem has un-synced changes",
-    });
+    buffer.println(
+      sprintChanges(ctx, {
+        changes: localChanges,
+        tense: "past",
+        message: "Your local filesystem has changed.",
+      }),
+    );
   } else {
-    ctx.log.printlns`Your local filesystem hasn't changed.`;
+    buffer.println`Your local filesystem has not changed.`;
   }
 
+  buffer.println("");
+
   if (gadgetChanges.size > 0) {
-    printChanges(ctx, {
-      changes: gadgetChanges,
-      tense: "past",
-      message: "Your environment's filesystem has un-synced changes",
-    });
+    buffer.println(
+      sprintChanges(ctx, {
+        changes: gadgetChanges,
+        includeDotGadget: true,
+        tense: "past",
+        message: "Your environment's filesystem has changed.",
+      }),
+    );
   } else {
-    ctx.log.printlns2`Your environment's filesystem hasn't changed.`;
+    buffer.println`Your environment's filesystem has not changed.`;
   }
+
+  buffer.flush();
 };

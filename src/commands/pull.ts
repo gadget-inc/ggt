@@ -17,7 +17,7 @@ export const usage: Usage = (ctx) => {
     return sprint`
       Pull changes from your environment's filesystem to your local filesystem.
 
-      Changes will be calculated from the last time you ran
+      Changes are calculated from the last time you ran
       "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
       {bold USAGE}
@@ -41,7 +41,7 @@ export const usage: Usage = (ctx) => {
   return sprint`
     Pull changes from your environment's filesystem to your local filesystem.
 
-    Changes will be calculated from the last time you ran
+    Changes are calculated from the last time you ran
     "ggt dev", "ggt push", or "ggt pull" in the chosen directory.
 
     If your local filesystem has also made changes since the last sync,

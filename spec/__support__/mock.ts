@@ -161,6 +161,14 @@ export const mockSideEffects = (): void => {
   vi.mock("node-notifier", () => ({ default: { notify: vi.fn().mockName("notify") } }));
   vi.mock("open", () => ({ default: vi.fn().mockName("open") }));
   vi.mock("which", () => ({ default: { sync: vi.fn().mockName("whichSync").mockReturnValue("/path/to/yarn") } }));
+  vi.mock("simple-git", () => ({
+    simpleGit: vi
+      .fn()
+      .mockName("simpleGit")
+      .mockReturnValue({
+        revparse: vi.fn().mockName("revparse").mockResolvedValue("test-branch"),
+      }),
+  }));
 
   beforeEach(() => {
     // alway opt in to confirm prompts

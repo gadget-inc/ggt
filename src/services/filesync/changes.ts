@@ -3,8 +3,7 @@ import pluralize from "pluralize";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";
-import type { PrintTableOptions } from "../output/log/printer.js";
-import { sprint } from "../output/sprint.js";
+import { sprint, sprintTable, type SprintTableOptions } from "../output/sprint.js";
 import { isNever, isString } from "../util/is.js";
 
 export type Create = { type: "create"; oldPath?: string };
@@ -32,7 +31,7 @@ export class Changes extends Map<string, Change> {
   }
 }
 
-export type PrintChangesOptions = {
+export type SprintChangesOptions = {
   /**
    * The changes to print.
    */
@@ -44,31 +43,45 @@ export type PrintChangesOptions = {
   tense: "past" | "present";
 
   /**
+   * Whether to include the `.gadget/` files in the output.
+   *
+   * @default false
+   */
+  includeDotGadget?: boolean;
+
+  /**
    * The maximum number of changes to print.
    *
    * @default Infinity
    */
   limit?: number;
-} & Partial<PrintTableOptions>;
+} & Partial<SprintTableOptions>;
 
 /**
  * Prints the changes to the console.
  *
  * @param ctx - The current context.
- * @see {@linkcode PrintChangesOptions}
+ * @see {@linkcode SprintChangesOptions}
  */
-export const printChanges = (ctx: Context, { changes, tense, limit = Infinity, ...tableOptions }: PrintChangesOptions): void => {
-  ctx.log.trace("printing changes", { changes, tense, limit });
+export const sprintChanges = (
+  ctx: Context,
+  { changes, tense, includeDotGadget = false, limit = Infinity, ...tableOptions }: SprintChangesOptions,
+): string => {
+  ctx.log.trace("sprinting changes", { changes, tense, limit });
 
   if (config.logLevel <= Level.TRACE) {
     // print all changes when tracing
     limit = Infinity;
   }
 
-  const changesToPrint = Array.from(changes.entries()).filter(([path]) => !path.startsWith(".gadget/"));
+  let changesToPrint = Array.from(changes.entries());
+  if (!includeDotGadget) {
+    changesToPrint = changesToPrint.filter(([path]) => !path.startsWith(".gadget/"));
+  }
+
   if (changesToPrint.length === 0) {
-    ctx.log.debug("no changes to print");
-    return;
+    ctx.log.debug("no changes to sprint");
+    return "";
   }
 
   const renamed = chalk.yellowBright(tense === "past" ? "renamed" : "rename");
@@ -132,5 +145,18 @@ export const printChanges = (ctx: Context, { changes, tense, limit = Infinity, .
     footer += ".";
   }
 
-  ctx.log.printTable({ rows, footer, ...tableOptions });
+  return sprintTable({ rows, footer, ...tableOptions });
+};
+
+/**
+ * Prints the changes to the console.
+ *
+ * @param ctx - The current context.
+ * @see {@linkcode SprintChangesOptions}
+ */
+export const printChanges = (ctx: Context, opts: SprintChangesOptions): void => {
+  const changes = sprintChanges(ctx, opts);
+  if (changes) {
+    ctx.log.println2(changes);
+  }
 };

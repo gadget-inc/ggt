@@ -126,17 +126,7 @@ describe("SyncJson.loadOrInit", () => {
     const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: localDir }));
 
     expect(error).toBeInstanceOf(ArgError);
-    expect(error.message).toMatchInlineSnapshot(`
-      "Unknown environment:
-
-        production
-
-      Did you mean one of these?
-
-        • development
-        • cool-environment-development
-        • other-environment-development"
-    `);
+    expect(error.message).toMatchInlineSnapshot('"You cannot \\"ggt dev\\" your production environment."');
   });
 
   it(`throws ${ArgError.name} when --env is passed an environment that is not in the list of valid environments for the app`, async () => {

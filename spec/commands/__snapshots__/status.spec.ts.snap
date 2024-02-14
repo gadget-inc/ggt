@@ -1,0 +1,49 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`status > prints the expected message when both local and gadget files have changed 1`] = `
+"Application  test
+Environment  development
+ Git Branch  test-branch
+
+Your local filesystem has changed.
++  local-file.txt  created 
+
+Your environment's filesystem has changed.
++  gadget-file.txt  created 
+"
+`;
+
+exports[`status > prints the expected message when gadget files have changed 1`] = `
+"Application  test
+Environment  development
+ Git Branch  test-branch
+
+Your local filesystem has not changed.
+
+Your environment's filesystem has changed.
++  gadget-file.txt  created 
+"
+`;
+
+exports[`status > prints the expected message when local files have changed 1`] = `
+"Application  test
+Environment  development
+ Git Branch  test-branch
+
+Your local filesystem has changed.
++  local-file.txt  created 
+
+Your environment's filesystem has not changed.
+"
+`;
+
+exports[`status > prints the expected message when nothing has changed 1`] = `
+"Application  test
+Environment  development
+ Git Branch  test-branch
+
+Your local filesystem has not changed.
+
+Your environment's filesystem has not changed.
+"
+`;

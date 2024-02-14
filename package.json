@@ -60,7 +60,7 @@
     "get-port": "^7.0.0",
     "got": "^13.0.0",
     "graphql": "^16.8.1",
-    "graphql-ws": "^5.14.3",
+    "graphql-ws": "^5.15.0",
     "ignore": "^5.3.1",
     "is-wsl": "^3.1.0",
     "mimic-fn": "^5.0.0",

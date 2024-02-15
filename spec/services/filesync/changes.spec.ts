@@ -23,7 +23,6 @@ describe("printChanges", () => {
       ±  bar  update 
       -  baz  delete 
       +  foo  create 
-
       "
     `);
   });
@@ -40,7 +39,6 @@ describe("printChanges", () => {
       ±  bar  updated 
       -  baz  deleted 
       +  foo  created 
-
       "
     `);
   });
@@ -95,7 +93,6 @@ describe("printChanges", () => {
       -  file-29  delete 
 
       29 changes in total. 9 creates, 10 updates, 10 deletes.
-
       "
     `);
   });

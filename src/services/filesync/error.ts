@@ -3,7 +3,7 @@ import { EditError } from "../app/edit/error.js";
 import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
 import { CLIError, IsBug } from "../output/report.js";
-import { sprint, sprintln, sprintlns } from "../output/sprint.js";
+import { sprint, sprintln } from "../output/sprint.js";
 import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
 import type { Directory } from "./directory.js";
 import type { SyncJsonArgs } from "./sync-json.js";
@@ -116,10 +116,9 @@ export class DeployDisallowedError extends CLIError {
   }
 
   protected render(): string {
-    let output = "\n";
-    output += sprintlns`{red Gadget has detected the following fatal errors with your files:}`;
+    let output = sprintln`{red Gadget has detected the following fatal errors with your files:}`;
     output += sprintProblems({ problems: this.fatalErrors, showFileTypes: false });
-    output += sprintln("");
+    output += sprintln();
     output += sprint`{red Please fix these errors and try again.}`;
     return output;
   }

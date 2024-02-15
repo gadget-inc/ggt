@@ -131,14 +131,14 @@ export const command: Command<DeployArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  ctx.log.printlns`
+  ctx.log.println({ marginTop: true })`
     Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
   `;
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
   if (!hashes.inSync) {
-    ctx.log.printlns`
+    ctx.log.println({ marginTop: true })`
       Your local filesystem must be in sync with your development
       environment before you can deploy.
     `;
@@ -160,7 +160,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
       spinner.fail();
 
       if (isCloseEvent(error.cause)) {
-        ctx.log.printlns(error.message);
+        ctx.log.println({ marginTop: true })(error.message);
       } else if (isGraphQLErrors(error.cause)) {
         const message = error.cause[0]?.message;
         assert(message, "expected message to be defined");
@@ -189,7 +189,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
           await reportErrorAndExit(ctx, new DeployDisallowedError(publishIssuesToProblems(fatalIssues)));
         }
 
-        ctx.log.printlns`{bold Problems found}`;
+        ctx.log.println({ marginTop: true, marginBottom: true })`{bold Problems found}`;
         printProblems(ctx, { problems: publishIssuesToProblems(issues) });
 
         if (!publishStarted) {
@@ -197,7 +197,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
           subscription.resubscribe({ localFilesVersion: String(syncJson.filesVersion), force: true });
         } else {
           assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");
-          ctx.log.printlns2`Deploying regardless of problems because "--allow-problems" was passed.`;
+          ctx.log.println({ marginTop: true, marginBottom: true })`Deploying regardless of problems because "--allow-problems" was passed.`;
         }
 
         return;
@@ -207,10 +207,10 @@ export const command: Command<DeployArgs> = async (ctx) => {
         subscription.unsubscribe();
         spinner.fail();
         if (status.message) {
-          ctx.log.printlns`{red ${status.message}}`;
+          ctx.log.println({ marginTop: true })`{red ${status.message}}`;
         }
         if (status.output) {
-          ctx.log.printlns(terminalLink("Check logs", status.output));
+          ctx.log.println({ marginTop: true })(terminalLink("Check logs", status.output));
         }
         return;
       }
@@ -222,7 +222,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
         if (status?.output) {
           message += ` ${terminalLink("Check logs", status.output)}`;
         }
-        ctx.log.printlns(message);
+        ctx.log.println({ marginTop: true })(message);
         return;
       }
 

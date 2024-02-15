@@ -49,7 +49,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
   const buffer = ctx.log.buffer();
 
   buffer.println(await syncJson.sprintState());
-  buffer.println("");
+  buffer.println();
 
   const filesync = new FileSync(syncJson);
   const { localChanges, gadgetChanges } = await filesync.hashes(ctx);
@@ -66,7 +66,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
     buffer.println`Your local filesystem has not changed.`;
   }
 
-  buffer.println("");
+  buffer.println();
 
   if (gadgetChanges.size > 0) {
     buffer.println(

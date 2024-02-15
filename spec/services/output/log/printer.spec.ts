@@ -7,7 +7,7 @@ import { expectStdout } from "../../../__support__/stream.js";
 describe("printer", () => {
   const printer = createPrinter({ name: "printer" });
 
-  for (const method of ["print", "println", "println2", "printlns"] as const) {
+  for (const method of ["print", "println"] as const) {
     describe(method, () => {
       it("writes to stdout", () => {
         printer[method]("Hello, world!");
@@ -27,6 +27,11 @@ describe("printer", () => {
             Hello, world!
             I am a multiline string.
         `;
+        expectStdout().toMatchSnapshot();
+      });
+
+      it("supports margin top", () => {
+        printer[method]({ marginTop: true })("Hello, world!");
         expectStdout().toMatchSnapshot();
       });
 

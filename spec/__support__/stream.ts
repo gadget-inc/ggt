@@ -23,7 +23,7 @@ export const mockStdout = (): void => {
     testStdout.length = 0;
 
     const { stdout } = await import("../../src/services/output/stream.js");
-    mock(stdout, "write", (data) => {
+    mock(stdout, "_write", (data) => {
       testStdout.push(data);
       return true;
     });

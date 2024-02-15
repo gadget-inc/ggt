@@ -1,7 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`FileSync._sendChangesToGadget > prints fatal errors when they're received 1`] = `
-"→ Sent to test (development) 12:00:00 AM
+"
+→ Sent to test (development) 12:00:00 AM
 ±  access-control.gadget.ts  updated 
 
 Gadget has detected the following fatal errors with your files:

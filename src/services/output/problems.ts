@@ -4,7 +4,7 @@ import type { Problem as FileSyncProblem, PublishIssue } from "../../__generated
 import type { Context } from "../command/context.js";
 import { compact } from "../util/collection.js";
 import { isGellyFile, isJavaScriptFile, isTypeScriptFile } from "../util/is.js";
-import { sprint, sprintln, sprintlns } from "./sprint.js";
+import { sprint, sprintln } from "./sprint.js";
 
 export type Problems = Record<string, Problem[]>;
 
@@ -42,7 +42,8 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: Pri
   let output = "";
 
   for (const [name, problems] of Object.entries(groupedProblems)) {
-    output += sprintlns`• {cyan ${name}} {redBright ${pluralize("problem", problems.length, true)}}`;
+    output += sprintln();
+    output += sprintln`• {cyan ${name}} {redBright ${pluralize("problem", problems.length, true)}}`;
     for (const problem of problems) {
       const [message, ...lines] = problem.message.split("\n") as [string, ...string[]];
 
@@ -53,7 +54,7 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: Pri
       output += sprint(message);
 
       for (const line of lines) {
-        output += sprintln("");
+        output += sprintln();
         output += sprint`    ${line}`;
       }
 
@@ -61,7 +62,7 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: Pri
         output += sprint` {dim ${label}}`;
       }
 
-      output += sprintln("");
+      output += sprintln();
     }
   }
 
@@ -69,7 +70,7 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: Pri
 };
 
 export const printProblems = (ctx: Context, opts: PrintProblemsOptions): void => {
-  ctx.log.printlns(sprintProblems(opts));
+  ctx.log.println(sprintProblems(opts));
 };
 
 export const filetype = (filename: string): string => {

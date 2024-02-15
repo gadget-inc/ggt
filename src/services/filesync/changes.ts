@@ -3,7 +3,7 @@ import pluralize from "pluralize";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";
-import { sprint, sprintTable, type SprintTableOptions } from "../output/sprint.js";
+import { sprint, sprintTable, type SprintOptions, type SprintTableOptions } from "../output/sprint.js";
 import { isNever, isString } from "../util/is.js";
 
 export type Create = { type: "create"; oldPath?: string };
@@ -31,12 +31,7 @@ export class Changes extends Map<string, Change> {
   }
 }
 
-export type SprintChangesOptions = {
-  /**
-   * The changes to print.
-   */
-  changes: Changes;
-
+export type SprintChangesOptions = SprintOptions & {
   /**
    * The tense to use for the change type.
    */
@@ -65,7 +60,7 @@ export type SprintChangesOptions = {
  */
 export const sprintChanges = (
   ctx: Context,
-  { changes, tense, includeDotGadget = false, limit = Infinity, ...tableOptions }: SprintChangesOptions,
+  { changes, tense, includeDotGadget = false, limit = Infinity, ...tableOptions }: { changes: Changes } & SprintChangesOptions,
 ): string => {
   ctx.log.trace("sprinting changes", { changes, tense, limit });
 
@@ -154,9 +149,9 @@ export const sprintChanges = (
  * @param ctx - The current context.
  * @see {@linkcode SprintChangesOptions}
  */
-export const printChanges = (ctx: Context, opts: SprintChangesOptions): void => {
+export const printChanges = (ctx: Context, opts: { changes: Changes } & SprintChangesOptions): void => {
   const changes = sprintChanges(ctx, opts);
   if (changes) {
-    ctx.log.println2(changes);
+    ctx.log.println(opts)(changes);
   }
 };

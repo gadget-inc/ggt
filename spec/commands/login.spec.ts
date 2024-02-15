@@ -60,8 +60,7 @@ describe("login", () => {
 
     await openedBrowser;
     expectStdout().toMatchInlineSnapshot(`
-      "
-      We've opened Gadget's login page using your default browser.
+      "We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
       "
@@ -84,8 +83,7 @@ describe("login", () => {
     expect(readSession()).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
-      "
-      We've opened Gadget's login page using your default browser.
+      "We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
 

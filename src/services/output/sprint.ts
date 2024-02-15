@@ -1,35 +1,74 @@
+/* eslint-disable func-style */
+/* eslint-disable jsdoc/require-jsdoc */
 import type { Options as BoxenOptions } from "boxen";
 import boxen from "boxen";
 import chalkTemplate from "chalk-template";
 import CliTable3 from "cli-table3";
 import { dedent } from "ts-dedent";
-import { isString } from "../util/is.js";
+import { isNil, isString } from "../util/is.js";
 
 export type Sprint = (template: TemplateStringsArray | string, ...values: unknown[]) => string;
+export type Sprintln = (template?: TemplateStringsArray | string, ...values: unknown[]) => string;
 
-export const sprint: Sprint = (template, ...values) => {
-  let content = template;
-  if (!isString(content)) {
-    content = chalkTemplate(content, ...values);
+export type SprintOptions = {
+  dedent?: boolean;
+  marginTop?: boolean;
+  marginBottom?: boolean;
+};
+
+const createSprint = (options: SprintOptions): Sprint => {
+  return (template, ...values) => {
+    let content = template;
+    if (!isString(content)) {
+      content = chalkTemplate(content, ...values);
+    }
+
+    if (options.dedent ?? true) {
+      content = dedent(content);
+    }
+
+    if (options.marginTop ?? false) {
+      content = "\n" + content;
+    }
+
+    if (options.marginBottom ?? false) {
+      content += "\n";
+    }
+
+    return content;
+  };
+};
+
+const defaultSprint = createSprint({});
+
+export function sprint(options: SprintOptions): Sprint;
+export function sprint(template: TemplateStringsArray | string, ...values: unknown[]): string;
+export function sprint(templateOrOptions: SprintOptions | TemplateStringsArray | string, ...values: unknown[]): Sprint | string {
+  if (isString(templateOrOptions) || Array.isArray(templateOrOptions)) {
+    return defaultSprint(templateOrOptions as string | TemplateStringsArray, ...values);
   }
-  return dedent(content);
-};
+  return createSprint(templateOrOptions as SprintOptions);
+}
 
-export const sprintln: Sprint = (template, ...values) => {
-  return sprint(template, ...values) + "\n";
-};
+export function sprintln(options: SprintOptions): Sprintln;
+export function sprintln(template?: TemplateStringsArray | string, ...values: unknown[]): string;
+export function sprintln(templateOrOptions?: SprintOptions | TemplateStringsArray | string, ...values: unknown[]): Sprintln | string {
+  if (isNil(templateOrOptions)) {
+    return "\n";
+  }
 
-export const sprintln2: Sprint = (template, ...values) => {
-  return sprintln(template, ...values) + "\n";
-};
+  if (isString(templateOrOptions) || Array.isArray(templateOrOptions)) {
+    return defaultSprint(templateOrOptions as string | TemplateStringsArray, ...values) + "\n";
+  }
 
-export const sprintlns: Sprint = (template, ...values) => {
-  return "\n" + sprintln(template, ...values);
-};
+  return (template?: TemplateStringsArray | string, ...values: unknown[]): string => {
+    if (isNil(template)) {
+      return "\n";
+    }
 
-export const sprintlns2: Sprint = (template, ...values) => {
-  return sprintlns(template, ...values) + "\n";
-};
+    return createSprint(templateOrOptions as SprintOptions)(template, ...values) + "\n";
+  };
+}
 
 export const sprintTable = ({
   message,

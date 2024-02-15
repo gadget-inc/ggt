@@ -335,7 +335,6 @@ describe("deploy", () => {
 
       Deploying regardless of problems because \\"--allow-problems\\" was passed.
 
-
       Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "
     `);

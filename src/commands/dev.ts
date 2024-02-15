@@ -170,6 +170,20 @@ export const command: Command<DevArgs> = async (ctx) => {
 
   const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+
+  const buffer = ctx.log.buffer();
+  buffer.println`ggt v${config.version}`;
+  buffer.println();
+  buffer.println(await syncJson.sprintState());
+  buffer.println`
+    ------------------------
+    Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
+    Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
+    Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
+    Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
+  `;
+  buffer.flush();
+
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
 
@@ -276,7 +290,7 @@ export const command: Command<DevArgs> = async (ctx) => {
         // if the git branch changed, we need all the changes to be sent
         // in a single batch, so wait a bit longer in case more changes
         // come in
-        ctx.log.printlns2`
+        ctx.log.println`
           Your git branch changed from ${lastGitBranch} → ${syncJson.gitBranch}
         `;
 
@@ -355,20 +369,6 @@ export const command: Command<DevArgs> = async (ctx) => {
     },
   ).once("error", (error) => ctx.abort(error));
 
-  const buffer = ctx.log.buffer();
-  buffer.println2`ggt v${config.version}`;
-  buffer.println(await syncJson.sprintState());
-  buffer.println`
-    ------------------------
-    Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
-    Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
-    Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
-    Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
-
-    Watching for file changes... {gray Press Ctrl+C to stop}
-  `;
-  buffer.flush();
-
   ctx.onAbort(async (reason) => {
     ctx.log.info("stopping", { reason });
 
@@ -384,11 +384,13 @@ export const command: Command<DevArgs> = async (ctx) => {
     }
 
     if (isAbortError(reason)) {
-      ctx.log.printlns("Goodbye!");
+      ctx.log.println("Goodbye!");
       return;
     }
 
     notify(ctx, { subtitle: "Uh oh!", message: "An error occurred while syncing files" });
     await reportErrorAndExit(ctx, reason);
   });
+
+  ctx.log.println({ marginTop: true })`Watching for file changes... {gray Press Ctrl+C to stop}`;
 };

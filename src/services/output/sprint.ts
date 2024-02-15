@@ -5,7 +5,7 @@ import boxen from "boxen";
 import chalkTemplate from "chalk-template";
 import CliTable3 from "cli-table3";
 import { dedent } from "ts-dedent";
-import { isNil, isString } from "../util/is.js";
+import { isString } from "../util/is.js";
 
 export type Sprint = (template: TemplateStringsArray | string, ...values: unknown[]) => string;
 export type Sprintln = (template?: TemplateStringsArray | string, ...values: unknown[]) => string;
@@ -47,25 +47,21 @@ export function sprint(templateOrOptions: SprintOptions | TemplateStringsArray |
   if (isString(templateOrOptions) || Array.isArray(templateOrOptions)) {
     return defaultSprint(templateOrOptions as string | TemplateStringsArray, ...values);
   }
+
   return createSprint(templateOrOptions as SprintOptions);
 }
 
 export function sprintln(options: SprintOptions): Sprintln;
 export function sprintln(template?: TemplateStringsArray | string, ...values: unknown[]): string;
 export function sprintln(templateOrOptions?: SprintOptions | TemplateStringsArray | string, ...values: unknown[]): Sprintln | string {
-  if (isNil(templateOrOptions)) {
-    return "\n";
-  }
+  templateOrOptions ??= "";
 
   if (isString(templateOrOptions) || Array.isArray(templateOrOptions)) {
     return defaultSprint(templateOrOptions as string | TemplateStringsArray, ...values) + "\n";
   }
 
   return (template?: TemplateStringsArray | string, ...values: unknown[]): string => {
-    if (isNil(template)) {
-      return "\n";
-    }
-
+    template ??= "";
     return createSprint(templateOrOptions as SprintOptions)(template, ...values) + "\n";
   };
 }

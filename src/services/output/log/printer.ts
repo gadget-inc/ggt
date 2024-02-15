@@ -1,18 +1,18 @@
 import type { SetReturnType } from "type-fest";
 import { config } from "../../config/config.js";
 import { isString } from "../../util/is.js";
-import { sprint, sprintTable, sprintln, type Sprint, type SprintOptions, type SprintTableOptions } from "../sprint.js";
+import { sprint, sprintTable, sprintln, type SprintOptions, type SprintTableOptions, type Sprinter } from "../sprint.js";
 import { stdout } from "../stream.js";
 import { formatters } from "./format/format.js";
 import { Level } from "./level.js";
 
 export type Print = {
-  (options: SprintOptions): SetReturnType<Sprint, void>;
+  (options: SprintOptions): SetReturnType<Sprinter, void>;
   (template: TemplateStringsArray | string, ...values: unknown[]): void;
 };
 
 export type Println = {
-  (options: SprintOptions): SetReturnType<Sprint, void>;
+  (options: SprintOptions): SetReturnType<Sprinter, void>;
   (template?: TemplateStringsArray | string, ...values: unknown[]): void;
 };
 

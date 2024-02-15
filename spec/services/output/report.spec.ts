@@ -47,7 +47,7 @@ describe("UnexpectedError", () => {
       "An unexpected error occurred
 
       Error: Whoops!
-          at spec/services/output/report.spec.ts:44:19
+          at spec/services/output/report.spec.ts:43:19
           at node_modules/@vitest/runner/dist/index.js:135:14
           at node_modules/@vitest/runner/dist/index.js:58:26
           at runTest (node_modules/@vitest/runner/dist/index.js:663:17)

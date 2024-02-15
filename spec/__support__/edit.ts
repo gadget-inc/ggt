@@ -90,8 +90,9 @@ export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   persist = false,
   times = 1,
   statusCode = 200,
+  overrides,
   ...opts
-}: NockEditResponseOptions<Query>): Scope & { responded: PromiseSignal } => {
+}: NockEditResponseOptions<Query> & { overrides?: { endpoint: string } }): Scope & { responded: PromiseSignal } => {
   let subdomain = app.slug;
   if (app.multiEnvironmentEnabled) {
     subdomain += `--${env.name}`;
@@ -120,7 +121,7 @@ export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   const responded = new PromiseSignal();
 
   const scope = nock(`https://${subdomain}.${config.domains.app}`)
-    .post("/edit/api/graphql", (body) => body.query === operation)
+    .post(overrides?.endpoint ? overrides.endpoint : "/edit/api/graphql", (body) => body.query === operation)
     .matchHeader("cookie", (cookie) => loadCookie() === cookie)
     .matchHeader("x-gadget-environment", env.name)
     .optionally(optional)
@@ -139,7 +140,6 @@ export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
       }
     })
     .persist(persist) as ReturnType<typeof nockEditResponse>;
-
   scope.responded = responded;
 
   return scope;

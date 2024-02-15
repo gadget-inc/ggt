@@ -31,6 +31,8 @@ export class Edit {
    * @param request.query - The GraphQL query to execute.
    * @param request.variables - The variables to send to the server.
    * @param request.http - {@linkcode HttpOptions} to pass to http.
+   * @param request.overrides - An object containing optional overrides for the HTTP request.
+   * @param request.overrides.endpoint - The endpoint URL to pass to the HTTP request.
    * @returns The data returned by the server.
    */
   async query<Query extends GraphQLQuery>({
@@ -41,6 +43,9 @@ export class Edit {
     query: Query;
     variables?: Thunk<Query["Variables"]> | null;
     http?: HttpOptions;
+    overrides?: {
+      endpoint?: string;
+    };
   }): Promise<Query["Data"]> {
     const name = query.split(/ |\(/, 2)[1];
     const ctx = this.ctx.child({

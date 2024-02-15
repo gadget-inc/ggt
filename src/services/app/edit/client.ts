@@ -160,6 +160,9 @@ export class Client {
       operation: Operation;
       variables?: Thunk<Operation["Variables"]> | null;
       http?: HttpOptions;
+      overrides?: {
+        endpoint?: string;
+      };
     },
   ): Promise<ExecutionResult<Operation["Data"], Operation["Extensions"]>> {
     assert(ctx.app, "missing app when executing GraphQL query");
@@ -179,7 +182,9 @@ export class Client {
       const json = await http({
         context: { ctx },
         method: "POST",
-        url: `https://${subdomain}.${config.domains.app}/edit/api/graphql`,
+        url: request.overrides?.endpoint
+          ? `https://${subdomain}.${config.domains.app}${request.overrides.endpoint}`
+          : `https://${subdomain}.${config.domains.app}/edit/api/graphql`,
         headers: { cookie, "x-gadget-environment": ctx.env.name },
         json: { query: request.operation, variables: unthunk(request.variables) },
         responseType: "json",

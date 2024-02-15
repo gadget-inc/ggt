@@ -173,7 +173,7 @@ export const mockSideEffects = (): void => {
   beforeEach(() => {
     // alway opt in to confirm prompts
     mock(prompt, "confirm", (_, { message }) => {
-      printStackTraceAndFail(sprintln`
+      printStackTraceAndFail(sprintln({ marginTop: true })`
         confirm("${message}") was called unexpectedly.
 
         If this was expected, mock the user's response:
@@ -189,7 +189,7 @@ export const mockSideEffects = (): void => {
 
     // alway opt in to select prompts
     mock(prompt, "select", (_, { message }) => {
-      printStackTraceAndFail(sprintln`
+      printStackTraceAndFail(sprintln({ marginTop: true })`
         select("${message}") was called unexpectedly.
 
         If this was expected, do the following to mock the user's response:

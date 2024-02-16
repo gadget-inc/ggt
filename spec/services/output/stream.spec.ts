@@ -6,20 +6,10 @@ describe("stdout", () => {
   it("strips leading newlines if the last line was empty", () => {
     // @ts-expect-error - _lastLineWasEmpty is private
     expect(stdout._lastLineWasEmpty).toBe(true);
-    stdout.write("\nhello\n\n");
+    stdout.write("\nhello\n");
     expectStdout().toMatchInlineSnapshot(`
       "hello
-
       "
-    `);
-
-    // @ts-expect-error - _lastLineWasEmpty is private
-    expect(stdout._lastLineWasEmpty).toBe(true);
-    stdout.write("\nworld");
-    expectStdout().toMatchInlineSnapshot(`
-      "hello
-
-      world"
     `);
   });
 

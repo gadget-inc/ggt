@@ -68,15 +68,13 @@ export const command: Command<StatusArgs> = async (ctx) => {
   output += sprintln("");
 
   if (gadgetChanges.size > 0) {
-    output += sprintln(
-      printChanges(ctx, {
-        toStr: true,
-        changes: gadgetChanges,
-        includeDotGadget: true,
-        tense: "past",
-        message: "Your environment's filesystem has changed.",
-      }),
-    );
+    output += printChanges(ctx, {
+      toStr: true,
+      changes: gadgetChanges,
+      includeDotGadget: true,
+      tense: "past",
+      message: "Your environment's filesystem has changed.",
+    });
   } else {
     output += sprintln`Your environment's filesystem has not changed.`;
   }

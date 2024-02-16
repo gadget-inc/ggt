@@ -5,23 +5,30 @@ import { withEnv } from "../../__support__/env.js";
 import { expectStdout } from "../../__support__/stream.js";
 
 describe("print", () => {
-  it("writes to stdout", () => {
+  it("prints to stdout", () => {
     print("Hello, world!");
     expectStdout().toMatchInlineSnapshot('"Hello, world!"');
   });
 
-  it("strips indentation from multiline strings", () => {
-    print(`
-        Hello, world!
-        I am a multiline string.
-    `);
-    expectStdout().toMatchInlineSnapshot(`
-      "Hello, world!
-      I am a multiline string."
-    `);
+  it("prints strings as is", () => {
+    try {
+      chalk.level = 3;
+      print(`
+        {bold Hello, world!}
+        {underline I am a multiline string.}
+      `);
+      expectStdout().toMatchInlineSnapshot(`
+        "
+                {bold Hello, world!}
+                {underline I am a multiline string.}
+              "
+      `);
+    } finally {
+      chalk.level = 0;
+    }
   });
 
-  it("supports tagged template literals", () => {
+  it("prints tagged template literal without indentation", () => {
     print`
         Hello, world!
         I am a multiline string.
@@ -32,15 +39,7 @@ describe("print", () => {
     `);
   });
 
-  it("supports top padding", () => {
-    print({ padTop: true })("Hello, world!");
-    expectStdout().toMatchInlineSnapshot(`
-      "
-      Hello, world!"
-    `);
-  });
-
-  it("supports chalk colors within template literals", () => {
+  it("prints tagged template literal with chalk colors", () => {
     try {
       chalk.level = 3;
       print`
@@ -54,6 +53,14 @@ describe("print", () => {
     } finally {
       chalk.level = 0;
     }
+  });
+
+  it("supports top padding", () => {
+    print({ padTop: true })("Hello, world!");
+    expectStdout().toMatchInlineSnapshot(`
+      "
+      Hello, world!"
+    `);
   });
 
   it("prints like a structured logger when GGT_LOG_LEVEL is set", () => {
@@ -76,7 +83,10 @@ describe("print", () => {
   it("prints json when GGT_LOG_FORMAT=json", () => {
     withEnv({ GGT_LOG_FORMAT: "json" }, () => {
       print({ json: { hello: "world" } })("Hello, world!");
-      expectStdout().toMatchInlineSnapshot('"{\\"hello\\":\\"world\\"}"');
+      expectStdout().toMatchInlineSnapshot(`
+        "{\\"hello\\":\\"world\\"}
+        "
+      `);
     });
   });
 });

@@ -72,7 +72,7 @@ export const login: Command = async (ctx): Promise<void> => {
         We've opened Gadget's login page using your default browser.
 
         Please log in and then return to this terminal.
-    `;
+      `;
     } catch (error) {
       ctx.log.error("failed to open browser", { error });
       println({ padTop: true })`

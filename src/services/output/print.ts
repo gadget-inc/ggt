@@ -5,6 +5,7 @@ import CliTable3 from "cli-table3";
 import { dedent } from "ts-dedent";
 import { config } from "../config/config.js";
 import { isString } from "../util/is.js";
+import { defaults } from "../util/object.js";
 import type { Field } from "./log/field.js";
 import { formatPretty } from "./log/format/pretty.js";
 import { Level } from "./log/level.js";
@@ -42,6 +43,8 @@ export type PrintOptions<ToString extends boolean> = {
 
   /**
    * What to print if --json was passed.
+   *
+   * @default undefined (print nothing)
    */
   json?: Record<string, Field>;
 
@@ -54,33 +57,6 @@ export type PrintOptions<ToString extends boolean> = {
 };
 
 export type print<ToString extends boolean, Options extends PrintOptions<ToString>> = {
-  /**
-   * Configures print with options before printing the given template
-   * string with dedent and chalk-template.
-   *
-   * @example
-   * ```
-   * let name = "Jane";
-   * print({ marginTop: true })`Hello, ${name}!`;
-   * // => "\nHello, Jane!"
-   *
-   * print({ marginTop: true })`Hello, {red ${name}}!`;
-   * // => "\nHello, \u001b[31mJane\u001b[39m!"
-   *
-   * print({ marginTop: true })`
-   *   Hello, {red ${name}}!
-   *
-   *   How are you?
-   * `;
-   * // => "\nHello, \u001b[31mJane\u001b[39m!\n\nHow are you?"
-   * ```
-   * @see PrintOptions
-   */
-  // eslint-disable-next-line @typescript-eslint/prefer-function-type
-  <const ToString extends boolean, const NewOptions extends PrintOptions<ToString>>(
-    options: PrintOptions<ToString>,
-  ): print<ToString, Options & NewOptions>;
-
   /**
    * Prints the given string with dedent.
    *
@@ -125,6 +101,33 @@ export type print<ToString extends boolean, Options extends PrintOptions<ToStrin
    * @see chalk-template https://github.com/chalk/chalk-template
    */
   (template: TemplateStringsArray, ...values: unknown[]): PrintOutput<Options["toStr"]>;
+
+  /**
+   * Configures print with options before printing the given template
+   * string with dedent and chalk-template.
+   *
+   * @example
+   * ```
+   * let name = "Jane";
+   * print({ marginTop: true })`Hello, ${name}!`;
+   * // => "\nHello, Jane!"
+   *
+   * print({ marginTop: true })`Hello, {red ${name}}!`;
+   * // => "\nHello, \u001b[31mJane\u001b[39m!"
+   *
+   * print({ marginTop: true })`
+   *   Hello, {red ${name}}!
+   *
+   *   How are you?
+   * `;
+   * // => "\nHello, \u001b[31mJane\u001b[39m!\n\nHow are you?"
+   * ```
+   * @see PrintOptions
+   */
+  // eslint-disable-next-line @typescript-eslint/prefer-function-type
+  <const ToString extends boolean, const NewOptions extends PrintOptions<ToString>>(
+    options: PrintOptions<ToString>,
+  ): print<ToString, Options & NewOptions>;
 };
 
 export const createPrint = <const ToString extends boolean, const Options extends PrintOptions<ToString>>(
@@ -138,30 +141,30 @@ export const createPrint = <const ToString extends boolean, const Options extend
       return createPrint({ ...options, ...templateOrOptions });
     }
 
+    options = defaults(options, {});
+
     if (config.logFormat === "json") {
       if (options.json) {
-        stdout.write(JSON.stringify(options.json));
+        stdout.write(JSON.stringify(options.json) + "\n");
       }
       return undefined;
     }
 
     let content = templateOrOptions as string | TemplateStringsArray;
     if (!isString(content)) {
-      content = chalkTemplate(content, ...values);
-    }
-
-    content = dedent(content);
-
-    if (options.padTop ?? false) {
-      content = "\n" + content;
-    }
-
-    if (options.addNewLine ?? true) {
-      content += "\n";
+      content = dedent(chalkTemplate(content, ...values));
     }
 
     if (options.boxen) {
       content = boxen(content, options.boxen);
+    }
+
+    if ((options.padTop ?? false) && !content.startsWith("\n")) {
+      content = "\n" + content;
+    }
+
+    if ((options.addNewLine ?? true) && !content.endsWith("\n")) {
+      content += "\n";
     }
 
     if (options.toStr ?? false) {

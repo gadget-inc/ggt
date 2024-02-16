@@ -14,7 +14,7 @@ export class Stream {
    */
   private _lastLineWasEmpty = true;
 
-  public constructor(public channel: "stdout" | "stderr") {
+  constructor(public channel: "stdout" | "stderr") {
     process[this.channel].on("error", (err: unknown) => {
       if (isObject(err) && "code" in err && err.code === "EPIPE") {
         return;
@@ -23,37 +23,55 @@ export class Stream {
     });
   }
 
-  public get isTTY(): boolean {
+  get isTTY(): boolean {
     return process[this.channel].isTTY;
   }
 
-  public getWindowSize(): number[] {
+  getWindowSize(): number[] {
     return process[this.channel].getWindowSize();
   }
 
-  public write(str: string): void {
+  write(str: string): void {
+    // remove duplicate empty lines
+    while (str.startsWith("\n\n")) {
+      str = str.slice(0, -1);
+    }
+
+    while (str.endsWith("\n\n")) {
+      str = str.slice(0, -1);
+    }
+
+    str = str.replaceAll(/\n\n+/g, "\n\n");
+
     if (this._lastLineWasEmpty) {
-      // don't ever write more than one empty line in a row
+      // we just printed an empty line, so don't print another one
       while (str.startsWith("\n")) {
         str = str.slice(1);
       }
     }
 
-    this._lastLineWasEmpty = str.endsWith("\n\n");
+    if (str === "") {
+      // nothing to print
+      return;
+    }
+
+    // remember if the last line was empty
+    this._lastLineWasEmpty = str === "\n";
+
     this._write(str);
   }
 
-  public on(event: string, listener: (...args: unknown[]) => void): this {
+  on(event: string, listener: (...args: unknown[]) => void): this {
     process[this.channel].on(event, listener);
     return this;
   }
 
-  public once(event: string, listener: (...args: unknown[]) => void): this {
+  once(event: string, listener: (...args: unknown[]) => void): this {
     process[this.channel].once(event, listener);
     return this;
   }
 
-  _write(data: string): boolean {
+  private _write(data: string): boolean {
     if (env.testLike) {
       // use console.log/error in tests since vitest doesn't display
       // process.stdout/stderr correctly; also, remove trailing newline

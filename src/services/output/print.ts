@@ -10,11 +10,9 @@ import { formatPretty } from "./log/format/pretty.js";
 import { Level } from "./log/level.js";
 import { stdout } from "./stream.js";
 
-export type PrintOutput<ToString extends boolean | undefined> = ToString extends false | undefined
-  ? undefined
-  : ToString extends true
-    ? string
-    : never;
+type IfTrue<B extends boolean | undefined, TrueValue, FalsyValue> = B extends true ? TrueValue : FalsyValue;
+
+export type PrintOutput<ToString extends boolean | undefined> = IfTrue<ToString, string, void>;
 
 export type PrintOptions<ToString extends boolean> = {
   /**
@@ -120,10 +118,9 @@ export type print<ToString extends boolean, Options extends PrintOptions<ToStrin
    * ```
    * @see PrintOptions
    */
-  // eslint-disable-next-line @typescript-eslint/prefer-function-type
-  <const ToString extends boolean, const NewOptions extends PrintOptions<ToString>>(
-    options: PrintOptions<ToString>,
-  ): print<ToString, Options & NewOptions>;
+  <const NewOptions extends PrintOptions<boolean>, const NewToString extends boolean | undefined = NewOptions["toStr"]>(
+    options: NewOptions,
+  ): print<ToString & NewToString, Options & NewOptions & { toStr: ToString & NewToString }>;
 };
 
 export const createPrint = <const ToString extends boolean, const Options extends PrintOptions<ToString>>(

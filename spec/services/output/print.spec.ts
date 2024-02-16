@@ -1,13 +1,15 @@
 import chalk from "chalk";
-import { describe, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { print, printTable } from "../../../src/services/output/print.js";
 import { withEnv } from "../../__support__/env.js";
 import { expectStdout } from "../../__support__/stream.js";
 
 describe("print", () => {
   it("prints to stdout", () => {
-    print("Hello, world!");
+    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression, @typescript-eslint/no-invalid-void-type
+    const result: void = print("Hello, world!");
     expectStdout().toMatchInlineSnapshot('"Hello, world!"');
+    expect(result).toBeUndefined();
   });
 
   it("prints strings as is", () => {
@@ -55,42 +57,6 @@ describe("print", () => {
     }
   });
 
-  describe("with addNewLine", () => {
-    it("adds a newline after the content", () => {
-      print({ ensureNewLine: true })("Hello, world!");
-      expectStdout().toMatchInlineSnapshot(`
-        "Hello, world!
-        "
-      `);
-    });
-
-    it("does not add a newline after the content when the content already ends with a newline", () => {
-      print({ ensureNewLine: true })("Hello, world!\n");
-      expectStdout().toMatchInlineSnapshot(`
-        "Hello, world!
-        "
-      `);
-    });
-  });
-
-  describe("with padTop", () => {
-    it("adds a newline before the content", () => {
-      print({ ensureNewLineAbove: true })("Hello, world!");
-      expectStdout().toMatchInlineSnapshot(`
-      "
-      Hello, world!"
-    `);
-    });
-
-    it("does not add a newline before the content when the content already begins with a newline", () => {
-      print({ ensureNewLineAbove: true })("\nHello, world!");
-      expectStdout().toMatchInlineSnapshot(`
-      "
-      Hello, world!"
-    `);
-    });
-  });
-
   it("prints like a structured logger when GGT_LOG_LEVEL is set", () => {
     try {
       vi.useFakeTimers();
@@ -115,6 +81,49 @@ describe("print", () => {
         "{\\"hello\\":\\"world\\"}
         "
       `);
+    });
+  });
+
+  describe("with ensureNewLine", () => {
+    it("adds a newline after the content", () => {
+      print({ ensureNewLine: true })("Hello, world!");
+      expectStdout().toMatchInlineSnapshot(`
+        "Hello, world!
+        "
+      `);
+    });
+
+    it("does not add a newline after the content when the content already ends with a newline", () => {
+      print({ ensureNewLine: true })("Hello, world!\n");
+      expectStdout().toMatchInlineSnapshot(`
+        "Hello, world!
+        "
+      `);
+    });
+  });
+
+  describe("with ensureNewLineAbove", () => {
+    it("adds a newline before the content", () => {
+      print({ ensureNewLineAbove: true })("Hello, world!");
+      expectStdout().toMatchInlineSnapshot(`
+      "
+      Hello, world!"
+    `);
+    });
+
+    it("does not add a newline before the content when the content already begins with a newline", () => {
+      print({ ensureNewLineAbove: true })("\nHello, world!");
+      expectStdout().toMatchInlineSnapshot(`
+      "
+      Hello, world!"
+    `);
+    });
+  });
+
+  describe("with toStr", () => {
+    it("returns the formatted string instead of printing it", () => {
+      const result: string = print({ toStr: true })("Hello, world!");
+      expect(result).toMatchInlineSnapshot('"Hello, world!"');
     });
   });
 });

@@ -11,13 +11,11 @@ import { formatPretty } from "./log/format/pretty.js";
 import { Level } from "./log/level.js";
 import { stdout } from "./stream.js";
 
-export type PrintOutput<ToString extends boolean | undefined> = ToString extends undefined
+export type PrintOutput<ToString extends boolean | undefined> = ToString extends false | undefined
   ? undefined
-  : ToString extends false
-    ? undefined
-    : ToString extends true
-      ? string
-      : never;
+  : ToString extends true
+    ? string
+    : never;
 
 export type PrintOptions<ToString extends boolean> = {
   /**
@@ -58,9 +56,9 @@ export type PrintOptions<ToString extends boolean> = {
 
 export type print<ToString extends boolean, Options extends PrintOptions<ToString>> = {
   /**
-   * Prints the given string with dedent.
+   * Prints the given string as is.
    *
-   * @param str - The string to dedent.
+   * @param str - The string to print.
    * @example
    * print("Hello, world!");
    * // => "Hello, world!"
@@ -70,8 +68,7 @@ export type print<ToString extends boolean, Options extends PrintOptions<ToStrin
    *
    *   How are you?
    * `);
-   * // => "Hello, world!\n\nHow are you?"
-   * @see dedent https://github.com/tamino-martinius/node-ts-dedent
+   * // => "\n  Hello, world!\n\n  How are you?\n"
    */
   (str: string): PrintOutput<Options["toStr"]>;
 

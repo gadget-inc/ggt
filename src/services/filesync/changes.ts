@@ -3,7 +3,7 @@ import pluralize from "pluralize";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";
-import { printTable, sprint, type PrintOptions, type PrintOutput, type PrintTableOptions } from "../output/print.js";
+import { printTable, sprint, type PrintOutput, type PrintTableOptions } from "../output/print.js";
 import { isNever, isString } from "../util/is.js";
 
 export type Create = { type: "create"; oldPath?: string };
@@ -31,7 +31,7 @@ export class Changes extends Map<string, Change> {
   }
 }
 
-export type PrintChangesOptions<ToString extends boolean> = PrintOptions<ToString> & {
+export type PrintChangesOptions<ToString extends boolean> = Partial<PrintTableOptions<ToString>> & {
   /**
    * The tense to use for the change type.
    */
@@ -50,7 +50,7 @@ export type PrintChangesOptions<ToString extends boolean> = PrintOptions<ToStrin
    * @default Infinity
    */
   limit?: number;
-} & Partial<PrintTableOptions<ToString>>;
+};
 
 /**
  * Prints the changes to the console.
@@ -58,7 +58,7 @@ export type PrintChangesOptions<ToString extends boolean> = PrintOptions<ToStrin
  * @param ctx - The current context.
  * @see {@linkcode SprintChangesOptions}
  */
-export const printChanges = <const ToString extends boolean>(
+export const printChanges = <const ToString extends boolean = false>(
   ctx: Context,
   { changes, tense, includeDotGadget = false, limit = Infinity, ...tableOptions }: { changes: Changes } & PrintChangesOptions<ToString>,
 ): PrintOutput<ToString> => {

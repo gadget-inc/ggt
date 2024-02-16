@@ -46,21 +46,19 @@ export const command: Command<StatusArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  let output = sprintln(await syncJson.sprintState());
-  output += sprintln("");
-
   const filesync = new FileSync(syncJson);
   const { localChanges, gadgetChanges } = await filesync.hashes(ctx);
 
+  let output = sprintln(await syncJson.sprintState());
+  output += sprintln("");
+
   if (localChanges.size > 0) {
-    output += sprintln(
-      printChanges(ctx, {
-        toStr: true,
-        changes: localChanges,
-        tense: "past",
-        message: "Your local filesystem has changed.",
-      }),
-    );
+    output += printChanges(ctx, {
+      toStr: true,
+      changes: localChanges,
+      tense: "past",
+      message: "Your local filesystem has changed.",
+    });
   } else {
     output += sprintln`Your local filesystem has not changed.`;
   }

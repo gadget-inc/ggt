@@ -5,14 +5,14 @@ import type { ClientRequestArgs } from "node:http";
 import PQueue from "p-queue";
 import type { Promisable } from "type-fest";
 import WebSocket from "ws";
-import type { Context } from "../../command/context.js";
-import { config } from "../../config/config.js";
-import { loadCookie } from "../../http/auth.js";
-import { http, type HttpOptions } from "../../http/http.js";
-import { noop, unthunk, type Thunk } from "../../util/function.js";
-import { isObject } from "../../util/is.js";
-import { EditError } from "./error.js";
-import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
+import type { Context } from "../command/context.js";
+import { config } from "../config/config.js";
+import { loadCookie } from "../http/auth.js";
+import { http, type HttpOptions } from "../http/http.js";
+import { noop, unthunk, type Thunk } from "../util/function.js";
+import { isObject } from "../util/is.js";
+import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
+import { GadgetError as Error } from "./error.js";
 
 enum ConnectionStatus {
   CONNECTED,
@@ -22,7 +22,7 @@ enum ConnectionStatus {
 
 /**
  * Client is a GraphQL client connected to a Gadget application's
- * /edit/api/graphql endpoint.
+ * given endpoint.
  */
 export class Client {
   // assume the client is going to connect
@@ -30,12 +30,16 @@ export class Client {
 
   readonly ctx: Context;
 
+  readonly endpoint: string;
+
   private _graphqlWsClient: ReturnType<typeof createClient>;
 
-  constructor(ctx: Context) {
+  constructor(ctx: Context, endpoint: string) {
     this.ctx = ctx.child({ name: "client" });
     assert(ctx.app, "app must be set on Client context");
     assert(ctx.env, "env must be set on Client context");
+
+    this.endpoint = endpoint;
 
     let subdomain = ctx.app.slug;
     if (ctx.app.hasSplitEnvironments) {
@@ -120,7 +124,7 @@ export class Client {
       subscription: Subscription;
       variables?: Thunk<Subscription["Variables"]> | null;
       onResponse: (response: ExecutionResult<Subscription["Data"], Subscription["Extensions"]>) => Promisable<void>;
-      onError: (error: EditError) => Promisable<void>;
+      onError: (error: Error) => Promisable<void>;
       onComplete?: () => Promisable<void>;
     },
   ): () => void {
@@ -134,7 +138,7 @@ export class Client {
     });
 
     const queue = new PQueue({ concurrency: 1 });
-    const onError = (error: unknown): Promisable<void> => optionsOnError(new EditError(subscription, error));
+    const onError = (error: unknown): Promisable<void> => optionsOnError(new Error(subscription, error));
 
     const unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(request, {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -160,9 +164,6 @@ export class Client {
       operation: Operation;
       variables?: Thunk<Operation["Variables"]> | null;
       http?: HttpOptions;
-      overrides?: {
-        endpoint?: string;
-      };
     },
   ): Promise<ExecutionResult<Operation["Data"], Operation["Extensions"]>> {
     assert(ctx.app, "missing app when executing GraphQL query");
@@ -182,9 +183,7 @@ export class Client {
       const json = await http({
         context: { ctx },
         method: "POST",
-        url: request.overrides?.endpoint
-          ? `https://${subdomain}.${config.domains.app}${request.overrides.endpoint}`
-          : `https://${subdomain}.${config.domains.app}/edit/api/graphql`,
+        url: `https://${subdomain}.${config.domains.app}${this.endpoint}`,
         headers: { cookie, "x-gadget-environment": ctx.env.name },
         json: { query: request.operation, variables: unthunk(request.variables) },
         responseType: "json",
@@ -200,7 +199,7 @@ export class Client {
 
       return json as Operation["Response"];
     } catch (error) {
-      throw new EditError(request.operation, error);
+      throw new Error(request.operation, error);
     }
   }
 

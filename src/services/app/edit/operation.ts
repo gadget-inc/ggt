@@ -7,8 +7,6 @@ import type {
   FileSyncFilesQueryVariables,
   FileSyncHashesQuery,
   FileSyncHashesQueryVariables,
-  GadgetMetaModelsQuery,
-  GadgetMetaModelsQueryVariables,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
   PublishStatusSubscription,
@@ -194,13 +192,3 @@ export const PUBLISH_STATUS_SUBSCRIPTION = sprint(/* GraphQL */ `
 `) as GraphQLSubscription<PublishStatusSubscription, PublishStatusSubscriptionVariables>;
 
 export type PUBLISH_STATUS_SUBSCRIPTION = typeof PUBLISH_STATUS_SUBSCRIPTION;
-
-export const GADGET_META_MODELS_QUERY = sprint(/* GraphQL */ `
-  query GadgetMetaModels {
-    gadgetMeta {
-      models {
-        apiIdentifier
-      }
-    }
-  }
-`) as GraphQLQuery<GadgetMetaModelsQuery, GadgetMetaModelsQueryVariables>;

@@ -4,8 +4,8 @@ import notifier from "node-notifier";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
 import { args, command as sync, type DevArgs } from "../../src/commands/dev.js";
-import { EditError } from "../../src/services/app/edit/error.js";
 import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
+import { GadgetError as Error } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
@@ -1199,7 +1199,7 @@ describe("dev", () => {
 
     await sync(ctx);
 
-    const error = new EditError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
+    const error = new Error(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
 
     const gadgetChangesSubscription = expectGadgetChangesSubscription();
     await gadgetChangesSubscription.emitError(error);

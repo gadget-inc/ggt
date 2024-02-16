@@ -87,7 +87,7 @@ export type OpenArgs = typeof args;
 
 export const args = {
   ...PushArgs,
-  "--show-all": { type: Boolean, alias: "--all" },
+  "--show-all": { type: Boolean },
 };
 
 export const command: Command<OpenArgs> = async (ctx) => {
@@ -167,7 +167,7 @@ export const command: Command<OpenArgs> = async (ctx) => {
       ctx.log.println`
         Unknown model {yellow ${modelApiIdentifier}}
   
-        Did you mean {blueBright ${closest}}?
+        Did you mean ggt open model {blueBright ${closest}}?
         
         Run {gray ggt open --help} for usage or run command with {yellow --show-all} to see all available models
       `;

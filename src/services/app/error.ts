@@ -2,14 +2,14 @@ import type { GraphQLError } from "graphql";
 import assert from "node:assert";
 import pluralize from "pluralize";
 import type { CloseEvent, ErrorEvent } from "ws";
-import { CLIError, IsBug } from "../../output/report.js";
-import { sprint } from "../../output/sprint.js";
-import { uniq } from "../../util/collection.js";
-import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString } from "../../util/is.js";
-import { serializeError } from "../../util/object.js";
-import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
+import { CLIError, IsBug } from "../output/report.js";
+import { sprint } from "../output/sprint.js";
+import { uniq } from "../util/collection.js";
+import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString } from "../util/is.js";
+import { serializeError } from "../util/object.js";
+import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
 
-export class EditError extends CLIError {
+export class GadgetError extends CLIError {
   isBug = IsBug.MAYBE;
 
   override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent;

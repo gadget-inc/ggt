@@ -3,18 +3,18 @@ import open from "open";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { nockTestApps, testApp } from "../../spec/__support__/app.js";
 import { makeContext } from "../../spec/__support__/context.js";
-import { nockEditResponse } from "../../spec/__support__/edit.js";
 import { expectError } from "../../spec/__support__/error.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { mock } from "../../spec/__support__/mock.js";
 import { expectStdout } from "../../spec/__support__/stream.js";
 import { loginTestUser, testUser } from "../../spec/__support__/user.js";
 import { args, command as openCommand } from "../../src/commands/open.js";
-import { GADGET_META_MODELS_QUERY } from "../../src/services/app/edit/operation.js";
+import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
 import { ArgError } from "../../src/services/command/arg.js";
 import type { Context } from "../../src/services/command/context.js";
 import { select } from "../../src/services/output/prompt.js";
 import * as user from "../../src/services/user/user.js";
+import { nockApiResponse } from "../__support__/graphql.js";
 
 describe("open", () => {
   let ctx: Context<typeof args>;
@@ -168,7 +168,7 @@ describe("open", () => {
     expectStdout().toMatchInlineSnapshot(`
       "      Unknown model use
 
-            Did you mean user?
+            Did you mean ggt open model user?
             
             Run ggt open --help for usage or run command with --show-all to see all available models
       "
@@ -178,11 +178,8 @@ describe("open", () => {
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const nockGetModels = () => {
-  return nockEditResponse({
+  return nockApiResponse({
     operation: GADGET_META_MODELS_QUERY,
-    overrides: {
-      endpoint: "/api/graphql",
-    },
     response: {
       data: {
         gadgetMeta: {

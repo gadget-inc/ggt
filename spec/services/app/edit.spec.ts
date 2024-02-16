@@ -3,19 +3,19 @@ import nock from "nock";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import { Edit } from "../../../src/services/app/edit/edit.js";
-import { EditError } from "../../../src/services/app/edit/error.js";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILES_VERSION_QUERY,
   type GraphQLQuery,
 } from "../../../src/services/app/edit/operation.js";
+import { GadgetError as Error } from "../../../src/services/app/error.js";
 import type { Context } from "../../../src/services/command/context.js";
 import { config } from "../../../src/services/config/config.js";
 import { loadCookie } from "../../../src/services/http/auth.js";
 import { testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
-import { nockEditResponse } from "../../__support__/edit.js";
 import { expectError } from "../../__support__/error.js";
+import { nockEditResponse } from "../../__support__/graphql.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe("Edit", () => {
@@ -62,8 +62,8 @@ describe("Edit", () => {
 
     const edit = new Edit(ctx);
 
-    const error: EditError = await expectError(() => edit.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
-    expect(error).toBeInstanceOf(EditError);
+    const error: Error = await expectError(() => edit.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
+    expect(error).toBeInstanceOf(Error);
     expect(error.cause).toEqual([{ message: "Something went wrong" }]);
   });
 
@@ -78,8 +78,8 @@ describe("Edit", () => {
 
     const editGraphQL = new Edit(ctx);
 
-    const error: EditError = await expectError(() => editGraphQL.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
-    expect(error).toBeInstanceOf(EditError);
+    const error: Error = await expectError(() => editGraphQL.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
+    expect(error).toBeInstanceOf(Error);
     expect(error.cause).toEqual([{ message: "Something went wrong" }]);
   });
 
@@ -91,8 +91,8 @@ describe("Edit", () => {
 
     const editGraphQL = new Edit(ctx);
 
-    const error: EditError = await expectError(() => editGraphQL.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
-    expect(error).toBeInstanceOf(EditError);
+    const error: Error = await expectError(() => editGraphQL.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
+    expect(error).toBeInstanceOf(Error);
     expect(error.cause).toEqual("Service Unavailable");
   });
 });
@@ -101,7 +101,7 @@ describe("EditError", () => {
   const query = "query { foo }" as GraphQLQuery;
 
   it("renders a GraphQL error correctly", () => {
-    const error = new EditError(query, [new GraphQLError("Changed and deleted files must not overlap")]);
+    const error = new Error(query, [new GraphQLError("Changed and deleted files must not overlap")]);
     expect(error.toString()).toMatchInlineSnapshot(`
       "An error occurred while communicating with Gadget
 
@@ -116,7 +116,7 @@ describe("EditError", () => {
   });
 
   it("renders multiple GraphQL errors correctly", () => {
-    const error = new EditError(query, [
+    const error = new Error(query, [
       new GraphQLError("Changed and deleted files must not overlap"),
       new GraphQLError("Files version mismatch, expected 1 but got 2"),
     ]);
@@ -135,7 +135,7 @@ describe("EditError", () => {
   });
 
   it("renders a CloseEvent correctly", () => {
-    const error = new EditError(query, {
+    const error = new Error(query, {
       type: "close",
       code: 1000,
       reason: "Normal closure",
@@ -153,7 +153,7 @@ describe("EditError", () => {
   });
 
   it("renders an ErrorEvent correctly", () => {
-    const error = new EditError(query, {
+    const error = new Error(query, {
       type: "error",
       message: "connect ECONNREFUSED 10.254.254.254:3000",
       error: {
@@ -176,7 +176,7 @@ describe("EditError", () => {
   });
 
   it("renders a string correctly", () => {
-    const error = new EditError(query, "We received a response without data");
+    const error = new Error(query, "We received a response without data");
     expect(error.toString()).toMatchInlineSnapshot(`
       "An error occurred while communicating with Gadget
 

@@ -4,8 +4,8 @@ import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { loadCookie } from "../http/auth.js";
 import { http } from "../http/http.js";
-import { Edit } from "./edit/edit.js";
-import { GADGET_META_MODELS_QUERY } from "./edit/operation.js";
+import { Api } from "./api/api.js";
+import { GADGET_META_MODELS_QUERY } from "./api/operation.js";
 
 export const EnvironmentType = Object.freeze({
   Development: "development",
@@ -76,9 +76,9 @@ export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []
 
   assert(ctx.user, "must get user before getting models");
 
-  const edit = new Edit(ctx);
+  const api = new Api(ctx);
 
-  const result = await edit.query({ query: GADGET_META_MODELS_QUERY, overrides: { endpoint: "/api/graphql" } });
+  const result = await api.query({ query: GADGET_META_MODELS_QUERY });
 
   return z.array(ModelApiIdentifier).parse(result.gadgetMeta.models);
 };

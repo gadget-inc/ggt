@@ -7,10 +7,10 @@ import { type Command, type Usage } from "../services/command/command.js";
 import { DeployDisallowedError, UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { println, sprint } from "../services/output/print.js";
 import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.js";
 import { confirm } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
-import { sprint } from "../services/output/sprint.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
 
@@ -131,14 +131,14 @@ export const command: Command<DeployArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  ctx.log.println({ marginTop: true })`
+  println({ padTop: true })`
     Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
   `;
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
   if (!hashes.inSync) {
-    ctx.log.println({ marginTop: true })`
+    println({ padTop: true })`
       Your local filesystem must be in sync with your development
       environment before you can deploy.
     `;
@@ -160,15 +160,15 @@ export const command: Command<DeployArgs> = async (ctx) => {
       spinner.fail();
 
       if (isCloseEvent(error.cause)) {
-        ctx.log.println({ marginTop: true })(error.message);
+        println({ padTop: true })(error.message);
       } else if (isGraphQLErrors(error.cause)) {
         const message = error.cause[0]?.message;
         assert(message, "expected message to be defined");
 
         if (message.includes("GGT_PAYMENT_REQUIRED")) {
-          ctx.log.println("Production environment limit reached. Upgrade your plan to deploy");
+          println("Production environment limit reached. Upgrade your plan to deploy");
         } else {
-          ctx.log.println(message);
+          println(message);
         }
       }
 
@@ -189,15 +189,15 @@ export const command: Command<DeployArgs> = async (ctx) => {
           await reportErrorAndExit(ctx, new DeployDisallowedError(publishIssuesToProblems(fatalIssues)));
         }
 
-        ctx.log.println({ marginTop: true, marginBottom: true })`{bold Problems found}`;
-        printProblems(ctx, { problems: publishIssuesToProblems(issues) });
+        println({ padTop: true })`{bold Problems found}`;
+        printProblems({ problems: publishIssuesToProblems(issues), padTop: true });
 
         if (!publishStarted) {
           await confirm(ctx, { message: "Do you want to continue?" });
           subscription.resubscribe({ localFilesVersion: String(syncJson.filesVersion), force: true });
         } else {
           assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");
-          ctx.log.println({ marginTop: true, marginBottom: true })`Deploying regardless of problems because "--allow-problems" was passed.`;
+          println({ padTop: true })`Deploying regardless of problems because "--allow-problems" was passed.`;
         }
 
         return;
@@ -207,10 +207,10 @@ export const command: Command<DeployArgs> = async (ctx) => {
         subscription.unsubscribe();
         spinner.fail();
         if (status.message) {
-          ctx.log.println({ marginTop: true })`{red ${status.message}}`;
+          println({ padTop: true })`{red ${status.message}}`;
         }
         if (status.output) {
-          ctx.log.println({ marginTop: true })(terminalLink("Check logs", status.output));
+          println({ padTop: true })(terminalLink("Check logs", status.output));
         }
         return;
       }
@@ -222,7 +222,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
         if (status?.output) {
           message += ` ${terminalLink("Check logs", status.output)}`;
         }
-        ctx.log.println({ marginTop: true })(message);
+        println({ padTop: true })(message);
         return;
       }
 

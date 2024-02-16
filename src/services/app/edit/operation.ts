@@ -16,7 +16,7 @@ import type {
   RemoteFilesVersionQuery,
   RemoteFilesVersionQueryVariables,
 } from "../../../__generated__/graphql.js";
-import { sprint } from "../../output/sprint.js";
+import { sprint } from "../../output/print.js";
 
 /**
  * A GraphQL query with its associated types.

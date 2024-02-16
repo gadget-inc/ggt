@@ -10,8 +10,8 @@ import { Edit } from "../app/edit/edit.js";
 import { ArgError, type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
+import { println, sprint } from "../output/print.js";
 import { select } from "../output/prompt.js";
-import { sprint, sprintln } from "../output/sprint.js";
 import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { Directory } from "./directory.js";
@@ -198,7 +198,7 @@ export class SyncJson {
     let previousEnvironment: string | undefined;
     if (state.environment !== ctx.env.name) {
       // the user specified a different environment, update the state
-      ctx.log.println`Changing environment from ${state.environment} → ${ctx.env.name}`;
+      println`Changing environment from ${state.environment} → ${ctx.env.name}`;
       previousEnvironment = state.environment;
       state.environment = ctx.env.name;
       if (!state.environments[ctx.env.name]) {
@@ -299,7 +299,7 @@ export class SyncJson {
   }
 
   async printState(): Promise<void> {
-    this.ctx.log.println(await this.sprintState());
+    println(await this.sprintState());
   }
 }
 
@@ -353,13 +353,15 @@ const loadApp = async (
 
   // TODO: differentiate between incorrect --app vs state.application?
   throw new ArgError(
-    sprintln({ marginBottom: true })`
+    sprint`
       Unknown application:
 
         ${appSlug}
 
       Did you mean one of these?
-    `.concat(`  • ${similarAppSlugs.join("\n  • ")}`),
+
+        • ${similarAppSlugs.join("\n        • ")}
+    `,
   );
 };
 
@@ -416,13 +418,15 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
   ).slice(0, 5);
 
   throw new ArgError(
-    sprintln({ marginBottom: true })`
+    sprint`
       Unknown environment:
 
         ${envName}
 
       Did you mean one of these?
-    `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
+
+        • ${similarEnvironments.join("\n        • ")}
+    `,
   );
 };
 

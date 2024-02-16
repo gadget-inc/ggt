@@ -3,7 +3,7 @@ import pluralize from "pluralize";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";
-import { sprint, sprintTable, type SprintOptions, type SprintTableOptions } from "../output/sprint.js";
+import { printTable, sprint, type PrintOptions, type PrintOutput, type PrintTableOptions } from "../output/print.js";
 import { isNever, isString } from "../util/is.js";
 
 export type Create = { type: "create"; oldPath?: string };
@@ -31,7 +31,7 @@ export class Changes extends Map<string, Change> {
   }
 }
 
-export type SprintChangesOptions = SprintOptions & {
+export type PrintChangesOptions<ToString extends boolean> = PrintOptions<ToString> & {
   /**
    * The tense to use for the change type.
    */
@@ -50,7 +50,7 @@ export type SprintChangesOptions = SprintOptions & {
    * @default Infinity
    */
   limit?: number;
-} & Partial<SprintTableOptions>;
+} & Partial<PrintTableOptions<ToString>>;
 
 /**
  * Prints the changes to the console.
@@ -58,10 +58,10 @@ export type SprintChangesOptions = SprintOptions & {
  * @param ctx - The current context.
  * @see {@linkcode SprintChangesOptions}
  */
-export const sprintChanges = (
+export const printChanges = <const ToString extends boolean>(
   ctx: Context,
-  { changes, tense, includeDotGadget = false, limit = Infinity, ...tableOptions }: { changes: Changes } & SprintChangesOptions,
-): string => {
+  { changes, tense, includeDotGadget = false, limit = Infinity, ...tableOptions }: { changes: Changes } & PrintChangesOptions<ToString>,
+): PrintOutput<ToString> => {
   ctx.log.trace("sprinting changes", { changes, tense, limit });
 
   if (config.logLevel <= Level.TRACE) {
@@ -76,7 +76,10 @@ export const sprintChanges = (
 
   if (changesToPrint.length === 0) {
     ctx.log.debug("no changes to sprint");
-    return "";
+    if (tableOptions.toStr ?? false) {
+      return undefined as PrintOutput<ToString>;
+    }
+    return "" as PrintOutput<ToString>;
   }
 
   const renamed = chalk.yellowBright(tense === "past" ? "renamed" : "rename");
@@ -140,18 +143,5 @@ export const sprintChanges = (
     footer += ".";
   }
 
-  return sprintTable({ rows, footer, ...tableOptions });
-};
-
-/**
- * Prints the changes to the console.
- *
- * @param ctx - The current context.
- * @see {@linkcode SprintChangesOptions}
- */
-export const printChanges = (ctx: Context, opts: { changes: Changes } & SprintChangesOptions): void => {
-  const changes = sprintChanges(ctx, opts);
-  if (changes) {
-    ctx.log.println(opts)(changes);
-  }
+  return printTable({ rows, footer, ...tableOptions });
 };

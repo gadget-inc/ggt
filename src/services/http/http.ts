@@ -5,7 +5,7 @@ import { Agent as HttpAgent } from "node:http";
 import { Agent as HttpsAgent } from "node:https";
 import { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { sprint } from "../output/sprint.js";
+import { sprint } from "../output/print.js";
 import { writeSession } from "../user/session.js";
 import { serializeError } from "../util/object.js";
 import { isGadgetServicesRequest } from "./auth.js";

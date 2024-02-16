@@ -9,14 +9,14 @@ import { env } from "../config/env.js";
 import { parseBoolean } from "../util/boolean.js";
 import { serializeError } from "../util/object.js";
 import { workspaceRoot } from "../util/paths.js";
-import { sprint } from "./sprint.js";
+import { println, sprint } from "./print.js";
 
 export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<never> => {
   ctx.log.error("reporting error and exiting", { error: cause });
 
   try {
     const error = CLIError.from(cause);
-    ctx.log.println({ marginTop: true })(error.toString());
+    println({ padTop: true })(error.toString());
 
     if (error.isBug === IsBug.NO) {
       return undefined as never;

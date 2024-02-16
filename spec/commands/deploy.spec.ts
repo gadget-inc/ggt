@@ -208,7 +208,6 @@ describe("deploy", () => {
         ✖ Add google keys for production
 
       Deploying regardless of problems because \\"--allow-problems\\" was passed.
-
       "
     `);
 

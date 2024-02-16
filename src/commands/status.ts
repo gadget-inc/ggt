@@ -1,10 +1,10 @@
 import { ArgError } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
-import { sprintChanges } from "../services/filesync/changes.js";
+import { printChanges } from "../services/filesync/changes.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { sprint } from "../services/output/sprint.js";
+import { println, sprint, sprintln } from "../services/output/print.js";
 
 export type StatusArgs = typeof args;
 
@@ -46,31 +46,31 @@ export const command: Command<StatusArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  const buffer = ctx.log.buffer();
-
-  buffer.println(await syncJson.sprintState());
-  buffer.println();
+  let output = sprintln(await syncJson.sprintState());
+  output += sprintln("");
 
   const filesync = new FileSync(syncJson);
   const { localChanges, gadgetChanges } = await filesync.hashes(ctx);
 
   if (localChanges.size > 0) {
-    buffer.println(
-      sprintChanges(ctx, {
+    output += sprintln(
+      printChanges(ctx, {
+        toStr: true,
         changes: localChanges,
         tense: "past",
         message: "Your local filesystem has changed.",
       }),
     );
   } else {
-    buffer.println`Your local filesystem has not changed.`;
+    output += sprintln`Your local filesystem has not changed.`;
   }
 
-  buffer.println();
+  output += sprintln("");
 
   if (gadgetChanges.size > 0) {
-    buffer.println(
-      sprintChanges(ctx, {
+    output += sprintln(
+      printChanges(ctx, {
+        toStr: true,
         changes: gadgetChanges,
         includeDotGadget: true,
         tense: "past",
@@ -78,8 +78,8 @@ export const command: Command<StatusArgs> = async (ctx) => {
       }),
     );
   } else {
-    buffer.println`Your environment's filesystem has not changed.`;
+    output += sprintln`Your environment's filesystem has not changed.`;
   }
 
-  buffer.flush();
+  println(output);
 };

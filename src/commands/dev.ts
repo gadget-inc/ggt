@@ -15,9 +15,9 @@ import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { notify } from "../services/output/notify.js";
+import { print, println, sprint, sprintln } from "../services/output/print.js";
 import { select } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
-import { sprint } from "../services/output/sprint.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 import type { PullArgs } from "./pull.js";
@@ -171,18 +171,17 @@ export const command: Command<DevArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
 
-  const buffer = ctx.log.buffer();
-  buffer.println`ggt v${config.version}`;
-  buffer.println();
-  buffer.println(await syncJson.sprintState());
-  buffer.println`
+  let output = sprintln`ggt v${config.version}`;
+  output += sprintln("");
+  output += sprintln(await syncJson.sprintState());
+  output += sprintln`
     ------------------------
     Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
     Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
     Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
     Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
   `;
-  buffer.flush();
+  print(output);
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
@@ -290,7 +289,7 @@ export const command: Command<DevArgs> = async (ctx) => {
         // if the git branch changed, we need all the changes to be sent
         // in a single batch, so wait a bit longer in case more changes
         // come in
-        ctx.log.println`
+        println`
           Your git branch changed from ${lastGitBranch} → ${syncJson.gitBranch}
         `;
 
@@ -384,7 +383,7 @@ export const command: Command<DevArgs> = async (ctx) => {
     }
 
     if (isAbortError(reason)) {
-      ctx.log.println("Goodbye!");
+      println("Goodbye!");
       return;
     }
 
@@ -392,5 +391,5 @@ export const command: Command<DevArgs> = async (ctx) => {
     await reportErrorAndExit(ctx, reason);
   });
 
-  ctx.log.println({ marginTop: true })`Watching for file changes... {gray Press Ctrl+C to stop}`;
+  println({ padTop: true })`Watching for file changes... {gray Press Ctrl+C to stop}`;
 };

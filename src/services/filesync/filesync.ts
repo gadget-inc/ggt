@@ -22,11 +22,11 @@ import {
 } from "../app/edit/operation.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.js";
+import { println, sprint, sprintln } from "../output/print.js";
+import { filesyncProblemsToProblems, printProblems } from "../output/problems.js";
 import { confirm, select } from "../output/prompt.js";
-import { sprint } from "../output/sprint.js";
 import { noop } from "../util/function.js";
-import { Changes, printChanges, type SprintChangesOptions } from "./changes.js";
+import { Changes, printChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
 import { TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
@@ -81,7 +81,7 @@ export class FileSync {
       printLocalChangesOptions,
     }: {
       changes: Changes;
-      printLocalChangesOptions?: Partial<SprintChangesOptions>;
+      printLocalChangesOptions?: Partial<PrintChangesOptions<false>>;
     },
   ): Promise<void> {
     await this._syncOperations.add(async () => {
@@ -120,7 +120,7 @@ export class FileSync {
       beforeChanges?: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
       afterChanges?: (data: { changes: Changes }) => Promisable<void>;
       onError: (error: unknown) => void;
-      printGadgetChangesOptions?: Partial<SprintChangesOptions>;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions<false>>;
     },
   ): EditSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION> {
     return this.syncJson.edit.subscribe({
@@ -178,7 +178,7 @@ export class FileSync {
               printChanges(ctx, {
                 changes,
                 tense: "past",
-                marginTop: true,
+                padTop: true,
                 message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${now}}`,
                 limit: 10,
                 ...printGadgetChangesOptions,
@@ -321,14 +321,14 @@ export class FileSync {
     }: {
       hashes?: FileSyncHashes;
       force?: boolean;
-      printLocalChangesOptions?: Partial<SprintChangesOptions>;
-      printGadgetChangesOptions?: Partial<SprintChangesOptions>;
+      printLocalChangesOptions?: Partial<PrintChangesOptions<false>>;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions<false>>;
     } = {},
   ): Promise<void> {
     const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const localChanges = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
     if (localChanges.size === 0) {
-      ctx.log.println({ marginTop: true })("There are no changes to push.");
+      println({ padTop: true })("There are no changes to push.");
       return;
     }
 
@@ -339,7 +339,7 @@ export class FileSync {
       !(force ?? ctx.args["--force"])
     ) {
       printChanges(ctx, {
-        marginTop: true,
+        padTop: true,
         changes: gadgetChanges,
         tense: "past",
         message: sprint`{bold Your environment's files have changed since you last synced.}`,
@@ -354,7 +354,7 @@ export class FileSync {
       expectedFilesVersion: gadgetFilesVersion,
       printLocalChangesOptions: {
         tense: "present",
-        marginTop: true,
+        padTop: true,
         message: sprint`Pushed changes {gray ${dayjs().format("hh:mm:ss A")}}`,
         ...printLocalChangesOptions,
       },
@@ -371,20 +371,20 @@ export class FileSync {
     }: {
       hashes?: FileSyncHashes;
       force?: boolean;
-      printLocalChangesOptions?: Partial<SprintChangesOptions>;
-      printGadgetChangesOptions?: Partial<SprintChangesOptions>;
+      printLocalChangesOptions?: Partial<PrintChangesOptions<false>>;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions<false>>;
     } = {},
   ): Promise<void> {
     const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
     if (gadgetChanges.size === 0) {
-      ctx.log.println({ marginTop: true })("There are no changes to pull.");
+      println({ padTop: true })("There are no changes to pull.");
       return;
     }
 
     if (localChanges.size > 0 && !(force ?? ctx.args["--force"])) {
       printChanges(ctx, {
-        marginTop: true,
+        padTop: true,
         changes: localChanges,
         tense: "past",
         message: sprint`{bold Your local files have changed since you last synced.}`,
@@ -399,7 +399,7 @@ export class FileSync {
       filesVersion: gadgetFilesVersion,
       printGadgetChangesOptions: {
         tense: "present",
-        marginTop: true,
+        padTop: true,
         message: sprint`Pulled changes {gray ${dayjs().format("hh:mm:ss A")}}`,
         ...printGadgetChangesOptions,
       },
@@ -458,7 +458,7 @@ export class FileSync {
     }: {
       filesVersion: bigint;
       changes: Changes | ChangesWithHash;
-      printGadgetChangesOptions?: Partial<SprintChangesOptions>;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions<false>>;
     },
   ): Promise<void> {
     ctx.log.debug("getting changes from gadget", { filesVersion, changes });
@@ -488,7 +488,7 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      marginTop: true,
+      padTop: true,
       message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
       ...printGadgetChangesOptions,
     });
@@ -503,7 +503,7 @@ export class FileSync {
     }: {
       changes: Changes;
       expectedFilesVersion?: bigint;
-      printLocalChangesOptions?: Partial<SprintChangesOptions>;
+      printLocalChangesOptions?: Partial<PrintChangesOptions<false>>;
     },
   ): Promise<void> {
     ctx.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
@@ -581,7 +581,7 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      marginTop: true,
+      padTop: true,
       message: sprint`→ Sent to ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
       ...printLocalChangesOptions,
     });
@@ -595,14 +595,12 @@ export class FileSync {
     await this.syncJson.save(remoteFilesVersion);
 
     if (filesyncProblems.length > 0) {
-      const buffer = ctx.log.buffer();
-      buffer.println();
-      buffer.println`{red Gadget has detected the following fatal errors with your files:}`;
-      buffer.println();
-      buffer.println(sprintProblems({ problems: filesyncProblemsToProblems(filesyncProblems), showFileTypes: false }));
-      buffer.println();
-      buffer.println`{red Your app will not be operational until all fatal errors are fixed.}`;
-      buffer.flush();
+      let output = sprintln`{red Gadget has detected the following fatal errors with your files:}`;
+      output += sprintln("");
+      output += printProblems({ toStr: true, problems: filesyncProblemsToProblems(filesyncProblems), showFileTypes: false });
+      output += sprintln("");
+      output += sprintln`{red Your app will not be operational until all fatal errors are fixed.}`;
+      println({ padTop: true })(output);
     }
   }
 

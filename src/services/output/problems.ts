@@ -1,10 +1,9 @@
 import chalk from "chalk";
 import pluralize from "pluralize";
 import type { Problem as FileSyncProblem, PublishIssue } from "../../__generated__/graphql.js";
-import type { Context } from "../command/context.js";
 import { compact } from "../util/collection.js";
 import { isGellyFile, isJavaScriptFile, isTypeScriptFile } from "../util/is.js";
-import { sprint, sprintln } from "./sprint.js";
+import { println, sprint, sprintln, type PrintOptions, type PrintOutput } from "./print.js";
 
 export type Problems = Record<string, Problem[]>;
 
@@ -24,7 +23,7 @@ export const ProblemSeverity = Object.freeze({
 
 export type ProblemSeverity = keyof typeof ProblemSeverity;
 
-export type PrintProblemsOptions = {
+export type PrintProblemsOptions<ToString extends boolean> = PrintOptions<ToString> & {
   /**
    * The problems to print.
    */
@@ -38,11 +37,15 @@ export type PrintProblemsOptions = {
   showFileTypes?: boolean;
 };
 
-export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: PrintProblemsOptions): string => {
+export const printProblems = <const ToString extends boolean>({
+  problems: groupedProblems,
+  showFileTypes,
+  ...printOptions
+}: PrintProblemsOptions<ToString>): PrintOutput<ToString> => {
   let output = "";
 
   for (const [name, problems] of Object.entries(groupedProblems)) {
-    output += sprintln();
+    output += sprintln("");
     output += sprintln`• {cyan ${name}} {redBright ${pluralize("problem", problems.length, true)}}`;
     for (const problem of problems) {
       const [message, ...lines] = problem.message.split("\n") as [string, ...string[]];
@@ -54,7 +57,7 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: Pri
       output += sprint(message);
 
       for (const line of lines) {
-        output += sprintln();
+        output += sprintln("");
         output += sprint`    ${line}`;
       }
 
@@ -62,15 +65,11 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: Pri
         output += sprint` {dim ${label}}`;
       }
 
-      output += sprintln();
+      output += sprintln("");
     }
   }
 
-  return output;
-};
-
-export const printProblems = (ctx: Context, opts: PrintProblemsOptions): void => {
-  ctx.log.println(sprintProblems(opts));
+  return println(printOptions)(output) as PrintOutput<ToString>;
 };
 
 export const filetype = (filename: string): string => {

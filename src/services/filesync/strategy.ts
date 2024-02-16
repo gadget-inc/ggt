@@ -1,5 +1,5 @@
 import { ArgError } from "../command/arg.js";
-import { sprint } from "../output/sprint.js";
+import { sprint } from "../output/print.js";
 
 export const FileSyncStrategy = Object.freeze({
   CANCEL: "Cancel (Ctrl+C)",

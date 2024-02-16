@@ -3,7 +3,7 @@ import type { Command, Usage } from "../services/command/command.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { sprint } from "../services/output/sprint.js";
+import { sprint } from "../services/output/print.js";
 
 export type PushArgs = typeof args;
 

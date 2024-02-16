@@ -1,17 +1,15 @@
 import { unthunk } from "../../util/function.js";
-import { createPrinter, type Printer } from "./printer.js";
 import { createStructuredLogger, type StructuredLogger, type StructuredLoggerOptions } from "./structured.js";
 
-export type Logger = StructuredLogger &
-  Printer & {
-    /**
-     * Creates a child logger with the given options. The child logger
-     * inherits the name and fields of the parent logger.
-     *
-     * @param options
-     */
-    child(options: Partial<StructuredLoggerOptions>): Logger;
-  };
+export type Logger = StructuredLogger & {
+  /**
+   * Creates a child logger with the given options. The child logger
+   * inherits the name and fields of the parent logger.
+   *
+   * @param options
+   */
+  child(options: Partial<StructuredLoggerOptions>): Logger;
+};
 
 /**
  * Creates a {@linkcode Logger} with the given name and fields.
@@ -43,9 +41,7 @@ export type Logger = StructuredLogger &
  */
 export const createLogger = ({ name, fields: loggerFields, devFields: loggerDevFields }: StructuredLoggerOptions): Logger => {
   return {
-    ...createPrinter({ name }),
     ...createStructuredLogger({ name, fields: loggerFields, devFields: loggerDevFields }),
-
     child: ({ name: childName, fields: childFields, devFields: childDevFields }) => {
       return createLogger({
         name: childName || name,

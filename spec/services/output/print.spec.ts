@@ -1,6 +1,6 @@
 import chalk from "chalk";
-import { describe, expect, it, vi } from "vitest";
-import { print, printTable, sprint, sprintln } from "../../../src/services/output/print.js";
+import { describe, it, vi } from "vitest";
+import { print, printTable } from "../../../src/services/output/print.js";
 import { withEnv } from "../../__support__/env.js";
 import { expectStdout } from "../../__support__/stream.js";
 
@@ -55,12 +55,40 @@ describe("print", () => {
     }
   });
 
-  it("supports top padding", () => {
-    print({ padTop: true })("Hello, world!");
-    expectStdout().toMatchInlineSnapshot(`
+  describe("with addNewLine", () => {
+    it("adds a newline after the content", () => {
+      print({ ensureNewLine: true })("Hello, world!");
+      expectStdout().toMatchInlineSnapshot(`
+        "Hello, world!
+        "
+      `);
+    });
+
+    it("does not add a newline after the content when the content already ends with a newline", () => {
+      print({ ensureNewLine: true })("Hello, world!\n");
+      expectStdout().toMatchInlineSnapshot(`
+        "Hello, world!
+        "
+      `);
+    });
+  });
+
+  describe("with padTop", () => {
+    it("adds a newline before the content", () => {
+      print({ ensureNewLineAbove: true })("Hello, world!");
+      expectStdout().toMatchInlineSnapshot(`
       "
       Hello, world!"
     `);
+    });
+
+    it("does not add a newline before the content when the content already begins with a newline", () => {
+      print({ ensureNewLineAbove: true })("\nHello, world!");
+      expectStdout().toMatchInlineSnapshot(`
+      "
+      Hello, world!"
+    `);
+    });
   });
 
   it("prints like a structured logger when GGT_LOG_LEVEL is set", () => {
@@ -117,21 +145,6 @@ describe("printTable", () => {
     expectStdout().toMatchSnapshot();
   });
 
-  //   it("writes the table as json when GGT_LOG_FORMAT=json", () => {
-  //     withEnv({ GGT_LOG_FORMAT: "json" }, () => {
-  //       printTable({
-  //         message: "Table Title",
-  //         headers: ["Column 1", "Column 2"],
-  //         rows: [
-  //           ["Row 1, Column 1", "Row 1, Column 2"],
-  //           ["Row 2, Column 1", "Row 2, Column 2"],
-  //         ],
-  //         footer: "Table Footer",
-  //       });
-  //       expectStdout().toMatchSnapshot();
-  //     });
-  //   });
-
   for (const borders of ["none", "thin", "thick"] as const) {
     it(`writes a table with ${borders} borders to stdout`, () => {
       printTable({
@@ -147,40 +160,4 @@ describe("printTable", () => {
       expectStdout().toMatchSnapshot();
     });
   }
-});
-
-describe("sprint", () => {
-  it("accepts a string", () => {
-    const result = sprint("hello");
-    expect(result).toBe("hello");
-  });
-
-  it("accepts a template", () => {
-    const world = "world";
-    const result = sprint`hello ${world}`;
-    expect(result).toBe("hello world");
-  });
-
-  it("adds top padding", () => {
-    const result = sprint({ padTop: true })("hello");
-    expect(result).toBe("\nhello");
-  });
-});
-
-describe("sprintln", () => {
-  it("accepts a string", () => {
-    const result = sprintln("hello");
-    expect(result).toBe("hello\n");
-  });
-
-  it("accepts a template", () => {
-    const world = "world";
-    const result = sprintln`hello ${world}`;
-    expect(result).toBe("hello world\n");
-  });
-
-  it("adds top padding", () => {
-    const result = sprintln({ padTop: true })("hello");
-    expect(result).toBe("\nhello\n");
-  });
 });

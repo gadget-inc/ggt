@@ -391,5 +391,5 @@ export const command: Command<DevArgs> = async (ctx) => {
     await reportErrorAndExit(ctx, reason);
   });
 
-  println({ padTop: true })`Watching for file changes... {gray Press Ctrl+C to stop}`;
+  println({ ensureNewLineAbove: true })`Watching for file changes... {gray Press Ctrl+C to stop}`;
 };

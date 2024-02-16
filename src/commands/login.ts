@@ -39,9 +39,9 @@ export const login: Command = async (ctx): Promise<void> => {
           assert(user, "missing user after successful login");
 
           if (user.name) {
-            println({ padTop: true })`Hello, ${user.name} {gray (${user.email})}`;
+            println({ ensureNewLineAbove: true })`Hello, ${user.name} {gray (${user.email})}`;
           } else {
-            println({ padTop: true })`Hello, ${user.email}`;
+            println({ ensureNewLineAbove: true })`Hello, ${user.email}`;
           }
 
           landingPage.searchParams.set("success", "true");
@@ -68,14 +68,14 @@ export const login: Command = async (ctx): Promise<void> => {
 
     try {
       await open(url.toString());
-      println({ padTop: true })`
+      println({ ensureNewLineAbove: true })`
         We've opened Gadget's login page using your default browser.
 
         Please log in and then return to this terminal.
       `;
     } catch (error) {
       ctx.log.error("failed to open browser", { error });
-      println({ padTop: true })`
+      println({ ensureNewLineAbove: true })`
         Please open the following URL in your browser and log in:
 
           {gray ${url.toString()}}

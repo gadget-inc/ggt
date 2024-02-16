@@ -16,7 +16,7 @@ export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<
 
   try {
     const error = CLIError.from(cause);
-    println({ padTop: true })(error.toString());
+    println({ ensureNewLineAbove: true })(error.toString());
 
     if (error.isBug === IsBug.NO) {
       return undefined as never;

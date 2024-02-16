@@ -131,14 +131,14 @@ export const command: Command<DeployArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  println({ padTop: true })`
+  println({ ensureNewLineAbove: true })`
     Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
   `;
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
   if (!hashes.inSync) {
-    println({ padTop: true })`
+    println({ ensureNewLineAbove: true })`
       Your local filesystem must be in sync with your development
       environment before you can deploy.
     `;
@@ -160,7 +160,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
       spinner.fail();
 
       if (isCloseEvent(error.cause)) {
-        println({ padTop: true })(error.message);
+        println({ ensureNewLineAbove: true })(error.message);
       } else if (isGraphQLErrors(error.cause)) {
         const message = error.cause[0]?.message;
         assert(message, "expected message to be defined");
@@ -189,15 +189,15 @@ export const command: Command<DeployArgs> = async (ctx) => {
           await reportErrorAndExit(ctx, new DeployDisallowedError(publishIssuesToProblems(fatalIssues)));
         }
 
-        println({ padTop: true })`{bold Problems found}`;
-        printProblems({ problems: publishIssuesToProblems(issues), padTop: true });
+        println({ ensureNewLineAbove: true })`{bold Problems found}`;
+        printProblems({ problems: publishIssuesToProblems(issues), ensureNewLineAbove: true });
 
         if (!publishStarted) {
           await confirm(ctx, { message: "Do you want to continue?" });
           subscription.resubscribe({ localFilesVersion: String(syncJson.filesVersion), force: true });
         } else {
           assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");
-          println({ padTop: true })`Deploying regardless of problems because "--allow-problems" was passed.`;
+          println({ ensureNewLineAbove: true })`Deploying regardless of problems because "--allow-problems" was passed.`;
         }
 
         return;
@@ -207,10 +207,10 @@ export const command: Command<DeployArgs> = async (ctx) => {
         subscription.unsubscribe();
         spinner.fail();
         if (status.message) {
-          println({ padTop: true })`{red ${status.message}}`;
+          println({ ensureNewLineAbove: true })`{red ${status.message}}`;
         }
         if (status.output) {
-          println({ padTop: true })(terminalLink("Check logs", status.output));
+          println({ ensureNewLineAbove: true })(terminalLink("Check logs", status.output));
         }
         return;
       }
@@ -222,7 +222,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
         if (status?.output) {
           message += ` ${terminalLink("Check logs", status.output)}`;
         }
-        println({ padTop: true })(message);
+        println({ ensureNewLineAbove: true })(message);
         return;
       }
 

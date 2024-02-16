@@ -5,7 +5,6 @@ import CliTable3 from "cli-table3";
 import { dedent } from "ts-dedent";
 import { config } from "../config/config.js";
 import { isString } from "../util/is.js";
-import { defaults } from "../util/object.js";
 import type { Field } from "./log/field.js";
 import { formatPretty } from "./log/format/pretty.js";
 import { Level } from "./log/level.js";
@@ -19,18 +18,18 @@ export type PrintOutput<ToString extends boolean | undefined> = ToString extends
 
 export type PrintOptions<ToString extends boolean> = {
   /**
-   * Whether to add an empty line above the content.
-   *
-   * @default false
-   */
-  padTop?: boolean;
-
-  /**
-   * Whether to add a new line after the content.
+   * Whether to ensure a new line is after the content.
    *
    * @default true
    */
-  addNewLine?: boolean;
+  ensureNewLine?: boolean;
+
+  /**
+   * Whether to ensure an empty line is above the content.
+   *
+   * @default false
+   */
+  ensureNewLineAbove?: boolean;
 
   /**
    * Whether to return the formatted string instead of printing it.
@@ -106,13 +105,13 @@ export type print<ToString extends boolean, Options extends PrintOptions<ToStrin
    * @example
    * ```
    * let name = "Jane";
-   * print({ marginTop: true })`Hello, ${name}!`;
+   * print({ ensureNewLineAbove: true })`Hello, ${name}!`;
    * // => "\nHello, Jane!"
    *
-   * print({ marginTop: true })`Hello, {red ${name}}!`;
+   * print({ ensureNewLineAbove: true })`Hello, {red ${name}}!`;
    * // => "\nHello, \u001b[31mJane\u001b[39m!"
    *
-   * print({ marginTop: true })`
+   * print({ ensureNewLineAbove: true })`
    *   Hello, {red ${name}}!
    *
    *   How are you?
@@ -138,9 +137,7 @@ export const createPrint = <const ToString extends boolean, const Options extend
       return createPrint({ ...options, ...templateOrOptions });
     }
 
-    options = defaults(options, {});
-
-    if (config.logFormat === "json") {
+    if (config.logFormat === "json" && !options.toStr) {
       if (options.json) {
         stdout.write(JSON.stringify(options.json) + "\n");
       }
@@ -156,11 +153,11 @@ export const createPrint = <const ToString extends boolean, const Options extend
       content = boxen(content, options.boxen);
     }
 
-    if ((options.padTop ?? false) && !content.startsWith("\n")) {
+    if ((options.ensureNewLineAbove ?? false) && !content.startsWith("\n")) {
       content = "\n" + content;
     }
 
-    if ((options.addNewLine ?? true) && !content.endsWith("\n")) {
+    if ((options.ensureNewLine ?? false) && !content.endsWith("\n")) {
       content += "\n";
     }
 
@@ -180,11 +177,11 @@ export const createPrint = <const ToString extends boolean, const Options extend
   return print;
 };
 
-export const print = createPrint({ addNewLine: false });
-export const println = createPrint({ addNewLine: true });
+export const print = createPrint({ ensureNewLine: false });
+export const println = createPrint({ ensureNewLine: true });
 
-export const sprint = createPrint({ toStr: true, addNewLine: false });
-export const sprintln = createPrint({ toStr: true, addNewLine: true });
+export const sprint = createPrint({ toStr: true, ensureNewLine: false });
+export const sprintln = createPrint({ toStr: true, ensureNewLine: true });
 
 export const printTable = <const ToString extends boolean>({
   message,
@@ -225,7 +222,7 @@ export const printTable = <const ToString extends boolean>({
     output += padding + footer;
   }
 
-  return createPrint(printOptions)(output) as PrintOutput<ToString>;
+  return createPrint({ ensureNewLine: true, ...printOptions })(output) as PrintOutput<ToString>;
 };
 
 export type PrintTableOptions<ToString extends boolean> = PrintOptions<ToString> & {

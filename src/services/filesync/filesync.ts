@@ -178,7 +178,7 @@ export class FileSync {
               printChanges(ctx, {
                 changes,
                 tense: "past",
-                padTop: true,
+                ensureNewLineAbove: true,
                 message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${now}}`,
                 limit: 10,
                 ...printGadgetChangesOptions,
@@ -328,7 +328,7 @@ export class FileSync {
     const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const localChanges = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
     if (localChanges.size === 0) {
-      println({ padTop: true })("There are no changes to push.");
+      println({ ensureNewLineAbove: true })("There are no changes to push.");
       return;
     }
 
@@ -339,7 +339,7 @@ export class FileSync {
       !(force ?? ctx.args["--force"])
     ) {
       printChanges(ctx, {
-        padTop: true,
+        ensureNewLineAbove: true,
         changes: gadgetChanges,
         tense: "past",
         message: sprint`{bold Your environment's files have changed since you last synced.}`,
@@ -354,7 +354,7 @@ export class FileSync {
       expectedFilesVersion: gadgetFilesVersion,
       printLocalChangesOptions: {
         tense: "present",
-        padTop: true,
+        ensureNewLineAbove: true,
         message: sprint`Pushed changes {gray ${dayjs().format("hh:mm:ss A")}}`,
         ...printLocalChangesOptions,
       },
@@ -378,13 +378,13 @@ export class FileSync {
     const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
     const gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
     if (gadgetChanges.size === 0) {
-      println({ padTop: true })("There are no changes to pull.");
+      println({ ensureNewLineAbove: true })("There are no changes to pull.");
       return;
     }
 
     if (localChanges.size > 0 && !(force ?? ctx.args["--force"])) {
       printChanges(ctx, {
-        padTop: true,
+        ensureNewLineAbove: true,
         changes: localChanges,
         tense: "past",
         message: sprint`{bold Your local files have changed since you last synced.}`,
@@ -399,7 +399,7 @@ export class FileSync {
       filesVersion: gadgetFilesVersion,
       printGadgetChangesOptions: {
         tense: "present",
-        padTop: true,
+        ensureNewLineAbove: true,
         message: sprint`Pulled changes {gray ${dayjs().format("hh:mm:ss A")}}`,
         ...printGadgetChangesOptions,
       },
@@ -488,7 +488,7 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      padTop: true,
+      ensureNewLineAbove: true,
       message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
       ...printGadgetChangesOptions,
     });
@@ -581,7 +581,7 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      padTop: true,
+      ensureNewLineAbove: true,
       message: sprint`→ Sent to ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
       ...printLocalChangesOptions,
     });
@@ -600,7 +600,7 @@ export class FileSync {
       output += printProblems({ toStr: true, problems: filesyncProblemsToProblems(filesyncProblems), showFileTypes: false });
       output += sprintln("");
       output += sprintln`{red Your app will not be operational until all fatal errors are fixed.}`;
-      println({ padTop: true })(output);
+      println({ ensureNewLineAbove: true })(output);
     }
   }
 

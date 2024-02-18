@@ -10,7 +10,7 @@ import { Edit } from "../app/edit/edit.js";
 import { ArgError, type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
-import { println, sprint } from "../output/print.js";
+import { println, sprint, type PrintOptions, type PrintOutput, type PrintOutputReturnType } from "../output/print.js";
 import { select } from "../output/prompt.js";
 import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
@@ -168,13 +168,16 @@ export class SyncJson {
       if (ctx.args["--allow-different-app"]) {
         // the user passed --allow-different-app, so use the application
         // and environment they specified and clobber everything
-        return new SyncJson(ctx, directory, undefined, {
+        const syncJson = new SyncJson(ctx, directory, undefined, {
           application: ctx.app.slug,
           environment: ctx.env.name,
           environments: {
             [ctx.env.name]: { filesVersion: "0" },
           },
         });
+
+        await syncJson.loadGitBranch();
+        return syncJson;
       }
 
       // the user didn't pass --allow-different-app, so throw an error
@@ -207,7 +210,10 @@ export class SyncJson {
       }
     }
 
-    return new SyncJson(ctx, directory, previousEnvironment, state);
+    const syncJson = new SyncJson(ctx, directory, previousEnvironment, state);
+
+    await syncJson.loadGitBranch();
+    return syncJson;
   }
 
   /**
@@ -223,10 +229,10 @@ export class SyncJson {
   static async loadOrInit(ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<SyncJson> {
     ctx = ctx.child({ name: "sync-json" });
 
-    const state = await SyncJson.load(ctx, { directory });
-    if (state) {
+    const syncJson = await SyncJson.load(ctx, { directory });
+    if (syncJson) {
       // the .gadget/sync.json file already exists and is valid
-      return state;
+      return syncJson;
     }
 
     ctx.app = await loadApp(ctx, { availableApps: await getApps(ctx) });
@@ -238,13 +244,16 @@ export class SyncJson {
       // exists and create a fresh .gadget/sync.json file
       await fs.ensureDir(directory.path);
 
-      return new SyncJson(ctx, directory, undefined, {
+      const syncJson = new SyncJson(ctx, directory, undefined, {
         application: ctx.app.slug,
         environment: ctx.env.name,
         environments: {
           [ctx.env.name]: { filesVersion: "0" },
         },
       });
+
+      await syncJson.loadGitBranch();
+      return syncJson;
     }
 
     // the directory isn't empty and the user didn't pass --allow-unknown-directory
@@ -275,31 +284,23 @@ export class SyncJson {
     );
   }
 
-  /**
-   * @returns true if the git branch has changed
-   */
   async loadGitBranch(): Promise<void> {
     this.gitBranch = await loadBranch(this.ctx, { directory: this.directory });
   }
 
-  async sprintState(): Promise<string> {
-    await this.loadGitBranch();
+  print<const Output extends PrintOutput>(options: PrintOptions<Output> = {}): PrintOutputReturnType<Output> {
     if (this.gitBranch) {
-      return sprint`
+      return println(options)`
         Application  ${this.app.slug}
         Environment  ${this.env.name}
-         Git Branch  ${this.gitBranch}
-      `;
+             Branch  ${this.gitBranch}
+      ` as PrintOutputReturnType<Output>;
     }
 
-    return sprint`
+    return println(options)`
       Application  ${this.app.slug}
       Environment  ${this.env.name}
-    `;
-  }
-
-  async printState(): Promise<void> {
-    println(await this.sprintState());
+    ` as PrintOutputReturnType<Output>;
   }
 }
 

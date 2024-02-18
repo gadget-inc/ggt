@@ -19,7 +19,8 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
         `;
 
         try {
-          await ctx.abort();
+          ctx.abort();
+          await ctx.done;
           spinner.stop();
           println`   {green ✔} Stopped`;
         } catch (error) {

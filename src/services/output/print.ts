@@ -11,11 +11,13 @@ import type { Field } from "./log/field.js";
 import { formatPretty } from "./log/format/pretty.js";
 import { Level } from "./log/level.js";
 import { stdout } from "./stream.js";
+import logUpdate from "log-update";
 
 export const PrintOutput = Object.freeze({
   STDOUT: "stdout",
   STRING: "string",
   SPINNER: "spinner",
+  STICKY: "sticky",
 });
 
 export type PrintOutput = (typeof PrintOutput)[keyof typeof PrintOutput];
@@ -132,6 +134,9 @@ export type print<Options extends PrintOptions<PrintOutput>> = {
   <const NewOptions extends PrintOptions<PrintOutput>>(options: NewOptions): print<Options & NewOptions>;
 };
 
+let stickyOutput = "";
+let printedStickyOutput = false;
+
 export const createPrint = <const Options extends PrintOptions<PrintOutput>>(options: Options): print<Options> => {
   const print = ((
     templateOrOptions: Options | string | TemplateStringsArray,
@@ -182,6 +187,12 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       return spinner;
     }
 
+    if (options.output === PrintOutput.STICKY) {
+      stickyOutput = content;
+      content = "";
+    }
+
+    // FIXME: this is probably wrong (needs to be moved up/down)
     if (config.logFormat === "json") {
       if (options.json) {
         content = JSON.stringify(options.json) + "\n";
@@ -194,7 +205,16 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       content = formatPretty(Level.PRINT, "", content, {});
     }
 
+    if (printedStickyOutput) {
+      logUpdate.clear();
+    }
+
     stdout.write(content);
+
+    if (stickyOutput.length > 0) {
+      logUpdate(stickyOutput);
+      printedStickyOutput = true;
+    }
 
     return undefined;
   }) as print<Options>;

@@ -3,19 +3,19 @@ import ms from "ms";
 import path from "node:path";
 import { setTimeout } from "node:timers/promises";
 import { oraPromise } from "ora";
+import terminalLink from "terminal-link";
 import Watcher from "watcher";
 import which from "which";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
-import { config } from "../services/config/config.js";
 import { Changes, printChanges } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { notify } from "../services/output/notify.js";
-import { print, println, sprint, sprintln } from "../services/output/print.js";
+import { println, sprint } from "../services/output/print.js";
 import { select } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { debounceAsync } from "../services/util/function.js";
@@ -171,17 +171,7 @@ export const command: Command<DevArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
 
-  let output = sprintln`ggt v${config.version}`;
-  output += sprintln("");
-  output += sprintln(await syncJson.sprintState());
-  output += sprintln`
-    ------------------------
-        Preview  https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
-         Editor  https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
-     Playground  https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
-           Docs  https://docs.gadget.dev/api/${syncJson.app.slug}
-  `;
-  print(output);
+  syncJson.print({ output: "sticky", ensureNewLineAbove: true });
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
@@ -194,6 +184,9 @@ export const command: Command<DevArgs> = async (ctx) => {
       await filesync.sync(ctx, {
         hashes,
         printGadgetChangesOptions: {
+          limit: 10,
+        },
+        printLocalChangesOptions: {
           limit: 10,
         },
       });
@@ -396,7 +389,13 @@ export const command: Command<DevArgs> = async (ctx) => {
     await reportErrorAndExit(ctx, reason);
   });
 
-  println({ ensureNewLineAbove: true })`
+  println({ output: "sticky", ensureNewLineAbove: true })`
+    Application  ${syncJson.app.slug}
+    Environment  ${syncJson.env.name}
+         Branch  ${syncJson.gitBranch}
+
+    ${terminalLink("Preview", `https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app`)}  ${terminalLink("Editor", `https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}`)}  ${terminalLink("Playground", `https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${syncJson.app.slug}`)}
+
     Watching for file changes... {gray Press Ctrl+C to stop}
   `;
 };

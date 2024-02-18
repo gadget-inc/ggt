@@ -43,6 +43,7 @@ export type FileSyncHashes = {
   filesVersionHashes: Hashes;
   localHashes: Hashes;
   localChanges: ChangesWithHash;
+  // TODO: rename to environmentHashes
   gadgetHashes: Hashes;
   gadgetChanges: ChangesWithHash;
   gadgetFilesVersion: bigint;

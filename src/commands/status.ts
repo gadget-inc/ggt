@@ -49,7 +49,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
   const filesync = new FileSync(syncJson);
   const { localChanges, gadgetChanges } = await filesync.hashes(ctx);
 
-  let output = sprintln(await syncJson.sprintState());
+  let output = syncJson.print({ output: "string" });
   output += sprintln("");
 
   if (localChanges.size > 0) {

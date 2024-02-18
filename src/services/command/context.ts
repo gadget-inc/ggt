@@ -250,10 +250,6 @@ export class Context<
     this.#onAborts.push(callback);
   }
 
-  override async abort(reason?: unknown): Promise<void> {
-    super.abort(reason);
-    await this.done;
-  }
 }
 
 /**

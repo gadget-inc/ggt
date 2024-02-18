@@ -9,10 +9,15 @@ import { isObject } from "../util/is.js";
  */
 export class Stream {
   /**
-   * Indicates whether the last line that was written was empty. This is
-   * used to prevent writing more than one empty line in a row.
+   * Indicates whether the last line that was written to the stream was
+   * empty (i.e. "\n"). This is useful for preventing duplicate empty
+   * lines from being printed.
+   *
+   * This is automatically calculated by the {@linkcode write} method,
+   * so you only need to set this property manually when you know
+   * something else wrote to the stream directly (e.g. `ora`).
    */
-  private _lastLineWasEmpty = true;
+  lastLineWasEmpty = true;
 
   constructor(public channel: "stdout" | "stderr") {
     process[this.channel].on("error", (err: unknown) => {
@@ -43,7 +48,7 @@ export class Stream {
 
     str = str.replaceAll(/\n\n+/g, "\n\n");
 
-    if (this._lastLineWasEmpty) {
+    if (this.lastLineWasEmpty) {
       // we just printed an empty line, so don't print another one
       while (str.startsWith("\n")) {
         str = str.slice(1);
@@ -56,7 +61,7 @@ export class Stream {
     }
 
     // remember if the last line was empty
-    this._lastLineWasEmpty = str === "\n";
+    this.lastLineWasEmpty = str === "\n";
 
     this._write(str);
   }

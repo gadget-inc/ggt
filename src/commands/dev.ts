@@ -176,10 +176,10 @@ export const command: Command<DevArgs> = async (ctx) => {
   output += sprintln(await syncJson.sprintState());
   output += sprintln`
     ------------------------
-    Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
-    Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
-    Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
-    Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
+        Preview  https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
+         Editor  https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
+     Playground  https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
+           Docs  https://docs.gadget.dev/api/${syncJson.app.slug}
   `;
   print(output);
 
@@ -191,7 +191,12 @@ export const command: Command<DevArgs> = async (ctx) => {
     if (!syncJson.previousEnvironment) {
       // we're either syncing for the first time, or we're syncing to
       // the same environment as last time, so get in sync and continue
-      await filesync.sync(ctx, { hashes });
+      await filesync.sync(ctx, {
+        hashes,
+        printGadgetChangesOptions: {
+          limit: 10,
+        },
+      });
     } else {
       // we're syncing to a different environment than last time, so
       // ask the user what to do
@@ -391,5 +396,7 @@ export const command: Command<DevArgs> = async (ctx) => {
     await reportErrorAndExit(ctx, reason);
   });
 
-  println({ ensureNewLineAbove: true })`Watching for file changes... {gray Press Ctrl+C to stop}`;
+  println({ ensureNewLineAbove: true })`
+    Watching for file changes... {gray Press Ctrl+C to stop}
+  `;
 };

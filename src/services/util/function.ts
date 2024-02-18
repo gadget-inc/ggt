@@ -19,9 +19,14 @@ export type MemoizedFn<Fn extends AnyFunction = AnyFunction> = Fn & {
 };
 
 /**
- * A function that returns the first argument as a string.
+ * A function that returns an empty string.
  *
  * Used as the default key function for {@linkcode memo}.
+ */
+export const MemoFirstCall = (): string => "";
+
+/**
+ * A function that returns the first argument as a string.
  */
 export const MemoFirstArg = (...args: any[]): string => String(args[0]);
 
@@ -36,12 +41,11 @@ export const MemoAllArgs = (...args: any[]): string => args.map(String).join(":"
 /**
  * Creates a memoized version of the provided function.
  *
- * The memoized function caches the results of previous calls and
- * returns the cached result when the first argument matches a previous
- * call. Subsequent arguments are ignored.
+ * The memoized function caches the result of the first call and returns
+ * the cached result for all subsequent calls.
  *
  * @param fn - The function to memoize.
- * @see MemoFirstArg
+ * @see MemoFirstCall
  */
 export function memo<Fn extends AnyFunction>(fn: Fn): MemoizedFn<Fn>;
 

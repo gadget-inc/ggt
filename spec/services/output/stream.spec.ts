@@ -4,9 +4,10 @@ import { expectStdout } from "../../__support__/stream.js";
 
 describe("stdout", () => {
   it("strips leading newlines if the last line was empty", () => {
-    // @ts-expect-error - _lastLineWasEmpty is private
-    expect(stdout._lastLineWasEmpty).toBe(true);
+    expect(stdout.lastLineWasEmpty).toBe(true);
+
     stdout.write("\nhello\n");
+
     expectStdout().toMatchInlineSnapshot(`
       "hello
       "
@@ -14,9 +15,10 @@ describe("stdout", () => {
   });
 
   it("does not strip leading newlines if the last line was not empty", () => {
-    // @ts-expect-error - _lastLineWasEmpty is private
-    stdout._lastLineWasEmpty = false;
+    stdout.lastLineWasEmpty = false;
+
     stdout.write("\nhello");
+
     expectStdout().toMatchInlineSnapshot(`
       "
       hello"

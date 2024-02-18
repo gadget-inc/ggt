@@ -11,10 +11,22 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
 
   try {
     for (const signal of ["SIGINT", "SIGTERM"] as const) {
-      process.once(signal, () => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      process.once(signal, async () => {
         ctx.log.trace("received signal", { signal });
-        println` Stopping... {gray Press Ctrl+C again to force}`;
-        ctx.abort();
+        const spinner = println({ output: "spinner", spinner: { prefixText: "^C" } })`
+          Stopping {gray Press Ctrl+C again to force}
+        `;
+
+        try {
+          await ctx.abort();
+          spinner.stop();
+          println`   {green ✔} Stopped`;
+        } catch (error) {
+          spinner.stop();
+          println` {red ✖} Stopping`;
+          void reportErrorAndExit(ctx, error);
+        }
 
         // when ggt is run via npx, and the user presses ctrl+c, npx
         // sends sigint twice in quick succession. in order to prevent

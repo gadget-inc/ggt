@@ -22,10 +22,11 @@ import {
 } from "../app/edit/operation.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { println, sprint, sprintln } from "../output/print.js";
+import { print, println, sprint, sprintln } from "../output/print.js";
 import { filesyncProblemsToProblems, printProblems } from "../output/problems.js";
 import { confirm, select } from "../output/prompt.js";
 import { noop } from "../util/function.js";
+import { serializeError } from "../util/object.js";
 import { Changes, printChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
@@ -81,7 +82,7 @@ export class FileSync {
       printLocalChangesOptions,
     }: {
       changes: Changes;
-      printLocalChangesOptions?: Partial<PrintChangesOptions<false>>;
+      printLocalChangesOptions?: PrintChangesOptions;
     },
   ): Promise<void> {
     await this._syncOperations.add(async () => {
@@ -113,14 +114,14 @@ export class FileSync {
     ctx: Context<DevArgs>,
     {
       beforeChanges = noop,
+      printGadgetChangesOptions,
       afterChanges = noop,
       onError,
-      printGadgetChangesOptions,
     }: {
       beforeChanges?: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
+      printGadgetChangesOptions?: PrintChangesOptions;
       afterChanges?: (data: { changes: Changes }) => Promisable<void>;
       onError: (error: unknown) => void;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions<false>>;
     },
   ): EditSubscription<REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION> {
     return this.syncJson.edit.subscribe({
@@ -171,19 +172,14 @@ export class FileSync {
               filesVersion: remoteFilesVersion,
               files: changed,
               delete: deleted.map((file) => file.path),
-            });
-
-            if (changes.size > 0) {
-              const now = dayjs().format("hh:mm:ss A");
-              printChanges(ctx, {
-                changes,
+              printGadgetChangesOptions: {
                 tense: "past",
                 ensureNewLineAbove: true,
-                message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${now}}`,
+                message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
                 limit: 10,
                 ...printGadgetChangesOptions,
-              });
-            }
+              },
+            });
 
             await afterChanges({ changes });
           })
@@ -271,7 +267,21 @@ export class FileSync {
    * - Conflicts are resolved by prompting the user to either keep their local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  async sync(ctx: Context<DevArgs>, { hashes, maxAttempts = 10 }: { hashes?: FileSyncHashes; maxAttempts?: number } = {}): Promise<void> {
+  // TODO: rename to merge
+  async sync(
+    ctx: Context<DevArgs>,
+    {
+      hashes,
+      maxAttempts = 10,
+      printLocalChangesOptions,
+      printGadgetChangesOptions,
+    }: {
+      hashes?: FileSyncHashes;
+      maxAttempts?: number;
+      printLocalChangesOptions?: Partial<PrintChangesOptions>;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
+    } = {},
+  ): Promise<void> {
     let attempt = 0;
 
     do {
@@ -292,7 +302,7 @@ export class FileSync {
       ctx.log.info("merging", { attempt, ...hashes });
 
       try {
-        await this._merge(ctx, hashes);
+        await this._merge(ctx, { hashes, printLocalChangesOptions, printGadgetChangesOptions });
       } catch (error) {
         swallowFilesVersionMismatch(ctx, error);
         // we either sent the wrong expectedFilesVersion or we received
@@ -321,8 +331,8 @@ export class FileSync {
     }: {
       hashes?: FileSyncHashes;
       force?: boolean;
-      printLocalChangesOptions?: Partial<PrintChangesOptions<false>>;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions<false>>;
+      printLocalChangesOptions?: PrintChangesOptions;
+      printGadgetChangesOptions?: PrintChangesOptions;
     } = {},
   ): Promise<void> {
     const { localHashes, gadgetHashes, gadgetChanges, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
@@ -371,8 +381,8 @@ export class FileSync {
     }: {
       hashes?: FileSyncHashes;
       force?: boolean;
-      printLocalChangesOptions?: Partial<PrintChangesOptions<false>>;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions<false>>;
+      printLocalChangesOptions?: PrintChangesOptions;
+      printGadgetChangesOptions?: PrintChangesOptions;
     } = {},
   ): Promise<void> {
     const { localChanges, localHashes, gadgetHashes, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
@@ -406,7 +416,18 @@ export class FileSync {
     });
   }
 
-  private async _merge(ctx: Context<DevArgs>, { localChanges, gadgetChanges, gadgetFilesVersion }: FileSyncHashes): Promise<void> {
+  private async _merge(
+    ctx: Context<DevArgs>,
+    {
+      hashes: { localChanges, gadgetChanges, gadgetFilesVersion },
+      printLocalChangesOptions,
+      printGadgetChangesOptions,
+    }: {
+      hashes: FileSyncHashes;
+      printLocalChangesOptions?: Partial<PrintChangesOptions>;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
+    },
+  ): Promise<void> {
     const conflicts = getConflicts({ localChanges, gadgetChanges });
     if (conflicts.size > 0) {
       ctx.log.debug("conflicts detected", { conflicts });
@@ -441,14 +462,23 @@ export class FileSync {
     }
 
     if (gadgetChanges.size > 0) {
-      await this._getChangesFromGadget(ctx, { changes: gadgetChanges, filesVersion: gadgetFilesVersion });
+      await this._getChangesFromGadget(ctx, {
+        changes: gadgetChanges,
+        filesVersion: gadgetFilesVersion,
+        printGadgetChangesOptions,
+      });
     }
 
     if (localChanges.size > 0) {
-      await this._sendChangesToGadget(ctx, { changes: localChanges, expectedFilesVersion: gadgetFilesVersion });
+      await this._sendChangesToGadget(ctx, {
+        changes: localChanges,
+        expectedFilesVersion: gadgetFilesVersion,
+        printLocalChangesOptions,
+      });
     }
   }
 
+  // TODO: rename to _getChangesFromEnvironment
   private async _getChangesFromGadget(
     ctx: Context<SyncJsonArgs>,
     {
@@ -458,7 +488,7 @@ export class FileSync {
     }: {
       filesVersion: bigint;
       changes: Changes | ChangesWithHash;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions<false>>;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
     },
   ): Promise<void> {
     ctx.log.debug("getting changes from gadget", { filesVersion, changes });
@@ -483,14 +513,12 @@ export class FileSync {
       filesVersion,
       files,
       delete: changes.deleted(),
-    });
-
-    printChanges(ctx, {
-      changes,
-      tense: "past",
-      ensureNewLineAbove: true,
-      message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
-      ...printGadgetChangesOptions,
+      printGadgetChangesOptions: {
+        tense: "past",
+        ensureNewLineAbove: true,
+        message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+        ...printGadgetChangesOptions,
+      },
     });
   }
 
@@ -501,9 +529,9 @@ export class FileSync {
       expectedFilesVersion = this.syncJson.filesVersion,
       printLocalChangesOptions,
     }: {
-      changes: Changes;
+      changes: Changes | ChangesWithHash;
       expectedFilesVersion?: bigint;
-      printLocalChangesOptions?: Partial<PrintChangesOptions<false>>;
+      printLocalChangesOptions?: Partial<PrintChangesOptions>;
     },
   ): Promise<void> {
     ctx.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
@@ -597,7 +625,7 @@ export class FileSync {
     if (filesyncProblems.length > 0) {
       let output = sprintln`{red Gadget has detected the following fatal errors with your files:}`;
       output += sprintln("");
-      output += printProblems({ toStr: true, problems: filesyncProblemsToProblems(filesyncProblems), showFileTypes: false });
+      output += printProblems({ output: "string", problems: filesyncProblemsToProblems(filesyncProblems), showFileTypes: false });
       output += sprintln("");
       output += sprintln`{red Your app will not be operational until all fatal errors are fixed.}`;
       println({ ensureNewLineAbove: true })(output);
@@ -606,7 +634,13 @@ export class FileSync {
 
   private async _writeToLocalFilesystem(
     ctx: Context<SyncJsonArgs>,
-    options: { filesVersion: bigint | string; files: File[]; delete: string[] },
+    options: {
+      filesVersion: bigint | string;
+      files: File[];
+      delete: string[];
+      printLocalChangesOptions?: PrintChangesOptions;
+      printGadgetChangesOptions: PrintChangesOptions;
+    },
   ): Promise<Changes> {
     const filesVersion = BigInt(options.filesVersion);
     assert(filesVersion >= this.syncJson.filesVersion, "filesVersion must be greater than or equal to current filesVersion");
@@ -686,11 +720,26 @@ export class FileSync {
       ...options.delete.map((path) => [path, { type: "delete" }] as const),
     ]);
 
+    printChanges(ctx, {
+      changes,
+      ...options.printGadgetChangesOptions,
+    });
+
     if (changes.has("yarn.lock")) {
-      ctx.log.info("running yarn install --check-files");
+      const spinner = print({ output: "spinner", ensureNewLineAbove: true })('Running "yarn install --check-files"');
+
       await execa("yarn", ["install", "--check-files"], { cwd: this.syncJson.directory.path })
-        .then(() => ctx.log.info("yarn install complete"))
-        .catch((error: unknown) => ctx.log.error("yarn install failed", { error }));
+        .then(() => spinner.succeed())
+        .catch((error: unknown) => {
+          ctx.log.error("yarn install failed", { error });
+
+          spinner.fail();
+          println({ ensureNewLineAbove: true })`
+            "yarn install --check-files" failed:
+
+            ${serializeError(error).message}
+          `;
+        });
     }
 
     return changes;

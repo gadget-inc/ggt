@@ -118,7 +118,7 @@ export class DeployDisallowedError extends CLIError {
   protected render(): string {
     let output = sprintln`{red Gadget has detected the following fatal errors with your files:}`;
     output += sprintln("");
-    output += printProblems({ toStr: true, problems: this.fatalErrors, showFileTypes: false });
+    output += printProblems({ output: "string", problems: this.fatalErrors, showFileTypes: false });
     output += sprintln("");
     output += sprint`{red Please fix these errors and try again.}`;
     return output;

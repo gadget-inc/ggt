@@ -3,8 +3,10 @@ import pluralize from "pluralize";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";
-import { printTable, sprint, type PrintOutput, type PrintTableOptions } from "../output/print.js";
+import { printTable, sprint, type PrintOutput, type PrintOutputReturnType, type PrintTableOptions } from "../output/print.js";
+import { memo } from "../util/function.js";
 import { isNever, isString } from "../util/is.js";
+import type { ChangesWithHash } from "./hashes.js";
 
 export type Create = { type: "create"; oldPath?: string };
 export type Update = { type: "update" };
@@ -12,33 +14,33 @@ export type Delete = { type: "delete" };
 export type Change = Create | Update | Delete;
 
 export class Changes extends Map<string, Change> {
-  created(): string[] {
+  created = memo((): string[] => {
     return Array.from(this.entries())
       .filter(([, change]) => change.type === "create")
       .map(([path]) => path);
-  }
+  });
 
-  updated(): string[] {
+  updated = memo((): string[] => {
     return Array.from(this.entries())
       .filter(([, change]) => change.type === "update")
       .map(([path]) => path);
-  }
+  });
 
-  deleted(): string[] {
+  deleted = memo((): string[] => {
     return Array.from(this.entries())
       .filter(([, change]) => change.type === "delete")
       .map(([path]) => path);
-  }
+  });
 }
 
-export type PrintChangesOptions<ToString extends boolean> = Partial<PrintTableOptions<ToString>> & {
+export type PrintChangesOptions<Output extends PrintOutput = "stdout"> = Partial<PrintTableOptions<Output>> & {
   /**
    * The tense to use for the change type.
    */
   tense: "past" | "present";
 
   /**
-   * Whether to include the `.gadget/` files in the output.
+   * Whether to include  `.gadget/` files in the output.
    *
    * @default false
    */
@@ -52,17 +54,31 @@ export type PrintChangesOptions<ToString extends boolean> = Partial<PrintTableOp
   limit?: number;
 };
 
+const renameSymbol = chalk.yellowBright("→");
+const createdSymbol = chalk.greenBright("+");
+const updatedSymbol = chalk.blueBright("±");
+const deletedSymbol = chalk.redBright("-");
+
 /**
  * Prints the changes to the console.
  *
- * @param ctx - The current context.
+ * @param _ctx - The current context.
  * @see {@linkcode SprintChangesOptions}
  */
-export const printChanges = <const ToString extends boolean = false>(
-  ctx: Context,
-  { changes, tense, includeDotGadget = false, limit = Infinity, ...tableOptions }: { changes: Changes } & PrintChangesOptions<ToString>,
-): PrintOutput<ToString> => {
-  ctx.log.trace("sprinting changes", { changes, tense, limit });
+export const printChanges = <const Output extends PrintOutput = "stdout">(
+  _ctx: Context,
+  {
+    changes,
+    tense,
+    includeDotGadget = false,
+    limit = Infinity,
+    ...tableOptions
+  }: { changes: Changes | ChangesWithHash } & PrintChangesOptions<Output>,
+): PrintOutputReturnType<Output> => {
+  const renamed = chalk.yellowBright(tense === "past" ? "renamed" : "rename");
+  const created = chalk.greenBright(tense === "past" ? "created" : "create");
+  const updated = chalk.blueBright(tense === "past" ? "updated" : "update");
+  const deleted = chalk.redBright(tense === "past" ? "deleted" : "delete");
 
   if (config.logLevel <= Level.TRACE) {
     // print all changes when tracing
@@ -70,32 +86,19 @@ export const printChanges = <const ToString extends boolean = false>(
   }
 
   let changesToPrint = Array.from(changes.entries());
+
+  if (changesToPrint.every(([filepath]) => filepath.startsWith(".gadget/"))) {
+    // all the changes are in `.gadget/`, so include them since there's
+    // nothing else to show
+    includeDotGadget = true;
+  }
+
   if (!includeDotGadget) {
-    changesToPrint = changesToPrint.filter(([path]) => !path.startsWith(".gadget/"));
+    changesToPrint = changesToPrint.filter(([filepath]) => !filepath.startsWith(".gadget/"));
   }
-
-  if (changesToPrint.length === 0) {
-    ctx.log.debug("no changes to sprint");
-    if (tableOptions.toStr ?? false) {
-      return undefined as PrintOutput<ToString>;
-    }
-    return "" as PrintOutput<ToString>;
-  }
-
-  const renamed = chalk.yellowBright(tense === "past" ? "renamed" : "rename");
-  const renameSymbol = chalk.yellowBright("→");
-
-  const created = chalk.greenBright(tense === "past" ? "created" : "create");
-  const createdSymbol = chalk.greenBright("+");
-
-  const updated = chalk.blueBright(tense === "past" ? "updated" : "update");
-  const updatedSymbol = chalk.blueBright("±");
-
-  const deleted = chalk.redBright(tense === "past" ? "deleted" : "delete");
-  const deletedSymbol = chalk.redBright("-");
 
   const rows = changesToPrint
-    .sort((a, b) => a[0].localeCompare(b[0]))
+    .sort(([filepathA], [filepathB]) => filepathA.localeCompare(filepathB))
     .slice(0, limit)
     .map(([path, change]) => {
       switch (true) {
@@ -117,30 +120,30 @@ export const printChanges = <const ToString extends boolean = false>(
   }
 
   let footer: string | undefined;
-  if (changesToPrint.length >= 10) {
-    tableOptions.spaceY = 1;
-
-    footer = sprint`${pluralize("change", changesToPrint.length, true)} in total. `;
-
+  if (changes.size >= 10) {
     const breakdown = [];
 
     const createdCount = changesToPrint.filter(([, change]) => change.type === "create").length;
     if (createdCount > 0) {
-      breakdown.push(sprint`{greenBright ${pluralize("create", createdCount, true)}}`);
+      const created = tense === "past" ? `${createdCount} created` : pluralize("create", createdCount, true);
+      breakdown.push(sprint`{greenBright ${created}}`);
     }
 
     const updatedCount = changesToPrint.filter(([, change]) => change.type === "update").length;
     if (updatedCount > 0) {
-      breakdown.push(sprint`{blueBright ${pluralize("update", updatedCount, true)}}`);
+      const updated = tense === "past" ? `${updatedCount} updated` : pluralize("update", updatedCount, true);
+      breakdown.push(sprint`{blueBright ${updated}}`);
     }
 
     const deletedCount = changesToPrint.filter(([, change]) => change.type === "delete").length;
     if (deletedCount > 0) {
-      breakdown.push(sprint`{redBright ${pluralize("delete", deletedCount, true)}}`);
+      const deleted = tense === "past" ? `${deletedCount} deleted` : pluralize("delete", deletedCount, true);
+      breakdown.push(sprint`{redBright ${deleted}}`);
     }
 
-    footer += breakdown.join(", ");
-    footer += ".";
+    footer = sprint({ ensureNewLineAbove: true })`
+      ${pluralize("change", changesToPrint.length, true)} in total. ${breakdown.join(", ")}.
+    `;
   }
 
   return printTable({ rows, footer, ...tableOptions });

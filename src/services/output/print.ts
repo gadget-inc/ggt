@@ -2,6 +2,8 @@ import type { Options as BoxenOptions } from "boxen";
 import boxen from "boxen";
 import chalkTemplate from "chalk-template";
 import CliTable3 from "cli-table3";
+import type { Ora, Options as OraOptions } from "ora";
+import ora from "ora";
 import { dedent } from "ts-dedent";
 import { config } from "../config/config.js";
 import { isString } from "../util/is.js";
@@ -10,11 +12,23 @@ import { formatPretty } from "./log/format/pretty.js";
 import { Level } from "./log/level.js";
 import { stdout } from "./stream.js";
 
-type IfTrue<B extends boolean | undefined, TrueValue, FalsyValue> = B extends true ? TrueValue : FalsyValue;
+export const PrintOutput = Object.freeze({
+  STDOUT: "stdout",
+  STRING: "string",
+  SPINNER: "spinner",
+});
 
-export type PrintOutput<ToString extends boolean | undefined> = IfTrue<ToString, string, void>;
+export type PrintOutput = (typeof PrintOutput)[keyof typeof PrintOutput];
 
-export type PrintOptions<ToString extends boolean> = {
+// prettier-ignore
+export type PrintOutputReturnType<Output extends PrintOutput | undefined> =
+    Output extends undefined ? undefined
+  : Output extends typeof PrintOutput.STDOUT ? undefined
+  : Output extends typeof PrintOutput.STRING ? string
+  : Output extends typeof PrintOutput.SPINNER ? Ora
+  : never;
+
+export type PrintOptions<Output extends PrintOutput = typeof PrintOutput.STDOUT> = {
   /**
    * Whether to ensure a new line is after the content.
    *
@@ -29,19 +43,9 @@ export type PrintOptions<ToString extends boolean> = {
    */
   ensureNewLineAbove?: boolean;
 
-  /**
-   * Whether to return the formatted string instead of printing it.
-   *
-   * @default false
-   */
-  toStr?: ToString;
+  output?: Output;
 
-  /**
-   * What to print if --json was passed.
-   *
-   * @default undefined (print nothing)
-   */
-  json?: Record<string, Field>;
+  spinner?: OraOptions;
 
   /**
    * The options to pass to `boxen`.
@@ -49,9 +53,16 @@ export type PrintOptions<ToString extends boolean> = {
    * @default undefined (no box)
    */
   boxen?: BoxenOptions;
+
+  /**
+   * What to print if --json was passed.
+   *
+   * @default undefined (print nothing)
+   */
+  json?: Record<string, Field>;
 };
 
-export type print<ToString extends boolean, Options extends PrintOptions<ToString>> = {
+export type print<Options extends PrintOptions<PrintOutput>> = {
   /**
    * Prints the given string as is.
    *
@@ -67,7 +78,7 @@ export type print<ToString extends boolean, Options extends PrintOptions<ToStrin
    * `);
    * // => "\n  Hello, world!\n\n  How are you?\n"
    */
-  (str: string): PrintOutput<Options["toStr"]>;
+  (str: string): PrintOutputReturnType<Options["output"]>;
 
   /**
    * Prints the given template string with dedent and chalk-template.
@@ -94,7 +105,7 @@ export type print<ToString extends boolean, Options extends PrintOptions<ToStrin
    * @see dedent https://github.com/tamino-martinius/node-ts-dedent
    * @see chalk-template https://github.com/chalk/chalk-template
    */
-  (template: TemplateStringsArray, ...values: unknown[]): PrintOutput<Options["toStr"]>;
+  (template: TemplateStringsArray, ...values: unknown[]): PrintOutputReturnType<Options["output"]>;
 
   /**
    * Configures print with options before printing the given template
@@ -118,27 +129,16 @@ export type print<ToString extends boolean, Options extends PrintOptions<ToStrin
    * ```
    * @see PrintOptions
    */
-  <const NewOptions extends PrintOptions<boolean>, const NewToString extends boolean | undefined = NewOptions["toStr"]>(
-    options: NewOptions,
-  ): print<ToString & NewToString, Options & NewOptions & { toStr: ToString & NewToString }>;
+  <const NewOptions extends PrintOptions<PrintOutput>>(options: NewOptions): print<Options & NewOptions>;
 };
 
-export const createPrint = <const ToString extends boolean, const Options extends PrintOptions<ToString>>(
-  options: Options,
-): print<ToString, Options> => {
+export const createPrint = <const Options extends PrintOptions<PrintOutput>>(options: Options): print<Options> => {
   const print = ((
-    templateOrOptions: PrintOptions<ToString> | string | TemplateStringsArray,
+    templateOrOptions: Options | string | TemplateStringsArray,
     ...values: unknown[]
-  ): print<ToString, PrintOptions<ToString>> | string | undefined => {
+  ): print<Options> | PrintOutputReturnType<PrintOptions<PrintOutput>["output"]> => {
     if (!isString(templateOrOptions) && !Array.isArray(templateOrOptions)) {
       return createPrint({ ...options, ...templateOrOptions });
-    }
-
-    if (config.logFormat === "json" && !options.toStr) {
-      if (options.json) {
-        stdout.write(JSON.stringify(options.json) + "\n");
-      }
-      return undefined;
     }
 
     let content = templateOrOptions as string | TemplateStringsArray;
@@ -158,8 +158,36 @@ export const createPrint = <const ToString extends boolean, const Options extend
       content += "\n";
     }
 
-    if (options.toStr ?? false) {
+    if (options.output === PrintOutput.STRING) {
       return content;
+    }
+
+    if (options.output === PrintOutput.SPINNER) {
+      if (options.ensureNewLineAbove) {
+        // manually add a newline before starting the spinner
+        // if a newline was already added before, stdout won't print it
+        stdout.write("\n");
+
+        // strip the newline we added above
+        content = content.slice(1);
+      }
+
+      const spinner = ora(options.spinner);
+      spinner.start(content);
+
+      // ora doesn't print an empty line after the spinner, so we need
+      // to make sure stdout's state reflects that
+      stdout.lastLineWasEmpty = false;
+
+      return spinner;
+    }
+
+    if (config.logFormat === "json") {
+      if (options.json) {
+        content = JSON.stringify(options.json) + "\n";
+      } else {
+        content = "";
+      }
     }
 
     if (config.logLevel < Level.PRINT) {
@@ -169,7 +197,7 @@ export const createPrint = <const ToString extends boolean, const Options extend
     stdout.write(content);
 
     return undefined;
-  }) as print<ToString, Options>;
+  }) as print<Options>;
 
   return print;
 };
@@ -177,10 +205,10 @@ export const createPrint = <const ToString extends boolean, const Options extend
 export const print = createPrint({ ensureNewLine: false });
 export const println = createPrint({ ensureNewLine: true });
 
-export const sprint = createPrint({ toStr: true, ensureNewLine: false });
-export const sprintln = createPrint({ toStr: true, ensureNewLine: true });
+export const sprint = createPrint({ output: "string", ensureNewLine: false });
+export const sprintln = createPrint({ output: "string", ensureNewLine: true });
 
-export const printTable = <const ToString extends boolean>({
+export const printTable = <const Output extends PrintOutput>({
   message,
   headers,
   rows,
@@ -190,7 +218,7 @@ export const printTable = <const ToString extends boolean>({
   colAligns = [],
   colWidths = [],
   ...printOptions
-}: PrintTableOptions<ToString>): PrintOutput<ToString> => {
+}: PrintTableOptions<Output>): PrintOutputReturnType<Output> => {
   const table = new CliTable3({
     chars: borders[borderType],
     colAligns,
@@ -219,10 +247,10 @@ export const printTable = <const ToString extends boolean>({
     output += padding + footer;
   }
 
-  return createPrint({ ensureNewLine: true, ...printOptions })(output) as PrintOutput<ToString>;
+  return createPrint({ ensureNewLine: true, ...printOptions })(output) as PrintOutputReturnType<Output>;
 };
 
-export type PrintTableOptions<ToString extends boolean> = PrintOptions<ToString> & {
+export type PrintTableOptions<Output extends PrintOutput = typeof PrintOutput.STDOUT> = PrintOptions<Output> & {
   /**
    * The message to print above the table.
    */

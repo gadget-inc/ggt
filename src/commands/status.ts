@@ -54,7 +54,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
 
   if (localChanges.size > 0) {
     output += printChanges(ctx, {
-      toStr: true,
+      output: "string",
       changes: localChanges,
       tense: "past",
       message: "Your local filesystem has changed.",
@@ -67,7 +67,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
 
   if (gadgetChanges.size > 0) {
     output += printChanges(ctx, {
-      toStr: true,
+      output: "string",
       changes: gadgetChanges,
       includeDotGadget: true,
       tense: "past",

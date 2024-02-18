@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import type { Ora } from "ora";
 import { describe, expect, it, vi } from "vitest";
 import { print, printTable } from "../../../src/services/output/print.js";
 import { withEnv } from "../../__support__/env.js";
@@ -120,10 +121,17 @@ describe("print", () => {
     });
   });
 
-  describe("with toStr", () => {
+  describe('{ output: "string" }', () => {
     it("returns the formatted string instead of printing it", () => {
-      const result: string = print({ toStr: true })("Hello, world!");
+      const result: string = print({ output: "string" })("Hello, world!");
       expect(result).toMatchInlineSnapshot('"Hello, world!"');
+    });
+  });
+
+  describe('{ output: "spinner" }', () => {
+    it("prints a spinner", () => {
+      const spinner: Ora = print({ output: "spinner" })("Hello, world!");
+      expect(spinner.text).toBe("Hello, world!");
     });
   });
 });

@@ -18,7 +18,6 @@ import { notify } from "../services/output/notify.js";
 import { println, sprint } from "../services/output/print.js";
 import { select } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
-import { stderr } from "../services/output/stream.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 import type { PullArgs } from "./pull.js";
@@ -173,7 +172,7 @@ export const command: Command<DevArgs> = async (ctx) => {
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
 
   println({ output: "sticky", ensureNewLineAbove: true })`
-    Application  ${syncJson.app.slug}
+    Application  ${syncJson.app.slug} 1
     Environment  ${syncJson.env.name}
          Branch  ${syncJson.gitBranch}
 
@@ -383,7 +382,6 @@ export const command: Command<DevArgs> = async (ctx) => {
 
   ctx.onAbort(async (reason) => {
     ctx.log.info("stopping", { reason });
-    stderr.persistStickyText();
 
     filesyncSubscription.unsubscribe();
     fileWatcher.close();
@@ -405,7 +403,7 @@ export const command: Command<DevArgs> = async (ctx) => {
   });
 
   println({ output: "sticky", ensureNewLineAbove: true })`
-    Application  ${syncJson.app.slug}
+    Application  ${syncJson.app.slug} 2
     Environment  ${syncJson.env.name}
          Branch  ${syncJson.gitBranch}
 

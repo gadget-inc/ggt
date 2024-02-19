@@ -1,10 +1,9 @@
 import type { Options as BoxenOptions } from "boxen";
 import boxen from "boxen";
-import chalk from "chalk";
+import chalk, { type ColorName } from "chalk";
 import chalkTemplate from "chalk-template";
 import cliSpinners, { type SpinnerName } from "cli-spinners";
 import CliTable3 from "cli-table3";
-import assert from "node:assert";
 import type { Ora } from "ora";
 import { dedent } from "ts-dedent";
 import { config } from "../config/config.js";
@@ -54,6 +53,8 @@ export type PrintOptions<Output extends PrintOutput = "stdout"> = {
     prefix?: string;
 
     suffix?: string;
+
+    color?: ColorName;
   };
 
   /**
@@ -181,7 +182,7 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
     }
 
     if (output === "spinner") {
-      let { kind = "dots", prefix = "", suffix = "" } = spinnerOptions ?? {};
+      let { kind = "dots", prefix = "", suffix = "", color = "cyan" } = spinnerOptions ?? {};
 
       if (ensureNewLineAbove) {
         if (!prefix.startsWith("\n")) {
@@ -204,19 +205,20 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       }
 
       // setup the spinner
+      const { frames, interval } = cliSpinners[kind];
       const originalStickyText = stderr.stickyText;
-      const dots = cliSpinners[kind];
+      stderr.clearStickyText();
 
-      let i = 0;
+      let frameIndex = 0;
       const printNextSpinnerFrame = (): void => {
-        const frame = dots.frames[(i = ++i % dots.frames.length)];
-        assert(frame, "frame must be defined");
+        frameIndex = ++frameIndex % frames.length;
+        const frame = chalk[color](frames[frameIndex]);
         stderr.replaceStickyText(`${prefix}${frame} ${text}${suffix}${originalStickyText}`);
       };
 
       // start the spinner
       printNextSpinnerFrame();
-      const spinnerId = setInterval(() => printNextSpinnerFrame(), dots.interval);
+      const spinnerId = setInterval(() => printNextSpinnerFrame(), interval);
 
       // return an Ora compatible object
       const spinner = {

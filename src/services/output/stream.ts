@@ -65,14 +65,13 @@ export class Stream {
 
   replaceStickyText(stickyText: string): void {
     this.clearStickyText();
-    this.#stickyText = stickyText;
 
-    stickyText = this._format(this.#stickyText);
+    this.#stickyText = stickyText;
     if (this.#stickyText === "") {
       return;
     }
 
-    this._write(stickyText);
+    this._write(this.#stickyText);
     this._updateStickyTextLinesToClear();
   }
 

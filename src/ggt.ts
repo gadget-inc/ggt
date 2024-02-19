@@ -14,18 +14,19 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       process.once(signal, async () => {
         ctx.log.trace("received signal", { signal });
-        const spinner = println({ output: "spinner", spinner: { prefixText: "^C" } })`
+        const spinner = println({ output: "spinner" })`
           Stopping {gray Press Ctrl+C again to force}
         `;
+
+        ctx.onAbort(() => new Promise((resolve) => setTimeout(resolve, ms("2s"))));
 
         try {
           ctx.abort();
           await ctx.done;
-          spinner.stop();
-          println`   {green ✔} Stopped`;
+          spinner.succeed();
         } catch (error) {
-          spinner.stop();
-          println` {red ✖} Stopping`;
+          spinner.fail();
+          // println` {red ✖} Stopping`;
           void reportErrorAndExit(ctx, error);
         }
 

@@ -1,36 +1,31 @@
 import type { Options as BoxenOptions } from "boxen";
 import boxen from "boxen";
+import chalk from "chalk";
 import chalkTemplate from "chalk-template";
+import cliSpinners, { type SpinnerName } from "cli-spinners";
 import CliTable3 from "cli-table3";
-import type { Ora, Options as OraOptions } from "ora";
-import ora from "ora";
+import assert from "node:assert";
+import type { Ora } from "ora";
 import { dedent } from "ts-dedent";
 import { config } from "../config/config.js";
-import { isString } from "../util/is.js";
+import { isArray, isString } from "../util/is.js";
 import type { Field } from "./log/field.js";
 import { formatPretty } from "./log/format/pretty.js";
 import { Level } from "./log/level.js";
-import { stdout } from "./stream.js";
-import logUpdate from "log-update";
+import { stderr, stdout } from "./stream.js";
 
-export const PrintOutput = Object.freeze({
-  STDOUT: "stdout",
-  STRING: "string",
-  SPINNER: "spinner",
-  STICKY: "sticky",
-});
-
-export type PrintOutput = (typeof PrintOutput)[keyof typeof PrintOutput];
+export type PrintOutput = "stdout" | "string" | "spinner" | "sticky";
 
 // prettier-ignore
 export type PrintOutputReturnType<Output extends PrintOutput | undefined> =
     Output extends undefined ? undefined
-  : Output extends typeof PrintOutput.STDOUT ? undefined
-  : Output extends typeof PrintOutput.STRING ? string
-  : Output extends typeof PrintOutput.SPINNER ? Ora
+  : Output extends "stdout" ? undefined
+  : Output extends "sticky" ? undefined
+  : Output extends "string" ? string
+  : Output extends "spinner" ? { succeed: () => void; fail: () => void; }
   : never;
 
-export type PrintOptions<Output extends PrintOutput = typeof PrintOutput.STDOUT> = {
+export type PrintOptions<Output extends PrintOutput = "stdout"> = {
   /**
    * Whether to ensure a new line is after the content.
    *
@@ -47,7 +42,19 @@ export type PrintOptions<Output extends PrintOutput = typeof PrintOutput.STDOUT>
 
   output?: Output;
 
-  spinner?: OraOptions;
+  spinner?: {
+    /**
+     * The name of the spinner to use.
+     *
+     * @default "dots"
+     * @see https://github.com/sindresorhus/cli-spinners
+     */
+    kind?: SpinnerName;
+
+    prefixText?: string;
+
+    suffixText?: string;
+  };
 
   /**
    * The options to pass to `boxen`.
@@ -134,87 +141,131 @@ export type print<Options extends PrintOptions<PrintOutput>> = {
   <const NewOptions extends PrintOptions<PrintOutput>>(options: NewOptions): print<Options & NewOptions>;
 };
 
-let stickyOutput = "";
-let printedStickyOutput = false;
-
 export const createPrint = <const Options extends PrintOptions<PrintOutput>>(options: Options): print<Options> => {
   const print = ((
     templateOrOptions: Options | string | TemplateStringsArray,
     ...values: unknown[]
   ): print<Options> | PrintOutputReturnType<PrintOptions<PrintOutput>["output"]> => {
-    if (!isString(templateOrOptions) && !Array.isArray(templateOrOptions)) {
+    if (!(isString(templateOrOptions) || isArray(templateOrOptions))) {
       return createPrint({ ...options, ...templateOrOptions });
     }
 
-    let content = templateOrOptions as string | TemplateStringsArray;
-    if (!isString(content)) {
-      content = dedent(chalkTemplate(content, ...values));
+    const {
+      output = "stdout",
+      ensureNewLine = false,
+      ensureNewLineAbove = false,
+      json,
+      boxen: boxenOptions,
+      spinner: spinnerOptions,
+    } = options;
+
+    let text = templateOrOptions as string;
+    if (!isString(text)) {
+      text = dedent(chalkTemplate(text, ...values));
     }
 
-    if (options.boxen) {
-      content = boxen(content, options.boxen);
+    if (boxenOptions) {
+      text = boxen(text, boxenOptions);
     }
 
-    if ((options.ensureNewLineAbove ?? false) && !content.startsWith("\n")) {
-      content = "\n" + content;
+    if (ensureNewLineAbove && !text.startsWith("\n")) {
+      text = "\n" + text;
     }
 
-    if ((options.ensureNewLine ?? false) && !content.endsWith("\n")) {
-      content += "\n";
+    if (ensureNewLine && !text.endsWith("\n")) {
+      text += "\n";
     }
 
-    if (options.output === PrintOutput.STRING) {
-      return content;
+    if (output === "string") {
+      return text;
     }
 
-    if (options.output === PrintOutput.SPINNER) {
-      if (options.ensureNewLineAbove) {
+    if (output === "spinner") {
+      const { kind = "dots", prefixText = "", suffixText = "" } = spinnerOptions ?? {};
+
+      if (ensureNewLineAbove) {
         // manually add a newline before starting the spinner
-        // if a newline was already added before, stdout won't print it
-        stdout.write("\n");
+        // if a newline was already added before, stderr won't print it
+        stderr.write("\n");
+        stderr.lastLineWasEmpty = true;
 
         // strip the newline we added above
-        content = content.slice(1);
+        text = text.slice(1);
       }
 
-      const spinner = ora(options.spinner);
-      spinner.start(content);
+      // setup the spinner
+      const dots = cliSpinners[kind];
+
+      let i = 0;
+      const printNextSpinnerFrame = (frame?: string): void => {
+        frame ??= dots.frames[(i = ++i % dots.frames.length)];
+        assert(frame, "frame must be defined");
+        stderr.writeStickyText(`${prefixText}${frame} ${text}${suffixText}`);
+      };
+
+      // start the spinner
+      printNextSpinnerFrame();
+      const spinnerId = setInterval(() => printNextSpinnerFrame(), dots.interval);
+
+      // return an Ora compatible object
+      const spinner = {
+        succeed: () => {
+          // persist the spinner
+          printNextSpinnerFrame(chalk.green("✔"));
+          // spinnerTextUpdate.done();
+          stderr.persistStickyText();
+
+          // stop rendering the spinner
+          clearInterval(spinnerId);
+
+          // if (stickyText.length > 0) {
+          //   // continue to print the sticky output
+          //   stickyTextUpdate(stickyText);
+          // }
+
+          return spinner;
+        },
+      } as Ora;
+
+      // const spinner = ora(spinner);
+      // spinner.start(content);
+
+      // if (printedStickyOutput) {
+      //   const stopAndPersist = spinner.stopAndPersist.bind(spinner);
+      //   spinner.stopAndPersist = () => {
+      //     spinner.suffixText = originalSuffixText;
+      //     stopAndPersist();
+      //     return spinner;
+      //   };
+      // }
 
       // ora doesn't print an empty line after the spinner, so we need
       // to make sure stdout's state reflects that
-      stdout.lastLineWasEmpty = false;
+      // stderr.lastLineWasEmpty = false;
 
       return spinner;
     }
 
-    if (options.output === PrintOutput.STICKY) {
-      stickyOutput = content;
-      content = "";
+    if (output === "sticky") {
+      stderr.writeStickyText(text);
+      return;
     }
 
     // FIXME: this is probably wrong (needs to be moved up/down)
     if (config.logFormat === "json") {
-      if (options.json) {
-        content = JSON.stringify(options.json) + "\n";
+      if (json) {
+        text = JSON.stringify(json) + "\n";
       } else {
-        content = "";
+        text = "";
       }
     }
 
+    // FIXME: this as well
     if (config.logLevel < Level.PRINT) {
-      content = formatPretty(Level.PRINT, "", content, {});
+      text = formatPretty(Level.PRINT, "", text, {});
     }
 
-    if (printedStickyOutput) {
-      logUpdate.clear();
-    }
-
-    stdout.write(content);
-
-    if (stickyOutput.length > 0) {
-      logUpdate(stickyOutput);
-      printedStickyOutput = true;
-    }
+    stdout.write(text);
 
     return undefined;
   }) as print<Options>;
@@ -270,7 +321,7 @@ export const printTable = <const Output extends PrintOutput>({
   return createPrint({ ensureNewLine: true, ...printOptions })(output) as PrintOutputReturnType<Output>;
 };
 
-export type PrintTableOptions<Output extends PrintOutput = typeof PrintOutput.STDOUT> = PrintOptions<Output> & {
+export type PrintTableOptions<Output extends PrintOutput = "stdout"> = PrintOptions<Output> & {
   /**
    * The message to print above the table.
    */

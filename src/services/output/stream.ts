@@ -1,4 +1,6 @@
 import process from "node:process";
+import stringWidth from "string-width";
+import stripAnsi from "strip-ansi";
 import { env } from "../config/env.js";
 import { isObject } from "../util/is.js";
 
@@ -19,8 +21,12 @@ export class Stream {
    */
   lastLineWasEmpty = true;
 
+  #stream = process[this.channel];
+  #stickyText = "";
+  #stickyTextLinesToClear = 0;
+
   constructor(public channel: "stdout" | "stderr") {
-    process[this.channel].on("error", (err: unknown) => {
+    this.#stream.on("error", (err: unknown) => {
       if (isObject(err) && "code" in err && err.code === "EPIPE") {
         return;
       }
@@ -29,68 +35,121 @@ export class Stream {
   }
 
   get isTTY(): boolean {
-    return process[this.channel].isTTY;
+    return this.#stream.isTTY;
+  }
+
+  get stickyText(): string {
+    return this.#stickyText;
   }
 
   getWindowSize(): number[] {
-    return process[this.channel].getWindowSize();
+    return this.#stream.getWindowSize();
   }
 
-  write(str: string): void {
-    // remove duplicate empty lines
-    while (str.startsWith("\n\n")) {
-      str = str.slice(0, -1);
-    }
+  write(text: string): void {
+    this.clearStickyText();
 
-    while (str.endsWith("\n\n")) {
-      str = str.slice(0, -1);
-    }
+    text = this._format(text);
+    this._write(text);
 
-    str = str.replaceAll(/\n\n+/g, "\n\n");
+    // remember if the last line was empty
+    this.lastLineWasEmpty = text === "\n";
 
-    if (this.lastLineWasEmpty) {
-      // we just printed an empty line, so don't print another one
-      while (str.startsWith("\n")) {
-        str = str.slice(1);
-      }
-    }
-
-    if (str === "") {
-      // nothing to print
+    const stickyText = this._format(this.#stickyText);
+    if (stickyText === "") {
       return;
     }
 
-    // remember if the last line was empty
-    this.lastLineWasEmpty = str === "\n";
-
-    this._write(str);
+    this._write(stickyText);
   }
 
-  on(event: string, listener: (...args: unknown[]) => void): this {
-    process[this.channel].on(event, listener);
-    return this;
-  }
-
-  once(event: string, listener: (...args: unknown[]) => void): this {
-    process[this.channel].once(event, listener);
-    return this;
-  }
-
-  private _write(data: string): boolean {
-    if (env.testLike) {
-      // use console.log/error in tests since vitest doesn't display
-      // process.stdout/stderr correctly; also, remove trailing newline
-      // since console.log/error adds one.
-      data = data.replace(/\n$/, "");
-      if (this.channel === "stdout") {
-        console.log(data);
-      } else {
-        console.error(data);
-      }
-      return true;
+  writeStickyText(text: string): void {
+    text = this._format(text);
+    if (text !== this.#stickyText) {
+      // persist the current sticky text before writing new text
+      this.persistStickyText();
     }
 
-    return process[this.channel].write(data);
+    this.#stickyText = text;
+    this.write("");
+  }
+
+  clearStickyText(): void {
+    if (!this.#stream.isTTY || this.#stickyTextLinesToClear === 0) {
+      return;
+    }
+
+    this.#stream.cursorTo(0);
+
+    for (let i = 0; i < this.#stickyTextLinesToClear; i++) {
+      if (i > 0) {
+        this.#stream.moveCursor(0, -1);
+      }
+      this.#stream.clearLine(1);
+    }
+
+    this.#stickyTextLinesToClear = 0;
+  }
+
+  persistStickyText(): void {
+    // we already wrote the sticky text, so just pretend we never had
+    // any to begin with
+    this.#stickyText = "";
+    this._updateStickyTextLinesToClear();
+  }
+
+  private _write(text: string): void {
+    if (env.testLike) {
+      if (text.endsWith("\n")) {
+        // we use console.log/error in tests since vitest doesn't
+        // display process.stdout/stderr correctly, so we need to remove
+        // the trailing newline because console.log/error adds one
+        text = text.slice(0, -1);
+      }
+
+      if (this.channel === "stdout") {
+        console.log(text);
+      } else {
+        console.error(text);
+      }
+    }
+
+    this.#stream.write(text);
+  }
+
+  private _updateStickyTextLinesToClear(): void {
+    if (this.#stickyText === "") {
+      this.#stickyTextLinesToClear = 0;
+      return;
+    }
+
+    for (const line of stripAnsi(this.#stickyText).split("\n")) {
+      const lineWidth = stringWidth(line, { countAnsiEscapeCodes: true });
+      const lineRowCount = Math.max(1, Math.ceil(lineWidth / this.#stream.columns));
+      this.#stickyTextLinesToClear += lineRowCount;
+    }
+  }
+
+  private _format(text: string): string {
+    // remove duplicate empty lines
+    while (text.startsWith("\n\n")) {
+      text = text.slice(0, -1);
+    }
+
+    while (text.endsWith("\n\n")) {
+      text = text.slice(0, -1);
+    }
+
+    text = text.replaceAll(/\n\n+/g, "\n\n");
+
+    if (this.lastLineWasEmpty) {
+      // we just printed an empty line, so don't print another one
+      while (text.startsWith("\n")) {
+        text = text.slice(1);
+      }
+    }
+
+    return text;
   }
 }
 

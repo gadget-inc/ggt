@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import assert from "node:assert";
 import pluralize from "pluralize";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
@@ -42,7 +43,7 @@ export type PrintChangesOptions<Output extends PrintOutput = "stdout"> = Partial
   /**
    * Whether to include  `.gadget/` files in the output.
    *
-   * @default false
+   * @default undefined (true if there are no other changes, false otherwise)
    */
   includeDotGadget?: boolean;
 
@@ -70,7 +71,7 @@ export const printChanges = <const Output extends PrintOutput = "stdout">(
   {
     changes,
     tense,
-    includeDotGadget = false,
+    includeDotGadget,
     limit = Infinity,
     ...tableOptions
   }: { changes: Changes | ChangesWithHash } & PrintChangesOptions<Output>,
@@ -87,7 +88,7 @@ export const printChanges = <const Output extends PrintOutput = "stdout">(
 
   let changesToPrint = Array.from(changes.entries());
 
-  if (changesToPrint.every(([filepath]) => filepath.startsWith(".gadget/"))) {
+  if (includeDotGadget !== false && changesToPrint.every(([filepath]) => filepath.startsWith(".gadget/"))) {
     // all the changes are in `.gadget/`, so include them since there's
     // nothing else to show
     includeDotGadget = true;
@@ -95,6 +96,11 @@ export const printChanges = <const Output extends PrintOutput = "stdout">(
 
   if (!includeDotGadget) {
     changesToPrint = changesToPrint.filter(([filepath]) => !filepath.startsWith(".gadget/"));
+  }
+
+  if (changesToPrint.length === 0) {
+    assert([undefined, "stdout"].includes(tableOptions.output), "cannot print empty changes to a non-stdout output type");
+    return undefined as PrintOutputReturnType<Output>;
   }
 
   const rows = changesToPrint

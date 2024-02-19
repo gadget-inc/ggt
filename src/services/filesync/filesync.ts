@@ -74,6 +74,7 @@ export class FileSync {
    * @param options - The options to use.
    * @param options.changes - The changes to send.
    * @param options.printLocalChangesOptions - The options to use when printing the local changes.
+   * @param options.printGadgetChangesOptions - The options to use when printing the changes from Gadget.
    * @returns A promise that resolves when the changes have been sent.
    */
   async mergeChangesWithGadget(
@@ -81,9 +82,11 @@ export class FileSync {
     {
       changes,
       printLocalChangesOptions,
+      printGadgetChangesOptions,
     }: {
       changes: Changes;
-      printLocalChangesOptions?: PrintChangesOptions;
+      printLocalChangesOptions?: Partial<PrintChangesOptions>;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
     },
   ): Promise<void> {
     await this._syncOperations.add(async () => {
@@ -94,7 +97,7 @@ export class FileSync {
         // we either sent the wrong expectedFilesVersion or we received
         // a filesVersion that is greater than the expectedFilesVersion
         // + 1, so we need to stop what we're doing and get in sync
-        await this.sync(ctx);
+        await this.sync(ctx, { printGadgetChangesOptions });
       }
     });
   }
@@ -120,7 +123,7 @@ export class FileSync {
       onError,
     }: {
       beforeChanges?: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
-      printGadgetChangesOptions?: PrintChangesOptions;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
       afterChanges?: (data: { changes: Changes }) => Promisable<void>;
       onError: (error: unknown) => void;
     },

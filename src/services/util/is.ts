@@ -15,6 +15,8 @@ export const isObject = (val: unknown): val is object => {
   return typeof val === "object" && val !== null;
 };
 
+export const isArray = Array.isArray;
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const isFunction = (val: unknown): val is Function => {
   return typeof val === "function";

@@ -171,7 +171,13 @@ export const command: Command<DevArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
 
-  syncJson.print({ output: "sticky", ensureNewLineAbove: true });
+  println({ output: "sticky", ensureNewLineAbove: true })`
+    Application  ${syncJson.app.slug}
+    Environment  ${syncJson.env.name}
+         Branch  ${syncJson.gitBranch}
+
+    ${terminalLink("Preview", `https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app`)}  ${terminalLink("Editor", `https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}`)}  ${terminalLink("Playground", `https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${syncJson.app.slug}`)}
+  `;
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
@@ -254,6 +260,9 @@ export const command: Command<DevArgs> = async (ctx) => {
    * filesystem.
    */
   const filesyncSubscription = filesync.subscribeToGadgetChanges(ctx, {
+    printGadgetChangesOptions: {
+      includeDotGadget: false,
+    },
     onError: (error) => ctx.abort(error),
     beforeChanges: ({ changed, deleted }) => {
       // add all the files and directories we're about to touch to
@@ -296,7 +305,12 @@ export const command: Command<DevArgs> = async (ctx) => {
 
       const changes = new Changes(localChangesBuffer.entries());
       localChangesBuffer.clear();
-      await filesync.mergeChangesWithGadget(ctx, { changes });
+      await filesync.mergeChangesWithGadget(ctx, {
+        changes,
+        printGadgetChangesOptions: {
+          includeDotGadget: false,
+        },
+      });
     } catch (error) {
       ctx.log.error("error sending changes to gadget", { error });
       ctx.abort(error);

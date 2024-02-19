@@ -181,7 +181,7 @@ export class FileSync {
               printGadgetChangesOptions: {
                 tense: "past",
                 ensureNewLineAbove: true,
-                message: sprint`←  ${dayjs().format("hh:mm:ss A")}`,
+                message: sprintln`←  Received {gray ${dayjs().format("hh:mm:ss A")}}`,
                 limit: 5,
                 ...printGadgetChangesOptions,
               },
@@ -199,7 +199,8 @@ export class FileSync {
       Calculating file changes.
     `;
 
-    await delay("1s");
+    // TODO: remove me
+    await delay("2s");
 
     try {
       const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
@@ -427,7 +428,7 @@ export class FileSync {
       changes: gadgetChanges,
       filesVersion: gadgetFilesVersion,
       printGadgetChangesOptions: {
-        tense: "present",
+        tense: "past",
         ensureNewLineAbove: true,
         message: sprint`Pulled changes {gray ${dayjs().format("hh:mm:ss A")}}`,
         ...printGadgetChangesOptions,
@@ -535,7 +536,7 @@ export class FileSync {
       printGadgetChangesOptions: {
         tense: "past",
         ensureNewLineAbove: true,
-        message: sprint`←  ${dayjs().format("hh:mm:ss A")}`,
+        message: sprintln`←  Received {gray ${dayjs().format("hh:mm:ss A")}}`,
         ...printGadgetChangesOptions,
       },
     });
@@ -611,7 +612,8 @@ export class FileSync {
       },
     });
 
-    await delay("1s");
+    // TODO: remove me
+    await delay("2s");
 
     const {
       publishFileSyncEvents: { remoteFilesVersion, problems: filesyncProblems },
@@ -661,6 +663,7 @@ export class FileSync {
 
     spinner.done(doneText);
 
+    // FIXME: I shouldn't have to do this
     stderr.write(doneText + "\n");
 
     if (filesyncProblems.length > 0) {

@@ -5,6 +5,7 @@ import { println } from "./services/output/print.js";
 import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.js";
 import { stderr } from "./services/output/stream.js";
 import { installJsonExtensions } from "./services/util/json.js";
+import { delay } from "./services/util/promise.js";
 
 export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> => {
   installJsonExtensions();
@@ -34,7 +35,8 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
           Stopping {gray Press Ctrl+C again to force}
         `;
 
-        ctx.onAbort(() => new Promise((resolve) => setTimeout(resolve, ms("2s"))));
+        // TODO: remove me
+        await delay("2s");
 
         try {
           ctx.abort();

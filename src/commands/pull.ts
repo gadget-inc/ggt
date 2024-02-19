@@ -114,8 +114,6 @@ export const command: Command<PullArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  syncJson.print();
-
   const filesync = new FileSync(syncJson);
   await filesync.pull(ctx);
 };

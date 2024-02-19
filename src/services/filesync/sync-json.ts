@@ -177,6 +177,8 @@ export class SyncJson {
         });
 
         await syncJson.loadGitBranch();
+        syncJson.print();
+
         return syncJson;
       }
 
@@ -211,8 +213,9 @@ export class SyncJson {
     }
 
     const syncJson = new SyncJson(ctx, directory, previousEnvironment, state);
-
     await syncJson.loadGitBranch();
+    syncJson.print();
+
     return syncJson;
   }
 

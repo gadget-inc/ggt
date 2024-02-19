@@ -4,7 +4,7 @@ import { printChanges } from "../services/filesync/changes.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { println, sprint, sprintln } from "../services/output/print.js";
+import { println, sprint } from "../services/output/print.js";
 
 export type StatusArgs = typeof args;
 
@@ -47,35 +47,38 @@ export const command: Command<StatusArgs> = async (ctx) => {
   }
 
   const filesync = new FileSync(syncJson);
-  const { localChanges, gadgetChanges } = await filesync.hashes(ctx);
+  const { inSync, localChanges, gadgetChanges } = await filesync.hashes(ctx);
 
-  let output = syncJson.print({ output: "string" });
-  output += sprintln("");
+  if (inSync) {
+    println({ ensureNewLineAbove: true })`
+      Your environment's files match your local files.
+    `;
+    return;
+  }
 
   if (localChanges.size > 0) {
-    output += printChanges(ctx, {
-      output: "string",
+    printChanges(ctx, {
       changes: localChanges,
       tense: "past",
-      message: "Your local filesystem has changed.",
+      ensureNewLineAbove: true,
+      message: "Your local files have changed.",
     });
   } else {
-    output += sprintln`Your local filesystem has not changed.`;
+    println({ ensureNewLineAbove: true })`
+      Your local files have not changed.
+    `;
   }
-
-  output += sprintln("");
 
   if (gadgetChanges.size > 0) {
-    output += printChanges(ctx, {
-      output: "string",
+    printChanges(ctx, {
       changes: gadgetChanges,
-      includeDotGadget: true,
       tense: "past",
-      message: "Your environment's filesystem has changed.",
+      ensureNewLineAbove: true,
+      message: "Your environment's files have changed.",
     });
   } else {
-    output += sprintln`Your environment's filesystem has not changed.`;
+    println({ ensureNewLineAbove: true })`
+      Your environment's files have not changed.
+    `;
   }
-
-  println(output);
 };

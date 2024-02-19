@@ -193,76 +193,87 @@ export class FileSync {
   }
 
   async hashes(ctx: Context<SyncJsonArgs>): Promise<FileSyncHashes> {
-    const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
-      // get the hashes of our local files
-      this.syncJson.directory.hashes(),
-      // get the hashes of our local filesVersion and the latest filesVersion
-      (async () => {
-        let gadgetFilesVersion: bigint;
-        let gadgetHashes: Hashes;
-        let filesVersionHashes: Hashes;
+    const spinner = println({ output: "spinner", ensureNewLineAbove: true })`
+      Calculating file changes.
+    `;
 
-        if (this.syncJson.filesVersion === 0n) {
-          // we're either syncing for the first time or we're syncing a
-          // non-empty directory without a `.gadget/sync.json` file,
-          // regardless just get the hashes of the latest filesVersion
-          const { fileSyncHashes } = await this.syncJson.edit.query({ query: FILE_SYNC_HASHES_QUERY });
-          gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
-          gadgetHashes = fileSyncHashes.hashes;
-          filesVersionHashes = {};
-        } else {
-          // this isn't the first time we're syncing, so get the hashes
-          // of the files at our local filesVersion and the latest
-          // filesVersion
-          const { fileSyncComparisonHashes } = await this.syncJson.edit.query({
-            query: FILE_SYNC_COMPARISON_HASHES_QUERY,
-            variables: { filesVersion: String(this.syncJson.filesVersion) },
-          });
-          gadgetFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
-          gadgetHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
-          filesVersionHashes = fileSyncComparisonHashes.filesVersionHashes.hashes;
-        }
+    try {
+      const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
+        // get the hashes of our local files
+        this.syncJson.directory.hashes(),
+        // get the hashes of our local filesVersion and the latest filesVersion
+        (async () => {
+          let gadgetFilesVersion: bigint;
+          let gadgetHashes: Hashes;
+          let filesVersionHashes: Hashes;
 
-        return { filesVersionHashes, gadgetHashes, gadgetFilesVersion };
-      })(),
-    ]);
+          if (this.syncJson.filesVersion === 0n) {
+            // we're either syncing for the first time or we're syncing a
+            // non-empty directory without a `.gadget/sync.json` file,
+            // regardless just get the hashes of the latest filesVersion
+            const { fileSyncHashes } = await this.syncJson.edit.query({ query: FILE_SYNC_HASHES_QUERY });
+            gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
+            gadgetHashes = fileSyncHashes.hashes;
+            filesVersionHashes = {};
+          } else {
+            // this isn't the first time we're syncing, so get the hashes
+            // of the files at our local filesVersion and the latest
+            // filesVersion
+            const { fileSyncComparisonHashes } = await this.syncJson.edit.query({
+              query: FILE_SYNC_COMPARISON_HASHES_QUERY,
+              variables: { filesVersion: String(this.syncJson.filesVersion) },
+            });
+            gadgetFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
+            gadgetHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
+            filesVersionHashes = fileSyncComparisonHashes.filesVersionHashes.hashes;
+          }
 
-    const inSync = isEqualHashes(ctx, localHashes, gadgetHashes);
+          return { filesVersionHashes, gadgetHashes, gadgetFilesVersion };
+        })(),
+      ]);
 
-    const localChanges = getNecessaryChanges(ctx, {
-      from: filesVersionHashes,
-      to: localHashes,
-      existing: gadgetHashes,
-      ignore: [".gadget/"],
-    });
+      const inSync = isEqualHashes(ctx, localHashes, gadgetHashes);
 
-    let gadgetChanges = getNecessaryChanges(ctx, {
-      from: filesVersionHashes,
-      to: gadgetHashes,
-      existing: localHashes,
-    });
+      const localChanges = getNecessaryChanges(ctx, {
+        from: filesVersionHashes,
+        to: localHashes,
+        existing: gadgetHashes,
+        ignore: [".gadget/"],
+      });
 
-    if (!inSync && localChanges.size === 0 && gadgetChanges.size === 0) {
-      // the local filesystem is missing .gadget/ files
-      gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
-      assert(gadgetChanges.size > 0, "expected gadgetChanges to have changes");
-      assert(
-        Array.from(gadgetChanges.keys()).every((path) => path.startsWith(".gadget/")),
-        "expected all gadgetChanges to be .gadget/ files",
-      );
+      let gadgetChanges = getNecessaryChanges(ctx, {
+        from: filesVersionHashes,
+        to: gadgetHashes,
+        existing: localHashes,
+      });
+
+      if (!inSync && localChanges.size === 0 && gadgetChanges.size === 0) {
+        // the local filesystem is missing .gadget/ files
+        gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
+        assert(gadgetChanges.size > 0, "expected gadgetChanges to have changes");
+        assert(
+          Array.from(gadgetChanges.keys()).every((path) => path.startsWith(".gadget/")),
+          "expected all gadgetChanges to be .gadget/ files",
+        );
+      }
+
+      assert(inSync || localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
+
+      spinner.done("");
+
+      return {
+        inSync,
+        filesVersionHashes,
+        localHashes,
+        localChanges,
+        gadgetHashes,
+        gadgetChanges,
+        gadgetFilesVersion,
+      };
+    } catch (error) {
+      spinner.fail();
+      throw error;
     }
-
-    assert(inSync || localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
-
-    return {
-      inSync,
-      filesVersionHashes,
-      localHashes,
-      localChanges,
-      gadgetHashes,
-      gadgetChanges,
-      gadgetFilesVersion,
-    };
   }
 
   /**

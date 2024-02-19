@@ -8,6 +8,7 @@ import which from "which";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
+import { config } from "../services/config/config.js";
 import { Changes, printChanges } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
@@ -170,8 +171,9 @@ export const command: Command<DevArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
 
+  println`ggt v${config.version}`;
   println({ output: "sticky", ensureNewLineAbove: true })`
-    Application  ${syncJson.app.slug} 1
+    Application  ${syncJson.app.slug}
     Environment  ${syncJson.env.name}
          Branch  ${syncJson.gitBranch}
 
@@ -407,7 +409,7 @@ export const command: Command<DevArgs> = async (ctx) => {
   });
 
   println({ output: "sticky", ensureNewLineAbove: true })`
-    Application  ${syncJson.app.slug} 2
+    Application  ${syncJson.app.slug}
     Environment  ${syncJson.env.name}
          Branch  ${syncJson.gitBranch}
 

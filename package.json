@@ -119,7 +119,7 @@
     "eslint-plugin-lodash": "^7.4.0",
     "eslint-plugin-only-warn": "^1.1.0",
     "eslint-plugin-unicorn": "^51.0.1",
-    "nock": "^13.5.1",
+    "nock": "^13.5.3",
     "prettier": "^3.2.5",
     "prettier-plugin-organize-imports": "^3.2.4",
     "prettier-plugin-packagejson": "^2.4.11",

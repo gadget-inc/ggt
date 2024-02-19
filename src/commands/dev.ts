@@ -287,9 +287,9 @@ export const command: Command<DevArgs> = async (ctx) => {
       if (lastGitBranch !== syncJson.gitBranch) {
         // the git branch changed
         println({ ensureNewLineAbove: true })`
-          Your git branch changed:
+          Your git branch changed.
 
-            ${lastGitBranch} → ${syncJson.gitBranch}
+          ${lastGitBranch} → ${syncJson.gitBranch}
         `;
 
         // we need all the changes to be sent in a single batch, so wait
@@ -297,10 +297,8 @@ export const command: Command<DevArgs> = async (ctx) => {
         const spinner = println({ output: "spinner", ensureNewLineAbove: true })`
           Waiting for file changes to settle.
         `;
-
         await delay("3s");
-
-        spinner.done();
+        spinner.done("");
       }
 
       const changes = new Changes(localChangesBuffer.entries());

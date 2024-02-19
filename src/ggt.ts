@@ -3,6 +3,7 @@ import * as root from "./commands/root.js";
 import { Context } from "./services/command/context.js";
 import { println } from "./services/output/print.js";
 import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.js";
+import { stderr } from "./services/output/stream.js";
 import { installJsonExtensions } from "./services/util/json.js";
 
 export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> => {
@@ -25,6 +26,9 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
             process.exit(1);
           });
         }, ms("100ms")).unref();
+
+        // if there was any sticky text, it needs to be persisted now
+        stderr.persistStickyText();
 
         const spinner = println({ output: "spinner" })`
           Stopping {gray Press Ctrl+C again to force}

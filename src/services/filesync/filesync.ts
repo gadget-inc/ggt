@@ -22,7 +22,7 @@ import {
 } from "../app/edit/operation.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { print, println, sprint, sprintln } from "../output/print.js";
+import { println, sprint, sprintln } from "../output/print.js";
 import { filesyncProblemsToProblems, printProblems } from "../output/problems.js";
 import { confirm, select } from "../output/prompt.js";
 import { noop } from "../util/function.js";
@@ -730,7 +730,9 @@ export class FileSync {
     });
 
     if (changes.has("yarn.lock")) {
-      const spinner = print({ output: "spinner", ensureNewLineAbove: true })('Running "yarn install --check-files"');
+      const spinner = println({ output: "spinner", ensureNewLineAbove: true })`
+        Running "yarn install --check-files"
+      `;
 
       await execa("yarn", ["install", "--check-files"], { cwd: this.syncJson.directory.path })
         .then(() => spinner.succeed())

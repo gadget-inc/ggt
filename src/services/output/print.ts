@@ -12,7 +12,7 @@ import { isArray, isString } from "../util/is.js";
 import type { Field } from "./log/field.js";
 import { formatPretty } from "./log/format/pretty.js";
 import { Level } from "./log/level.js";
-import { stderr, stdout } from "./stream.js";
+import { stderr } from "./stream.js";
 
 export type PrintOutput = "stdout" | "string" | "spinner" | "sticky";
 
@@ -51,9 +51,9 @@ export type PrintOptions<Output extends PrintOutput = "stdout"> = {
      */
     kind?: SpinnerName;
 
-    prefixText?: string;
+    prefix?: string;
 
-    suffixText?: string;
+    suffix?: string;
   };
 
   /**
@@ -181,26 +181,37 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
     }
 
     if (output === "spinner") {
-      const { kind = "dots", prefixText = "", suffixText = "" } = spinnerOptions ?? {};
+      let { kind = "dots", prefix = "", suffix = "" } = spinnerOptions ?? {};
 
       if (ensureNewLineAbove) {
-        // manually add a newline before starting the spinner
-        // if a newline was already added before, stderr won't print it
-        stderr.write("\n");
-        stderr.lastLineWasEmpty = true;
+        if (!prefix.startsWith("\n")) {
+          // add a newline before the spinner
+          prefix = "\n" + prefix;
+        }
 
         // strip the newline we added above
         text = text.slice(1);
       }
 
+      if (ensureNewLine) {
+        if (!suffix.endsWith("\n")) {
+          // add a newline after the spinner
+          suffix += "\n";
+        }
+
+        // strip the newline we added above
+        text = text.slice(0, -1);
+      }
+
       // setup the spinner
+      const originalStickyText = stderr.stickyText;
       const dots = cliSpinners[kind];
 
       let i = 0;
-      const printNextSpinnerFrame = (frame?: string): void => {
-        frame ??= dots.frames[(i = ++i % dots.frames.length)];
+      const printNextSpinnerFrame = (): void => {
+        const frame = dots.frames[(i = ++i % dots.frames.length)];
         assert(frame, "frame must be defined");
-        stderr.replaceStickyText(`${prefixText}${frame} ${text}${suffixText}`);
+        stderr.replaceStickyText(`${prefix}${frame} ${text}${suffix}${originalStickyText}`);
       };
 
       // start the spinner
@@ -213,9 +224,11 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
           // stop rendering the spinner
           clearInterval(spinnerId);
 
-          // persist the spinner
-          stderr.replaceStickyText(`${prefixText}${chalk.green("✔")} ${text}${suffixText}`);
-          stderr.persistStickyText();
+          // set the original sticky text back
+          stderr.replaceStickyText(originalStickyText);
+
+          // print the success message
+          stderr.write(`${prefix}${chalk.green("✔")} ${text}${suffix}`);
 
           return spinner;
         },
@@ -225,7 +238,7 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
     }
 
     if (output === "sticky") {
-      stdout.replaceStickyText(text);
+      stderr.replaceStickyText(text);
       return;
     }
 
@@ -243,7 +256,7 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       text = formatPretty(Level.PRINT, "", text, {});
     }
 
-    stdout.write(text);
+    stderr.write(text);
 
     return undefined;
   }) as print<Options>;

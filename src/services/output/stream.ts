@@ -66,12 +66,20 @@ export class Stream {
   replaceStickyText(stickyText: string): void {
     this.clearStickyText();
     this.#stickyText = stickyText;
+
+    stickyText = this._format(this.#stickyText);
     if (this.#stickyText === "") {
       return;
     }
 
     this._write(stickyText);
     this._updateStickyTextLinesToClear();
+  }
+
+  persistStickyText(finalStickyText = this.#stickyText): void {
+    this.clearStickyText();
+    this._write(finalStickyText);
+    this.#stickyText = "";
   }
 
   clearStickyText(): void {
@@ -89,13 +97,6 @@ export class Stream {
     }
 
     this.#stickyTextLinesToClear = 0;
-  }
-
-  persistStickyText(): void {
-    // we already wrote the sticky text, so just pretend we never had
-    // any to begin with
-    this.#stickyText = "";
-    this._updateStickyTextLinesToClear();
   }
 
   private _write(text: string): void {

@@ -179,7 +179,7 @@ export class FileSync {
               printGadgetChangesOptions: {
                 tense: "past",
                 ensureNewLineAbove: true,
-                message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+                message: sprint`←  ${dayjs().format("hh:mm:ss A")}`,
                 limit: 10,
                 ...printGadgetChangesOptions,
               },
@@ -520,7 +520,7 @@ export class FileSync {
       printGadgetChangesOptions: {
         tense: "past",
         ensureNewLineAbove: true,
-        message: sprint`← Received from ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+        message: sprint`←  ${dayjs().format("hh:mm:ss A")}`,
         ...printGadgetChangesOptions,
       },
     });
@@ -614,7 +614,7 @@ export class FileSync {
       changes,
       tense: "past",
       ensureNewLineAbove: true,
-      message: sprint`→ Sent to ${this.syncJson.app.slug} (${this.syncJson.env.name}) {gray ${dayjs().format("hh:mm:ss A")}}`,
+      message: sprint`→  ${dayjs().format("hh:mm:ss A")}`,
       ...printLocalChangesOptions,
     });
 

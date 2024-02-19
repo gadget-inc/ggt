@@ -39,7 +39,7 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
         try {
           ctx.abort();
           await ctx.done;
-          spinner.succeed();
+          spinner.done("Goodbye 👋");
         } catch (error) {
           spinner.fail();
           await reportErrorAndExit(ctx, error);

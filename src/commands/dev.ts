@@ -2,7 +2,6 @@ import dayjs from "dayjs";
 import ms from "ms";
 import path from "node:path";
 import { setTimeout } from "node:timers/promises";
-import { oraPromise } from "ora";
 import terminalLink from "terminal-link";
 import Watcher from "watcher";
 import which from "which";
@@ -296,11 +295,16 @@ export const command: Command<DevArgs> = async (ctx) => {
         // if the git branch changed, we need all the changes to be sent
         // in a single batch, so wait a bit longer in case more changes
         // come in
-        println`
-          Your git branch changed from ${lastGitBranch} → ${syncJson.gitBranch}
+        const spinner = println({ output: "spinner", ensureNewLineAbove: true })`
+          Your git branch changed:
+
+            ${lastGitBranch} → ${syncJson.gitBranch}
+
+          Waiting for file changes to settle.
         `;
 
-        await oraPromise(setTimeout(ms("3s")), "Waiting for file changes to settle");
+        await setTimeout(ms("3s"));
+        spinner.succeed();
       }
 
       const changes = new Changes(localChangesBuffer.entries());

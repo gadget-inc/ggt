@@ -3,13 +3,14 @@ import cleanStack from "clean-stack";
 import ms from "ms";
 import { randomUUID } from "node:crypto";
 import os from "node:os";
+import terminalLink from "terminal-link";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { env } from "../config/env.js";
 import { parseBoolean } from "../util/boolean.js";
 import { serializeError } from "../util/object.js";
 import { workspaceRoot } from "../util/paths.js";
-import { println, sprint } from "./print.js";
+import { println, sprintln } from "./print.js";
 
 export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<never> => {
   ctx.log.error("reporting error and exiting", { error: cause });
@@ -137,12 +138,15 @@ export abstract class CLIError extends Error {
     let rendered = this.render();
 
     if (this.isBug !== IsBug.NO) {
-      rendered +=
-        "\n\n" +
-        sprint`
-          ${this.isBug === IsBug.YES ? "This is a bug" : "If you think this is a bug"}, please submit an issue using the link below.
+      const thisIsABug = this.isBug === IsBug.YES ? "This is a bug" : "If you think this is a bug";
+      const clickHere = terminalLink(
+        "click here",
+        `https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.id}`,
+      );
 
-          https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.id}
+      rendered += sprintln("");
+      rendered += sprintln({ ensureNewLineAbove: true })`
+          ${thisIsABug}, ${clickHere} to create an issue on GitHub.
         `;
     }
 
@@ -175,6 +179,6 @@ export class UnexpectedError extends CLIError {
   protected render(): string {
     const serialized = serializeError(this.cause);
     const body = serialized.stack || serialized.message || this.stack;
-    return this.message + "\n\n" + body;
+    return this.message + ".\n\n" + body;
   }
 }

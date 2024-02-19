@@ -5,7 +5,6 @@ import chalkTemplate from "chalk-template";
 import cliSpinners, { type SpinnerName } from "cli-spinners";
 import CliTable3 from "cli-table3";
 import assert from "node:assert";
-import type { Ora } from "ora";
 import { dedent } from "ts-dedent";
 import { config } from "../config/config.js";
 import { isArray, isString } from "../util/is.js";
@@ -22,8 +21,14 @@ export type PrintOutputReturnType<Output extends PrintOutput | undefined> =
   : Output extends "stdout" ? undefined
   : Output extends "sticky" ? undefined
   : Output extends "string" ? string
-  : Output extends "spinner" ? { succeed: () => void; fail: () => void; }
+  : Output extends "spinner" ? Spinner
   : never;
+
+export type Spinner = {
+  done: (text?: string) => void;
+  succeed: (text?: string) => void;
+  fail: (text?: string) => void;
+};
 
 export type PrintOptions<Output extends PrintOutput = "stdout"> = {
   /**
@@ -225,9 +230,8 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       printNextSpinnerFrame();
       const spinnerId = setInterval(() => printNextSpinnerFrame(), interval);
 
-      // return an Ora compatible object
-      const spinner = {
-        succeed: () => {
+      return {
+        done(doneText = text) {
           // stop rendering the spinner
           clearInterval(spinnerId);
 
@@ -235,15 +239,17 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
           stderr.replaceStickyText(originalStickyText);
 
           // print the success message
-          stderr.write(`${prefix}${chalk.green("✔")} ${text}${suffix}`);
+          stderr.write(`${prefix}${doneText}${suffix}`);
 
           activeSpinner = false;
-
-          return spinner;
         },
-      } as Ora;
-
-      return spinner;
+        succeed(successText = text) {
+          this.done(`${chalk.green("✔")} ${successText}`);
+        },
+        fail(failureText = text) {
+          this.done(`${chalk.red("✖")} ${failureText}`);
+        },
+      } as Spinner;
     }
 
     if (output === "sticky") {

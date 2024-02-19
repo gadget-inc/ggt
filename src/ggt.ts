@@ -41,6 +41,8 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
         try {
           ctx.abort();
           await ctx.done;
+          // TODO: remove me
+          // throw new Error("🤮");
           spinner.done("Goodbye 👋");
         } catch (error) {
           spinner.failed();

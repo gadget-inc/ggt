@@ -124,7 +124,10 @@ export class SyncJson {
    * Returns undefined if the directory doesn't exist, is empty, or
    * doesn't contain a `.gadget/sync.json` file.
    */
-  static async load(ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<SyncJson | undefined> {
+  static async load(
+    ctx: Context<SyncJsonArgs>,
+    { directory, printOptions }: { directory: Directory; printOptions: PrintOptions<PrintOutput> },
+  ): Promise<SyncJson | undefined> {
     ctx = ctx.child({ name: "sync-json" });
 
     const user = await getUserOrLogin(ctx);
@@ -177,7 +180,7 @@ export class SyncJson {
         });
 
         await syncJson.loadGitBranch();
-        syncJson.print();
+        syncJson.print(printOptions);
 
         return syncJson;
       }
@@ -214,7 +217,7 @@ export class SyncJson {
 
     const syncJson = new SyncJson(ctx, directory, previousEnvironment, state);
     await syncJson.loadGitBranch();
-    syncJson.print();
+    syncJson.print(printOptions);
 
     return syncJson;
   }
@@ -229,10 +232,13 @@ export class SyncJson {
    * - Ensures the directory is empty or contains a `.gadget/sync.json` file, unless --allow-unknown-directory was passed
    * - Ensures the specified app matches the app the directory previously synced to, unless --allow-different-app was passed
    */
-  static async loadOrInit(ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<SyncJson> {
+  static async loadOrInit(
+    ctx: Context<SyncJsonArgs>,
+    { directory, printOptions }: { directory: Directory; printOptions: PrintOptions<PrintOutput> },
+  ): Promise<SyncJson> {
     ctx = ctx.child({ name: "sync-json" });
 
-    const syncJson = await SyncJson.load(ctx, { directory });
+    const syncJson = await SyncJson.load(ctx, { directory, printOptions });
     if (syncJson) {
       // the .gadget/sync.json file already exists and is valid
       return syncJson;
@@ -292,6 +298,8 @@ export class SyncJson {
   }
 
   print<const Output extends PrintOutput>(options: PrintOptions<Output> = {}): PrintOutputReturnType<Output> {
+    options.ensureNewLineAbove ??= true;
+
     if (this.gitBranch) {
       return println(options)`
         Application  ${this.app.slug}

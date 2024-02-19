@@ -1,7 +1,6 @@
 import dayjs from "dayjs";
 import ms from "ms";
 import path from "node:path";
-import { setTimeout } from "node:timers/promises";
 import terminalLink from "terminal-link";
 import Watcher from "watcher";
 import which from "which";
@@ -15,7 +14,7 @@ import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { notify } from "../services/output/notify.js";
-import { println, sprint } from "../services/output/print.js";
+import { println, sprint, sprintln } from "../services/output/print.js";
 import { select } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { debounceAsync } from "../services/util/function.js";
@@ -164,21 +163,14 @@ export const usage: Usage = (ctx) => {
 };
 
 export const command: Command<DevArgs> = async (ctx) => {
+  println`ggt v${config.version}`;
+
   if (!which.sync("yarn", { nothrow: true })) {
     throw new YarnNotFoundError();
   }
 
   const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
-
-  println`ggt v${config.version}`;
-  println({ output: "sticky", ensureNewLineAbove: true })`
-    Application  ${syncJson.app.slug}
-    Environment  ${syncJson.env.name}
-         Branch  ${syncJson.gitBranch}
-
-    ${terminalLink("Preview", `https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app`)}  ${terminalLink("Editor", `https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}`)}  ${terminalLink("Playground", `https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${syncJson.app.slug}`)}
-  `;
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory, printOptions: { output: "sticky" } });
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
@@ -191,10 +183,10 @@ export const command: Command<DevArgs> = async (ctx) => {
       await filesync.sync(ctx, {
         hashes,
         printGadgetChangesOptions: {
-          limit: 10,
+          limit: 5,
         },
         printLocalChangesOptions: {
-          limit: 10,
+          limit: 5,
         },
       });
     } else {
@@ -202,19 +194,17 @@ export const command: Command<DevArgs> = async (ctx) => {
       // ask the user what to do
       if (hashes.localChanges.size > 0) {
         printChanges(ctx, {
-          message: sprint`{bold Your local filesystem has changed}`,
+          message: sprintln`{bold Your local filesystem has changed}`,
           changes: hashes.localChanges,
           tense: "past",
-          spaceY: 1,
         });
       }
 
       if (hashes.gadgetChanges.size > 0) {
         printChanges(ctx, {
-          message: sprint`{bold Your environment's filesystem has changed}`,
+          message: sprintln`{bold Your environment's filesystem has changed}`,
           changes: hashes.gadgetChanges,
           tense: "past",
-          spaceY: 1,
         });
       }
 
@@ -294,9 +284,9 @@ export const command: Command<DevArgs> = async (ctx) => {
       const lastGitBranch = syncJson.gitBranch;
       await syncJson.loadGitBranch();
       if (lastGitBranch !== syncJson.gitBranch) {
-        // if the git branch changed, we need all the changes to be sent
-        // in a single batch, so wait a bit longer in case more changes
-        // come in
+        // the git branch changed; we need all the changes to be sent in
+        // a single batch, so wait a bit in case there are changes the
+        // watcher hasn't seen yet
         const spinner = println({ output: "spinner", ensureNewLineAbove: true })`
           Your git branch changed:
 
@@ -305,8 +295,8 @@ export const command: Command<DevArgs> = async (ctx) => {
           Waiting for file changes to settle.
         `;
 
-        await setTimeout(ms("3s"));
-        spinner.succeed();
+        // await delay("3s");
+        spinner.done();
       }
 
       const changes = new Changes(localChangesBuffer.entries());

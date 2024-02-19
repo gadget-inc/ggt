@@ -34,7 +34,7 @@ export class Changes extends Map<string, Change> {
   });
 }
 
-export type PrintChangesOptions<Output extends PrintOutput = "stdout"> = Partial<PrintTableOptions<Output>> & {
+export type PrintChangesOptions<Output extends PrintOutput = "stderr"> = Partial<PrintTableOptions<Output>> & {
   /**
    * The tense to use for the change type.
    */
@@ -66,7 +66,7 @@ const deletedSymbol = chalk.redBright("-");
  * @param _ctx - The current context.
  * @see {@linkcode SprintChangesOptions}
  */
-export const printChanges = <const Output extends PrintOutput = "stdout">(
+export const printChanges = <const Output extends PrintOutput = "stderr">(
   _ctx: Context,
   {
     changes,
@@ -126,7 +126,7 @@ export const printChanges = <const Output extends PrintOutput = "stdout">(
   }
 
   let footer: string | undefined;
-  if (changes.size >= 10) {
+  if (changesToPrint.length >= 5) {
     const breakdown = [];
 
     const createdCount = changesToPrint.filter(([, change]) => change.type === "create").length;

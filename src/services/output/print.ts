@@ -13,24 +13,24 @@ import { formatPretty } from "./log/format/pretty.js";
 import { Level } from "./log/level.js";
 import { stderr } from "./stream.js";
 
-export type PrintOutput = "stdout" | "string" | "spinner" | "sticky";
+export type PrintOutput = "stderr" | "string" | "spinner" | "sticky";
 
 // prettier-ignore
 export type PrintOutputReturnType<Output extends PrintOutput | undefined> =
     Output extends undefined ? undefined
-  : Output extends "stdout" ? undefined
+  : Output extends "stderr" ? undefined
   : Output extends "sticky" ? undefined
   : Output extends "string" ? string
   : Output extends "spinner" ? Spinner
   : never;
 
 export type Spinner = {
-  done: (text?: string) => void;
-  succeed: (text?: string) => void;
-  fail: (text?: string) => void;
+  done: (text?: string, frame?: string) => void;
+  succeeded: (text?: string) => void;
+  failed: (text?: string) => void;
 };
 
-export type PrintOptions<Output extends PrintOutput = "stdout"> = {
+export type PrintOptions<Output extends PrintOutput = "stderr"> = {
   /**
    * Whether to ensure a new line is after the content.
    *
@@ -56,11 +56,23 @@ export type PrintOptions<Output extends PrintOutput = "stdout"> = {
      */
     kind?: SpinnerName;
 
+    /**
+     * The position of the spinner in relation to the text.
+     *
+     * @default "start"
+     */
+    position?: "start" | "end";
+
+    /**
+     * The color of the spinner.
+     *
+     * @default "cyan"
+     */
+    color?: ColorName;
+
     prefix?: string;
 
     suffix?: string;
-
-    color?: ColorName;
   };
 
   /**
@@ -161,7 +173,7 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
 
     const {
       json,
-      output = "stdout",
+      output = "stderr",
       ensureNewLine = false,
       ensureNewLineAbove = false,
       boxen: boxenOptions,
@@ -189,11 +201,16 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       return text;
     }
 
+    if (output === "sticky") {
+      stderr.replaceStickyText(text);
+      return;
+    }
+
     if (output === "spinner") {
+      let { kind = "dots", position = "start", color = "cyan", prefix = "", suffix = "" } = spinnerOptions ?? {};
+
       assert(!activeSpinner, "only one spinner can be active at a time");
       activeSpinner = true;
-
-      let { kind = "dots", prefix = "", suffix = "", color = "cyan" } = spinnerOptions ?? {};
 
       if (ensureNewLineAbove) {
         if (!prefix.startsWith("\n")) {
@@ -223,7 +240,13 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       const printNextSpinnerFrame = (): void => {
         frameIndex = ++frameIndex % frames.length;
         const frame = chalk[color](frames[frameIndex]);
-        stderr.replaceStickyText(`${prefix}${frame} ${text}${suffix}${originalStickyText}`);
+
+        // add the spinner frame to the first line of the text
+        const lines = text.split("\n");
+        lines[0] = position === "start" ? `${frame} ${lines[0]}` : `${lines[0]} ${frame}`;
+        const center = lines.join("\n");
+
+        stderr.replaceStickyText(`${prefix}${center}${suffix}${originalStickyText}`);
       };
 
       // start the spinner
@@ -231,30 +254,37 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       const spinnerId = setInterval(() => printNextSpinnerFrame(), interval);
 
       return {
-        done(doneText = text) {
+        done(doneText = text, frame = "") {
           // stop rendering the spinner
           clearInterval(spinnerId);
 
           // set the original sticky text back
           stderr.replaceStickyText(originalStickyText);
 
-          // print the success message
-          stderr.write(`${prefix}${doneText}${suffix}`);
+          if (doneText !== "") {
+            // there's done text to print
+            let center = doneText;
+            if (frame !== "") {
+              // a frame was provided, so add it to the first line of
+              // the done text
+              const lines = center.split("\n");
+              lines[0] = position === "start" ? `${frame} ${lines[0]}` : `${lines[0]} ${frame}`;
+              center = lines.join("\n");
+            }
+
+            // print the done text
+            stderr.write(`${prefix}${center}${suffix}`);
+          }
 
           activeSpinner = false;
         },
-        succeed(successText = text) {
-          this.done(`${chalk.green("✔")} ${successText}`);
+        succeeded(successText = text) {
+          this.done(successText, chalk.green("✔"));
         },
-        fail(failureText = text) {
-          this.done(`${chalk.red("✖")} ${failureText}`);
+        failed(failureText = text) {
+          this.done(failureText, chalk.red("✖"));
         },
       } as Spinner;
-    }
-
-    if (output === "sticky") {
-      stderr.replaceStickyText(text);
-      return;
     }
 
     // FIXME: this is probably wrong (needs to be moved up/down)
@@ -291,7 +321,6 @@ export const printTable = <const Output extends PrintOutput>({
   rows,
   footer,
   borders: borderType = "none",
-  spaceY = 0,
   colAligns = [],
   colWidths = [],
   ...printOptions
@@ -306,28 +335,26 @@ export const printTable = <const Output extends PrintOutput>({
 
   table.push(...rows);
 
-  const padding = "\n".repeat(spaceY + 1);
-
-  let output = "";
+  let text = "";
   if (message) {
-    output += message + padding;
+    text += message;
   }
 
   if (borderType === "none") {
     // remove the left padding
-    output += dedent(table.toString()).slice(1);
+    text += dedent(table.toString()).slice(1);
   } else {
-    output += table.toString();
+    text += table.toString();
   }
 
   if (footer) {
-    output += padding + footer;
+    text += footer;
   }
 
-  return createPrint({ ensureNewLine: true, ...printOptions })(output) as PrintOutputReturnType<Output>;
+  return createPrint({ ensureNewLine: true, ...printOptions })(text) as PrintOutputReturnType<Output>;
 };
 
-export type PrintTableOptions<Output extends PrintOutput = "stdout"> = PrintOptions<Output> & {
+export type PrintTableOptions<Output extends PrintOutput = "stderr"> = PrintOptions<Output> & {
   /**
    * The message to print above the table.
    */
@@ -354,14 +381,6 @@ export type PrintTableOptions<Output extends PrintOutput = "stdout"> = PrintOpti
    * @default "none"
    */
   borders?: "none" | "thin" | "thick";
-
-  /**
-   * The amount of empty lines to print between the message, table,
-   * and footer.
-   *
-   * @default 0
-   */
-  spaceY?: number;
 
   /**
    * The alignment of the content in each column.

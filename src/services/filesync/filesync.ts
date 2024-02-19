@@ -25,8 +25,10 @@ import { config } from "../config/config.js";
 import { println, sprint, sprintln } from "../output/print.js";
 import { filesyncProblemsToProblems, printProblems } from "../output/problems.js";
 import { confirm, select } from "../output/prompt.js";
+import { stderr } from "../output/stream.js";
 import { noop } from "../util/function.js";
 import { serializeError } from "../util/object.js";
+import { delay } from "../util/promise.js";
 import { Changes, printChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
@@ -180,7 +182,7 @@ export class FileSync {
                 tense: "past",
                 ensureNewLineAbove: true,
                 message: sprint`←  ${dayjs().format("hh:mm:ss A")}`,
-                limit: 10,
+                limit: 5,
                 ...printGadgetChangesOptions,
               },
             });
@@ -271,7 +273,7 @@ export class FileSync {
         gadgetFilesVersion,
       };
     } catch (error) {
-      spinner.fail();
+      spinner.failed();
       throw error;
     }
   }
@@ -594,6 +596,21 @@ export class FileSync {
       return;
     }
 
+    const spinner = printChanges(ctx, {
+      changes,
+      tense: "present",
+      ensureNewLineAbove: true,
+      message: sprintln`→  Sending changes`,
+      ...printLocalChangesOptions,
+      output: "spinner",
+      spinner: {
+        position: "end",
+        ...printLocalChangesOptions?.spinner,
+      },
+    });
+
+    await delay("3s");
+
     const {
       publishFileSyncEvents: { remoteFilesVersion, problems: filesyncProblems },
     } = await this.syncJson.edit.mutate({
@@ -613,6 +630,7 @@ export class FileSync {
           calculateDelay: ({ error, computedValue }) => {
             if (isFilesVersionMismatchError(error.response?.body)) {
               // don't retry if we get a files version mismatch error
+              spinner.failed("Files version mismatch");
               return 0;
             }
             return computedValue;
@@ -621,21 +639,27 @@ export class FileSync {
       },
     });
 
-    printChanges(ctx, {
-      changes,
-      tense: "past",
-      ensureNewLineAbove: true,
-      message: sprint`→  ${dayjs().format("hh:mm:ss A")}`,
-      ...printLocalChangesOptions,
-    });
-
     if (BigInt(remoteFilesVersion) > expectedFilesVersion + 1n) {
       // we can't save the remoteFilesVersion because we haven't
       // received the intermediate filesVersions yet
+      spinner.failed("Files version mismatch");
       throw new Error("Files version mismatch");
     }
 
     await this.syncJson.save(remoteFilesVersion);
+
+    const doneText = printChanges(ctx, {
+      changes,
+      tense: "past",
+      ensureNewLineAbove: true,
+      message: sprintln`→  Sent {gray ${dayjs().format("hh:mm:ss A")}}`,
+      ...printLocalChangesOptions,
+      output: "string",
+    });
+
+    spinner.done(doneText);
+
+    stderr.write(doneText + "\n");
 
     if (filesyncProblems.length > 0) {
       let output = sprintln`{red Gadget has detected the following fatal errors with your files:}`;
@@ -746,11 +770,11 @@ export class FileSync {
       `;
 
       await execa("yarn", ["install", "--check-files"], { cwd: this.syncJson.directory.path })
-        .then(() => spinner.succeed())
+        .then(() => spinner.succeeded())
         .catch((error: unknown) => {
           ctx.log.error("yarn install failed", { error });
 
-          spinner.fail();
+          spinner.failed();
           println({ ensureNewLineAbove: true })`
             "yarn install --check-files" failed:
 

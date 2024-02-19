@@ -1,3 +1,4 @@
+import assert from "assert";
 import type { Options as BoxenOptions } from "boxen";
 import boxen from "boxen";
 import chalk, { type ColorName } from "chalk";
@@ -142,6 +143,8 @@ export type print<Options extends PrintOptions<PrintOutput>> = {
   <const NewOptions extends PrintOptions<PrintOutput>>(options: NewOptions): print<Options & NewOptions>;
 };
 
+let activeSpinner = false;
+
 export const createPrint = <const Options extends PrintOptions<PrintOutput>>(options: Options): print<Options> => {
   const print = ((
     templateOrOptions: Options | string | TemplateStringsArray,
@@ -152,10 +155,10 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
     }
 
     const {
+      json,
       output = "stdout",
       ensureNewLine = false,
       ensureNewLineAbove = false,
-      json,
       boxen: boxenOptions,
       spinner: spinnerOptions,
     } = options;
@@ -182,6 +185,9 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
     }
 
     if (output === "spinner") {
+      assert(!activeSpinner, "only one spinner can be active at a time");
+      activeSpinner = true;
+
       let { kind = "dots", prefix = "", suffix = "", color = "cyan" } = spinnerOptions ?? {};
 
       if (ensureNewLineAbove) {
@@ -207,13 +213,12 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       // setup the spinner
       const { frames, interval } = cliSpinners[kind];
       const originalStickyText = stderr.stickyText;
-      stderr.clearStickyText();
 
       let frameIndex = 0;
       const printNextSpinnerFrame = (): void => {
         frameIndex = ++frameIndex % frames.length;
         const frame = chalk[color](frames[frameIndex]);
-        stderr.replaceStickyText(`${prefix}${frame} ${text}${suffix}${originalStickyText}`);
+        // TODO: stderr.replaceStickyText(`${prefix}${frame} ${text}${suffix}${originalStickyText}`);
       };
 
       // start the spinner
@@ -230,7 +235,9 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
           stderr.replaceStickyText(originalStickyText);
 
           // print the success message
-          stderr.write(`${prefix}${chalk.green("✔")} ${text}${suffix}`);
+          // TODO: stderr.write(`${prefix}${chalk.green("✔")} ${text}${suffix}`);
+
+          activeSpinner = false;
 
           return spinner;
         },

@@ -55,12 +55,13 @@ export class Stream {
     // remember if the last line was empty
     this.lastLineWasEmpty = text === "\n";
 
-    const stickyText = this._format(this.#stickyText);
-    if (stickyText === "") {
+    const formattedStickyText = this._format(this.#stickyText);
+    if (formattedStickyText === "") {
       return;
     }
 
-    this._write(stickyText);
+    this._write(formattedStickyText);
+    this._updateStickyTextLinesToClear(formattedStickyText);
   }
 
   replaceStickyText(stickyText: string): void {
@@ -117,13 +118,8 @@ export class Stream {
     this.#stream.write(text);
   }
 
-  private _updateStickyTextLinesToClear(): void {
-    if (this.#stickyText === "") {
-      this.#stickyTextLinesToClear = 0;
-      return;
-    }
-
-    for (const line of stripAnsi(this.#stickyText).split("\n")) {
+  private _updateStickyTextLinesToClear(stickyText = this.#stickyText): void {
+    for (const line of stripAnsi(stickyText).split("\n")) {
       const numCharacters = stringWidth(line, { countAnsiEscapeCodes: true });
       const numLines = Math.ceil(numCharacters / this.#stream.columns);
       this.#stickyTextLinesToClear += Math.max(1, numLines);

@@ -18,6 +18,7 @@ import { notify } from "../services/output/notify.js";
 import { println, sprint } from "../services/output/print.js";
 import { select } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
+import { stdout } from "../services/output/stream.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 import type { PullArgs } from "./pull.js";
@@ -382,6 +383,7 @@ export const command: Command<DevArgs> = async (ctx) => {
 
   ctx.onAbort(async (reason) => {
     ctx.log.info("stopping", { reason });
+    stdout.persistStickyText();
 
     filesyncSubscription.unsubscribe();
     fileWatcher.close();

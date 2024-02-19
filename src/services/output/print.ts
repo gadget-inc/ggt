@@ -200,7 +200,7 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       const printNextSpinnerFrame = (frame?: string): void => {
         frame ??= dots.frames[(i = ++i % dots.frames.length)];
         assert(frame, "frame must be defined");
-        stderr.writeStickyText(`${prefixText}${frame} ${text}${suffixText}`);
+        stderr.replaceStickyText(`${prefixText}${frame} ${text}${suffixText}`);
       };
 
       // start the spinner
@@ -210,44 +210,22 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       // return an Ora compatible object
       const spinner = {
         succeed: () => {
-          // persist the spinner
-          printNextSpinnerFrame(chalk.green("✔"));
-          // spinnerTextUpdate.done();
-          stderr.persistStickyText();
-
           // stop rendering the spinner
           clearInterval(spinnerId);
 
-          // if (stickyText.length > 0) {
-          //   // continue to print the sticky output
-          //   stickyTextUpdate(stickyText);
-          // }
+          // persist the spinner
+          stderr.replaceStickyText(`${prefixText}${chalk.green("✔")} ${text}${suffixText}`);
+          stderr.persistStickyText();
 
           return spinner;
         },
       } as Ora;
 
-      // const spinner = ora(spinner);
-      // spinner.start(content);
-
-      // if (printedStickyOutput) {
-      //   const stopAndPersist = spinner.stopAndPersist.bind(spinner);
-      //   spinner.stopAndPersist = () => {
-      //     spinner.suffixText = originalSuffixText;
-      //     stopAndPersist();
-      //     return spinner;
-      //   };
-      // }
-
-      // ora doesn't print an empty line after the spinner, so we need
-      // to make sure stdout's state reflects that
-      // stderr.lastLineWasEmpty = false;
-
       return spinner;
     }
 
     if (output === "sticky") {
-      stderr.writeStickyText(text);
+      stdout.replaceStickyText(text);
       return;
     }
 

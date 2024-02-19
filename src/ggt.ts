@@ -14,6 +14,18 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       process.once(signal, async () => {
         ctx.log.trace("received signal", { signal });
+
+        // when ggt is run via npx, and the user presses ctrl+c, npx
+        // sends sigint twice in quick succession. in order to prevent
+        // the second sigint from triggering the force exit listener,
+        // we wait a bit before registering it
+        setTimeout(() => {
+          process.once(signal, () => {
+            println(" Exiting immediately");
+            process.exit(1);
+          });
+        }, ms("100ms")).unref();
+
         const spinner = println({ output: "spinner" })`
           Stopping {gray Press Ctrl+C again to force}
         `;
@@ -26,20 +38,8 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
           spinner.succeed();
         } catch (error) {
           spinner.fail();
-          // println` {red ✖} Stopping`;
-          void reportErrorAndExit(ctx, error);
+          await reportErrorAndExit(ctx, error);
         }
-
-        // when ggt is run via npx, and the user presses ctrl+c, npx
-        // sends sigint twice in quick succession. in order to prevent
-        // the second sigint from triggering the force exit listener,
-        // we wait a bit before registering it
-        setTimeout(() => {
-          process.once(signal, () => {
-            println(" Exiting immediately");
-            process.exit(1);
-          });
-        }, ms("100ms")).unref();
       });
     }
 

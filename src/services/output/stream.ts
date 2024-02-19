@@ -63,15 +63,15 @@ export class Stream {
     this._write(stickyText);
   }
 
-  writeStickyText(text: string): void {
-    text = this._format(text);
-    if (text !== this.#stickyText) {
-      // persist the current sticky text before writing new text
-      this.persistStickyText();
+  replaceStickyText(stickyText: string): void {
+    this.clearStickyText();
+    this.#stickyText = stickyText;
+    if (this.#stickyText === "") {
+      return;
     }
 
-    this.#stickyText = text;
-    this.write("");
+    this._write(stickyText);
+    this._updateStickyTextLinesToClear();
   }
 
   clearStickyText(): void {
@@ -124,9 +124,9 @@ export class Stream {
     }
 
     for (const line of stripAnsi(this.#stickyText).split("\n")) {
-      const lineWidth = stringWidth(line, { countAnsiEscapeCodes: true });
-      const lineRowCount = Math.max(1, Math.ceil(lineWidth / this.#stream.columns));
-      this.#stickyTextLinesToClear += lineRowCount;
+      const numCharacters = stringWidth(line, { countAnsiEscapeCodes: true });
+      const numLines = Math.ceil(numCharacters / this.#stream.columns);
+      this.#stickyTextLinesToClear += Math.max(1, numLines);
     }
   }
 

@@ -51,7 +51,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
 
   if (inSync) {
     println({ ensureNewLineAbove: true })`
-      Your environment's files match your local files.
+      Your local files match your environment's files.
     `;
     return;
   }

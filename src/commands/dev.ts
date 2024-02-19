@@ -19,6 +19,7 @@ import { select } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
+import { delay } from "../services/util/promise.js";
 import type { PullArgs } from "./pull.js";
 import type { PushArgs } from "./push.js";
 
@@ -284,18 +285,21 @@ export const command: Command<DevArgs> = async (ctx) => {
       const lastGitBranch = syncJson.gitBranch;
       await syncJson.loadGitBranch();
       if (lastGitBranch !== syncJson.gitBranch) {
-        // the git branch changed; we need all the changes to be sent in
-        // a single batch, so wait a bit in case there are changes the
-        // watcher hasn't seen yet
-        const spinner = println({ output: "spinner", ensureNewLineAbove: true })`
+        // the git branch changed
+        println({ ensureNewLineAbove: true })`
           Your git branch changed:
 
             ${lastGitBranch} → ${syncJson.gitBranch}
+        `;
 
+        // we need all the changes to be sent in a single batch, so wait
+        // a bit in case there are changes the watcher hasn't seen yet
+        const spinner = println({ output: "spinner", ensureNewLineAbove: true })`
           Waiting for file changes to settle.
         `;
 
-        // await delay("3s");
+        await delay("3s");
+
         spinner.done();
       }
 

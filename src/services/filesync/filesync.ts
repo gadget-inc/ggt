@@ -199,6 +199,8 @@ export class FileSync {
       Calculating file changes.
     `;
 
+    await delay("1s");
+
     try {
       const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
         // get the hashes of our local files
@@ -609,7 +611,7 @@ export class FileSync {
       },
     });
 
-    await delay("3s");
+    await delay("1s");
 
     const {
       publishFileSyncEvents: { remoteFilesVersion, problems: filesyncProblems },

@@ -126,7 +126,7 @@ export class SyncJson {
    */
   static async load(
     ctx: Context<SyncJsonArgs>,
-    { directory, printOptions }: { directory: Directory; printOptions: PrintOptions<PrintOutput> },
+    { directory, printOptions }: { directory: Directory; printOptions?: PrintOptions<PrintOutput> },
   ): Promise<SyncJson | undefined> {
     ctx = ctx.child({ name: "sync-json" });
 

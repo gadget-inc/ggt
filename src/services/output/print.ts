@@ -1,10 +1,10 @@
-import assert from "assert";
 import type { Options as BoxenOptions } from "boxen";
 import boxen from "boxen";
 import chalk, { type ColorName } from "chalk";
 import chalkTemplate from "chalk-template";
 import cliSpinners, { type SpinnerName } from "cli-spinners";
 import CliTable3 from "cli-table3";
+import assert from "node:assert";
 import type { Ora } from "ora";
 import { dedent } from "ts-dedent";
 import { config } from "../config/config.js";
@@ -218,7 +218,7 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
       const printNextSpinnerFrame = (): void => {
         frameIndex = ++frameIndex % frames.length;
         const frame = chalk[color](frames[frameIndex]);
-        // TODO: stderr.replaceStickyText(`${prefix}${frame} ${text}${suffix}${originalStickyText}`);
+        stderr.replaceStickyText(`${prefix}${frame} ${text}${suffix}${originalStickyText}`);
       };
 
       // start the spinner
@@ -235,7 +235,7 @@ export const createPrint = <const Options extends PrintOptions<PrintOutput>>(opt
           stderr.replaceStickyText(originalStickyText);
 
           // print the success message
-          // TODO: stderr.write(`${prefix}${chalk.green("✔")} ${text}${suffix}`);
+          stderr.write(`${prefix}${chalk.green("✔")} ${text}${suffix}`);
 
           activeSpinner = false;
 

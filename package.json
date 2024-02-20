@@ -91,7 +91,7 @@
     "@changesets/cli": "^2.27.1",
     "@graphql-codegen/add": "^5.0.2",
     "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/typescript": "^4.0.4",
+    "@graphql-codegen/typescript": "^4.0.5",
     "@graphql-codegen/typescript-operations": "^4.1.2",
     "@swc-node/register": "^1.8.0",
     "@swc/cli": "^0.3.9",

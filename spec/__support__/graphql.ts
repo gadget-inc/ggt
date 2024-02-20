@@ -3,9 +3,9 @@ import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
 import { ZodSchema, z } from "zod";
 import type { App, Environment } from "../../src/services/app/app.js";
-import { Client } from "../../src/services/app/edit/client.js";
-import type { EditError } from "../../src/services/app/edit/error.js";
+import { Client } from "../../src/services/app/client.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.js";
+import type { ClientError } from "../../src/services/app/error.js";
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
 import { noop, unthunk, type Thunk } from "../../src/services/util/function.js";
@@ -15,7 +15,7 @@ import { testApp } from "./app.js";
 import { log } from "./debug.js";
 import { mock } from "./mock.js";
 
-export type NockEditResponseOptions<Operation extends GraphQLQuery | GraphQLMutation> = {
+export type NockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLMutation> = {
   /**
    * The GraphQL operation to nock.
    */
@@ -80,9 +80,9 @@ export type NockEditResponseOptions<Operation extends GraphQLQuery | GraphQLMuta
 /**
  * Sets up a response to an {@linkcode Edit} query or mutation.
  *
- * @see {@linkcode NockEditResponseOptions}
+ * @see {@linkcode NockGraphQLResponseOptions}
  */
-export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
+export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   operation,
   app = testApp,
   env = app.environments[0]!,
@@ -90,8 +90,9 @@ export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   persist = false,
   times = 1,
   statusCode = 200,
+  endpoint,
   ...opts
-}: NockEditResponseOptions<Query>): Scope & { responded: PromiseSignal } => {
+}: NockGraphQLResponseOptions<Query> & { endpoint: string }): Scope & { responded: PromiseSignal } => {
   let subdomain = app.slug;
   if (app.multiEnvironmentEnabled) {
     subdomain += `--${env.name}`;
@@ -120,7 +121,7 @@ export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   const responded = new PromiseSignal();
 
   const scope = nock(`https://${subdomain}.${config.domains.app}`)
-    .post("/edit/api/graphql", (body) => body.query === operation)
+    .post(endpoint, (body) => body.query === operation)
     .matchHeader("cookie", (cookie) => loadCookie() === cookie)
     .matchHeader("x-gadget-environment", env.name)
     .optionally(optional)
@@ -138,8 +139,7 @@ export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
         responded.resolve();
       }
     })
-    .persist(persist) as ReturnType<typeof nockEditResponse>;
-
+    .persist(persist) as ReturnType<typeof nockGraphQLResponse>;
   scope.responded = responded;
 
   return scope;
@@ -179,7 +179,7 @@ export type MockEditSubscription<Query extends GraphQLSubscription = GraphQLSubs
   /**
    * Emits an error to the subscription.
    */
-  emitError(error: EditError): Promisable<void>;
+  emitError(error: ClientError): Promisable<void>;
 
   /**
    * Emits the onComplete event to the subscription.
@@ -220,4 +220,16 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
   });
 
   return mockEditSubscriptions;
+};
+
+export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
+  ...options
+}: NockGraphQLResponseOptions<Query>): ReturnType<typeof nockGraphQLResponse> => {
+  return nockGraphQLResponse({ ...options, endpoint: "/edit/api/graphql" });
+};
+
+export const nockApiResponse = <Query extends GraphQLQuery | GraphQLMutation>({
+  ...options
+}: NockGraphQLResponseOptions<Query>): ReturnType<typeof nockGraphQLResponse> => {
+  return nockGraphQLResponse({ ...options, endpoint: "/api/graphql" });
 };

@@ -1,0 +1,607 @@
+"""
+======================================================
+THIS IS A GENERATED FILE! DO NOT EDIT IT MANUALLY!
+
+This is copied from the gadget repository at packages/api/src/__generated__/app.graphql
+We manually copy in new versions when we need to change it.
+======================================================
+"""
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+"Instruction for establishing a live connection that is updated once the underlying data changes."
+directive @live(
+  """Whether the query should be live or not."""
+  if: Boolean = true
+  """
+  Propose a desired throttle interval ot the server in order to receive updates to at most once per "throttle" milliseconds. The server must not accept this value.
+  """
+  throttle: Int
+) on QUERY
+
+"""
+A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar DateTime
+
+"""
+One upload target to use for the Direct Upload style of sending files to Gadget
+"""
+type DirectUploadToken {
+  """The token to pass to an action to reference the uploaded file."""
+  token: String!
+  """The URL to upload a file to."""
+  url: String!
+}
+
+interface ExecutionError {
+  """The Gadget platform error code for this error."""
+  code: String!
+  """The human facing error message for this error."""
+  message: String!
+  """
+  The stack for any exception that caused the error. Only available for super users.
+  """
+  stack: String
+}
+
+type GadgetAction {
+  acceptsInput: Boolean!
+  apiIdentifier: String!
+  availableInBulk: Boolean!
+  bulkApiIdentifier: String
+  bulkInvokedByIDOnly: Boolean!
+  examples: GadgetActionGraphQLType
+  hasAmbiguousIdentifier: Boolean!
+  hasCreateOrUpdateEffect: Boolean! @deprecated(reason: "This field will be removed. Use `isCreateOrUpdateAction` instead.")
+  hasDeleteRecordEffect: Boolean! @deprecated(reason: "This field will be removed. Use `isDeleteAction` instead.")
+  inputFields: [GadgetObjectField!]!
+  isCreateOrUpdateAction: Boolean!
+  isDeleteAction: Boolean!
+  name: String!
+  operatesWithRecordIdentity: Boolean!
+  possibleTransitions: JSONObject!
+  requiresInput: Boolean!
+  triggers: [GadgetTrigger!]
+}
+
+type GadgetActionGraphQLType {
+  bulkOutputGraphQLTypeSDL: String
+  exampleBulkGraphQLMutation: String
+  exampleBulkGraphQLVariables: JSON
+  exampleBulkImperativeInvocation: String
+  exampleBulkMutation: String @deprecated(reason: "moved to exampleBulkGraphQLMutation")
+  exampleBulkReactHook: String
+  exampleGraphQLMutation: String!
+  exampleGraphQLVariables: JSON!
+  exampleImperativeInvocation: String!
+  exampleJSInputs: JSON!
+  exampleMutation: String! @deprecated(reason: "moved to exampleGraphQLMutation")
+  exampleReactHook: String!
+  inputGraphQLTypeSDL: String
+  inputTypeScriptInterface: String
+  outputGraphQLTypeSDL: String!
+  outputTypeScriptInterface: String!
+}
+
+type GadgetApplicationMeta {
+  allHydrations: JSON!
+  """The roles that the entity making this API call has been assigned"""
+  assignedRoles: [GadgetRole!]!
+  canonicalRenderURL: String!
+  developmentGraphQLEndpoint: String!
+  developmentRenderURL: String!
+  directUploadToken(
+    """
+    An optional unique value for this upload. Useful for forcing simultaneous requests to not be deduplicated through GraphQL client caching.
+    """
+    nonce: String
+  ): DirectUploadToken
+  editURL: String!
+  environmentID: GadgetID!
+  environmentName: String!
+  environmentSlug: String!
+  firstModelForExamples: GadgetModel!
+  globalActions: [GadgetGlobalAction!]!
+  graphQLEndpoint: String!
+  hasGlobalActions: Boolean!
+  hasLegacyEffectCards: Boolean!
+  hasShopifyConnection: Boolean!
+  hasSplitEnvironments: Boolean!
+  hydrations(modelName: String!): HydrationPlan
+  id: GadgetID!
+  jsPackageIdentifier: String!
+  jsPackageTarballURL: String!
+  model(apiIdentifier: String, key: String): GadgetModel
+  models: [GadgetModel!]!
+  name: String!
+  productionGraphQLEndpoint: String!
+  productionRenderURL: String!
+  referencedHydrations: JSON!
+  roles: [GadgetRole!]!
+  sessionID: String @deprecated(reason: "The current session is available as the root field `currentSession` on the root Query object, which has the ID as well as other attributes of the session.")
+  shopifyConnectionApiVersion: String
+  slug: String!
+}
+
+type GadgetBelongsToConfig implements GadgetFieldConfigInterface {
+  fieldType: GadgetFieldType!
+  isConfigured: Boolean!
+  isInverseConfigured: Boolean!
+  relatedModel: GadgetModel
+  relatedModelKey: String
+}
+
+type GadgetDateTimeConfig implements GadgetFieldConfigInterface {
+  fieldType: GadgetFieldType!
+  includeTime: Boolean!
+}
+
+type GadgetEnumConfig implements GadgetFieldConfigInterface {
+  allowMultiple: Boolean!
+  allowOther: Boolean!
+  fieldType: GadgetFieldType!
+  options: [GadgetEnumOption!]!
+}
+
+type GadgetEnumOption {
+  color: String!
+  name: String!
+}
+
+interface GadgetField {
+  apiIdentifier: String!
+  configuration: GadgetFieldConfigInterface!
+  fieldType: GadgetFieldType!
+  hasDefault: Boolean!
+  name: String!
+  required: Boolean!
+  requiredArgumentForInput: Boolean!
+}
+
+"""The common bits that all field configuration types share"""
+interface GadgetFieldConfigInterface {
+  fieldType: GadgetFieldType!
+}
+
+"""
+The type of a given field of a model or other in-transit object within Gadget's type system
+"""
+enum GadgetFieldType {
+  Any
+  Array
+  BelongsTo
+  Boolean
+  Code
+  Color
+  Computed
+  DateTime
+  Email
+  EncryptedString
+  Enum
+  File
+  HasMany
+  HasManyThrough
+  HasOne
+  ID
+  JSON
+  Money
+  Null
+  Number
+  Object
+  Password
+  RecordState
+  RichText
+  RoleAssignments
+  String
+  URL
+  Vector
+}
+
+type GadgetFieldUsageExample {
+  exampleGraphQLMutation: String!
+  exampleGraphQLVariables: JSON!
+  exampleImperativeInvocation: String!
+  exampleReactHook: String!
+}
+
+type GadgetGenericFieldConfig implements GadgetFieldConfigInterface {
+  fieldType: GadgetFieldType!
+}
+
+type GadgetGlobalAction {
+  acceptsInput: Boolean!
+  apiIdentifier: String!
+  examples: GadgetGlobalActionGraphQLType
+  name: String!
+  requiresInput: Boolean!
+  triggers: [GadgetTrigger!]
+}
+
+type GadgetGlobalActionGraphQLType {
+  exampleGraphQLMutation: String!
+  exampleGraphQLVariables: JSON!
+  exampleImperativeInvocation: String!
+  exampleJSInputs: JSON!
+  exampleMutation: String! @deprecated(reason: "moved to exampleGraphQLMutation")
+  exampleReactHook: String!
+  inputGraphQLTypeSDL: String
+  inputTypeScriptInterface: String
+  outputGraphQLTypeSDL: String!
+  outputTypeScriptInterface: String!
+}
+
+type GadgetHasManyConfig implements GadgetFieldConfigInterface {
+  fieldType: GadgetFieldType!
+  isConfigured: Boolean!
+  isInverseConfigured: Boolean!
+  relatedModel: GadgetModel
+  relatedModelKey: String
+}
+
+"""The ID of a record in Gadget"""
+scalar GadgetID
+
+type GadgetModel {
+  action(apiIdentifier: String!): GadgetAction
+  actions: [GadgetAction!]!
+  apiIdentifier: String!
+  currentSingletonApiIdentifier: String
+  exampleFilterQuery: String!
+  exampleFindMostRecentlyCreatedQuery: String!
+  exampleFullFindFirstQuery: String!
+  exampleFullFindManyQuery: String!
+  exampleFullFindOneQuery: String!
+  exampleInternalBulkCreateMutation: String!
+  exampleInternalCreateMutation: String!
+  exampleInternalDeleteManyMutation: String!
+  exampleInternalDeleteMutation: String!
+  exampleInternalFindFirstQuery: String!
+  exampleInternalFindManyQuery: String!
+  exampleInternalFindOneQuery: String!
+  exampleInternalUpdateMutation: String!
+  examplePaginationQuery: String!
+  exampleSearchQuery: String!
+  exampleSimpleFindManyQuery: String!
+  exampleSimpleFindOneQuery: String!
+  fields: [GadgetModelField!]!
+  filterGraphQLTypeName: String
+  filterGraphQLTypeSDL: String
+  filterable: Boolean!
+  graphQLTypeName: String!
+  graphQLTypeSDL: String!
+  initialCreatedState: String
+  key: String!
+  name: String!
+  pluralApiIdentifier: String!
+  pluralName: String!
+  searchable: Boolean!
+  sortGraphQLTypeName: String
+  sortGraphQLTypeSDL: String
+  sortable: Boolean!
+  typescriptTypeInterface: String!
+  typescriptTypeInterfaceName: String!
+}
+
+"""One field of a Gadget model"""
+type GadgetModelField implements GadgetField {
+  apiIdentifier: String!
+  configuration: GadgetFieldConfigInterface!
+  examples: GadgetModelFieldExamples!
+  fieldType: GadgetFieldType!
+  filterable: Boolean!
+  hasDefault: Boolean!
+  isUniqueField: Boolean!
+  name: String!
+  required: Boolean!
+  requiredArgumentForInput: Boolean!
+  sortable: Boolean!
+}
+
+type GadgetModelFieldExamples {
+  createNestedInParent: GadgetFieldUsageExample
+  linkExistingChild: GadgetFieldUsageExample
+  linkNewChild: GadgetFieldUsageExample
+  linkToExistingParent: GadgetFieldUsageExample
+}
+
+"""One field of an action input or other transitory object in Gadget"""
+type GadgetObjectField implements GadgetField {
+  apiIdentifier: String!
+  configuration: GadgetFieldConfigInterface!
+  fieldType: GadgetFieldType!
+  hasDefault: Boolean!
+  name: String!
+  required: Boolean!
+  requiredArgumentForInput: Boolean!
+}
+
+type GadgetObjectFieldConfig implements GadgetFieldConfigInterface {
+  fieldType: GadgetFieldType!
+  fields: [GadgetModelField!]!
+  name: String
+}
+
+"""
+Represents one of the roles an identity in the system can be entitled to
+"""
+type GadgetRole {
+  key: String!
+  name: String!
+  order: Int!
+  selectable: Boolean!
+}
+
+type GadgetTrigger {
+  specID: String!
+}
+
+"""
+Instructions for a client to turn raw transport types (like strings) into useful client side types (like Dates). Unstable and not intended for developer use.
+"""
+scalar HydrationPlan
+
+type InternalBulkCreateSessionsResult {
+  errors: [ExecutionError!]
+  sessions: [InternalSessionRecord]
+  success: Boolean!
+}
+
+type InternalCreateSessionResult {
+  errors: [ExecutionError!]
+  session: InternalSessionRecord
+  success: Boolean!
+}
+
+type InternalDeleteManySessionResult {
+  errors: [ExecutionError!]
+  success: Boolean!
+}
+
+type InternalDeleteSessionResult {
+  errors: [ExecutionError!]
+  session: InternalSessionRecord
+  success: Boolean!
+}
+
+type InternalMutations {
+  """Acquire a backend lock, returning only once the lock has been acquired"""
+  acquireLock(
+    """Lock name to acquire"""
+    lock: String!
+  ): LockOperationResult!
+  bulkCreateSessions(sessions: [InternalSessionInput]!): InternalBulkCreateSessionsResult
+  commitTransaction: String!
+  createSession(session: InternalSessionInput): InternalCreateSessionResult
+  deleteManySession: InternalDeleteManySessionResult
+  deleteSession(id: GadgetID!): InternalDeleteSessionResult
+  rollbackTransaction: String!
+  startTransaction: String!
+  updateSession(id: GadgetID!, session: InternalSessionInput): InternalUpdateSessionResult
+}
+
+type InternalQueries {
+  """
+  Currently open platform transaction details, or null if no transaction is open
+  """
+  currentTransactionDetails: JSONObject
+  listSession(
+    """Returns the items in the list that come after the specified cursor."""
+    after: String
+    """Returns the items in the list that come before the specified cursor."""
+    before: String
+    """Returns the first n items from the list."""
+    first: Int
+    """Returns the last n items from the list."""
+    last: Int
+    """
+    A list of field api identifiers to return for each record. If not specified, all fields except for the computed fields on the record are returned.
+    """
+    select: [String!]
+  ): InternalSessionRecordConnection!
+  session(
+    id: GadgetID!
+    """
+    A list of field api identifiers to return. If not specified, all fields except for the computed fields on the record are returned.
+    """
+    select: [String!]
+  ): InternalSessionRecord
+}
+
+input InternalSessionInput {
+  createdAt: DateTime
+  id: GadgetID
+  """A string list of Gadget platform Role keys to assign to this record"""
+  roles: [String!]
+  state: RecordState
+  stateHistory: RecordState
+  updatedAt: DateTime
+}
+
+"""
+Represents one session result record in internal api calls. Returns a JSON blob of all the record's fields.
+"""
+scalar InternalSessionRecord
+
+"""A connection to a list of InternalSessionRecord items."""
+type InternalSessionRecordConnection {
+  """A list of edges."""
+  edges: [InternalSessionRecordEdge!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a InternalSessionRecord connection."""
+type InternalSessionRecordEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: InternalSessionRecord!
+}
+
+type InternalUpdateSessionResult {
+  errors: [ExecutionError!]
+  session: InternalSessionRecord
+  success: Boolean!
+}
+
+"""
+This Error object represents one individual failed validation for a record field. It has a message which is appropriate for display to a user, and lists the apiIdentifier of the field in question. The `apiIdentifier` for the field is not guaranteed to exist on the model.
+"""
+type InvalidFieldError {
+  """The apiIdentifier of the field this error occurred on."""
+  apiIdentifier: String!
+  """The human facing error message for this error."""
+  message: String!
+}
+
+"""
+This object is returned as an error when a record doesn't pass the defined validations on the model. The validation messages for each of the invalid fields are available via the other fields on this error type.
+"""
+type InvalidRecordError implements ExecutionError {
+  """The Gadget platform error code for this InvalidRecordError."""
+  code: String!
+  """The human facing error message for this error."""
+  message: String!
+  """The model of the record which failed validation"""
+  model: GadgetModel
+  """
+  The record which failed validation, if available. Returns all the owned fields of the record -- no sub-selections are required or possible. Only available for super users.
+  """
+  record: JSONObject
+  """The stack for any exception that caused the error"""
+  stack: String
+  """
+  A list of InvalidFieldError objects describing each of the errors encountered on the invalid record.
+  """
+  validationErrors: [InvalidFieldError!]
+  """
+  An object mapping field apiIdentifiers to arrays of validation error message strings for that field, as a JSON object. The object may have keys that don't correspond exactly to field apiIdentifiers if added by validations, and the object may have missing keys if no errors were encountered for that field.
+  """
+  validationErrorsByField: JSONObject
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+"""
+The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSONObject
+
+type LockOperationResult {
+  """Any errors encountered during the locking/unlocking operation"""
+  errors: [ExecutionError!]
+  """Whether the lock operation succeeded"""
+  success: Boolean!
+}
+
+type Mutation {
+  """
+  Meta information about the application, like it's name, schema, and other internal details.
+  """
+  gadgetMeta: GadgetApplicationMeta!
+  internal: InternalMutations
+}
+
+"""Information about pagination in a connection."""
+type PageInfo {
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
+}
+
+type Query {
+  currentSession: Session
+  """
+  Meta information about the application, like it's name, schema, and other internal details.
+  """
+  gadgetMeta: GadgetApplicationMeta!
+  internal: InternalQueries
+  session(id: GadgetID!): Session
+  sessions(
+    """Returns the items in the list that come after the specified cursor."""
+    after: String
+    """Returns the items in the list that come before the specified cursor."""
+    before: String
+    """Returns the first n items from the list."""
+    first: Int
+    """Returns the last n items from the list."""
+    last: Int
+  ): SessionConnection!
+}
+
+"""
+Represents the state of one record in a Gadget database. Represented as either a string or set of strings nested in objects.
+"""
+scalar RecordState
+
+"""
+A named group of permissions granted to a particular actor in the system. Managed in the Gadget editor.
+"""
+type Role {
+  """
+  The stable identifier for this role. Null if the role has since been deleted.
+  """
+  key: String!
+  """The human readable name for this role. Can be changed."""
+  name: String!
+}
+
+type Session {
+  """
+  Get all the fields for this record. Useful for not having to list out all the fields you want to retrieve, but slower.
+  """
+  _all: JSONObject!
+  """
+  The time at which this record was first created. Set once upon record creation and never changed. Managed by Gadget.
+  """
+  createdAt: DateTime!
+  """
+  The globally unique, unchanging identifier for this record. Assigned and managed by Gadget.
+  """
+  id: GadgetID
+  roles: [Role!]
+  """
+  The time at which this record was last changed. Set each time the record is successfully acted upon by an action. Managed by Gadget.
+  """
+  updatedAt: DateTime!
+}
+
+"""A connection to a list of Session items."""
+type SessionConnection {
+  """A list of edges."""
+  edges: [SessionEdge!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a Session connection."""
+type SessionEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Session!
+}
+
+"""
+This Error object is returned for errors which don't have other specific handling. It has a message which is safe to display to users, but is often technical in nature. It also has a `code` field which is documented in the Gadget API Error Codes docs.
+"""
+type SimpleError implements ExecutionError {
+  """The Gadget platform error code for this error."""
+  code: String!
+  """The human facing error message for this error."""
+  message: String!
+  """The stack for any exception that caused the error"""
+  stack: String
+}

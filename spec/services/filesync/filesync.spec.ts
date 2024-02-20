@@ -8,8 +8,8 @@ import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args as DevArgs } from "../../../src/commands/dev.js";
 import { args as PullArgs } from "../../../src/commands/pull.js";
 import { args as PushArgs } from "../../../src/commands/push.js";
-import { EditError } from "../../../src/services/app/edit/error.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../src/services/app/edit/operation.js";
+import { ClientError } from "../../../src/services/app/error.js";
 import type { Context } from "../../../src/services/command/context.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions, type Directory } from "../../../src/services/filesync/directory.js";
@@ -22,10 +22,10 @@ import { noop } from "../../../src/services/util/function.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
-import { nockEditResponse } from "../../__support__/edit.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
 import { defaultFileMode, expectPublishVariables, expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
+import { nockEditResponse } from "../../__support__/graphql.js";
 import { mock, mockOnce } from "../../__support__/mock.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
@@ -2033,7 +2033,7 @@ describe("isFilesVersionMismatchError", () => {
 
   it("returns true given an EditGraphQLError", () => {
     const query = "query { foo }" as GraphQLQuery;
-    expect(isFilesVersionMismatchError(new EditError(query, [{ message: "Files version mismatch" }]))).toBe(true);
+    expect(isFilesVersionMismatchError(new ClientError(query, [{ message: "Files version mismatch" }]))).toBe(true);
   });
 
   it("returns false given an object with a message that does not start with 'Files version mismatch'", () => {

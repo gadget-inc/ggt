@@ -1,7 +1,7 @@
 overwrite: true
 generates:
   src/__generated__/graphql.ts:
-    schema: src/__generated__/edit.graphql
+    schema: src/__generated__/*.graphql
     documents:
       - "src/**/*.ts"
       - "!src/__generated__/**"

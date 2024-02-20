@@ -4,6 +4,8 @@ import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { loadCookie } from "../http/auth.js";
 import { http } from "../http/http.js";
+import { Api } from "./api/api.js";
+import { GADGET_META_MODELS_QUERY } from "./api/operation.js";
 
 export const EnvironmentType = Object.freeze({
   Development: "development",
@@ -31,7 +33,13 @@ export const App = z.object({
   environments: z.array(Environment),
 });
 
+export const ModelApiIdentifier = z.object({
+  apiIdentifier: z.string(),
+});
+
 export type App = z.infer<typeof App>;
+
+export type ModelApiIdentifier = z.infer<typeof ModelApiIdentifier>;
 
 /**
  * Retrieves a list of apps for the given user. If the user is not
@@ -58,4 +66,19 @@ export const getApps = async (ctx: Context): Promise<App[]> => {
   });
 
   return z.array(App).parse(json);
+};
+
+export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []> => {
+  const cookie = loadCookie();
+  if (!cookie) {
+    return [];
+  }
+
+  assert(ctx.user, "must get user before getting models");
+
+  const api = new Api(ctx);
+
+  const result = await api.query({ query: GADGET_META_MODELS_QUERY });
+
+  return z.array(ModelApiIdentifier).parse(result.gadgetMeta.models);
 };

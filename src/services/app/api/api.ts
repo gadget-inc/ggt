@@ -1,27 +1,27 @@
 import type { ExecutionResult } from "graphql-ws";
 import type { Promisable } from "type-fest";
 import type { Context } from "../../command/context.js";
-import { type HttpOptions } from "../../http/http.js";
+import type { HttpOptions } from "../../http/http.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { Client } from "../client.js";
+import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../edit/operation.js";
 import { ClientError } from "../error.js";
-import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
 
-export class Edit {
+export class Api {
   /**
    * The {@linkcode Context} that was used to create this instance.
    */
   readonly ctx: Context;
 
   /**
-   * The client used to make requests to Gadget's /edit/api/graphql
+   * The client used to make requests to Gadget's /api/graphql
    * endpoint.
    */
   #client: Client;
 
   constructor(ctx: Context) {
-    this.ctx = ctx.child({ name: "edit" });
-    this.#client = new Client(this.ctx, "/edit/api/graphql");
+    this.ctx = ctx.child({ name: "api" });
+    this.#client = new Client(this.ctx, "/api/graphql");
   }
 
   /**

@@ -7,12 +7,12 @@ import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
 import { expectStdout } from "../../spec/__support__/stream.js";
 import { args, command as deploy } from "../../src/commands/deploy.js";
-import { EditError } from "../../src/services/app/edit/error.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
+import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
 import { confirm } from "../../src/services/output/prompt.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeMockEditSubscriptions } from "../__support__/edit.js";
+import { makeMockEditSubscriptions } from "../__support__/graphql.js";
 import { mock } from "../__support__/mock.js";
 import { loginTestUser } from "../__support__/user.js";
 
@@ -486,7 +486,7 @@ describe("deploy", () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
-    const error = new EditError(PUBLISH_STATUS_SUBSCRIPTION, [
+    const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, [
       {
         message: "GGT_PAYMENT_REQUIRED: Payment is required for this application.",
       },
@@ -517,7 +517,7 @@ describe("deploy", () => {
       wasClean: true,
     };
 
-    const error = new EditError(PUBLISH_STATUS_SUBSCRIPTION, cause);
+    const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, cause);
 
     await deploy(ctx);
     const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);

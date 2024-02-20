@@ -9,7 +9,7 @@ import { args as DevArgs } from "../../../src/commands/dev.js";
 import { args as PullArgs } from "../../../src/commands/pull.js";
 import { args as PushArgs } from "../../../src/commands/push.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../src/services/app/edit/operation.js";
-import { GadgetError } from "../../../src/services/app/error.js";
+import { ClientError } from "../../../src/services/app/error.js";
 import type { Context } from "../../../src/services/command/context.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions, type Directory } from "../../../src/services/filesync/directory.js";
@@ -2033,7 +2033,7 @@ describe("isFilesVersionMismatchError", () => {
 
   it("returns true given an EditGraphQLError", () => {
     const query = "query { foo }" as GraphQLQuery;
-    expect(isFilesVersionMismatchError(new GadgetError(query, [{ message: "Files version mismatch" }]))).toBe(true);
+    expect(isFilesVersionMismatchError(new ClientError(query, [{ message: "Files version mismatch" }]))).toBe(true);
   });
 
   it("returns false given an object with a message that does not start with 'Files version mismatch'", () => {

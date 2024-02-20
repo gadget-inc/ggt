@@ -9,7 +9,7 @@ import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString } from "
 import { serializeError } from "../util/object.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
 
-export class GadgetError extends CLIError {
+export class ClientError extends CLIError {
   isBug = IsBug.MAYBE;
 
   override cause: string | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent;

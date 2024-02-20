@@ -4,11 +4,10 @@ import { getModels } from "../services/app/app.js";
 import { ArgError } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
-import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { select } from "../services/output/prompt.js";
-import { sprint, sprintln2, sprintlns2 } from "../services/output/sprint.js";
+import { sprint, sprintln2 } from "../services/output/sprint.js";
 import { sortBySimilar } from "../services/util/collection.js";
-import { args as PushArgs } from "./push.js";
 
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
@@ -30,7 +29,7 @@ export const usage: Usage = (ctx) => {
     
     {bold FLAGS}
       -a, --app=<name>      The application to open
-      -e, --from=<env>      The environment to open
+      -e, --env=<env>       The environment to open
           --show-all        Shows all available models to open
     
     Run "ggt open --help" for more information.
@@ -86,7 +85,7 @@ export const usage: Usage = (ctx) => {
 export type OpenArgs = typeof args;
 
 export const args = {
-  ...PushArgs,
+  ...SyncJsonArgs,
   "--show-all": { type: Boolean },
 };
 
@@ -98,14 +97,11 @@ export const command: Command<OpenArgs> = async (ctx) => {
   }
 
   if (ctx.args._.length === 0) {
-    const possibleOpenSubcommands = ["logs", "data", "schema", "permissions"];
-
-    throw new ArgError(
-      sprintlns2`
-    Missing {cyanBright subcommand} for ggt open {cyanBright [subcommand]}.
-    Run {yellow ggt open -help} for more information or pass in a subcommand:
-            `.concat(`  • ${chalk.cyanBright(possibleOpenSubcommands.join("\n  • "))}`),
-    );
+    ctx.log.println`
+    Opened editor for environment ${chalk.cyanBright(syncJson.env.name)} please check your browser.
+  `;
+    await open(`https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}`);
+    return;
   }
 
   switch (ctx.args._[0]) {
@@ -113,9 +109,6 @@ export const command: Command<OpenArgs> = async (ctx) => {
       ctx.log.println`
     Opened log viewer for environment ${chalk.cyanBright(syncJson.env.name)} please check your browser.
   `;
-
-      console.log(`https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}/logs`);
-
       await open(`https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}/logs`);
 
       break;
@@ -179,7 +172,7 @@ export const command: Command<OpenArgs> = async (ctx) => {
            Invalid subcommand for ggt open. 
            Did you mean ggt open {cyanBright logs}, {cyanBright data}, {cyanBright schema} or {cyanBright permissions}?
            
-           Run {yellow ggt open -help} for more information
+           Run {yellow ggt open --help} for more information
         `,
       );
   }

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
 import { args, command as sync, type DevArgs } from "../../src/commands/dev.js";
 import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
-import { GadgetError as Error } from "../../src/services/app/error.js";
+import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
@@ -1199,7 +1199,7 @@ describe("dev", () => {
 
     await sync(ctx);
 
-    const error = new Error(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
+    const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
 
     const gadgetChangesSubscription = expectGadgetChangesSubscription();
     await gadgetChangesSubscription.emitError(error);

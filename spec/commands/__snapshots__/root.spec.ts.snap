@@ -356,7 +356,7 @@ EXAMPLES
 
 FLAGS
   -a, --app=<name>      The application to open
-  -e, --from=<env>      The environment to open
+  -e, --env=<env>       The environment to open
       --show-all        Shows all available models to open
 
 Run \\"ggt open --help\\" for more information.

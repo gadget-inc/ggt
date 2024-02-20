@@ -12,7 +12,7 @@ import { http, type HttpOptions } from "../http/http.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
 import { isObject } from "../util/is.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
-import { GadgetError as Error } from "./error.js";
+import { ClientError } from "./error.js";
 
 enum ConnectionStatus {
   CONNECTED,
@@ -124,7 +124,7 @@ export class Client {
       subscription: Subscription;
       variables?: Thunk<Subscription["Variables"]> | null;
       onResponse: (response: ExecutionResult<Subscription["Data"], Subscription["Extensions"]>) => Promisable<void>;
-      onError: (error: Error) => Promisable<void>;
+      onError: (error: ClientError) => Promisable<void>;
       onComplete?: () => Promisable<void>;
     },
   ): () => void {
@@ -138,7 +138,7 @@ export class Client {
     });
 
     const queue = new PQueue({ concurrency: 1 });
-    const onError = (error: unknown): Promisable<void> => optionsOnError(new Error(subscription, error));
+    const onError = (error: unknown): Promisable<void> => optionsOnError(new ClientError(subscription, error));
 
     const unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(request, {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -199,7 +199,7 @@ export class Client {
 
       return json as Operation["Response"];
     } catch (error) {
-      throw new Error(request.operation, error);
+      throw new ClientError(request.operation, error);
     }
   }
 

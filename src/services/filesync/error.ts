@@ -1,5 +1,5 @@
 import fs from "fs-extra";
-import { GadgetError as Error } from "../app/error.js";
+import { ClientError } from "../app/error.js";
 import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
 import { CLIError, IsBug } from "../output/report.js";
@@ -126,7 +126,7 @@ export class DeployDisallowedError extends CLIError {
 }
 
 export const isFilesVersionMismatchError = (error: unknown): boolean => {
-  if (error instanceof Error) {
+  if (error instanceof ClientError) {
     error = error.cause;
   }
   if (isGraphQLResult(error)) {

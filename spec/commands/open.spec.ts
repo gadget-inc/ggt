@@ -3,14 +3,12 @@ import open from "open";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { nockTestApps, testApp } from "../../spec/__support__/app.js";
 import { makeContext } from "../../spec/__support__/context.js";
-import { expectError } from "../../spec/__support__/error.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { mock } from "../../spec/__support__/mock.js";
 import { expectStdout } from "../../spec/__support__/stream.js";
 import { loginTestUser, testUser } from "../../spec/__support__/user.js";
 import { args, command as openCommand } from "../../src/commands/open.js";
 import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
-import { ArgError } from "../../src/services/command/arg.js";
 import type { Context } from "../../src/services/command/context.js";
 import { select } from "../../src/services/output/prompt.js";
 import * as user from "../../src/services/user/user.js";
@@ -33,6 +31,20 @@ describe("open", () => {
   });
 
   describe("opens the browser", () => {
+    it("opens a browser to the app's editor", async () => {
+      mock(user, "getUser", () => testUser);
+      ctx = makeContext({ parse: args, argv: ["open", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+
+      await openCommand(ctx);
+
+      expect(open).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testApp.environments[0]!.name}`);
+
+      expectStdout().toMatchInlineSnapshot(`
+          "Opened editor for environment development please check your browser.
+          "
+        `);
+    });
+
     it("opens a browser to the app's logs viewer", async () => {
       mock(user, "getUser", () => testUser);
       ctx = makeContext({ parse: args, argv: ["open", "logs", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
@@ -136,22 +148,6 @@ describe("open", () => {
         "
       `);
     });
-  });
-
-  it("displays the possible subcommands when one is not passed", async () => {
-    const error = await expectError(() => openCommand(ctx));
-
-    expect(error).toBeInstanceOf(ArgError);
-    expect(error.message).toMatchInlineSnapshot(`
-      "
-      Missing subcommand for ggt open [subcommand].
-      Run ggt open -help for more information or pass in a subcommand:
-
-        • logs
-        • data
-        • schema
-        • permissions"
-    `);
   });
 
   it("displays the closest match for a model that does not exist", async () => {

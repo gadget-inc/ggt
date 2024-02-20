@@ -5,7 +5,7 @@ import { ZodSchema, z } from "zod";
 import type { App, Environment } from "../../src/services/app/app.js";
 import { Client } from "../../src/services/app/client.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.js";
-import type { GadgetError as Error } from "../../src/services/app/error.js";
+import type { ClientError } from "../../src/services/app/error.js";
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
 import { noop, unthunk, type Thunk } from "../../src/services/util/function.js";
@@ -179,7 +179,7 @@ export type MockEditSubscription<Query extends GraphQLSubscription = GraphQLSubs
   /**
    * Emits an error to the subscription.
    */
-  emitError(error: Error): Promisable<void>;
+  emitError(error: ClientError): Promisable<void>;
 
   /**
    * Emits the onComplete event to the subscription.

@@ -5,7 +5,7 @@ import type { HttpOptions } from "../../http/http.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { Client } from "../client.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../edit/operation.js";
-import { GadgetError as Error } from "../error.js";
+import { ClientError } from "../error.js";
 
 export class Api {
   /**
@@ -63,11 +63,11 @@ export class Api {
     });
 
     if (response.errors) {
-      throw new Error(query, response.errors);
+      throw new ClientError(query, response.errors);
     }
 
     if (!response.data) {
-      throw new Error(query, "Query response did not contain data");
+      throw new ClientError(query, "Query response did not contain data");
     }
 
     return response.data;
@@ -101,11 +101,11 @@ export class Api {
     const response = await this.#client.execute(ctx, { operation: mutation, variables, ...options });
 
     if (response.errors) {
-      throw new Error(mutation, response.errors);
+      throw new ClientError(mutation, response.errors);
     }
 
     if (!response.data) {
-      throw new Error(mutation, "Mutation response did not contain data");
+      throw new ClientError(mutation, "Mutation response did not contain data");
     }
 
     return response.data;
@@ -129,7 +129,7 @@ export class Api {
     subscription: Subscription;
     variables?: Thunk<Subscription["Variables"]> | null;
     onData: (data: Subscription["Data"]) => Promisable<void>;
-    onError: (error: Error) => Promisable<void>;
+    onError: (error: ClientError) => Promisable<void>;
     onComplete?: () => Promisable<void>;
   }): EditSubscription<Subscription> {
     const name = options.subscription.split(/ |\(/, 2)[1];
@@ -141,13 +141,13 @@ export class Api {
     const onResponse = async (response: ExecutionResult<Subscription["Data"], Subscription["Extensions"]>): Promise<void> => {
       if (response.errors) {
         unsubscribe();
-        await options.onError(new Error(options.subscription, response.errors));
+        await options.onError(new ClientError(options.subscription, response.errors));
         return;
       }
 
       if (!response.data) {
         unsubscribe();
-        await options.onError(new Error(options.subscription, "Subscription response did not contain data"));
+        await options.onError(new ClientError(options.subscription, "Subscription response did not contain data"));
         return;
       }
 

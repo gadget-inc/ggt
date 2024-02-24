@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable no-irregular-whitespace */
 import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
@@ -11,6 +11,8 @@ import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operati
 import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
 import { confirm } from "../../src/services/output/prompt.js";
+import * as spinner from "../../src/services/output/spinner.js";
+import { noop } from "../../src/services/util/function.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
 import { mock } from "../__support__/mock.js";
@@ -151,6 +153,7 @@ describe("deploy", () => {
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+
       Problems found
 
       • routes/GET-hello.js 1 problem
@@ -201,6 +204,7 @@ describe("deploy", () => {
     expectStdout().toMatchInlineSnapshot(`
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
 
       Problems found
 
@@ -327,6 +331,7 @@ describe("deploy", () => {
     expectStdout().toMatchInlineSnapshot(`
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
 
       Problems found
 
@@ -477,18 +482,24 @@ describe("deploy", () => {
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+
       Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "
     `);
   });
 
   it("can not deploy if the maximum number of applications has been reached", async () => {
+    const fail = vi.spyOn(spinner, "failSpinner");
+
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
     const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, [
       {
-        message: "GGT_PAYMENT_REQUIRED: Payment is required for this application.",
+        message: "GGT_PAYMENT_REQUIRED: Production environment limit reached. Upgrade your plan to deploy.",
+        extensions: {
+          requiresUpgrade: true,
+        },
       },
     ]);
 
@@ -500,7 +511,41 @@ describe("deploy", () => {
     expectStdout().toMatchInlineSnapshot(`
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
-      Production environment limit reached. Upgrade your plan to deploy
+
+      "
+    `);
+
+    expect(fail).toHaveBeenCalledWith("Production environment limit reached. Upgrade your plan to deploy.");
+  });
+
+  it("prompts the user to confirm if there is going to be a deploy charge", async () => {
+    const confirmSpy = mock(confirm, noop);
+
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditSubscriptions();
+    const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, [
+      {
+        message: "GGT_PAYMENT_REQUIRED: Deploying this app to production will add $25.00 to your existing monthly plan.",
+        extensions: {
+          requiresAdditionalCharge: true,
+        },
+      },
+    ]);
+
+    await deploy(ctx);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitError(error);
+
+    expect(confirmSpy).toHaveBeenCalledWith(expect.anything(), {
+      message: "Deploying this app to production will add $25.00 to your existing monthly plan.\nDo you wish to proceed?",
+    });
+
+    expectStdout().toMatchInlineSnapshot(`
+      "
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
       "
     `);
   });
@@ -571,6 +616,7 @@ describe("deploy", () => {
     expectStdout().toMatchInlineSnapshot(`
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
 
       An error occurred while communicating with Gadget
       "
@@ -649,6 +695,7 @@ describe("deploy", () => {
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+
       GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
 
       Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
@@ -712,6 +759,7 @@ describe("deploy", () => {
     expectStdout().toMatchInlineSnapshot(`
       "
       Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
 
       Gadget has detected the following fatal errors with your files:
 

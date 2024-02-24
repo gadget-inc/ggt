@@ -58,6 +58,65 @@ export type AddUserTagResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type BackgroundAction = {
+  __typename?: 'BackgroundAction';
+  actionApiIdentifier: Scalars['String']['output'];
+  attempts: Array<BackgroundActionAttempt>;
+  cancelledAt?: Maybe<Scalars['DateTime']['output']>;
+  createdDate: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  lastAttemptFinishedAt?: Maybe<Scalars['DateTime']['output']>;
+  lastAttemptStartedAt?: Maybe<Scalars['DateTime']['output']>;
+  lastRestartedAt?: Maybe<Scalars['DateTime']['output']>;
+  nextAttemptStartsAfter?: Maybe<Scalars['DateTime']['output']>;
+  payload: Scalars['JSON']['output'];
+  priority: Scalars['String']['output'];
+  queue?: Maybe<Scalars['String']['output']>;
+  retryPolicy: Scalars['JSON']['output'];
+  state: BackgroundActionState;
+  type: Scalars['String']['output'];
+};
+
+export type BackgroundActionAttempt = {
+  __typename?: 'BackgroundActionAttempt';
+  attemptNumber: Scalars['Int']['output'];
+  details: Scalars['JSON']['output'];
+  failureReason?: Maybe<Scalars['JSON']['output']>;
+  failureSummary?: Maybe<Scalars['String']['output']>;
+  finishedDate?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['String']['output'];
+  startedDate?: Maybe<Scalars['DateTime']['output']>;
+  state: BackgroundActionAttemptState;
+};
+
+export enum BackgroundActionAttemptState {
+  Failed = 'FAILED',
+  Running = 'RUNNING',
+  Succeeded = 'SUCCEEDED'
+}
+
+export type BackgroundActionConnection = {
+  __typename?: 'BackgroundActionConnection';
+  nodes: Array<BackgroundAction>;
+  pageInfo: OffsetPageInfo;
+};
+
+export type BackgroundActionFilter = {
+  inState?: InputMaybe<Array<BackgroundActionState>>;
+  priority?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export enum BackgroundActionState {
+  Cancelled = 'CANCELLED',
+  Completed = 'COMPLETED',
+  Failed = 'FAILED',
+  Retrying = 'RETRYING',
+  Running = 'RUNNING',
+  Scheduled = 'SCHEDULED',
+  Waiting = 'WAITING'
+}
+
 export type ChangeAppDomainResult = {
   __typename?: 'ChangeAppDomainResult';
   onlyValidate?: Maybe<Scalars['Boolean']['output']>;
@@ -94,6 +153,21 @@ export type EnableFrontendResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type Environment = {
+  __typename?: 'Environment';
+  id: Scalars['String']['output'];
+  lastUserEditDate: Scalars['DateTime']['output'];
+  name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+  status: EnvironmentStatus;
+  type: EnvironmentType;
+};
+
+export type EnvironmentInput = {
+  slug: Scalars['String']['input'];
+  sourceSlug?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type EnvironmentPatchResult = {
   __typename?: 'EnvironmentPatchResult';
   success: Scalars['Boolean']['output'];
@@ -104,6 +178,13 @@ export type EnvironmentPublishResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export enum EnvironmentStatus {
+  Active = 'ACTIVE',
+  FatalError = 'FATAL_ERROR',
+  Paused = 'PAUSED',
+  Pending = 'PENDING'
+}
+
 export type EnvironmentSubscriptionResult = {
   __typename?: 'EnvironmentSubscriptionResult';
   patches: Array<Scalars['JSON']['output']>;
@@ -113,6 +194,12 @@ export type EnvironmentTreeClientId = {
   clientType: Scalars['String']['input'];
   id: Scalars['String']['input'];
 };
+
+export enum EnvironmentType {
+  Development = 'DEVELOPMENT',
+  Production = 'PRODUCTION',
+  Test = 'TEST'
+}
 
 export type ExecutionError = {
   /** The Gadget platform error code for this error. */
@@ -688,19 +775,38 @@ export type MigrateEnvironmentsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type MigrateFbaResult = {
+  __typename?: 'MigrateFBAResult';
+  reason?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export enum ModelExportFormat {
+  Csv = 'CSV',
+  Ndjson = 'NDJSON'
+}
+
 export type Mutation = {
   __typename?: 'Mutation';
   addApplicationTag?: Maybe<AddApplicationTagResult>;
   addUserTag?: Maybe<AddUserTagResult>;
+  cancelBackgroundAction: BackgroundAction;
   changeAppDomain?: Maybe<ChangeAppDomainResult>;
   convergePackages: Scalars['Boolean']['output'];
+  createEnvironment: Environment;
   deleteApp?: Maybe<DeleteAppStatusResult>;
+  deleteBackgroundAction: Scalars['Boolean']['output'];
+  deleteEnvironment: Scalars['Boolean']['output'];
+  /** @deprecated enabling frontends on legacy apps is no longer supported */
   enableFrontend?: Maybe<EnableFrontendResult>;
+  exportModelData: Scalars['Boolean']['output'];
   /** Meta information about the application, like it's name, schema, and other internal details. */
   gadgetMeta: GadgetApplicationMeta;
   internal?: Maybe<InternalMutations>;
   migrateAAC?: Maybe<MigrateAacResult>;
+  /** @deprecated legacy environments are no longer supported */
   migrateEnvironments?: Maybe<MigrateEnvironmentsResult>;
+  migrateFBA?: Maybe<MigrateFbaResult>;
   patchEnvironmentTree?: Maybe<EnvironmentPatchResult>;
   publish?: Maybe<EnvironmentPublishResult>;
   publishFileSyncEvents: PublishFileSyncEventsResult;
@@ -710,9 +816,11 @@ export type Mutation = {
   removeContributor?: Maybe<RemoveContributorResult>;
   /** @deprecated app invitations are no longer supported */
   sendAppInvitation?: Maybe<SendAppInvitationResult>;
-  setClientCurrentPath: EnvironmentPatchResult;
   setFrameworkVersion: SetFrameworkVersionResult;
+  startLogsExport: Scalars['Boolean']['output'];
+  startNextBackgroundActionAttemptNow: BackgroundAction;
   syncToWebflow: Scalars['Boolean']['output'];
+  triggerRunShopifySync?: Maybe<TriggerRunShopifySyncResult>;
   uninstallShop?: Maybe<UninstallShopResult>;
   unregisterWebhooks?: Maybe<UnregisterWebhooksResult>;
   uploadFiles: UploadFilesResult;
@@ -731,9 +839,19 @@ export type MutationAddUserTagArgs = {
 };
 
 
+export type MutationCancelBackgroundActionArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type MutationChangeAppDomainArgs = {
   newSubdomain: Scalars['String']['input'];
   onlyValidate?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
+export type MutationCreateEnvironmentArgs = {
+  environment: EnvironmentInput;
 };
 
 
@@ -742,8 +860,26 @@ export type MutationDeleteAppArgs = {
 };
 
 
+export type MutationDeleteBackgroundActionArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteEnvironmentArgs = {
+  slug: Scalars['String']['input'];
+};
+
+
 export type MutationEnableFrontendArgs = {
   hasShopifyConnection: Scalars['Boolean']['input'];
+};
+
+
+export type MutationExportModelDataArgs = {
+  filterSort?: InputMaybe<Scalars['JSON']['input']>;
+  format?: InputMaybe<ModelExportFormat>;
+  modelApiIdentifier: Scalars['String']['input'];
+  selection?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -755,6 +891,7 @@ export type MutationMigrateEnvironmentsArgs = {
 export type MutationPatchEnvironmentTreeArgs = {
   clientID: EnvironmentTreeClientId;
   patches: Array<Scalars['JSON']['input']>;
+  txID?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -791,14 +928,25 @@ export type MutationSendAppInvitationArgs = {
 };
 
 
-export type MutationSetClientCurrentPathArgs = {
-  clientID: EnvironmentTreeClientId;
-  currentPath: Scalars['String']['input'];
+export type MutationSetFrameworkVersionArgs = {
+  constraint: Scalars['String']['input'];
 };
 
 
-export type MutationSetFrameworkVersionArgs = {
-  constraint: Scalars['String']['input'];
+export type MutationStartLogsExportArgs = {
+  end?: InputMaybe<Scalars['DateTime']['input']>;
+  query: Scalars['String']['input'];
+  start: Scalars['DateTime']['input'];
+};
+
+
+export type MutationStartNextBackgroundActionAttemptNowArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type MutationTriggerRunShopifySyncArgs = {
+  shopIds: Array<Scalars['String']['input']>;
 };
 
 
@@ -821,6 +969,14 @@ export type MutationUploadFilesArgs = {
 
 export type MutationUploadTemplateAssetArgs = {
   file: Scalars['Upload']['input'];
+};
+
+export type OffsetPageInfo = {
+  __typename?: 'OffsetPageInfo';
+  hasNextPage: Scalars['Boolean']['output'];
+  hasPreviousPage: Scalars['Boolean']['output'];
+  page: Scalars['Int']['output'];
+  total: Scalars['Int']['output'];
 };
 
 /** Information about pagination in a connection. */
@@ -900,16 +1056,20 @@ export type PublishStatusState = {
 export type Query = {
   __typename?: 'Query';
   apiUpgradeConvergePlan?: Maybe<ApiUpgradeConvergePlanResult>;
+  backgroundAction?: Maybe<BackgroundAction>;
+  backgroundActions: BackgroundActionConnection;
   currentSession?: Maybe<Session>;
   currentUser: User;
   environmentTreeChildKeys: Array<Scalars['String']['output']>;
   environmentTreePath?: Maybe<Scalars['JSON']['output']>;
+  environments: Array<Environment>;
   fileSyncComparisonHashes: FileSyncComparisonHashes;
   fileSyncFiles: FileSyncFiles;
   fileSyncHashes: FileSyncHashes;
   /** Meta information about the application, like it's name, schema, and other internal details. */
   gadgetMeta: GadgetApplicationMeta;
   identifySupportConversation?: Maybe<IdentifySupportConversationResult>;
+  initialSnapshot: Scalars['JSON']['output'];
   internal?: Maybe<InternalQueries>;
   /** @deprecated use team */
   listContributors: Array<ContributorResult>;
@@ -928,6 +1088,17 @@ export type Query = {
 export type QueryApiUpgradeConvergePlanArgs = {
   currentVersion: Scalars['String']['input'];
   targetVersion: Scalars['String']['input'];
+};
+
+
+export type QueryBackgroundActionArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryBackgroundActionsArgs = {
+  filter?: InputMaybe<BackgroundActionFilter>;
+  page?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1097,6 +1268,7 @@ export type SubscriptionLogsSearchArgs = {
 
 
 export type SubscriptionPublishStatusArgs = {
+  allowCharges?: InputMaybe<Scalars['Boolean']['input']>;
   force?: InputMaybe<Scalars['Boolean']['input']>;
   localFilesVersion: Scalars['String']['input'];
 };
@@ -1134,6 +1306,13 @@ export type TeamResult = {
   maxApplications?: Maybe<Scalars['Int']['output']>;
   teamEntitlements: TeamEntitlements;
   teamMembers: Array<TeamMember>;
+};
+
+export type TriggerRunShopifySyncResult = {
+  __typename?: 'TriggerRunShopifySyncResult';
+  failedShopIds: Array<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+  successfulShopIds: Array<Scalars['String']['output']>;
 };
 
 export type TypeManifestEntry = {
@@ -1183,6 +1362,11 @@ export type User = {
   name?: Maybe<Scalars['String']['output']>;
 };
 
+export type GadgetMetaModelsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GadgetMetaModelsQuery = { __typename?: 'Query', gadgetMeta: { __typename?: 'GadgetApplicationMeta', models: Array<{ __typename?: 'GadgetModel', apiIdentifier: string }> } };
+
 export type RemoteFileSyncEventsSubscriptionVariables = Exact<{
   localFilesVersion: Scalars['String']['input'];
 }>;
@@ -1228,12 +1412,8 @@ export type FileSyncComparisonHashesQuery = { __typename?: 'Query', fileSyncComp
 export type PublishStatusSubscriptionVariables = Exact<{
   localFilesVersion: Scalars['String']['input'];
   force?: InputMaybe<Scalars['Boolean']['input']>;
+  allowCharges?: InputMaybe<Scalars['Boolean']['input']>;
 }>;
 
 
 export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', publishStarted: boolean, remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null, nodeLabels?: Array<{ __typename?: 'PublishIssueNodeLabel', type?: string | null, identifier?: string | null } | null> | null }>, status?: { __typename?: 'PublishStatus', code?: string | null, message?: string | null, output?: string | null } | null } | null };
-
-export type GadgetMetaModelsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GadgetMetaModelsQuery = { __typename?: 'Query', gadgetMeta: { __typename?: 'GadgetApplicationMeta', models: Array<{ __typename?: 'GadgetModel', apiIdentifier: string }> } };

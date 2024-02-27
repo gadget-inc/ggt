@@ -10,7 +10,7 @@ import { args, command as deploy } from "../../src/commands/deploy.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
-import { confirm } from "../../src/services/output/prompt.js";
+import { confirm } from "../../src/services/output/confirm.js";
 import * as spinner from "../../src/services/output/spinner.js";
 import { noop } from "../../src/services/util/function.js";
 import { nockTestApps } from "../__support__/app.js";
@@ -212,7 +212,6 @@ describe("deploy", () => {
         ✖ Add google keys for production
 
       Deploying regardless of problems because \\"--allow-problems\\" was passed.
-
       "
     `);
 
@@ -339,7 +338,6 @@ describe("deploy", () => {
         ✖ Add google keys for production
 
       Deploying regardless of problems because \\"--allow-problems\\" was passed.
-
 
       Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
       "

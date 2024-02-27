@@ -3,8 +3,10 @@ import pluralize from "pluralize";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";
-import { sprint, sprintTable, type SprintTableOptions } from "../output/sprint.js";
+import { println, sprint, sprintln, sprintTable, type SprintTableOptions } from "../output/print.js";
+import { memo } from "../util/function.js";
 import { isNever, isString } from "../util/is.js";
+import type { ChangesWithHash } from "./hashes.js";
 
 export type Create = { type: "create"; oldPath?: string };
 export type Update = { type: "update" };
@@ -12,40 +14,35 @@ export type Delete = { type: "delete" };
 export type Change = Create | Update | Delete;
 
 export class Changes extends Map<string, Change> {
-  created(): string[] {
+  created = memo((): string[] => {
     return Array.from(this.entries())
       .filter(([, change]) => change.type === "create")
       .map(([path]) => path);
-  }
+  });
 
-  updated(): string[] {
+  updated = memo((): string[] => {
     return Array.from(this.entries())
       .filter(([, change]) => change.type === "update")
       .map(([path]) => path);
-  }
+  });
 
-  deleted(): string[] {
+  deleted = memo((): string[] => {
     return Array.from(this.entries())
       .filter(([, change]) => change.type === "delete")
       .map(([path]) => path);
-  }
+  });
 }
 
-export type SprintChangesOptions = {
-  /**
-   * The changes to print.
-   */
-  changes: Changes;
-
+export type PrintChangesOptions = Partial<SprintTableOptions> & {
   /**
    * The tense to use for the change type.
    */
   tense: "past" | "present";
 
   /**
-   * Whether to include the `.gadget/` files in the output.
+   * Whether to include  `.gadget/` files in the output.
    *
-   * @default false
+   * @default undefined (true if there are no other changes, false otherwise)
    */
   includeDotGadget?: boolean;
 
@@ -55,46 +52,45 @@ export type SprintChangesOptions = {
    * @default Infinity
    */
   limit?: number;
-} & Partial<SprintTableOptions>;
+};
+
+const createdSymbol = chalk.greenBright("+");
+const updatedSymbol = chalk.blueBright("±");
+const deletedSymbol = chalk.redBright("-");
+const renameSymbol = chalk.yellowBright("→");
 
 /**
  * Prints the changes to the console.
  *
- * @param ctx - The current context.
+ * @param _ctx - The current context.
  * @see {@linkcode SprintChangesOptions}
  */
 export const sprintChanges = (
-  ctx: Context,
-  { changes, tense, includeDotGadget = false, limit = Infinity, ...tableOptions }: SprintChangesOptions,
+  _ctx: Context,
+  { changes, tense, includeDotGadget, limit = Infinity, ...tableOptions }: { changes: Changes | ChangesWithHash } & PrintChangesOptions,
 ): string => {
-  ctx.log.trace("sprinting changes", { changes, tense, limit });
-
   if (config.logLevel <= Level.TRACE) {
     // print all changes when tracing
     limit = Infinity;
   }
 
   let changesToPrint = Array.from(changes.entries());
-  if (!includeDotGadget) {
-    changesToPrint = changesToPrint.filter(([path]) => !path.startsWith(".gadget/"));
+
+  if (includeDotGadget === undefined && changesToPrint.every(([filepath]) => filepath.startsWith(".gadget/"))) {
+    // we weren't explicitly told to exclude `.gadget/` files, and all
+    // the changes are to files within `.gadget/`, so include them since
+    // there's nothing else to show
+    includeDotGadget = true;
   }
 
-  if (changesToPrint.length === 0) {
-    ctx.log.debug("no changes to sprint");
-    return "";
+  if (!includeDotGadget) {
+    changesToPrint = changesToPrint.filter(([filepath]) => !filepath.startsWith(".gadget/"));
   }
 
   const renamed = chalk.yellowBright(tense === "past" ? "renamed" : "rename");
-  const renameSymbol = chalk.yellowBright("→");
-
   const created = chalk.greenBright(tense === "past" ? "created" : "create");
-  const createdSymbol = chalk.greenBright("+");
-
   const updated = chalk.blueBright(tense === "past" ? "updated" : "update");
-  const updatedSymbol = chalk.blueBright("±");
-
   const deleted = chalk.redBright(tense === "past" ? "deleted" : "delete");
-  const deletedSymbol = chalk.redBright("-");
 
   const rows = changesToPrint
     .sort((a, b) => a[0].localeCompare(b[0]))
@@ -119,44 +115,49 @@ export const sprintChanges = (
   }
 
   let footer: string | undefined;
-  if (changesToPrint.length >= 10) {
-    tableOptions.spaceY = 1;
-
-    footer = sprint`${pluralize("change", changesToPrint.length, true)} in total. `;
-
+  if (changesToPrint.length >= 5) {
     const breakdown = [];
 
     const createdCount = changesToPrint.filter(([, change]) => change.type === "create").length;
     if (createdCount > 0) {
-      breakdown.push(sprint`{greenBright ${pluralize("create", createdCount, true)}}`);
+      const created = tense === "past" ? `${createdCount} created` : pluralize("create", createdCount, true);
+      breakdown.push(sprint`{greenBright ${created}}`);
     }
 
     const updatedCount = changesToPrint.filter(([, change]) => change.type === "update").length;
     if (updatedCount > 0) {
-      breakdown.push(sprint`{blueBright ${pluralize("update", updatedCount, true)}}`);
+      const updated = tense === "past" ? `${updatedCount} updated` : pluralize("update", updatedCount, true);
+      breakdown.push(sprint`{blueBright ${updated}}`);
     }
 
     const deletedCount = changesToPrint.filter(([, change]) => change.type === "delete").length;
     if (deletedCount > 0) {
-      breakdown.push(sprint`{redBright ${pluralize("delete", deletedCount, true)}}`);
+      const deleted = tense === "past" ? `${deletedCount} deleted` : pluralize("delete", deletedCount, true);
+      breakdown.push(sprint`{redBright ${deleted}}`);
     }
 
-    footer += breakdown.join(", ");
-    footer += ".";
+    footer = sprintln`
+      ${pluralize("change", changesToPrint.length, true)} in total. ${breakdown.join(", ")}.
+    `;
   }
 
-  return sprintTable({ rows, footer, ...tableOptions });
+  return sprintTable({
+    rows,
+    footer,
+    ensureEmptyLineAbove: true,
+    ensureEmptyLineAboveBody: true,
+    ensureEmptyLineAboveFooter: true,
+    indent: 0,
+    ...tableOptions,
+  });
 };
 
 /**
  * Prints the changes to the console.
  *
- * @param ctx - The current context.
+ * @param _ctx - The current context.
  * @see {@linkcode SprintChangesOptions}
  */
-export const printChanges = (ctx: Context, opts: SprintChangesOptions): void => {
-  const changes = sprintChanges(ctx, opts);
-  if (changes) {
-    ctx.log.println2(changes);
-  }
+export const printChanges = (_ctx: Context, options: { changes: Changes | ChangesWithHash } & PrintChangesOptions): void => {
+  println(sprintChanges(_ctx, options));
 };

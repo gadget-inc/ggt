@@ -1,5 +1,5 @@
 import { ArgError } from "../command/arg.js";
-import { sprint } from "../output/sprint.js";
+import { sprint } from "../output/print.js";
 
 /**
  * Parses the value of an application argument (-a/--app) and returns

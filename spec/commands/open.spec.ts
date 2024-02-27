@@ -10,7 +10,7 @@ import { loginTestUser, testUser } from "../../spec/__support__/user.js";
 import { args, command as openCommand } from "../../src/commands/open.js";
 import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
 import type { Context } from "../../src/services/command/context.js";
-import { select } from "../../src/services/output/prompt.js";
+import { select } from "../../src/services/output/select.js";
 import * as user from "../../src/services/user/user.js";
 import { nockApiResponse } from "../__support__/graphql.js";
 
@@ -165,7 +165,7 @@ describe("open", () => {
       "      Unknown model use
 
             Did you mean ggt open model user?
-            
+
             Run ggt open --help for usage or run command with --show-all to see all available models
       "
     `);

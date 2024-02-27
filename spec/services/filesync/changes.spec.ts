@@ -17,13 +17,12 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "present", message: "→ Sent to example (staging) 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "present", title: "→ Sent to example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
       "→ Sent to example (staging) 12:00:00 PM
-      ±  bar  update 
-      -  baz  delete 
-      +  foo  create 
-
+      ±  bar  update
+      -  baz  delete
+      +  foo  create
       "
     `);
   });
@@ -34,68 +33,50 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "past", message: "← Received from example (staging) 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "past", title: "← Received from example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
       "← Received from example (staging) 12:00:00 PM
-      ±  bar  updated 
-      -  baz  deleted 
-      +  foo  created 
-
+      ±  bar  updated
+      -  baz  deleted
+      +  foo  created
       "
     `);
   });
 
   it("prints differently when there are 10+ changes", () => {
-    const changes = new Changes();
-    for (let i = 0; i < 9; i++) {
-      changes.set(`file-0${i}`, { type: "create" });
-    }
-    changes.set("file-10", { type: "create" });
+    const changes = new Changes([
+      ["file-01", { type: "create" }],
+      ["file-02", { type: "create" }],
+      ["file-03", { type: "create" }],
+      ["file-04", { type: "create" }],
 
-    for (let i = 10; i < 20; i++) {
-      changes.set(`file-${i}`, { type: "update" });
-    }
+      ["file-05", { type: "update" }],
+      ["file-06", { type: "update" }],
+      ["file-07", { type: "update" }],
+      ["file-08", { type: "update" }],
 
-    for (let i = 20; i < 30; i++) {
-      changes.set(`file-${i}`, { type: "delete" });
-    }
+      ["file-08", { type: "delete" }],
+      ["file-09", { type: "delete" }],
+      ["file-11", { type: "delete" }],
+      ["file-12", { type: "delete" }],
+    ]);
 
-    printChanges(ctx, { changes, tense: "present", message: "→ Sent to example (staging) 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "present", title: "→ Sent to example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
       "→ Sent to example (staging) 12:00:00 PM
+      +  file-01  create
+      +  file-02  create
+      +  file-03  create
+      +  file-04  create
+      ±  file-05  update
+      ±  file-06  update
+      ±  file-07  update
+      -  file-08  delete
+      -  file-09  delete
+      -  file-11  delete
+      -  file-12  delete
 
-      +  file-00  create 
-      +  file-01  create 
-      +  file-02  create 
-      +  file-03  create 
-      +  file-04  create 
-      +  file-05  create 
-      +  file-06  create 
-      +  file-07  create 
-      +  file-08  create 
-      ±  file-10  update 
-      ±  file-11  update 
-      ±  file-12  update 
-      ±  file-13  update 
-      ±  file-14  update 
-      ±  file-15  update 
-      ±  file-16  update 
-      ±  file-17  update 
-      ±  file-18  update 
-      ±  file-19  update 
-      -  file-20  delete 
-      -  file-21  delete 
-      -  file-22  delete 
-      -  file-23  delete 
-      -  file-24  delete 
-      -  file-25  delete 
-      -  file-26  delete 
-      -  file-27  delete 
-      -  file-28  delete 
-      -  file-29  delete 
-
-      29 changes in total. 9 creates, 10 updates, 10 deletes.
-
+      11 changes in total. 4 creates, 3 updates, 4 deletes.
       "
     `);
   });

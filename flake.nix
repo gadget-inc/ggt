@@ -18,8 +18,12 @@
           nix-direnv = pkgs.nix-direnv.override { enableFlakes = true; };
           nodejs = pkgs.nodejs-16_x;
 
-          dggt = pkgs.writeShellScriptBin "dggt" ''
+          ggt = pkgs.writeShellScriptBin "ggt" ''
             GGT_ENV=production "$WORKSPACE_ROOT"/bin/dev.js "$@"
+          '';
+
+          dggt = pkgs.writeShellScriptBin "dggt" ''
+            GGT_ENV=development "$WORKSPACE_ROOT"/bin/dev.js "$@"
           '';
         };
 

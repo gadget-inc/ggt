@@ -1,9 +1,11 @@
+import ms from "ms";
 import type { EmptyObject } from "type-fest";
 import type { RootArgs } from "../../commands/root.js";
 import type { App, Environment } from "../app/app.js";
 import { createLogger, type Logger } from "../output/log/logger.js";
 import type { StructuredLoggerOptions } from "../output/log/structured.js";
 import type { User } from "../user/user.js";
+import { noop } from "../util/function.js";
 import { defaults, pick } from "../util/object.js";
 import { PromiseSignal } from "../util/promise.js";
 import type { AnyVoid } from "../util/types.js";
@@ -123,17 +125,26 @@ export class Context<
       "abort",
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       async () => {
+        let error: unknown;
+        const timeout = setTimeout(noop, ms("5s"));
+
         // call the callbacks in reverse order, like go's defer
         for (const callback of this.#onAborts.reverse()) {
           try {
             await callback(this.signal.reason);
-          } catch (error: unknown) {
+          } catch (e: unknown) {
+            error = e;
             this.log.error("error during abort", { error });
           }
         }
 
-        // signal that the context is done
-        this.done.resolve();
+        clearTimeout(timeout);
+
+        if (error) {
+          this.done.reject(error);
+        } else {
+          this.done.resolve();
+        }
       },
     );
   }

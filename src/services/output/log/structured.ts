@@ -3,7 +3,7 @@ import { config } from "../../config/config.js";
 import { env } from "../../config/env.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { serializeError } from "../../util/object.js";
-import { stderr } from "../stream.js";
+import { stderr } from "../output.js";
 import type { Fields } from "./field.js";
 import { formatters } from "./format/format.js";
 import { Level } from "./level.js";

@@ -9,7 +9,7 @@ import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
-import { select } from "../../src/services/output/prompt.js";
+import { select } from "../../src/services/output/select.js";
 import { assetsPath } from "../../src/services/util/paths.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
 import { makeContext } from "../__support__/context.js";

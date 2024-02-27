@@ -4,14 +4,12 @@ import { $ } from "execa";
 import fs from "fs-extra";
 import { oraPromise } from "ora";
 import { packageJson } from "../src/services/config/package-json.js";
-import { createLogger } from "../src/services/output/log/logger.js";
+import { println } from "../src/services/output/print.js";
 import { workspacePath } from "../src/services/util/paths.js";
-
-const log = createLogger({ name: "publish-experimental" });
 
 const status = await $`git status --porcelain`;
 if (status.stdout.trim() !== "") {
-  log.println`
+  println`
     You have uncommitted changes
 
     Please commit or stash them before publishing
@@ -30,7 +28,7 @@ try {
   packageJson.version = `0.0.0-experimental.${gitSha.stdout.trim()}`;
   await fs.writeJSON(workspacePath("package.json"), packageJson, { spaces: 2 });
 
-  log.printlns("Publishing experimental release:");
+  println({ ensureEmptyLineAbove: true })("Publishing experimental release:");
   await $({ stdio: "inherit" })`npm publish --tag=experimental`;
 } finally {
   // undo changes to package.json

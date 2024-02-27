@@ -1,53 +1,201 @@
-import prompts from "prompts";
-import type { Context } from "../command/context.js";
+import ansiEscapes from "ansi-escapes";
+import assert from "node:assert";
+import EventEmitter from "node:events";
+import process from "node:process";
+import readline from "node:readline";
+import { stderr } from "./output.js";
 
-/**
- * Prompts the user to select an option from a list of choices.
- *
- * @param _ctx - The current context.
- * @param options - The options to use.
- * @param options.message - The message to display to the user.
- * @param options.choices - The list of choices for the user to select from.
- * @returns A promise that resolves to the selected option.
- */
-export const select = async <T extends string>(_ctx: Context, { message, choices }: { message: string; choices: T[] }): Promise<T> => {
-  try {
-    const response = await prompts({
-      name: "value",
-      type: "autocomplete",
-      message,
-      choices: choices.map((value) => ({ title: value, value })),
-    });
+export class Prompt extends EventEmitter {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [action: string]: any; // (key: StdinKey) => void;
 
-    if (!response.value) {
-      // The user pressed Ctrl+C
-      process.exit(0);
+  static active = false;
+
+  // state
+  value: unknown = undefined;
+  firstRender = true;
+  done = false;
+  closed = false;
+  aborted = false;
+  exited = false;
+
+  // methods that rely on constructor closure
+  close: () => void;
+
+  constructor() {
+    super();
+    assert(!Prompt.active, "only one prompt can be active at a time");
+    Prompt.active = true;
+
+    const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
+    readline.emitKeypressEvents(process.stdin, rl);
+
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
     }
 
-    return response.value as T;
-  } catch (error) {
-    process.exit(0);
+    const isSelect = ["SelectPrompt"].includes(this.constructor.name);
+    const keypress = (str: string, key: StdinKey): void => {
+      const action = getPromptAction(key, isSelect);
+      if (action === false) {
+        this._(str, key);
+      } else if (action && typeof this[action] === "function") {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        this[action](key);
+      } else {
+        this.bell();
+      }
+    };
+
+    this.close = () => {
+      process.stdin.removeListener("keypress", keypress);
+      if (process.stdin.isTTY) {
+        process.stdin.setRawMode(false);
+      }
+
+      rl.close();
+      this.emit(this.aborted ? "abort" : this.exited ? "exit" : "submit", this.value);
+      this.closed = true;
+      Prompt.active = false;
+    };
+
+    process.stdin.on("keypress", keypress);
+  }
+
+  _(_str: string, _key: StdinKey): void {
+    // noop
+  }
+
+  onRender(): void {
+    // noop
+  }
+
+  fire(): void {
+    this.emit("state", {
+      value: this.value,
+      aborted: this.aborted,
+      exited: this.exited,
+    });
+  }
+
+  bell(): void {
+    stderr.write(ansiEscapes.beep);
+  }
+
+  render(): void {
+    this.onRender();
+    if (this.firstRender) {
+      this.firstRender = false;
+    }
+  }
+}
+
+export type PromptAction =
+  | "abort"
+  | "exit"
+  | "submit"
+  | "next"
+  | "nextPage"
+  | "prevPage"
+  | "home"
+  | "end"
+  | "up"
+  | "down"
+  | "right"
+  | "left"
+  | "reset"
+  | "delete"
+  | "deleteForward"
+  | "first"
+  | "last";
+
+export type StdinKey = {
+  name: string;
+  ctrl: boolean;
+  meta: boolean;
+};
+
+const getPromptAction = (key: StdinKey, isSelect: boolean): PromptAction | false | undefined => {
+  if (key.meta && key.name !== "escape") {
+    return;
+  }
+
+  if (key.ctrl) {
+    switch (key.name) {
+      case "a":
+        return "first";
+      case "c":
+      case "d":
+        return "abort";
+      case "e":
+        return "last";
+      case "g":
+        return "reset";
+    }
+  }
+
+  if (isSelect) {
+    if (key.name === "j") {
+      return "down";
+    }
+    if (key.name === "k") {
+      return "up";
+    }
+  }
+
+  switch (key.name) {
+    case "return":
+    case "enter":
+      return "submit";
+    case "backspace":
+      return "delete";
+    case "delete":
+      return "deleteForward";
+    case "abort":
+      return "abort";
+    case "escape":
+      return "exit";
+    case "tab":
+      return "next";
+    case "pagedown":
+      return "nextPage";
+    case "pageup":
+      return "prevPage";
+    case "home":
+      return "home";
+    case "end":
+      return "end";
+    case "up":
+      return "up";
+    case "down":
+      return "down";
+    case "right":
+      return "right";
+    case "left":
+      return "left";
+    default:
+      return false;
   }
 };
 
 /**
- * Displays a confirmation prompt with the specified message. If the
- * user confirms, the function resolves, otherwise it exits the process.
+ * Determine what entries should be displayed on the screen, based on the
+ * currently selected index and the maximum visible. Used in list-based
+ * prompts like `select` and `multiselect`.
  *
- * @param _ctx - The current context.
- * @param options - The options to use.
- * @param options.message - The message to display in the confirmation prompt.
- * @returns A Promise that resolves when the user confirms the prompt.
+ * @param cursor - the currently selected entry
+ * @param total - the total entries available to display
+ * @param [maxVisible] - the number of entries that can be displayed
  */
-export const confirm = async (_ctx: Context, { message }: { message: string }): Promise<void> => {
-  const response = await prompts({
-    name: "value",
-    type: "confirm",
-    message,
-  });
+export const entriesToDisplay = (cursor: number, total: number, maxVisible: number): { startIndex: number; endIndex: number } => {
+  maxVisible = maxVisible || total;
 
-  if (!response.value) {
-    // The user pressed Ctrl+C
-    process.exit(0);
+  let startIndex = Math.min(total - maxVisible, cursor - Math.floor(maxVisible / 2));
+  if (startIndex < 0) {
+    startIndex = 0;
   }
+
+  const endIndex = Math.min(startIndex + maxVisible, total);
+
+  return { startIndex, endIndex };
 };

@@ -17,7 +17,8 @@ import { TooManySyncAttemptsError, isFilesVersionMismatchError } from "../../../
 import { FileSync } from "../../../src/services/filesync/filesync.js";
 import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.js";
 import { SyncJson, loadSyncJsonDirectory, type SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
-import { confirm, select } from "../../../src/services/output/prompt.js";
+import { confirm } from "../../../src/services/output/confirm.js";
+import { select } from "../../../src/services/output/select.js";
 import { noop } from "../../../src/services/util/function.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";

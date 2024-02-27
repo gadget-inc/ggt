@@ -22,8 +22,8 @@ export const mockStdout = (): void => {
   beforeEach(async () => {
     testStdout.length = 0;
 
-    const { stdout } = await import("../../src/services/output/stream.js");
-    mock(stdout, "write", (data) => {
+    const { stdout } = await import("../../src/services/output/output.js");
+    mock(stdout, "_write", (data) => {
       testStdout.push(data);
       return true;
     });
@@ -47,7 +47,7 @@ export const expectStderr = (): Assertion<string> => expect(testStderr.join(""))
  */
 export const mockStderr = (): void => {
   beforeEach(async () => {
-    const { stderr } = await import("../../src/services/output/stream.js");
+    const { stderr: stderr } = await import("../../src/services/output/output.js");
     mock(stderr, "write", (data) => {
       testStderr.push(data);
       return true;
@@ -56,7 +56,7 @@ export const mockStderr = (): void => {
   });
 
   afterEach(async () => {
-    const { stderr } = await import("../../src/services/output/stream.js");
+    const { stderr: stderr } = await import("../../src/services/output/output.js");
     mockRestore(stderr.write);
   });
 };

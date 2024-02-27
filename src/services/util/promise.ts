@@ -1,3 +1,8 @@
+import ms from "ms";
+import { setTimeout } from "node:timers/promises";
+
+export const delay = (duration: string): Promise<void> => setTimeout(ms(duration));
+
 /**
  * Long lived references to Promises stress the garbage collector in JS.
  *

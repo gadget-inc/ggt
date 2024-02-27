@@ -1,6 +1,6 @@
 import { assert, beforeEach, expect, vi, type SpyInstance } from "vitest";
+import { sprintln } from "../../src/services/output/print.js";
 import * as prompt from "../../src/services/output/prompt.js";
-import { sprintln, sprintlns } from "../../src/services/output/sprint.js";
 import type { ArgsType, FunctionPropertyNames } from "../../src/services/util/types.js";
 import { printStackTraceAndFail } from "./debug.js";
 
@@ -174,7 +174,7 @@ export const mockSideEffects = (): void => {
   beforeEach(() => {
     // alway opt in to confirm prompts
     mock(prompt, "confirm", (_, { message }) => {
-      printStackTraceAndFail(sprintln`
+      printStackTraceAndFail(sprintln({ ensureEmptyLineAbove: true })`
         confirm("${message}") was called unexpectedly.
 
         If this was expected, mock the user's response:
@@ -190,7 +190,7 @@ export const mockSideEffects = (): void => {
 
     // alway opt in to select prompts
     mock(prompt, "select", (_, { message }) => {
-      printStackTraceAndFail(sprintlns`
+      printStackTraceAndFail(sprintln({ ensureEmptyLineAbove: true })`
         select("${message}") was called unexpectedly.
 
         If this was expected, do the following to mock the user's response:

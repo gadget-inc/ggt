@@ -3,8 +3,8 @@ import type { EmptyObject } from "type-fest";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import { Commands, importCommand, isAvailableCommand, type Command, type Usage } from "../services/command/command.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
+import { println, sprint } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
-import { sprint } from "../services/output/sprint.js";
 import { warnIfUpdateAvailable } from "../services/output/update.js";
 import { sortBySimilar } from "../services/util/collection.js";
 import { isNil } from "../services/util/is.js";
@@ -66,7 +66,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
 
   let cmd = ctx.args._.shift();
   if (isNil(cmd)) {
-    ctx.log.println(usage(ctx));
+    println(usage(ctx));
     process.exit(0);
   }
 
@@ -77,7 +77,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
 
   if (!isAvailableCommand(cmd)) {
     const [closest] = sortBySimilar(cmd, Commands);
-    ctx.log.println`
+    println`
       Unknown command {yellow ${cmd}}
 
       Did you mean {blueBright ${closest}}?
@@ -90,7 +90,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
   const subcommand = await importCommand(cmd);
 
   if (ctx.args["-h"] ?? ctx.args["--help"]) {
-    ctx.log.println(subcommand.usage(ctx));
+    println(subcommand.usage(ctx));
     process.exit(0);
   }
 

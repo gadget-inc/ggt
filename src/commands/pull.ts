@@ -3,7 +3,7 @@ import type { Command, Usage } from "../services/command/command.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { sprint } from "../services/output/sprint.js";
+import { println, sprint } from "../services/output/print.js";
 
 export type PullArgs = typeof args;
 
@@ -115,5 +115,13 @@ export const command: Command<PullArgs> = async (ctx) => {
   }
 
   const filesync = new FileSync(syncJson);
+  const hashes = await filesync.hashes(ctx);
+  if (hashes.localChangesToPush.size === 0) {
+    println({ ensureEmptyLineAbove: true })`
+      Your files are up to date. {gray Nothing to pull.}
+    `;
+    return;
+  }
+
   await filesync.pull(ctx);
 };

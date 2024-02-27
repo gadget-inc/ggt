@@ -5,7 +5,7 @@ import { ArgError } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { select } from "../services/output/prompt.js";
+import { select } from "../services/output/select.js";
 import { sprint, sprintln2 } from "../services/output/sprint.js";
 import { sortBySimilar } from "../services/util/collection.js";
 
@@ -18,20 +18,20 @@ export const usage: Usage = (ctx) => {
 
       ggt open [SUBCOMMAND] [--app=<name>] [--environment=<env>]
                  [--show-all]
-    
+
     {bold EXAMPLES}
       $ ggt open logs
-      $ ggt open permissions 
+      $ ggt open permissions
       $ ggt open data modelA
       $ ggt open data --show-all
       $ ggt open schema modelA
       $ ggt open schema --show-all
-    
+
     {bold FLAGS}
       -a, --app=<name>      The application to open
       -e, --env=<env>       The environment to open
           --show-all        Shows all available models to open
-    
+
     Run "ggt open --help" for more information.
     `;
   }
@@ -53,11 +53,11 @@ export const usage: Usage = (ctx) => {
         The data viewer for a specified model on the current environment
       • schema
         The schema viewer for a specified model on the current environment
-    
+
     {bold EXAMPLES}
 
       $ ggt open logs
-      $ ggt open permissions 
+      $ ggt open permissions
       $ ggt open data modelA
       $ ggt open data --show-all
       $ ggt open schema modelA
@@ -77,7 +77,7 @@ export const usage: Usage = (ctx) => {
         Defaults to the environment within the ".gadget/sync.json"
         file in the current directory or any parent directories.
 
-      --show-all, 
+      --show-all,
         Shows a list of available models the user may select from to open
 `;
 };
@@ -141,7 +141,7 @@ export const command: Command<OpenArgs> = async (ctx) => {
         } else {
           throw new ArgError(
             sprintln2`
-          Missing {cyanBright model} for ggt open ${view} {cyanBright [model]}. 
+          Missing {cyanBright model} for ggt open ${view} {cyanBright [model]}.
           Please pass in a model or run with {yellow --show-all} to choose from available models.`,
           );
         }
@@ -159,9 +159,9 @@ export const command: Command<OpenArgs> = async (ctx) => {
 
       ctx.log.println`
         Unknown model {yellow ${modelApiIdentifier}}
-  
+
         Did you mean ggt open model {blueBright ${closest}}?
-        
+
         Run {gray ggt open --help} for usage or run command with {yellow --show-all} to see all available models
       `;
       break;
@@ -169,9 +169,9 @@ export const command: Command<OpenArgs> = async (ctx) => {
     default:
       throw new ArgError(
         sprintln2`
-           Invalid subcommand for ggt open. 
+           Invalid subcommand for ggt open.
            Did you mean ggt open {cyanBright logs}, {cyanBright data}, {cyanBright schema} or {cyanBright permissions}?
-           
+
            Run {yellow ggt open --help} for more information
         `,
       );

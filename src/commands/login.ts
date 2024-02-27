@@ -4,7 +4,7 @@ import http, { type Server } from "node:http";
 import open from "open";
 import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
-import { sprint } from "../services/output/sprint.js";
+import { println, sprint } from "../services/output/print.js";
 import { writeSession } from "../services/user/session.js";
 import { getUser } from "../services/user/user.js";
 
@@ -39,9 +39,9 @@ export const login: Command = async (ctx): Promise<void> => {
           assert(user, "missing user after successful login");
 
           if (user.name) {
-            ctx.log.printlns`Hello, ${user.name} {gray (${user.email})}`;
+            println({ ensureEmptyLineAbove: true })`Hello, ${user.name} {gray (${user.email})}`;
           } else {
-            ctx.log.printlns`Hello, ${user.email}`;
+            println({ ensureEmptyLineAbove: true })`Hello, ${user.email}`;
           }
 
           landingPage.searchParams.set("success", "true");
@@ -68,14 +68,14 @@ export const login: Command = async (ctx): Promise<void> => {
 
     try {
       await open(url.toString());
-      ctx.log.printlns`
+      println({ ensureEmptyLineAbove: true })`
         We've opened Gadget's login page using your default browser.
 
         Please log in and then return to this terminal.
-    `;
+      `;
     } catch (error) {
       ctx.log.error("failed to open browser", { error });
-      ctx.log.printlns`
+      println({ ensureEmptyLineAbove: true })`
         Please open the following URL in your browser and log in:
 
           {gray ${url.toString()}}

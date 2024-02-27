@@ -1,25 +1,25 @@
 import dayjs from "dayjs";
 import ms from "ms";
 import path from "node:path";
-import { setTimeout } from "node:timers/promises";
-import { oraPromise } from "ora";
 import Watcher from "watcher";
 import which from "which";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
-import { config } from "../services/config/config.js";
 import { Changes, printChanges } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory, sprintSyncJson } from "../services/filesync/sync-json.js";
+import { footer } from "../services/output/footer.js";
 import { notify } from "../services/output/notify.js";
-import { select } from "../services/output/prompt.js";
+import { println, sprint, sprintln } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
-import { sprint } from "../services/output/sprint.js";
+import { select } from "../services/output/select.js";
+import { spin } from "../services/output/spinner.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
+import { delay } from "../services/util/promise.js";
 import type { PullArgs } from "./pull.js";
 import type { PushArgs } from "./push.js";
 
@@ -169,41 +169,82 @@ export const command: Command<DevArgs> = async (ctx) => {
   }
 
   const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory, print: false });
+  footer(sprintSyncJson(syncJson));
+
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
 
   if (!hashes.inSync) {
-    // we're not in sync
+    // environment's files don't match ours
     if (!syncJson.previousEnvironment) {
-      // we're either syncing for the first time, or we're syncing to
-      // the same environment as last time, so get in sync and continue
-      await filesync.sync(ctx, { hashes });
+      // we're either developing for the very first time, or we're
+      // developing on the same environment as last time, either way
+      // merge the files (if any) and continue
+      await filesync.sync(ctx, {
+        hashes,
+        printLocalChangesOptions: {
+          limit: 5,
+        },
+        printGadgetChangesOptions: {
+          limit: 5,
+        },
+      });
     } else {
+      const bothChanged = hashes.localChanges.size > 0 && hashes.gadgetChanges.size > 0;
+
       // we're syncing to a different environment than last time, so
       // ask the user what to do
       if (hashes.localChanges.size > 0) {
         printChanges(ctx, {
-          message: sprint`{bold Your local filesystem has changed}`,
           changes: hashes.localChanges,
           tense: "past",
-          spaceY: 1,
+          ensureEmptyLineAbove: true,
+          title: sprintln`{bold Your local files have changed.}`,
         });
       }
 
       if (hashes.gadgetChanges.size > 0) {
         printChanges(ctx, {
-          message: sprint`{bold Your environment's filesystem has changed}`,
           changes: hashes.gadgetChanges,
           tense: "past",
-          spaceY: 1,
+          ensureEmptyLineAbove: true,
+          title: sprintln`{bold Your environment's files have ${bothChanged ? "also " : ""}changed.}`,
         });
       }
 
-      const strategy = await select(ctx, {
-        message: "What would you like to do?",
-        choices: Object.values(FileSyncStrategy),
-      });
+      const choices = Object.values(FileSyncStrategy);
+
+      const strategy = await select({
+        ensureEmptyLineAbove: true,
+        choices: bothChanged ? choices : choices.filter((choice) => choice !== FileSyncStrategy.MERGE),
+        formatChoice: (choice) => {
+          switch (choice) {
+            case FileSyncStrategy.CANCEL:
+              return sprint`{bold Cancel} (Ctrl+C)`;
+            case FileSyncStrategy.MERGE:
+              return sprint`{bold Sync} local and environment's changes`;
+            case FileSyncStrategy.PUSH:
+              return sprint`{bold Push} local changes and discard environment's changes`;
+            case FileSyncStrategy.PULL:
+              return sprint`{bold Pull} environment's changes and discard local changes`;
+          }
+        },
+        formatSelection: (choice) => {
+          switch (choice) {
+            case FileSyncStrategy.CANCEL:
+              return sprint`Cancel`;
+            case FileSyncStrategy.MERGE:
+              return sprint`Sync`;
+            case FileSyncStrategy.PUSH:
+              return sprint`Push`;
+            case FileSyncStrategy.PULL:
+              return sprint`Pull`;
+          }
+        },
+      })`
+        {bold What do you want to do?}
+      `;
 
       switch (strategy) {
         case FileSyncStrategy.CANCEL:
@@ -213,9 +254,11 @@ export const command: Command<DevArgs> = async (ctx) => {
           await filesync.sync(ctx, { hashes });
           break;
         case FileSyncStrategy.PUSH:
+          // TODO: skip printing changes again
           await filesync.push(ctx as unknown as Context<PushArgs>, { hashes, force: true });
           break;
         case FileSyncStrategy.PULL:
+          // TODO: same here
           await filesync.pull(ctx as unknown as Context<PullArgs>, { hashes, force: true });
           break;
       }
@@ -243,6 +286,9 @@ export const command: Command<DevArgs> = async (ctx) => {
    * filesystem.
    */
   const filesyncSubscription = filesync.subscribeToGadgetChanges(ctx, {
+    printGadgetChangesOptions: {
+      includeDotGadget: false,
+    },
     onError: (error) => ctx.abort(error),
     beforeChanges: ({ changed, deleted }) => {
       // add all the files and directories we're about to touch to
@@ -273,19 +319,28 @@ export const command: Command<DevArgs> = async (ctx) => {
       const lastGitBranch = syncJson.gitBranch;
       await syncJson.loadGitBranch();
       if (lastGitBranch !== syncJson.gitBranch) {
-        // if the git branch changed, we need all the changes to be sent
-        // in a single batch, so wait a bit longer in case more changes
-        // come in
-        ctx.log.printlns2`
-          Your git branch changed from ${lastGitBranch} → ${syncJson.gitBranch}
+        // the git branch changed
+        println({ ensureEmptyLineAbove: true })`
+          Your git branch changed.
+
+          ${lastGitBranch} → ${syncJson.gitBranch}
         `;
 
-        await oraPromise(setTimeout(ms("3s")), "Waiting for file changes to settle");
+        // we need all the changes to be sent in a single batch, so wait
+        // a bit in case there are changes the watcher hasn't seen yet
+        const spinner = spin({ ensureEmptyLineAbove: true })("Waiting for file changes to settle.");
+        await delay("3s");
+        spinner.clear();
       }
 
       const changes = new Changes(localChangesBuffer.entries());
       localChangesBuffer.clear();
-      await filesync.mergeChangesWithGadget(ctx, { changes });
+      await filesync.mergeChangesWithGadget(ctx, {
+        changes,
+        printGadgetChangesOptions: {
+          includeDotGadget: false,
+        },
+      });
     } catch (error) {
       ctx.log.error("error sending changes to gadget", { error });
       ctx.abort(error);
@@ -355,20 +410,6 @@ export const command: Command<DevArgs> = async (ctx) => {
     },
   ).once("error", (error) => ctx.abort(error));
 
-  const buffer = ctx.log.buffer();
-  buffer.println2`ggt v${config.version}`;
-  buffer.println(await syncJson.sprintState());
-  buffer.println`
-    ------------------------
-    Preview      https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app
-    Editor       https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}
-    Playground   https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}
-    Docs         https://docs.gadget.dev/api/${syncJson.app.slug}
-
-    Watching for file changes... {gray Press Ctrl+C to stop}
-  `;
-  buffer.flush();
-
   ctx.onAbort(async (reason) => {
     ctx.log.info("stopping", { reason });
 
@@ -384,11 +425,16 @@ export const command: Command<DevArgs> = async (ctx) => {
     }
 
     if (isAbortError(reason)) {
-      ctx.log.printlns("Goodbye!");
       return;
     }
 
     notify(ctx, { subtitle: "Uh oh!", message: "An error occurred while syncing files" });
     await reportErrorAndExit(ctx, reason);
   });
+
+  footer`
+    ${sprintSyncJson(syncJson, { indent: 4 })}
+
+    Watching for file changes… {gray Press Ctrl+C to stop}
+  `;
 };

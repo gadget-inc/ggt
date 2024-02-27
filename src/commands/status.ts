@@ -1,10 +1,10 @@
 import { ArgError } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
-import { sprintChanges } from "../services/filesync/changes.js";
+import { printChanges } from "../services/filesync/changes.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { sprint } from "../services/output/sprint.js";
+import { println, sprint } from "../services/output/print.js";
 
 export type StatusArgs = typeof args;
 
@@ -36,7 +36,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
       If you are trying to see the status of a specific directory,
       you must "cd" to that directory and then run "ggt status".
 
-       Run "ggt status -h" for more information.
+      Run "ggt status -h" for more information.
     `);
   }
 
@@ -46,40 +46,41 @@ export const command: Command<StatusArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  const buffer = ctx.log.buffer();
-
-  buffer.println(await syncJson.sprintState());
-  buffer.println("");
-
   const filesync = new FileSync(syncJson);
-  const { localChanges, gadgetChanges } = await filesync.hashes(ctx);
+  const { inSync, localChanges, gadgetChanges } = await filesync.hashes(ctx);
+
+  if (inSync) {
+    println({ ensureEmptyLineAbove: true })`
+      Your files are up to date.
+    `;
+
+    // TODO: print git status
+    return;
+  }
 
   if (localChanges.size > 0) {
-    buffer.println(
-      sprintChanges(ctx, {
-        changes: localChanges,
-        tense: "past",
-        message: "Your local filesystem has changed.",
-      }),
-    );
+    printChanges(ctx, {
+      changes: localChanges,
+      tense: "past",
+      ensureEmptyLineAbove: true,
+      title: sprint`Your local files have changed.`,
+    });
   } else {
-    buffer.println`Your local filesystem has not changed.`;
+    println({ ensureEmptyLineAbove: true })`
+      Your local files {bold have not} changed.
+    `;
   }
-
-  buffer.println("");
 
   if (gadgetChanges.size > 0) {
-    buffer.println(
-      sprintChanges(ctx, {
-        changes: gadgetChanges,
-        includeDotGadget: true,
-        tense: "past",
-        message: "Your environment's filesystem has changed.",
-      }),
-    );
+    printChanges(ctx, {
+      changes: gadgetChanges,
+      tense: "past",
+      ensureEmptyLineAbove: true,
+      title: sprint`Your environment's files {bold have} changed.`,
+    });
   } else {
-    buffer.println`Your environment's filesystem has not changed.`;
+    println({ ensureEmptyLineAbove: true })`
+      {bold Your environment's files have not changed.}
+    `;
   }
-
-  buffer.flush();
 };

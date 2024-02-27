@@ -3,6 +3,7 @@ codegen
 commandsstop
 dedenting
 direnv
+Discarder
 EADDRNOTAVAIL
 EHOSTUNREACH
 ENOENT
@@ -23,6 +24,8 @@ notificationcenter
 notifysend
 oclif
 packagejson
+pagedown
+pageup
 postbuild
 printlns
 Promisable

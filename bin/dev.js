@@ -1,4 +1,6 @@
-#!/usr/bin/env node --loader @swc-node/register/esm --no-warnings
+#!/usr/bin/env -S SWCRC=true SWC_NODE_PROJECT=../tsconfig.json node --loader @swc-node/register/esm --no-warnings
+
+// TODO move to src/main.ts
 
 import process from "node:process";
 import { ggt } from "../src/ggt.js";

@@ -5,7 +5,7 @@ import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { loadCookie, swallowUnauthorized } from "../http/auth.js";
 import { http } from "../http/http.js";
-import { confirm } from "../output/prompt.js";
+import { confirm } from "../output/confirm.js";
 
 const User = z.object({
   id: z.union([z.string(), z.number()]).transform(Number),

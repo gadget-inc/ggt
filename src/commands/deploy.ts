@@ -6,11 +6,11 @@ import { type Command, type Usage } from "../services/command/command.js";
 import { DeployDisallowedError, UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { confirm } from "../services/output/confirm.js";
+import { println, sprint } from "../services/output/print.js";
 import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.js";
-import { confirm } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { failSpinner, spinnerText, startSpinner, succeedSpinner } from "../services/output/spinner.js";
-import { sprint } from "../services/output/sprint.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
 
@@ -142,14 +142,14 @@ export const command: Command<DeployArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  ctx.log.printlns2`
+  println({ ensureEmptyLineAbove: true })`
     Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
   `;
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
   if (!hashes.inSync) {
-    ctx.log.printlns`
+    println({ ensureEmptyLineAbove: true })`
       Your local filesystem must be in sync with your development
       environment before you can deploy.
     `;
@@ -217,15 +217,15 @@ export const command: Command<DeployArgs> = async (ctx) => {
           await reportErrorAndExit(ctx, new DeployDisallowedError(publishIssuesToProblems(fatalIssues)));
         }
 
-        ctx.log.printlns`{bold Problems found}`;
-        printProblems(ctx, { problems: publishIssuesToProblems(issues) });
+        println({ ensureEmptyLineAbove: true })`{bold Problems found}`;
+        printProblems({ problems: publishIssuesToProblems(issues), ensureEmptyLineAbove: true });
 
         if (!publishStarted) {
           await confirm(ctx, { message: "Do you want to continue?" });
           subscription.resubscribe({ ...variables, force: true });
         } else {
           assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");
-          ctx.log.printlns2`Deploying regardless of problems because "--allow-problems" was passed.`;
+          println({ ensureEmptyLineAbove: true })`Deploying regardless of problems because "--allow-problems" was passed.`;
         }
 
         return;
@@ -237,10 +237,10 @@ export const command: Command<DeployArgs> = async (ctx) => {
         failSpinner();
 
         if (status.message) {
-          ctx.log.printlns`{red ${status.message}}`;
+          println({ ensureEmptyLineAbove: true })`{red ${status.message}}`;
         }
         if (status.output) {
-          ctx.log.printlns(terminalLink("Check logs", status.output));
+          println({ ensureEmptyLineAbove: true })(terminalLink("Check logs", status.output));
         }
         return;
       }
@@ -252,7 +252,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
         if (status?.output) {
           message += ` ${terminalLink("Check logs", status.output)}`;
         }
-        ctx.log.printlns(message);
+        println({ ensureEmptyLineAbove: true })(message);
         return;
       }
 

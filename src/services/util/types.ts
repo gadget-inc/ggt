@@ -11,7 +11,7 @@ export type PartialExcept<T, K extends keyof T> = Simplify<Partial<T> & Pick<T, 
  * Represents a function that can accept any number of arguments
  * and returns any value.
  */
-export type AnyFunction = (...args: never[]) => unknown;
+export type AnyFunction = (...args: any[]) => unknown;
 
 /**
  * Represents void or Promise<void>.

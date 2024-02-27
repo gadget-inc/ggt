@@ -1,19 +1,19 @@
 import { ArgError } from "../command/arg.js";
-import { sprint } from "../output/sprint.js";
+import { sprint } from "../output/print.js";
 
 export const FileSyncStrategy = Object.freeze({
-  CANCEL: "Cancel (Ctrl+C)",
-  MERGE: "Merge my changes with Gadget's",
-  PUSH: "Push my changes and discard Gadget's",
-  PULL: "Pull Gadget's changes and discard mine",
+  CANCEL: "cancel",
+  MERGE: "merge",
+  PUSH: "push",
+  PULL: "pull",
 });
 
 export type FileSyncStrategy = (typeof FileSyncStrategy)[keyof typeof FileSyncStrategy];
 
 export const MergeConflictPreference = Object.freeze({
-  CANCEL: "Cancel (Ctrl+C)",
-  LOCAL: "Keep my conflicting changes",
-  GADGET: "Keep Gadget's conflicting changes",
+  CANCEL: sprint`{bold Cancel} (Ctrl+C)`,
+  LOCAL: sprint`Keep {bold local} conflicting changes`,
+  GADGET: sprint`Keep {bold environment}'s conflicting changes`,
 });
 
 export type MergeConflictPreference = (typeof MergeConflictPreference)[keyof typeof MergeConflictPreference];

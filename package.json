@@ -66,6 +66,7 @@
     "graphql-ws": "^5.15.0",
     "ignore": "^5.3.1",
     "indent-string": "^5.0.0",
+    "is-interactive": "^2.0.0",
     "is-wsl": "^3.1.0",
     "log-update": "^5.0.1",
     "mimic-fn": "^5.0.0",

@@ -1,6 +1,8 @@
 import { assert, beforeEach, expect, vi, type SpyInstance } from "vitest";
-import { sprintln } from "../../src/services/output/print.js";
-import * as prompt from "../../src/services/output/prompt.js";
+import * as confirm from "../../src/services/output/confirm.js";
+import { isSprintOptions, sprint, sprintln } from "../../src/services/output/print.js";
+import * as select from "../../src/services/output/select.js";
+import { isString } from "../../src/services/util/is.js";
 import type { ArgsType, FunctionPropertyNames } from "../../src/services/util/types.js";
 import { printStackTraceAndFail } from "./debug.js";
 
@@ -173,35 +175,65 @@ export const mockSideEffects = (): void => {
 
   beforeEach(() => {
     // alway opt in to confirm prompts
-    mock(prompt, "confirm", (_, { message }) => {
-      printStackTraceAndFail(sprintln({ ensureEmptyLineAbove: true })`
-        confirm("${message}") was called unexpectedly.
+    // @ts-expect-error - mock is not typed correctly
+    mock(confirm, "confirm", (optionsOrStr): never | ((str: string | TemplateStringsArray, ...values: unknown[]) => never) => {
+      const failTest = (str: string | TemplateStringsArray, ...values: unknown[]): never => {
+        if (!isString(str)) {
+          str = sprint(optionsOrStr)(str, ...values);
+        }
 
-        If this was expected, mock the user's response:
+        return printStackTraceAndFail(sprintln({ ensureEmptyLineAbove: true })`
+          confirm("${str}") was called unexpectedly.
 
-          // mock all confirmations
-          mock(confirm, noop);
+          If this was expected, mock the user's response:
 
-          // mock sequential confirmations
-          mockOnce(confirm, noop)
-          mockOnce(confirm, noop)
-      `);
+            // mock all confirmations
+            mock(confirm, noop);
+
+            // mock sequential confirmations
+            mockOnce(confirm, noop)
+            mockOnce(confirm, noop)
+        `);
+      };
+
+      if (!isSprintOptions(optionsOrStr)) {
+        return failTest(optionsOrStr);
+      }
+
+      return failTest;
     });
 
     // alway opt in to select prompts
-    mock(prompt, "select", (_, { message }) => {
-      printStackTraceAndFail(sprintln({ ensureEmptyLineAbove: true })`
-        select("${message}") was called unexpectedly.
+    mock(select, "select", (optionsOrStr): never | ((str: string | TemplateStringsArray, ...values: unknown[]) => never) => {
+      const failTest = (str: string | TemplateStringsArray, ...values: unknown[]): never => {
+        if (!isString(str)) {
+          str = sprint(optionsOrStr)(str, ...values);
+        }
 
-        If this was expected, do the following to mock the user's response:
+        printStackTraceAndFail(sprintln({ ensureEmptyLineAbove: true })`
+          select("${str}") was called unexpectedly.
 
-          // mock all selects
-          mock(select, () => value);
+          If this was expected, do the following to mock the user's response:
 
-          // mock sequential selects
-          mockOnce(select, () => firstValue)
-          mockOnce(select, () => secondValue)
-      `);
+            // mock all selects
+            mock(select, () => value);
+
+            // mock sequential selects
+            mockOnce(select, () => firstValue)
+            mockOnce(select, () => secondValue)
+        `);
+      };
+
+      if (!isSprintOptions(optionsOrStr)) {
+        return failTest(optionsOrStr);
+      }
+
+      return (str, ...values) => {
+        if (!isString(str)) {
+          str = sprint(optionsOrStr)(str, ...values);
+        }
+        return failTest(str);
+      };
     });
 
     // alway opt in to process.exit

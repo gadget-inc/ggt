@@ -23,6 +23,7 @@ export const mockStdout = (): void => {
     testStdout.length = 0;
 
     const { stdout } = await import("../../src/services/output/output.js");
+    // @ts-expect-error - _write is private
     mock(stdout, "_write", (data) => {
       testStdout.push(data);
       return true;
@@ -47,8 +48,9 @@ export const expectStderr = (): Assertion<string> => expect(testStderr.join(""))
  */
 export const mockStderr = (): void => {
   beforeEach(async () => {
-    const { stderr: stderr } = await import("../../src/services/output/output.js");
-    mock(stderr, "write", (data) => {
+    const { stderr } = await import("../../src/services/output/output.js");
+    // @ts-expect-error - _write is private
+    mock(stderr, "_write", (data) => {
       testStderr.push(data);
       return true;
     });

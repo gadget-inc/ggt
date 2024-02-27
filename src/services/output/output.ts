@@ -40,9 +40,10 @@ export class Output {
 
   private _stickyTextLinesToClear = 0;
 
-  #stream = process[this.channel];
+  #stream;
 
   constructor(public channel: "stdout" | "stderr") {
+    this.#stream = process[this.channel];
     this.#stream.on("error", (err: unknown) => {
       if (isObject(err) && "code" in err && err.code === "EPIPE") {
         return;
@@ -61,7 +62,6 @@ export class Output {
     text = this._stripUnnecessaryNewLines(text, this.lastPrintedLineWasEmpty);
     this._write(text);
     this.lastPrintedLineWasEmpty = text === "\n" || text.endsWith("\n\n");
-    // this.lastStickyLineWasEmpty = this.lastPrintedLineWasEmpty;
 
     this._writeStickyText();
   }

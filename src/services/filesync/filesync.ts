@@ -406,8 +406,8 @@ export class FileSync {
     }: {
       hashes?: FileSyncHashes;
       force?: boolean;
-      printLocalChangesOptions?: PrintChangesOptions;
-      printGadgetChangesOptions?: PrintChangesOptions;
+      printLocalChangesOptions?: Partial<PrintChangesOptions>;
+      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
     } = {},
   ): Promise<void> {
     const { localChanges, gadgetChangesToPull, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
@@ -428,8 +428,6 @@ export class FileSync {
     }
 
     await this._getChangesFromGadget(ctx, {
-      // what changes need to be made to your local files to make
-      // them match the environment's files
       changes: gadgetChangesToPull,
       filesVersion: gadgetFilesVersion,
       printGadgetChangesOptions,
@@ -518,7 +516,7 @@ export class FileSync {
       sprintChanges(ctx, {
         changes,
         tense: "present",
-        title: sprintln`Pulling ${pluralize("file", changes.size)}. ←`,
+        title: sprint`Pulling ${pluralize("file", changes.size)}. ←`,
         ensureNewLine: true,
         ensureEmptyLineAbove: true,
         ensureEmptyLineAboveBody: false,
@@ -778,7 +776,8 @@ export class FileSync {
       changes,
       tense: "past",
       title: sprint`{green ✔}  Pulled ${pluralize("file", changes.size)}. ← {gray ${dayjs().format("hh:mm:ss A")}}`,
-      ensureEmptyLineAbove: false,
+      ensureNewLine: true,
+      ensureEmptyLineAbove: true,
       ensureEmptyLineAboveBody: false,
       ...options.printGadgetChangesOptions,
     });

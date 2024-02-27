@@ -123,5 +123,10 @@ export const command: Command<PullArgs> = async (ctx) => {
     return;
   }
 
-  await filesync.pull(ctx);
+  await filesync.pull(ctx, {
+    hashes,
+    printGadgetChangesOptions: {
+      ensureEmptyLineAbove: true,
+    },
+  });
 };

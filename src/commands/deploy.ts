@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import assert from "node:assert";
-import ora from "ora";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { type Command, type Usage } from "../services/command/command.js";
@@ -10,6 +9,7 @@ import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.
 import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.js";
 import { confirm } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
+import { failSpinner, spinnerText, startSpinner, succeedSpinner } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
@@ -20,6 +20,7 @@ export const args = {
   ...PushArgs,
   "--env": { type: String, alias: ["-e", "--from", "--environment"] },
   "--allow-problems": { type: Boolean, alias: "--allow-issues" },
+  "--allow-charges": { type: Boolean },
 };
 
 export const usage: Usage = (ctx) => {
@@ -46,6 +47,8 @@ export const usage: Usage = (ctx) => {
         -a, --app=<name>      The application to deploy
         -e, --from=<env>      The environment to deploy from
             --force           Discard un-synchronized environment changes
+            --allow-problems  Deploy regardless of any problems on the environment
+            --allow-charges   Deploy even if doing so will add charges to your account
 
       Run "ggt deploy --help" for more information.
     `;
@@ -107,6 +110,14 @@ export const usage: Usage = (ctx) => {
           • TypeScript errors
           • Models with missing fields
 
+        Defaults to false.
+
+      --allow-charges
+        Deploy your development environment to production even if
+        doing so will add charges to your account.
+
+        Defaults to false.
+
       --allow-unknown-directory
         Allows "ggt deploy" to continue when the current directory, nor
         any parent directories, contain a ".gadget/sync.json" file
@@ -131,7 +142,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  ctx.log.printlns`
+  ctx.log.printlns2`
     Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
   `;
 
@@ -147,30 +158,47 @@ export const command: Command<DeployArgs> = async (ctx) => {
     await filesync.push(ctx, { hashes });
   }
 
-  const spinner = ora();
   let printedProblems = false;
 
   // subscribes to the graphql subscription that will listen and send
   // back the server contract status
+
+  const variables = {
+    localFilesVersion: String(syncJson.filesVersion),
+    force: ctx.args["--allow-problems"],
+    allowCharges: ctx.args["--allow-charges"],
+  };
+
   const subscription = syncJson.edit.subscribe({
     subscription: PUBLISH_STATUS_SUBSCRIPTION,
-    variables: { localFilesVersion: String(syncJson.filesVersion), force: ctx.args["--allow-problems"] },
-    onError: (error) => {
+    variables,
+    onError: async (error) => {
       ctx.log.error("failed to deploy", { error });
-      spinner.fail();
+
+      let failMessage: string | undefined = undefined;
 
       if (isCloseEvent(error.cause)) {
+        failMessage = error.message;
         ctx.log.printlns(error.message);
       } else if (isGraphQLErrors(error.cause)) {
         const message = error.cause[0]?.message;
+        const extensions = error.cause[0]?.extensions;
         assert(message, "expected message to be defined");
 
-        if (message.includes("GGT_PAYMENT_REQUIRED")) {
-          ctx.log.println("Production environment limit reached. Upgrade your plan to deploy");
+        if (extensions?.["requiresUpgrade"]) {
+          failMessage = message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "");
+        } else if (extensions?.["requiresAdditionalCharge"]) {
+          const paymentRequiredMessage = message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "");
+
+          await confirm(ctx, { message: `${paymentRequiredMessage}\nDo you wish to proceed?` });
+          subscription.resubscribe({ ...variables, allowCharges: true });
+          return;
         } else {
-          ctx.log.println(message);
+          failMessage = message;
         }
       }
+
+      failSpinner(failMessage ?? "Failed to deploy");
 
       return;
     },
@@ -194,7 +222,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
 
         if (!publishStarted) {
           await confirm(ctx, { message: "Do you want to continue?" });
-          subscription.resubscribe({ localFilesVersion: String(syncJson.filesVersion), force: true });
+          subscription.resubscribe({ ...variables, force: true });
         } else {
           assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");
           ctx.log.printlns2`Deploying regardless of problems because "--allow-problems" was passed.`;
@@ -205,7 +233,9 @@ export const command: Command<DeployArgs> = async (ctx) => {
 
       if (status?.code === "Errored") {
         subscription.unsubscribe();
-        spinner.fail();
+
+        failSpinner();
+
         if (status.message) {
           ctx.log.printlns`{red ${status.message}}`;
         }
@@ -217,7 +247,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
 
       if (step === AppDeploymentSteps.COMPLETED) {
         subscription.unsubscribe();
-        spinner.succeed();
+        succeedSpinner();
         let message = chalk.green("Deploy successful!");
         if (status?.output) {
           message += ` ${terminalLink("Check logs", status.output)}`;
@@ -226,12 +256,13 @@ export const command: Command<DeployArgs> = async (ctx) => {
         return;
       }
 
-      const spinnerText = stepToSpinnerText(syncJson, step);
-      if (spinnerText !== spinner.text) {
-        if (spinner.text) {
-          spinner.succeed();
+      const newSpinnerText = stepToSpinnerText(syncJson, step);
+      const currentSpinnerText = spinnerText();
+      if (newSpinnerText !== currentSpinnerText) {
+        if (currentSpinnerText) {
+          succeedSpinner();
         }
-        spinner.start(spinnerText);
+        startSpinner(newSpinnerText);
       }
     },
   });

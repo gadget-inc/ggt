@@ -56,6 +56,14 @@ FLAGS
       • TypeScript errors
       • Models with missing fields
 
+    Defaults to false.
+
+  --allow-charges
+    Deploy your development environment to production even if
+    doing so will add charges to your account.
+
+    Defaults to false.
+
   --allow-unknown-directory
     Allows \\"ggt deploy\\" to continue when the current directory, nor
     any parent directories, contain a \\".gadget/sync.json\\" file
@@ -95,6 +103,8 @@ FLAGS
   -a, --app=<name>      The application to deploy
   -e, --from=<env>      The environment to deploy from
       --force           Discard un-synchronized environment changes
+      --allow-problems  Deploy regardless of any problems on the environment
+      --allow-charges   Deploy even if doing so will add charges to your account
 
 Run \\"ggt deploy --help\\" for more information.
 "

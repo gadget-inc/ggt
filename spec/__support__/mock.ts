@@ -95,6 +95,7 @@ export const mock = ((target: any, property: any, accessor: any, impl: any) => {
     mocked = vi.spyOn(target, property).mockImplementation(impl);
   } else {
     // (fn, impl)
+
     impl = property;
     assert(vi.isMockFunction(target), "expected mocked function");
     expect(impl).toBeInstanceOf(Function);

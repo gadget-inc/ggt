@@ -28,6 +28,62 @@ type AddUserTagResult {
   success: Boolean!
 }
 
+type BackgroundAction {
+  actionApiIdentifier: String!
+  attempts: [BackgroundActionAttempt!]!
+  cancelledAt: DateTime
+  createdDate: DateTime!
+  id: String!
+  lastAttemptFinishedAt: DateTime
+  lastAttemptStartedAt: DateTime
+  lastRestartedAt: DateTime
+  nextAttemptStartsAfter: DateTime
+  payload: JSON!
+  priority: String!
+  queue: String
+  retryPolicy: JSON!
+  state: BackgroundActionState!
+  type: String!
+}
+
+type BackgroundActionAttempt {
+  attemptNumber: Int!
+  details: JSON!
+  failureReason: JSON
+  failureSummary: String
+  finishedDate: DateTime
+  id: String!
+  startedDate: DateTime
+  state: BackgroundActionAttemptState!
+}
+
+enum BackgroundActionAttemptState {
+  FAILED
+  RUNNING
+  SUCCEEDED
+}
+
+type BackgroundActionConnection {
+  nodes: [BackgroundAction!]!
+  pageInfo: OffsetPageInfo!
+}
+
+input BackgroundActionFilter {
+  inState: [BackgroundActionState!]
+  priority: String
+  search: String
+}
+
+enum BackgroundActionState {
+  CANCELLED
+  COMPLETED
+  FAILED
+  RETRYING
+  RUNNING
+  SCHEDULED
+  WAITING
+}
+
 type ChangeAppDomainResult {
   onlyValidate: Boolean
   reason: String
@@ -61,12 +117,33 @@ type EnableFrontendResult {
   success: Boolean!
 }
 
+type Environment {
+  id: String!
+  lastUserEditDate: DateTime!
+  name: String!
+  slug: String!
+  status: EnvironmentStatus!
+  type: EnvironmentType!
+}
+
+input EnvironmentInput {
+  slug: String!
+  sourceSlug: String
+}
+
 type EnvironmentPatchResult {
   success: Boolean!
 }
 
 type EnvironmentPublishResult {
   success: Boolean!
+}
+
+enum EnvironmentStatus {
+  ACTIVE
+  FATAL_ERROR
+  PAUSED
+  PENDING
 }
 
 type EnvironmentSubscriptionResult {
@@ -76,6 +153,12 @@ type EnvironmentSubscriptionResult {
 input EnvironmentTreeClientId {
   clientType: String!
   id: String!
+}
+
+enum EnvironmentType {
+  DEVELOPMENT
+  PRODUCTION
+  TEST
 }
 
 type FileSyncChangedEvent {
@@ -147,13 +230,6 @@ type LogSearchResult {
   status: String!
 }
 
-type Problem {
-  level: String!
-  message: String!
-  path: String!
-  type: String!
-}
-
 type MigrateAACResult {
   reason: String
   success: Boolean!
@@ -163,29 +239,61 @@ type MigrateEnvironmentsResult {
   success: Boolean!
 }
 
+type MigrateFBAResult {
+  reason: String
+  success: Boolean!
+}
+
+enum ModelExportFormat {
+  CSV
+  NDJSON
+}
+
 type Mutation {
   addApplicationTag(tag: String!): AddApplicationTagResult
   addUserTag(replaceMatches: [String!], tag: String!): AddUserTagResult
+  cancelBackgroundAction(id: String!): BackgroundAction!
   changeAppDomain(newSubdomain: String!, onlyValidate: Boolean): ChangeAppDomainResult
   convergePackages: Boolean!
+  createEnvironment(environment: EnvironmentInput!): Environment!
   deleteApp(onlyProduction: Boolean): DeleteAppStatusResult
-  enableFrontend(hasShopifyConnection: Boolean!): EnableFrontendResult
+  deleteBackgroundAction(id: String!): Boolean!
+  deleteEnvironment(slug: String!): Boolean!
+  enableFrontend(hasShopifyConnection: Boolean!): EnableFrontendResult @deprecated(reason: "enabling frontends on legacy apps is no longer supported")
+  exportModelData(filterSort: JSON, format: ModelExportFormat, modelApiIdentifier: String!, selection: [String!]): Boolean!
   migrateAAC: MigrateAACResult
-  migrateEnvironments(existingToProduction: Boolean!): MigrateEnvironmentsResult
-  patchEnvironmentTree(clientID: EnvironmentTreeClientId!, patches: [JSON!]!): EnvironmentPatchResult
+  migrateEnvironments(existingToProduction: Boolean!): MigrateEnvironmentsResult @deprecated(reason: "legacy environments are no longer supported")
+  migrateFBA: MigrateFBAResult
+  patchEnvironmentTree(clientID: EnvironmentTreeClientId!, patches: [JSON!]!, txID: String): EnvironmentPatchResult
   publish: EnvironmentPublishResult
   publishFileSyncEvents(input: PublishFileSyncEventsInput!): PublishFileSyncEventsResult!
   refreshScopes(appConfigKey: String!, connectionKey: String!, shopId: String!): RefreshScopesResult
   registerWebhooks(connectionKey: String!, keepExtraTopics: Boolean, modelKeys: [String!], shopIds: [String!]!): RegisterWebhooksResult
   removeContributor(email: String!, isInvitation: Boolean!): RemoveContributorResult @deprecated(reason: "use team")
   sendAppInvitation(email: String, emails: [String!], resend: Boolean): SendAppInvitationResult @deprecated(reason: "app invitations are no longer supported")
-  setClientCurrentPath(clientID: EnvironmentTreeClientId!, currentPath: String!): EnvironmentPatchResult!
   setFrameworkVersion(constraint: String!): SetFrameworkVersionResult!
+  startLogsExport(end: DateTime, query: String!, start: DateTime!): Boolean!
+  startNextBackgroundActionAttemptNow(id: String!): BackgroundAction!
   syncToWebflow: Boolean!
+  triggerRunShopifySync(shopIds: [String!]!): TriggerRunShopifySyncResult
   uninstallShop(shopId: String!): UninstallShopResult
   unregisterWebhooks(apiKeys: [String!], connectionKey: String!, modelKeys: [String!]): UnregisterWebhooksResult
   uploadFiles(files: [UploadFile!]!): UploadFilesResult!
   uploadTemplateAsset(file: Upload!): UploadTemplateAssetResult!
+}
+
+type OffsetPageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  page: Int!
+  total: Int!
+}
+
+type Problem {
+  level: String!
+  message: String!
+  path: String!
+  type: String!
 }
 
 input PublishFileSyncEventsInput {
@@ -195,8 +303,8 @@ input PublishFileSyncEventsInput {
 }
 
 type PublishFileSyncEventsResult {
-  remoteFilesVersion: String!
   problems: [Problem!]!
+  remoteFilesVersion: String!
 }
 
 type PublishIssue {
@@ -237,13 +345,17 @@ type PublishStatusState {
 
 type Query {
   apiUpgradeConvergePlan(currentVersion: String!, targetVersion: String!): APIUpgradeConvergePlanResult
+  backgroundAction(id: String!): BackgroundAction
+  backgroundActions(filter: BackgroundActionFilter, page: Int): BackgroundActionConnection!
   currentUser: User!
   environmentTreeChildKeys(path: String!): [String!]!
   environmentTreePath(hydrateChildrenGlobs: [String!], path: String!): JSON
+  environments: [Environment!]!
   fileSyncComparisonHashes(filesVersion: String!): FileSyncComparisonHashes!
   fileSyncFiles(encoding: FileSyncEncoding, filesVersion: String, paths: [String!]!): FileSyncFiles!
   fileSyncHashes(filesVersion: String): FileSyncHashes!
   identifySupportConversation: IdentifySupportConversationResult
+  initialSnapshot: JSON!
   listContributors: [ContributorResult!]! @deprecated(reason: "use team")
   logsSearch(direction: String, end: DateTime, limit: Int, query: String!, start: DateTime, step: Int): LogSearchResult!
   publishIssues: [PublishIssue!]!
@@ -285,7 +397,7 @@ type SetFrameworkVersionResult {
 type Subscription {
   environmentTreePathPatches(clientID: EnvironmentTreeClientId!, path: String!): EnvironmentSubscriptionResult
   logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
-  publishStatus(force: Boolean, localFilesVersion: String!): PublishStatusState
+  publishStatus(allowCharges: Boolean, force: Boolean, localFilesVersion: String!): PublishStatusState
   remoteFileSyncEvents(encoding: FileSyncEncoding, localFilesVersion: String!): RemoteFileSyncEvents!
   reportClientPresence(clientID: EnvironmentTreeClientId!): Boolean
   typesManifestStream: TypesManifest!
@@ -310,6 +422,12 @@ type TeamResult {
   maxApplications: Int
   teamEntitlements: TeamEntitlements!
   teamMembers: [TeamMember!]!
+}
+
+type TriggerRunShopifySyncResult {
+  failedShopIds: [String!]!
+  success: Boolean!
+  successfulShopIds: [String!]!
 }
 
 type TypeManifestEntry {

@@ -87,7 +87,7 @@
         "eslint-plugin-lodash": "^7.4.0",
         "eslint-plugin-only-warn": "^1.1.0",
         "eslint-plugin-unicorn": "^51.0.1",
-        "nock": "^13.5.3",
+        "nock": "^13.5.4",
         "prettier": "^3.2.5",
         "prettier-plugin-organize-imports": "^3.2.4",
         "prettier-plugin-packagejson": "^2.4.12",
@@ -12670,9 +12670,9 @@
       }
     },
     "node_modules/nock": {
-      "version": "13.5.3",
-      "resolved": "https://registry.npmjs.org/nock/-/nock-13.5.3.tgz",
-      "integrity": "sha512-2NlGmHIK2rTeyy7UaY1ZNg0YZfEJMxghXgZi0b4DBsUyoDNTTxZeCSG1nmirAWF44RkkoV8NnegLVQijgVapNQ==",
+      "version": "13.5.4",
+      "resolved": "https://registry.npmjs.org/nock/-/nock-13.5.4.tgz",
+      "integrity": "sha512-yAyTfdeNJGGBFxWdzSKCBYxs5FxLbCg5X5Q4ets974hcQzG1+qCxvIyOo4j2Ry6MUlhWVMX4OoYDefAIIwupjw==",
       "dev": true,
       "dependencies": {
         "debug": "^4.1.0",
@@ -26043,9 +26043,9 @@
       }
     },
     "nock": {
-      "version": "13.5.3",
-      "resolved": "https://registry.npmjs.org/nock/-/nock-13.5.3.tgz",
-      "integrity": "sha512-2NlGmHIK2rTeyy7UaY1ZNg0YZfEJMxghXgZi0b4DBsUyoDNTTxZeCSG1nmirAWF44RkkoV8NnegLVQijgVapNQ==",
+      "version": "13.5.4",
+      "resolved": "https://registry.npmjs.org/nock/-/nock-13.5.4.tgz",
+      "integrity": "sha512-yAyTfdeNJGGBFxWdzSKCBYxs5FxLbCg5X5Q4ets974hcQzG1+qCxvIyOo4j2Ry6MUlhWVMX4OoYDefAIIwupjw==",
       "dev": true,
       "requires": {
         "debug": "^4.1.0",

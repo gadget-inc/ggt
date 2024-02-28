@@ -10,7 +10,6 @@ import { isObject } from "../util/is.js";
 import stdinDiscarder from "./stdin.js";
 
 let cursorIsHidden = false;
-let stdinIsBeingDiscarded = false;
 
 /**
  * Stderr
@@ -86,7 +85,7 @@ export class Output {
   }
 
   persistPrompt(finalPromptText = this._promptText): void {
-    assert(this.isInteractive, "cannot update prompt in non-interactive mode");
+    // assert(this.isInteractive, "cannot update prompt in non-interactive mode");
     this._promptText = "";
     this.writeStdout(finalPromptText);
   }
@@ -99,7 +98,7 @@ export class Output {
   }
 
   persistSpinner(finalSpinnerText = this._spinnerText): void {
-    assert(this.isInteractive, "cannot persist spinner in non-interactive mode");
+    // assert(this.isInteractive, "cannot persist spinner in non-interactive mode");
     this._spinnerText = "";
     this.writeStdout(finalSpinnerText);
   }
@@ -112,7 +111,7 @@ export class Output {
   }
 
   persistFooter(finalFooterText = this._footerText): void {
-    assert(this.isInteractive, "cannot persist footer in non-interactive mode");
+    // assert(this.isInteractive, "cannot persist footer in non-interactive mode");
     this._footerText = "";
     this.writeStdout(finalFooterText);
   }

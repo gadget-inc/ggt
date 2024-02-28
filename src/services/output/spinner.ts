@@ -34,14 +34,6 @@ export type SpinnerOptions = {
   kind?: SpinnerName;
 
   /**
-   * The position of the spinner in relation to the text.
-   *
-   * @default "start"
-   */
-  // TODO: "top-left" | "top-right" | "bottom-left" | "bottom-right"
-  position?: "start" | "end";
-
-  /**
    * The color of the spinner.
    *
    * @default "cyan"
@@ -97,36 +89,35 @@ export const createSpin = (options: SpinnerOptions): spin => {
       str = sprintln(str, ...values);
     }
 
-    if (!output.isInteractive) {
-      // write the message to stdout
-      output.writeStdout(sprintln(options)(str));
+    // if (!output.isInteractive) {
+    //   // write the message to stdout
+    //   output.writeStdout(sprintln(options)(str));
 
-      return {
-        clear: () => {
-          activeSpinner = false;
-        },
-        succeed: (successStr = str, ...values) => {
-          if (!isString(successStr)) {
-            successStr = sprintln(options)(successStr, ...values);
-          }
-          output.writeStdout(successStr);
-          activeSpinner = false;
-        },
-        fail: (failStr = str, ...values) => {
-          if (!isString(failStr)) {
-            failStr = sprintln(failStr, ...values);
-          }
-          output.writeStdout(failStr);
-          activeSpinner = false;
-        },
-      };
-    }
+    //   return {
+    //     clear: () => {
+    //       activeSpinner = false;
+    //     },
+    //     succeed: (successStr = str, ...values) => {
+    //       if (!isString(successStr)) {
+    //         successStr = sprintln(options)(successStr, ...values);
+    //       }
+    //       output.writeStdout(successStr);
+    //       activeSpinner = false;
+    //     },
+    //     fail: (failStr = str, ...values) => {
+    //       if (!isString(failStr)) {
+    //         failStr = sprintln(failStr, ...values);
+    //       }
+    //       output.writeStdout(failStr);
+    //       activeSpinner = false;
+    //     },
+    //   };
+    // }
 
     const {
       ensureNewLine = true,
       ensureEmptyLineAbove = false,
       kind = "dots",
-      position = "start",
       color = "white",
       successSymbol = chalk.green("✔"),
       failSymbol = chalk.red("✖"),
@@ -137,13 +128,9 @@ export const createSpin = (options: SpinnerOptions): spin => {
     const interval = cliSpinners[kind].interval;
 
     type RenderOptions = { symbol?: string; message: string; final?: boolean };
+    let firstRender = true;
 
-    const render = ({ symbol, message, final = false }: RenderOptions): void => {
-      if (symbol === undefined) {
-        frameIndex = ++frameIndex % frames.length;
-        symbol = chalk[color](frames[frameIndex]);
-      }
-
+    const render = ({ symbol, message, final: finalRender = false }: RenderOptions): void => {
       // strip leading and trailing newlines so we can add them back in
       // the right place
       while (message.startsWith("\n")) {
@@ -154,34 +141,60 @@ export const createSpin = (options: SpinnerOptions): spin => {
         message = message.slice(0, -1);
       }
 
+      // if no symbol is provided, use the next frame
+      if (symbol === undefined) {
+        frameIndex = ++frameIndex % frames.length;
+        symbol = chalk[color](frames[frameIndex]);
+      }
+
       if (message) {
+        // we have a message to display
         if (symbol) {
+          // add the spinner symbol to the first line of the message
           const lines = message.split(/\r?\n/);
-          lines[0] = position === "start" ? `${symbol} ${lines[0]}` : `${lines[0]} ${symbol}`;
+          lines[0] = `${symbol} ${lines[0]}`;
           message = lines.join(os.EOL);
         }
 
         if (ensureEmptyLineAbove && !message.startsWith("\n")) {
+          // add an empty line before the symbol
           message = "\n" + message;
         }
 
         if (ensureNewLine && !message.endsWith("\n")) {
+          // add a newline after the message
           message += "\n";
         }
       }
 
-      if (!final) {
-        output.updateSpinner(message);
+      if (!finalRender) {
+        // this is not the final render, so we need to update the spinner
+        if (output.isInteractive) {
+          // we are in an interactive terminal, so update the spinner
+          output.updateSpinner(message);
+        } else if (firstRender) {
+          // we are not in an interactive terminal, and this is the
+          // first render, so write the message to stdout
+          output.writeStdout(message);
+          firstRender = false;
+        }
         return;
       }
 
+      // this is the final render
       output.persistSpinner(message);
+
       activeSpinner = false;
     };
 
-    // start rendering the spinner
+    // render the first frame
     render({ message: str });
-    const spinnerInterval = setInterval(() => render({ message: str }), interval);
+
+    let spinnerInterval: NodeJS.Timeout | undefined;
+    if (output.isInteractive) {
+      // we are in an interactive terminal, so keep rendering the spinner
+      spinnerInterval = setInterval(() => render({ message: str }), interval);
+    }
 
     // setup the last render
     const finalRender = (renderOptions: Omit<RenderOptions, "final">): void => {

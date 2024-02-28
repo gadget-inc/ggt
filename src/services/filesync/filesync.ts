@@ -648,7 +648,7 @@ export class FileSync {
       sprintChanges(ctx, {
         changes,
         tense: "present",
-        title: sprintln`Pushing ${pluralize("file", changed.length + deleted.length)}. →`,
+        title: sprintln` Pushing ${pluralize("file", changed.length + deleted.length)}. →`,
         ensureEmptyLineAbove: false,
         ensureEmptyLineAboveBody: false,
         ...printLocalChangesOptions,

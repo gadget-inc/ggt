@@ -18,8 +18,6 @@ import { FileSync } from "../../../src/services/filesync/filesync.js";
 import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.js";
 import { SyncJson, loadSyncJsonDirectory, type SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
 import { confirm } from "../../../src/services/output/confirm.js";
-import { select } from "../../../src/services/output/select.js";
-import { noop } from "../../../src/services/util/function.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
@@ -27,10 +25,10 @@ import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
 import { defaultFileMode, expectPublishVariables, expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
 import { nockEditResponse } from "../../__support__/graphql.js";
-import { mock, mockOnce } from "../../__support__/mock.js";
+import { mock, mockConfirmOnce, mockSelectOnce } from "../../__support__/mock.js";
+import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
-import { expectStdout } from "../../__support__/stream.js";
 import { mockSystemTime } from "../../__support__/time.js";
 import { loginTestUser } from "../../__support__/user.js";
 
@@ -790,7 +788,7 @@ describe("FileSync.sync", () => {
       gadgetFiles: { "foo.js": "foo (gadget)" },
     });
 
-    mockOnce(select, () => ConflictPreference.CANCEL);
+    mockSelectOnce(ConflictPreference.CANCEL);
 
     await expectProcessExit(() => filesync.sync(ctx));
 
@@ -832,7 +830,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.LOCAL);
+    mockSelectOnce(ConflictPreference.LOCAL);
 
     await filesync.sync(ctx);
 
@@ -929,7 +927,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.LOCAL);
+    mockSelectOnce(ConflictPreference.LOCAL);
 
     await filesync.sync(ctx);
 
@@ -1040,7 +1038,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.GADGET);
+    mockSelectOnce(ConflictPreference.GADGET);
 
     await filesync.sync(ctx);
 
@@ -1129,7 +1127,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.GADGET);
+    mockSelectOnce(ConflictPreference.GADGET);
 
     await filesync.sync(ctx);
 
@@ -1186,7 +1184,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.GADGET);
+    mockSelectOnce(ConflictPreference.GADGET);
 
     await filesync.sync(ctx);
 
@@ -1342,7 +1340,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.LOCAL);
+    mockSelectOnce(ConflictPreference.LOCAL);
 
     await filesync.sync(ctx);
 
@@ -1707,7 +1705,7 @@ describe("FileSync.push", () => {
       },
     });
 
-    mockOnce(confirm, noop);
+    mockConfirmOnce();
 
     await filesync.push(ctx);
 
@@ -1897,7 +1895,7 @@ describe("FileSync.pull", () => {
       },
     });
 
-    mockOnce(confirm, noop);
+    mockConfirmOnce();
 
     await filesync.pull(ctx);
 

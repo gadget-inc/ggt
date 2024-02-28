@@ -11,8 +11,8 @@ import { makeRootContext } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
 import { mock } from "../__support__/mock.js";
+import { expectStdout } from "../__support__/output.js";
 import { expectProcessExit } from "../__support__/process.js";
-import { expectStdout } from "../__support__/stream.js";
 
 describe("root", () => {
   beforeEach(() => {

@@ -1,7 +1,8 @@
 import { assert, beforeEach, expect, vi, type SpyInstance } from "vitest";
 import * as confirm from "../../src/services/output/confirm.js";
-import { isSprintOptions, sprint, sprintln } from "../../src/services/output/print.js";
+import { isSprintOptions, sprint, sprintln, type SprintOptions } from "../../src/services/output/print.js";
 import * as select from "../../src/services/output/select.js";
+import { noop } from "../../src/services/util/function.js";
 import { isString } from "../../src/services/util/is.js";
 import type { ArgsType, FunctionPropertyNames } from "../../src/services/util/types.js";
 import { printStackTraceAndFail } from "./debug.js";
@@ -246,3 +247,65 @@ export const mockSideEffects = (): void => {
     });
   });
 };
+
+export const mockConfirm = (impl = noop): SpyInstance<[options: SprintOptions], confirm.confirm> => {
+  const mockedConfirm = (options: any): any => {
+    if (isSprintOptions(options)) {
+      return mockedConfirm;
+    }
+    impl();
+  };
+
+  return mock(confirm, "confirm", mockedConfirm);
+};
+
+export const mockConfirmOnce = (impl = noop): SpyInstance<[options: SprintOptions], confirm.confirm> => {
+  const mockedConfirm = (options: any): any => {
+    if (isSprintOptions(options)) {
+      return mockedConfirm;
+    }
+    impl();
+  };
+
+  return mockOnce(confirm, "confirm", mockedConfirm);
+};
+
+export const mockSelect = <Choice extends string>(
+  choice: Choice,
+): SpyInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
+  return mock(select, "select", (_options) => {
+    return (_str) => {
+      return Promise.resolve(choice);
+    };
+  });
+};
+
+export const mockSelectOnce = <Choice extends string>(
+  choice: Choice,
+): SpyInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
+  return mockOnce(select, "select", (_options) => {
+    return (_str) => {
+      return Promise.resolve(choice);
+    };
+  });
+};
+
+// export const select = <Choice extends string>(options: SelectOptions<Choice>): selectWithChoices<Choice> => {
+//   return ((template: string | TemplateStringsArray, ...values: unknown[]): Promise<Choice> => {
+//     let text = template as string;
+//     if (!isString(text)) {
+//       text = sprint(template as TemplateStringsArray, ...values);
+//     }
+
+//     return new Promise((resolve) => {
+//       const sel = new Select(text, {
+//         formatChoice: (choice) => choice,
+//         formatSelection: (choice) => choice,
+//         ...options,
+//       });
+//       sel.on("submit", resolve);
+//       sel.on("exit", () => process.exit(0));
+//       sel.on("abort", () => process.exit(0));
+//     });
+//   }) as selectWithChoices<Choice>;
+// };

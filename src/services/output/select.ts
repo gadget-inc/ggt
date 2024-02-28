@@ -4,7 +4,7 @@ import assert from "node:assert";
 import process from "node:process";
 import { isString } from "../util/is.js";
 import { defaults } from "../util/object.js";
-import { stderr } from "./output.js";
+import { output } from "./output.js";
 import { sprint, sprintln, type SprintOptions } from "./print.js";
 import { entriesToDisplay, Prompt, type StdinKey } from "./prompt.js";
 
@@ -13,6 +13,7 @@ export type SelectOptions<Choice extends string> = SprintOptions & {
   formatChoice?: (choice: Choice) => string;
   formatSelection?: (choice: Choice) => string;
 };
+
 class Select<Choice extends string> extends Prompt {
   cursor = 0;
   optionsPerPage = 10;
@@ -123,7 +124,7 @@ class Select<Choice extends string> extends Prompt {
 
     let question = this.text;
     if (this.done) {
-      stderr.persistPrompt(sprintln`
+      output.persistPrompt(sprintln`
         ${question.trimEnd()} ${this.options.formatSelection(selection ?? this.selection)}
       `);
       return;
@@ -161,7 +162,7 @@ class Select<Choice extends string> extends Prompt {
       choices = indentString(choices, this.options.indent);
     }
 
-    stderr.updatePrompt(question + choices);
+    output.updatePrompt(question + choices);
   }
 }
 

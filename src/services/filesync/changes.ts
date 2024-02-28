@@ -145,7 +145,7 @@ export const sprintChanges = (
     rows,
     footer,
     ensureEmptyLineAbove: true,
-    ensureEmptyLineAboveBody: true,
+    ensureEmptyLineAboveBody: false,
     ensureEmptyLineAboveFooter: true,
     indent: 0,
     ...tableOptions,

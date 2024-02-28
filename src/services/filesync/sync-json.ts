@@ -244,11 +244,11 @@ export class SyncJson {
    */
   static async loadOrInit(
     ctx: Context<SyncJsonArgs>,
-    { directory, print: shouldPrint }: { directory: Directory; print: boolean },
+    { directory, ...options }: { directory: Directory; print?: boolean },
   ): Promise<SyncJson> {
     ctx = ctx.child({ name: "sync-json" });
 
-    const syncJson = await SyncJson.load(ctx, { directory, print: shouldPrint });
+    const syncJson = await SyncJson.load(ctx, { directory, ...options });
     if (syncJson) {
       // the .gadget/sync.json file already exists and is valid
       return syncJson;

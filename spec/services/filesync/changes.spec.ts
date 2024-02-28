@@ -2,7 +2,7 @@ import { beforeEach, describe, it } from "vitest";
 import type { Context } from "../../../src/services/command/context.js";
 import { Changes, printChanges } from "../../../src/services/filesync/changes.js";
 import { makeContext } from "../../__support__/context.js";
-import { expectStdout } from "../../__support__/stream.js";
+import { expectStdout } from "../../__support__/output.js";
 
 describe("printChanges", () => {
   let ctx: Context;
@@ -33,9 +33,9 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "past", title: "← Received from example (staging) 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "past", title: "Pulled files. ← 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
-      "← Received from example (staging) 12:00:00 PM
+      "Pulled files. ← 12:00:00 PM
       ±  bar  updated
       -  baz  deleted
       +  foo  created

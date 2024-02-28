@@ -7,8 +7,8 @@ import assert from "node:assert";
 import os from "node:os";
 import { dedent } from "ts-dedent";
 import { isString } from "../util/is.js";
-import { stderr } from "./output.js";
-import { isSprintOptions } from "./print.js";
+import { output } from "./output.js";
+import { isSprintOptions, sprintln } from "./print.js";
 
 export type SpinnerOptions = {
   /**
@@ -94,7 +94,32 @@ export const createSpin = (options: SpinnerOptions): spin => {
 
     let str = optionsOrString as string;
     if (!isString(str)) {
-      str = dedent(chalkTemplate(str, ...values));
+      str = sprintln(str, ...values);
+    }
+
+    if (!output.isInteractive) {
+      // write the message to stdout
+      output.writeStdout(sprintln(options)(str));
+
+      return {
+        clear: () => {
+          activeSpinner = false;
+        },
+        succeed: (successStr = str, ...values) => {
+          if (!isString(successStr)) {
+            successStr = sprintln(options)(successStr, ...values);
+          }
+          output.writeStdout(successStr);
+          activeSpinner = false;
+        },
+        fail: (failStr = str, ...values) => {
+          if (!isString(failStr)) {
+            failStr = sprintln(failStr, ...values);
+          }
+          output.writeStdout(failStr);
+          activeSpinner = false;
+        },
+      };
     }
 
     const {
@@ -137,11 +162,11 @@ export const createSpin = (options: SpinnerOptions): spin => {
       }
 
       if (!final) {
-        stderr.updateSpinner(message);
+        output.updateSpinner(message);
         return;
       }
 
-      stderr.persistSpinner(message);
+      output.persistSpinner(message);
       activeSpinner = false;
     };
 

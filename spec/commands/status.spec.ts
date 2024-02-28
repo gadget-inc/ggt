@@ -4,7 +4,7 @@ import type { Context } from "../../src/services/command/context.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeContext } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
-import { expectStdout } from "../__support__/stream.js";
+import { expectStdout } from "../__support__/output.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("status", () => {

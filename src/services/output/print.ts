@@ -7,7 +7,7 @@ import { dedent } from "ts-dedent";
 import { config } from "../config/config.js";
 import { isArray, isString } from "../util/is.js";
 import type { Field } from "./log/field.js";
-import { stderr, stdout } from "./output.js";
+import { output } from "./output.js";
 
 export type SprintOptions = {
   /**
@@ -53,28 +53,28 @@ const createSprint = (options: SprintOptions): sprint => {
 
     const { ensureNewLine = false, ensureEmptyLineAbove = false, indent = 0, boxen: boxenOptions } = options;
 
-    let text = templateOrOptions as string;
-    if (!isString(text)) {
-      text = dedent(chalkTemplate(text, ...values));
+    let str = templateOrOptions as string;
+    if (!isString(str)) {
+      str = dedent(chalkTemplate(str, ...values));
     }
 
-    if (ensureEmptyLineAbove && !text.startsWith("\n")) {
-      text = "\n" + text;
+    if (ensureEmptyLineAbove && !str.startsWith("\n")) {
+      str = "\n" + str;
     }
 
-    if (ensureNewLine && !text.endsWith("\n")) {
-      text += "\n";
+    if (ensureNewLine && !str.endsWith("\n")) {
+      str += "\n";
     }
 
     if (boxenOptions) {
-      text = boxen(text, boxenOptions);
+      str = boxen(str, boxenOptions);
     }
 
     if (indent > 0) {
-      text = indentString(text, indent);
+      str = indentString(str, indent);
     }
 
-    return text;
+    return str;
   }) as sprint;
 };
 
@@ -170,13 +170,13 @@ const createPrint = (options: PrintOptions): print => {
 
     if (config.logFormat === "json") {
       if (json) {
-        stdout.write(JSON.stringify(json) + "\n");
+        output.writeStdout(JSON.stringify(json) + "\n");
       }
       return;
     }
 
     const text = sprint(sprintOptions)(templateOrOptions as TemplateStringsArray, ...values);
-    stderr.write(text);
+    output.writeStdout(text);
     return;
   }) as print;
 };
@@ -317,17 +317,6 @@ const borders = {
   },
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isSprintOptions = <const T extends SprintOptions>(value: string | TemplateStringsArray | SprintOptions): value is T => {
   return !isString(value) && !isArray(value);
-};
-
-export const stripSurroundingNewlines = (str: string): string => {
-  while (str.startsWith("\n")) {
-    str = str.slice(1);
-  }
-  while (str.endsWith("\n")) {
-    str = str.slice(0, -1);
-  }
-  return str;
 };

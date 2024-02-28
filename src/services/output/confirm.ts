@@ -2,7 +2,7 @@ import chalk from "chalk";
 import process from "node:process";
 import { isArray, isString } from "../util/is.js";
 import { defaults } from "../util/object.js";
-import { stderr } from "./output.js";
+import { output } from "./output.js";
 import { sprint, sprintln, type SprintOptions } from "./print.js";
 import { Prompt, type StdinKey } from "./prompt.js";
 
@@ -89,13 +89,13 @@ export class Confirm extends Prompt {
     super.render();
 
     if (this.done) {
-      stderr.persistPrompt(sprintln`
+      output.persistPrompt(sprintln`
         ${this.text} ${this.value ? chalk.bold.greenBright("Yes.") : chalk.bold.redBright("No.")}
       `);
       return;
     }
 
-    stderr.updatePrompt(sprintln`
+    output.updatePrompt(sprintln`
       ${this.text} ${this.defaultValue ? "[Y/n] " : "[y/N] "}
     `);
   }
@@ -106,6 +106,7 @@ export type confirm = {
   (template: TemplateStringsArray, ...values: unknown[]): Promise<void>;
   (options: SprintOptions): confirm;
 };
+
 const createConfirm = (options: SprintOptions): confirm => {
   return ((templateOrOptions: SprintOptions | string | TemplateStringsArray, ...values: unknown[]): confirm | Promise<void> => {
     if (!(isString(templateOrOptions) || isArray(templateOrOptions))) {

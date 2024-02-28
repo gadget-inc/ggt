@@ -3,7 +3,7 @@ import type { Ora } from "ora";
 import { describe, expect, it, vi } from "vitest";
 import { print, printTable } from "../../../src/services/output/print.js";
 import { withEnv } from "../../__support__/env.js";
-import { expectStdout } from "../../__support__/stream.js";
+import { expectStdout } from "../../__support__/output.js";
 
 describe("print", () => {
   it("prints to stdout", () => {

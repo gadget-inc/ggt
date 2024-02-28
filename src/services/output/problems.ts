@@ -3,7 +3,7 @@ import pluralize from "pluralize";
 import type { Problem as FileSyncProblem, PublishIssue } from "../../__generated__/graphql.js";
 import { compact } from "../util/collection.js";
 import { isGellyFile, isJavaScriptFile, isTypeScriptFile } from "../util/is.js";
-import { println, sprint, sprintln, type PrintOptions, type PrintOptionsReturnType, type PrintOutput } from "./print.js";
+import { println, sprint, sprintln, type SprintOptions } from "./print.js";
 
 export type Problems = Record<string, Problem[]>;
 
@@ -23,7 +23,7 @@ export const ProblemSeverity = Object.freeze({
 
 export type ProblemSeverity = keyof typeof ProblemSeverity;
 
-export type PrintProblemsOptions<Output extends PrintOutput> = PrintOptions<Output> & {
+export type PrintProblemsOptions = SprintOptions & {
   /**
    * The problems to print.
    */
@@ -37,11 +37,7 @@ export type PrintProblemsOptions<Output extends PrintOutput> = PrintOptions<Outp
   showFileTypes?: boolean;
 };
 
-export const printProblems = <const Output extends PrintOutput>({
-  problems: groupedProblems,
-  showFileTypes,
-  ...printOptions
-}: PrintProblemsOptions<Output>): PrintOptionsReturnType<Output> => {
+export const sprintProblems = ({ problems: groupedProblems, showFileTypes, ...sprintOptions }: PrintProblemsOptions): string => {
   let output = "";
 
   for (const [name, problems] of Object.entries(groupedProblems)) {
@@ -69,7 +65,11 @@ export const printProblems = <const Output extends PrintOutput>({
     }
   }
 
-  return println(printOptions)(output) as PrintOptionsReturnType<Output>;
+  return sprintln(sprintOptions)(output);
+};
+
+export const printProblems = (options: PrintProblemsOptions): void => {
+  println(sprintProblems(options));
 };
 
 export const filetype = (filename: string): string => {

@@ -25,7 +25,7 @@ import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { confirm } from "../output/confirm.js";
 import { println, sprint, sprintln } from "../output/print.js";
-import { filesyncProblemsToProblems, printProblems } from "../output/problems.js";
+import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.js";
 import { select } from "../output/select.js";
 import { spin, type spinner } from "../output/spinner.js";
 import { noop } from "../util/function.js";
@@ -136,7 +136,7 @@ export class FileSync {
       const localChangesToPush = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
       const gadgetChangesToPull = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
 
-      spinner.clear();
+      spinner.succeed("Your files are up to date.");
 
       return {
         inSync,
@@ -626,59 +626,72 @@ export class FileSync {
     // TODO: remove me
     // await delay("5s");
 
-    const {
-      publishFileSyncEvents: { remoteFilesVersion, problems: filesyncProblems },
-    } = await this.syncJson.edit.mutate({
-      mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      variables: {
-        input: {
-          expectedRemoteFilesVersion: String(expectedFilesVersion),
-          changed,
-          deleted,
-        },
-      },
-      http: {
-        retry: {
-          // we can retry this request because
-          // expectedRemoteFilesVersion makes it idempotent
-          methods: ["POST"],
-          calculateDelay: ({ error, computedValue }) => {
-            if (isFilesVersionMismatchError(error.response?.body)) {
-              // don't retry if we get a files version mismatch error
-              spinner.fail("Files version mismatch");
-              return 0;
-            }
-            return computedValue;
+    try {
+      const {
+        publishFileSyncEvents: { remoteFilesVersion, problems: filesyncProblems },
+      } = await this.syncJson.edit.mutate({
+        mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+        variables: {
+          input: {
+            expectedRemoteFilesVersion: String(expectedFilesVersion),
+            changed,
+            deleted,
           },
         },
-      },
-    });
+        http: {
+          retry: {
+            // we can retry this request because
+            // expectedRemoteFilesVersion makes it idempotent
+            methods: ["POST"],
+            calculateDelay: ({ error, computedValue }) => {
+              if (isFilesVersionMismatchError(error.response?.body)) {
+                // don't retry if we get a files version mismatch error
+                return 0;
+              }
+              return computedValue;
+            },
+          },
+        },
+      });
 
-    if (BigInt(remoteFilesVersion) > expectedFilesVersion + 1n) {
-      // we can't save the remoteFilesVersion because we haven't
-      // received the intermediate filesVersions yet
-      spinner.fail("Files version mismatch");
-      throw new Error("Files version mismatch");
-    }
+      if (BigInt(remoteFilesVersion) > expectedFilesVersion + 1n) {
+        // we can't save the remoteFilesVersion because we haven't
+        // received the intermediate filesVersions yet
+        throw new Error("Files version mismatch");
+      }
 
-    await this.syncJson.save(remoteFilesVersion);
+      await this.syncJson.save(remoteFilesVersion);
 
-    spinner.succeed(
-      sprintChanges(ctx, {
-        changes,
-        tense: "past",
-        title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. → {gray ${dayjs().format("hh:mm:ss A")}}`,
-        ...printLocalChangesOptions,
-      }),
-    );
+      spinner.succeed(
+        sprintChanges(ctx, {
+          changes,
+          tense: "past",
+          title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. → {gray ${dayjs().format("hh:mm:ss A")}}`,
+          ...printLocalChangesOptions,
+        }),
+      );
 
-    if (filesyncProblems.length > 0) {
-      let output = sprintln`{red Gadget has detected the following fatal errors with your files:}`;
-      output += sprintln("");
-      output += printProblems({ output: "string", problems: filesyncProblemsToProblems(filesyncProblems), showFileTypes: false });
-      output += sprintln("");
-      output += sprintln`{red Your app will not be operational until all fatal errors are fixed.}`;
-      println({ ensureEmptyLineAbove: true })(output);
+      if (filesyncProblems.length > 0) {
+        println({ ensureEmptyLineAbove: true })`
+          {red Gadget has detected the following fatal errors with your files:}
+
+          ${sprintProblems({
+            problems: filesyncProblemsToProblems(filesyncProblems),
+            showFileTypes: false,
+            indent: 10,
+          })}
+
+          {red Your app will not be operational until all fatal errors are fixed.}
+        `;
+      }
+    } catch (error) {
+      if (isFilesVersionMismatchError(error)) {
+        spinner.clear();
+      } else {
+        spinner.fail();
+      }
+
+      throw error;
     }
   }
 

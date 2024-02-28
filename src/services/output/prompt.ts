@@ -3,7 +3,7 @@ import assert from "node:assert";
 import EventEmitter from "node:events";
 import process from "node:process";
 import readline from "node:readline";
-import { stderr } from "./output.js";
+import { output } from "./output.js";
 
 export class Prompt extends EventEmitter {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,7 +79,7 @@ export class Prompt extends EventEmitter {
   }
 
   bell(): void {
-    stderr.write(ansiEscapes.beep);
+    output.writeStdout(ansiEscapes.beep);
   }
 
   render(): void {

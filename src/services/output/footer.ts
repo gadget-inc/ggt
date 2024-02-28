@@ -1,5 +1,5 @@
 import { isString } from "../util/is.js";
-import { stderr } from "./output.js";
+import { output } from "./output.js";
 import { isSprintOptions, sprint, type SprintOptions } from "./print.js";
 
 export type footer = {
@@ -87,7 +87,7 @@ const createFooter = (options: SprintOptions): footer => {
       str = sprint({ ensureNewLine: true, ...options })(optionsOrString as TemplateStringsArray, ...values);
     }
 
-    stderr.updateFooter(str);
+    output.updateFooter(str);
 
     return;
   }) as footer;

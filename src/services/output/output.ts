@@ -1,4 +1,6 @@
 import cliCursor from "cli-cursor";
+import isInteractive from "is-interactive";
+import assert from "node:assert";
 import process from "node:process";
 import stringWidth from "string-width";
 import stripAnsi from "strip-ansi";
@@ -22,7 +24,7 @@ export class Output {
    * empty (i.e. "\n"). This is useful for preventing duplicate empty
    * lines from being printed.
    *
-   * This is automatically calculated by the {@linkcode write} method,
+   * This is automatically calculated by the {@linkcode writeStdout} method,
    * so you only need to set this property manually when you know
    * something else wrote to the stream directly (e.g. `ora`).
    */
@@ -40,11 +42,8 @@ export class Output {
 
   private _stickyTextLinesToClear = 0;
 
-  #stream;
-
-  constructor(public channel: "stdout" | "stderr") {
-    this.#stream = process[this.channel];
-    this.#stream.on("error", (err: unknown) => {
+  constructor() {
+    process.stderr.on("error", (err: unknown) => {
       if (isObject(err) && "code" in err && err.code === "EPIPE") {
         return;
       }
@@ -52,62 +51,70 @@ export class Output {
     });
   }
 
-  get isTTY(): boolean {
-    return this.#stream.isTTY;
+  get isInteractive(): boolean {
+    return !env.testLike && isInteractive({ stream: process.stderr });
   }
 
-  write(text: string): void {
+  writeStdout(text: string): void {
     this._clearStickyText();
 
     text = this._stripUnnecessaryNewLines(text, this.lastPrintedLineWasEmpty);
-    this._write(text);
+    this._writeStdout(text);
     this.lastPrintedLineWasEmpty = text === "\n" || text.endsWith("\n\n");
 
     this._writeStickyText();
   }
 
-  updateHeader(headerTextThunk: string | ((currentHeaderText: string) => string)): void {
-    this._headerText = unthunk(headerTextThunk, this._headerText);
+  writeStderr(text: string): void {
     this._clearStickyText();
+
+    text = this._stripUnnecessaryNewLines(text, this.lastPrintedLineWasEmpty);
+    this._writeStderr(text);
+    this.lastPrintedLineWasEmpty = text === "\n" || text.endsWith("\n\n");
+
+    // TODO: figure out if this is correct
+    this.lastStickyLineWasEmpty = this.lastPrintedLineWasEmpty;
+
     this._writeStickyText();
   }
 
-  persistHeader(finalHeaderText = this._headerText): void {
-    this._headerText = "";
-    this.write(finalHeaderText);
-  }
-
   updatePrompt(promptTextThunk: string | ((currentPromptText: string) => string)): void {
+    assert(this.isInteractive, "cannot update prompt in non-interactive mode");
     this._promptText = unthunk(promptTextThunk, this._promptText);
     this._clearStickyText();
     this._writeStickyText();
   }
 
   persistPrompt(finalPromptText = this._promptText): void {
+    assert(this.isInteractive, "cannot update prompt in non-interactive mode");
     this._promptText = "";
-    this.write(finalPromptText);
+    this.writeStdout(finalPromptText);
   }
 
   updateSpinner(spinnerTextThunk: string | ((currentSpinnerText: string) => string)): void {
+    assert(this.isInteractive, "cannot update spinner in non-interactive mode");
     this._spinnerText = unthunk(spinnerTextThunk, this._spinnerText);
     this._clearStickyText();
     this._writeStickyText();
   }
 
   persistSpinner(finalSpinnerText = this._spinnerText): void {
+    assert(this.isInteractive, "cannot persist spinner in non-interactive mode");
     this._spinnerText = "";
-    this.write(finalSpinnerText);
+    this.writeStdout(finalSpinnerText);
   }
 
   updateFooter(footerTextThunk: string | ((currentFooterText: string) => string)): void {
+    assert(this.isInteractive, "cannot update footer in non-interactive mode");
     this._footerText = unthunk(footerTextThunk, this._footerText);
     this._clearStickyText();
     this._writeStickyText();
   }
 
   persistFooter(finalFooterText = this._footerText): void {
+    assert(this.isInteractive, "cannot persist footer in non-interactive mode");
     this._footerText = "";
-    this.write(finalFooterText);
+    this.writeStdout(finalFooterText);
   }
 
   private _stripUnnecessaryNewLines(text: string, lastLineWasEmpty: boolean): string {
@@ -125,13 +132,13 @@ export class Output {
     return text;
   }
 
-  private _write(text: string): void {
+  private _writeStderr(text: string): void {
     if (text === "") {
       return;
     }
 
     if (!env.testLike) {
-      this.#stream.write(text);
+      process.stderr.write(text);
       return;
     }
 
@@ -142,33 +149,50 @@ export class Output {
       text = text.slice(0, -1);
     }
 
-    if (this.channel === "stdout") {
-      console.log(text);
-    } else {
-      console.error(text);
-    }
+    console.error(text);
   }
 
-  private _clearStickyText(): void {
-    if (!this.#stream.isTTY || this._stickyTextLinesToClear === 0) {
+  private _writeStdout(text: string): void {
+    if (text === "") {
       return;
     }
 
-    this.#stream.cursorTo(0);
+    if (!env.testLike) {
+      process.stdout.write(text);
+      return;
+    }
+
+    // we use console.log/error in tests since vitest doesn't display
+    // process.stdout/stderr correctly, so we need to remove the
+    // trailing newline because console.log/error adds one
+    if (text.endsWith("\n")) {
+      text = text.slice(0, -1);
+    }
+
+    console.log(text);
+  }
+
+  private _clearStickyText(): void {
+    if (this._stickyTextLinesToClear === 0) {
+      return;
+    }
+
+    process.stderr.cursorTo(0);
     for (let i = 0; i < this._stickyTextLinesToClear; i++) {
       if (i > 0) {
-        this.#stream.moveCursor(0, -1);
+        process.stderr.moveCursor(0, -1);
       }
-      this.#stream.clearLine(1);
+      process.stderr.clearLine(1);
     }
 
     this._stickyTextLinesToClear = 0;
-
-    // TODO: figure out if this is correct
-    this.lastStickyLineWasEmpty = this.lastPrintedLineWasEmpty;
   }
 
   private _writeStickyText(): void {
+    if (!this.isInteractive) {
+      return;
+    }
+
     let formattedStickyText = "";
     if (this._headerText) {
       formattedStickyText += this._stripUnnecessaryNewLines(this._headerText, this.lastStickyLineWasEmpty);
@@ -190,35 +214,38 @@ export class Output {
       this.lastStickyLineWasEmpty = formattedStickyText === "\n" || formattedStickyText.endsWith("\n\n");
     }
 
-    this._write(formattedStickyText);
+    this._writeStderr(formattedStickyText);
     this._updateStickyTextLinesToClear(formattedStickyText);
 
-    if (formattedStickyText && !cursorIsHidden) {
-      cliCursor.hide(this.#stream);
-      cursorIsHidden = true;
-    } else if (!formattedStickyText && cursorIsHidden) {
-      cliCursor.show(this.#stream);
+    if (cursorIsHidden && !formattedStickyText) {
+      cliCursor.show(process.stderr);
+      stdinDiscarder.stop();
       cursorIsHidden = false;
+    } else if (!cursorIsHidden && formattedStickyText) {
+      cliCursor.hide(process.stderr);
+      stdinDiscarder.start();
+      cursorIsHidden = true;
     }
 
-    if (this._promptText && !stdinIsBeingDiscarded) {
-      stdinDiscarder.start();
-      stdinIsBeingDiscarded = true;
-    } else if (!this._promptText && stdinIsBeingDiscarded) {
-      stdinDiscarder.stop();
-      stdinIsBeingDiscarded = false;
-    }
+    // if (stdinIsBeingDiscarded && this._promptText) {
+    //   // stdin is being discarded, but we have a prompt, so stop
+    //   // discarding stdin so the user can answer the prompt
+    //   stdinIsBeingDiscarded = false;
+    // } else if (!stdinIsBeingDiscarded && !this._promptText && formattedStickyText) {
+    //   // stdin is not being discarded, we are not prompting the user,
+    //   // and we have sticky text, so start discarding stdin so the user
+    //   // can't mess up the sticky text
+    //   stdinIsBeingDiscarded = true;
+    // }
   }
 
   private _updateStickyTextLinesToClear(lastWrittenStickyText: string): void {
     for (const line of stripAnsi(lastWrittenStickyText).split(/\r?\n/)) {
       const numCharacters = stringWidth(line, { countAnsiEscapeCodes: true });
-      const numLines = Math.ceil(numCharacters / this.#stream.columns);
+      const numLines = Math.ceil(numCharacters / process.stderr.columns);
       this._stickyTextLinesToClear += Math.max(1, numLines);
     }
   }
 }
 
-// TODO: combine into a single object
-export const stdout = new Output("stdout");
-export const stderr = new Output("stderr");
+export const output = new Output();

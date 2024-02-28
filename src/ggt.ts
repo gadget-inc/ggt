@@ -1,7 +1,7 @@
 import ms from "ms";
 import * as root from "./commands/root.js";
 import { Context } from "./services/command/context.js";
-import { stderr } from "./services/output/output.js";
+import { output } from "./services/output/output.js";
 import { println } from "./services/output/print.js";
 import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.js";
 import { spin } from "./services/output/spinner.js";
@@ -36,10 +36,10 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
         }, ms("100ms")).unref();
 
         // ctrl+c was pressed, so we need to clear the line
-        stderr.write("\n");
+        output.writeStdout("\n");
 
         // if there was any sticky text, it needs to be persisted now
-        stderr.persistFooter();
+        output.persistFooter();
 
         // FIXME: might cause multiple spinners to be printed (assertion error)
         const spinner = spin({ successSymbol: "👋" })`
@@ -47,7 +47,7 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
         `;
 
         // TODO: remove me
-        // await delay("5s");
+        // await delay("2s");
 
         try {
           ctx.abort();

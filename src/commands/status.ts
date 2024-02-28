@@ -1,5 +1,6 @@
 import { ArgError } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
+import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
@@ -42,5 +43,12 @@ export const command: Command<StatusArgs> = async (ctx) => {
   }
 
   const filesync = new FileSync(syncJson);
-  await filesync.printStatus(ctx);
+  const hashes = await filesync.hashes(ctx);
+  await filesync.printStatus(ctx, { hashes });
+
+  const conflicts = getConflicts({ localChanges: hashes.localChanges, gadgetChanges: hashes.gadgetChanges });
+  if (conflicts.size > 0) {
+    ctx.log.debug("conflicts detected", { conflicts });
+    printConflicts({ conflicts });
+  }
 };

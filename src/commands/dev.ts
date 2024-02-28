@@ -174,7 +174,6 @@ export const command: Command<DevArgs> = async (ctx) => {
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
-  await filesync.printStatus(ctx, { hashes });
 
   if (!hashes.inSync) {
     // environment's files don't match ours
@@ -193,28 +192,9 @@ export const command: Command<DevArgs> = async (ctx) => {
       });
     } else {
       const bothChanged = hashes.localChanges.size > 0 && hashes.gadgetChanges.size > 0;
-
-      // // we're syncing to a different environment than last time, so
-      // // ask the user what to do
-      // if (hashes.localChanges.size > 0) {
-      //   printChanges(ctx, {
-      //     changes: hashes.localChanges,
-      //     tense: "past",
-      //     ensureEmptyLineAbove: true,
-      //     title: sprintln`Your local files have changed.`,
-      //   });
-      // }
-
-      // if (hashes.gadgetChanges.size > 0) {
-      //   printChanges(ctx, {
-      //     changes: hashes.gadgetChanges,
-      //     tense: "past",
-      //     ensureEmptyLineAbove: true,
-      //     title: sprintln`{bold Your environment's files have ${bothChanged ? "also " : ""}changed.}`,
-      //   });
-      // }
-
       const choices = Object.values(FileSyncStrategy);
+
+      await filesync.printStatus(ctx, { hashes });
 
       const strategy = await select({
         ensureEmptyLineAbove: true,

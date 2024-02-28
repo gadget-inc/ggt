@@ -89,31 +89,6 @@ export const createSpin = (options: SpinnerOptions): spin => {
       str = sprintln(str, ...values);
     }
 
-    // if (!output.isInteractive) {
-    //   // write the message to stdout
-    //   output.writeStdout(sprintln(options)(str));
-
-    //   return {
-    //     clear: () => {
-    //       activeSpinner = false;
-    //     },
-    //     succeed: (successStr = str, ...values) => {
-    //       if (!isString(successStr)) {
-    //         successStr = sprintln(options)(successStr, ...values);
-    //       }
-    //       output.writeStdout(successStr);
-    //       activeSpinner = false;
-    //     },
-    //     fail: (failStr = str, ...values) => {
-    //       if (!isString(failStr)) {
-    //         failStr = sprintln(failStr, ...values);
-    //       }
-    //       output.writeStdout(failStr);
-    //       activeSpinner = false;
-    //     },
-    //   };
-    // }
-
     const {
       ensureNewLine = true,
       ensureEmptyLineAbove = false,
@@ -167,24 +142,24 @@ export const createSpin = (options: SpinnerOptions): spin => {
         }
       }
 
-      if (!finalRender) {
-        // this is not the final render, so we need to update the spinner
-        if (output.isInteractive) {
-          // we are in an interactive terminal, so update the spinner
-          output.updateSpinner(message);
-        } else if (firstRender) {
-          // we are not in an interactive terminal, and this is the
-          // first render, so write the message to stdout
-          output.writeStdout(message);
-          firstRender = false;
-        }
+      if (finalRender) {
+        // this is the final render, so persist the spinner
+        output.persistSpinner(message);
+        activeSpinner = false;
         return;
       }
 
-      // this is the final render
-      output.persistSpinner(message);
-
-      activeSpinner = false;
+      // this is not the final render, so we need to update the spinner
+      if (output.isInteractive) {
+        debugger;
+        // we are in an interactive terminal, so update the spinner
+        output.updateSpinner(message);
+      } else if (firstRender) {
+        // we are not in an interactive terminal, and this is the first
+        // render, so write the message to stdout
+        output.writeStdout(message);
+        firstRender = false;
+      }
     };
 
     // render the first frame

@@ -10,6 +10,7 @@ import { isObject } from "../util/is.js";
 import stdinDiscarder from "./stdin.js";
 
 let cursorIsHidden = false;
+let firstWrite = true;
 
 /**
  * Stderr
@@ -30,8 +31,6 @@ export class Output {
   lastPrintedLineWasEmpty = true;
 
   lastStickyLineWasEmpty = true;
-
-  private _headerText = "";
 
   private _promptText = "";
 
@@ -55,23 +54,32 @@ export class Output {
   }
 
   writeStdout(text: string): void {
+    if (firstWrite) {
+      debugger;
+      firstWrite = false;
+    }
+
     this._clearStickyText();
 
     text = this._stripUnnecessaryNewLines(text, this.lastPrintedLineWasEmpty);
     this._writeStdout(text);
     this.lastPrintedLineWasEmpty = text === "\n" || text.endsWith("\n\n");
+    this.lastStickyLineWasEmpty = this.lastPrintedLineWasEmpty;
 
     this._writeStickyText();
   }
 
   writeStderr(text: string): void {
+    if (firstWrite) {
+      debugger;
+      firstWrite = false;
+    }
+
     this._clearStickyText();
 
     text = this._stripUnnecessaryNewLines(text, this.lastPrintedLineWasEmpty);
     this._writeStderr(text);
     this.lastPrintedLineWasEmpty = text === "\n" || text.endsWith("\n\n");
-
-    // TODO: figure out if this is correct
     this.lastStickyLineWasEmpty = this.lastPrintedLineWasEmpty;
 
     this._writeStickyText();
@@ -80,7 +88,6 @@ export class Output {
   updatePrompt(promptTextThunk: string | ((currentPromptText: string) => string)): void {
     assert(this.isInteractive, "cannot update prompt in non-interactive mode");
     this._promptText = unthunk(promptTextThunk, this._promptText);
-    this._clearStickyText();
     this._writeStickyText();
   }
 
@@ -93,7 +100,6 @@ export class Output {
   updateSpinner(spinnerTextThunk: string | ((currentSpinnerText: string) => string)): void {
     assert(this.isInteractive, "cannot update spinner in non-interactive mode");
     this._spinnerText = unthunk(spinnerTextThunk, this._spinnerText);
-    this._clearStickyText();
     this._writeStickyText();
   }
 
@@ -104,9 +110,9 @@ export class Output {
   }
 
   updateFooter(footerTextThunk: string | ((currentFooterText: string) => string)): void {
+    debugger;
     assert(this.isInteractive, "cannot update footer in non-interactive mode");
     this._footerText = unthunk(footerTextThunk, this._footerText);
-    this._clearStickyText();
     this._writeStickyText();
   }
 
@@ -114,41 +120,6 @@ export class Output {
     // assert(this.isInteractive, "cannot persist footer in non-interactive mode");
     this._footerText = "";
     this.writeStdout(finalFooterText);
-  }
-
-  private _stripUnnecessaryNewLines(text: string, lastLineWasEmpty: boolean): string {
-    // remove duplicate empty lines
-    let index = -1;
-    while ((index = text.indexOf("\n\n\n")) !== -1) {
-      text = text.slice(0, index) + text.slice(index + 1);
-    }
-
-    if (lastLineWasEmpty && text.startsWith("\n")) {
-      // we just printed an empty line, so don't print another one
-      text = text.slice(1);
-    }
-
-    return text;
-  }
-
-  private _writeStderr(text: string): void {
-    if (text === "") {
-      return;
-    }
-
-    if (!env.testLike) {
-      process.stderr.write(text);
-      return;
-    }
-
-    // we use console.log/error in tests since vitest doesn't display
-    // process.stdout/stderr correctly, so we need to remove the
-    // trailing newline because console.log/error adds one
-    if (text.endsWith("\n")) {
-      text = text.slice(0, -1);
-    }
-
-    console.error(text);
   }
 
   private _writeStdout(text: string): void {
@@ -171,7 +142,28 @@ export class Output {
     console.log(text);
   }
 
+  private _writeStderr(text: string): void {
+    if (text === "") {
+      return;
+    }
+
+    if (!env.testLike) {
+      process.stderr.write(text);
+      return;
+    }
+
+    // we use console.log/error in tests since vitest doesn't display
+    // process.stdout/stderr correctly, so we need to remove the
+    // trailing newline because console.log/error adds one
+    if (text.endsWith("\n")) {
+      text = text.slice(0, -1);
+    }
+
+    console.error(text);
+  }
+
   private _clearStickyText(): void {
+    this.lastStickyLineWasEmpty = this.lastPrintedLineWasEmpty;
     if (this._stickyTextLinesToClear === 0) {
       return;
     }
@@ -192,12 +184,9 @@ export class Output {
       return;
     }
 
-    let formattedStickyText = "";
-    if (this._headerText) {
-      formattedStickyText += this._stripUnnecessaryNewLines(this._headerText, this.lastStickyLineWasEmpty);
-      this.lastStickyLineWasEmpty = formattedStickyText === "\n" || formattedStickyText.endsWith("\n\n");
-    }
+    this._clearStickyText();
 
+    let formattedStickyText = "";
     if (this._promptText) {
       formattedStickyText += this._stripUnnecessaryNewLines(this._promptText, this.lastStickyLineWasEmpty);
       this.lastStickyLineWasEmpty = formattedStickyText === "\n" || formattedStickyText.endsWith("\n\n");
@@ -244,6 +233,23 @@ export class Output {
       const numLines = Math.ceil(numCharacters / process.stderr.columns);
       this._stickyTextLinesToClear += Math.max(1, numLines);
     }
+  }
+
+  private _stripUnnecessaryNewLines(text: string, lastLineWasEmpty: boolean): string {
+    // remove duplicate empty lines
+    let index = -1;
+    while ((index = text.indexOf("\n\n\n")) !== -1) {
+      text = text.slice(0, index) + text.slice(index + 1);
+    }
+
+    if (lastLineWasEmpty) {
+      // we just printed an empty line, so don't print another one
+      while (text.startsWith("\n")) {
+        text = text.slice(1);
+      }
+    }
+
+    return text;
   }
 }
 

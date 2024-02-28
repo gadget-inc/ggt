@@ -174,7 +174,6 @@ export const command: Command<DevArgs> = async (ctx) => {
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
-  await filesync.printStatus(ctx, { hashes });
 
   if (!hashes.inSync) {
     // environment's files don't match ours

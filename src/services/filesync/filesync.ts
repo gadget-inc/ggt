@@ -30,6 +30,7 @@ import { select } from "../output/select.js";
 import { spin, type spinner } from "../output/spinner.js";
 import { noop } from "../util/function.js";
 import { serializeError } from "../util/object.js";
+import { delay } from "../util/promise.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
@@ -69,7 +70,7 @@ export class FileSync {
     `;
 
     // TODO: remove me
-    // await delay("5s");
+    await delay("5s");
 
     try {
       const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([

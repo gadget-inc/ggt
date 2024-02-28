@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { stdout } from "../../../src/services/output/output.js";
+import { output } from "../../../src/services/output/output.js";
 import { expectStdout } from "../../__support__/output.js";
 
-describe("stdout", () => {
+describe("output", () => {
   it("strips leading newlines if the last line was empty", () => {
-    expect(stdout.lastPrintedLineWasEmpty).toBe(true);
+    expect(output.lastPrintedLineWasEmpty).toBe(true);
 
-    stdout.write("\nhello\n");
+    output.writeStdout("\nhello\n");
 
     expectStdout().toMatchInlineSnapshot(`
       "hello
@@ -15,9 +15,9 @@ describe("stdout", () => {
   });
 
   it("does not strip leading newlines if the last line was not empty", () => {
-    stdout.lastPrintedLineWasEmpty = false;
+    output.lastPrintedLineWasEmpty = false;
 
-    stdout.write("\nhello");
+    output.writeStdout("\nhello");
 
     expectStdout().toMatchInlineSnapshot(`
       "

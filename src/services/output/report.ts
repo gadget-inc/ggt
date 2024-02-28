@@ -138,16 +138,23 @@ export abstract class CLIError extends Error {
     let rendered = this.render();
 
     if (this.isBug !== IsBug.NO) {
-      const thisIsABug = this.isBug === IsBug.YES ? "This is a bug" : "If you think this is a bug";
-      const clickHere = terminalLink(
-        "click here",
-        `https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.id}`,
-      );
+      // ensure the rendered message ends with a newline
+      rendered = sprintln(rendered);
 
-      rendered += sprintln("");
-      rendered += sprintln({ ensureEmptyLineAbove: true })`
-          ${thisIsABug}, ${clickHere} to create an issue on GitHub.
+      const thisIsABug = this.isBug === IsBug.YES ? "This is a bug" : "If you think this is a bug";
+      const issueLink = `https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.id}`;
+
+      if (terminalLink.isSupported) {
+        rendered += sprintln({ ensureEmptyLineAbove: true })`
+          ${thisIsABug}, ${terminalLink("click here", issueLink)} to create an issue on GitHub.
         `;
+      } else {
+        rendered += sprintln({ ensureEmptyLineAbove: true })`
+          ${thisIsABug}, use the link below to create an issue on GitHub.
+
+          ${issueLink}
+        `;
+      }
     }
 
     return rendered;

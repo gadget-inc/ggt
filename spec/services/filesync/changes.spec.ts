@@ -35,7 +35,8 @@ describe("printChanges", () => {
 
     printChanges(ctx, { changes, tense: "past", title: "Pulled files. ← 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
-      "Pulled files. ← 12:00:00 PM
+      "
+      Pulled files. ← 12:00:00 PM
       ±  bar  updated
       -  baz  deleted
       +  foo  created
@@ -63,7 +64,8 @@ describe("printChanges", () => {
 
     printChanges(ctx, { changes, tense: "present", title: "→ Sent to example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
-      "→ Sent to example (staging) 12:00:00 PM
+      "
+      → Sent to example (staging) 12:00:00 PM
       +  file-01  create
       +  file-02  create
       +  file-03  create

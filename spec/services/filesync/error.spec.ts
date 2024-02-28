@@ -69,9 +69,10 @@ describe(TooManySyncAttemptsError.name, () => {
       Make sure no one else is editing files in the Gadget editor
       and try again.
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 });

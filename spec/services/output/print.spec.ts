@@ -1,6 +1,5 @@
 import chalk from "chalk";
-import type { Ora } from "ora";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { print, printTable } from "../../../src/services/output/print.js";
 import { withEnv } from "../../__support__/env.js";
 import { expectStdout } from "../../__support__/output.js";
@@ -58,23 +57,6 @@ describe("print", () => {
     }
   });
 
-  it("prints like a structured logger when GGT_LOG_LEVEL is set", () => {
-    try {
-      vi.useFakeTimers();
-      vi.setSystemTime(0);
-
-      withEnv({ GGT_LOG_LEVEL: "info" }, () => {
-        print("Hello, world!");
-        expectStdout().toMatchInlineSnapshot(`
-          "12:00:00 PRINT : Hello, world!
-          "
-        `);
-      });
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
   it("prints json when GGT_LOG_FORMAT=json", () => {
     withEnv({ GGT_LOG_FORMAT: "json" }, () => {
       print({ json: { hello: "world" } })("Hello, world!");
@@ -120,20 +102,6 @@ describe("print", () => {
     `);
     });
   });
-
-  describe('{ output: "string" }', () => {
-    it("returns the formatted string instead of printing it", () => {
-      const result: string = print({ output: "string" })("Hello, world!");
-      expect(result).toMatchInlineSnapshot('"Hello, world!"');
-    });
-  });
-
-  describe('{ output: "spinner" }', () => {
-    it("prints a spinner", () => {
-      const spinner: Ora = print({ output: "spinner" })("Hello, world!");
-      expect(spinner.text).toBe("Hello, world!");
-    });
-  });
 });
 
 describe("printTable", () => {
@@ -147,7 +115,14 @@ describe("printTable", () => {
       ],
       footer: "Table Footer",
     });
-    expectStdout().toMatchSnapshot();
+    expectStdout().toMatchInlineSnapshot(`
+      "Table Title
+      Column 1         Column 2
+      Row 1, Column 1  Row 1, Column 2
+      Row 2, Column 1  Row 2, Column 2
+      Table Footer
+      "
+    `);
   });
 
   it("writes a table with without a footer to stdout", () => {
@@ -159,7 +134,13 @@ describe("printTable", () => {
         ["Row 2, Column 1", "Row 2, Column 2"],
       ],
     });
-    expectStdout().toMatchSnapshot();
+    expectStdout().toMatchInlineSnapshot(`
+      "Table Title
+      Column 1         Column 2
+      Row 1, Column 1  Row 1, Column 2
+      Row 2, Column 1  Row 2, Column 2
+      "
+    `);
   });
 
   for (const borders of ["none", "thin", "thick"] as const) {

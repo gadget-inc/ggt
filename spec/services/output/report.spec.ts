@@ -28,7 +28,7 @@ describe("reportErrorAndExit", () => {
     expectStdout().toMatchInlineSnapshot(`
       "Boom!
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
       https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
       "
@@ -44,7 +44,7 @@ describe("UnexpectedError", () => {
 
     const error = new UnexpectedError(cause);
     expect(error.toString()).toMatchInlineSnapshot(`
-      "An unexpected error occurred
+      "An unexpected error occurred.
 
       Error: Whoops!
           at spec/services/output/report.spec.ts:43:19
@@ -58,9 +58,10 @@ describe("UnexpectedError", () => {
           at node_modules/vitest/dist/entry.js:103:7
           at withEnv (node_modules/vitest/dist/entry.js:73:5)
 
-      This is a bug, please submit an issue using the link below.
+      This is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 });

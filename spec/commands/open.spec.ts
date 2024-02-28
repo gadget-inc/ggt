@@ -4,12 +4,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { nockTestApps, testApp } from "../../spec/__support__/app.js";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
-import { mock } from "../../spec/__support__/mock.js";
+import { mock, mockSelectOnce } from "../../spec/__support__/mock.js";
 import { loginTestUser, testUser } from "../../spec/__support__/user.js";
 import { args, command as openCommand } from "../../src/commands/open.js";
 import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
 import type { Context } from "../../src/services/command/context.js";
-import { select } from "../../src/services/output/select.js";
 import * as user from "../../src/services/user/user.js";
 import { nockApiResponse } from "../__support__/graphql.js";
 import { expectStdout } from "../__support__/output.js";
@@ -114,8 +113,7 @@ describe("open", () => {
     it("to the model's data page based on user selection from a list of available models if --show-all flag is passed", async () => {
       mock(user, "getUser", () => testUser);
       nockGetModels();
-
-      mock(select, () => "user");
+      mockSelectOnce("user");
 
       ctx = makeContext({
         parse: args,
@@ -133,8 +131,7 @@ describe("open", () => {
     it("to the model's schema page based on user selection from a list of available models if --show-all flag is passed", async () => {
       mock(user, "getUser", () => testUser);
       nockGetModels();
-
-      mock(select, () => "user");
+      mockSelectOnce("user");
 
       ctx = makeContext({
         parse: args,

@@ -170,7 +170,6 @@ export const command: Command<DevArgs> = async (ctx) => {
 
   const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory, print: false });
-  footer(sprintSyncJson(syncJson));
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
@@ -195,7 +194,6 @@ export const command: Command<DevArgs> = async (ctx) => {
       const choices = Object.values(FileSyncStrategy);
 
       await filesync.printStatus(ctx, { hashes });
-
       const strategy = await select({
         ensureEmptyLineAbove: true,
         choices: bothChanged ? choices : choices.filter((choice) => choice !== FileSyncStrategy.MERGE),

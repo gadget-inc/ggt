@@ -544,14 +544,11 @@ export class FileSync {
     const created = changes.created();
     const updated = changes.updated();
 
-    const spinner = spin(
+    const spinner = spin({ ensureEmptyLineAbove: true })(
       sprintChanges(ctx, {
         changes,
         tense: "present",
         title: sprint`Pulling ${pluralize("file", changes.size)}. ←`,
-        ensureNewLine: true,
-        ensureEmptyLineAbove: true,
-        ensureEmptyLineAboveBody: false,
         ...printGadgetChangesOptions,
       }),
     );
@@ -649,8 +646,6 @@ export class FileSync {
         changes,
         tense: "present",
         title: sprintln` Pushing ${pluralize("file", changed.length + deleted.length)}. →`,
-        ensureEmptyLineAbove: false,
-        ensureEmptyLineAboveBody: false,
         ...printLocalChangesOptions,
       }),
     );
@@ -821,9 +816,6 @@ export class FileSync {
       changes,
       tense: "past",
       title: sprint`{green ✔}  Pulled ${pluralize("file", changes.size)}. ← {gray ${dayjs().format("hh:mm:ss A")}}`,
-      ensureNewLine: true,
-      ensureEmptyLineAbove: true,
-      ensureEmptyLineAboveBody: false,
       ...options.printGadgetChangesOptions,
     });
 

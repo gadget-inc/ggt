@@ -312,7 +312,7 @@ export class FileSync {
               printGadgetChangesOptions: {
                 tense: "past",
                 ensureEmptyLineAbove: true,
-                title: sprintln`{green ✔}  Pulled ${pluralize("file", changed.length + deleted.length)}. ← {gray ${dayjs().format("hh:mm:ss A")}}`,
+                title: sprintln`{green ✔} Pulled ${pluralize("file", changed.length + deleted.length)}. ← {gray ${dayjs().format("hh:mm:ss A")}}`,
                 limit: 5,
                 ...printGadgetChangesOptions,
               },
@@ -645,7 +645,7 @@ export class FileSync {
       sprintChanges(ctx, {
         changes,
         tense: "present",
-        title: sprintln` Pushing ${pluralize("file", changed.length + deleted.length)}. →`,
+        title: sprintln`Pushing ${pluralize("file", changed.length + deleted.length)}. →`,
         ...printLocalChangesOptions,
       }),
     );
@@ -693,7 +693,7 @@ export class FileSync {
         sprintChanges(ctx, {
           changes,
           tense: "past",
-          title: " " + sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. → {gray ${dayjs().format("hh:mm:ss A")}}`,
+          title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. → {gray ${dayjs().format("hh:mm:ss A")}}`,
           ...printLocalChangesOptions,
         }),
       );
@@ -815,7 +815,7 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      title: sprint`{green ✔}  Pulled ${pluralize("file", changes.size)}. ← {gray ${dayjs().format("hh:mm:ss A")}}`,
+      title: sprint`{green ✔} Pulled ${pluralize("file", changes.size)}. ← {gray ${dayjs().format("hh:mm:ss A")}}`,
       ...options.printGadgetChangesOptions,
     });
 

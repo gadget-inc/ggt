@@ -10,7 +10,6 @@ import { isObject } from "../util/is.js";
 import stdinDiscarder from "./stdin.js";
 
 let cursorIsHidden = false;
-let firstWrite = true;
 
 /**
  * Stderr
@@ -54,11 +53,6 @@ export class Output {
   }
 
   writeStdout(text: string): void {
-    if (firstWrite) {
-      debugger;
-      firstWrite = false;
-    }
-
     this._clearStickyText();
 
     text = this._stripUnnecessaryNewLines(text, this.lastPrintedLineWasEmpty);
@@ -70,11 +64,6 @@ export class Output {
   }
 
   writeStderr(text: string): void {
-    if (firstWrite) {
-      debugger;
-      firstWrite = false;
-    }
-
     this._clearStickyText();
 
     text = this._stripUnnecessaryNewLines(text, this.lastPrintedLineWasEmpty);
@@ -110,7 +99,6 @@ export class Output {
   }
 
   updateFooter(footerTextThunk: string | ((currentFooterText: string) => string)): void {
-    debugger;
     assert(this.isInteractive, "cannot update footer in non-interactive mode");
     this._footerText = unthunk(footerTextThunk, this._footerText);
     this._writeStickyText();

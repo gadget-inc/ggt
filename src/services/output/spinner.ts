@@ -151,7 +151,6 @@ export const createSpin = (options: SpinnerOptions): spin => {
 
       // this is not the final render, so we need to update the spinner
       if (output.isInteractive) {
-        debugger;
         // we are in an interactive terminal, so update the spinner
         output.updateSpinner(message);
       } else if (firstRender) {

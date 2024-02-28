@@ -62,7 +62,7 @@ class Select<Choice extends string> extends Prompt {
   abort(): void {
     this.done = this.aborted = true;
     this.fire();
-    this.render("Ctrl+C" as Choice);
+    this.render("Cancel (Ctrl+C)" as Choice);
     this.close();
   }
 

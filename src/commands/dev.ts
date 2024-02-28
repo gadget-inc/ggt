@@ -6,14 +6,14 @@ import which from "which";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
-import { Changes, printChanges } from "../services/filesync/changes.js";
+import { Changes } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory, sprintSyncJson } from "../services/filesync/sync-json.js";
 import { footer } from "../services/output/footer.js";
 import { notify } from "../services/output/notify.js";
-import { println, sprint, sprintln } from "../services/output/print.js";
+import { println, sprint } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { select } from "../services/output/select.js";
 import { spin } from "../services/output/spinner.js";
@@ -194,25 +194,25 @@ export const command: Command<DevArgs> = async (ctx) => {
     } else {
       const bothChanged = hashes.localChanges.size > 0 && hashes.gadgetChanges.size > 0;
 
-      // we're syncing to a different environment than last time, so
-      // ask the user what to do
-      if (hashes.localChanges.size > 0) {
-        printChanges(ctx, {
-          changes: hashes.localChanges,
-          tense: "past",
-          ensureEmptyLineAbove: true,
-          title: sprintln`{bold Your local files have changed.}`,
-        });
-      }
+      // // we're syncing to a different environment than last time, so
+      // // ask the user what to do
+      // if (hashes.localChanges.size > 0) {
+      //   printChanges(ctx, {
+      //     changes: hashes.localChanges,
+      //     tense: "past",
+      //     ensureEmptyLineAbove: true,
+      //     title: sprintln`Your local files have changed.`,
+      //   });
+      // }
 
-      if (hashes.gadgetChanges.size > 0) {
-        printChanges(ctx, {
-          changes: hashes.gadgetChanges,
-          tense: "past",
-          ensureEmptyLineAbove: true,
-          title: sprintln`{bold Your environment's files have ${bothChanged ? "also " : ""}changed.}`,
-        });
-      }
+      // if (hashes.gadgetChanges.size > 0) {
+      //   printChanges(ctx, {
+      //     changes: hashes.gadgetChanges,
+      //     tense: "past",
+      //     ensureEmptyLineAbove: true,
+      //     title: sprintln`{bold Your environment's files have ${bothChanged ? "also " : ""}changed.}`,
+      //   });
+      // }
 
       const choices = Object.values(FileSyncStrategy);
 
@@ -222,13 +222,13 @@ export const command: Command<DevArgs> = async (ctx) => {
         formatChoice: (choice) => {
           switch (choice) {
             case FileSyncStrategy.CANCEL:
-              return sprint`{bold Cancel} (Ctrl+C)`;
+              return sprint`Cancel (Ctrl+C)`;
             case FileSyncStrategy.MERGE:
-              return sprint`{bold Sync} local and environment's changes`;
+              return sprint`Merge local and environment's changes`;
             case FileSyncStrategy.PUSH:
-              return sprint`{bold Push} local changes and discard environment's changes`;
+              return sprint`Push local changes and {underline discard environment's} changes`;
             case FileSyncStrategy.PULL:
-              return sprint`{bold Pull} environment's changes and discard local changes`;
+              return sprint`Pull environment's changes and {underline discard local} changes`;
           }
         },
         formatSelection: (choice) => {
@@ -236,7 +236,7 @@ export const command: Command<DevArgs> = async (ctx) => {
             case FileSyncStrategy.CANCEL:
               return sprint`Cancel`;
             case FileSyncStrategy.MERGE:
-              return sprint`Sync`;
+              return sprint`Merge`;
             case FileSyncStrategy.PUSH:
               return sprint`Push`;
             case FileSyncStrategy.PULL:

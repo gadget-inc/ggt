@@ -490,7 +490,7 @@ export class FileSync {
       if (!preference) {
         printConflicts({ conflicts });
         preference = await select({ choices: Object.values(MergeConflictPreference) })`
-          How should we resolve these conflicts?
+          {bold How should we resolve these conflicts?}
         `;
       }
 

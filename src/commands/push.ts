@@ -118,7 +118,7 @@ export const command: Command<typeof args> = async (ctx) => {
   const hashes = await filesync.hashes(ctx);
   if (hashes.localChangesToPush.size === 0) {
     println({ ensureEmptyLineAbove: true })`
-      Your files are up to date. {gray Nothing to push.}
+      Nothing to push.
     `;
     return;
   }

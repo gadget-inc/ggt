@@ -116,9 +116,9 @@ export const command: Command<PullArgs> = async (ctx) => {
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
-  if (hashes.localChangesToPush.size === 0) {
+  if (hashes.gadgetChangesToPull.size === 0) {
     println({ ensureEmptyLineAbove: true })`
-      Your files are up to date. {gray Nothing to pull.}
+      Nothing to pull.
     `;
     return;
   }

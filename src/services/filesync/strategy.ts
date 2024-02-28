@@ -11,9 +11,9 @@ export const FileSyncStrategy = Object.freeze({
 export type FileSyncStrategy = (typeof FileSyncStrategy)[keyof typeof FileSyncStrategy];
 
 export const MergeConflictPreference = Object.freeze({
-  CANCEL: sprint`{bold Cancel} (Ctrl+C)`,
-  LOCAL: sprint`Keep {bold local} conflicting changes`,
-  GADGET: sprint`Keep {bold environment}'s conflicting changes`,
+  CANCEL: sprint`Cancel (Ctrl+C)`,
+  LOCAL: sprint`Keep {underline local} conflicting changes`,
+  GADGET: sprint`Keep {underline environment}'s conflicting changes`,
 });
 
 export type MergeConflictPreference = (typeof MergeConflictPreference)[keyof typeof MergeConflictPreference];

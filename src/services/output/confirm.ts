@@ -108,6 +108,10 @@ export type confirm = {
 };
 
 const createConfirm = (options: SprintOptions): confirm => {
+  options = defaults(options, {
+    ensureEmptyLineAbove: true,
+  });
+
   return ((templateOrOptions: SprintOptions | string | TemplateStringsArray, ...values: unknown[]): confirm | Promise<void> => {
     if (!(isString(templateOrOptions) || isArray(templateOrOptions))) {
       return createConfirm({ ...options, ...templateOrOptions });

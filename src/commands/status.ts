@@ -1,10 +1,9 @@
 import { ArgError } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
-import { printChanges } from "../services/filesync/changes.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { println, sprint } from "../services/output/print.js";
+import { sprint } from "../services/output/print.js";
 
 export type StatusArgs = typeof args;
 
@@ -12,11 +11,7 @@ export const args = SyncJsonArgs;
 
 export const usage: Usage = () => {
   return sprint`
-    Show changes made to your local filesystem and your
-    environment's filesystem.
-
-    Changes are calculated from the last time you ran
-    "ggt dev", "ggt push", or "ggt pull".
+    Show file changes since your last dev, push, or pull.
 
     {bold USAGE}
 
@@ -47,40 +42,5 @@ export const command: Command<StatusArgs> = async (ctx) => {
   }
 
   const filesync = new FileSync(syncJson);
-  const { inSync, localChanges, gadgetChanges } = await filesync.hashes(ctx);
-
-  if (inSync) {
-    println({ ensureEmptyLineAbove: true })`
-      Your files are up to date.
-    `;
-
-    // TODO: print git status
-    return;
-  }
-
-  if (localChanges.size > 0) {
-    printChanges(ctx, {
-      changes: localChanges,
-      tense: "past",
-      ensureEmptyLineAbove: true,
-      title: sprint`Your local files have changed.`,
-    });
-  } else {
-    println({ ensureEmptyLineAbove: true })`
-      Your local files {bold have not} changed.
-    `;
-  }
-
-  if (gadgetChanges.size > 0) {
-    printChanges(ctx, {
-      changes: gadgetChanges,
-      tense: "past",
-      ensureEmptyLineAbove: true,
-      title: sprint`Your environment's files {bold have} changed.`,
-    });
-  } else {
-    println({ ensureEmptyLineAbove: true })`
-      {bold Your environment's files have not changed.}
-    `;
-  }
+  await filesync.printStatus(ctx);
 };

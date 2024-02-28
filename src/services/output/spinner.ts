@@ -144,7 +144,16 @@ export const createSpin = (options: SpinnerOptions): spin => {
         symbol = chalk[color](frames[frameIndex]);
       }
 
-      message = message.trim();
+      // strip leading and trailing newlines so we can add them back in
+      // the right place
+      while (message.startsWith("\n")) {
+        message = message.slice(1);
+      }
+
+      while (message.endsWith("\n")) {
+        message = message.slice(0, -1);
+      }
+
       if (message) {
         if (symbol) {
           const lines = message.split(/\r?\n/);

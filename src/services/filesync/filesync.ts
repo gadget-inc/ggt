@@ -136,7 +136,11 @@ export class FileSync {
       const localChangesToPush = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
       const gadgetChangesToPull = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
 
-      spinner.succeed("Your files are up to date.");
+      if (inSync) {
+        spinner.succeed`Your files are up to date. {gray ${dayjs().format("hh:mm:ss A")}}`;
+      } else {
+        spinner.succeed`Calculated file changes. {gray ${dayjs().format("hh:mm:ss A")}}`;
+      }
 
       return {
         inSync,
@@ -152,6 +156,38 @@ export class FileSync {
     } catch (error) {
       spinner.fail();
       throw error;
+    }
+  }
+
+  async printStatus(ctx: Context<SyncJsonArgs>, { hashes }: { hashes?: FileSyncHashes } = {}): Promise<void> {
+    const { inSync, localChanges, gadgetChanges } = hashes ?? (await this.hashes(ctx));
+    if (inSync) {
+      // the spinner in hashes will have already printed that we're in sync
+      return;
+    }
+
+    if (localChanges.size > 0) {
+      printChanges(ctx, {
+        changes: localChanges,
+        tense: "past",
+        title: sprint`Your local files {underline have} changed.`,
+      });
+    } else {
+      println({ ensureEmptyLineAbove: true })`
+        Your local files {underline have not} changed.
+      `;
+    }
+
+    if (gadgetChanges.size > 0) {
+      printChanges(ctx, {
+        changes: gadgetChanges,
+        tense: "past",
+        title: sprint`Your environment's files {underline have} changed.`,
+      });
+    } else {
+      println({ ensureEmptyLineAbove: true })`
+        Your environment's files {underline have not} changed.
+      `;
     }
   }
 
@@ -276,7 +312,7 @@ export class FileSync {
               printGadgetChangesOptions: {
                 tense: "past",
                 ensureEmptyLineAbove: true,
-                title: sprintln`←  Received ${pluralize("file", changed.length + deleted.length)}. {gray ${dayjs().format("hh:mm:ss A")}}`,
+                title: sprintln`{green ✔}  Pulled ${pluralize("file", changed.length + deleted.length)}. ← {gray ${dayjs().format("hh:mm:ss A")}}`,
                 limit: 5,
                 ...printGadgetChangesOptions,
               },
@@ -383,7 +419,7 @@ export class FileSync {
       });
 
       await confirm({ ensureEmptyLineAbove: true })`
-        Are you sure you want to {bold discard} these changes?
+        Are you sure you want to {underline discard} these changes?
       `;
     }
 
@@ -452,13 +488,9 @@ export class FileSync {
 
       let preference = ctx.args["--prefer"];
       if (!preference) {
-        printConflicts(ctx, {
-          message: sprint`{bold You have conflicting changes with Gadget}`,
-          conflicts,
-        });
-
+        printConflicts({ conflicts });
         preference = await select({ choices: Object.values(MergeConflictPreference) })`
-          How would you like to resolve these conflicts?"
+          How should we resolve these conflicts?
         `;
       }
 
@@ -666,7 +698,7 @@ export class FileSync {
         sprintChanges(ctx, {
           changes,
           tense: "past",
-          title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. → {gray ${dayjs().format("hh:mm:ss A")}}`,
+          title: " " + sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. → {gray ${dayjs().format("hh:mm:ss A")}}`,
           ...printLocalChangesOptions,
         }),
       );

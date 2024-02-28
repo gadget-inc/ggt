@@ -130,7 +130,7 @@ class Select<Choice extends string> extends Prompt {
       return;
     }
 
-    question += ` ${chalk.gray("(Use arrow keys)")}\n\n`;
+    question += ` ${chalk.gray("Use arrow keys to move, type to filter")}\n\n`;
 
     let choices = "";
     const { startIndex, endIndex } = entriesToDisplay(this.cursor, this.options.choices.length, this.optionsPerPage);
@@ -174,6 +174,10 @@ export type selectWithChoices<Choice extends string> = {
 };
 
 export const select = <Choice extends string>(options: SelectOptions<Choice>): selectWithChoices<Choice> => {
+  options = defaults(options, {
+    ensureEmptyLineAbove: true,
+  });
+
   return ((template: string | TemplateStringsArray, ...values: unknown[]): Promise<Choice> => {
     let text = template as string;
     if (!isString(text)) {

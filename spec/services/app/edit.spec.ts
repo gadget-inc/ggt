@@ -109,9 +109,10 @@ describe("EditError", () => {
 
         • Changed and deleted files must not overlap
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 
@@ -128,9 +129,10 @@ describe("EditError", () => {
         • Changed and deleted files must not overlap
         • Files version mismatch, expected 1 but got 2
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 
@@ -146,9 +148,10 @@ describe("EditError", () => {
 
       The connection to Gadget closed unexpectedly.
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 
@@ -169,9 +172,10 @@ describe("EditError", () => {
 
       connect ECONNREFUSED 10.254.254.254:3000
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 
@@ -182,9 +186,10 @@ describe("EditError", () => {
 
       We received a response without data
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 });

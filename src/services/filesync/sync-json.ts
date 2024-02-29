@@ -312,7 +312,7 @@ export class SyncJson {
     let str = sprintln`
       Application  ${this.app.slug}
       Environment  ${this.env.name}
-  `;
+    `;
 
     if (this.gitBranch) {
       str += sprintln({ indent: 5 })`Branch  ${this.gitBranch}`;

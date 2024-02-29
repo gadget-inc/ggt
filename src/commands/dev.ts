@@ -411,8 +411,8 @@ export const command: Command<DevArgs> = async (ctx) => {
     await reportErrorAndExit(ctx, reason);
   });
 
-  footer`
-    ${syncJson.sprint({ indent: 4 })}
+  footer({ ensureEmptyLineAbove: true })`
+${syncJson.sprint({ indent: 4 })}
 
     Watching for file changes… {gray Press Ctrl+C to stop}
   `;

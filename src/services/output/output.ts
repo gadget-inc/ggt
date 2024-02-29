@@ -23,9 +23,9 @@ export class Output {
    * empty (i.e. "\n"). This is useful for preventing duplicate empty
    * lines from being printed.
    *
-   * This is automatically calculated by the {@linkcode writeStdout} method,
-   * so you only need to set this property manually when you know
-   * something else wrote to the stream directly (e.g. `ora`).
+   * This is automatically calculated by the {@linkcode writeStdout}
+   * method, so you only need to set this property manually when you
+   * know something else wrote to the stream directly.
    */
   lastPrintedLineWasEmpty = true;
 

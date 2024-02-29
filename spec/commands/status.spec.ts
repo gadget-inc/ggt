@@ -9,8 +9,9 @@ import { mockSystemTime } from "../__support__/time.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("status", () => {
-  let ctx: Context<StatusArgs>;
   mockSystemTime();
+
+  let ctx: Context<StatusArgs>;
 
   beforeEach(() => {
     loginTestUser();

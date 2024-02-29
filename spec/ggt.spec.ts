@@ -32,7 +32,7 @@ describe("ggt", () => {
     let signalled = false;
     let onSignal: AnyFunction;
 
-    mock(process, "once", (actualSignal, cb) => {
+    mock(process, "on", (actualSignal, cb) => {
       signalled ||= actualSignal === expectedSignal;
       expect(signals).toContain(actualSignal);
       onSignal = cb;

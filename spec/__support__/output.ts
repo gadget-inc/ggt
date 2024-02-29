@@ -23,6 +23,11 @@ export const mockStdout = (): void => {
     testStdout.length = 0;
 
     const { output } = await import("../../src/services/output/output.js");
+
+    // reset the state of the output service
+    output.lastPrintedLineWasEmpty = true;
+    output.lastStickyLineWasEmpty = true;
+
     // @ts-expect-error - _writeStdout is private
     mock(output, "_writeStdout", (data) => {
       testStdout.push(data);

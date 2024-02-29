@@ -20,8 +20,7 @@ describe("print", () => {
         {underline I am a multiline string.}
       `);
       expectStdout().toMatchInlineSnapshot(`
-        "
-                {bold Hello, world!}
+        "        {bold Hello, world!}
                 {underline I am a multiline string.}
               "
       `);
@@ -88,18 +87,12 @@ describe("print", () => {
   describe("with ensureEmptyLineAbove", () => {
     it("adds a newline before the content", () => {
       print({ ensureEmptyLineAbove: true })("Hello, world!");
-      expectStdout().toMatchInlineSnapshot(`
-      "
-      Hello, world!"
-    `);
+      expectStdout().toMatchInlineSnapshot('"Hello, world!"');
     });
 
     it("does not add a newline before the content when the content already begins with a newline", () => {
       print({ ensureEmptyLineAbove: true })("\nHello, world!");
-      expectStdout().toMatchInlineSnapshot(`
-      "
-      Hello, world!"
-    `);
+      expectStdout().toMatchInlineSnapshot('"Hello, world!"');
     });
   });
 });

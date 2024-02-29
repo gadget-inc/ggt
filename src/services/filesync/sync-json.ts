@@ -11,10 +11,11 @@ import { Edit } from "../app/edit/edit.js";
 import { ArgError, type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
-import { println, sprint, type SprintOptions } from "../output/print.js";
+import { println, sprint, sprintln, type SprintOptions } from "../output/print.js";
 import { select } from "../output/select.js";
 import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
+import { defaults } from "../util/object.js";
 import { Directory } from "./directory.js";
 import { UnknownDirectoryError } from "./error.js";
 
@@ -182,7 +183,7 @@ export class SyncJson {
 
         await syncJson.loadGitBranch();
         if (shouldPrint) {
-          printSyncJson(syncJson, { ensureEmptyLineAbove: true });
+          syncJson.println();
         }
 
         return syncJson;
@@ -226,7 +227,7 @@ export class SyncJson {
     const syncJson = new SyncJson(ctx, directory, previousEnvironment, state);
     await syncJson.loadGitBranch();
     if (shouldPrint) {
-      printSyncJson(syncJson, { ensureEmptyLineAbove: true });
+      syncJson.println();
     }
 
     return syncJson;
@@ -306,33 +307,39 @@ export class SyncJson {
   async loadGitBranch(): Promise<void> {
     this.gitBranch = await loadBranch(this.ctx, { directory: this.directory });
   }
-}
 
-export const sprintSyncJson = (syncJson: SyncJson, options?: SprintOptions): string => {
-  options ??= {} as SprintOptions;
-  options.ensureEmptyLineAbove ??= true;
+  sprint(options: SprintOptions = {}): string {
+    let str = sprintln`
+      Application  ${this.app.slug}
+      Environment  ${this.env.name}
+  `;
 
-  if (syncJson.gitBranch) {
-    return sprint(options)`
-        Application  ${syncJson.app.slug}
-        Environment  ${syncJson.env.name}
-             Branch  ${syncJson.gitBranch}
+    if (this.gitBranch) {
+      str += sprintln({ indent: 5 })`Branch  ${this.gitBranch}`;
+    }
 
-        ${terminalLink("Preview", `https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app`)}  ${terminalLink("Editor", `https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}`)}  ${terminalLink("Playground", `https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${syncJson.app.slug}`)}
+    if (terminalLink.isSupported) {
+      str += sprintln({ ensureEmptyLineAbove: true })`
+        ${terminalLink("Preview", `https://${this.app.slug}--${this.env.name}.gadget.app`)}  ${terminalLink("Editor", `https://${this.app.primaryDomain}/edit/${this.env.name}`)}  ${terminalLink("Playground", `https://${this.app.primaryDomain}/api/playground/graphql?environment=${this.env.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${this.app.slug}`)}
       `;
+    } else {
+      str += sprintln`
+          ------------------------
+           Preview     https://${this.app.slug}--${this.env.name}.gadget.app
+           Editor      https://${this.app.primaryDomain}/edit/${this.env.name}
+           Playground  https://${this.app.primaryDomain}/api/playground/graphql?environment=${this.env.name}
+           Docs        https://docs.gadget.dev/api/${this.app.slug}
+      `;
+    }
+
+    return sprintln(options)(str);
   }
 
-  return sprint(options)`
-      Application  ${syncJson.app.slug}
-      Environment  ${syncJson.env.name}
-
-      ${terminalLink("Preview", `https://${syncJson.app.slug}--${syncJson.env.name}.gadget.app`)}  ${terminalLink("Editor", `https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}`)}  ${terminalLink("Playground", `https://${syncJson.app.primaryDomain}/api/playground/graphql?environment=${syncJson.env.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${syncJson.app.slug}`)}
-    `;
-};
-
-export const printSyncJson = (syncJson: SyncJson, options?: SprintOptions): void => {
-  println(sprintSyncJson(syncJson, options));
-};
+  println(options?: SprintOptions): void {
+    options = defaults(options, { ensureEmptyLineAbove: true });
+    println(this.sprint(options));
+  }
+}
 
 export const loadSyncJsonDirectory = async (dir: string): Promise<Directory> => {
   if (config.windows && dir.startsWith("~/")) {

@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import { execa } from "execa";
 import fs from "fs-extra";
 import ms from "ms";
@@ -28,6 +27,7 @@ import { println, sprint, sprintln } from "../output/print.js";
 import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.js";
 import { select } from "../output/select.js";
 import { spin, type spinner } from "../output/spinner.js";
+import { ts } from "../output/timestamp.js";
 import { noop } from "../util/function.js";
 import { serializeError } from "../util/object.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
@@ -137,9 +137,9 @@ export class FileSync {
       const gadgetChangesToPull = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
 
       if (inSync) {
-        spinner.succeed`Your files are up to date. {gray ${dayjs().format("hh:mm:ss A")}}`;
+        spinner.succeed`Your files are up to date. ${ts()}`;
       } else {
-        spinner.succeed`Calculated file changes. {gray ${dayjs().format("hh:mm:ss A")}}`;
+        spinner.succeed`Calculated file changes. ${ts()}`;
       }
 
       return {
@@ -159,7 +159,7 @@ export class FileSync {
     }
   }
 
-  async printStatus(ctx: Context<SyncJsonArgs>, { hashes }: { hashes?: FileSyncHashes } = {}): Promise<void> {
+  async print(ctx: Context<SyncJsonArgs>, { hashes }: { hashes?: FileSyncHashes } = {}): Promise<void> {
     const { inSync, localChanges, gadgetChanges } = hashes ?? (await this.hashes(ctx));
     if (inSync) {
       // the spinner in hashes will have already printed that we're in sync
@@ -312,7 +312,7 @@ export class FileSync {
               printGadgetChangesOptions: {
                 tense: "past",
                 ensureEmptyLineAbove: true,
-                title: sprintln`{green ✔} Pulled ${pluralize("file", changed.length + deleted.length)}. ← {gray ${dayjs().format("hh:mm:ss A")}}`,
+                title: sprintln`{green ✔} Pulled ${pluralize("file", changed.length + deleted.length)}. ← ${ts()}`,
                 limit: 5,
                 ...printGadgetChangesOptions,
               },
@@ -693,7 +693,7 @@ export class FileSync {
         sprintChanges(ctx, {
           changes,
           tense: "past",
-          title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. → {gray ${dayjs().format("hh:mm:ss A")}}`,
+          title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. → ${ts()}`,
           ...printLocalChangesOptions,
         }),
       );
@@ -815,7 +815,7 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      title: sprint`{green ✔} Pulled ${pluralize("file", changes.size)}. ← {gray ${dayjs().format("hh:mm:ss A")}}`,
+      title: sprint`{green ✔} Pulled ${pluralize("file", changes.size)}. ← ${ts()}`,
       ...options.printGadgetChangesOptions,
     });
 
@@ -824,7 +824,7 @@ export class FileSync {
 
       try {
         await execa("yarn", ["install", "--check-files"], { cwd: this.syncJson.directory.path });
-        spinner.succeed`Ran "yarn install --check-files" {gray ${dayjs().format("hh:mm:ss A")}}`;
+        spinner.succeed`Ran "yarn install --check-files" ${ts()}`;
       } catch (error) {
         spinner.fail();
         ctx.log.error("yarn install failed", { error });

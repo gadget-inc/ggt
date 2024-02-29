@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable no-irregular-whitespace */
 import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
@@ -10,11 +10,9 @@ import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operati
 import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
 import { confirm } from "../../src/services/output/confirm.js";
-import * as spinner from "../../src/services/output/spinner.js";
-import { noop } from "../../src/services/util/function.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
-import { mock } from "../__support__/mock.js";
+import { mock, mockConfirmOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { loginTestUser } from "../__support__/user.js";
 
@@ -487,8 +485,6 @@ describe("deploy", () => {
   });
 
   it("can not deploy if the maximum number of applications has been reached", async () => {
-    const fail = vi.spyOn(spinner, "failSpinner");
-
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
@@ -512,12 +508,10 @@ describe("deploy", () => {
 
       "
     `);
-
-    expect(fail).toHaveBeenCalledWith("Production environment limit reached. Upgrade your plan to deploy.");
   });
 
   it("prompts the user to confirm if there is going to be a deploy charge", async () => {
-    const confirmSpy = mock(confirm, noop);
+    const confirmSpy = mockConfirmOnce();
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 

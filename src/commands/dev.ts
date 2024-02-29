@@ -10,7 +10,7 @@ import { Changes } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory, sprintSyncJson } from "../services/filesync/sync-json.js";
+import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { footer } from "../services/output/footer.js";
 import { notify } from "../services/output/notify.js";
 import { println, sprint } from "../services/output/print.js";
@@ -193,7 +193,7 @@ export const command: Command<DevArgs> = async (ctx) => {
       const bothChanged = hashes.localChanges.size > 0 && hashes.gadgetChanges.size > 0;
       const choices = Object.values(FileSyncStrategy);
 
-      await filesync.printStatus(ctx, { hashes });
+      await filesync.print(ctx, { hashes });
       const strategy = await select({
         ensureEmptyLineAbove: true,
         choices: bothChanged ? choices : choices.filter((choice) => choice !== FileSyncStrategy.MERGE),
@@ -412,7 +412,7 @@ export const command: Command<DevArgs> = async (ctx) => {
   });
 
   footer`
-    ${sprintSyncJson(syncJson, { indent: 4 })}
+    ${syncJson.sprint({ indent: 4 })}
 
     Watching for file changes… {gray Press Ctrl+C to stop}
   `;

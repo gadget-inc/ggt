@@ -1,4 +1,5 @@
 import fs from "fs-extra";
+import terminalLink from "terminal-link";
 import { beforeEach, describe, expect, it } from "vitest";
 import * as app from "../../../src/services/app/app.js";
 import { ArgError } from "../../../src/services/command/arg.js";
@@ -9,6 +10,7 @@ import { SyncJson, SyncJsonArgs, type AnySyncJsonState, type SyncJsonStateV05 } 
 import { nockTestApps, testApp, testApp2, testAppWith2Environments } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
+import { makeSyncScenario } from "../../__support__/filesync.js";
 import { mockOnce } from "../../__support__/mock.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { loginTestUser } from "../../__support__/user.js";
@@ -239,5 +241,42 @@ describe("SyncJson.loadOrInit", () => {
         [testApp.environments[3]!.name]: { filesVersion: "0" },
       },
     });
+  });
+});
+
+describe("sprintSyncJson", () => {
+  let syncJson: SyncJson;
+
+  beforeEach(async () => {
+    loginTestUser();
+    nockTestApps();
+
+    ({ syncJson } = await makeSyncScenario());
+  });
+
+  it("produces the expected output when terminalLink.isSupported = true", () => {
+    mockOnce(terminalLink, "isSupported", "get", () => true);
+    expect(syncJson.sprint()).toMatchInlineSnapshot(`
+      "Application  test
+      Environment  development
+           Branch  test-branch
+
+      Preview (​https://test--development.gadget.app​)  Editor (​https://test.gadget.app/edit/development​)  Playground (​https://test.gadget.app/api/playground/graphql?environment=development​)  Docs (​https://docs.gadget.dev/api/test​)
+      "
+    `);
+  });
+
+  it("produces the expected output when terminalLink.isSupported = false", () => {
+    expect(syncJson.sprint()).toMatchInlineSnapshot(`
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+      "
+    `);
   });
 });

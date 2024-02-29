@@ -1,8 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`FileSync._sendChangesToGadget > prints fatal errors when they're received 1`] = `
-"
-⠙ Pushing file. →
+"⠙ Pushing file. →
 ±  access-control.gadget.ts  update
 
 ✔ Pushed file. → 12:00:00 AM

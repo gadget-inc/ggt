@@ -62,6 +62,7 @@ export type spin = {
 };
 
 export type spinner = {
+  text: string;
   clear: () => void;
   succeed: {
     (str?: string): void;
@@ -177,24 +178,28 @@ export const createSpin = (options: SpinnerOptions): spin => {
     };
 
     return {
-      clear: (): void => {
+      text: str,
+      clear(): void {
+        this.text = "";
         finalRender({ symbol: "", message: "" });
       },
-      succeed: (finalStr?: string | TemplateStringsArray, ...values: unknown[]): void => {
+      succeed(finalStr?: string | TemplateStringsArray, ...values: unknown[]): void {
         finalStr ??= str;
         if (!isString(finalStr)) {
           finalStr = dedent(chalkTemplate(finalStr, ...values));
         }
+        this.text = finalStr;
         finalRender({ message: finalStr, symbol: successSymbol });
       },
-      fail: (finalStr?: string | TemplateStringsArray, ...values: unknown[]): void => {
+      fail(finalStr?: string | TemplateStringsArray, ...values: unknown[]): void {
         finalStr ??= str;
         if (!isString(finalStr)) {
           finalStr = dedent(chalkTemplate(finalStr, ...values));
         }
+        this.text = finalStr;
         finalRender({ message: finalStr, symbol: failSymbol });
       },
-    };
+    } as spinner;
   }) as spin;
 };
 

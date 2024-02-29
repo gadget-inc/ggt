@@ -44,7 +44,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
-  await filesync.printStatus(ctx, { hashes });
+  await filesync.print(ctx, { hashes });
 
   const conflicts = getConflicts({ localChanges: hashes.localChanges, gadgetChanges: hashes.gadgetChanges });
   if (conflicts.size > 0) {

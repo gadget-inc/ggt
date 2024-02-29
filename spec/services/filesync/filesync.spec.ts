@@ -23,7 +23,14 @@ import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
-import { defaultFileMode, expectPublishVariables, expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
+import {
+  defaultFileMode,
+  expectPublishVariables,
+  expectSyncJson,
+  makeFile,
+  makeSyncScenario,
+  type FileSyncScenarioOptions,
+} from "../../__support__/filesync.js";
 import { nockEditResponse } from "../../__support__/graphql.js";
 import { mock, mockConfirmOnce, mockSelectOnce } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
@@ -2012,6 +2019,62 @@ describe("FileSync.pull", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+  });
+});
+
+describe("FileSync.print", () => {
+  mockSystemTime();
+
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
+  });
+
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const makePrintScenario = (options?: FileSyncScenarioOptions) => {
+    return makeSyncScenario({
+      ...options,
+      filesVersion1Files: {
+        "local.txt": "local",
+        "environment.txt": "environment",
+        "shared.txt": "shared",
+        ...options?.filesVersion1Files,
+      },
+      localFiles: {
+        "local.txt": "local",
+        "environment.txt": "environment",
+        "shared.txt": "shared",
+        ...options?.localFiles,
+      },
+      gadgetFiles: {
+        "local.txt": "local",
+        "environment.txt": "environment",
+        "shared.txt": "shared",
+        ...options?.gadgetFiles,
+      },
+    });
+  };
+
+  it("prints the expected output", async () => {
+    const { ctx, filesync } = await makePrintScenario();
+
+    await filesync.print(ctx);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      ⠙ Calculating file changes.
+
+      ✔ Your files are up to date. 12:00:00 AM
+      "
+    `);
   });
 });
 

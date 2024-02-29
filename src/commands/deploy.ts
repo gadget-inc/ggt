@@ -10,7 +10,7 @@ import { confirm } from "../services/output/confirm.js";
 import { println, sprint } from "../services/output/print.js";
 import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.js";
 import { reportErrorAndExit } from "../services/output/report.js";
-import { failSpinner, spinnerText, startSpinner, succeedSpinner } from "../services/output/spinner.js";
+import { spin, type spinner } from "../services/output/spinner.js";
 import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
 
@@ -154,7 +154,10 @@ export const command: Command<DeployArgs> = async (ctx) => {
       environment before you can deploy.
     `;
 
-    await confirm(ctx, { message: "Would you like to push now?" });
+    await confirm`
+      Would you like to {underline push} now?
+    `;
+
     await filesync.push(ctx, { hashes });
   }
 
@@ -169,17 +172,18 @@ export const command: Command<DeployArgs> = async (ctx) => {
     allowCharges: ctx.args["--allow-charges"],
   };
 
+  let spinner: spinner | undefined;
+
   const subscription = syncJson.edit.subscribe({
     subscription: PUBLISH_STATUS_SUBSCRIPTION,
     variables,
     onError: async (error) => {
       ctx.log.error("failed to deploy", { error });
 
-      let failMessage: string | undefined = undefined;
+      let failMessage = "Failed to deploy.";
 
       if (isCloseEvent(error.cause)) {
         failMessage = error.message;
-        ctx.log.printlns(error.message);
       } else if (isGraphQLErrors(error.cause)) {
         const message = error.cause[0]?.message;
         const extensions = error.cause[0]?.extensions;
@@ -190,7 +194,12 @@ export const command: Command<DeployArgs> = async (ctx) => {
         } else if (extensions?.["requiresAdditionalCharge"]) {
           const paymentRequiredMessage = message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "");
 
-          await confirm(ctx, { message: `${paymentRequiredMessage}\nDo you wish to proceed?` });
+          await confirm`
+            ${paymentRequiredMessage}
+
+            Do you wish to proceed?
+          `;
+
           subscription.resubscribe({ ...variables, allowCharges: true });
           return;
         } else {
@@ -198,9 +207,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
         }
       }
 
-      failSpinner(failMessage ?? "Failed to deploy");
-
-      return;
+      spinner?.fail(failMessage);
     },
     onData: async ({ publishStatus }): Promise<void> => {
       if (!publishStatus) {
@@ -221,7 +228,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
         printProblems({ problems: publishIssuesToProblems(issues), ensureEmptyLineAbove: true });
 
         if (!publishStarted) {
-          await confirm(ctx, { message: "Do you want to continue?" });
+          await confirm("Do you want to continue?");
           subscription.resubscribe({ ...variables, force: true });
         } else {
           assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");
@@ -233,8 +240,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
 
       if (status?.code === "Errored") {
         subscription.unsubscribe();
-
-        failSpinner();
+        spinner?.fail();
 
         if (status.message) {
           println({ ensureEmptyLineAbove: true })`{red ${status.message}}`;
@@ -247,22 +253,23 @@ export const command: Command<DeployArgs> = async (ctx) => {
 
       if (step === AppDeploymentSteps.COMPLETED) {
         subscription.unsubscribe();
-        succeedSpinner();
+        spinner?.succeed();
+
         let message = chalk.green("Deploy successful!");
         if (status?.output) {
           message += ` ${terminalLink("Check logs", status.output)}`;
         }
+
         println({ ensureEmptyLineAbove: true })(message);
         return;
       }
 
       const newSpinnerText = stepToSpinnerText(syncJson, step);
-      const currentSpinnerText = spinnerText();
-      if (newSpinnerText !== currentSpinnerText) {
-        if (currentSpinnerText) {
-          succeedSpinner();
+      if (newSpinnerText !== spinner?.text) {
+        if (spinner) {
+          spinner.succeed();
         }
-        startSpinner(newSpinnerText);
+        spinner = spin(newSpinnerText);
       }
     },
   });

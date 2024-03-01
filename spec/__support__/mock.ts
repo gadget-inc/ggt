@@ -1,5 +1,6 @@
 import { assert, beforeEach, expect, vi, type SpyInstance } from "vitest";
 import * as confirm from "../../src/services/output/confirm.js";
+import { output } from "../../src/services/output/output.js";
 import { isSprintOptions, sprint, sprintln, type SprintOptions } from "../../src/services/output/print.js";
 import * as select from "../../src/services/output/select.js";
 import { noop } from "../../src/services/util/function.js";
@@ -249,10 +250,15 @@ export const mockSideEffects = (): void => {
 };
 
 export const mockConfirm = (impl = noop): SpyInstance<[options: SprintOptions], confirm.confirm> => {
-  const mockedConfirm = (options: any): any => {
-    if (isSprintOptions(options)) {
+  const mockedConfirm = (optionsOrStr: any, ...values: unknown[]): any => {
+    if (isSprintOptions(optionsOrStr)) {
       return mockedConfirm;
     }
+    if (!isString(optionsOrStr)) {
+      optionsOrStr = sprint(optionsOrStr, ...values);
+    }
+    // FIXME: this is actually printed to stderr
+    output.writeStdout(optionsOrStr);
     impl();
   };
 
@@ -260,10 +266,20 @@ export const mockConfirm = (impl = noop): SpyInstance<[options: SprintOptions], 
 };
 
 export const mockConfirmOnce = (impl = noop): SpyInstance<[options: SprintOptions], confirm.confirm> => {
-  const mockedConfirm = (options: any): any => {
-    if (isSprintOptions(options)) {
+  let options: SprintOptions = {
+    ensureEmptyLineAbove: true,
+  };
+
+  const mockedConfirm = (optionsOrStr: any, ...values: unknown[]): any => {
+    if (isSprintOptions(optionsOrStr)) {
+      options = { ...options, ...optionsOrStr };
       return mockedConfirm;
     }
+    if (!isString(optionsOrStr)) {
+      optionsOrStr = sprintln(options)(optionsOrStr, ...values);
+    }
+    // FIXME: this is actually printed to stderr
+    output.writeStdout(optionsOrStr);
     impl();
   };
 

@@ -196,14 +196,13 @@ export const command: Command<DeployArgs> = async (ctx) => {
             await confirm`
               ${graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "")}
 
-              Do you wish to proceed?
+              Do you want to continue?
             `;
             subscription.resubscribe({ ...variables, allowCharges: true });
             return;
         }
       }
 
-      println({ ensureEmptyLineAbove: true })`{bold.red Failed to deploy.}`;
       await reportErrorAndExit(ctx, error);
     },
     onData: async ({ publishStatus }): Promise<void> => {

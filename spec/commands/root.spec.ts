@@ -9,7 +9,7 @@ import * as update from "../../src/services/output/update.js";
 import { noop, noopThis } from "../../src/services/util/function.js";
 import { makeRootContext } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
-import { expectReportErrorAndExit } from "../__support__/error.js";
+import { expectReportErrorAndExitDumb } from "../__support__/error.js";
 import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { expectProcessExit } from "../__support__/process.js";
@@ -135,7 +135,7 @@ describe("root", () => {
       process.argv = ["node", "ggt", name];
 
       void root(makeRootContext());
-      await expectReportErrorAndExit(error);
+      await expectReportErrorAndExitDumb(error);
 
       expect(cmd.command).toHaveBeenCalled();
     });

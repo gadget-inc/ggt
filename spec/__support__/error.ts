@@ -27,7 +27,23 @@ export const expectError = async (fnThatThrows: () => unknown): Promise<any> => 
  * @param expectedCause - The expected cause of the error.
  * @returns A promise that resolves when the error is reported.
  */
-export const expectReportErrorAndExit = async (expectedCause: unknown): Promise<void> => {
+export const expectReportErrorAndExit = async (expectedCause: unknown, fnThatReports: () => unknown): Promise<void> => {
+  mock(report, "reportErrorAndExit", (_ctx, actualCause) => {
+    // print the error like we normally would so we can snapshot it
+    const error = report.CLIError.from(actualCause);
+    error.print();
+    throw actualCause;
+  });
+
+  try {
+    await fnThatReports();
+    expect.fail("Expected reportErrorAndExit to be called");
+  } catch (error) {
+    expect(error).toStrictEqual(expectedCause);
+  }
+};
+
+export const expectReportErrorAndExitDumb = async (expectedCause: unknown): Promise<void> => {
   const signal = new PromiseSignal();
 
   mock(report, "reportErrorAndExit", (_ctx, actualCause) => {

@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/no-null */
 /* eslint-disable no-irregular-whitespace */
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -9,6 +8,7 @@ import { args, command as deploy } from "../../src/commands/deploy.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
+import { DeployDisallowedError } from "../../src/services/filesync/error.js";
 import { nockTestApps } from "../__support__/app.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
@@ -34,7 +34,7 @@ describe("deploy", () => {
     expect(nock.pendingMocks()).toEqual([]);
   });
 
-  it.only("does not try to deploy if local files are not up to date with remote", async () => {
+  it("does not try to deploy if local files are not up to date with remote", async () => {
     mockConfirmOnce(() => process.exit(0));
 
     await makeSyncScenario({ localFiles: { "file.txt": "test" } });
@@ -42,7 +42,7 @@ describe("deploy", () => {
     await expectProcessExit(() => deploy(ctx));
   });
 
-  it.only("does not try to deploy if any problems were detected and displays the problems", async () => {
+  it("does not try to deploy if any problems were detected and displays the problems", async () => {
     mockConfirmOnce(() => process.exit(0));
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
@@ -68,10 +68,6 @@ describe("deploy", () => {
                   type: "SourceFile",
                   key: "routes/GET-hello.js",
                   apiIdentifier: "routes/GET-hello.js",
-                  name: null,
-                  fieldType: null,
-                  parentKey: null,
-                  parentApiIdentifier: null,
                 },
                 nodeLabels: [
                   {
@@ -87,10 +83,6 @@ describe("deploy", () => {
                   type: "SourceFile",
                   key: "routes/GET-test.ts",
                   apiIdentifier: "routes/GET-test.ts",
-                  name: null,
-                  fieldType: null,
-                  parentKey: null,
-                  parentApiIdentifier: null,
                 },
                 nodeLabels: [
                   {
@@ -106,10 +98,6 @@ describe("deploy", () => {
                   type: "SourceFile",
                   key: "routes/GET-test.ts",
                   apiIdentifier: "routes/GET-test.ts",
-                  name: null,
-                  fieldType: null,
-                  parentKey: null,
-                  parentApiIdentifier: null,
                 },
                 nodeLabels: [
                   {
@@ -125,10 +113,6 @@ describe("deploy", () => {
                   type: "SourceFile",
                   key: "models/example/comp.gelly",
                   apiIdentifier: "models/example/comp.gelly",
-                  name: null,
-                  fieldType: null,
-                  parentKey: null,
-                  parentApiIdentifier: null,
                 },
                 nodeLabels: [
                   {
@@ -140,8 +124,6 @@ describe("deploy", () => {
               {
                 severity: "Error",
                 message: "Add google keys for production",
-                node: null,
-                nodeLabels: null,
               },
             ],
             status: undefined,
@@ -170,11 +152,11 @@ describe("deploy", () => {
 
       • Other 1 problem
         ✖ Add google keys for production
-      "
+      Do you want to continue?"
     `);
   });
 
-  it.only("deploys even if there are problems when --allow-problems is passed", async () => {
+  it("deploys even if there are problems when --allow-problems is passed", async () => {
     ctx = ctx.child({ overwrite: { "--allow-problems": true } });
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" }, ctx });
@@ -360,7 +342,7 @@ describe("deploy", () => {
     `);
   });
 
-  it.only("deploys if there are no problems with the app", async () => {
+  it("deploys if there are no problems with the app", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
@@ -515,7 +497,7 @@ describe("deploy", () => {
     `);
   });
 
-  it.only("can not deploy if the maximum number of applications has been reached", async () => {
+  it("can not deploy if the maximum number of applications has been reached", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
@@ -529,25 +511,24 @@ describe("deploy", () => {
     ]);
 
     await deploy(ctx);
-    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
     await expectProcessExit(() => publishStatus.emitError(error), 1);
 
-    const exited = expectReportErrorAndExit(error);
-    await exited;
-
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
+
+      Production environment limit reached. Upgrade your plan to deploy.
       "
     `);
   });
 
   it("prompts the user to confirm if there is going to be a deploy charge", async () => {
-    const confirmSpy = mockConfirmOnce();
-
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+    mockConfirmOnce();
 
     const mockEditGraphQL = makeMockEditSubscriptions();
     const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, [
@@ -560,39 +541,30 @@ describe("deploy", () => {
     ]);
 
     await deploy(ctx);
-    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
     await publishStatus.emitError(error);
 
-    expect(confirmSpy).toHaveBeenCalledWith(expect.anything(), {
-      message: "Deploying this app to production will add $25.00 to your existing monthly plan.\nDo you wish to proceed?",
-    });
-
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
+
+      Deploying this app to production will add $25.00 to your existing monthly plan.
+
+      Do you want to continue?
       "
     `);
   });
 
   it("exits if the subscription unexpectedly closes due to an Internal Error", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
     const mockEditGraphQL = makeMockEditSubscriptions();
 
-    const cause = {
-      type: "close",
-      code: 4500,
-      reason: "Internal Error",
-      wasClean: true,
-    };
-
-    const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, cause);
-
     await deploy(ctx);
-    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
@@ -637,26 +609,42 @@ describe("deploy", () => {
       },
     });
 
-    await publishStatus.emitError(error);
+    const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, {
+      type: "close",
+      code: 4500,
+      reason: "Internal Error",
+      wasClean: true,
+    });
+
+    await expectReportErrorAndExit(error, () => publishStatus.emitError(error));
 
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
+
+      ⠙ Building frontend assets.
+      ✖ Building frontend assets.
 
       An error occurred while communicating with Gadget
+
+      The connection to Gadget closed unexpectedly.
+
+      If you think this is a bug, use the link below to create an issue on GitHub.
+
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
       "
     `);
   });
 
   it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
     const mockEditGraphQL = makeMockEditSubscriptions();
 
     await deploy(ctx);
-    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
     await publishStatus.emitResponse({
       data: {
         publishStatus: {
@@ -718,9 +706,13 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
+
+      ⠙ Building frontend assets.
+      ✖ Building frontend assets.
 
       GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
 
@@ -731,61 +723,59 @@ describe("deploy", () => {
 
   it("prints out fatal errors in the terminal and exit with code 1 if there are fatal errors", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
     const mockEditGraphQL = makeMockEditSubscriptions();
 
     await deploy(ctx);
 
     const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
-    await expectProcessExit(
-      () =>
-        publishStatus.emitResponse({
-          data: {
-            publishStatus: {
-              publishStarted: false,
-              remoteFilesVersion: "1",
-              progress: "NOT_STARTED",
-              issues: [
-                {
-                  severity: "Fatal",
-                  message: "Something went wrong",
-                  node: {
-                    type: "SourceFile",
-                    key: "access-control.gadget.ts",
-                    apiIdentifier: "access-control.gadget.ts",
-                  },
+    await expectReportErrorAndExit(expect.any(DeployDisallowedError), () =>
+      publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            publishStarted: false,
+            remoteFilesVersion: "1",
+            progress: "NOT_STARTED",
+            issues: [
+              {
+                severity: "Fatal",
+                message: "Something went wrong",
+                node: {
+                  type: "SourceFile",
+                  key: "access-control.gadget.ts",
+                  apiIdentifier: "access-control.gadget.ts",
                 },
-                {
-                  severity: "Fatal",
-                  message: "Another message",
-                  node: {
-                    type: "SourceFile",
-                    key: "access-control.gadget.ts",
-                    apiIdentifier: "access-control.gadget.ts",
-                  },
+              },
+              {
+                severity: "Fatal",
+                message: "Another message",
+                node: {
+                  type: "SourceFile",
+                  key: "access-control.gadget.ts",
+                  apiIdentifier: "access-control.gadget.ts",
                 },
-                {
-                  severity: "Fatal",
-                  message: "Message from another file",
-                  node: {
-                    type: "SourceFile",
-                    key: "settings.gadget.ts",
-                    apiIdentifier: "settings.gadget.ts",
-                  },
+              },
+              {
+                severity: "Fatal",
+                message: "Message from another file",
+                node: {
+                  type: "SourceFile",
+                  key: "settings.gadget.ts",
+                  apiIdentifier: "settings.gadget.ts",
                 },
-              ],
-              status: undefined,
-            },
+              },
+            ],
+            status: undefined,
           },
-        }),
-      1, // ggt should exit with code 1 if there are fatal errors
+        },
+      }),
     );
 
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
       Gadget has detected the following fatal errors with your files:
 
@@ -798,7 +788,7 @@ describe("deploy", () => {
 
       Please fix these errors and try again.
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
       https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
       "

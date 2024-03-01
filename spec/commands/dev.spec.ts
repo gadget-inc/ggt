@@ -13,7 +13,7 @@ import { select } from "../../src/services/output/select.js";
 import { assetsPath } from "../../src/services/util/paths.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
 import { makeContext } from "../__support__/context.js";
-import { expectReportErrorAndExit } from "../__support__/error.js";
+import { expectReportErrorAndExitDumb } from "../__support__/error.js";
 import { makeFile, makeSyncScenario } from "../__support__/filesync.js";
 import { mock, mockOnce } from "../__support__/mock.js";
 import { testDirPath } from "../__support__/paths.js";
@@ -1204,7 +1204,7 @@ describe("dev", () => {
     const gadgetChangesSubscription = expectGadgetChangesSubscription();
     await gadgetChangesSubscription.emitError(error);
 
-    await expectReportErrorAndExit(error);
+    await expectReportErrorAndExitDumb(error);
 
     expect(notifier.notify).toHaveBeenCalledWith(
       {

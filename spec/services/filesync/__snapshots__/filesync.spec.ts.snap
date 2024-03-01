@@ -3,7 +3,6 @@
 exports[`FileSync._sendChangesToGadget > prints fatal errors when they're received 1`] = `
 "⠙ Pushing file. →
 ±  access-control.gadget.ts  update
-
 ✔ Pushed file. → 12:00:00 AM
 ±  access-control.gadget.ts  updated
 

@@ -2061,17 +2061,7 @@ describe("FileSync.print", () => {
     await filesync.print(ctx);
 
     expectStdout().toMatchInlineSnapshot(`
-      "Application  test
-      Environment  development
-           Branch  test-branch
-      ------------------------
-       Preview     https://test--development.gadget.app
-       Editor      https://test.gadget.app/edit/development
-       Playground  https://test.gadget.app/api/playground/graphql?environment=development
-       Docs        https://docs.gadget.dev/api/test
-
-      ⠙ Calculating file changes.
-
+      "⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
       "
     `);

@@ -43,7 +43,6 @@ describe("status", () => {
        Docs        https://docs.gadget.dev/api/test
 
       ⠙ Calculating file changes.
-
       ✔ Your files are up to date. 12:00:00 AM
       "
     `);
@@ -70,7 +69,6 @@ describe("status", () => {
        Docs        https://docs.gadget.dev/api/test
 
       ⠙ Calculating file changes.
-
       ✔ Calculated file changes. 12:00:00 AM
 
       Your local files have changed.
@@ -104,7 +102,6 @@ describe("status", () => {
        Docs        https://docs.gadget.dev/api/test
 
       ⠙ Calculating file changes.
-
       ✔ Calculated file changes. 12:00:00 AM
 
       Your local files have not changed.
@@ -139,7 +136,6 @@ describe("status", () => {
        Docs        https://docs.gadget.dev/api/test
 
       ⠙ Calculating file changes.
-
       ✔ Calculated file changes. 12:00:00 AM
 
       Your local files have changed.

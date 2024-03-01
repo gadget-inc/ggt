@@ -231,7 +231,12 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
 
   mockRestore(SyncJson.load);
   const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir, print: false });
-  mock(SyncJson, "load", () => syncJson);
+  mock(SyncJson, "load", (_, { print: shouldPrint = true }) => {
+    if (shouldPrint) {
+      syncJson.print();
+    }
+    return syncJson;
+  });
 
   const filesync = new FileSync(syncJson);
 

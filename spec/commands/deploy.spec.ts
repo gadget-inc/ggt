@@ -133,7 +133,16 @@ describe("deploy", () => {
     );
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
@@ -186,7 +195,16 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
@@ -313,7 +331,16 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
@@ -475,7 +502,16 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
@@ -516,7 +552,16 @@ describe("deploy", () => {
     await expectProcessExit(() => publishStatus.emitError(error), 1);
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
@@ -546,7 +591,16 @@ describe("deploy", () => {
     await publishStatus.emitError(error);
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
@@ -619,7 +673,16 @@ describe("deploy", () => {
     await expectReportErrorAndExit(error, () => publishStatus.emitError(error));
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
@@ -706,7 +769,16 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
@@ -772,7 +844,16 @@ describe("deploy", () => {
     );
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM

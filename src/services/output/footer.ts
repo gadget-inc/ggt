@@ -81,13 +81,16 @@ const createFooter = (options: SprintOptions): footer => {
       return createFooter({ ...options, ...optionsOrString });
     }
 
-    // const text = sprintln(sprintOptions)(templateOrOptions as TemplateStringsArray, ...values);
     let str = optionsOrString as string;
     if (!isString(str)) {
       str = sprint({ ensureNewLine: true, ...options })(optionsOrString as TemplateStringsArray, ...values);
     }
 
-    output.updateFooter(str);
+    if (output.isInteractive) {
+      output.updateFooter(str);
+    } else {
+      output.writeStdout(str);
+    }
 
     return;
   }) as footer;

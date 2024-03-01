@@ -9,13 +9,12 @@ import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
-import { select } from "../../src/services/output/select.js";
 import { assetsPath } from "../../src/services/util/paths.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
 import { makeContext } from "../__support__/context.js";
 import { expectReportErrorAndExitDumb } from "../__support__/error.js";
 import { makeFile, makeSyncScenario } from "../__support__/filesync.js";
-import { mock, mockOnce } from "../__support__/mock.js";
+import { mock, mockSelectOnce } from "../__support__/mock.js";
 import { testDirPath } from "../__support__/paths.js";
 import { sleep, timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
@@ -47,7 +46,7 @@ describe("dev", () => {
       ].map(String),
     });
 
-    mockOnce(select, () => FileSyncStrategy.MERGE);
+    mockSelectOnce(FileSyncStrategy.MERGE);
   });
 
   it("writes changes from gadget to the local filesystem", async () => {

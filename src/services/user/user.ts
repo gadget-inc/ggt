@@ -6,6 +6,7 @@ import { config } from "../config/config.js";
 import { loadCookie, swallowUnauthorized } from "../http/auth.js";
 import { http } from "../http/http.js";
 import { confirm } from "../output/confirm.js";
+import { println } from "../output/print.js";
 
 const User = z.object({
   id: z.union([z.string(), z.number()]).transform(Number),
@@ -55,20 +56,21 @@ export const getUser = async (ctx: Context): Promise<User | undefined> => {
  * already logged in.
  *
  * @param ctx - The current context.
- * @param message - The message to display when prompting the user to log in.
  * @returns A Promise that resolves to the current user.
  */
-export const getUserOrLogin = async (
-  ctx: Context,
-  message = "You must be logged in to use this command. Would you like to log in?",
-): Promise<User> => {
+export const getUserOrLogin = async (ctx: Context): Promise<User> => {
   let user = await getUser(ctx);
   if (user) {
     return user;
   }
 
   ctx.log.info("prompting user to log in");
-  await confirm(ctx, { message });
+
+  println({ ensureEmptyLineAbove: true })`
+    You must be logged in to use "ggt ${ctx.command}".
+  `;
+
+  await confirm({ ensureEmptyLineAbove: true })("Would you like to log in?");
 
   await login(ctx);
 

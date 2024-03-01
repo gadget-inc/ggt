@@ -30,6 +30,8 @@ postbuild
 printlns
 Promisable
 revparse
+Sindre
+Sorhus
 sourcemaps
 sprintln
 sprintlns

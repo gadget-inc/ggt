@@ -43,7 +43,7 @@ describe("UnexpectedError", () => {
     const cause = new Error("Whoops!");
 
     const error = new UnexpectedError(cause);
-    expect(error.toString()).toMatchInlineSnapshot(`
+    expect(error.sprint()).toMatchInlineSnapshot(`
       "An unexpected error occurred.
 
       Error: Whoops!

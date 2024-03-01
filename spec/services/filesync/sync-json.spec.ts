@@ -1,3 +1,4 @@
+/* eslint-disable no-irregular-whitespace */
 import fs from "fs-extra";
 import terminalLink from "terminal-link";
 import { beforeEach, describe, expect, it } from "vitest";

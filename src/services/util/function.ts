@@ -76,8 +76,8 @@ export function memo<Fn extends AnyFunction, KeyFn extends (...args: Parameters<
 
   const cache = new Map<string, unknown>();
 
-  const memoized = ((...args) => {
-    const key = keyFn(...(args as Parameters<Fn>));
+  const memoized = ((...args: Parameters<Fn>) => {
+    const key = keyFn(...args);
     if (cache.has(key)) {
       return cache.get(key);
     }

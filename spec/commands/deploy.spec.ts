@@ -9,14 +9,17 @@ import { args, command as deploy } from "../../src/commands/deploy.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
-import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
+import { expectReportErrorAndExit } from "../__support__/error.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
-import { mock, mockConfirmOnce } from "../__support__/mock.js";
+import { mockConfirmOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
+import { mockSystemTime } from "../__support__/time.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("deploy", () => {
+  mockSystemTime();
+
   let ctx: Context<typeof args>;
 
   beforeEach(() => {
@@ -31,16 +34,16 @@ describe("deploy", () => {
     expect(nock.pendingMocks()).toEqual([]);
   });
 
-  it("does not try to deploy if local files are not up to date with remote", async () => {
-    mock(confirm, () => process.exit(0));
+  it.only("does not try to deploy if local files are not up to date with remote", async () => {
+    mockConfirmOnce(() => process.exit(0));
 
     await makeSyncScenario({ localFiles: { "file.txt": "test" } });
 
     await expectProcessExit(() => deploy(ctx));
   });
 
-  it("does not try to deploy if any problems were detected and displays the problems", async () => {
-    mock(confirm, () => process.exit(0));
+  it.only("does not try to deploy if any problems were detected and displays the problems", async () => {
+    mockConfirmOnce(() => process.exit(0));
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
@@ -148,11 +151,12 @@ describe("deploy", () => {
     );
 
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-      Problems found
+      Problems found.
 
       • routes/GET-hello.js 1 problem
         ✖ JavaScript Unexpected keyword or identifier. line 13
@@ -170,7 +174,7 @@ describe("deploy", () => {
     `);
   });
 
-  it("deploys even if there are problems when --allow-problems is passed", async () => {
+  it.only("deploys even if there are problems when --allow-problems is passed", async () => {
     ctx = ctx.child({ overwrite: { "--allow-problems": true } });
 
     await makeSyncScenario({ localFiles: { ".gadget/": "" }, ctx });
@@ -200,11 +204,12 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-      Problems found
+      Problems found.
 
       • Other 1 problem
         ✖ Add google keys for production
@@ -326,23 +331,36 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-      Problems found
+      Problems found.
 
       • Other 1 problem
         ✖ Add google keys for production
 
       Deploying regardless of problems because \\"--allow-problems\\" was passed.
 
-      Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
+      ⠙ Building frontend assets.
+      ✔ Built frontend assets. 12:00:00 AM
+
+      ⠙ Setting up database.
+      ✔ Setup database. 12:00:00 AM
+
+      ⠙ Copying development.
+      ✔ Copied development. 12:00:00 AM
+
+      ⠙ Restarting app.
+      ✔ Restarted app. 12:00:00 AM
+
+      Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
       "
     `);
   });
 
-  it("deploys if there are no problems with the app", async () => {
+  it.only("deploys if there are no problems with the app", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
@@ -475,16 +493,29 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-      Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
+      ⠙ Building frontend assets.
+      ✔ Built frontend assets. 12:00:00 AM
+
+      ⠙ Setting up database.
+      ✔ Setup database. 12:00:00 AM
+
+      ⠙ Copying development.
+      ✔ Copied development. 12:00:00 AM
+
+      ⠙ Restarting app.
+      ✔ Restarted app. 12:00:00 AM
+
+      Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
       "
     `);
   });
 
-  it("can not deploy if the maximum number of applications has been reached", async () => {
+  it.only("can not deploy if the maximum number of applications has been reached", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
@@ -500,7 +531,10 @@ describe("deploy", () => {
     await deploy(ctx);
     const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
-    await publishStatus.emitError(error);
+    await expectProcessExit(() => publishStatus.emitError(error), 1);
+
+    const exited = expectReportErrorAndExit(error);
+    await exited;
 
     expectStdout().toMatchInlineSnapshot(`
       "

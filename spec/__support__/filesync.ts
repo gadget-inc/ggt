@@ -230,7 +230,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
   }
 
   mockRestore(SyncJson.load);
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir, print: false });
   mock(SyncJson, "load", () => syncJson);
 
   const filesync = new FileSync(syncJson);

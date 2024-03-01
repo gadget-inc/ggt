@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import assert from "node:assert";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
@@ -7,11 +6,13 @@ import { DeployDisallowedError, UnknownDirectoryError } from "../services/filesy
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { confirm } from "../services/output/confirm.js";
+import { output } from "../services/output/output.js";
 import { println, sprint } from "../services/output/print.js";
 import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { spin, type spinner } from "../services/output/spinner.js";
-import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
+import { ts } from "../services/output/timestamp.js";
+import { isGraphQLErrors } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
 
 export type DeployArgs = typeof args;
@@ -173,41 +174,37 @@ export const command: Command<DeployArgs> = async (ctx) => {
   };
 
   let spinner: spinner | undefined;
+  let currentStep: AppDeploymentSteps = AppDeploymentSteps.NOT_STARTED;
 
   const subscription = syncJson.edit.subscribe({
     subscription: PUBLISH_STATUS_SUBSCRIPTION,
     variables,
     onError: async (error) => {
       ctx.log.error("failed to deploy", { error });
+      spinner?.fail(stepToSpinnerStart(syncJson, currentStep));
 
-      let failMessage = "Failed to deploy.";
+      if (isGraphQLErrors(error.cause)) {
+        const graphqlError = error.cause[0];
+        assert(graphqlError, "expected graphqlError to be defined");
 
-      if (isCloseEvent(error.cause)) {
-        failMessage = error.message;
-      } else if (isGraphQLErrors(error.cause)) {
-        const message = error.cause[0]?.message;
-        const extensions = error.cause[0]?.extensions;
-        assert(message, "expected message to be defined");
+        switch (true) {
+          case graphqlError.extensions["requiresUpgrade"]:
+            println({ ensureEmptyLineAbove: true })(graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, ""));
+            process.exit(1);
+            break;
+          case graphqlError.extensions["requiresAdditionalCharge"]:
+            await confirm`
+              ${graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "")}
 
-        if (extensions?.["requiresUpgrade"]) {
-          failMessage = message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "");
-        } else if (extensions?.["requiresAdditionalCharge"]) {
-          const paymentRequiredMessage = message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "");
-
-          await confirm`
-            ${paymentRequiredMessage}
-
-            Do you wish to proceed?
-          `;
-
-          subscription.resubscribe({ ...variables, allowCharges: true });
-          return;
-        } else {
-          failMessage = message;
+              Do you wish to proceed?
+            `;
+            subscription.resubscribe({ ...variables, allowCharges: true });
+            return;
         }
       }
 
-      spinner?.fail(failMessage);
+      println({ ensureEmptyLineAbove: true })`{bold.red Failed to deploy.}`;
+      await reportErrorAndExit(ctx, error);
     },
     onData: async ({ publishStatus }): Promise<void> => {
       if (!publishStatus) {
@@ -224,7 +221,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
           await reportErrorAndExit(ctx, new DeployDisallowedError(publishIssuesToProblems(fatalIssues)));
         }
 
-        println({ ensureEmptyLineAbove: true })`{bold Problems found}`;
+        println({ ensureEmptyLineAbove: true })`{bold Problems found.}`;
         printProblems({ problems: publishIssuesToProblems(issues), ensureEmptyLineAbove: true });
 
         if (!publishStarted) {
@@ -246,30 +243,32 @@ export const command: Command<DeployArgs> = async (ctx) => {
           println({ ensureEmptyLineAbove: true })`{red ${status.message}}`;
         }
         if (status.output) {
-          println({ ensureEmptyLineAbove: true })(terminalLink("Check logs", status.output));
+          println({ ensureEmptyLineAbove: true })`${terminalLink("Check logs", status.output)}`;
         }
         return;
       }
 
       if (step === AppDeploymentSteps.COMPLETED) {
         subscription.unsubscribe();
-        spinner?.succeed();
+        spinner?.succeed(stepToSpinnerEnd(syncJson, currentStep));
 
-        let message = chalk.green("Deploy successful!");
+        let message = sprint`{green Deploy successful!}`;
         if (status?.output) {
-          message += ` ${terminalLink("Check logs", status.output)}`;
+          message += ` ${terminalLink("Check logs", status.output)}.`;
         }
 
         println({ ensureEmptyLineAbove: true })(message);
         return;
       }
 
-      const newSpinnerText = stepToSpinnerText(syncJson, step);
-      if (newSpinnerText !== spinner?.text) {
-        if (spinner) {
-          spinner.succeed();
+      if (step !== currentStep) {
+        const spinnerText = stepToSpinnerStart(syncJson, step);
+        if (spinnerText !== spinner?.text) {
+          spinner?.succeed(stepToSpinnerEnd(syncJson, currentStep));
+          spinner = spin({ ensureEmptyLineAbove: !output.isInteractive })(spinnerText);
         }
-        spinner = spin(newSpinnerText);
+
+        currentStep = step as AppDeploymentSteps;
       }
     },
   });
@@ -288,22 +287,42 @@ export const AppDeploymentSteps = Object.freeze({
 
 export type AppDeploymentSteps = (typeof AppDeploymentSteps)[keyof typeof AppDeploymentSteps];
 
-export const stepToSpinnerText = (syncJson: SyncJson, step: string): string => {
+export const stepToSpinnerStart = (syncJson: SyncJson, step: string): string => {
   switch (step) {
     case AppDeploymentSteps.NOT_STARTED:
     case AppDeploymentSteps.STARTING:
     case AppDeploymentSteps.BUILDING_ASSETS:
     case AppDeploymentSteps.UPLOADING_ASSETS:
-      return "Building frontend assets";
+      return "Building frontend assets.";
     case AppDeploymentSteps.CONVERGING_STORAGE:
-      return "Setting up database";
+      return "Setting up database.";
     case AppDeploymentSteps.PUBLISHING_TREE:
-      return `Copying ${syncJson.env.name}`;
+      return `Copying ${syncJson.env.name}.`;
     case AppDeploymentSteps.RELOADING_SANDBOX:
-      return "Restarting app";
+      return "Restarting app.";
     case AppDeploymentSteps.COMPLETED:
-      return "Deploy completed";
+      return "Deploy complete!";
     default:
-      return "Unknown step";
+      return "Unknown step.";
+  }
+};
+
+export const stepToSpinnerEnd = (syncJson: SyncJson, step: string): string => {
+  switch (step) {
+    case AppDeploymentSteps.NOT_STARTED:
+    case AppDeploymentSteps.STARTING:
+    case AppDeploymentSteps.BUILDING_ASSETS:
+    case AppDeploymentSteps.UPLOADING_ASSETS:
+      return `Built frontend assets. ${ts()}`;
+    case AppDeploymentSteps.CONVERGING_STORAGE:
+      return `Setup database. ${ts()}`;
+    case AppDeploymentSteps.PUBLISHING_TREE:
+      return `Copied ${syncJson.env.name}. ${ts()}`;
+    case AppDeploymentSteps.RELOADING_SANDBOX:
+      return `Restarted app. ${ts()}`;
+    case AppDeploymentSteps.COMPLETED:
+      return "Deploy successful!";
+    default:
+      return `Completed unknown step. ${ts()}`;
   }
 };

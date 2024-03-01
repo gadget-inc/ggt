@@ -10,14 +10,14 @@ import { env } from "../config/env.js";
 import { parseBoolean } from "../util/boolean.js";
 import { serializeError } from "../util/object.js";
 import { workspaceRoot } from "../util/paths.js";
-import { println, sprintln } from "./print.js";
+import { println, sprintln, type SprintOptions } from "./print.js";
 
 export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<never> => {
   ctx.log.error("reporting error and exiting", { error: cause });
 
   try {
     const error = CLIError.from(cause);
-    println({ ensureEmptyLineAbove: true })(error.toString());
+    error.print();
 
     if (error.isBug === IsBug.NO) {
       return undefined as never;
@@ -134,7 +134,7 @@ export abstract class CLIError extends Error {
     return new UnexpectedError(cause);
   }
 
-  override toString(): string {
+  sprint(): string {
     let rendered = this.render();
 
     if (this.isBug !== IsBug.NO) {
@@ -158,6 +158,10 @@ export abstract class CLIError extends Error {
     }
 
     return rendered;
+  }
+
+  print(options?: SprintOptions): void {
+    println({ ensureEmptyLineAbove: true, ...options })(this.sprint());
   }
 
   /**

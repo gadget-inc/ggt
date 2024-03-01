@@ -48,7 +48,18 @@ export const isGraphQLResult = (val: unknown): val is ExecutionResult => {
 };
 
 export const isGraphQLErrors = (e: unknown): e is readonly GraphQLError[] => {
-  return z.array(z.object({ message: z.string() })).safeParse(e).success;
+  return z
+    .array(
+      z.object({
+        message: z.string(),
+        extensions: z
+          .record(z.unknown())
+          .nullish()
+          .transform((ext) => ext ?? {}),
+      }),
+    )
+    .min(1)
+    .safeParse(e).success;
 };
 
 export const isNever = (value: never): never => {

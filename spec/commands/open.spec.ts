@@ -159,11 +159,11 @@ describe("open", () => {
     await openCommand(ctx);
 
     expectStdout().toMatchInlineSnapshot(`
-      "      Unknown model use
+      "Unknown model use
 
-            Did you mean ggt open model user?
+      Did you mean ggt open model user?
 
-            Run ggt open --help for usage or run command with --show-all to see all available models
+      Run ggt open --help for usage or run command with --show-all to see all available models
       "
     `);
   });

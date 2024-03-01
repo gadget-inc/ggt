@@ -144,6 +144,13 @@ export const createSpin = (options: SpinnerOptions): spin => {
       }
 
       if (finalRender) {
+        if (!output.isInteractive && ensureEmptyLineAbove) {
+          // ensureEmptyLineAbove only applies to the first render.
+          // strip it so that the final render of the spinner is right
+          // below the first render of the spinner
+          message = message.slice(1);
+        }
+
         // this is the final render, so persist the spinner
         output.persistSpinner(message);
         activeSpinner = false;

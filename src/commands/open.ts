@@ -71,7 +71,7 @@ export const usage: Usage = (ctx) => {
         Defaults to the application within the ".gadget/sync.json"
         file in the current directory or any parent directories.
 
-      -e, --from, --env, --environment=<name>
+      -e, --env, --environment=<name>
         The development environment to open.
 
         Defaults to the environment within the ".gadget/sync.json"
@@ -93,7 +93,7 @@ export const args = {
 
 export const command: Command<OpenArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { directory });
+  const syncJson = await SyncJson.load(ctx, { directory, print: false });
   if (!syncJson) {
     throw new UnknownDirectoryError(ctx, { directory });
   }

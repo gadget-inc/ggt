@@ -183,7 +183,7 @@ export class SyncJson {
 
         await syncJson.loadGitBranch();
         if (shouldPrint) {
-          syncJson.println();
+          syncJson.print();
         }
 
         return syncJson;
@@ -227,7 +227,7 @@ export class SyncJson {
     const syncJson = new SyncJson(ctx, directory, previousEnvironment, state);
     await syncJson.loadGitBranch();
     if (shouldPrint) {
-      syncJson.println();
+      syncJson.print();
     }
 
     return syncJson;
@@ -335,7 +335,7 @@ export class SyncJson {
     return sprintln(options)(str);
   }
 
-  println(options?: SprintOptions): void {
+  print(options?: SprintOptions): void {
     options = defaults(options, { ensureEmptyLineAbove: true });
     println(this.sprint(options));
   }

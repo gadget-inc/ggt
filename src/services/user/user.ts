@@ -3,7 +3,7 @@ import z from "zod";
 import { login } from "../../commands/login.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { loadCookie, swallowUnauthorized } from "../http/auth.js";
+import { loadAuthHeaders, swallowUnauthorized } from "../http/auth.js";
 import { http } from "../http/http.js";
 import { confirm } from "../output/prompt.js";
 
@@ -26,8 +26,9 @@ export const getUser = async (ctx: Context): Promise<User | undefined> => {
     return ctx.user;
   }
 
-  const cookie = loadCookie();
-  if (!cookie) {
+  const headers = loadAuthHeaders();
+
+  if (!headers) {
     return undefined;
   }
 
@@ -35,7 +36,7 @@ export const getUser = async (ctx: Context): Promise<User | undefined> => {
     const json = await http({
       context: { ctx },
       url: `https://${config.domains.services}/auth/api/current-user`,
-      headers: { cookie },
+      headers: { ...headers },
       responseType: "json",
       resolveBodyOnly: true,
     });

@@ -34,3 +34,4 @@ SWCRC
 typecheck
 unthunk
 usagestop
+gpat

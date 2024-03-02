@@ -1,5 +1,5 @@
 import nock from "nock";
-import { beforeEach, describe, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 import { config } from "../src/services/config/config.js";
 import { readToken } from "../src/services/user/session.js";
 import { nockTestApps, testApp, testApp2, testAppWith0Environments, testAppWith2Environments } from "./__support__/app.js";
@@ -10,6 +10,10 @@ export const describeWithTokenAndCookieAuthentication = (suite: () => void): voi
     beforeEach(() => {
       loginTestUser();
       nockTestApps();
+    });
+
+    afterEach(() => {
+      expect(nock.pendingMocks()).toEqual([]);
     });
 
     suite();
@@ -38,6 +42,10 @@ export const describeWithTokenAndCookieAuthentication = (suite: () => void): voi
         })
         .reply(200, [testApp, testApp2, testAppWith2Environments, testAppWith0Environments])
         .persist();
+    });
+
+    afterEach(() => {
+      expect(nock.pendingMocks()).toEqual([]);
     });
 
     suite();

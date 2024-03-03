@@ -32,7 +32,7 @@ import { expectProcessExit } from "../../__support__/process.js";
 import { expectStdout } from "../../__support__/stream.js";
 import { mockSystemTime } from "../../__support__/time.js";
 import { loginTestUser } from "../../__support__/user.js";
-import { describeWithTokenAndCookieAuthentication } from "../../utils.js";
+import { describeWithAuth } from "../../utils.js";
 
 describe("FileSync._writeToLocalFilesystem", () => {
   let ctx: Context<SyncJsonArgs>;
@@ -1654,7 +1654,7 @@ describe("FileSync.sync", () => {
 });
 
 describe("FileSync.push", () => {
-  describeWithTokenAndCookieAuthentication(() => {
+  describeWithAuth(() => {
     it("automatically sends local changes to gadget when gadget hasn't made any changes", async () => {
       const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
         ctx: makeContext({ parse: PushArgs, argv: ["push", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] }),

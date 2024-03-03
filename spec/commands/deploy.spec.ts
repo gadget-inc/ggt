@@ -14,10 +14,10 @@ import * as spinner from "../../src/services/output/spinner.js";
 import { noop } from "../../src/services/util/function.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
 import { mock } from "../__support__/mock.js";
-import { describeWithTokenAndCookieAuthentication } from "../utils.js";
+import { describeWithAuth } from "../utils.js";
 
 describe("deploy", () => {
-  describeWithTokenAndCookieAuthentication(() => {
+  describeWithAuth(() => {
     let ctx: Context<typeof args>;
 
     beforeEach(() => {

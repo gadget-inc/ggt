@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { z } from "zod";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { loadCookie } from "../http/auth.js";
+import { loadAuthHeaders } from "../http/auth.js";
 import { http } from "../http/http.js";
 import { Api } from "./api/api.js";
 import { GADGET_META_MODELS_QUERY } from "./api/operation.js";
@@ -50,8 +50,8 @@ export type ModelApiIdentifier = z.infer<typeof ModelApiIdentifier>;
  */
 // TODO: cache this
 export const getApps = async (ctx: Context): Promise<App[]> => {
-  const cookie = loadCookie();
-  if (!cookie) {
+  const headers = loadAuthHeaders();
+  if (!headers) {
     return [];
   }
 
@@ -60,7 +60,7 @@ export const getApps = async (ctx: Context): Promise<App[]> => {
   const json = await http({
     context: { ctx },
     url: `https://${config.domains.services}/auth/api/apps`,
-    headers: { cookie },
+    headers: { ...headers },
     responseType: "json",
     resolveBodyOnly: true,
   });
@@ -69,8 +69,8 @@ export const getApps = async (ctx: Context): Promise<App[]> => {
 };
 
 export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []> => {
-  const cookie = loadCookie();
-  if (!cookie) {
+  const headers = loadAuthHeaders();
+  if (!headers) {
     return [];
   }
 

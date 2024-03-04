@@ -11,60 +11,58 @@ import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
 import { select } from "../../src/services/output/prompt.js";
 import { assetsPath } from "../../src/services/util/paths.js";
-import { nockTestApps, testApp } from "../__support__/app.js";
+import { testApp } from "../__support__/app.js";
 import { makeContext } from "../__support__/context.js";
 import { expectReportErrorAndExit } from "../__support__/error.js";
 import { makeFile, makeSyncScenario } from "../__support__/filesync.js";
 import { mock, mockOnce } from "../__support__/mock.js";
 import { testDirPath } from "../__support__/paths.js";
 import { sleep, timeoutMs } from "../__support__/sleep.js";
-import { loginTestUser } from "../__support__/user.js";
+import { describeWithAuth } from "../utils.js";
 
 describe("dev", () => {
   let ctx: Context<DevArgs>;
 
-  beforeEach(() => {
-    loginTestUser();
-    nockTestApps();
+  describeWithAuth(() => {
+    beforeEach(() => {
+      ctx = makeContext({
+        parse: args,
+        argv: [
+          "dev",
+          testDirPath("local"),
+          "--app",
+          testApp.slug,
+          "--file-push-delay",
+          ms("10ms" /* default 100ms */),
+          "--file-watch-debounce",
+          ms("300ms" /* default 300ms */),
+          "--file-watch-poll-interval",
+          ms("30ms" /* default 3s */),
+          "--file-watch-poll-timeout",
+          ms("20ms" /* default 20s */),
+          "--file-watch-rename-timeout",
+          ms("50ms" /* default 1.25s */),
+        ].map(String),
+      });
 
-    ctx = makeContext({
-      parse: args,
-      argv: [
-        "dev",
-        testDirPath("local"),
-        "--app",
-        testApp.slug,
-        "--file-push-delay",
-        ms("10ms" /* default 100ms */),
-        "--file-watch-debounce",
-        ms("300ms" /* default 300ms */),
-        "--file-watch-poll-interval",
-        ms("30ms" /* default 3s */),
-        "--file-watch-poll-timeout",
-        ms("20ms" /* default 20s */),
-        "--file-watch-rename-timeout",
-        ms("50ms" /* default 1.25s */),
-      ].map(String),
+      mockOnce(select, () => FileSyncStrategy.MERGE);
     });
 
-    mockOnce(select, () => FileSyncStrategy.MERGE);
-  });
+    it("writes changes from gadget to the local filesystem", async () => {
+      const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
-  it("writes changes from gadget to the local filesystem", async () => {
-    const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario();
+      await sync(ctx);
 
-    await sync(ctx);
+      // receive a new file
+      await emitGadgetChanges({
+        remoteFilesVersion: "2",
+        changed: [makeFile({ path: "file.txt", content: "file v2" })],
+        deleted: [],
+      });
 
-    // receive a new file
-    await emitGadgetChanges({
-      remoteFilesVersion: "2",
-      changed: [makeFile({ path: "file.txt", content: "file v2" })],
-      deleted: [],
-    });
+      await waitUntilLocalFilesVersion(2n);
 
-    await waitUntilLocalFilesVersion(2n);
-
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -87,16 +85,16 @@ describe("dev", () => {
       }
     `);
 
-    // receive an update to a file
-    await emitGadgetChanges({
-      remoteFilesVersion: "3",
-      changed: [makeFile({ path: "file.txt", content: "file v3" })],
-      deleted: [],
-    });
+      // receive an update to a file
+      await emitGadgetChanges({
+        remoteFilesVersion: "3",
+        changed: [makeFile({ path: "file.txt", content: "file v3" })],
+        deleted: [],
+      });
 
-    await waitUntilLocalFilesVersion(3n);
+      await waitUntilLocalFilesVersion(3n);
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -123,16 +121,16 @@ describe("dev", () => {
       }
     `);
 
-    // receive a delete to a file
-    await emitGadgetChanges({
-      remoteFilesVersion: "4",
-      changed: [],
-      deleted: [{ path: "file.txt" }],
-    });
+      // receive a delete to a file
+      await emitGadgetChanges({
+        remoteFilesVersion: "4",
+        changed: [],
+        deleted: [{ path: "file.txt" }],
+      });
 
-    await waitUntilLocalFilesVersion(4n);
+      await waitUntilLocalFilesVersion(4n);
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -162,16 +160,16 @@ describe("dev", () => {
       }
     `);
 
-    // receive a new directory
-    await emitGadgetChanges({
-      remoteFilesVersion: "5",
-      changed: [makeFile({ path: "directory/" })],
-      deleted: [],
-    });
+      // receive a new directory
+      await emitGadgetChanges({
+        remoteFilesVersion: "5",
+        changed: [makeFile({ path: "directory/" })],
+        deleted: [],
+      });
 
-    await waitUntilLocalFilesVersion(5n);
+      await waitUntilLocalFilesVersion(5n);
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -207,16 +205,16 @@ describe("dev", () => {
       }
     `);
 
-    // receive a delete to a directory
-    await emitGadgetChanges({
-      remoteFilesVersion: "6",
-      changed: [],
-      deleted: [{ path: "directory/" }],
-    });
+      // receive a delete to a directory
+      await emitGadgetChanges({
+        remoteFilesVersion: "6",
+        changed: [],
+        deleted: [{ path: "directory/" }],
+      });
 
-    await waitUntilLocalFilesVersion(6n);
+      await waitUntilLocalFilesVersion(6n);
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -254,17 +252,17 @@ describe("dev", () => {
       }
     `);
 
-    // receive a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
-    await emitGadgetChanges({
-      remoteFilesVersion: "7",
-      changed: files.map((filename) => makeFile({ path: filename, content: filename })),
-      deleted: [],
-    });
+      // receive a bunch of files
+      const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
+      await emitGadgetChanges({
+        remoteFilesVersion: "7",
+        changed: files.map((filename) => makeFile({ path: filename, content: filename })),
+        deleted: [],
+      });
 
-    await waitUntilLocalFilesVersion(7n);
+      await waitUntilLocalFilesVersion(7n);
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -334,61 +332,61 @@ describe("dev", () => {
         },
       }
     `);
-  });
-
-  it("writes changes from gadget in the order they were received", async () => {
-    // this test is exactly the same as the previous one, except we just
-    // wait for the final filesVersion and expect the same result
-    const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario();
-
-    await sync(ctx);
-
-    // receive a new file
-    await emitGadgetChanges({
-      remoteFilesVersion: "2",
-      changed: [makeFile({ path: "file.txt", content: "file v2" })],
-      deleted: [],
     });
 
-    // receive an update to a file
-    await emitGadgetChanges({
-      remoteFilesVersion: "3",
-      changed: [makeFile({ path: "file.txt", content: "file v3" })],
-      deleted: [],
-    });
+    it("writes changes from gadget in the order they were received", async () => {
+      // this test is exactly the same as the previous one, except we just
+      // wait for the final filesVersion and expect the same result
+      const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
-    // receive a delete to a file
-    await emitGadgetChanges({
-      remoteFilesVersion: "4",
-      changed: [],
-      deleted: [{ path: "file.txt" }],
-    });
+      await sync(ctx);
 
-    // receive a new directory
-    await emitGadgetChanges({
-      remoteFilesVersion: "5",
-      changed: [makeFile({ path: "directory/" })],
-      deleted: [],
-    });
+      // receive a new file
+      await emitGadgetChanges({
+        remoteFilesVersion: "2",
+        changed: [makeFile({ path: "file.txt", content: "file v2" })],
+        deleted: [],
+      });
 
-    // receive a delete to a directory
-    await emitGadgetChanges({
-      remoteFilesVersion: "6",
-      changed: [],
-      deleted: [{ path: "directory/" }],
-    });
+      // receive an update to a file
+      await emitGadgetChanges({
+        remoteFilesVersion: "3",
+        changed: [makeFile({ path: "file.txt", content: "file v3" })],
+        deleted: [],
+      });
 
-    // receive a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
-    await emitGadgetChanges({
-      remoteFilesVersion: "7",
-      changed: files.map((filename) => makeFile({ path: filename, content: filename })),
-      deleted: [],
-    });
+      // receive a delete to a file
+      await emitGadgetChanges({
+        remoteFilesVersion: "4",
+        changed: [],
+        deleted: [{ path: "file.txt" }],
+      });
 
-    await waitUntilLocalFilesVersion(7n);
+      // receive a new directory
+      await emitGadgetChanges({
+        remoteFilesVersion: "5",
+        changed: [makeFile({ path: "directory/" })],
+        deleted: [],
+      });
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // receive a delete to a directory
+      await emitGadgetChanges({
+        remoteFilesVersion: "6",
+        changed: [],
+        deleted: [{ path: "directory/" }],
+      });
+
+      // receive a bunch of files
+      const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
+      await emitGadgetChanges({
+        remoteFilesVersion: "7",
+        changed: files.map((filename) => makeFile({ path: filename, content: filename })),
+        deleted: [],
+      });
+
+      await waitUntilLocalFilesVersion(7n);
+
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -458,62 +456,62 @@ describe("dev", () => {
         },
       }
     `);
-  });
-
-  it("writes all received files before stopping", async () => {
-    // this test is exactly the same as the previous one, except we just
-    // wait for stop() to finish and expect the same result
-    const { emitGadgetChanges, expectDirs } = await makeSyncScenario();
-
-    await sync(ctx);
-
-    // receive a new file
-    await emitGadgetChanges({
-      remoteFilesVersion: "2",
-      changed: [makeFile({ path: "file.js", content: "file v2" })],
-      deleted: [],
     });
 
-    // receive an update to a file
-    await emitGadgetChanges({
-      remoteFilesVersion: "3",
-      changed: [makeFile({ path: "file.txt", content: "file v3" })],
-      deleted: [],
-    });
+    it("writes all received files before stopping", async () => {
+      // this test is exactly the same as the previous one, except we just
+      // wait for stop() to finish and expect the same result
+      const { emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
-    // receive a delete to a file
-    await emitGadgetChanges({
-      remoteFilesVersion: "4",
-      changed: [],
-      deleted: [{ path: "file.txt" }],
-    });
+      await sync(ctx);
 
-    // receive a new directory
-    await emitGadgetChanges({
-      remoteFilesVersion: "5",
-      changed: [makeFile({ path: "directory/" })],
-      deleted: [],
-    });
+      // receive a new file
+      await emitGadgetChanges({
+        remoteFilesVersion: "2",
+        changed: [makeFile({ path: "file.js", content: "file v2" })],
+        deleted: [],
+      });
 
-    // receive a delete to a directory
-    await emitGadgetChanges({
-      remoteFilesVersion: "6",
-      changed: [],
-      deleted: [{ path: "directory/" }],
-    });
+      // receive an update to a file
+      await emitGadgetChanges({
+        remoteFilesVersion: "3",
+        changed: [makeFile({ path: "file.txt", content: "file v3" })],
+        deleted: [],
+      });
 
-    // receive a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
-    await emitGadgetChanges({
-      remoteFilesVersion: "7",
-      changed: files.map((filename) => makeFile({ path: filename, content: filename })),
-      deleted: [],
-    });
+      // receive a delete to a file
+      await emitGadgetChanges({
+        remoteFilesVersion: "4",
+        changed: [],
+        deleted: [{ path: "file.txt" }],
+      });
 
-    ctx.abort();
-    await ctx.done;
+      // receive a new directory
+      await emitGadgetChanges({
+        remoteFilesVersion: "5",
+        changed: [makeFile({ path: "directory/" })],
+        deleted: [],
+      });
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // receive a delete to a directory
+      await emitGadgetChanges({
+        remoteFilesVersion: "6",
+        changed: [],
+        deleted: [{ path: "directory/" }],
+      });
+
+      // receive a bunch of files
+      const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
+      await emitGadgetChanges({
+        remoteFilesVersion: "7",
+        changed: files.map((filename) => makeFile({ path: filename, content: filename })),
+        deleted: [],
+      });
+
+      ctx.abort();
+      await ctx.done;
+
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -590,33 +588,33 @@ describe("dev", () => {
         },
       }
     `);
-  });
-
-  it("doesn't write changes from gadget to the local filesystem if the file is ignored", async () => {
-    const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario({
-      filesVersion1Files: {
-        ".ignore": "**/tmp",
-      },
-      gadgetFiles: {
-        ".ignore": "**/tmp",
-      },
-      localFiles: {
-        ".ignore": "**/tmp",
-      },
     });
 
-    await sync(ctx);
+    it("doesn't write changes from gadget to the local filesystem if the file is ignored", async () => {
+      const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario({
+        filesVersion1Files: {
+          ".ignore": "**/tmp",
+        },
+        gadgetFiles: {
+          ".ignore": "**/tmp",
+        },
+        localFiles: {
+          ".ignore": "**/tmp",
+        },
+      });
 
-    await emitGadgetChanges({
-      remoteFilesVersion: "2",
-      changed: [makeFile({ path: "tmp/file.txt", content: "file" })],
-      deleted: [],
-    });
+      await sync(ctx);
 
-    // it should still update the filesVersion
-    await waitUntilLocalFilesVersion(2n);
+      await emitGadgetChanges({
+        remoteFilesVersion: "2",
+        changed: [makeFile({ path: "tmp/file.txt", content: "file" })],
+        deleted: [],
+      });
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // it should still update the filesVersion
+      await waitUntilLocalFilesVersion(2n);
+
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -644,16 +642,16 @@ describe("dev", () => {
       }
     `);
 
-    await emitGadgetChanges({
-      remoteFilesVersion: "3",
-      changed: [],
-      deleted: [{ path: "tmp/file.txt" }],
-    });
+      await emitGadgetChanges({
+        remoteFilesVersion: "3",
+        changed: [],
+        deleted: [{ path: "tmp/file.txt" }],
+      });
 
-    // it should still update the filesVersion
-    await waitUntilLocalFilesVersion(3n);
+      // it should still update the filesVersion
+      await waitUntilLocalFilesVersion(3n);
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -684,17 +682,17 @@ describe("dev", () => {
         },
       }
     `);
-  });
+    });
 
-  it("sends changes from the local filesystem to gadget", async () => {
-    const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
+    it("sends changes from the local filesystem to gadget", async () => {
+      const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
 
-    await sync(ctx);
+      await sync(ctx);
 
-    // add a file
-    await fs.outputFile(localDir.absolute("file.txt"), "file v2");
-    await waitUntilGadgetFilesVersion(2n);
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // add a file
+      await fs.outputFile(localDir.absolute("file.txt"), "file v2");
+      await waitUntilGadgetFilesVersion(2n);
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -717,10 +715,10 @@ describe("dev", () => {
       }
     `);
 
-    // update a file
-    await fs.outputFile(localDir.absolute("file.txt"), "file v3");
-    await waitUntilGadgetFilesVersion(3n);
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // update a file
+      await fs.outputFile(localDir.absolute("file.txt"), "file v3");
+      await waitUntilGadgetFilesVersion(3n);
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -747,10 +745,10 @@ describe("dev", () => {
       }
     `);
 
-    // rename a file
-    await fs.rename(localDir.absolute("file.txt"), localDir.absolute("renamed-file.txt"));
-    await waitUntilGadgetFilesVersion(4n);
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // rename a file
+      await fs.rename(localDir.absolute("file.txt"), localDir.absolute("renamed-file.txt"));
+      await waitUntilGadgetFilesVersion(4n);
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -781,10 +779,10 @@ describe("dev", () => {
       }
     `);
 
-    // delete a file
-    await fs.remove(localDir.absolute("renamed-file.txt"));
-    await waitUntilGadgetFilesVersion(5n);
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // delete a file
+      await fs.remove(localDir.absolute("renamed-file.txt"));
+      await waitUntilGadgetFilesVersion(5n);
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -816,10 +814,10 @@ describe("dev", () => {
       }
     `);
 
-    // add a directory
-    await fs.mkdir(localDir.absolute("directory"));
-    await waitUntilGadgetFilesVersion(6n);
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // add a directory
+      await fs.mkdir(localDir.absolute("directory"));
+      await waitUntilGadgetFilesVersion(6n);
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -857,10 +855,10 @@ describe("dev", () => {
       }
     `);
 
-    // rename a directory
-    await fs.rename(localDir.absolute("directory"), localDir.absolute("renamed-directory"));
-    await waitUntilGadgetFilesVersion(7n);
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // rename a directory
+      await fs.rename(localDir.absolute("directory"), localDir.absolute("renamed-directory"));
+      await waitUntilGadgetFilesVersion(7n);
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -902,10 +900,10 @@ describe("dev", () => {
       }
     `);
 
-    // delete a directory
-    await fs.remove(localDir.absolute("renamed-directory"));
-    await waitUntilGadgetFilesVersion(8n);
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // delete a directory
+      await fs.remove(localDir.absolute("renamed-directory"));
+      await waitUntilGadgetFilesVersion(8n);
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -948,17 +946,17 @@ describe("dev", () => {
       }
     `);
 
-    // add a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
+      // add a bunch of files
+      const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
 
-    // sleep a bit between each one to simulate a slow filesystem
-    for (const filename of files) {
-      await fs.outputFile(localDir.absolute(filename), filename);
-      await sleep("5ms");
-    }
+      // sleep a bit between each one to simulate a slow filesystem
+      for (const filename of files) {
+        await fs.outputFile(localDir.absolute(filename), filename);
+        await sleep("5ms");
+      }
 
-    await waitUntilGadgetFilesVersion(9n);
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await waitUntilGadgetFilesVersion(9n);
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -1033,21 +1031,21 @@ describe("dev", () => {
         },
       }
     `);
-  });
+    });
 
-  it("doesn't send multiple changes to the same file at once", async () => {
-    const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
+    it("doesn't send multiple changes to the same file at once", async () => {
+      const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
 
-    await sync(ctx);
+      await sync(ctx);
 
-    // update a file 10 times
-    for (let i = 0; i < 10; i++) {
-      await fs.outputFile(localDir.absolute("file.txt"), `v${i + 1}`);
-    }
+      // update a file 10 times
+      for (let i = 0; i < 10; i++) {
+        await fs.outputFile(localDir.absolute("file.txt"), `v${i + 1}`);
+      }
 
-    await waitUntilGadgetFilesVersion(2n);
+      await waitUntilGadgetFilesVersion(2n);
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -1069,54 +1067,54 @@ describe("dev", () => {
         },
       }
     `);
-  });
-
-  it("doesn't send changes from the local filesystem to gadget if the file is ignored", async () => {
-    const { localDir, expectDirs } = await makeSyncScenario({
-      filesVersion1Files: {
-        ".ignore": "**/tmp",
-      },
-      gadgetFiles: {
-        ".ignore": "**/tmp",
-      },
-      localFiles: {
-        ".ignore": "**/tmp",
-      },
     });
 
-    await sync(ctx);
+    it("doesn't send changes from the local filesystem to gadget if the file is ignored", async () => {
+      const { localDir, expectDirs } = await makeSyncScenario({
+        filesVersion1Files: {
+          ".ignore": "**/tmp",
+        },
+        gadgetFiles: {
+          ".ignore": "**/tmp",
+        },
+        localFiles: {
+          ".ignore": "**/tmp",
+        },
+      });
 
-    // add a file
-    await fs.outputFile(localDir.absolute("tmp/file.js"), "foo");
+      await sync(ctx);
 
-    // update a file
-    await fs.outputFile(localDir.absolute("tmp/file.js"), "foo v2");
+      // add a file
+      await fs.outputFile(localDir.absolute("tmp/file.js"), "foo");
 
-    // rename a file
-    await fs.rename(localDir.absolute("tmp/file.js"), localDir.absolute("tmp/renamed-file.js"));
+      // update a file
+      await fs.outputFile(localDir.absolute("tmp/file.js"), "foo v2");
 
-    // delete a file
-    await fs.remove(localDir.absolute("tmp/renamed-file.js"));
+      // rename a file
+      await fs.rename(localDir.absolute("tmp/file.js"), localDir.absolute("tmp/renamed-file.js"));
 
-    // add a directory
-    await fs.mkdir(localDir.absolute("tmp/directory"));
+      // delete a file
+      await fs.remove(localDir.absolute("tmp/renamed-file.js"));
 
-    // rename a directory
-    await fs.rename(localDir.absolute("tmp/directory"), localDir.absolute("tmp/renamed-directory"));
+      // add a directory
+      await fs.mkdir(localDir.absolute("tmp/directory"));
 
-    // delete a directory
-    await fs.remove(localDir.absolute("tmp/renamed-directory"));
+      // rename a directory
+      await fs.rename(localDir.absolute("tmp/directory"), localDir.absolute("tmp/renamed-directory"));
 
-    // add a bunch of files
-    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
-    for (const filename of files) {
-      await fs.outputFile(localDir.absolute(`tmp/${filename}`), filename);
-    }
+      // delete a directory
+      await fs.remove(localDir.absolute("tmp/renamed-directory"));
 
-    // give the watcher a chance to see the changes
-    await sleep(timeoutMs("2.5s"));
+      // add a bunch of files
+      const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
+      for (const filename of files) {
+        await fs.outputFile(localDir.absolute(`tmp/${filename}`), filename);
+      }
 
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      // give the watcher a chance to see the changes
+      await sleep(timeoutMs("2.5s"));
+
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -1146,19 +1144,19 @@ describe("dev", () => {
         },
       }
     `);
-  });
+    });
 
-  it("reloads the ignore file when .ignore changes", async () => {
-    const { filesync, waitUntilLocalFilesVersion, localDir, waitUntilGadgetFilesVersion, emitGadgetChanges, expectDirs } =
-      await makeSyncScenario();
+    it("reloads the ignore file when .ignore changes", async () => {
+      const { filesync, waitUntilLocalFilesVersion, localDir, waitUntilGadgetFilesVersion, emitGadgetChanges, expectDirs } =
+        await makeSyncScenario();
 
-    await sync(ctx);
+      await sync(ctx);
 
-    vi.spyOn(filesync.syncJson.directory, "loadIgnoreFile");
+      vi.spyOn(filesync.syncJson.directory, "loadIgnoreFile");
 
-    await fs.outputFile(localDir.absolute(".ignore"), "# watch it all");
-    await waitUntilGadgetFilesVersion(2n);
-    await expectDirs().resolves.toMatchInlineSnapshot(`
+      await fs.outputFile(localDir.absolute(".ignore"), "# watch it all");
+      await waitUntilGadgetFilesVersion(2n);
+      await expectDirs().resolves.toMatchInlineSnapshot(`
       {
         "filesVersionDirs": {
           "1": {
@@ -1181,55 +1179,56 @@ describe("dev", () => {
       }
     `);
 
-    expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(1);
+      expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(1);
 
-    await emitGadgetChanges({
-      remoteFilesVersion: "3",
-      changed: [makeFile({ path: ".ignore", content: "tmp" })],
-      deleted: [],
+      await emitGadgetChanges({
+        remoteFilesVersion: "3",
+        changed: [makeFile({ path: ".ignore", content: "tmp" })],
+        deleted: [],
+      });
+
+      await waitUntilLocalFilesVersion(3n);
+
+      expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(2);
     });
 
-    await waitUntilLocalFilesVersion(3n);
+    it("notifies the user when an error occurs", async () => {
+      const { expectGadgetChangesSubscription } = await makeSyncScenario();
 
-    expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(2);
-  });
+      await sync(ctx);
 
-  it("notifies the user when an error occurs", async () => {
-    const { expectGadgetChangesSubscription } = await makeSyncScenario();
+      const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
 
-    await sync(ctx);
+      const gadgetChangesSubscription = expectGadgetChangesSubscription();
+      await gadgetChangesSubscription.emitError(error);
 
-    const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
+      await expectReportErrorAndExit(error);
 
-    const gadgetChangesSubscription = expectGadgetChangesSubscription();
-    await gadgetChangesSubscription.emitError(error);
+      expect(notifier.notify).toHaveBeenCalledWith(
+        {
+          title: "Gadget",
+          subtitle: "Uh oh!",
+          message: "An error occurred while syncing files",
+          sound: true,
+          timeout: false,
+          icon: assetsPath("favicon-128@4x.png"),
+          contentImage: assetsPath("favicon-128@4x.png"),
+        },
+        expect.any(Function),
+      );
+    });
 
-    await expectReportErrorAndExit(error);
+    it("throws YarnNotFoundError if yarn is not found", async () => {
+      await makeSyncScenario();
+      // eslint-disable-next-line unicorn/no-null
+      mock(which.sync, () => null);
+      await expect(sync(ctx)).rejects.toThrow(YarnNotFoundError);
+    });
 
-    expect(notifier.notify).toHaveBeenCalledWith(
-      {
-        title: "Gadget",
-        subtitle: "Uh oh!",
-        message: "An error occurred while syncing files",
-        sound: true,
-        timeout: false,
-        icon: assetsPath("favicon-128@4x.png"),
-        contentImage: assetsPath("favicon-128@4x.png"),
-      },
-      expect.any(Function),
-    );
-  });
-
-  it("throws YarnNotFoundError if yarn is not found", async () => {
-    await makeSyncScenario();
-    // eslint-disable-next-line unicorn/no-null
-    mock(which.sync, () => null);
-    await expect(sync(ctx)).rejects.toThrow(YarnNotFoundError);
-  });
-
-  it("does not throw YarnNotFoundError if yarn is found", async () => {
-    await makeSyncScenario();
-    mock(which.sync, () => "/path/to/yarn");
-    await sync(ctx);
+    it("does not throw YarnNotFoundError if yarn is found", async () => {
+      await makeSyncScenario();
+      mock(which.sync, () => "/path/to/yarn");
+      await sync(ctx);
+    });
   });
 });

@@ -48,3 +48,8 @@ export const writeSession = (session: string | undefined): void => {
     fs.removeSync(configPath("session.txt"));
   }
 };
+
+export const readToken = (): string | undefined => {
+  log.debug("reading token from env");
+  return process.env["GGT_TOKEN"];
+};

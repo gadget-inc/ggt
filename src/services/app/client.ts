@@ -7,7 +7,7 @@ import type { Promisable } from "type-fest";
 import WebSocket from "ws";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { loadCookie } from "../http/auth.js";
+import { loadAuthHeaders } from "../http/auth.js";
 import { http, type HttpOptions } from "../http/http.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
 import { isObject } from "../util/is.js";
@@ -55,8 +55,9 @@ export class Client {
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
           // this cookie should be available since we were given an app which requires a cookie to load
-          const cookie = loadCookie();
-          assert(cookie, "missing cookie when connecting to GraphQL API");
+          const headers = loadAuthHeaders();
+
+          assert(headers, "missing headers when connecting to GraphQL API");
 
           super(address, protocols, {
             signal: ctx.signal,
@@ -64,7 +65,7 @@ export class Client {
             headers: {
               ...wsOptions?.headers,
               "user-agent": config.versionFull,
-              cookie,
+              ...headers,
             },
           });
         }
@@ -169,8 +170,8 @@ export class Client {
     assert(ctx.app, "missing app when executing GraphQL query");
     assert(ctx.env, "missing env when executing GraphQL query");
 
-    const cookie = loadCookie();
-    assert(cookie, "missing cookie when executing GraphQL request");
+    const headers = loadAuthHeaders();
+    assert(headers, "missing headers when executing GraphQL request");
 
     let subdomain = ctx.app.slug;
     if (ctx.app.multiEnvironmentEnabled) {
@@ -184,7 +185,7 @@ export class Client {
         context: { ctx },
         method: "POST",
         url: `https://${subdomain}.${config.domains.app}${this.endpoint}`,
-        headers: { cookie, "x-gadget-environment": ctx.env.name },
+        headers: { ...headers, "x-gadget-environment": ctx.env.name },
         json: { query: request.operation, variables: unthunk(request.variables) },
         responseType: "json",
         resolveBodyOnly: true,

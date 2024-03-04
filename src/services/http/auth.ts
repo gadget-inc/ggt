@@ -1,7 +1,10 @@
 import { HTTPError, type OptionsInit } from "got";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { readSession } from "../user/session.js";
+import { createLogger } from "../output/log/logger.js";
+import { readSession, readToken } from "../user/session.js";
+
+const log = createLogger({ name: "auth" });
 
 /**
  * Determines whether the given request options are for a Gadget
@@ -23,6 +26,28 @@ export const isGadgetServicesRequest = (options: OptionsInit): boolean => {
 export const loadCookie = (): string | undefined => {
   const token = readSession();
   return token && `session=${encodeURIComponent(token)};`;
+};
+
+/**
+ * Loads the authentication headers.
+ *
+ * @returns The authentication headers as a record of key-value pairs, or undefined if no headers are available.
+ */
+export const loadAuthHeaders = (): Record<string, string> | undefined => {
+  const cookie = loadCookie();
+  if (cookie) {
+    log.trace("loading cookie as auth header", { cookie });
+    return { cookie };
+  }
+
+  const token = readToken();
+
+  if (token) {
+    log.trace("loading token as auth header", { token });
+    return { "x-platform-access-token": token };
+  }
+
+  return undefined;
 };
 
 export const isUnauthorizedError = (error: unknown): error is HTTPError => {

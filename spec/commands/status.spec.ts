@@ -1,78 +1,116 @@
 import { beforeEach, describe, it } from "vitest";
 import { args, command as status, type StatusArgs } from "../../src/commands/status.js";
 import type { Context } from "../../src/services/command/context.js";
-import { nockTestApps } from "../__support__/app.js";
 import { makeContext } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { expectStdout } from "../__support__/stream.js";
-import { loginTestUser } from "../__support__/user.js";
+import { describeWithAuth } from "../utils.js";
 
 describe("status", () => {
   let ctx: Context<StatusArgs>;
 
-  beforeEach(() => {
-    loginTestUser();
-    nockTestApps();
-
-    ctx = makeContext({
-      parse: args,
-      argv: ["status"],
-    });
-  });
-
-  it("prints the expected message when nothing has changed", async () => {
-    await makeSyncScenario({
-      localFiles: {
-        ".gadget/": "",
-      },
+  describeWithAuth(() => {
+    beforeEach(() => {
+      ctx = makeContext({
+        parse: args,
+        argv: ["status"],
+      });
     });
 
-    await status(ctx);
+    it("prints the expected message when nothing has changed", async () => {
+      await makeSyncScenario({
+        localFiles: {
+          ".gadget/": "",
+        },
+      });
 
-    expectStdout().toMatchSnapshot();
-  });
+      await status(ctx);
 
-  it("prints the expected message when local files have changed", async () => {
-    await makeSyncScenario({
-      localFiles: {
-        ".gadget/": "",
-        "local-file.txt": "changed",
-      },
+      expectStdout().toMatchInlineSnapshot(`
+        "Application  test
+        Environment  development
+         Git Branch  test-branch
+
+        Your local filesystem has not changed.
+
+        Your environment's filesystem has not changed.
+        "
+      `);
     });
 
-    await status(ctx);
+    it("prints the expected message when local files have changed", async () => {
+      await makeSyncScenario({
+        localFiles: {
+          ".gadget/": "",
+          "local-file.txt": "changed",
+        },
+      });
 
-    expectStdout().toMatchSnapshot();
-  });
+      await status(ctx);
 
-  it("prints the expected message when gadget files have changed", async () => {
-    await makeSyncScenario({
-      localFiles: {
-        ".gadget/": "",
-      },
-      gadgetFiles: {
-        "gadget-file.txt": "changed",
-      },
+      expectStdout().toMatchInlineSnapshot(`
+        "Application  test
+        Environment  development
+         Git Branch  test-branch
+
+        Your local filesystem has changed.
+        +  local-file.txt  created 
+
+        Your environment's filesystem has not changed.
+        "
+      `);
     });
 
-    await status(ctx);
+    it("prints the expected message when gadget files have changed", async () => {
+      await makeSyncScenario({
+        localFiles: {
+          ".gadget/": "",
+        },
+        gadgetFiles: {
+          "gadget-file.txt": "changed",
+        },
+      });
 
-    expectStdout().toMatchSnapshot();
-  });
+      await status(ctx);
 
-  it("prints the expected message when both local and gadget files have changed", async () => {
-    await makeSyncScenario({
-      localFiles: {
-        ".gadget/": "",
-        "local-file.txt": "changed",
-      },
-      gadgetFiles: {
-        "gadget-file.txt": "changed",
-      },
+      expectStdout().toMatchInlineSnapshot(`
+        "Application  test
+        Environment  development
+         Git Branch  test-branch
+
+        Your local filesystem has not changed.
+
+        Your environment's filesystem has changed.
+        +  gadget-file.txt  created 
+        "
+      `);
     });
 
-    await status(ctx);
+    it("prints the expected message when both local and gadget files have changed", async () => {
+      await makeSyncScenario({
+        localFiles: {
+          ".gadget/": "",
+          "local-file.txt": "changed",
+        },
+        gadgetFiles: {
+          "gadget-file.txt": "changed",
+        },
+      });
 
-    expectStdout().toMatchSnapshot();
+      await status(ctx);
+
+      expectStdout().toMatchInlineSnapshot(`
+        "Application  test
+        Environment  development
+         Git Branch  test-branch
+
+        Your local filesystem has changed.
+        +  local-file.txt  created 
+
+        Your environment's filesystem has changed.
+        +  gadget-file.txt  created 
+        "
+      `);
+    });
   });
 });

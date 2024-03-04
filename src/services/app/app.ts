@@ -51,7 +51,6 @@ export type ModelApiIdentifier = z.infer<typeof ModelApiIdentifier>;
 // TODO: cache this
 export const getApps = async (ctx: Context): Promise<App[]> => {
   const headers = loadAuthHeaders();
-
   if (!headers) {
     return [];
   }

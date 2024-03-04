@@ -21,58 +21,72 @@ export type WithAuthSuiteApi = ChainableWithAuthSuiteApi;
 
 function createWithAuthSuite() {
   function suiteFn(this: AuthContext, fn: () => void) {
-    if (this.cookies ?? (!this.cookies && !this.tokens)) {
-      describe("with cookie authentication", () => {
-        beforeEach(() => {
-          loginTestUser();
-          nockTestApps();
-        });
-
-        afterEach(() => {
-          expect(nock.pendingMocks()).toEqual([]);
-        });
-
-        fn();
-      });
+    if (this.cookies) {
+      return describeWithCookieAuth(fn);
     }
 
-    if (this.tokens ?? (!this.tokens && !this.cookies)) {
-      describe("with token authentication", () => {
-        beforeEach(() => {
-          vi.stubEnv("GGT_TOKEN", "gpat-test-token");
+    if (this.tokens) {
+      return describeWithTokenAuth(fn);
+    }
 
-          nock(`https://${config.domains.services}`)
-            .get("/auth/api/current-user")
-            .matchHeader("x-platform-access-token", (value) => {
-              const token = readToken();
-              return value === token;
-            })
-            .optionally(false)
-            .reply(200, testUser)
-            .persist();
-
-          nock(`https://${config.domains.services}`)
-            .get("/auth/api/apps")
-            .optionally(false)
-            .matchHeader("x-platform-access-token", (value) => {
-              const token = readToken();
-              return value === token;
-            })
-            .reply(200, [testApp, testApp2, testAppWith2Environments, testAppWith0Environments])
-            .persist();
-        });
-
-        afterEach(() => {
-          expect(nock.pendingMocks()).toEqual([]);
-        });
-
-        fn();
-      });
+    // randomly pick an auth method
+    const useCookiesAuth = Math.random() < 0.5;
+    if (useCookiesAuth) {
+      return describeWithCookieAuth(fn);
+    } else {
+      return describeWithTokenAuth(fn);
     }
   }
 
   return createChainable(["cookies", "tokens"], suiteFn) as unknown as WithAuthSuiteApi;
 }
+
+const describeWithTokenAuth = (fn: () => void) =>
+  describe("with token authentication", () => {
+    beforeEach(() => {
+      vi.stubEnv("GGT_TOKEN", "gpat-test-token");
+
+      nock(`https://${config.domains.services}`)
+        .get("/auth/api/current-user")
+        .matchHeader("x-platform-access-token", (value) => {
+          const token = readToken();
+          return value === token;
+        })
+        .optionally(false)
+        .reply(200, testUser)
+        .persist();
+
+      nock(`https://${config.domains.services}`)
+        .get("/auth/api/apps")
+        .optionally(false)
+        .matchHeader("x-platform-access-token", (value) => {
+          const token = readToken();
+          return value === token;
+        })
+        .reply(200, [testApp, testApp2, testAppWith2Environments, testAppWith0Environments])
+        .persist();
+    });
+
+    afterEach(() => {
+      expect(nock.pendingMocks()).toEqual([]);
+    });
+
+    fn();
+  });
+
+const describeWithCookieAuth = (fn: () => void) =>
+  describe("with cookie authentication", () => {
+    beforeEach(() => {
+      loginTestUser();
+      nockTestApps();
+    });
+
+    afterEach(() => {
+      expect(nock.pendingMocks()).toEqual([]);
+    });
+
+    fn();
+  });
 
 // Very much taken from vitest's own `createChainable` function - packages/runner/src/utils/chain.ts
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/ban-types

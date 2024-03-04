@@ -3,7 +3,7 @@ import assert from "node:assert";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { type Command, type Usage } from "../services/command/command.js";
-import { DeployDisallowedError, UnknownDirectoryError } from "../services/filesync/error.js";
+import { DeployDisallowedError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.js";
@@ -137,10 +137,7 @@ export const usage: Usage = (ctx) => {
 
 export const command: Command<DeployArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { directory });
-  if (!syncJson) {
-    throw new UnknownDirectoryError(ctx, { directory });
-  }
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
 
   ctx.log.printlns2`
     Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
@@ -154,7 +151,10 @@ export const command: Command<DeployArgs> = async (ctx) => {
       environment before you can deploy.
     `;
 
-    await confirm(ctx, { message: "Would you like to push now?" });
+    if (!ctx.args["--force"]) {
+      await confirm(ctx, { message: "Would you like to push now?" });
+    }
+
     await filesync.push(ctx, { hashes });
   }
 

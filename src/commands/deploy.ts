@@ -11,7 +11,7 @@ import { confirm } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { failSpinner, spinnerText, startSpinner, succeedSpinner } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
-import { isCloseEvent, isGraphQLErrors } from "../services/util/is.js";
+import { isCloseEvent, isGraphQLErrors, isInteractive } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
 
 export type DeployArgs = typeof args;
@@ -146,13 +146,17 @@ export const command: Command<DeployArgs> = async (ctx) => {
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
   if (!hashes.inSync) {
-    ctx.log.printlns`
+    if (!ctx.args["--force"]) {
+      ctx.log.printlns`
       Your local filesystem must be in sync with your development
-      environment before you can deploy.
+      environment before you can deploy. ${!isInteractive() ? "In non-interactive environments use --force to always push" : ""}
     `;
 
-    if (!ctx.args["--force"]) {
-      await confirm(ctx, { message: "Would you like to push now?" });
+      if (isInteractive()) {
+        await confirm(ctx, { message: "Would you like to push now?" });
+      } else {
+        process.exit(0);
+      }
     }
 
     await filesync.push(ctx, { hashes });
@@ -221,7 +225,12 @@ export const command: Command<DeployArgs> = async (ctx) => {
         printProblems(ctx, { problems: publishIssuesToProblems(issues) });
 
         if (!publishStarted) {
-          await confirm(ctx, { message: "Do you want to continue?" });
+          if (isInteractive()) {
+            await confirm(ctx, { message: "Do you want to continue?" });
+          } else {
+            process.exit(0);
+          }
+
           subscription.resubscribe({ ...variables, force: true });
         } else {
           assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");

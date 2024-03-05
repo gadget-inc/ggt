@@ -69,3 +69,10 @@ export const isTypeScriptFile = (filepath: string): boolean => {
 export const isGellyFile = (filepath: string): boolean => {
   return filepath.endsWith(".gelly");
 };
+
+export const isInteractive = ({ stream = process.stdout } = {}): boolean => {
+  return Boolean(
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    stream && stream.isTTY && process.env["TERM"] !== "dumb" && !("CI" in process.env),
+  );
+};

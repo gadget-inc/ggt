@@ -155,7 +155,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
       if (isInteractive()) {
         await confirm(ctx, { message: "Would you like to push now?" });
       } else {
-        process.exit(0);
+        process.exit(-1);
       }
     }
 
@@ -228,7 +228,7 @@ export const command: Command<DeployArgs> = async (ctx) => {
           if (isInteractive()) {
             await confirm(ctx, { message: "Do you want to continue?" });
           } else {
-            process.exit(0);
+            process.exit(-1);
           }
 
           subscription.resubscribe({ ...variables, force: true });

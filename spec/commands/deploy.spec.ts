@@ -33,7 +33,7 @@ describe("deploy", () => {
 
       await makeSyncScenario({ localFiles: { "file.txt": "test" } });
 
-      await expectProcessExit(() => deploy(ctx));
+      await expectProcessExit(() => deploy(ctx), -1);
     });
 
     it("does not try to deploy if any problems were detected and displays the problems", async () => {
@@ -47,101 +47,103 @@ describe("deploy", () => {
 
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
-      await expectProcessExit(() =>
-        publishStatus.emitResponse({
-          data: {
-            publishStatus: {
-              publishStarted: false,
-              remoteFilesVersion: "1",
-              progress: "NOT_STARTED",
-              issues: [
-                {
-                  severity: "Error",
-                  message: "Unexpected keyword or identifier.",
-                  node: {
-                    type: "SourceFile",
-                    key: "routes/GET-hello.js",
-                    apiIdentifier: "routes/GET-hello.js",
-                    name: null,
-                    fieldType: null,
-                    parentKey: null,
-                    parentApiIdentifier: null,
-                  },
-                  nodeLabels: [
-                    {
-                      type: "File",
-                      identifier: "line 13",
+      await expectProcessExit(
+        () =>
+          publishStatus.emitResponse({
+            data: {
+              publishStatus: {
+                publishStarted: false,
+                remoteFilesVersion: "1",
+                progress: "NOT_STARTED",
+                issues: [
+                  {
+                    severity: "Error",
+                    message: "Unexpected keyword or identifier.",
+                    node: {
+                      type: "SourceFile",
+                      key: "routes/GET-hello.js",
+                      apiIdentifier: "routes/GET-hello.js",
+                      name: null,
+                      fieldType: null,
+                      parentKey: null,
+                      parentApiIdentifier: null,
                     },
-                  ],
-                },
-                {
-                  severity: "Error",
-                  message: "Identifier expected.",
-                  node: {
-                    type: "SourceFile",
-                    key: "routes/GET-test.ts",
-                    apiIdentifier: "routes/GET-test.ts",
-                    name: null,
-                    fieldType: null,
-                    parentKey: null,
-                    parentApiIdentifier: null,
+                    nodeLabels: [
+                      {
+                        type: "File",
+                        identifier: "line 13",
+                      },
+                    ],
                   },
-                  nodeLabels: [
-                    {
-                      type: "File",
-                      identifier: "line 10",
+                  {
+                    severity: "Error",
+                    message: "Identifier expected.",
+                    node: {
+                      type: "SourceFile",
+                      key: "routes/GET-test.ts",
+                      apiIdentifier: "routes/GET-test.ts",
+                      name: null,
+                      fieldType: null,
+                      parentKey: null,
+                      parentApiIdentifier: null,
                     },
-                  ],
-                },
-                {
-                  severity: "Error",
-                  message: "Expression expected.",
-                  node: {
-                    type: "SourceFile",
-                    key: "routes/GET-test.ts",
-                    apiIdentifier: "routes/GET-test.ts",
-                    name: null,
-                    fieldType: null,
-                    parentKey: null,
-                    parentApiIdentifier: null,
+                    nodeLabels: [
+                      {
+                        type: "File",
+                        identifier: "line 10",
+                      },
+                    ],
                   },
-                  nodeLabels: [
-                    {
-                      type: "File",
-                      identifier: "line 15",
+                  {
+                    severity: "Error",
+                    message: "Expression expected.",
+                    node: {
+                      type: "SourceFile",
+                      key: "routes/GET-test.ts",
+                      apiIdentifier: "routes/GET-test.ts",
+                      name: null,
+                      fieldType: null,
+                      parentKey: null,
+                      parentApiIdentifier: null,
                     },
-                  ],
-                },
-                {
-                  severity: "Error",
-                  message: 'Unknown identifier "tru"',
-                  node: {
-                    type: "SourceFile",
-                    key: "models/example/comp.gelly",
-                    apiIdentifier: "models/example/comp.gelly",
-                    name: null,
-                    fieldType: null,
-                    parentKey: null,
-                    parentApiIdentifier: null,
+                    nodeLabels: [
+                      {
+                        type: "File",
+                        identifier: "line 15",
+                      },
+                    ],
                   },
-                  nodeLabels: [
-                    {
-                      type: "File",
-                      identifier: "",
+                  {
+                    severity: "Error",
+                    message: 'Unknown identifier "tru"',
+                    node: {
+                      type: "SourceFile",
+                      key: "models/example/comp.gelly",
+                      apiIdentifier: "models/example/comp.gelly",
+                      name: null,
+                      fieldType: null,
+                      parentKey: null,
+                      parentApiIdentifier: null,
                     },
-                  ],
-                },
-                {
-                  severity: "Error",
-                  message: "Add google keys for production",
-                  node: null,
-                  nodeLabels: null,
-                },
-              ],
-              status: undefined,
+                    nodeLabels: [
+                      {
+                        type: "File",
+                        identifier: "",
+                      },
+                    ],
+                  },
+                  {
+                    severity: "Error",
+                    message: "Add google keys for production",
+                    node: null,
+                    nodeLabels: null,
+                  },
+                ],
+                status: undefined,
+              },
             },
-          },
-        }),
+          }),
+        -1,
       );
 
       expectStdout().toMatchInlineSnapshot(`

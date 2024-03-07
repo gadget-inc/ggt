@@ -82,7 +82,7 @@
     "semver": "^7.6.0",
     "serialize-error": "^11.0.3",
     "simple-git": "^3.22.0",
-    "string-width": "^6.1.0",
+    "string-width": "^7.1.0",
     "strip-ansi": "^7.1.0",
     "terminal-link": "^3.0.0",
     "ts-dedent": "^2.2.0",

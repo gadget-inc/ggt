@@ -621,7 +621,7 @@ describe("deploy", () => {
         ✔ Your files are up to date. 12:00:00 AM
 
         ⠙ Building frontend assets.
-        ✖ Building frontend assets. 12:00:00 AM
+        ✘ Building frontend assets. 12:00:00 AM
 
         An error occurred while communicating with Gadget
 
@@ -709,7 +709,7 @@ describe("deploy", () => {
         ✔ Your files are up to date. 12:00:00 AM
 
         ⠙ Building frontend assets.
-        ✖ Building frontend assets. 12:00:00 AM
+        ✘ Building frontend assets. 12:00:00 AM
 
         GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
 

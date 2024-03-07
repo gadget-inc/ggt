@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import figures from "figures";
 import indentString from "indent-string";
 import assert from "node:assert";
 import process from "node:process";
@@ -207,11 +208,11 @@ class Select<Choice extends string> extends Prompt {
       // determine whether to display "more choices" indicators
       let prefix: string;
       if (this.cursor === index) {
-        prefix = "→ ";
+        prefix = `${figures.arrowRight} `;
       } else if (index === startIndex && startIndex > 0) {
-        prefix = "↑ ";
+        prefix = `${figures.arrowUp} `;
       } else if (index === endIndex - 1 && endIndex < this.options.choices.length) {
-        prefix = "↓ ";
+        prefix = `${figures.arrowDown} `;
       } else {
         prefix = "  ";
       }

@@ -175,6 +175,14 @@ export const mockSideEffects = (): void => {
       }),
   }));
 
+  // we mock figures to always return the main symbols rather than the
+  // fallback ones so that our tests are consistent across platforms
+  // (particularly Windows)
+  vi.mock("figures", async () => {
+    const { mainSymbols } = await vi.importActual("figures");
+    return { default: mainSymbols };
+  });
+
   beforeEach(() => {
     // alway opt in to process.exit
     mock(process, "exit", () => {

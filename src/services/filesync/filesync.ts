@@ -1,4 +1,5 @@
 import { execa } from "execa";
+import figures from "figures";
 import fs from "fs-extra";
 import ms from "ms";
 import assert from "node:assert";
@@ -318,7 +319,7 @@ export class FileSync {
               printGadgetChangesOptions: {
                 tense: "past",
                 ensureEmptyLineAbove: true,
-                title: sprintln`{green ✔} Pulled ${pluralize("file", changed.length + deleted.length)}. ← ${ts()}`,
+                title: sprintln`{green ${figures.tick}} Pulled ${pluralize("file", changed.length + deleted.length)}. ${figures.arrowLeft} ${ts()}`,
                 limit: 5,
                 ...printGadgetChangesOptions,
               },
@@ -549,7 +550,7 @@ export class FileSync {
       sprintChanges(ctx, {
         changes,
         tense: "present",
-        title: sprint`Pulling ${pluralize("file", changes.size)}. ←`,
+        title: sprint`Pulling ${pluralize("file", changes.size)}. ${figures.arrowLeft}`,
         ...printGadgetChangesOptions,
       }),
     );
@@ -643,7 +644,7 @@ export class FileSync {
       sprintChanges(ctx, {
         changes,
         tense: "present",
-        title: sprintln`Pushing ${pluralize("file", changed.length + deleted.length)}. →`,
+        title: sprintln`Pushing ${pluralize("file", changed.length + deleted.length)}. ${figures.arrowRight}`,
         ...printLocalChangesOptions,
       }),
     );
@@ -688,7 +689,7 @@ export class FileSync {
         sprintChanges(ctx, {
           changes,
           tense: "past",
-          title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. → ${ts()}`,
+          title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. ${figures.arrowRight} ${ts()}`,
           ...printLocalChangesOptions,
         }),
       );
@@ -810,7 +811,7 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      title: sprint`{green ✔} Pulled ${pluralize("file", changes.size)}. ← ${ts()}`,
+      title: sprint`{green ${figures.tick}} Pulled ${pluralize("file", changes.size)}. ${figures.arrowLeft} ${ts()}`,
       ...options.printGadgetChangesOptions,
     });
 

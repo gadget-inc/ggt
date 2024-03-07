@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import figures from "figures";
 import pluralize from "pluralize";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
@@ -113,7 +114,7 @@ export const sprintChanges = (
     });
 
   if (changesToPrint.length > limit) {
-    rows.push([chalk.gray("…"), sprint`{gray ${changesToPrint.length - limit} more}`, ""]);
+    rows.push([chalk.gray(figures.ellipsis), sprint`{gray ${changesToPrint.length - limit} more}`, ""]);
   }
 
   let footer: string | undefined;

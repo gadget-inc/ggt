@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import figures from "figures";
 import ms from "ms";
 import path from "node:path";
 import Watcher from "watcher";
@@ -417,6 +418,6 @@ export const command: Command<DevArgs> = async (ctx) => {
   footer({ ensureEmptyLineAbove: true })`
 ${syncJson.sprint({ indent: 4 })}
 
-    Waiting for file changes… {gray Press Ctrl+C to stop}
+    Waiting for file changes${figures.ellipsis} {gray Press Ctrl+C to stop}
   `;
 };

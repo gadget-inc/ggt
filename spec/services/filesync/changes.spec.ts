@@ -1,3 +1,4 @@
+import figures from "figures";
 import { beforeEach, describe, it } from "vitest";
 import type { Context } from "../../../src/services/command/context.js";
 import { Changes, printChanges } from "../../../src/services/filesync/changes.js";
@@ -33,7 +34,7 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "past", title: "Pulled files. ← 12:00:00 PM" });
+    printChanges(ctx, { changes, tense: "past", title: `Pulled files. ${figures.arrowLeft} 12:00:00 PM` });
     expectStdout().toMatchInlineSnapshot(`
       "Pulled files. ← 12:00:00 PM
       ±  bar  updated

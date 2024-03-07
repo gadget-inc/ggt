@@ -1,4 +1,5 @@
 import type { Command, Usage } from "../services/command/command.js";
+import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 import { readSession, writeSession } from "../services/user/session.js";
 
@@ -12,12 +13,12 @@ export const usage: Usage = () => sprint`
       $ ggt logout
 `;
 
-export const command: Command = (ctx) => {
+export const command: Command = (_ctx) => {
   const token = readSession();
   if (token) {
     writeSession(undefined);
-    ctx.log.println("Goodbye");
+    println("Goodbye");
   } else {
-    ctx.log.println("You are not logged in");
+    println("You are not logged in");
   }
 };

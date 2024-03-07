@@ -3,7 +3,7 @@ import { config } from "../../config/config.js";
 import { env } from "../../config/env.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { serializeError } from "../../util/object.js";
-import { stderr } from "../stream.js";
+import { output } from "../output.js";
 import type { Fields } from "./field.js";
 import { formatters } from "./format/format.js";
 import { Level } from "./level.js";
@@ -64,7 +64,7 @@ export const createStructuredLogger = ({
 
       if (shouldLog) {
         const format = formatters[config.logFormat];
-        stderr.write(format(level, name, msg, fields));
+        output.writeStderr(format(level, name, msg, fields));
       }
 
       if (shouldSendToSentry) {

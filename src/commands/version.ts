@@ -1,5 +1,6 @@
 import type { Command, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
+import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
 export const usage: Usage = () => sprint`
@@ -12,6 +13,6 @@ export const usage: Usage = () => sprint`
     $ ggt version
 `;
 
-export const command: Command = (ctx) => {
-  ctx.log.println(config.version);
+export const command: Command = (_ctx) => {
+  println(config.version);
 };

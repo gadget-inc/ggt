@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import assert from "node:assert";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
@@ -6,12 +5,16 @@ import { type Command, type Usage } from "../services/command/command.js";
 import { DeployDisallowedError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { confirm } from "../services/output/confirm.js";
+import { output } from "../services/output/output.js";
+import { println } from "../services/output/print.js";
 import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.js";
-import { confirm } from "../services/output/prompt.js";
 import { reportErrorAndExit } from "../services/output/report.js";
-import { failSpinner, spinnerText, startSpinner, succeedSpinner } from "../services/output/spinner.js";
+import { spin, type spinner } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
-import { isCloseEvent, isGraphQLErrors, isInteractive } from "../services/util/is.js";
+import { ts } from "../services/output/timestamp.js";
+import { unreachable } from "../services/util/assert.js";
+import { isGraphQLErrors } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
 
 export type DeployArgs = typeof args;
@@ -139,33 +142,55 @@ export const command: Command<DeployArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
 
-  ctx.log.printlns2`
+  println({ ensureEmptyLineAbove: true })`
     Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
   `;
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
-  if (!hashes.inSync) {
-    if (!ctx.args["--force"]) {
-      ctx.log.printlns`
-      Your local filesystem must be in sync with your development
-      environment before you can deploy. ${!isInteractive() ? "In non-interactive environments use --force to always push" : ""}
+  if (!hashes.inSync && (hashes.localChangesToPush.size > 0 || !hashes.onlyDotGadgetFilesChanged)) {
+    // the following is true:
+    //   1. our local files don't match our environment's files
+    //   2. we have local changes to push or non .gadget/ files have changed on our environment
+    //  therefor, we need to push before we can deploy
+    await filesync.print(ctx, { hashes });
+
+    println({ ensureEmptyLineAbove: true })`
+      Your environment's files must match your local files before you can deploy.
     `;
 
-      if (isInteractive()) {
-        await confirm(ctx, { message: "Would you like to push now?" });
-      } else {
-        process.exit(-1);
+    // some scenarios make the confirmation to push changes imply the
+    // --force flag (e.g. when both local and environment files have
+    // changed, or when only environment files have changed)
+    let implicitForce = false;
+
+    if (output.isInteractive) {
+      let message: string;
+      switch (true) {
+        case hashes.bothChanged:
+          message = sprint`Would you like to push your local changes and discard your environment's changes now?`;
+          implicitForce = true;
+          break;
+        case hashes.localChangesToPush.size > 0:
+          message = sprint`Would you like to push your local changes now?`;
+          break;
+        case hashes.gadgetChanges.size > 0:
+          message = sprint`Do you want to discard your environment's changes now?`;
+          implicitForce = true;
+          break;
+        default:
+          unreachable("no changes to push or discard");
       }
+
+      await confirm({ ensureEmptyLineAbove: true })(message);
+    } else {
+      println({ ensureEmptyLineAbove: true })`
+        Assuming you want to push your local files now.
+      `;
     }
 
-    await filesync.push(ctx, { hashes });
+    await filesync.push(ctx, { hashes, force: implicitForce || ctx.args["--force"] });
   }
-
-  let printedProblems = false;
-
-  // subscribes to the graphql subscription that will listen and send
-  // back the server contract status
 
   const variables = {
     localFilesVersion: String(syncJson.filesVersion),
@@ -173,38 +198,35 @@ export const command: Command<DeployArgs> = async (ctx) => {
     allowCharges: ctx.args["--allow-charges"],
   };
 
+  let spinner: spinner | undefined;
+  let currentStep: AppDeploymentSteps = AppDeploymentSteps.NOT_STARTED;
+  let printedProblems = false;
+
   const subscription = syncJson.edit.subscribe({
     subscription: PUBLISH_STATUS_SUBSCRIPTION,
     variables,
     onError: async (error) => {
       ctx.log.error("failed to deploy", { error });
+      spinner?.fail(stepToSpinnerStart(syncJson, currentStep) + " " + ts());
 
-      let failMessage: string | undefined = undefined;
+      if (isGraphQLErrors(error.cause)) {
+        const graphqlError = error.cause[0];
+        assert(graphqlError, "expected graphqlError to be defined");
 
-      if (isCloseEvent(error.cause)) {
-        failMessage = error.message;
-        ctx.log.printlns(error.message);
-      } else if (isGraphQLErrors(error.cause)) {
-        const message = error.cause[0]?.message;
-        const extensions = error.cause[0]?.extensions;
-        assert(message, "expected message to be defined");
-
-        if (extensions?.["requiresUpgrade"]) {
-          failMessage = message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "");
-        } else if (extensions?.["requiresAdditionalCharge"]) {
-          const paymentRequiredMessage = message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "");
-
-          await confirm(ctx, { message: `${paymentRequiredMessage}\nDo you wish to proceed?` });
-          subscription.resubscribe({ ...variables, allowCharges: true });
-          return;
-        } else {
-          failMessage = message;
+        switch (true) {
+          case graphqlError.extensions["requiresUpgrade"]:
+            println({ ensureEmptyLineAbove: true })(graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, ""));
+            process.exit(1);
+            break;
+          case graphqlError.extensions["requiresAdditionalCharge"]:
+            println({ ensureEmptyLineAbove: true })(graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, ""));
+            await confirm({ ensureEmptyLineAbove: true })("Do you want to continue?");
+            subscription.resubscribe({ ...variables, allowCharges: true });
+            return;
         }
       }
 
-      failSpinner(failMessage ?? "Failed to deploy");
-
-      return;
+      await reportErrorAndExit(ctx, error);
     },
     onData: async ({ publishStatus }): Promise<void> => {
       if (!publishStatus) {
@@ -221,20 +243,15 @@ export const command: Command<DeployArgs> = async (ctx) => {
           await reportErrorAndExit(ctx, new DeployDisallowedError(publishIssuesToProblems(fatalIssues)));
         }
 
-        ctx.log.printlns`{bold Problems found}`;
-        printProblems(ctx, { problems: publishIssuesToProblems(issues) });
+        println({ ensureEmptyLineAbove: true })`{bold Problems found.}`;
+        printProblems({ problems: publishIssuesToProblems(issues) });
 
         if (!publishStarted) {
-          if (isInteractive()) {
-            await confirm(ctx, { message: "Do you want to continue?" });
-          } else {
-            process.exit(-1);
-          }
-
+          await confirm("Do you want to continue?");
           subscription.resubscribe({ ...variables, force: true });
         } else {
           assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");
-          ctx.log.printlns2`Deploying regardless of problems because "--allow-problems" was passed.`;
+          println({ ensureEmptyLineAbove: true })`Deploying regardless of problems because {bold "--allow-problems"} was passed.`;
         }
 
         return;
@@ -242,36 +259,41 @@ export const command: Command<DeployArgs> = async (ctx) => {
 
       if (status?.code === "Errored") {
         subscription.unsubscribe();
-
-        failSpinner();
+        spinner?.fail(stepToSpinnerStart(syncJson, currentStep) + " " + ts());
 
         if (status.message) {
-          ctx.log.printlns`{red ${status.message}}`;
+          println({ ensureEmptyLineAbove: true })`{red ${status.message}}`;
         }
         if (status.output) {
-          ctx.log.printlns(terminalLink("Check logs", status.output));
+          println({ ensureEmptyLineAbove: true })`${terminalLink("Check logs", status.output)}`;
         }
         return;
       }
 
       if (step === AppDeploymentSteps.COMPLETED) {
         subscription.unsubscribe();
-        succeedSpinner();
-        let message = chalk.green("Deploy successful!");
+        spinner?.succeed(stepToSpinnerEnd(syncJson, currentStep));
+
+        let message = sprint`{green Deploy successful!}`;
         if (status?.output) {
-          message += ` ${terminalLink("Check logs", status.output)}`;
+          message += ` ${terminalLink("Check logs", status.output)}.`;
         }
-        ctx.log.printlns(message);
+
+        println({ ensureEmptyLineAbove: true })(message);
         return;
       }
 
-      const newSpinnerText = stepToSpinnerText(syncJson, step);
-      const currentSpinnerText = spinnerText();
-      if (newSpinnerText !== currentSpinnerText) {
-        if (currentSpinnerText) {
-          succeedSpinner();
+      if (step !== currentStep) {
+        const spinnerText = stepToSpinnerStart(syncJson, step);
+        if (spinnerText !== spinner?.text) {
+          // stop the current spinner, if any, and start a new one
+          spinner?.succeed(stepToSpinnerEnd(syncJson, currentStep));
+
+          const ensureEmptyLineAbove = currentStep === AppDeploymentSteps.NOT_STARTED || !output.isInteractive;
+          spinner = spin({ ensureEmptyLineAbove })(spinnerText);
         }
-        startSpinner(newSpinnerText);
+
+        currentStep = step as AppDeploymentSteps;
       }
     },
   });
@@ -290,22 +312,42 @@ export const AppDeploymentSteps = Object.freeze({
 
 export type AppDeploymentSteps = (typeof AppDeploymentSteps)[keyof typeof AppDeploymentSteps];
 
-export const stepToSpinnerText = (syncJson: SyncJson, step: string): string => {
+export const stepToSpinnerStart = (syncJson: SyncJson, step: string): string => {
   switch (step) {
     case AppDeploymentSteps.NOT_STARTED:
     case AppDeploymentSteps.STARTING:
     case AppDeploymentSteps.BUILDING_ASSETS:
     case AppDeploymentSteps.UPLOADING_ASSETS:
-      return "Building frontend assets";
+      return "Building frontend assets.";
     case AppDeploymentSteps.CONVERGING_STORAGE:
-      return "Setting up database";
+      return "Setting up database.";
     case AppDeploymentSteps.PUBLISHING_TREE:
-      return `Copying ${syncJson.env.name}`;
+      return `Copying ${syncJson.env.name}.`;
     case AppDeploymentSteps.RELOADING_SANDBOX:
-      return "Restarting app";
+      return "Restarting app.";
     case AppDeploymentSteps.COMPLETED:
-      return "Deploy completed";
+      return "Deploy complete!";
     default:
-      return "Unknown step";
+      return "Unknown step.";
+  }
+};
+
+export const stepToSpinnerEnd = (syncJson: SyncJson, step: string): string => {
+  switch (step) {
+    case AppDeploymentSteps.NOT_STARTED:
+    case AppDeploymentSteps.STARTING:
+    case AppDeploymentSteps.BUILDING_ASSETS:
+    case AppDeploymentSteps.UPLOADING_ASSETS:
+      return `Built frontend assets. ${ts()}`;
+    case AppDeploymentSteps.CONVERGING_STORAGE:
+      return `Setup database. ${ts()}`;
+    case AppDeploymentSteps.PUBLISHING_TREE:
+      return `Copied ${syncJson.env.name}. ${ts()}`;
+    case AppDeploymentSteps.RELOADING_SANDBOX:
+      return `Restarted app. ${ts()}`;
+    case AppDeploymentSteps.COMPLETED:
+      return "Deploy successful!";
+    default:
+      return `Completed unknown step. ${ts()}`;
   }
 };

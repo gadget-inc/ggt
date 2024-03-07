@@ -15,6 +15,8 @@ export const isObject = (val: unknown): val is object => {
   return typeof val === "object" && val !== null;
 };
 
+export const isArray = Array.isArray;
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const isFunction = (val: unknown): val is Function => {
   return typeof val === "function";
@@ -46,7 +48,18 @@ export const isGraphQLResult = (val: unknown): val is ExecutionResult => {
 };
 
 export const isGraphQLErrors = (e: unknown): e is readonly GraphQLError[] => {
-  return z.array(z.object({ message: z.string() })).safeParse(e).success;
+  return z
+    .array(
+      z.object({
+        message: z.string(),
+        extensions: z
+          .record(z.unknown())
+          .nullish()
+          .transform((ext) => ext ?? {}),
+      }),
+    )
+    .min(1)
+    .safeParse(e).success;
 };
 
 export const isNever = (value: never): never => {
@@ -68,11 +81,4 @@ export const isTypeScriptFile = (filepath: string): boolean => {
 
 export const isGellyFile = (filepath: string): boolean => {
   return filepath.endsWith(".gelly");
-};
-
-export const isInteractive = ({ stream = process.stdout } = {}): boolean => {
-  return Boolean(
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    stream && stream.isTTY && process.env["TERM"] !== "dumb" && !("CI" in process.env),
-  );
 };

@@ -3,7 +3,7 @@ import { ClientError } from "../app/error.js";
 import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
 import { CLIError, IsBug } from "../output/report.js";
-import { sprint, sprintln, sprintlns } from "../output/sprint.js";
+import { sprint, sprintln } from "../output/sprint.js";
 import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
 import type { Directory } from "./directory.js";
 import type { SyncJsonArgs } from "./sync-json.js";
@@ -38,7 +38,7 @@ export class UnknownDirectoryError extends CLIError {
 
   protected render(): string {
     const dir = this.opts.directory.path;
-    const appSlug = this.ctx.app?.slug || "<name of app>";
+    const appSlug = this.ctx.app?.slug || "<name>";
     const cmd = this.ctx.command;
     const exists = fs.existsSync(this.opts.directory.absolute(".gadget/sync.json"));
 
@@ -52,7 +52,7 @@ export class UnknownDirectoryError extends CLIError {
           ${dir}
 
         You can either fix the file manually or run "ggt dev" with the
-        {bold --allow-unknown-directory} flag to recreate it.
+        "--allow-unknown-directory" flag to recreate it.
       `;
     }
 
@@ -71,13 +71,13 @@ export class UnknownDirectoryError extends CLIError {
           ggt dev ~/gadget/${appSlug} --app=${appSlug}
 
         To use a non-empty directory without a ".gadget/sync.json" file,
-        run "ggt dev" again with the {bold --allow-unknown-directory} flag:
+        run "ggt dev" again with the "--allow-unknown-directory" flag:
 
           ggt dev ${dir} --app=${appSlug} --allow-unknown-directory
       `;
     }
 
-    // this is push, pull, or deploy which must be run within a
+    // this is status, push, or pull which must be run within a
     // directory that has already has .gadget/sync.json file
     return sprint`
       A ".gadget/sync.json" file is missing in this directory:
@@ -116,11 +116,9 @@ export class DeployDisallowedError extends CLIError {
   }
 
   protected render(): string {
-    let output = "\n";
-    output += sprintlns`{red Gadget has detected the following fatal errors with your files:}`;
-    output += sprintProblems({ problems: this.fatalErrors, showFileTypes: false });
-    output += sprintln("");
-    output += sprint`{red Please fix these errors and try again.}`;
+    let output = sprintln`{red Gadget has detected the following fatal errors with your files:}`;
+    output += sprintProblems({ ensureEmptyLineAbove: true, problems: this.fatalErrors, showFileTypes: false });
+    output += sprintln({ ensureEmptyLineAbove: true })`{red Please fix these errors and try again.}`;
     return output;
   }
 }

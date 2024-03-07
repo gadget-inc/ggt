@@ -3,6 +3,7 @@ import type { Command, Usage } from "../services/command/command.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
 export type PushArgs = typeof args;
@@ -115,5 +116,18 @@ export const command: Command<typeof args> = async (ctx) => {
   }
 
   const filesync = new FileSync(syncJson);
-  await filesync.push(ctx);
+  const hashes = await filesync.hashes(ctx);
+  if (hashes.localChangesToPush.size === 0) {
+    println({ ensureEmptyLineAbove: true })`
+      Nothing to push.
+    `;
+    return;
+  }
+
+  if (hashes.gadgetChangesToPull.size > 0 && !hashes.onlyDotGadgetFilesChanged) {
+    // show them the environment changes they will discard
+    await filesync.print(ctx, { hashes });
+  }
+
+  await filesync.push(ctx, { hashes });
 };

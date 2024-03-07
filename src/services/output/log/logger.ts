@@ -1,26 +1,15 @@
 import { unthunk } from "../../util/function.js";
-import { sprint, sprintTable, sprintln, sprintln2, sprintlns, sprintlns2 } from "../sprint.js";
-import { stdout } from "../stream.js";
-import { createPrinter, type Printer } from "./printer.js";
 import { createStructuredLogger, type StructuredLogger, type StructuredLoggerOptions } from "./structured.js";
 
-export type Logger = StructuredLogger &
-  Printer & {
-    /**
-     * Creates a child logger with the given options. The child logger
-     * inherits the name and fields of the parent logger.
-     *
-     * @param options
-     */
-    child(options: Partial<StructuredLoggerOptions>): Logger;
-
-    /**
-     * Creates a buffer that can be used to batch multiple print
-     * statements together. Call `flush` to print all the buffered
-     * messages to stdout in a single write.
-     */
-    buffer(): Printer & { flush(): void };
-  };
+export type Logger = StructuredLogger & {
+  /**
+   * Creates a child logger with the given options. The child logger
+   * inherits the name and fields of the parent logger.
+   *
+   * @param options
+   */
+  child(options: Partial<StructuredLoggerOptions>): Logger;
+};
 
 /**
  * Creates a {@linkcode Logger} with the given name and fields.
@@ -52,32 +41,13 @@ export type Logger = StructuredLogger &
  */
 export const createLogger = ({ name, fields: loggerFields, devFields: loggerDevFields }: StructuredLoggerOptions): Logger => {
   return {
-    ...createPrinter({ name }),
     ...createStructuredLogger({ name, fields: loggerFields, devFields: loggerDevFields }),
-
     child: ({ name: childName, fields: childFields, devFields: childDevFields }) => {
       return createLogger({
         name: childName || name,
         fields: () => ({ ...unthunk(loggerFields), ...unthunk(childFields) }),
         devFields: { ...unthunk(loggerDevFields), ...unthunk(childDevFields) },
       });
-    },
-
-    buffer: () => {
-      let buf: string[] = [];
-
-      return {
-        print: (...args) => buf.push(sprint(...args)),
-        println: (...args) => buf.push(sprintln(...args)),
-        println2: (...args) => buf.push(sprintln2(...args)),
-        printlns: (...args) => buf.push(sprintlns(...args)),
-        printlns2: (...args) => buf.push(sprintlns2(...args)),
-        printTable: (options) => buf.push(sprintTable(options)),
-        flush() {
-          stdout.write(buf.join(""));
-          buf = [];
-        },
-      };
     },
   };
 };

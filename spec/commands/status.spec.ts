@@ -3,10 +3,13 @@ import { args, command as status, type StatusArgs } from "../../src/commands/sta
 import type { Context } from "../../src/services/command/context.js";
 import { makeContext } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
-import { expectStdout } from "../__support__/stream.js";
+import { expectStdout } from "../__support__/output.js";
+import { mockSystemTime } from "../__support__/time.js";
 import { describeWithAuth } from "../utils.js";
 
 describe("status", () => {
+  mockSystemTime();
+
   let ctx: Context<StatusArgs>;
 
   describeWithAuth(() => {
@@ -27,15 +30,19 @@ describe("status", () => {
       await status(ctx);
 
       expectStdout().toMatchInlineSnapshot(`
-        "Application  test
-        Environment  development
-         Git Branch  test-branch
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
 
-        Your local filesystem has not changed.
-
-        Your environment's filesystem has not changed.
-        "
-      `);
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
+      "
+    `);
     });
 
     it("prints the expected message when local files have changed", async () => {
@@ -49,16 +56,24 @@ describe("status", () => {
       await status(ctx);
 
       expectStdout().toMatchInlineSnapshot(`
-        "Application  test
-        Environment  development
-         Git Branch  test-branch
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
 
-        Your local filesystem has changed.
-        +  local-file.txt  created 
+      ⠙ Calculating file changes.
+      ✔ Calculated file changes. 12:00:00 AM
 
-        Your environment's filesystem has not changed.
-        "
-      `);
+      Your local files have changed.
+      +  local-file.txt  created
+
+      Your environment's files have not changed.
+      "
+    `);
     });
 
     it("prints the expected message when gadget files have changed", async () => {
@@ -74,16 +89,24 @@ describe("status", () => {
       await status(ctx);
 
       expectStdout().toMatchInlineSnapshot(`
-        "Application  test
-        Environment  development
-         Git Branch  test-branch
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.gadget.app
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Docs        https://docs.gadget.dev/api/test
 
-        Your local filesystem has not changed.
+      ⠙ Calculating file changes.
+      ✔ Calculated file changes. 12:00:00 AM
 
-        Your environment's filesystem has changed.
-        +  gadget-file.txt  created 
-        "
-      `);
+      Your local files have not changed.
+
+      Your environment's files have changed.
+      +  gadget-file.txt  created
+      "
+    `);
     });
 
     it("prints the expected message when both local and gadget files have changed", async () => {
@@ -102,13 +125,21 @@ describe("status", () => {
       expectStdout().toMatchInlineSnapshot(`
         "Application  test
         Environment  development
-         Git Branch  test-branch
+             Branch  test-branch
+        ------------------------
+         Preview     https://test--development.gadget.app
+         Editor      https://test.gadget.app/edit/development
+         Playground  https://test.gadget.app/api/playground/graphql?environment=development
+         Docs        https://docs.gadget.dev/api/test
 
-        Your local filesystem has changed.
-        +  local-file.txt  created 
+        ⠙ Calculating file changes.
+        ✔ Calculated file changes. 12:00:00 AM
 
-        Your environment's filesystem has changed.
-        +  gadget-file.txt  created 
+        Your local files have changed.
+        +  local-file.txt  created
+
+        Your environment's files have also changed.
+        +  gadget-file.txt  created
         "
       `);
     });

@@ -9,10 +9,10 @@ import * as update from "../../src/services/output/update.js";
 import { noop, noopThis } from "../../src/services/util/function.js";
 import { makeRootContext } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
-import { expectReportErrorAndExit } from "../__support__/error.js";
+import { waitForReportErrorAndExit } from "../__support__/error.js";
 import { mock } from "../__support__/mock.js";
+import { expectStdout } from "../__support__/output.js";
 import { expectProcessExit } from "../__support__/process.js";
-import { expectStdout } from "../__support__/stream.js";
 
 describe("root", () => {
   beforeEach(() => {
@@ -66,10 +66,10 @@ describe("root", () => {
         ggt [COMMAND]
 
       COMMANDS
-        dev            Sync your local and environment's filesystem
-        status         Show your local and environment's filesystem status
-        push           Push your local filesystem
-        pull           Pull your environment's filesystem
+        dev            Start developing your application
+        status         Show your local and environment's file changes
+        push           Push your local files to your environment
+        pull           Pull your environment's files to your local computer
         deploy         Deploy your environment to production
         list           List your available applications
         login          Log in to your account
@@ -135,7 +135,7 @@ describe("root", () => {
       process.argv = ["node", "ggt", name];
 
       void root(makeRootContext());
-      await expectReportErrorAndExit(error);
+      await waitForReportErrorAndExit(error);
 
       expect(cmd.command).toHaveBeenCalled();
     });

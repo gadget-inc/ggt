@@ -4,7 +4,7 @@ import { type Context } from "../../src/services/command/context.js";
 import * as user from "../../src/services/user/user.js";
 import { makeContext } from "../__support__/context.js";
 import { mock } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/stream.js";
+import { expectStdout } from "../__support__/output.js";
 
 describe("whoami", () => {
   let ctx: Context;

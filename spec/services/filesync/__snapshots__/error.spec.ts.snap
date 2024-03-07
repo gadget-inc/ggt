@@ -20,7 +20,7 @@ using a gadget specific directory like this:
   ggt dev ~/gadget/test --app=test
 
 To use a non-empty directory without a \\".gadget/sync.json\\" file,
-run \\"ggt dev\\" again with the --allow-unknown-directory flag:
+run \\"ggt dev\\" again with the \\"--allow-unknown-directory\\" flag:
 
   ggt dev /Users/jane/doe --app=test --allow-unknown-directory"
 `;
@@ -58,5 +58,5 @@ exports[`UnknownDirectoryError > renders correctly when the file exists but is i
   /Users/jane/doe
 
 You can either fix the file manually or run \\"ggt dev\\" with the
---allow-unknown-directory flag to recreate it."
+\\"--allow-unknown-directory\\" flag to recreate it."
 `;

@@ -1,4 +1,5 @@
 import type { ExecutionResult } from "graphql-ws";
+import assert from "node:assert";
 import type { Promisable } from "type-fest";
 import type { Context } from "../../command/context.js";
 import { type HttpOptions } from "../../http/http.js";
@@ -42,7 +43,9 @@ export class Edit {
     variables?: Thunk<Query["Variables"]> | null;
     http?: HttpOptions;
   }): Promise<Query["Data"]> {
-    const name = query.split(/ |\(/, 2)[1];
+    const name = query.match(/query (\w+)/)?.[1];
+    assert(name, "query name not found");
+
     const ctx = this.ctx.child({
       fields: { edit: { query: name } },
       devFields: { edit: { query: name, variables: unthunk(variables) } },
@@ -91,7 +94,9 @@ export class Edit {
     variables?: Thunk<Mutation["Variables"]> | null;
     http?: HttpOptions;
   }): Promise<Mutation["Data"]> {
-    const name = mutation.split(/ |\(/, 2)[1];
+    const name = mutation.match(/mutation (\w+)/)?.[1];
+    assert(name, "mutation name not found");
+
     const ctx = this.ctx.child({
       fields: { edit: { mutation: name } },
       devFields: { edit: { mutation: name, variables: unthunk(variables) } },
@@ -132,7 +137,9 @@ export class Edit {
     onError: (error: ClientError) => Promisable<void>;
     onComplete?: () => Promisable<void>;
   }): EditSubscription<Subscription> {
-    const name = options.subscription.split(/ |\(/, 2)[1];
+    const name = options.subscription.match(/subscription (\w+)/)?.[1];
+    assert(name, "subscription name not found");
+
     let ctx = this.ctx.child({
       fields: { edit: { subscription: name } },
       devFields: { edit: { subscription: name, variables: unthunk(options.variables) } },

@@ -3,20 +3,28 @@ import cleanStack from "clean-stack";
 import ms from "ms";
 import { randomUUID } from "node:crypto";
 import os from "node:os";
+import terminalLink from "terminal-link";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { env } from "../config/env.js";
 import { parseBoolean } from "../util/boolean.js";
+import { isAbortError } from "../util/is.js";
 import { serializeError } from "../util/object.js";
 import { workspaceRoot } from "../util/paths.js";
-import { sprint } from "./sprint.js";
+import { println } from "./print.js";
+import { sprintln, type SprintOptions } from "./sprint.js";
 
 export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<never> => {
+  if (isAbortError(cause)) {
+    ctx.log.debug("aborting without reporting error", { error: cause });
+    return process.exit(1);
+  }
+
   ctx.log.error("reporting error and exiting", { error: cause });
 
   try {
     const error = CLIError.from(cause);
-    ctx.log.println(error.toString());
+    error.print();
 
     if (error.isBug === IsBug.NO) {
       return undefined as never;
@@ -133,20 +141,34 @@ export abstract class CLIError extends Error {
     return new UnexpectedError(cause);
   }
 
-  override toString(): string {
+  sprint(): string {
     let rendered = this.render();
 
     if (this.isBug !== IsBug.NO) {
-      rendered +=
-        "\n\n" +
-        sprint`
-          ${this.isBug === IsBug.YES ? "This is a bug" : "If you think this is a bug"}, please submit an issue using the link below.
+      // ensure the rendered message ends with a newline
+      rendered = sprintln(rendered);
 
-          https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.id}
+      const thisIsABug = this.isBug === IsBug.YES ? "This is a bug" : "If you think this is a bug";
+      const issueLink = `https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.id}`;
+
+      if (terminalLink.isSupported) {
+        rendered += sprintln({ ensureEmptyLineAbove: true })`
+          ${thisIsABug}, ${terminalLink("click here", issueLink)} to create an issue on GitHub.
         `;
+      } else {
+        rendered += sprintln({ ensureEmptyLineAbove: true })`
+          ${thisIsABug}, use the link below to create an issue on GitHub.
+
+          ${issueLink}
+        `;
+      }
     }
 
     return rendered;
+  }
+
+  print(options?: SprintOptions): void {
+    println({ ensureEmptyLineAbove: true, ...options })(this.sprint());
   }
 
   /**
@@ -175,6 +197,24 @@ export class UnexpectedError extends CLIError {
   protected render(): string {
     const serialized = serializeError(this.cause);
     const body = serialized.stack || serialized.message || this.stack;
-    return this.message + "\n\n" + body;
+    return this.message + ".\n\n" + body;
+  }
+}
+
+/**
+ * An error that is expected to happen sometimes.
+ */
+export class MaybeExpectedError extends CLIError {
+  isBug = IsBug.MAYBE;
+
+  constructor(
+    message: string,
+    override cause?: unknown,
+  ) {
+    super(message);
+  }
+
+  protected render(): string {
+    return this.message;
   }
 }

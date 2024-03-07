@@ -1,22 +1,21 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable no-irregular-whitespace */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, it } from "vitest";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
-import { expectStdout } from "../../spec/__support__/stream.js";
 import { args, command as deploy } from "../../src/commands/deploy.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";
-import { confirm } from "../../src/services/output/prompt.js";
-import * as spinner from "../../src/services/output/spinner.js";
-import { noop } from "../../src/services/util/function.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
-import { mock } from "../__support__/mock.js";
+import { expectStdout } from "../__support__/output.js";
+import { mockSystemTime } from "../__support__/time.js";
 import { describeWithAuth } from "../utils.js";
 
 describe("deploy", () => {
+  mockSystemTime();
+
   describeWithAuth(() => {
     let ctx: Context<typeof args>;
 
@@ -28,17 +27,7 @@ describe("deploy", () => {
       ctx.abort();
     });
 
-    it("does not try to deploy if local files are not up to date with remote", async () => {
-      mock(confirm, () => process.exit(0));
-
-      await makeSyncScenario({ localFiles: { "file.txt": "test" } });
-
-      await expectProcessExit(() => deploy(ctx), -1);
-    });
-
     it("does not try to deploy if any problems were detected and displays the problems", async () => {
-      mock(confirm, () => process.exit(0));
-
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const mockEditGraphQL = makeMockEditSubscriptions();
@@ -143,30 +132,35 @@ describe("deploy", () => {
               },
             },
           }),
-        -1,
+        1,
       );
 
       expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
 
-      Problems found
+        Problems found.
 
-      • routes/GET-hello.js 1 problem
-        ✖ JavaScript Unexpected keyword or identifier. line 13
+        • routes/GET-hello.js 1 problem
+          ✖ JavaScript Unexpected keyword or identifier. line 13
 
-      • routes/GET-test.ts 2 problems
-        ✖ TypeScript Identifier expected. line 10
-        ✖ TypeScript Expression expected. line 15
+        • routes/GET-test.ts 2 problems
+          ✖ TypeScript Identifier expected. line 10
+          ✖ TypeScript Expression expected. line 15
 
-      • models/example/comp.gelly 1 problem
-        ✖ Gelly Unknown identifier \\"tru\\"
+        • models/example/comp.gelly 1 problem
+          ✖ Gelly Unknown identifier \\"tru\\"
 
-      • Other 1 problem
-        ✖ Add google keys for production
-      "
-    `);
+        • Other 1 problem
+          ✖ Add google keys for production
+
+        Do you want to continue?
+
+        Aborting because ggt is not running in an interactive terminal.
+        "
+      `);
     });
 
     it("deploys even if there are problems when --allow-problems is passed", async () => {
@@ -197,21 +191,6 @@ describe("deploy", () => {
           },
         },
       });
-
-      expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
-
-
-      Problems found
-
-      • Other 1 problem
-        ✖ Add google keys for production
-
-      Deploying regardless of problems because \\"--allow-problems\\" was passed.
-
-      "
-    `);
 
       await publishStatus.emitResponse({
         data: {
@@ -326,21 +305,33 @@ describe("deploy", () => {
       });
 
       expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
 
-      Problems found
+        Problems found.
 
-      • Other 1 problem
-        ✖ Add google keys for production
+        • Other 1 problem
+          ✖ Add google keys for production
 
-      Deploying regardless of problems because \\"--allow-problems\\" was passed.
+        Deploying regardless of problems because \\"--allow-problems\\" was passed.
 
+        ⠙ Building frontend assets.
+        ✔ Built frontend assets. 12:00:00 AM
 
-      Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
-      "
-    `);
+        ⠙ Setting up database.
+        ✔ Setup database. 12:00:00 AM
+
+        ⠙ Copying development.
+        ✔ Copied development. 12:00:00 AM
+
+        ⠙ Restarting app.
+        ✔ Restarted app. 12:00:00 AM
+
+        Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
+        "
+      `);
     });
 
     it("deploys if there are no problems with the app", async () => {
@@ -476,18 +467,29 @@ describe("deploy", () => {
       });
 
       expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
 
-      Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
-      "
-    `);
+        ⠙ Building frontend assets.
+        ✔ Built frontend assets. 12:00:00 AM
+
+        ⠙ Setting up database.
+        ✔ Setup database. 12:00:00 AM
+
+        ⠙ Copying development.
+        ✔ Copied development. 12:00:00 AM
+
+        ⠙ Restarting app.
+        ✔ Restarted app. 12:00:00 AM
+
+        Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
+        "
+      `);
     });
 
     it("can not deploy if the maximum number of applications has been reached", async () => {
-      const fail = vi.spyOn(spinner, "failSpinner");
-
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const mockEditGraphQL = makeMockEditSubscriptions();
@@ -503,21 +505,20 @@ describe("deploy", () => {
       await deploy(ctx);
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
-      await publishStatus.emitError(error);
+      await expectProcessExit(() => publishStatus.emitError(error), 1);
 
       expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
-      "
-    `);
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
 
-      expect(fail).toHaveBeenCalledWith("Production environment limit reached. Upgrade your plan to deploy.");
+        Production environment limit reached. Upgrade your plan to deploy.
+        "
+      `);
     });
 
     it("prompts the user to confirm if there is going to be a deploy charge", async () => {
-      const confirmSpy = mock(confirm, noop);
-
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const mockEditGraphQL = makeMockEditSubscriptions();
@@ -533,18 +534,21 @@ describe("deploy", () => {
       await deploy(ctx);
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
-      await publishStatus.emitError(error);
-
-      expect(confirmSpy).toHaveBeenCalledWith(expect.anything(), {
-        message: "Deploying this app to production will add $25.00 to your existing monthly plan.\nDo you wish to proceed?",
-      });
+      await expectProcessExit(() => publishStatus.emitError(error), 1);
 
       expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
-      "
-    `);
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
+
+        Deploying this app to production will add $25.00 to your existing monthly plan.
+
+        Do you want to continue?
+
+        Aborting because ggt is not running in an interactive terminal.
+        "
+      `);
     });
 
     it("exits if the subscription unexpectedly closes due to an Internal Error", async () => {
@@ -608,16 +612,26 @@ describe("deploy", () => {
         },
       });
 
-      await publishStatus.emitError(error);
+      await expectProcessExit(() => publishStatus.emitError(error), 1);
 
       expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
 
-      An error occurred while communicating with Gadget
-      "
-    `);
+        ⠙ Building frontend assets.
+        ✖ Building frontend assets. 12:00:00 AM
+
+        An error occurred while communicating with Gadget
+
+        The connection to Gadget closed unexpectedly.
+
+        If you think this is a bug, use the link below to create an issue on GitHub.
+
+        https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+        "
+      `);
     });
 
     it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
@@ -689,15 +703,19 @@ describe("deploy", () => {
       });
 
       expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
 
-      GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
+        ⠙ Building frontend assets.
+        ✖ Building frontend assets. 12:00:00 AM
 
-      Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
-      "
-    `);
+        GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
+
+        Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
+        "
+      `);
     });
 
     it("prints out fatal errors in the terminal and exit with code 1 if there are fatal errors", async () => {
@@ -754,26 +772,27 @@ describe("deploy", () => {
       );
 
       expectStdout().toMatchInlineSnapshot(`
-      "
-      Deploying development to test.gadget.app (​https://test.gadget.app/​)
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
 
-      Gadget has detected the following fatal errors with your files:
+        Gadget has detected the following fatal errors with your files:
 
-      • access-control.gadget.ts 2 problems
-        ✖ Something went wrong
-        ✖ Another message
+        • access-control.gadget.ts 2 problems
+          ✖ Something went wrong
+          ✖ Another message
 
-      • settings.gadget.ts 1 problem
-        ✖ Message from another file
+        • settings.gadget.ts 1 problem
+          ✖ Message from another file
 
-      Please fix these errors and try again.
+        Please fix these errors and try again.
 
-      If you think this is a bug, please submit an issue using the link below.
+        If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
-      "
-    `);
+        https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+        "
+      `);
     });
   });
 });

@@ -1,6 +1,6 @@
 import { ArgError } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
-import { sprintChanges } from "../services/filesync/changes.js";
+import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
@@ -12,11 +12,7 @@ export const args = SyncJsonArgs;
 
 export const usage: Usage = () => {
   return sprint`
-    Show changes made to your local filesystem and your
-    environment's filesystem.
-
-    Changes are calculated from the last time you ran
-    "ggt dev", "ggt push", or "ggt pull".
+    Show file changes since your last dev, push, or pull.
 
     {bold USAGE}
 
@@ -36,7 +32,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
       If you are trying to see the status of a specific directory,
       you must "cd" to that directory and then run "ggt status".
 
-       Run "ggt status -h" for more information.
+      Run "ggt status -h" for more information.
     `);
   }
 
@@ -46,40 +42,15 @@ export const command: Command<StatusArgs> = async (ctx) => {
     throw new UnknownDirectoryError(ctx, { directory });
   }
 
-  const buffer = ctx.log.buffer();
-
-  buffer.println(await syncJson.sprintState());
-  buffer.println("");
+  syncJson.print();
 
   const filesync = new FileSync(syncJson);
-  const { localChanges, gadgetChanges } = await filesync.hashes(ctx);
+  const hashes = await filesync.hashes(ctx);
+  await filesync.print(ctx, { hashes });
 
-  if (localChanges.size > 0) {
-    buffer.println(
-      sprintChanges(ctx, {
-        changes: localChanges,
-        tense: "past",
-        message: "Your local filesystem has changed.",
-      }),
-    );
-  } else {
-    buffer.println`Your local filesystem has not changed.`;
+  const conflicts = getConflicts({ localChanges: hashes.localChanges, gadgetChanges: hashes.gadgetChanges });
+  if (conflicts.size > 0) {
+    ctx.log.debug("conflicts detected", { conflicts });
+    printConflicts({ conflicts });
   }
-
-  buffer.println("");
-
-  if (gadgetChanges.size > 0) {
-    buffer.println(
-      sprintChanges(ctx, {
-        changes: gadgetChanges,
-        includeDotGadget: true,
-        tense: "past",
-        message: "Your environment's filesystem has changed.",
-      }),
-    );
-  } else {
-    buffer.println`Your environment's filesystem has not changed.`;
-  }
-
-  buffer.flush();
 };

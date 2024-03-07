@@ -356,7 +356,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
               const stats = await fs.stat(filesVersionDir.absolute(filepath));
               let content = "";
               if (stats.isFile()) {
-                content = (await fs.readFile(filesVersionDir.absolute(filepath), { encoding })) as string;
+                content = await fs.readFile(filesVersionDir.absolute(filepath), { encoding });
               }
 
               return {

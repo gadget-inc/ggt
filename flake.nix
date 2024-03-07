@@ -13,10 +13,13 @@
       in
       {
         packages = {
+          direnv = pkgs.direnv;
           git = pkgs.git;
           mkcert = pkgs.mkcert;
-          nix-direnv = pkgs.nix-direnv.override { enableFlakes = true; };
-          nodejs = pkgs.nodejs-16_x;
+          nix-direnv = pkgs.nix-direnv;
+          nixpkgs-fmt = pkgs.nixpkgs-fmt;
+          nodejs = pkgs.nodejs-18_x;
+          yarn = pkgs.yarn.override { nodejs = flake.packages.nodejs; };
 
           ggt = pkgs.writeShellScriptBin "ggt" ''
             GGT_ENV=production "$WORKSPACE_ROOT"/bin/dev.js "$@"

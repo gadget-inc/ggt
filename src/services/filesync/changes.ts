@@ -1,11 +1,11 @@
 import chalk from "chalk";
-import figures from "figures";
 import pluralize from "pluralize";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";
 import { println } from "../output/print.js";
 import { sprint, sprintln } from "../output/sprint.js";
+import { symbol } from "../output/symbols.js";
 import { sprintTable, type SprintTableOptions } from "../output/table.js";
 import { memo } from "../util/function.js";
 import { isNever, isString } from "../util/is.js";
@@ -114,7 +114,7 @@ export const sprintChanges = (
     });
 
   if (changesToPrint.length > limit) {
-    rows.push([chalk.gray(figures.ellipsis), sprint`{gray ${changesToPrint.length - limit} more}`, ""]);
+    rows.push([chalk.gray(symbol.ellipsis), sprint`{gray ${changesToPrint.length - limit} more}`, ""]);
   }
 
   let footer: string | undefined;

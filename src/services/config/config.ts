@@ -38,12 +38,16 @@ export const config = {
     return os.arch() === "ia32" ? "x86" : os.arch();
   },
 
-  get platform(): string {
+  get platform(): NodeJS.Platform | "wsl" {
     return isWsl ? "wsl" : os.platform();
   },
 
   get windows(): boolean {
     return process.platform === "win32";
+  },
+
+  get windowsOrWsl(): boolean {
+    return this.windows || isWsl;
   },
 
   get macos(): boolean {

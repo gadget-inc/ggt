@@ -1,10 +1,10 @@
 import chalk, { Chalk } from "chalk";
 import dayjs from "dayjs";
-import figures from "figures";
 import assert from "node:assert";
 import { config } from "../../../config/config.js";
 import { env } from "../../../config/env.js";
 import { isObject } from "../../../util/is.js";
+import { symbol } from "../../symbols.js";
 import { Level } from "../level.js";
 import type { Formatter } from "./format.js";
 
@@ -114,7 +114,7 @@ const formatFields = (fields: Record<string, unknown>, indent = 2): string => {
 
       if (entries.length > 10 && config.logLevel > Level.TRACE) {
         // truncate objects to 10 keys when not tracing
-        value = Object.fromEntries([...entries.slice(0, 10), [figures.ellipsis, `${entries.length - 10} more`]]);
+        value = Object.fromEntries([...entries.slice(0, 10), [symbol.ellipsis, `${entries.length - 10} more`]]);
       }
 
       buf.push(formatFields(value as Record<string, unknown>, indent + 2));

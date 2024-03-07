@@ -1,5 +1,4 @@
 import dayjs from "dayjs";
-import figures from "figures";
 import ms from "ms";
 import path from "node:path";
 import Watcher from "watcher";
@@ -19,6 +18,7 @@ import { reportErrorAndExit } from "../services/output/report.js";
 import { select } from "../services/output/select.js";
 import { spin } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
+import { symbol } from "../services/output/symbols.js";
 import { unreachable } from "../services/util/assert.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
@@ -418,6 +418,6 @@ export const command: Command<DevArgs> = async (ctx) => {
   footer({ ensureEmptyLineAbove: true })`
 ${syncJson.sprint({ indent: 4 })}
 
-    Waiting for file changes${figures.ellipsis} {gray Press Ctrl+C to stop}
+    Waiting for file changes${symbol.ellipsis} {gray Press Ctrl+C to stop}
   `;
 };

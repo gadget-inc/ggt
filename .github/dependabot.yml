@@ -7,6 +7,10 @@ updates:
     rebase-strategy: auto
     schedule:
       interval: daily
+    groups:
+      typescript-eslint:
+        patterns:
+          - "@typescript-eslint/*"
     ignore:
       - dependency-name: "@types/node"
         update-types:

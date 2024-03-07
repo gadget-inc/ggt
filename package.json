@@ -74,7 +74,7 @@
     "normalize-package-data": "^6.0.0",
     "normalize-path": "^3.0.0",
     "open": "^9.1.0",
-    "p-map": "^6.0.0",
+    "p-map": "^7.0.1",
     "p-queue": "^7.4.1",
     "p-retry": "^6.2.0",
     "p-timeout": "^6.1.2",

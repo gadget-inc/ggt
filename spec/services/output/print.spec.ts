@@ -61,7 +61,7 @@ describe("print", () => {
     withEnv({ GGT_LOG_FORMAT: "json" }, () => {
       print({ json: { hello: "world" } })("Hello, world!");
       expectStdout().toMatchInlineSnapshot(`
-        "{\\"hello\\":\\"world\\"}
+        "{"hello":"world"}
         "
       `);
     });

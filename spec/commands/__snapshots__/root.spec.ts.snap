@@ -7,7 +7,7 @@ Your local filesystem must be in sync with your development
 environment before you can deploy.
 
 Changes are calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
+"ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
 If your environment has also made changes since the last sync,
 you will be prompted to discard them or abort the deploy.
@@ -32,18 +32,18 @@ FLAGS
   -a, --app, --application=<name>
     The application to deploy.
 
-    Defaults to the application within the \\".gadget/sync.json\\"
+    Defaults to the application within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   -e, --from, --env, --environment=<name>
     The development environment to deploy from.
 
-    Defaults to the environment within the \\".gadget/sync.json\\"
+    Defaults to the environment within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   -f, --force
     Discard any changes made to your environment's filesystem
-    since the last \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\".
+    since the last "ggt dev", "ggt push", or "ggt pull".
 
     Defaults to false.
 
@@ -65,19 +65,19 @@ FLAGS
     Defaults to false.
 
   --allow-unknown-directory
-    Allows \\"ggt deploy\\" to continue when the current directory, nor
-    any parent directories, contain a \\".gadget/sync.json\\" file
+    Allows "ggt deploy" to continue when the current directory, nor
+    any parent directories, contain a ".gadget/sync.json" file
     within it.
 
     Defaults to false.
 
   --allow-different-app
-    Allows \\"ggt push\\" to continue with a different --app than the
-    one found within the \\".gadget/sync.json\\" file.
+    Allows "ggt push" to continue with a different --app than the
+    one found within the ".gadget/sync.json" file.
 
     Defaults to false.
 
-Run \\"ggt deploy -h\\" for less information.
+Run "ggt deploy -h" for less information.
 "
 `;
 
@@ -88,7 +88,7 @@ Your local filesystem must be in sync with your development
 environment before you can deploy.
 
 Changes are calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
+"ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
 USAGE
   ggt deploy
@@ -106,7 +106,7 @@ FLAGS
       --allow-problems  Deploy regardless of any problems on the environment
       --allow-charges   Deploy even if doing so will add charges to your account
 
-Run \\"ggt deploy --help\\" for more information.
+Run "ggt deploy --help" for more information.
 "
 `;
 
@@ -115,12 +115,12 @@ exports[`root > when dev is given > prints the usage when --help is passed 1`] =
 with your environment's files, in real-time.
 
 File changes are calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
+"ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
 If conflicting changes are detected, you will be prompted to
-choose which changes to keep before \\"ggt dev\\" resumes.
+choose which changes to keep before "ggt dev" resumes.
 
-While \\"ggt dev\\" is running, changes on your local filesystem are
+While "ggt dev" is running, changes on your local filesystem are
 immediately reflected on your environment, while file changes on
 your environment are immediately reflected on your local filesystem.
 
@@ -128,7 +128,7 @@ Ideal for:
   • Local development with editors like VSCode
   • Storing source code in a Git repository like GitHub
 
-\\"ggt dev\\" looks for a \\".ignore\\" file to exclude files and directories
+"ggt dev" looks for a ".ignore" file to exclude files and directories
 from being merged. The format is identical to Git's.
 
 These files are always ignored:
@@ -139,8 +139,8 @@ These files are always ignored:
 
 Note:
   • Only works with development environments
-  • Only supports \\"yarn\\" v1 for installing dependencies
-  • Avoid deleting or moving all your files while \\"ggt dev\\" is running
+  • Only supports "yarn" v1 for installing dependencies
+  • Avoid deleting or moving all your files while "ggt dev" is running
 
 USAGE
 
@@ -161,46 +161,46 @@ ARGUMENTS
     The path to the directory to merge files to.
     The directory will be created if it does not exist.
 
-    Defaults to the current working directory. (default: \\".\\")
+    Defaults to the current working directory. (default: ".")
 
 FLAGS
 
   -a, --app, --application=<name>
     The application to merge files to.
 
-    Defaults to the application within the \\".gadget/sync.json\\"
+    Defaults to the application within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   -e, --env, --environment=<name>
     The development environment to merge files to.
 
-    Defaults to the environment within the \\".gadget/sync.json\\"
+    Defaults to the environment within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   --prefer=<filesystem>
     Which filesystem's changes to automatically keep when
     conflicting changes are detected.
 
-    Must be one of \\"local\\" or \\"gadget\\".
+    Must be one of "local" or "gadget".
 
-    If not provided, \\"ggt dev\\" will pause when conflicting changes
+    If not provided, "ggt dev" will pause when conflicting changes
     are detected and you will be prompted to choose which changes to
-    keep before \\"ggt dev\\" resumes.
+    keep before "ggt dev" resumes.
 
   --allow-unknown-directory
-    Allows \\"ggt dev\\" to continue when the chosen directory, nor
-    any parent directories, contain a \\".gadget/sync.json\\" file
+    Allows "ggt dev" to continue when the chosen directory, nor
+    any parent directories, contain a ".gadget/sync.json" file
     within it.
 
     Defaults to false.
 
   --allow-different-app
-    Allows \\"ggt dev\\" to continue with a different --app than the
-    one found within the \\".gadget/sync.json\\" file.
+    Allows "ggt dev" to continue with a different --app than the
+    one found within the ".gadget/sync.json" file.
 
     Defaults to false.
 
-Run \\"ggt dev -h\\" for less information.
+Run "ggt dev -h" for less information.
 "
 `;
 
@@ -209,7 +209,7 @@ exports[`root > when dev is given > prints the usage when -h is passed 1`] = `
 with your environment's files, in real-time.
 
 File changes are calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
+"ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
 USAGE
   ggt dev [DIRECTORY]
@@ -222,14 +222,14 @@ EXAMPLES
   $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
 
 ARGUMENTS
-  DIRECTORY    The directory to merge files to (default: \\".\\")
+  DIRECTORY    The directory to merge files to (default: ".")
 
 FLAGS
   -a, --app=<name>           The application to merge files to
   -e, --env=<name>           The environment to merge files to
-      --prefer=<filesystem>  Prefer \\"local\\" or \\"gadget\\" conflicting changes
+      --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
 
-  Run \\"ggt dev --help\\" for more information.
+  Run "ggt dev --help" for more information.
 "
 `;
 
@@ -331,19 +331,19 @@ FLAGS
   -a, --app, --application=<name>
     The application to open.
 
-    Defaults to the application within the \\".gadget/sync.json\\"
+    Defaults to the application within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   -e, --env, --environment=<name>
     The development environment to open.
 
-    Defaults to the environment within the \\".gadget/sync.json\\"
+    Defaults to the environment within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   --show-all,
     Shows a list of available models the user may select from to open
 
-Run \\"ggt open -h\\" for less information.
+Run "ggt open -h" for less information.
 "
 `;
 
@@ -368,7 +368,7 @@ FLAGS
   -e, --env=<env>       The environment to open
       --show-all        Shows all available models to open
 
-Run \\"ggt open --help\\" for more information.
+Run "ggt open --help" for more information.
 "
 `;
 
@@ -376,7 +376,7 @@ exports[`root > when pull is given > prints the usage when --help is passed 1`] 
 "Pull changes from your environment's filesystem to your local filesystem.
 
 Changes are calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" in the chosen directory.
+"ggt dev", "ggt push", or "ggt pull" in the chosen directory.
 
 If your local filesystem has also made changes since the last sync,
 you will be prompted to discard them or abort the pull.
@@ -398,35 +398,35 @@ FLAGS
   -a, --app=<name>
     The application to pull files from.
 
-    Defaults to the application within the \\".gadget/sync.json\\"
+    Defaults to the application within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   -e, --env, --environment=<name>
     The environment to pull files from.
 
-    Defaults to the environment within the \\".gadget/sync.json\\"
+    Defaults to the environment within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   -f, --force
     Discard any changes made to your local filesystem
-    since the last \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\".
+    since the last "ggt dev", "ggt push", or "ggt pull".
 
     Defaults to false.
 
   --allow-unknown-directory
-    Allows \\"ggt pull\\" to continue when the current directory, nor
-    any parent directories, contain a \\".gadget/sync.json\\" file
+    Allows "ggt pull" to continue when the current directory, nor
+    any parent directories, contain a ".gadget/sync.json" file
     within it.
 
     Defaults to false.
 
   --allow-different-app
-    Allows \\"ggt pull\\" to continue with a different --app than the
-    one found within the \\".gadget/sync.json\\" file.
+    Allows "ggt pull" to continue with a different --app than the
+    one found within the ".gadget/sync.json" file.
 
     Defaults to false.
 
-Run \\"ggt pull -h\\" for less information.
+Run "ggt pull -h" for less information.
 "
 `;
 
@@ -434,7 +434,7 @@ exports[`root > when pull is given > prints the usage when -h is passed 1`] = `
 "Pull changes from your environment's filesystem to your local filesystem.
 
 Changes are calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
+"ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
 USAGE
   ggt pull
@@ -450,7 +450,7 @@ FLAGS
   -e, --env=<name>   The environment to pull files from
       --force        Discard un-synchronized local changes
 
-  Run \\"ggt pull --help\\" for more information.
+  Run "ggt pull --help" for more information.
 "
 `;
 
@@ -458,7 +458,7 @@ exports[`root > when push is given > prints the usage when --help is passed 1`] 
 "Push changes from your local filesystem to your environment's filesystem.
 
 Changes are calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
+"ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
 If your environment has also made changes since the last sync,
 you will be prompted to discard them or abort the push.
@@ -480,35 +480,35 @@ FLAGS
   -a, --app, --application=<name>
     The application to push files to.
 
-    Defaults to the application within the \\".gadget/sync.json\\"
+    Defaults to the application within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   -e, --env, --environment=<name>
     The development environment to push files to.
 
-    Defaults to the environment within the \\".gadget/sync.json\\"
+    Defaults to the environment within the ".gadget/sync.json"
     file in the current directory or any parent directories.
 
   -f, --force
     Discard any changes made to your environment's filesystem
-    since the last \\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\".
+    since the last "ggt dev", "ggt push", or "ggt pull".
 
     Defaults to false.
 
   --allow-unknown-directory
-    Allows \\"ggt push\\" to continue when the current directory, nor
-    any parent directories, contain a \\".gadget/sync.json\\" file
+    Allows "ggt push" to continue when the current directory, nor
+    any parent directories, contain a ".gadget/sync.json" file
     within it.
 
     Defaults to false.
 
   --allow-different-app
-    Allows \\"ggt push\\" to continue with a different --app than the
-    one found within the \\".gadget/sync.json\\" file.
+    Allows "ggt push" to continue with a different --app than the
+    one found within the ".gadget/sync.json" file.
 
     Defaults to false.
 
-Run \\"ggt push -h\\" for less information.
+Run "ggt push -h" for less information.
 "
 `;
 
@@ -516,7 +516,7 @@ exports[`root > when push is given > prints the usage when -h is passed 1`] = `
 "Push changes from your local filesystem to your environment's filesystem.
 
 Changes are calculated from the last time you ran
-\\"ggt dev\\", \\"ggt push\\", or \\"ggt pull\\" on your local filesystem.
+"ggt dev", "ggt push", or "ggt pull" on your local filesystem.
 
 USAGE
   ggt push
@@ -532,7 +532,7 @@ FLAGS
   -e, --env=<name>   The environment to push files to
       --force        Discard un-synchronized environment changes
 
-  Run \\"ggt push --help\\" for more information.
+  Run "ggt push --help" for more information.
 "
 `;
 

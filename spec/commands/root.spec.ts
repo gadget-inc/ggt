@@ -82,7 +82,7 @@ describe("root", () => {
         -v, --verbose  Print more verbose output
             --json     Print all output as newline-delimited JSON
 
-      Run \\"ggt [COMMAND] -h\\" for more information about a specific command.
+      Run "ggt [COMMAND] -h" for more information about a specific command.
       "
     `);
   });

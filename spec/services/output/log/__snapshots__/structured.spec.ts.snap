@@ -73,10 +73,10 @@ exports[`structured > prints dev fields in test 1`] = `
 `;
 
 exports[`structured > prints json when GGT_LOG_FORMAT=json 1`] = `
-"{\\"level\\":1,\\"name\\":\\"structured\\",\\"msg\\":\\"trace\\",\\"fields\\":{}}
-{\\"level\\":2,\\"name\\":\\"structured\\",\\"msg\\":\\"debug\\",\\"fields\\":{}}
-{\\"level\\":3,\\"name\\":\\"structured\\",\\"msg\\":\\"info\\",\\"fields\\":{}}
-{\\"level\\":4,\\"name\\":\\"structured\\",\\"msg\\":\\"warn\\",\\"fields\\":{}}
-{\\"level\\":5,\\"name\\":\\"structured\\",\\"msg\\":\\"error\\",\\"fields\\":{}}
+"{"level":1,"name":"structured","msg":"trace","fields":{}}
+{"level":2,"name":"structured","msg":"debug","fields":{}}
+{"level":3,"name":"structured","msg":"info","fields":{}}
+{"level":4,"name":"structured","msg":"warn","fields":{}}
+{"level":5,"name":"structured","msg":"error","fields":{}}
 "
 `;

@@ -95,7 +95,7 @@ describe("warnIfUpdateAvailable", () => {
       │                                                                      │
       │                   Update available! 1.0.0 → 1.0.1                    │
       │   Changelog: https://github.com/gadget-inc/ggt/releases/tag/v1.0.1   │
-      │                 Run \\"npm install -g ggt\\" to update.                  │
+      │                 Run "npm install -g ggt" to update.                  │
       │                                                                      │
       ╰──────────────────────────────────────────────────────────────────────╯
       "
@@ -126,7 +126,7 @@ describe("warnIfUpdateAvailable", () => {
       │                                                                              │
       │                Update available! 0.0.0-experimental.bf3e4a3 →                │
       │                          0.0.0-experimental.41b05e2                          │
-      │               Run \\"npm install -g ggt@experimental\\" to update.               │
+      │               Run "npm install -g ggt@experimental" to update.               │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "

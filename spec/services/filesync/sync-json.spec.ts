@@ -129,7 +129,8 @@ describe("SyncJson.loadOrInit", () => {
     const error = await expectError(() => SyncJson.loadOrInit(ctx, { directory: localDir }));
 
     expect(error).toBeInstanceOf(ArgError);
-    expect(error.message).toMatchInlineSnapshot('"You cannot \\"ggt dev\\" your production environment."');
+    // eslint-disable-next-line quotes
+    expect(error.message).toMatchInlineSnapshot(`"You cannot "ggt dev" your production environment."`);
   });
 
   it(`throws ${ArgError.name} when --env is passed an environment that is not in the list of valid environments for the app`, async () => {

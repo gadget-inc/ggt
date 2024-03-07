@@ -60,7 +60,7 @@ describe("pull", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}},"app":"test","filesVersion":"1"}",
           },
         }
       `);
@@ -102,7 +102,7 @@ describe("pull", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"2\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"2\\"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}},"app":"test","filesVersion":"2"}",
             "file1.txt": "file1.txt",
             "file10.txt": "file10.txt",
             "file2.txt": "file2.txt",
@@ -159,7 +159,7 @@ describe("pull", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}},"app":"test","filesVersion":"1"}",
             ".ignore": "**/tmp",
           },
         }
@@ -192,7 +192,7 @@ describe("pull", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{\\"application\\":\\"test\\",\\"environment\\":\\"development\\",\\"environments\\":{\\"development\\":{\\"filesVersion\\":\\"1\\"}},\\"app\\":\\"test\\",\\"filesVersion\\":\\"1\\"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}},"app":"test","filesVersion":"1"}",
             ".ignore": "**/tmp",
           },
         }

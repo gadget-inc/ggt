@@ -151,7 +151,7 @@ describe("deploy", () => {
           ✖ TypeScript Expression expected. line 15
 
         • models/example/comp.gelly 1 problem
-          ✖ Gelly Unknown identifier \\"tru\\"
+          ✖ Gelly Unknown identifier "tru"
 
         • Other 1 problem
           ✖ Add google keys for production
@@ -315,7 +315,7 @@ describe("deploy", () => {
         • Other 1 problem
           ✖ Add google keys for production
 
-        Deploying regardless of problems because \\"--allow-problems\\" was passed.
+        Deploying regardless of problems because "--allow-problems" was passed.
 
         ⠙ Building frontend assets.
         ✔ Built frontend assets. 12:00:00 AM

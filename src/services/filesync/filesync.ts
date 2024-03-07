@@ -1,5 +1,4 @@
 import { execa } from "execa";
-import figures from "figures";
 import fs from "fs-extra";
 import ms from "ms";
 import assert from "node:assert";
@@ -30,6 +29,7 @@ import { MaybeExpectedError } from "../output/report.js";
 import { select } from "../output/select.js";
 import { spin, type spinner } from "../output/spinner.js";
 import { sprint, sprintln } from "../output/sprint.js";
+import { symbol } from "../output/symbols.js";
 import { ts } from "../output/timestamp.js";
 import { noop } from "../util/function.js";
 import { serializeError } from "../util/object.js";
@@ -319,7 +319,7 @@ export class FileSync {
               printGadgetChangesOptions: {
                 tense: "past",
                 ensureEmptyLineAbove: true,
-                title: sprintln`{green ${figures.tick}} Pulled ${pluralize("file", changed.length + deleted.length)}. ${figures.arrowLeft} ${ts()}`,
+                title: sprintln`{green ${symbol.tick}} Pulled ${pluralize("file", changed.length + deleted.length)}. ${symbol.arrowLeft} ${ts()}`,
                 limit: 5,
                 ...printGadgetChangesOptions,
               },
@@ -550,7 +550,7 @@ export class FileSync {
       sprintChanges(ctx, {
         changes,
         tense: "present",
-        title: sprint`Pulling ${pluralize("file", changes.size)}. ${figures.arrowLeft}`,
+        title: sprint`Pulling ${pluralize("file", changes.size)}. ${symbol.arrowLeft}`,
         ...printGadgetChangesOptions,
       }),
     );
@@ -644,7 +644,7 @@ export class FileSync {
       sprintChanges(ctx, {
         changes,
         tense: "present",
-        title: sprintln`Pushing ${pluralize("file", changed.length + deleted.length)}. ${figures.arrowRight}`,
+        title: sprintln`Pushing ${pluralize("file", changed.length + deleted.length)}. ${symbol.arrowRight}`,
         ...printLocalChangesOptions,
       }),
     );
@@ -689,7 +689,7 @@ export class FileSync {
         sprintChanges(ctx, {
           changes,
           tense: "past",
-          title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. ${figures.arrowRight} ${ts()}`,
+          title: sprintln`Pushed ${pluralize("file", changed.length + deleted.length)}. ${symbol.arrowRight} ${ts()}`,
           ...printLocalChangesOptions,
         }),
       );
@@ -811,7 +811,7 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      title: sprint`{green ${figures.tick}} Pulled ${pluralize("file", changes.size)}. ${figures.arrowLeft} ${ts()}`,
+      title: sprint`{green ${symbol.tick}} Pulled ${pluralize("file", changes.size)}. ${symbol.arrowLeft} ${ts()}`,
       ...options.printGadgetChangesOptions,
     });
 

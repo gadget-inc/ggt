@@ -3,13 +3,13 @@ import chalk from "chalk";
 import chalkTemplate from "chalk-template";
 import type { SpinnerName } from "cli-spinners";
 import cliSpinners from "cli-spinners";
-import figures from "figures";
 import assert from "node:assert";
 import os from "node:os";
 import { dedent } from "ts-dedent";
 import { isString } from "../util/is.js";
 import { output } from "./output.js";
 import { isSprintOptions, sprintln } from "./sprint.js";
+import { symbol } from "./symbols.js";
 
 export type SpinnerOptions = {
   /**
@@ -96,8 +96,8 @@ export const createSpin = (options: SpinnerOptions): spin => {
       ensureEmptyLineAbove = false,
       kind = "dots",
       color = "white",
-      successSymbol = chalk.green(figures.tick),
-      failSymbol = chalk.red(figures.cross),
+      successSymbol = chalk.green(symbol.tick),
+      failSymbol = chalk.red(symbol.cross),
     } = options;
 
     let frameIndex = 0;

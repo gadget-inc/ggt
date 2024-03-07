@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import figures from "figures";
 import indentString from "indent-string";
 import assert from "node:assert";
 import process from "node:process";
@@ -9,6 +8,7 @@ import { output } from "./output.js";
 import { println } from "./print.js";
 import { entriesToDisplay, Prompt, type StdinKey } from "./prompt.js";
 import { sprint, sprintln, type SprintOptions } from "./sprint.js";
+import { symbol } from "./symbols.js";
 
 export type SelectOptions<Choice extends string> = SprintOptions & {
   choices: Choice[];
@@ -208,11 +208,11 @@ class Select<Choice extends string> extends Prompt {
       // determine whether to display "more choices" indicators
       let prefix: string;
       if (this.cursor === index) {
-        prefix = `${figures.arrowRight} `;
+        prefix = `${symbol.arrowRight} `;
       } else if (index === startIndex && startIndex > 0) {
-        prefix = `${figures.arrowUp} `;
+        prefix = `${symbol.arrowUp} `;
       } else if (index === endIndex - 1 && endIndex < this.options.choices.length) {
-        prefix = `${figures.arrowDown} `;
+        prefix = `${symbol.arrowDown} `;
       } else {
         prefix = "  ";
       }

@@ -68,6 +68,12 @@
         "no-restricted-imports": [
           "warn",
           {
+            "paths": [
+              {
+                "name": "figures",
+                "message": "use src/services/output/symbols.ts instead"
+              }
+            ],
             "patterns": [
               {
                 "group": ["/src"],
@@ -89,6 +95,12 @@
         "no-restricted-imports": [
           "warn",
           {
+            "paths": [
+              {
+                "name": "figures",
+                "message": "use src/services/output/symbols.ts instead"
+              }
+            ],
             "patterns": [
               {
                 "group": ["/src"],

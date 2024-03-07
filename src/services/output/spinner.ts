@@ -3,6 +3,7 @@ import chalk from "chalk";
 import chalkTemplate from "chalk-template";
 import type { SpinnerName } from "cli-spinners";
 import cliSpinners from "cli-spinners";
+import figures from "figures";
 import assert from "node:assert";
 import os from "node:os";
 import { dedent } from "ts-dedent";
@@ -95,8 +96,8 @@ export const createSpin = (options: SpinnerOptions): spin => {
       ensureEmptyLineAbove = false,
       kind = "dots",
       color = "white",
-      successSymbol = chalk.green("✔"),
-      failSymbol = chalk.red("✖"),
+      successSymbol = chalk.green(figures.tick),
+      failSymbol = chalk.red(figures.cross),
     } = options;
 
     let frameIndex = 0;

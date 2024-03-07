@@ -102,16 +102,17 @@ describe("EditError", () => {
 
   it("renders a GraphQL error correctly", () => {
     const error = new ClientError(query, [new GraphQLError("Changed and deleted files must not overlap")]);
-    expect(error.toString()).toMatchInlineSnapshot(`
+    expect(error.sprint()).toMatchInlineSnapshot(`
       "An error occurred while communicating with Gadget
 
       Gadget responded with the following error:
 
         • Changed and deleted files must not overlap
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 
@@ -120,7 +121,7 @@ describe("EditError", () => {
       new GraphQLError("Changed and deleted files must not overlap"),
       new GraphQLError("Files version mismatch, expected 1 but got 2"),
     ]);
-    expect(error.toString()).toMatchInlineSnapshot(`
+    expect(error.sprint()).toMatchInlineSnapshot(`
       "An error occurred while communicating with Gadget
 
       Gadget responded with the following errors:
@@ -128,9 +129,10 @@ describe("EditError", () => {
         • Changed and deleted files must not overlap
         • Files version mismatch, expected 1 but got 2
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 
@@ -141,14 +143,15 @@ describe("EditError", () => {
       reason: "Normal closure",
       wasClean: true,
     } as CloseEvent);
-    expect(error.toString()).toMatchInlineSnapshot(`
+    expect(error.sprint()).toMatchInlineSnapshot(`
       "An error occurred while communicating with Gadget
 
       The connection to Gadget closed unexpectedly.
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 
@@ -164,27 +167,29 @@ describe("EditError", () => {
         port: 3000,
       },
     } as ErrorEvent);
-    expect(error.toString()).toMatchInlineSnapshot(`
+    expect(error.sprint()).toMatchInlineSnapshot(`
       "An error occurred while communicating with Gadget
 
       connect ECONNREFUSED 10.254.254.254:3000
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 
   it("renders a string correctly", () => {
     const error = new ClientError(query, "We received a response without data");
-    expect(error.toString()).toMatchInlineSnapshot(`
+    expect(error.sprint()).toMatchInlineSnapshot(`
       "An error occurred while communicating with Gadget
 
       We received a response without data
 
-      If you think this is a bug, please submit an issue using the link below.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000"
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
     `);
   });
 });

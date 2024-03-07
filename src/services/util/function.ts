@@ -19,9 +19,14 @@ export type MemoizedFn<Fn extends AnyFunction = AnyFunction> = Fn & {
 };
 
 /**
- * A function that returns the first argument as a string.
+ * A function that returns an empty string.
  *
  * Used as the default key function for {@linkcode memo}.
+ */
+export const MemoFirstCall = (): string => "";
+
+/**
+ * A function that returns the first argument as a string.
  */
 export const MemoFirstArg = (...args: any[]): string => String(args[0]);
 
@@ -36,12 +41,11 @@ export const MemoAllArgs = (...args: any[]): string => args.map(String).join(":"
 /**
  * Creates a memoized version of the provided function.
  *
- * The memoized function caches the results of previous calls and
- * returns the cached result when the first argument matches a previous
- * call. Subsequent arguments are ignored.
+ * The memoized function caches the result of the first call and returns
+ * the cached result for all subsequent calls.
  *
  * @param fn - The function to memoize.
- * @see MemoFirstArg
+ * @see MemoFirstCall
  */
 export function memo<Fn extends AnyFunction>(fn: Fn): MemoizedFn<Fn>;
 
@@ -72,8 +76,8 @@ export function memo<Fn extends AnyFunction, KeyFn extends (...args: Parameters<
 
   const cache = new Map<string, unknown>();
 
-  const memoized = ((...args) => {
-    const key = keyFn(...(args as Parameters<Fn>));
+  const memoized = ((...args: Parameters<Fn>) => {
+    const key = keyFn(...args);
     if (cache.has(key)) {
       return cache.get(key);
     }
@@ -210,7 +214,7 @@ export const debounceAsync = <F extends (...args: unknown[]) => Promise<void>>(d
 /**
  * Either a value or a function that returns a value.
  */
-export type Thunk<T> = T | (() => T);
+export type Thunk<T, Args extends any[] = []> = T | ((...args: Args) => T);
 
 /**
  * Wraps a value in a thunk (a function that returns a value). If the
@@ -230,14 +234,14 @@ export const thunk = <T>(val: T | (() => T)): (() => T) => {
  * Unwraps a value from a thunk (a function that returns a value). If the
  * value is not a function, it is returned as is.
  *
- * @param val - The value or thunk to unwrap.
+ * @param value - The value or thunk to unwrap.
  * @returns The unwrapped value.
  */
-export const unthunk = <T>(val: T | (() => T)): T => {
-  if (isFunction(val)) {
-    return val();
+export const unthunk = <T, Args extends any[]>(value: Thunk<T, Args>, ...args: Args): T => {
+  if (isFunction(value)) {
+    return value(...args);
   }
-  return val;
+  return value;
 };
 
 /**

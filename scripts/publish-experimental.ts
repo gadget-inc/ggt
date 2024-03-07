@@ -2,16 +2,14 @@
 
 import { $ } from "execa";
 import fs from "fs-extra";
-import { oraPromise } from "ora";
 import { packageJson } from "../src/services/config/package-json.js";
-import { createLogger } from "../src/services/output/log/logger.js";
+import { println } from "../src/services/output/print.js";
+import { spin } from "../src/services/output/spinner.js";
 import { workspacePath } from "../src/services/util/paths.js";
-
-const log = createLogger({ name: "publish-experimental" });
 
 const status = await $`git status --porcelain`;
 if (status.stdout.trim() !== "") {
-  log.println`
+  println`
     You have uncommitted changes
 
     Please commit or stash them before publishing
@@ -20,17 +18,28 @@ if (status.stdout.trim() !== "") {
   process.exit(1);
 }
 
-await oraPromise($`npm install`, "Installing dependencies");
-await oraPromise($`npm run lint`, "Linting");
-await oraPromise($`npm run test`, "Testing");
-await oraPromise($`npm run build`, "Building");
+let spinner = spin("Installing dependencies");
+await $`npm install`;
+spinner.succeed();
+
+spinner = spin("Linting");
+await $`npm run lint`;
+spinner.succeed();
+
+spinner = spin("Testing");
+await $`npm run test`;
+spinner.succeed();
+
+spinner = spin("Building");
+await $`npm run build`;
+spinner.succeed();
 
 try {
   const gitSha = await $`git rev-parse --short HEAD`;
   packageJson.version = `0.0.0-experimental.${gitSha.stdout.trim()}`;
   await fs.writeJSON(workspacePath("package.json"), packageJson, { spaces: 2 });
 
-  log.printlns("Publishing experimental release:");
+  println({ ensureEmptyLineAbove: true })("Publishing experimental release:");
   await $({ stdio: "inherit" })`npm publish --tag=experimental`;
 } finally {
   // undo changes to package.json

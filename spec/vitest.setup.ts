@@ -6,8 +6,8 @@ import { installJsonExtensions, uninstallJsonExtensions } from "../src/services/
 import { mockConfig } from "./__support__/config.js";
 import { mockContext } from "./__support__/context.js";
 import { mockSideEffects } from "./__support__/mock.js";
+import { mockStdout } from "./__support__/output.js";
 import { testDirPath } from "./__support__/paths.js";
-import { mockStdout } from "./__support__/stream.js";
 
 beforeEach(async () => {
   // always set the environment to test

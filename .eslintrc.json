@@ -5,7 +5,7 @@
   "parserOptions": {
     "project": true
   },
-  "plugins": ["@typescript-eslint", "import", "lodash", "unicorn", "only-warn"],
+  "plugins": ["@typescript-eslint", "import", "unicorn", "only-warn"],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/strict-type-checked",

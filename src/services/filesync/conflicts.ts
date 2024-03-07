@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import type { Context } from "../command/context.js";
+import { printTable } from "../output/table.js";
 import { ChangesWithHash, isEqualHash, type ChangeWithHash } from "./hashes.js";
 
 /**
@@ -83,21 +83,21 @@ export const withoutConflictingChanges = ({ conflicts, changes }: { conflicts: C
 /**
  * Prints a table of conflicts between local changes and gadget changes.
  *
- * @param ctx - The current context.
  * @param options - The options to use.
- * @param options.message - The message to print above the table.
  * @param options.conflicts - The conflicts to print.
  */
-export const printConflicts = (ctx: Context, { message, conflicts }: { message: string; conflicts: Conflicts }): void => {
+// TODO: write a snapshot test for this!
+export const printConflicts = ({ conflicts }: { conflicts: Conflicts }): void => {
   const created = chalk.greenBright("+ created");
   const updated = chalk.blueBright("± updated");
   const deleted = chalk.redBright("- deleted");
 
-  ctx.log.printTable({
-    message,
+  printTable({
+    title: "These files have conflicting changes.",
+    ensureEmptyLineAbove: true,
+    ensureEmptyLineAboveBody: true,
     colAligns: ["left", "center", "center"],
-    headers: ["", "You", "Gadget"],
-    spaceY: 1,
+    headers: ["", "You", "Environment"],
     rows: Array.from(conflicts.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([path, { localChange, gadgetChange }]) => {

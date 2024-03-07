@@ -1,6 +1,10 @@
 import { assert, beforeEach, expect, vi, type SpyInstance } from "vitest";
-import * as prompt from "../../src/services/output/prompt.js";
-import { sprintln, sprintlns } from "../../src/services/output/sprint.js";
+import * as confirm from "../../src/services/output/confirm.js";
+import { output } from "../../src/services/output/output.js";
+import * as select from "../../src/services/output/select.js";
+import { isSprintOptions, sprint, sprintln, type SprintOptions } from "../../src/services/output/sprint.js";
+import { noop } from "../../src/services/util/function.js";
+import { isString } from "../../src/services/util/is.js";
 import type { ArgsType, FunctionPropertyNames } from "../../src/services/util/types.js";
 import { printStackTraceAndFail } from "./debug.js";
 
@@ -172,38 +176,6 @@ export const mockSideEffects = (): void => {
   }));
 
   beforeEach(() => {
-    // alway opt in to confirm prompts
-    mock(prompt, "confirm", (_, { message }) => {
-      printStackTraceAndFail(sprintln`
-        confirm("${message}") was called unexpectedly.
-
-        If this was expected, mock the user's response:
-
-          // mock all confirmations
-          mock(confirm, noop);
-
-          // mock sequential confirmations
-          mockOnce(confirm, noop)
-          mockOnce(confirm, noop)
-      `);
-    });
-
-    // alway opt in to select prompts
-    mock(prompt, "select", (_, { message }) => {
-      printStackTraceAndFail(sprintlns`
-        select("${message}") was called unexpectedly.
-
-        If this was expected, do the following to mock the user's response:
-
-          // mock all selects
-          mock(select, () => value);
-
-          // mock sequential selects
-          mockOnce(select, () => firstValue)
-          mockOnce(select, () => secondValue)
-      `);
-    });
-
     // alway opt in to process.exit
     mock(process, "exit", () => {
       printStackTraceAndFail(sprintln`
@@ -212,5 +184,62 @@ export const mockSideEffects = (): void => {
         If you expected process.exit to be called, use expectProcessExit(() => fn()) instead.
       `);
     });
+  });
+};
+
+export const mockConfirm = (impl = noop): SpyInstance<[options: SprintOptions], confirm.confirm> => {
+  const mockedConfirm = (optionsOrStr: any, ...values: unknown[]): any => {
+    if (isSprintOptions(optionsOrStr)) {
+      return mockedConfirm;
+    }
+    if (!isString(optionsOrStr)) {
+      optionsOrStr = sprint(optionsOrStr, ...values);
+    }
+    // TODO: this is actually printed to stderr
+    output.writeStdout(optionsOrStr);
+    impl();
+  };
+
+  return mock(confirm, "confirm", mockedConfirm);
+};
+
+export const mockConfirmOnce = (impl = noop): SpyInstance<[options: SprintOptions], confirm.confirm> => {
+  let options: SprintOptions = {
+    ensureEmptyLineAbove: true,
+  };
+
+  const mockedConfirm = (optionsOrStr: any, ...values: unknown[]): any => {
+    if (isSprintOptions(optionsOrStr)) {
+      options = { ...options, ...optionsOrStr };
+      return mockedConfirm;
+    }
+    if (!isString(optionsOrStr)) {
+      optionsOrStr = sprintln(options)(optionsOrStr, ...values);
+    }
+    // TODO: this is actually printed to stderr
+    output.writeStdout(optionsOrStr);
+    impl();
+  };
+
+  return mockOnce(confirm, "confirm", mockedConfirm);
+};
+
+export const mockSelect = <Choice extends string>(
+  choice: Choice,
+): SpyInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
+  return mock(select, "select", (_options) => {
+    return (_str) => {
+      return Promise.resolve(choice);
+    };
+  });
+};
+
+export const mockSelectOnce = <Choice extends string>(
+  choice: Choice,
+): SpyInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
+  return mockOnce(select, "select", (_options) => {
+    return (_str) => {
+      return Promise.resolve(choice);
+    };
   });
 };

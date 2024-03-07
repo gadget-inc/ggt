@@ -9,6 +9,7 @@ import { z } from "zod";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { http } from "../http/http.js";
+import { println } from "./print.js";
 import { sprint } from "./sprint.js";
 
 const UPDATE_CHECK_FREQUENCY = ms("12 hours");
@@ -91,7 +92,7 @@ export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
 
     if (updateAvailable) {
       ctx.log.info("update available", { current: config.version, latest });
-      ctx.log.println(
+      println(
         boxen(updateMessage, {
           padding: 1,
           borderStyle: "round",

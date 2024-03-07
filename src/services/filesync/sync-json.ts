@@ -3,6 +3,7 @@ import fs from "fs-extra";
 import assert from "node:assert";
 import path from "node:path";
 import { simpleGit } from "simple-git";
+import terminalLink from "terminal-link";
 import { z } from "zod";
 import { EnvironmentType, getApps, type App, type Environment } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
@@ -10,10 +11,12 @@ import { Edit } from "../app/edit/edit.js";
 import { ArgError, type ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
-import { select } from "../output/prompt.js";
-import { sprint, sprintln2 } from "../output/sprint.js";
+import { println } from "../output/print.js";
+import { select } from "../output/select.js";
+import { sprint, sprintln, type SprintOptions } from "../output/sprint.js";
 import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
+import { defaults } from "../util/object.js";
 import { Directory } from "./directory.js";
 import { UnknownDirectoryError } from "./error.js";
 
@@ -70,7 +73,7 @@ export class SyncJson {
     readonly ctx: Context<SyncJsonArgs>,
 
     /**
-     * the root directory of the local filesystem, or in other words,
+     * The root directory of the local filesystem, or in other words,
      * the directory that contains the `.gadget/sync.json` file.
      */
     readonly directory: Directory,
@@ -168,13 +171,16 @@ export class SyncJson {
       if (ctx.args["--allow-different-app"]) {
         // the user passed --allow-different-app, so use the application
         // and environment they specified and clobber everything
-        return new SyncJson(ctx, directory, undefined, {
+        const syncJson = new SyncJson(ctx, directory, undefined, {
           application: ctx.app.slug,
           environment: ctx.env.name,
           environments: {
             [ctx.env.name]: { filesVersion: "0" },
           },
         });
+
+        await syncJson.loadGitBranch();
+        return syncJson;
       }
 
       // the user didn't pass --allow-different-app, so throw an error
@@ -198,7 +204,12 @@ export class SyncJson {
     let previousEnvironment: string | undefined;
     if (state.environment !== ctx.env.name) {
       // the user specified a different environment, update the state
-      ctx.log.printlns2`Changing environment from ${state.environment} → ${ctx.env.name}`;
+      println({ ensureEmptyLineAbove: true })`
+        Changing environment.
+
+          ${state.environment} → ${ctx.env.name}
+      `;
+
       previousEnvironment = state.environment;
       state.environment = ctx.env.name;
       if (!state.environments[ctx.env.name]) {
@@ -207,7 +218,9 @@ export class SyncJson {
       }
     }
 
-    return new SyncJson(ctx, directory, previousEnvironment, state);
+    const syncJson = new SyncJson(ctx, directory, previousEnvironment, state);
+    await syncJson.loadGitBranch();
+    return syncJson;
   }
 
   /**
@@ -223,32 +236,36 @@ export class SyncJson {
   static async loadOrInit(ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<SyncJson> {
     ctx = ctx.child({ name: "sync-json" });
 
-    const state = await SyncJson.load(ctx, { directory });
-    if (state) {
+    let syncJson = await SyncJson.load(ctx, { directory });
+    if (syncJson) {
       // the .gadget/sync.json file already exists and is valid
-      return state;
+      return syncJson;
+    }
+
+    if (!(await directory.isEmptyOrNonExistent()) && !ctx.args["--allow-unknown-directory"]) {
+      // the directory isn't empty and the user didn't pass --allow-unknown-directory
+      throw new UnknownDirectoryError(ctx, { directory });
     }
 
     ctx.app = await loadApp(ctx, { availableApps: await getApps(ctx) });
     ctx.env = await loadEnv(ctx, { app: ctx.app });
 
-    if ((await directory.isEmptyOrNonExistent()) || ctx.args["--allow-unknown-directory"]) {
-      // the directory is empty or the user passed
-      // --allow-unknown-directory, either way ensure the directory
-      // exists and create a fresh .gadget/sync.json file
-      await fs.ensureDir(directory.path);
+    // the directory is empty or the user passed
+    // --allow-unknown-directory, either way ensure the directory exists
+    // and create a fresh .gadget/sync.json file
+    await fs.ensureDir(directory.path);
 
-      return new SyncJson(ctx, directory, undefined, {
-        application: ctx.app.slug,
-        environment: ctx.env.name,
-        environments: {
-          [ctx.env.name]: { filesVersion: "0" },
-        },
-      });
-    }
+    syncJson = new SyncJson(ctx, directory, undefined, {
+      application: ctx.app.slug,
+      environment: ctx.env.name,
+      environments: {
+        [ctx.env.name]: { filesVersion: "0" },
+      },
+    });
 
-    // the directory isn't empty and the user didn't pass --allow-unknown-directory
-    throw new UnknownDirectoryError(ctx, { directory });
+    await syncJson.loadGitBranch();
+
+    return syncJson;
   }
 
   /**
@@ -275,31 +292,40 @@ export class SyncJson {
     );
   }
 
-  /**
-   * @returns true if the git branch has changed
-   */
   async loadGitBranch(): Promise<void> {
     this.gitBranch = await loadBranch(this.ctx, { directory: this.directory });
   }
 
-  async sprintState(): Promise<string> {
-    await this.loadGitBranch();
-    if (this.gitBranch) {
-      return sprint`
-        Application  ${this.app.slug}
-        Environment  ${this.env.name}
-         Git Branch  ${this.gitBranch}
-      `;
-    }
-
-    return sprint`
+  sprint(options: SprintOptions = {}): string {
+    let str = sprintln`
       Application  ${this.app.slug}
       Environment  ${this.env.name}
     `;
+
+    if (this.gitBranch) {
+      str += sprintln({ indent: 5 })`Branch  ${this.gitBranch}`;
+    }
+
+    if (terminalLink.isSupported) {
+      str += sprintln({ ensureEmptyLineAbove: true })`
+        ${terminalLink("Preview", `https://${this.app.slug}--${this.env.name}.gadget.app`)}  ${terminalLink("Editor", `https://${this.app.primaryDomain}/edit/${this.env.name}`)}  ${terminalLink("Playground", `https://${this.app.primaryDomain}/api/playground/graphql?environment=${this.env.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${this.app.slug}`)}
+      `;
+    } else {
+      str += sprintln`
+          ------------------------
+           Preview     https://${this.app.slug}--${this.env.name}.gadget.app
+           Editor      https://${this.app.primaryDomain}/edit/${this.env.name}
+           Playground  https://${this.app.primaryDomain}/api/playground/graphql?environment=${this.env.name}
+           Docs        https://docs.gadget.dev/api/${this.app.slug}
+      `;
+    }
+
+    return sprintln(options)(str);
   }
 
-  async printState(): Promise<void> {
-    this.ctx.log.println(await this.sprintState());
+  print(options?: SprintOptions): void {
+    options = defaults(options, { ensureEmptyLineAbove: true });
+    println(this.sprint(options));
   }
 }
 
@@ -329,10 +355,9 @@ const loadApp = async (
   let appSlug = ctx.args["--app"] || state?.application;
   if (!appSlug) {
     // the user didn't specify an app, ask them to select one
-    appSlug = await select(ctx, {
-      message: "Which application do you want to sync to?",
-      choices: availableApps.map((x) => x.slug),
-    });
+    appSlug = await select({ choices: availableApps.map((x) => x.slug) })`
+      Which application do you want to develop?
+    `;
   }
 
   const app = availableApps.find((app) => app.slug === appSlug);
@@ -353,13 +378,15 @@ const loadApp = async (
 
   // TODO: differentiate between incorrect --app vs state.application?
   throw new ArgError(
-    sprintln2`
+    sprint`
       Unknown application:
 
         ${appSlug}
 
       Did you mean one of these?
-    `.concat(`  • ${similarAppSlugs.join("\n  • ")}`),
+
+        • ${similarAppSlugs.join("\n        • ")}
+    `,
   );
 };
 
@@ -382,10 +409,9 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
   let envName = ctx.args["--env"] || state?.environment;
   if (!envName) {
     // user didn't specify an environment, ask them to select one
-    envName = await select(ctx, {
-      message: "Which environment do you want to sync to?",
-      choices: devEnvs.map((x) => x.name),
-    });
+    envName = await select({ choices: devEnvs.map((x) => x.name) })`
+      Which environment do you want to develop on?
+    `;
   }
 
   if (envName.toLowerCase() === "production") {
@@ -416,13 +442,15 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; s
   ).slice(0, 5);
 
   throw new ArgError(
-    sprintln2`
+    sprint`
       Unknown environment:
 
         ${envName}
 
       Did you mean one of these?
-    `.concat(`  • ${similarEnvironments.join("\n  • ")}`),
+
+        • ${similarEnvironments.join("\n        • ")}
+    `,
   );
 };
 

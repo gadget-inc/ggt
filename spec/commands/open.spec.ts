@@ -3,15 +3,14 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { testApp } from "../../spec/__support__/app.js";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
-import { mock } from "../../spec/__support__/mock.js";
-import { expectStdout } from "../../spec/__support__/stream.js";
+import { mock, mockSelectOnce } from "../../spec/__support__/mock.js";
 import { testUser } from "../../spec/__support__/user.js";
 import { args, command as openCommand } from "../../src/commands/open.js";
 import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
 import type { Context } from "../../src/services/command/context.js";
-import { select } from "../../src/services/output/prompt.js";
 import * as user from "../../src/services/user/user.js";
 import { nockApiResponse } from "../__support__/graphql.js";
+import { expectStdout } from "../__support__/output.js";
 import { describeWithAuth } from "../utils.js";
 
 describe("open", () => {
@@ -115,7 +114,7 @@ describe("open", () => {
         mock(user, "getUser", () => testUser);
         nockGetModels();
 
-        mock(select, () => "user");
+        mockSelectOnce("user");
 
         ctx = makeContext({
           parse: args,
@@ -134,7 +133,7 @@ describe("open", () => {
         mock(user, "getUser", () => testUser);
         nockGetModels();
 
-        mock(select, () => "user");
+        mockSelectOnce("user");
 
         ctx = makeContext({
           parse: args,
@@ -162,13 +161,13 @@ describe("open", () => {
       await openCommand(ctx);
 
       expectStdout().toMatchInlineSnapshot(`
-      "      Unknown model use
+        "Unknown model use
 
-            Did you mean ggt open model user?
-            
-            Run ggt open --help for usage or run command with --show-all to see all available models
-      "
-    `);
+        Did you mean ggt open model user?
+
+        Run ggt open --help for usage or run command with --show-all to see all available models
+        "
+      `);
     });
   });
 });

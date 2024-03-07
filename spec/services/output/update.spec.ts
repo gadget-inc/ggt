@@ -8,7 +8,7 @@ import { config } from "../../../src/services/config/config.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
 import { makeContext } from "../../__support__/context.js";
 import { mock } from "../../__support__/mock.js";
-import { expectStdout } from "../../__support__/stream.js";
+import { expectStdout } from "../../__support__/output.js";
 
 describe("getDistTags", () => {
   let ctx: Context;

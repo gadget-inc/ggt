@@ -1,10 +1,10 @@
 import chalk from "chalk";
 import pluralize from "pluralize";
 import type { Problem as FileSyncProblem, PublishIssue } from "../../__generated__/graphql.js";
-import type { Context } from "../command/context.js";
 import { compact } from "../util/collection.js";
 import { isGellyFile, isJavaScriptFile, isTypeScriptFile } from "../util/is.js";
-import { sprint, sprintln, sprintlns } from "./sprint.js";
+import { println } from "./print.js";
+import { sprint, sprintln, type SprintOptions } from "./sprint.js";
 
 export type Problems = Record<string, Problem[]>;
 
@@ -24,7 +24,7 @@ export const ProblemSeverity = Object.freeze({
 
 export type ProblemSeverity = keyof typeof ProblemSeverity;
 
-export type PrintProblemsOptions = {
+export type PrintProblemsOptions = SprintOptions & {
   /**
    * The problems to print.
    */
@@ -38,11 +38,12 @@ export type PrintProblemsOptions = {
   showFileTypes?: boolean;
 };
 
-export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: PrintProblemsOptions): string => {
+export const sprintProblems = ({ problems: groupedProblems, showFileTypes, ...sprintOptions }: PrintProblemsOptions): string => {
   let output = "";
 
   for (const [name, problems] of Object.entries(groupedProblems)) {
-    output += sprintlns`• {cyan ${name}} {redBright ${pluralize("problem", problems.length, true)}}`;
+    output += sprintln("");
+    output += sprintln`• {cyan ${name}} {redBright ${pluralize("problem", problems.length, true)}}`;
     for (const problem of problems) {
       const [message, ...lines] = problem.message.split("\n") as [string, ...string[]];
 
@@ -65,11 +66,11 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes }: Pri
     }
   }
 
-  return output;
+  return sprintln(sprintOptions)(output);
 };
 
-export const printProblems = (ctx: Context, opts: PrintProblemsOptions): void => {
-  ctx.log.printlns(sprintProblems(opts));
+export const printProblems = (options: PrintProblemsOptions): void => {
+  println(sprintProblems(options));
 };
 
 export const filetype = (filename: string): string => {

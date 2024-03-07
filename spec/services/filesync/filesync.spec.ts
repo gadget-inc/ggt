@@ -17,19 +17,25 @@ import { TooManySyncAttemptsError, isFilesVersionMismatchError } from "../../../
 import { FileSync } from "../../../src/services/filesync/filesync.js";
 import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.js";
 import { SyncJson, loadSyncJsonDirectory, type SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
-import { confirm, select } from "../../../src/services/output/prompt.js";
-import { noop } from "../../../src/services/util/function.js";
+import { confirm } from "../../../src/services/output/confirm.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
-import { defaultFileMode, expectPublishVariables, expectSyncJson, makeFile, makeSyncScenario } from "../../__support__/filesync.js";
+import {
+  defaultFileMode,
+  expectPublishVariables,
+  expectSyncJson,
+  makeFile,
+  makeSyncScenario,
+  type FileSyncScenarioOptions,
+} from "../../__support__/filesync.js";
 import { nockEditResponse } from "../../__support__/graphql.js";
-import { mock, mockOnce } from "../../__support__/mock.js";
+import { mock, mockConfirmOnce, mockSelectOnce } from "../../__support__/mock.js";
+import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
-import { expectStdout } from "../../__support__/stream.js";
 import { mockSystemTime } from "../../__support__/time.js";
 import { loginTestUser } from "../../__support__/user.js";
 import { describeWithAuth } from "../../utils.js";
@@ -790,7 +796,7 @@ describe("FileSync.sync", () => {
       gadgetFiles: { "foo.js": "foo (gadget)" },
     });
 
-    mockOnce(select, () => ConflictPreference.CANCEL);
+    mockSelectOnce(ConflictPreference.CANCEL);
 
     await expectProcessExit(() => filesync.sync(ctx));
 
@@ -832,7 +838,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.LOCAL);
+    mockSelectOnce(ConflictPreference.LOCAL);
 
     await filesync.sync(ctx);
 
@@ -929,7 +935,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.LOCAL);
+    mockSelectOnce(ConflictPreference.LOCAL);
 
     await filesync.sync(ctx);
 
@@ -1040,7 +1046,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.GADGET);
+    mockSelectOnce(ConflictPreference.GADGET);
 
     await filesync.sync(ctx);
 
@@ -1129,7 +1135,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.GADGET);
+    mockSelectOnce(ConflictPreference.GADGET);
 
     await filesync.sync(ctx);
 
@@ -1186,7 +1192,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.GADGET);
+    mockSelectOnce(ConflictPreference.GADGET);
 
     await filesync.sync(ctx);
 
@@ -1342,7 +1348,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockOnce(select, () => ConflictPreference.LOCAL);
+    mockSelectOnce(ConflictPreference.LOCAL);
 
     await filesync.sync(ctx);
 
@@ -1703,7 +1709,7 @@ describe("FileSync.push", () => {
         },
       });
 
-      mockOnce(confirm, noop);
+      mockConfirmOnce();
 
       await filesync.push(ctx);
 
@@ -1894,7 +1900,7 @@ describe("FileSync.pull", () => {
       },
     });
 
-    mockOnce(confirm, noop);
+    mockConfirmOnce();
 
     await filesync.pull(ctx);
 
@@ -2011,6 +2017,119 @@ describe("FileSync.pull", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+  });
+});
+
+describe("FileSync.print", () => {
+  mockSystemTime();
+
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
+  });
+
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const makePrintScenario = (options?: Partial<FileSyncScenarioOptions>) => {
+    return makeSyncScenario({
+      ...options,
+      filesVersion1Files: {
+        "local.txt": "local",
+        "environment.txt": "environment",
+        "shared.txt": "shared",
+        ...options?.filesVersion1Files,
+      },
+      localFiles: {
+        "local.txt": "local",
+        "environment.txt": "environment",
+        "shared.txt": "shared",
+        ...options?.localFiles,
+      },
+      gadgetFiles: {
+        "local.txt": "local",
+        "environment.txt": "environment",
+        "shared.txt": "shared",
+        ...options?.gadgetFiles,
+      },
+    });
+  };
+
+  it("prints the expected output when no files have changed", async () => {
+    const { ctx, filesync } = await makePrintScenario();
+
+    await filesync.print(ctx);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
+      "
+    `);
+  });
+
+  it("prints the expected output when local files have changed", async () => {
+    const { ctx, filesync } = await makePrintScenario({
+      localFiles: {
+        "local-file.txt": "local",
+      },
+    });
+
+    await filesync.print(ctx);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "⠙ Calculating file changes.
+      ✔ Calculated file changes. 12:00:00 AM
+
+      Your local files have changed.
+      +  local-file.txt  created
+
+      Your environment's files have not changed.
+      "
+    `);
+  });
+
+  it("prints the expected output when environment files have changed", async () => {
+    const { ctx, filesync } = await makePrintScenario({
+      gadgetFiles: {
+        "environment-file.txt": "environment",
+      },
+    });
+
+    await filesync.print(ctx);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "⠙ Calculating file changes.
+      ✔ Calculated file changes. 12:00:00 AM
+
+      Your local files have not changed.
+
+      Your environment's files have changed.
+      +  environment-file.txt  created
+      "
+    `);
+  });
+
+  it("prints the expected output when local and environment files have changed", async () => {
+    const { ctx, filesync } = await makePrintScenario({
+      localFiles: {
+        "local-file.txt": "local",
+      },
+      gadgetFiles: {
+        "environment-file.txt": "environment",
+      },
+    });
+
+    await filesync.print(ctx);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "⠙ Calculating file changes.
+      ✔ Calculated file changes. 12:00:00 AM
+
+      Your local files have changed.
+      +  local-file.txt  created
+
+      Your environment's files have also changed.
+      +  environment-file.txt  created
+      "
+    `);
   });
 });
 

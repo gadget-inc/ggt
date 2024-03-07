@@ -11,7 +11,7 @@ import { noop } from "../../src/services/util/function.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { makeContext } from "../__support__/context.js";
 import { mock } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/stream.js";
+import { expectStdout } from "../__support__/output.js";
 import { testUser } from "../__support__/user.js";
 
 describe("login", () => {
@@ -60,8 +60,7 @@ describe("login", () => {
 
     await openedBrowser;
     expectStdout().toMatchInlineSnapshot(`
-      "
-      We've opened Gadget's login page using your default browser.
+      "We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
       "
@@ -84,8 +83,7 @@ describe("login", () => {
     expect(readSession()).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
-      "
-      We've opened Gadget's login page using your default browser.
+      "We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
 
@@ -120,8 +118,7 @@ describe("login", () => {
 
     await openedBrowser;
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Please open the following URL in your browser and log in:
+      "Please open the following URL in your browser and log in:
 
         https://app.ggt.dev/auth/login?returnTo=https%3A%2F%2Fapp.ggt.dev%2Fauth%2Fcli%2Fcallback%3Fport%3D1234
 
@@ -146,8 +143,7 @@ describe("login", () => {
     expect(readSession()).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
-      "
-      Please open the following URL in your browser and log in:
+      "Please open the following URL in your browser and log in:
 
         https://app.ggt.dev/auth/login?returnTo=https%3A%2F%2Fapp.ggt.dev%2Fauth%2Fcli%2Fcallback%3Fport%3D1234
 
@@ -181,8 +177,7 @@ describe("login", () => {
 
     await openedBrowser;
     expectStdout().toMatchInlineSnapshot(`
-      "
-      We've opened Gadget's login page using your default browser.
+      "We've opened Gadget's login page using your default browser.
 
       Please log in and then return to this terminal.
       "

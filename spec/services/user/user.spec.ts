@@ -5,12 +5,11 @@ import * as login from "../../../src/commands/login.js";
 import type { Context } from "../../../src/services/command/context.js";
 import { config } from "../../../src/services/config/config.js";
 import { loadCookie } from "../../../src/services/http/auth.js";
-import { confirm } from "../../../src/services/output/prompt.js";
+import { confirm } from "../../../src/services/output/confirm.js";
 import { readSession, writeSession } from "../../../src/services/user/session.js";
 import { getUser, getUserOrLogin } from "../../../src/services/user/user.js";
-import { noop } from "../../../src/services/util/function.js";
 import { makeContext } from "../../__support__/context.js";
-import { mock } from "../../__support__/mock.js";
+import { mock, mockConfirmOnce } from "../../__support__/mock.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { loginTestUser, testUser } from "../../__support__/user.js";
 
@@ -72,7 +71,7 @@ describe("getUserOrLogin", () => {
   });
 
   it("prompts the user to log in if the session is not set", async () => {
-    mock(confirm, noop);
+    mockConfirmOnce();
     vi.spyOn(process, "exit");
 
     mock(login, "login", () => {
@@ -90,7 +89,7 @@ describe("getUserOrLogin", () => {
   });
 
   it("prompts the user to log in if the session is invalid or expired", async () => {
-    mock(confirm, noop);
+    mockConfirmOnce();
     vi.spyOn(process, "exit");
     mock(login, "login", () => {
       loginTestUser({ optional: false });

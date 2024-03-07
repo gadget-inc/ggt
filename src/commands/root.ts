@@ -3,6 +3,7 @@ import type { EmptyObject } from "type-fest";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import { Commands, importCommand, isAvailableCommand, type Command, type Usage } from "../services/command/command.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
+import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
 import { warnIfUpdateAvailable } from "../services/output/update.js";
@@ -26,10 +27,10 @@ export const usage: Usage = () => {
       ggt [COMMAND]
 
     {bold COMMANDS}
-      dev            Sync your local and environment's filesystem
-      status         Show your local and environment's filesystem status
-      push           Push your local filesystem
-      pull           Pull your environment's filesystem
+      dev            Start developing your application
+      status         Show your local and environment's file changes
+      push           Push your local files to your environment
+      pull           Pull your environment's files to your local computer
       deploy         Deploy your environment to production
       list           List your available applications
       login          Log in to your account
@@ -66,7 +67,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
 
   let cmd = ctx.args._.shift();
   if (isNil(cmd)) {
-    ctx.log.println(usage(ctx));
+    println(usage(ctx));
     process.exit(0);
   }
 
@@ -77,7 +78,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
 
   if (!isAvailableCommand(cmd)) {
     const [closest] = sortBySimilar(cmd, Commands);
-    ctx.log.println`
+    println`
       Unknown command {yellow ${cmd}}
 
       Did you mean {blueBright ${closest}}?
@@ -90,7 +91,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
   const subcommand = await importCommand(cmd);
 
   if (ctx.args["-h"] ?? ctx.args["--help"]) {
-    ctx.log.println(subcommand.usage(ctx));
+    println(subcommand.usage(ctx));
     process.exit(0);
   }
 

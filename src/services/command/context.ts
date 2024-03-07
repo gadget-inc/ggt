@@ -123,17 +123,23 @@ export class Context<
       "abort",
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       async () => {
+        let error: unknown;
+
         // call the callbacks in reverse order, like go's defer
         for (const callback of this.#onAborts.reverse()) {
           try {
             await callback(this.signal.reason);
-          } catch (error: unknown) {
+          } catch (e: unknown) {
+            error = e;
             this.log.error("error during abort", { error });
           }
         }
 
-        // signal that the context is done
-        this.done.resolve();
+        if (error) {
+          this.done.reject(error);
+        } else {
+          this.done.resolve();
+        }
       },
     );
   }

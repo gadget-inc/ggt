@@ -50,7 +50,7 @@ export const login: Command = async (ctx): Promise<void> => {
         } catch (error) {
           writeSession(undefined);
           landingPage.searchParams.set("success", "false");
-          reject(error);
+          reject(error as Error);
         } finally {
           res.writeHead(303, { Location: landingPage.toString() });
           res.end();

@@ -1,4 +1,3 @@
-import fs from "fs-extra";
 import { ClientError } from "../app/error.js";
 import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
@@ -37,56 +36,48 @@ export class UnknownDirectoryError extends CLIError {
   }
 
   protected render(): string {
-    const dir = this.opts.directory.path;
-    const appSlug = this.ctx.app?.slug || "<name>";
     const cmd = this.ctx.command;
-    const exists = fs.existsSync(this.opts.directory.absolute(".gadget/sync.json"));
+    const dir = this.opts.directory.path;
 
-    if (exists) {
-      // the file exists, but it's invalid JSON or is missing a required
-      // piece of data. this can only happen if someone manually edits
-      // the file, which is unlikely, so we don't need to be too helpful
-      return sprint`
-        The ".gadget/sync.json" file in this directory is invalid:
+    switch (cmd) {
+      case "open":
+      case "status":
+        return sprint`
+          A ".gadget/sync.json" file is missing in this directory:
 
-          ${dir}
+            ${dir}
 
-        You can either fix the file manually or run "ggt dev" with the
-        "--allow-unknown-directory" flag to recreate it.
-      `;
+          In order to use "ggt ${cmd}", you must run it within a directory
+          that has already been initialized with "ggt dev".
+        `;
+      case "dev":
+        return sprint`
+          A ".gadget/sync.json" file is missing in this directory:
+
+            ${dir}
+
+          If you're running "ggt dev" for the first time, we recommend
+          using a gadget specific directory like this:
+
+            ggt dev ~/gadget/${this.ctx.args["--app"] ?? "<name>"}
+
+          To use a non-empty directory without a ".gadget/sync.json" file,
+          run "ggt dev" again with the "--allow-unknown-directory" flag:
+
+            ggt dev ${dir} --allow-unknown-directory
+        `;
+      default:
+        return sprint`
+          A ".gadget/sync.json" file is missing in this directory:
+
+            ${dir}
+
+          If you're certain you want to use this directory, you can run
+          "ggt ${cmd}" again with the "--allow-unknown-directory" flag:
+
+            ggt ${cmd} --allow-unknown-directory
+        `;
     }
-
-    // the file doesn't exist
-    if (cmd === "dev") {
-      // this is dev, which is used to initialize a new directory
-      // so we should be helpful and tell the user what to do
-      return sprint`
-        A ".gadget/sync.json" file is missing in this directory:
-
-          ${dir}
-
-        If you're running "ggt dev" for the first time, we recommend
-        using a gadget specific directory like this:
-
-          ggt dev ~/gadget/${appSlug} --app=${appSlug}
-
-        To use a non-empty directory without a ".gadget/sync.json" file,
-        run "ggt dev" again with the "--allow-unknown-directory" flag:
-
-          ggt dev ${dir} --app=${appSlug} --allow-unknown-directory
-      `;
-    }
-
-    // this is status, push, or pull which must be run within a
-    // directory that has already has .gadget/sync.json file
-    return sprint`
-      A ".gadget/sync.json" file is missing in this directory:
-
-        ${dir}
-
-      In order to use "ggt ${cmd}", you must run it within a directory
-      that has already been initialized with "ggt dev".
-    `;
   }
 }
 

@@ -219,6 +219,7 @@ export class SyncJson {
     }
 
     const syncJson = new SyncJson(ctx, directory, previousEnvironment, state);
+    await syncJson.save(syncJson.filesVersion);
     await syncJson.loadGitBranch();
     return syncJson;
   }
@@ -263,6 +264,7 @@ export class SyncJson {
       },
     });
 
+    await syncJson.save(syncJson.filesVersion);
     await syncJson.loadGitBranch();
 
     return syncJson;

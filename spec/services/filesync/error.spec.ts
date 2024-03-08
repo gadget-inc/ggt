@@ -6,7 +6,6 @@ import type { AvailableCommand } from "../../../src/services/command/command.js"
 import { Directory } from "../../../src/services/filesync/directory.js";
 import { TooManySyncAttemptsError, UnknownDirectoryError, YarnNotFoundError } from "../../../src/services/filesync/error.js";
 import { SyncJson, SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
-import { noop } from "../../../src/services/util/function.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
 import { mockOnce } from "../../__support__/mock.js";
@@ -29,13 +28,23 @@ describe(YarnNotFoundError.name, () => {
 // Unix path that keeps failing in CI
 describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
   const makeSyncJson = async (command: AvailableCommand): Promise<SyncJson> => {
-    const ctx = makeContext({ parse: SyncJsonArgs, argv: [command, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`] });
+    const application = testApp.slug;
+    const environment = testApp.environments[0]!.name;
+
+    const ctx = makeContext({ parse: SyncJsonArgs, argv: [command, `--app=${application}`, `--env=${environment}`] });
+    ctx.app = testApp;
+    ctx.env = testApp.environments[0]!;
+
     const directory = await Directory.init(path.resolve("/Users/jane/doe/"));
 
-    // mock fs.ensureDir so we don't actually create the /Users/jane/doe/ directory
-    mockOnce(fs, "ensureDir", noop);
-    const syncJson = await SyncJson.loadOrInit(ctx, { directory });
-    expect(fs.ensureDir).toHaveBeenCalledOnce();
+    // @ts-expect-error - SyncJson's constructor is private
+    const syncJson: SyncJson = new SyncJson(ctx, directory, undefined, {
+      application,
+      environment,
+      environments: {
+        [environment]: { filesVersion: "0" },
+      },
+    });
 
     return syncJson;
   };

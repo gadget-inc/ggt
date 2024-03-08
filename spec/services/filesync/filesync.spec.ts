@@ -118,6 +118,8 @@ describe("FileSync._writeToLocalFilesystem", () => {
     });
 
     await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
       "file.js": "foo",
       "some/": "",
       "some/deeply/": "",

@@ -5,8 +5,10 @@ exports[`UnknownDirectoryError > renders correctly when deploy is passed 1`] = `
 
   /Users/jane/doe
 
-In order to use "ggt deploy", you must run it within a directory
-that has already been initialized with "ggt dev"."
+If you're certain you want to use this directory, you can run
+"ggt deploy" again with the "--allow-unknown-directory" flag:
+
+  ggt deploy --allow-unknown-directory"
 `;
 
 exports[`UnknownDirectoryError > renders correctly when dev is passed 1`] = `
@@ -17,12 +19,12 @@ exports[`UnknownDirectoryError > renders correctly when dev is passed 1`] = `
 If you're running "ggt dev" for the first time, we recommend
 using a gadget specific directory like this:
 
-  ggt dev ~/gadget/test --app=test
+  ggt dev ~/gadget/test
 
 To use a non-empty directory without a ".gadget/sync.json" file,
 run "ggt dev" again with the "--allow-unknown-directory" flag:
 
-  ggt dev /Users/jane/doe --app=test --allow-unknown-directory"
+  ggt dev /Users/jane/doe --allow-unknown-directory"
 `;
 
 exports[`UnknownDirectoryError > renders correctly when pull is passed 1`] = `
@@ -30,8 +32,10 @@ exports[`UnknownDirectoryError > renders correctly when pull is passed 1`] = `
 
   /Users/jane/doe
 
-In order to use "ggt pull", you must run it within a directory
-that has already been initialized with "ggt dev"."
+If you're certain you want to use this directory, you can run
+"ggt pull" again with the "--allow-unknown-directory" flag:
+
+  ggt pull --allow-unknown-directory"
 `;
 
 exports[`UnknownDirectoryError > renders correctly when push is passed 1`] = `
@@ -39,8 +43,10 @@ exports[`UnknownDirectoryError > renders correctly when push is passed 1`] = `
 
   /Users/jane/doe
 
-In order to use "ggt push", you must run it within a directory
-that has already been initialized with "ggt dev"."
+If you're certain you want to use this directory, you can run
+"ggt push" again with the "--allow-unknown-directory" flag:
+
+  ggt push --allow-unknown-directory"
 `;
 
 exports[`UnknownDirectoryError > renders correctly when status is passed 1`] = `
@@ -53,10 +59,17 @@ that has already been initialized with "ggt dev"."
 `;
 
 exports[`UnknownDirectoryError > renders correctly when the file exists but is invalid 1`] = `
-"The ".gadget/sync.json" file in this directory is invalid:
+"A ".gadget/sync.json" file is missing in this directory:
 
   /Users/jane/doe
 
-You can either fix the file manually or run "ggt dev" with the
-"--allow-unknown-directory" flag to recreate it."
+If you're running "ggt dev" for the first time, we recommend
+using a gadget specific directory like this:
+
+  ggt dev ~/gadget/test
+
+To use a non-empty directory without a ".gadget/sync.json" file,
+run "ggt dev" again with the "--allow-unknown-directory" flag:
+
+  ggt dev /Users/jane/doe --allow-unknown-directory"
 `;

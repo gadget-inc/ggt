@@ -1,6 +1,5 @@
 import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
 import type { Command, Usage } from "../services/command/command.js";
-import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { println } from "../services/output/print.js";
@@ -110,13 +109,10 @@ export const command: Command<PullArgs> = async (ctx) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { directory });
-  if (!syncJson) {
-    throw new UnknownDirectoryError(ctx, { directory });
-  }
-
+  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
+
   if (hashes.gadgetChangesToPull.size === 0) {
     println({ ensureEmptyLineAbove: true })`
       Nothing to pull.

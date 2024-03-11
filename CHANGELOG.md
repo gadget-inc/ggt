@@ -1,5 +1,97 @@
 # @gadgetinc/ggt
 
+## 1.0.0
+
+### Major Changes
+
+- c420a54: Require Node 18 or later
+
+  ## `ggt` requires Node 18 or later to run
+
+  Node 16 reached End-of-Life (EOL) on 2023-09-11:
+
+  - https://github.com/nodejs/release#end-of-life-releases
+  - https://nodejs.org/en/blog/announcements/nodejs16-eol
+
+  This means Node 16 no longer receives security updates and bug fixes.
+
+  ggt runs on your computer, so it's important to use a supported version of Node to ensure you have the latest security updates. **Your Gadget environment will continue to use the Node version specified in your [Framework version](https://docs.gadget.dev/guides/gadget-framework).**
+
+- 91de55b: Release v1.0.0
+
+  ## `ggt` v1.0.0 is here!
+
+  We're excited to announce the release of `ggt` v1.0.0! This release is the culmination of months of hard work and includes a bunch of new commands to take advantage of Gadget's v1 launch week 👀
+
+  Let's take a look at what's new:
+
+  ### `ggt dev`
+
+  `ggt dev` replaces `ggt sync` and is the new and improved way to develop your Gadget app locally. It comes with a fresh new look and feel, making sure you always know which environment and git branch you're developing on.
+
+  That's right, `ggt dev` is git and multi-environment aware, and comes with a new `--env` flag to change which environment you're developing on.
+
+  ![ggt dev example](https://github.com/gadget-inc/ggt/assets/21965521/88413d2c-b00a-4a06-8493-96d7f8cceb8f)
+
+  > [!NOTE]
+  >
+  > `ggt sync` is now deprecated and will be removed in a future release. From now on, if you run `ggt sync`, `ggt dev` will be run instead.
+
+  ### `ggt status`
+
+  Now that you can develop on multiple environments, it's important to know which environment you're currently developing on. That's where `ggt status` comes in. It shows you the current environment and git branch you're developing on, as well as the status of your local files compared to your environment's files.
+
+  ![ggt status example](https://github.com/gadget-inc/ggt/assets/21965521/4590af24-59c1-40ed-a2f4-8dfd05c603a6)
+
+  ### `ggt push` and `ggt pull`
+
+  When you need to push your local files to your environment, or pull your environment's files to your local machine without having ggt
+  continue to watch for changes, you can use `ggt push` and `ggt pull` respectively.
+
+  `ggt push` and `ggt pull` are also environment aware, so you can use the `--env` flag to specify which environment you want to push or pull from.
+
+  ![ggt push example](https://github.com/gadget-inc/ggt/assets/21965521/e7f739a9-e944-41d0-8563-d7a70af8cc2e)
+
+  ### `ggt deploy`
+
+  Once you're ready to deploy your environment to production, you can use `ggt deploy`. This command will ensure your environment's files are up to date with your local files, and then deploy your environment to production 🎉
+
+  ![ggt deploy example](https://github.com/gadget-inc/ggt/assets/21965521/3298ca86-8882-461e-bb9a-aef8cf7661ad)
+
+  ### `ggt open`
+
+  Finally, we've added `ggt open` to quickly open your Gadget app in your default browser. Run `ggt open --help` to see all the places you can open your browser to.
+
+  ![ggt open example](https://github.com/gadget-inc/ggt/assets/21965521/9af3cde8-0faa-4b75-9866-f239911950fc)
+
+  ### This is just the beginning
+
+  Even though `ggt` v1.0.0 is here, we're not done yet. We have a lot of exciting features and improvements planned for the future. Don't be surprised to see a few v1.0.x releases in the coming days as we iron out any kinks the community finds 😅
+
+  We hope you enjoy the new `ggt` commands and the new `ggt dev` experience. We're excited to see what you build with Gadget v1!
+
+### Patch Changes
+
+- c48efcb: Bump @sentry/node from 7.103.0 to 7.104.0
+- 163e72b: Bump @sentry/node from 7.105.0 to 7.106.0
+- c939101: Bump @swc/helpers from 0.5.3 to 0.5.6
+- 2366c1c: Bump graphql-ws from 5.14.3 to 5.15.0
+- ece8f55: Bump string-width from 6.1.0 to 7.1.0
+- 9ac8c78: Bump @sentry/node from 7.101.0 to 7.101.1
+- 3404930: Bump @sentry/node from 7.95.0 to 7.98.0
+- 147057f: Bump @sentry/node from 7.102.1 to 7.103.0
+- f80c289: Bump ignore from 5.3.0 to 5.3.1
+- 7ea926a: Bump semver from 7.5.4 to 7.6.0
+- 3991c3d: Bump @sentry/node from 7.93.0 to 7.94.1
+- 2402194: Bump p-map from 6.0.0 to 7.0.1
+- 4dd62aa: Bump @sentry/node from 7.102.0 to 7.102.1
+- 96f7e19: Bump @sentry/node from 7.94.1 to 7.95.0
+- ecef4e7: Bump open from 10.0.4 to 10.1.0
+- 56366c0: Bump find-up from 6.3.0 to 7.0.0
+- ec9a401: Bump @sentry/node from 7.104.0 to 7.105.0
+- e95a97f: Bump @sentry/node from 7.101.1 to 7.102.0
+- 50907f3: Bump @sentry/node from 7.98.0 to 7.101.0
+
 ## 0.4.10
 
 ### Patch Changes

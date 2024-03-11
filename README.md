@@ -26,7 +26,12 @@
 - [Quick Start](#quick-start)
 - [Usage](#usage)
 - [Commands](#commands)
-  - [`ggt sync`](#ggt-sync)
+  - [`ggt dev`](#ggt-dev)
+  - [`ggt deploy`](#ggt-deploy)
+  - [`ggt status`](#ggt-status)
+  - [`ggt push`](#ggt-push)
+  - [`ggt pull`](#ggt-pull)
+  - [`ggt open`](#ggt-open)
   - [`ggt list`](#ggt-list)
   - [`ggt login`](#ggt-login)
   - [`ggt logout`](#ggt-logout)
@@ -52,177 +57,246 @@ While `ggt dev` is running, `~/gadget/example` will synchronized with your appli
 ```sh-session
 $ npm install -g ggt
 $ ggt
-The command-line interface for Gadget
+The command-line interface for Gadget.
 
 USAGE
   ggt [COMMAND]
 
 COMMANDS
-  sync           Sync your Gadget application's source code
-  list           List your apps
-  login          Log in to your account
-  logout         Log out of your account
-  whoami         Print the currently logged in account
-  version        Print the version of ggt
+  dev              Start developing your application
+  deploy           Deploy your environment to production
+  status           Show your local and environment's file changes
+  push             Push your local files to your environment
+  pull             Pull your environment's files to your local computer
+  open             Open a Gadget location in your browser
+  list             List your available applications
+  login            Log in to your account
+  logout           Log out of your account
+  whoami           Print the currently logged in account
+  version          Print this version of ggt
 
 FLAGS
-  -h, --help     Print command's usage
-  -v, --verbose  Print verbose output
-      --json     Print output as JSON
+  -h, --help       Print how to use a command
+  -v, --verbose    Print more verbose output
+      --telemetry  Enable telemetry
 
-For more information on a specific command, use 'ggt [COMMAND] --help'
+Run "ggt [COMMAND] -h" for more information about a specific command.
 ```
 
 ## Commands
 
-### `ggt sync`
+### `ggt dev`
 
 ```sh-session
-$ ggt sync --help
-Sync your Gadget environment's source code with your local filesystem.
+$ ggt dev -h
+Develop your app by synchronizing your local files with your
+environment's files, in real-time. Changes are tracked from
+the last "ggt dev", "ggt push", or "ggt pull" run locally.
 
 USAGE
-  ggt sync [DIRECTORY]
+  ggt dev [DIRECTORY]
+
+EXAMPLES
+  $ ggt dev
+  $ ggt dev ~/gadget/example
+  $ ggt dev ~/gadget/example
+  $ ggt dev ~/gadget/example --app=example
+  $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
 
 ARGUMENTS
-  DIRECTORY                  The directory to sync files to (default: ".")
+  DIRECTORY    The directory to synchronize files to (default: ".")
 
 FLAGS
-  -a, --app=<name>           The Gadget application to sync files to
-      --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
-      --once                 Sync once and exit
-      --force                Sync regardless of local filesystem state
+  -a, --app=<name>           The application to synchronize files with
+  -e, --env=<name>           The environment to synchronize files with
+      --prefer=<filesystem>  Prefer "local" or "environment" conflicting changes
 
-DESCRIPTION
-  Sync allows you to synchronize your Gadget application's source
-  code with your local filesystem.
+  Run "ggt dev --help" for more information.
+```
 
-  While ggt sync is running, local file changes are immediately
-  reflected within Gadget, while files that are changed in Gadget are
-  immediately saved to your local filesystem.
+### `ggt deploy`
 
-  Ideal for:
-    • Local development with editors like VSCode
-    • Storing source code in a Git repository like GitHub
+```sh-session
+$ ggt deploy -h
+Deploy an environment to production.
 
-  Sync looks for a ".ignore" file to exclude certain files/directories
-  from being synced. The format is identical to Git's.
+Your local files must match your environment's files
+before you can deploy. Changes are tracked from
+the last "ggt dev", "ggt push", or "ggt pull" run locally.
 
-  These files are always ignored:
-    • .DS_Store
-    • .gadget
-    • .git
-    • node_modules
+USAGE
+  ggt deploy
 
-  Note:
-    • Sync only works with your development environment
-    • Avoid deleting/moving all your files while sync is running
-    • Gadget only supports Yarn v1 for dependency installation
+EXAMPLES
+  $ ggt deploy
+  $ ggt deploy --from=staging
+  $ ggt deploy --from=staging --force
+  $ ggt deploy --from=staging --force --allow-problems
 
-EXAMPLE
-  $ ggt sync ~/gadget/example --app example
+FLAGS
+  -a, --app=<name>      The application to deploy
+  -e, --from=<env>      The environment to deploy from
+      --force           Discard changes to your environment's filesystem
+      --allow-problems  Deploy regardless of any problems the environment has
+      --allow-charges   Deploy even if doing so will add charges to your account
 
-    App         example
-    Editor      https://example.gadget.app/edit
-    Playground  https://example.gadget.app/api/graphql/playground
-    Docs        https://docs.gadget.dev/api/example
+Run "ggt deploy --help" for more information.
+```
 
-    Endpoints
-      • https://example.gadget.app
-      • https://example--development.gadget.app
+### `ggt status`
 
-    Watching for file changes... Press Ctrl+C to stop
+```sh-session
+$ ggt status -h
+Show file changes since your last dev, push, or pull.
 
-    → Sent 09:06:25 AM
-    routes/GET-hello.js  + created
+USAGE
 
-    → Sent 09:06:49 AM
-    routes/GET-hello.js  ± updated
+  ggt status
 
-    ← Received 09:06:54 AM
-    routes/GET-hello.js  ± updated
+EXAMPLES
 
-    ← Received 09:06:56 AM
-    routes/GET-hello.js  - deleted
-    ^C Stopping... press Ctrl+C again to force
+  $ ggt status
+```
 
-    Goodbye!
+### `ggt push`
+
+```sh-session
+$ ggt push -h
+Push your local files to your environment's filesystem.
+Changes are tracked from the last "ggt dev", "ggt push", or
+"ggt pull" run locally.
+
+USAGE
+  ggt push
+
+EXAMPLES
+  $ ggt push
+  $ ggt push --env=staging
+  $ ggt push --env=staging --force
+
+FLAGS
+  -a, --app=<name>   The application to push files to
+  -e, --env=<name>   The environment to push files to
+      --force        Discard changes to your environment's filesystem
+
+  Run "ggt push --help" for more information.
+```
+
+### `ggt pull`
+
+```sh-session
+$ ggt pull -h
+Pull your environment's files to your local filesystem.
+Changes are tracked from the last "ggt dev", "ggt push", or
+"ggt pull" run locally.
+
+USAGE
+  ggt pull
+
+EXAMPLES
+  $ ggt pull
+  $ ggt pull --env=staging
+  $ ggt pull --env=staging --force
+
+FLAGS
+  -a, --app=<name>   The application to pull files from
+  -e, --env=<name>   The environment to pull files from
+      --force        Discard changes to your local filesystem
+
+  Run "ggt pull --help" for more information.
+```
+
+### `ggt open`
+
+```sh-session
+$ ggt open -h
+Open a Gadget location in your browser.
+
+USAGE
+  ggt open [LOCATION] [MODEL]
+
+EXAMPLES
+  $ ggt open
+  $ ggt open logs
+  $ ggt open permissions
+  $ ggt open data modelA
+  $ ggt open schema modelA
+  $ ggt open data --show-all
+  $ ggt open schema --show-all
+
+ARGUMENTS
+  LOCATION    The location to open
+  MODEL       The model to open
+
+FLAGS
+  -a, --app=<name>      The application to open
+  -e, --env=<env>       The environment to open
+      --show-all        Show all available models to open
+
+Run "ggt open --help" for more information.
 ```
 
 ### `ggt list`
 
 ```sh-session
-$ ggt list --help
-List the apps available to the currently logged in user.
+$ ggt list -h
+List your available applications.
 
 USAGE
   ggt list
 
-EXAMPLE
+EXAMPLES
   $ ggt list
-    Slug    Domain
-    ─────── ──────────────────
-    my-app  my-app.gadget.app
-    example example.gadget.app
-    test    test.gadget.app
 ```
 
 ### `ggt login`
 
 ```sh-session
-$ ggt login --help
+$ ggt login -h
 Log in to your account.
 
 USAGE
   ggt login
 
-EXAMPLE
+EXAMPLES
   $ ggt login
-    We've opened Gadget's login page using your default browser.
-
-    Please log in and then return to this terminal.
-
-    Hello, Jane Doe (jane@example.com)
 ```
 
 ### `ggt logout`
 
 ```sh-session
-$ ggt logout --help
+$ ggt logout -h
 Log out of your account.
 
 USAGE
   ggt logout
 
-EXAMPLE
+EXAMPLES
   $ ggt logout
-    Goodbye
 ```
 
 ### `ggt whoami`
 
 ```sh-session
-$ ggt whoami --help
-Show the name and email address of the currently logged in user
+$ ggt whoami -h
+Show the name and email address of the currently logged in user.
 
 USAGE
   ggt whoami
 
-EXAMPLE
+EXAMPLES
   $ ggt whoami
-    You are logged in as Jane Doe (jane@example.com)
 ```
 
 ### `ggt version`
 
 ```sh-session
-$ ggt version --help
-Print the version of ggt
+$ ggt version -h
+Print this version of ggt.
 
 USAGE
   ggt version
 
-EXAMPLE
+EXAMPLES
   $ ggt version
-    0.4.10
 ```

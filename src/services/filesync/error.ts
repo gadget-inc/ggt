@@ -1,13 +1,13 @@
 import { ClientError } from "../app/error.js";
 import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
-import { CLIError, IsBug } from "../output/report.js";
+import { GGTError, IsBug } from "../output/report.js";
 import { sprint, sprintln } from "../output/sprint.js";
 import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
 import type { Directory } from "./directory.js";
 import type { SyncJsonArgs } from "./sync-json.js";
 
-export class YarnNotFoundError extends CLIError {
+export class YarnNotFoundError extends GGTError {
   isBug = IsBug.NO;
 
   constructor() {
@@ -25,7 +25,7 @@ export class YarnNotFoundError extends CLIError {
   }
 }
 
-export class UnknownDirectoryError extends CLIError {
+export class UnknownDirectoryError extends GGTError {
   isBug = IsBug.NO;
 
   constructor(
@@ -81,25 +81,24 @@ export class UnknownDirectoryError extends CLIError {
   }
 }
 
-export class TooManySyncAttemptsError extends CLIError {
+export class TooManyMergeAttemptsError extends GGTError {
   isBug = IsBug.MAYBE;
 
   constructor(readonly attempts: number) {
-    super(`Failed to sync files after ${attempts} attempts.`);
+    super(`Failed to synchronize files after ${attempts} attempts.`);
   }
 
   protected render(): string {
     return sprint`
-        We synced your local files with Gadget ${this.attempts} times, but
-        your local filesystem is still out of sync.
+      We merged your local files with your environment's files ${this.attempts} times,
+      but your local and environment's files still don't match.
 
-        Make sure no one else is editing files in the Gadget editor
-        and try again.
+      Make sure no one else is editing files on your environment, and try again.
     `;
   }
 }
 
-export class DeployDisallowedError extends CLIError {
+export class DeployDisallowedError extends GGTError {
   isBug = IsBug.MAYBE;
 
   constructor(readonly fatalErrors: Problems) {

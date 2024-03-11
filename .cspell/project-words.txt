@@ -40,5 +40,7 @@ sprintln
 sprintlns
 SWCRC
 typecheck
+unmock
+unstub
 unthunk
 usagestop

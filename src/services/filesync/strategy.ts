@@ -13,24 +13,31 @@ export type FileSyncStrategy = (typeof FileSyncStrategy)[keyof typeof FileSyncSt
 export const MergeConflictPreference = Object.freeze({
   CANCEL: sprint`Cancel (Ctrl+C)`,
   LOCAL: sprint`Keep {underline local} conflicting changes`,
-  GADGET: sprint`Keep {underline environment}'s conflicting changes`,
+  ENVIRONMENT: sprint`Keep {underline environment}'s conflicting changes`,
 });
 
 export type MergeConflictPreference = (typeof MergeConflictPreference)[keyof typeof MergeConflictPreference];
 
 export const MergeConflictPreferenceArg = (value: string, name: string): MergeConflictPreference => {
-  if (["local", "gadget"].includes(value)) {
+  if (["local", "environment"].includes(value)) {
     return MergeConflictPreference[value.toUpperCase() as keyof typeof MergeConflictPreference];
   }
 
+  if (value === "gadget") {
+    // v0.4 (deprecated)
+    return MergeConflictPreference.ENVIRONMENT;
+  }
+
   throw new ArgError(sprint`
-      ${name} must be {bold local} or {bold gadget}
+      ${name} must be {bold local} or {bold environment}
 
       {bold EXAMPLES:}
-        ${name} local
-        ${name} gadget
+        ${name}=local
+        ${name}=environment
     `);
 };
+
+// export type FileSyncArgs = DevArgs | PushArgs | PullArgs;
 
 // export const getFileSyncStrategy = (ctx: Context<FileSyncArgs>): FileSyncStrategy | undefined => {
 //   switch (true) {

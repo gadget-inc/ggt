@@ -1,52 +1,57 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { command } from "../../src/commands/list.js";
+import { beforeEach, describe, it } from "vitest";
+import { command as list } from "../../src/commands/list.js";
 import * as app from "../../src/services/app/app.js";
 import { type Context } from "../../src/services/command/context.js";
-import * as user from "../../src/services/user/user.js";
+import { output } from "../../src/services/output/output.js";
+import { nockTestApps } from "../__support__/app.js";
 import { makeContext } from "../__support__/context.js";
-import { mock } from "../__support__/mock.js";
+import { mock, mockOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
+import { loginTestUser } from "../__support__/user.js";
 
 describe("list", () => {
   let ctx: Context;
 
   beforeEach(() => {
     ctx = makeContext();
+    loginTestUser();
+    nockTestApps();
   });
 
-  it("lists apps", async () => {
-    mock(user, "getUserOrLogin", () => ({ id: 1, email: "test@example.com", name: "Jane Doe" }));
-    mock(app, "getApps", () => [
-      {
-        id: 1n,
-        slug: "app-a",
-        primaryDomain: "app-a.example.com",
-        hasSplitEnvironments: true,
-        multiEnvironmentEnabled: true,
-        environments: [],
-      },
-      { id: 2n, slug: "app-b", primaryDomain: "cool-app.com", hasSplitEnvironments: true, multiEnvironmentEnabled: true, environments: [] },
-    ]);
+  it("lists apps with tabs when output.isInteractive = true", async () => {
+    mockOnce(output, "isInteractive", "get", () => true);
 
-    await command(ctx);
+    await list(ctx);
 
-    expect(user.getUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
-      "Slug  Domain
-      ───── ─────────────────
-      app-a app-a.example.com
-      app-b cool-app.com
+      "Name                      Domain
+      test                      test.gadget.app
+      test2                     test2.gadget.app
+      test-with-2-environments  test-with-2-environments.gadget.app
+      test-with-0-environments  test-with-0-environments.gadget.app
+      "
+    `);
+  });
+
+  it("lists apps with tabs when output.isInteractive = false", async () => {
+    mockOnce(output, "isInteractive", "get", () => false);
+
+    await list(ctx);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "test	test.gadget.app
+      test2	test2.gadget.app
+      test-with-2-environments	test-with-2-environments.gadget.app
+      test-with-0-environments	test-with-0-environments.gadget.app
       "
     `);
   });
 
   it("lists no apps if the user doesn't have any", async () => {
-    mock(user, "getUserOrLogin", () => ({ id: 1, email: "test@example.com", name: "Jane Doe" }));
     mock(app, "getApps", () => []);
 
-    await command(ctx);
+    await list(ctx);
 
-    expect(user.getUserOrLogin).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "It doesn't look like you have any applications.
 

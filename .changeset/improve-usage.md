@@ -1,5 +1,5 @@
 ---
-"ggt": patch
+"ggt": minor
 ---
 
 ggt can differentiate between `-h` and `--help`

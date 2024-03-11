@@ -7,14 +7,6 @@ import { env } from "./env.js";
 import { packageJson } from "./package-json.js";
 
 export const config = {
-  get name(): string {
-    return packageJson.name;
-  },
-
-  get version(): string {
-    return packageJson.version;
-  },
-
   get logLevel() {
     return parseLevel(process.env["GGT_LOG_LEVEL"], Level.PRINT);
   },
@@ -31,7 +23,7 @@ export const config = {
    * @example "ggt/1.2.3 darwin-arm64 node-v16.0.0"
    */
   get versionFull(): string {
-    return `${this.name}/${this.version} ${this.platform}-${this.arch} node-${process.version}`;
+    return `${packageJson.name}/${packageJson.version} ${this.platform}-${this.arch} node-${process.version}`;
   },
 
   get arch(): string {

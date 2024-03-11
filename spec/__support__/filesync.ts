@@ -187,7 +187,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
     argv: ["dev", testDirPath("local"), `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`],
   }) as Context<Args>;
 
-  let gadgetFilesVersion = 1n;
+  let environmentFilesVersion = 1n;
   await writeDir(testDirPath("gadget"), { ".gadget/": "", ...gadgetFiles });
   const gadgetDir = await Directory.init(testDirPath("gadget"));
 
@@ -198,7 +198,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
   filesVersionDirs.set(1n, filesVersion1Dir);
 
   if (!isEqualHashes(ctx, await gadgetDir.hashes(), await filesVersion1Dir.hashes())) {
-    gadgetFilesVersion = 2n;
+    environmentFilesVersion = 2n;
     await fs.copy(gadgetDir.path, testDirPath("fv-2"));
     filesVersionDirs.set(2n, await Directory.init(testDirPath("fv-2")));
   }
@@ -257,11 +257,11 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
       await fs.chmod(gadgetDir.absolute(file.path), file.mode & 0o777);
     }
 
-    gadgetFilesVersion += 1n;
-    const newFilesVersionDir = await Directory.init(testDirPath(`fv-${gadgetFilesVersion}`));
+    environmentFilesVersion += 1n;
+    const newFilesVersionDir = await Directory.init(testDirPath(`fv-${environmentFilesVersion}`));
     await fs.copy(gadgetDir.path, newFilesVersionDir.path);
-    filesVersionDirs.set(gadgetFilesVersion, newFilesVersionDir);
-    log.trace("new files version", { gadgetFilesVersion });
+    filesVersionDirs.set(environmentFilesVersion, newFilesVersionDir);
+    log.trace("new files version", { environmentFilesVersion });
   };
 
   nockEditResponse({
@@ -276,8 +276,8 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
       let hashes: Hashes;
 
       if (isNil(variables?.filesVersion)) {
-        log.trace("sending gadget hashes", { gadgetFilesVersion, variables });
-        filesVersion = gadgetFilesVersion;
+        log.trace("sending gadget hashes", { environmentFilesVersion, variables });
+        filesVersion = environmentFilesVersion;
         hashes = await gadgetDir.hashes();
       } else {
         filesVersion = BigInt(variables.filesVersion);
@@ -306,23 +306,23 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
     operation: FILE_SYNC_COMPARISON_HASHES_QUERY,
     expectVariables: z.object({ filesVersion: z.string() }),
     response: async (variables) => {
-      log.trace("sending comparison hashes", { gadgetFilesVersion, variables });
+      log.trace("sending comparison hashes", { environmentFilesVersion, variables });
 
       const filesVersionDir = filesVersionDirs.get(BigInt(variables.filesVersion));
       assertOrFail(filesVersionDir, `filesVersionDir ${filesync.syncJson.filesVersion} doesn't exist`);
 
-      const [filesVersionHashes, gadgetHashes] = await Promise.all([filesVersionDir.hashes(), gadgetDir.hashes()]);
+      const [localFilesVersionHashes, environmentHashes] = await Promise.all([filesVersionDir.hashes(), gadgetDir.hashes()]);
 
       return {
         data: {
           fileSyncComparisonHashes: {
             filesVersionHashes: {
               filesVersion: variables.filesVersion,
-              hashes: filesVersionHashes,
+              hashes: localFilesVersionHashes,
             },
             latestFilesVersionHashes: {
-              filesVersion: String(gadgetFilesVersion),
-              hashes: gadgetHashes,
+              filesVersion: String(environmentFilesVersion),
+              hashes: environmentHashes,
             },
           },
         },
@@ -342,7 +342,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
       encoding: z.nativeEnum(FileSyncEncoding).optional(),
     }),
     response: async ({ filesVersion, paths, encoding }) => {
-      filesVersion ??= String(gadgetFilesVersion);
+      filesVersion ??= String(environmentFilesVersion);
       encoding ??= FileSyncEncoding.Base64;
 
       const filesVersionDir = filesVersionDirs.get(BigInt(filesVersion));
@@ -396,7 +396,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
     response: async ({ input: { expectedRemoteFilesVersion, changed, deleted } }) => {
       log.trace("mocking publish filesync events result", { expectedRemoteFilesVersion, changed, deleted });
 
-      assert(expectedRemoteFilesVersion === String(gadgetFilesVersion), "Files version mismatch");
+      assert(expectedRemoteFilesVersion === String(environmentFilesVersion), "Files version mismatch");
       assert(
         changed.every((change) => deleted.every((del) => del.path !== change.path)),
         "changed and deleted files must not overlap",
@@ -409,7 +409,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
       return {
         data: {
           publishFileSyncEvents: {
-            remoteFilesVersion: String(gadgetFilesVersion),
+            remoteFilesVersion: String(environmentFilesVersion),
             problems: [],
           },
         },
@@ -477,7 +477,7 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
     },
 
     emitGadgetChanges: async (changes) => {
-      expect(changes.remoteFilesVersion).toBe(String(gadgetFilesVersion + 1n));
+      expect(changes.remoteFilesVersion).toBe(String(environmentFilesVersion + 1n));
       await changeGadgetFiles({ change: changes.changed, delete: changes.deleted });
       await mockEditSubscriptions
         .expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION)
@@ -526,8 +526,8 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
 
     expectLocalAndGadgetHashesMatch: async () => {
       const localHashes = await localDir.hashes();
-      const gadgetHashes = await gadgetDir.hashes();
-      expect(localHashes).toEqual(gadgetHashes);
+      const environmentHashes = await gadgetDir.hashes();
+      expect(localHashes).toEqual(environmentHashes);
     },
   };
 };
@@ -543,8 +543,8 @@ export const makeHashes = async ({
   filesVersionFiles: Files;
   localFiles: Files;
   gadgetFiles?: Files;
-}): Promise<{ filesVersionHashes: Hashes; localHashes: Hashes; gadgetHashes: Hashes }> => {
-  const [filesVersionHashes, localHashes, gadgetHashes] = await Promise.all([
+}): Promise<{ localFilesVersionHashes: Hashes; localHashes: Hashes; environmentHashes: Hashes }> => {
+  const [localFilesVersionHashes, localHashes, environmentHashes] = await Promise.all([
     writeDir(testDirPath("filesVersion"), filesVersionFiles)
       .then(() => Directory.init(testDirPath("filesVersion")))
       .then((dir) => dir.hashes()),
@@ -560,7 +560,7 @@ export const makeHashes = async ({
           .then((dir) => dir.hashes()),
   ]);
 
-  return { filesVersionHashes, localHashes, gadgetHashes };
+  return { localFilesVersionHashes, localHashes, environmentHashes };
 };
 
 export const defaultFileMode = os.platform() === "win32" ? 0o100666 : 0o100644;

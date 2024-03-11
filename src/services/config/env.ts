@@ -1,7 +1,7 @@
 import process from "node:process";
 
 /**
- * Captures the name and nature of the environment
+ * Captures the current environment ggt is running in.
  */
 export const env = {
   get value(): string {

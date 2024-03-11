@@ -15,9 +15,9 @@
     "name": "Gadget Authors"
   },
   "type": "module",
-  "main": "lib/main.js",
+  "main": "lib/ggt.js",
   "bin": {
-    "ggt": "bin/run.js"
+    "ggt": "lib/main.js"
   },
   "files": [
     "/assets",
@@ -70,7 +70,7 @@
     "is-interactive": "^2.0.0",
     "is-unicode-supported": "^2.0.0",
     "is-wsl": "^3.1.0",
-    "mimic-fn": "^5.0.0",
+    "mimic-function": "^5.0.0",
     "ms": "^2.1.3",
     "node-notifier": "^10.0.1",
     "normalize-package-data": "^6.0.0",
@@ -84,6 +84,7 @@
     "semver": "^7.6.0",
     "serialize-error": "^11.0.3",
     "simple-git": "^3.22.0",
+    "stdin-discarder": "^0.2.2",
     "string-width": "^7.1.0",
     "strip-ansi": "^7.1.0",
     "terminal-link": "^3.0.0",

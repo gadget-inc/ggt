@@ -2,12 +2,12 @@ import cliCursor from "cli-cursor";
 import isInteractive from "is-interactive";
 import assert from "node:assert";
 import process from "node:process";
+import stdinDiscarder from "stdin-discarder";
 import stringWidth from "string-width";
 import stripAnsi from "strip-ansi";
 import { env } from "../config/env.js";
 import { unthunk } from "../util/function.js";
 import { isObject } from "../util/is.js";
-import stdinDiscarder from "./stdin.js";
 
 let cursorIsHidden = false;
 
@@ -40,6 +40,13 @@ export class Output {
   private _stickyTextLinesToClear = 0;
 
   constructor() {
+    process.stdout.on("error", (err: unknown) => {
+      if (isObject(err) && "code" in err && err.code === "EPIPE") {
+        return;
+      }
+      throw err;
+    });
+
     process.stderr.on("error", (err: unknown) => {
       if (isObject(err) && "code" in err && err.code === "EPIPE") {
         return;
@@ -49,7 +56,7 @@ export class Output {
   }
 
   get isInteractive(): boolean {
-    return !env.testLike && isInteractive({ stream: process.stderr });
+    return !env.testLike && isInteractive({ stream: process.stdout });
   }
 
   writeStdout(text: string): void {

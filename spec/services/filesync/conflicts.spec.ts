@@ -13,7 +13,7 @@ describe("getConflicts", () => {
   });
 
   it("returns conflicting changes", async () => {
-    const { filesVersionHashes, gadgetHashes, localHashes } = await makeHashes({
+    const { localFilesVersionHashes, environmentHashes, localHashes } = await makeHashes({
       filesVersionFiles: {
         "foo.js": "// foo",
         "bar.js": "// bar",
@@ -31,32 +31,32 @@ describe("getConflicts", () => {
       },
     });
 
-    const localChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes });
-    const gadgetChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: gadgetHashes });
-    const conflicts = getConflicts({ localChanges, gadgetChanges });
+    const localChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes });
+    const environmentChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: environmentHashes });
+    const conflicts = getConflicts({ localChanges, environmentChanges });
 
     expect(Object.fromEntries(conflicts)).toEqual({
       "foo.js": {
-        localChange: { type: "update", sourceHash: filesVersionHashes["foo.js"], targetHash: localHashes["foo.js"] },
-        gadgetChange: { type: "update", sourceHash: filesVersionHashes["foo.js"], targetHash: gadgetHashes["foo.js"] },
+        localChange: { type: "update", sourceHash: localFilesVersionHashes["foo.js"], targetHash: localHashes["foo.js"] },
+        gadgetChange: { type: "update", sourceHash: localFilesVersionHashes["foo.js"], targetHash: environmentHashes["foo.js"] },
       },
       "bar.js": {
-        localChange: { type: "update", sourceHash: filesVersionHashes["bar.js"], targetHash: localHashes["bar.js"] },
-        gadgetChange: { type: "delete", sourceHash: filesVersionHashes["bar.js"] },
+        localChange: { type: "update", sourceHash: localFilesVersionHashes["bar.js"], targetHash: localHashes["bar.js"] },
+        gadgetChange: { type: "delete", sourceHash: localFilesVersionHashes["bar.js"] },
       },
       "baz.js": {
-        localChange: { type: "delete", sourceHash: filesVersionHashes["baz.js"] },
-        gadgetChange: { type: "update", sourceHash: filesVersionHashes["baz.js"], targetHash: gadgetHashes["baz.js"] },
+        localChange: { type: "delete", sourceHash: localFilesVersionHashes["baz.js"] },
+        gadgetChange: { type: "update", sourceHash: localFilesVersionHashes["baz.js"], targetHash: environmentHashes["baz.js"] },
       },
       "qux.js": {
         localChange: { type: "create", targetHash: localHashes["qux.js"] },
-        gadgetChange: { type: "create", targetHash: gadgetHashes["qux.js"] },
+        gadgetChange: { type: "create", targetHash: environmentHashes["qux.js"] },
       },
     });
   });
 
   it("doesn't return non-conflicting changes", async () => {
-    const { filesVersionHashes, gadgetHashes, localHashes } = await makeHashes({
+    const { localFilesVersionHashes, environmentHashes, localHashes } = await makeHashes({
       filesVersionFiles: {
         "foo.js": "// foo",
         "bar.js": "// bar",
@@ -76,9 +76,9 @@ describe("getConflicts", () => {
       },
     });
 
-    const localChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: localHashes });
-    const gadgetChanges = getNecessaryChanges(ctx, { from: filesVersionHashes, to: gadgetHashes });
-    const conflicts = getConflicts({ localChanges, gadgetChanges });
+    const localChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes });
+    const environmentChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: environmentHashes });
+    const conflicts = getConflicts({ localChanges, environmentChanges });
 
     expect(Object.fromEntries(conflicts)).toEqual({});
     expect(conflicts.size).toBe(0);

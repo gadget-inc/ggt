@@ -15,53 +15,50 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Pull changes from your environment's filesystem to your local filesystem.
-
-      Changes are calculated from the last time you ran
-      "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
+      Pull your environment's files to your local filesystem.
+      Changes are tracked from the last "ggt dev", "ggt push", or
+      "ggt pull" run locally.
 
       {bold USAGE}
         ggt pull
 
       {bold EXAMPLES}
         $ ggt pull
-        $ ggt pull --force
-        $ ggt pull --force --env=staging
-        $ ggt pull --force --env=staging --app=example --allow-unknown-directory
+        $ ggt pull --env=staging
+        $ ggt pull --env=staging --force
 
       {bold FLAGS}
         -a, --app=<name>   The application to pull files from
         -e, --env=<name>   The environment to pull files from
-            --force        Discard un-synchronized local changes
+            --force        Discard changes to your local filesystem
 
         Run "ggt pull --help" for more information.
     `;
   }
 
   return sprint`
-    Pull changes from your environment's filesystem to your local filesystem.
+    Pull your environment's files to your local filesystem.
+    Changes are tracked from the last "ggt dev", "ggt push", or
+    "ggt pull" run locally.
 
-    Changes are calculated from the last time you ran
-    "ggt dev", "ggt push", or "ggt pull" in the chosen directory.
-
-    If your local filesystem has also made changes since the last sync,
-    you will be prompted to discard them or abort the pull.
+    If you have un-pushed changes, and "--force" is not passed,
+    you will be prompted to {underline discard them} or abort the pull.
 
     {bold USAGE}
 
-      ggt pull [DIRECTORY] [--app=<name>] [--env=<name>] [--force]
-                           [--allow-unknown-directory] [--allow-different-app]
+      ggt pull [--app=<name>] [--env=<name>] [--force]
+               [--allow-unknown-directory] [--allow-different-app]
 
     {bold EXAMPLES}
 
       $ ggt pull
-      $ ggt pull --force
-      $ ggt pull --force --env=staging
-      $ ggt pull --force --env=staging --app=example --allow-unknown-directory
+      $ ggt pull --env=staging
+      $ ggt pull --env=staging --force
+      $ ggt pull --env=staging --force --allow-unknown-directory
 
     {bold FLAGS}
 
-      -a, --app=<name>
+      -a, --app, --application=<name>
         The application to pull files from.
 
         Defaults to the application within the ".gadget/sync.json"
@@ -87,7 +84,7 @@ export const usage: Usage = (ctx) => {
         Defaults to false.
 
       --allow-different-app
-        Allows "ggt pull" to continue with a different --app than the
+        Allows "ggt pull" to continue with a different "--app" than the
         one found within the ".gadget/sync.json" file.
 
         Defaults to false.
@@ -113,7 +110,7 @@ export const command: Command<PullArgs> = async (ctx) => {
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
 
-  if (hashes.gadgetChangesToPull.size === 0) {
+  if (hashes.environmentChangesToPull.size === 0) {
     println({ ensureEmptyLineAbove: true })`
       Nothing to pull.
     `;

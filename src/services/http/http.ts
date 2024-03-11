@@ -77,6 +77,7 @@ export const http = got.extend({
     beforeRetry: [
       (error, retryCount) => {
         const ctx = getContext(error.request?.options ?? error.options.context);
+
         ctx.log.warn("http request failed, retrying...", {
           http: {
             retryCount,
@@ -84,6 +85,11 @@ export const http = got.extend({
             request: error.request && {
               method: error.request.options.method,
               url: error.request.options.url?.toString(),
+            },
+            response: error.response && {
+              statusCode: error.response.statusCode,
+              traceId: error.response.headers["x-trace-id"],
+              durationMs: error.response.timings.phases.total,
             },
           },
         });

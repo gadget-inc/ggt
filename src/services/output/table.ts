@@ -113,8 +113,8 @@ export const sprintTable = ({
 
 export type PrintTableOptions = PrintOptions & SprintTableOptions;
 
-export const printTable = (options: SprintTableOptions): void => {
-  println(sprintTable(options));
+export const printTable = (options: PrintTableOptions): void => {
+  println(options)(sprintTable(options));
 };
 
 // prettier-ignore

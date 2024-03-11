@@ -1,8 +1,7 @@
 import { config } from "../config/config.js";
-import { isArray, isString } from "../util/is.js";
 import type { Field } from "./log/field.js";
 import { output } from "./output.js";
-import { sprint, type SprintOptions } from "./sprint.js";
+import { isSprintOptions, sprint, type SprintOptions } from "./sprint.js";
 
 export type PrintOptions = SprintOptions & {
   /**
@@ -10,7 +9,7 @@ export type PrintOptions = SprintOptions & {
    *
    * @default undefined (print nothing)
    */
-  json?: Record<string, Field>;
+  json?: Field;
 };
 
 export type print = {
@@ -85,7 +84,7 @@ export type print = {
 
 const createPrint = (options: PrintOptions): print => {
   return ((templateOrOptions: PrintOptions | string | TemplateStringsArray, ...values: unknown[]): print | undefined => {
-    if (!(isString(templateOrOptions) || isArray(templateOrOptions))) {
+    if (isSprintOptions(templateOrOptions)) {
       return createPrint({ ...options, ...templateOrOptions });
     }
 

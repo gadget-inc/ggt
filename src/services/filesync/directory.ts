@@ -1,7 +1,7 @@
 /**
  * DO NOT MODIFY
  *
- * Everything in this file also exists in ggt to ensure that this logic
+ * Everything in this file also exists in gadget to ensure that this logic
  * is the same between the two projects.
  */
 import fs from "fs-extra";
@@ -210,6 +210,10 @@ export class Directory {
     } finally {
       this._isHashing = false;
     }
+  }
+
+  async hasFiles(): Promise<boolean> {
+    return !(await this.isEmptyOrNonExistent());
   }
 
   async isEmptyOrNonExistent(): Promise<boolean> {

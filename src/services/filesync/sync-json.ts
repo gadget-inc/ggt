@@ -5,7 +5,7 @@ import path from "node:path";
 import { simpleGit } from "simple-git";
 import terminalLink from "terminal-link";
 import { z } from "zod";
-import { EnvironmentType, getApps, type App, type Environment } from "../app/app.js";
+import { EnvironmentType, getApps, type Application, type Environment } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
 import { Edit } from "../app/edit/edit.js";
 import { ArgError, type ArgsDefinition } from "../command/arg.js";
@@ -34,11 +34,12 @@ export type SyncJsonArgs = typeof SyncJsonArgs;
  *
  * This is persisted to `.gadget/sync.json` within the {@linkcode directory}.
  */
+// TODO: rename and/or add to ctx?
 export class SyncJson {
   /**
-   * The {@linkcode App} that the directory is synced to.
+   * The {@linkcode Application} that the directory is synced to.
    */
-  readonly app: App;
+  readonly app: Application;
 
   /**
    * The {@linkcode Environment} that the directory is synced to.
@@ -234,6 +235,7 @@ export class SyncJson {
    * - Ensures the directory is empty or contains a `.gadget/sync.json` file, unless --allow-unknown-directory was passed
    * - Ensures the specified app matches the app the directory previously synced to, unless --allow-different-app was passed
    */
+  // TODO: rename to loadOrAskAndInit
   static async loadOrInit(ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<SyncJson> {
     ctx = ctx.child({ name: "sync-json" });
 
@@ -243,7 +245,7 @@ export class SyncJson {
       return syncJson;
     }
 
-    if (!(await directory.isEmptyOrNonExistent()) && !ctx.args["--allow-unknown-directory"]) {
+    if ((await directory.hasFiles()) && !ctx.args["--allow-unknown-directory"]) {
       // the directory isn't empty and the user didn't pass --allow-unknown-directory
       throw new UnknownDirectoryError(ctx, { directory });
     }
@@ -269,6 +271,10 @@ export class SyncJson {
 
     return syncJson;
   }
+
+  // TODO: just asks the user to select an app and environment, doesn't create a .gadget/sync.json file
+  // static async loadOrAsk(ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<SyncJson | undefined> {
+  // }
 
   /**
    * Updates {@linkcode _syncJson} and saves it to `.gadget/sync.json`.
@@ -337,6 +343,7 @@ export const loadSyncJsonDirectory = async (dir: string): Promise<Directory> => 
     dir = homePath(dir.slice(2));
   }
 
+  // TODO: rename to .gadget/ggt.json
   const syncJsonPath = await findUp(".gadget/sync.json", { cwd: dir });
   if (syncJsonPath) {
     // we found a .gadget/sync.json file, use its parent directory
@@ -352,8 +359,8 @@ export const loadSyncJsonDirectory = async (dir: string): Promise<Directory> => 
 // ensure the selected app is valid
 const loadApp = async (
   ctx: Context<SyncJsonArgs>,
-  { availableApps, state }: { availableApps: App[]; state?: SyncJsonState },
-): Promise<App> => {
+  { availableApps, state }: { availableApps: Application[]; state?: SyncJsonState },
+): Promise<Application> => {
   let appSlug = ctx.args["--app"] || state?.application;
   if (!appSlug) {
     // the user didn't specify an app, ask them to select one
@@ -392,7 +399,7 @@ const loadApp = async (
   );
 };
 
-const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: App; state?: SyncJsonState }): Promise<Environment> => {
+const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: Application; state?: SyncJsonState }): Promise<Environment> => {
   if (ctx.args["--env"] && !app.multiEnvironmentEnabled) {
     // this is a legacy app that only has 1 development environment, so
     // let them know now rather than running into a weird error later
@@ -480,16 +487,15 @@ export const SyncJsonStateV04 = z.object({
   mtime: z.number(),
 });
 
-// TODO: ensure v05 is parsed before v04
 export const AnySyncJsonState = z.union([SyncJsonStateV05, SyncJsonStateV04]);
 
 export const SyncJsonState = AnySyncJsonState.transform((state): SyncJsonStateV05 => {
   if ("environment" in state) {
-    // v0.5
+    // it's a v0.5 state
     return state;
   }
 
-  // v0.4 -> v0.5
+  // it's a v0.4 state, transform it to a v0.5 state
   return {
     application: state.app,
     environment: "development",

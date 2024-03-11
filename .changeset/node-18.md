@@ -1,8 +1,10 @@
 ---
-ggt: minor
+ggt: major
 ---
 
 Require Node 18 or later
+
+## `ggt` requires Node 18 or later to run
 
 Node 16 reached End-of-Life (EOL) on 2023-09-11:
 

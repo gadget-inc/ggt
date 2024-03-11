@@ -5,9 +5,9 @@ import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Context } from "../../../src/services/command/context.js";
 import { config } from "../../../src/services/config/config.js";
+import { packageJson } from "../../../src/services/config/package-json.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
 import { makeContext } from "../../__support__/context.js";
-import { mock } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
 
 describe("getDistTags", () => {
@@ -72,7 +72,7 @@ describe("warnIfUpdateAvailable", () => {
   });
 
   it("logs a warning if an update is available (latest)", async () => {
-    mock(config, "version", "get", () => "1.0.0");
+    packageJson.version = "1.0.0";
 
     nock("https://registry.npmjs.org")
       .get("/ggt")
@@ -103,7 +103,7 @@ describe("warnIfUpdateAvailable", () => {
   });
 
   it("logs a warning if an update is available (experimental)", async () => {
-    mock(config, "version", "get", () => "0.0.0-experimental.bf3e4a3");
+    packageJson.version = "0.0.0-experimental.bf3e4a3";
 
     nock("https://registry.npmjs.org")
       .get("/ggt")
@@ -134,7 +134,7 @@ describe("warnIfUpdateAvailable", () => {
   });
 
   it("does nothing if already at latest version", async () => {
-    mock(config, "version", "get", () => "1.0.0");
+    packageJson.version = "1.0.0";
 
     nock("https://registry.npmjs.org")
       .get("/ggt")

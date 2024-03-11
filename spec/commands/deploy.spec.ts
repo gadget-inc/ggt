@@ -1,6 +1,6 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable no-irregular-whitespace */
-import { afterEach, beforeEach, describe, it } from "vitest";
+import { beforeEach, describe, it } from "vitest";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
@@ -21,10 +21,6 @@ describe("deploy", () => {
 
     beforeEach(() => {
       ctx = makeContext({ parse: args });
-    });
-
-    afterEach(() => {
-      ctx.abort();
     });
 
     it("does not try to deploy if any problems were detected and displays the problems", async () => {

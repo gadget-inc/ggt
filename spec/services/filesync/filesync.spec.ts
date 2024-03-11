@@ -8,16 +8,16 @@ import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args as DevArgs } from "../../../src/commands/dev.js";
 import { args as PullArgs } from "../../../src/commands/pull.js";
 import { args as PushArgs } from "../../../src/commands/push.js";
-import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, type GraphQLQuery } from "../../../src/services/app/edit/operation.js";
-import { ClientError } from "../../../src/services/app/error.js";
+import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit/operation.js";
 import type { Context } from "../../../src/services/command/context.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions, type Directory } from "../../../src/services/filesync/directory.js";
-import { TooManySyncAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
-import { FileSync } from "../../../src/services/filesync/filesync.js";
+import { TooManyMergeAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
+import { FileSync, MAX_PUSH_CONTENT_LENGTH } from "../../../src/services/filesync/filesync.js";
 import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.js";
 import { SyncJson, loadSyncJsonDirectory, type SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
 import { confirm } from "../../../src/services/output/confirm.js";
+import { EdgeCaseError } from "../../../src/services/output/report.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
@@ -319,7 +319,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
   });
 });
 
-describe("FileSync._sendChangesToGadget", () => {
+describe("FileSync._sendChangesToEnvironment", () => {
   mockSystemTime();
 
   let ctx: Context<SyncJsonArgs>;
@@ -327,8 +327,8 @@ describe("FileSync._sendChangesToGadget", () => {
   let syncJson: SyncJson;
   let filesync: FileSync;
 
-  // @ts-expect-error _sendChangesToGadget is private
-  let sendChangesToGadget: typeof FileSync.prototype._sendChangesToGadget;
+  // @ts-expect-error _sendChangesToEnvironment is private
+  let sendChangesToGadget: typeof FileSync.prototype._sendChangesToEnvironment;
 
   beforeEach(async () => {
     loginTestUser();
@@ -339,8 +339,8 @@ describe("FileSync._sendChangesToGadget", () => {
     syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
     filesync = new FileSync(syncJson);
 
-    // @ts-expect-error _sendChangesToGadget is private
-    sendChangesToGadget = filesync._sendChangesToGadget.bind(filesync);
+    // @ts-expect-error _sendChangesToEnvironment is private
+    sendChangesToGadget = filesync._sendChangesToEnvironment.bind(filesync);
   });
 
   it("sends changed files to gadget", async () => {
@@ -534,9 +534,32 @@ describe("FileSync._sendChangesToGadget", () => {
 
     expectStdout().toMatchSnapshot();
   });
+
+  it(`throws ${EdgeCaseError.name} when the content length is greater than ${MAX_PUSH_CONTENT_LENGTH}`, async () => {
+    await writeDir(localDir, {
+      "file.txt": "a".repeat(MAX_PUSH_CONTENT_LENGTH + 1),
+    });
+
+    const changes = new Changes();
+    changes.set("file.txt", { type: "create" });
+
+    const error: EdgeCaseError = await expectError(() => sendChangesToGadget(ctx, { changes }));
+    expect(error).toBeInstanceOf(EdgeCaseError);
+    expect(error.sprint()).toMatchInlineSnapshot(`
+      "Your file changes are too large to push.
+
+      Run "ggt status" to see your changes and consider
+      ignoring some files or pushing in smaller batches.
+
+      If you think this is a bug, use the link below to create an issue on GitHub.
+
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
+    `);
+  });
 });
 
-describe("FileSync.mergeChangesWithGadget", () => {
+describe("FileSync.mergeChangesWithEnvironment", () => {
   beforeEach(() => {
     loginTestUser();
     nockTestApps();
@@ -551,7 +574,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await filesync.mergeChangesWithGadget(ctx, { changes });
+    await filesync.mergeChangesWithEnvironment(ctx, { changes });
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -609,7 +632,7 @@ describe("FileSync.mergeChangesWithGadget", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await filesync.mergeChangesWithGadget(ctx, { changes });
+    await filesync.mergeChangesWithEnvironment(ctx, { changes });
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -667,7 +690,7 @@ describe("FileSync.sync", () => {
       gadgetFiles: { "foo.js": "// foo" },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -708,7 +731,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -751,7 +774,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -800,7 +823,7 @@ describe("FileSync.sync", () => {
 
     mockSelectOnce(ConflictPreference.CANCEL);
 
-    await expectProcessExit(() => filesync.sync(ctx));
+    await expectProcessExit(() => filesync.merge(ctx));
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -842,7 +865,7 @@ describe("FileSync.sync", () => {
 
     mockSelectOnce(ConflictPreference.LOCAL);
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -889,7 +912,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -939,7 +962,7 @@ describe("FileSync.sync", () => {
 
     mockSelectOnce(ConflictPreference.LOCAL);
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -995,7 +1018,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1035,7 +1058,7 @@ describe("FileSync.sync", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
-  it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
+  it(`uses gadget's conflicting changes when "${ConflictPreference.ENVIRONMENT}" is chosen`, async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         "foo.js": "// foo",
@@ -1048,9 +1071,9 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockSelectOnce(ConflictPreference.GADGET);
+    mockSelectOnce(ConflictPreference.ENVIRONMENT);
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1079,7 +1102,7 @@ describe("FileSync.sync", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
-  it(`uses gadget's conflicting changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
+  it(`uses gadget's conflicting changes when "${ConflictPreference.ENVIRONMENT}" is passed as an argument`, async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       ctx: makeContext({ parse: DevArgs, argv: ["dev", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
       filesVersion1Files: {
@@ -1093,7 +1116,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1122,7 +1145,7 @@ describe("FileSync.sync", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
-  it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
+  it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.ENVIRONMENT}" is chosen`, async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         "foo.js": "// foo",
@@ -1137,9 +1160,9 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockSelectOnce(ConflictPreference.GADGET);
+    mockSelectOnce(ConflictPreference.ENVIRONMENT);
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1179,7 +1202,7 @@ describe("FileSync.sync", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
-  it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is chosen`, async () => {
+  it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.ENVIRONMENT}" is chosen`, async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         "foo.js": "// foo",
@@ -1194,9 +1217,9 @@ describe("FileSync.sync", () => {
       },
     });
 
-    mockSelectOnce(ConflictPreference.GADGET);
+    mockSelectOnce(ConflictPreference.ENVIRONMENT);
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1236,7 +1259,7 @@ describe("FileSync.sync", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
-  it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.GADGET}" is passed as an argument`, async () => {
+  it(`uses gadget's conflicting changes and merges non-conflicting local changes when "${ConflictPreference.ENVIRONMENT}" is passed as an argument`, async () => {
     const { ctx, filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       ctx: makeContext({ parse: DevArgs, argv: ["dev", appDir, "--app", testApp.slug, "--prefer=gadget"] }),
       filesVersion1Files: {
@@ -1252,7 +1275,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1305,7 +1328,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1352,7 +1375,7 @@ describe("FileSync.sync", () => {
 
     mockSelectOnce(ConflictPreference.LOCAL);
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1401,7 +1424,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1448,7 +1471,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -1505,7 +1528,7 @@ describe("FileSync.sync", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await filesync.mergeChangesWithGadget(ctx, { changes });
+    await filesync.mergeChangesWithEnvironment(ctx, { changes });
 
     expect(scope.isDone()).toBe(true);
 
@@ -1540,7 +1563,7 @@ describe("FileSync.sync", () => {
     `);
   });
 
-  it(`throws ${TooManySyncAttemptsError.name} if the number of sync attempts exceeds the maximum`, async () => {
+  it(`throws ${TooManyMergeAttemptsError.name} if the number of sync attempts exceeds the maximum`, async () => {
     const { ctx, filesync, localDir } = await makeSyncScenario({
       localFiles: { "local.txt": "// local" },
       gadgetFiles: { "gadget.txt": "// gadget" },
@@ -1556,10 +1579,10 @@ describe("FileSync.sync", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await expect(filesync.sync(ctx)).rejects.toThrow(TooManySyncAttemptsError);
+    await expect(filesync.merge(ctx)).rejects.toThrow(TooManyMergeAttemptsError);
   });
 
-  it(`does not throw ${TooManySyncAttemptsError.name} if it succeeds on the last attempt`, async () => {
+  it(`does not throw ${TooManyMergeAttemptsError.name} if it succeeds on the last attempt`, async () => {
     const maxAttempts = 3;
     let attempt = 0;
 
@@ -1589,7 +1612,7 @@ describe("FileSync.sync", () => {
     const changes = new Changes();
     changes.set("local.txt", { type: "create" });
 
-    await expect(filesync.sync(ctx, { maxAttempts })).resolves.not.toThrow();
+    await expect(filesync.merge(ctx, { maxAttempts })).resolves.not.toThrow();
   });
 
   it("bumps the correct environment filesVersion when multi-environment is enabled", async () => {
@@ -1620,7 +1643,7 @@ describe("FileSync.sync", () => {
       },
     });
 
-    await filesync.sync(ctx);
+    await filesync.merge(ctx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -2132,30 +2155,5 @@ describe("FileSync.print", () => {
       +  environment-file.txt  created
       "
     `);
-  });
-});
-
-// TODO: move to errors.spec.ts
-describe("isFilesVersionMismatchError", () => {
-  it('returns true given an object with a message that starts with "Files version mismatch"', () => {
-    expect(isFilesVersionMismatchError({ message: "Files version mismatch" })).toBe(true);
-    expect(isFilesVersionMismatchError({ message: "Files version mismatch, expected 1 but got 2" })).toBe(true);
-  });
-
-  it("returns true given GraphQLErrors", () => {
-    expect(isFilesVersionMismatchError([{ message: "Files version mismatch" }])).toBe(true);
-  });
-
-  it("returns true given a GraphQLResult", () => {
-    expect(isFilesVersionMismatchError({ errors: [{ message: "Files version mismatch" }] })).toBe(true);
-  });
-
-  it("returns true given an EditGraphQLError", () => {
-    const query = "query { foo }" as GraphQLQuery;
-    expect(isFilesVersionMismatchError(new ClientError(query, [{ message: "Files version mismatch" }]))).toBe(true);
-  });
-
-  it("returns false given an object with a message that does not start with 'Files version mismatch'", () => {
-    expect(isFilesVersionMismatchError({ message: "Something else" })).toBe(false);
   });
 });

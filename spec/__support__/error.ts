@@ -30,7 +30,7 @@ export const expectError = async (fnThatThrows: () => unknown): Promise<any> => 
 export const expectReportErrorAndExit = async (expectedCause: unknown, fnThatReports: () => unknown): Promise<void> => {
   mock(report, "reportErrorAndExit", (_ctx, actualCause) => {
     // print the error like we normally would so we can snapshot it
-    const error = report.CLIError.from(actualCause);
+    const error = report.GGTError.from(actualCause);
     error.print();
     throw actualCause;
   });

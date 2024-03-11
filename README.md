@@ -18,8 +18,6 @@
 <br>
 <br>
 
-<i>Status: alpha -- please report any issues to the [issue tracker](https://github.com/gadget-inc/ggt/issues?q=is%3Aissue+is%3Aopen) here so we can fix them!</i>
-
 </div>
 
 ## Table of Contents
@@ -37,17 +35,17 @@
 
 ## Intro
 
-`ggt` is the command line interface for the Gadget platform, providing additional functionality for working with your Gadget applications using your existing tools on your machine. `ggt` isn't required for building end-to-end Gadget apps but supports syncing files locally (and more soon) for your preferred coding experience.
+`ggt` is the command line interface for the Gadget platform, providing additional functionality for working with your Gadget applications using your existing tools on your machine.
 
 ## Quick Start
 
-Run the following to sync a `my-app.gadget.app` application to the `~/gadget/my-app` on your local machine:
+Assuming you have a Gadget application named `example`, run the following to clone your application's source code to `~/gadget/example` to begin developing:
 
 ```sh
-npx ggt@latest sync ~/gadget/my-app --app=my-app
+npx ggt@latest dev ~/gadget/example --app=example
 ```
 
-With this running in the background, your local `~/gadget/my-app` folder will become two-way synced with your application's filesystem in Gadget's cloud. Changes you make locally will be immediately reflected by your application's API and actions if you re-run them.
+While "ggt dev" is running, `~/gadget/example` will synchronized with your application's filesystem in Gadget's cloud. Any file changes you make locally will be immediately reflected by your application's API and actions if you re-run them.
 
 ## Usage
 

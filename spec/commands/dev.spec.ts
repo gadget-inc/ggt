@@ -1220,13 +1220,13 @@ describe("dev", () => {
     it("throws YarnNotFoundError if yarn is not found", async () => {
       await makeSyncScenario();
       // eslint-disable-next-line unicorn/no-null
-      mock(which.sync, () => null);
+      mock(which, () => Promise.resolve(null as any));
       await expect(sync(ctx)).rejects.toThrow(YarnNotFoundError);
     });
 
     it("does not throw YarnNotFoundError if yarn is found", async () => {
       await makeSyncScenario();
-      mock(which.sync, () => "/path/to/yarn");
+      mock(which, () => Promise.resolve("/path/to/yarn"));
       await sync(ctx);
     });
   });

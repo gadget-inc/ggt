@@ -1,5 +1,5 @@
 import type { Command, Usage } from "../services/command/command.js";
-import { config } from "../services/config/config.js";
+import { packageJson } from "../services/config/package-json.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
@@ -14,5 +14,5 @@ export const usage: Usage = () => sprint`
 `;
 
 export const command: Command = (_ctx) => {
-  println(config.version);
+  println(packageJson.version);
 };

@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/node";
 import { describe, expect, it, vi } from "vitest";
-import { CLIError, IsBug, UnexpectedError, reportErrorAndExit } from "../../../src/services/output/report.js";
+import { GGTError, IsBug, UnexpectedError, reportErrorAndExit } from "../../../src/services/output/report.js";
 import { makeContext } from "../../__support__/context.js";
 import { expectStdout } from "../../__support__/output.js";
 import { expectProcessExit } from "../../__support__/process.js";
@@ -9,7 +9,7 @@ describe("reportErrorAndExit", () => {
   it("renders and reports errors then exits", async () => {
     vi.spyOn(Sentry, "captureException");
 
-    class TestError extends CLIError {
+    class TestError extends GGTError {
       override isBug = IsBug.MAYBE;
 
       constructor() {

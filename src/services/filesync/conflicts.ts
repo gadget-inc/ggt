@@ -15,15 +15,15 @@ export class Conflicts extends Map<string, { localChange: ChangeWithHash; gadget
  */
 export const getConflicts = ({
   localChanges,
-  gadgetChanges,
+  environmentChanges,
 }: {
   localChanges: ChangesWithHash;
-  gadgetChanges: ChangesWithHash;
+  environmentChanges: ChangesWithHash;
 }): Conflicts => {
   const conflicts = new Conflicts();
 
   for (const [filepath, localChange] of localChanges) {
-    const gadgetChange = gadgetChanges.get(filepath);
+    const gadgetChange = environmentChanges.get(filepath);
     if (!gadgetChange) {
       // gadget doesn't have this change, so there's no conflict
       continue;

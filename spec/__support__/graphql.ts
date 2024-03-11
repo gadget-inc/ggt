@@ -2,7 +2,7 @@ import nock, { type Scope } from "nock";
 import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
 import { ZodSchema, z } from "zod";
-import type { App, Environment } from "../../src/services/app/app.js";
+import type { Application, Environment } from "../../src/services/app/app.js";
 import { Client } from "../../src/services/app/client.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.js";
 import type { ClientError } from "../../src/services/app/error.js";
@@ -39,7 +39,7 @@ export type NockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLM
    *
    * @default testApp
    */
-  app?: App;
+  app?: Application;
 
   /**
    * The environment to respond to.

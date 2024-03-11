@@ -1,4 +1,4 @@
-import { assert, beforeEach, expect, vi, type SpyInstance } from "vitest";
+import { assert, beforeEach, expect, vi, type MockInstance } from "vitest";
 import * as confirm from "../../src/services/output/confirm.js";
 import { output } from "../../src/services/output/output.js";
 import * as select from "../../src/services/output/select.js";
@@ -19,7 +19,7 @@ export type Mock = {
   <Fn extends (...args: any[]) => any, Impl extends (...args: Parameters<Fn>) => ReturnType<Fn> | Awaited<ReturnType<Fn>>>(
     fn: Fn,
     impl: Impl,
-  ): SpyInstance<ArgsType<Fn>, ReturnType<Fn>>;
+  ): MockInstance<ArgsType<Fn>, ReturnType<Fn>>;
 
   /**
    * Mocks a method on an object. If the method is already mocked,
@@ -38,7 +38,7 @@ export type Mock = {
     target: Target,
     property: Property,
     impl: Impl,
-  ): SpyInstance<ArgsType<Fn>, ReturnType<Fn>>;
+  ): MockInstance<ArgsType<Fn>, ReturnType<Fn>>;
 
   /**
    * Mocks a getter on an object. If the getter is already mocked,
@@ -54,7 +54,7 @@ export type Mock = {
     property: Property,
     accessor: "get",
     impl: Impl,
-  ): SpyInstance<[], Property>;
+  ): MockInstance<[], Property>;
 
   /**
    * Mocks a setter on an object. If the setter is already mocked,
@@ -70,7 +70,7 @@ export type Mock = {
     property: Property,
     accessor: "set",
     impl: Impl,
-  ): SpyInstance<[Property], void>;
+  ): MockInstance<[Property], void>;
 };
 
 /**
@@ -79,7 +79,7 @@ export type Mock = {
  * @see {@linkcode Mock}
  */
 export const mock = ((target: any, property: any, accessor: any, impl: any) => {
-  let mocked: SpyInstance;
+  let mocked: MockInstance;
 
   if (impl) {
     // (target, property, accessor, value)
@@ -118,7 +118,7 @@ export const mock = ((target: any, property: any, accessor: any, impl: any) => {
  * @see {@linkcode Mock}
  */
 export const mockOnce = ((target: any, property: any, accessor: any, impl: any) => {
-  let mocked: SpyInstance;
+  let mocked: MockInstance;
 
   if (impl) {
     // (target, property, accessor, value)
@@ -165,7 +165,7 @@ export const mockSideEffects = (): void => {
   vi.mock("get-port", () => ({ default: vi.fn().mockName("getPort").mockResolvedValue(1234) }));
   vi.mock("node-notifier", () => ({ default: { notify: vi.fn().mockName("notify") } }));
   vi.mock("open", () => ({ default: vi.fn().mockName("open") }));
-  vi.mock("which", () => ({ default: { sync: vi.fn().mockName("whichSync").mockReturnValue("/path/to/yarn") } }));
+  vi.mock("which", () => ({ default: vi.fn().mockName("which").mockResolvedValue("/path/to/yarn") }));
   vi.mock("simple-git", () => ({
     simpleGit: vi
       .fn()
@@ -187,7 +187,7 @@ export const mockSideEffects = (): void => {
   });
 };
 
-export const mockConfirm = (impl = noop): SpyInstance<[options: SprintOptions], confirm.confirm> => {
+export const mockConfirm = (impl = noop): MockInstance<[options: SprintOptions], confirm.confirm> => {
   const mockedConfirm = (optionsOrStr: any, ...values: unknown[]): any => {
     if (isSprintOptions(optionsOrStr)) {
       return mockedConfirm;
@@ -203,7 +203,7 @@ export const mockConfirm = (impl = noop): SpyInstance<[options: SprintOptions], 
   return mock(confirm, "confirm", mockedConfirm);
 };
 
-export const mockConfirmOnce = (impl = noop): SpyInstance<[options: SprintOptions], confirm.confirm> => {
+export const mockConfirmOnce = (impl = noop): MockInstance<[options: SprintOptions], confirm.confirm> => {
   let options: SprintOptions = {
     ensureEmptyLineAbove: true,
   };
@@ -226,7 +226,7 @@ export const mockConfirmOnce = (impl = noop): SpyInstance<[options: SprintOption
 
 export const mockSelect = <Choice extends string>(
   choice: Choice,
-): SpyInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
+): MockInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
   return mock(select, "select", (_options) => {
     return (_str) => {
       return Promise.resolve(choice);
@@ -236,7 +236,7 @@ export const mockSelect = <Choice extends string>(
 
 export const mockSelectOnce = <Choice extends string>(
   choice: Choice,
-): SpyInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
+): MockInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
   return mockOnce(select, "select", (_options) => {
     return (_str) => {
       return Promise.resolve(choice);

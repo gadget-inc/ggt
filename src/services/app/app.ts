@@ -23,8 +23,7 @@ export const Environment = z.object({
 
 export type Environment = z.infer<typeof Environment>;
 
-// TODO: rename to Application
-export const App = z.object({
+export const Application = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
   slug: z.string(),
   primaryDomain: z.string(),
@@ -33,11 +32,11 @@ export const App = z.object({
   environments: z.array(Environment),
 });
 
+export type Application = z.infer<typeof Application>;
+
 export const ModelApiIdentifier = z.object({
   apiIdentifier: z.string(),
 });
-
-export type App = z.infer<typeof App>;
 
 export type ModelApiIdentifier = z.infer<typeof ModelApiIdentifier>;
 
@@ -46,10 +45,10 @@ export type ModelApiIdentifier = z.infer<typeof ModelApiIdentifier>;
  * logged in, an empty array is returned instead.
  *
  * @param ctx - The current context.
- * @returns A promise that resolves to an array of App objects.
+ * @returns A promise that resolves to an array of Application objects.
  */
 // TODO: cache this
-export const getApps = async (ctx: Context): Promise<App[]> => {
+export const getApps = async (ctx: Context): Promise<Application[]> => {
   const headers = loadAuthHeaders();
   if (!headers) {
     return [];
@@ -65,7 +64,7 @@ export const getApps = async (ctx: Context): Promise<App[]> => {
     resolveBodyOnly: true,
   });
 
-  return z.array(App).parse(json);
+  return z.array(Application).parse(json);
 };
 
 export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []> => {
@@ -77,8 +76,6 @@ export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []
   assert(ctx.user, "must get user before getting models");
 
   const api = new Api(ctx);
-
-  const result = await api.query({ query: GADGET_META_MODELS_QUERY });
-
-  return z.array(ModelApiIdentifier).parse(result.gadgetMeta.models);
+  const { gadgetMeta } = await api.query({ query: GADGET_META_MODELS_QUERY });
+  return gadgetMeta.models;
 };

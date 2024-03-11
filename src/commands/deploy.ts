@@ -21,7 +21,7 @@ export type DeployArgs = typeof args;
 
 export const args = {
   ...PushArgs,
-  "--env": { type: String, alias: ["-e", "--from", "--environment"] },
+  "--env": { type: String, alias: ["-e", "--environment", "--from"] },
   "--allow-problems": { type: Boolean, alias: "--allow-issues" },
   "--allow-charges": { type: Boolean },
 };
@@ -29,13 +29,11 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Deploy your development environment to production.
+      Deploy an environment to production.
 
-      Your local filesystem must be in sync with your development
-      environment before you can deploy.
-
-      Changes are calculated from the last time you ran
-      "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
+      Your local files must match your environment's files
+      before you can deploy. Changes are tracked from
+      the last "ggt dev", "ggt push", or "ggt pull" run locally.
 
       {bold USAGE}
         ggt deploy
@@ -49,8 +47,8 @@ export const usage: Usage = (ctx) => {
       {bold FLAGS}
         -a, --app=<name>      The application to deploy
         -e, --from=<env>      The environment to deploy from
-            --force           Discard un-synchronized environment changes
-            --allow-problems  Deploy regardless of any problems on the environment
+            --force           Discard changes to your environment's filesystem
+            --allow-problems  Deploy regardless of any problems the environment has
             --allow-charges   Deploy even if doing so will add charges to your account
 
       Run "ggt deploy --help" for more information.
@@ -58,24 +56,22 @@ export const usage: Usage = (ctx) => {
   }
 
   return sprint`
-    Deploy your development environment to production.
+    Deploy an environment to production.
 
-    Your local filesystem must be in sync with your development
-    environment before you can deploy.
+    Your local files must match your environment's files
+    before you can deploy. Changes are tracked from
+    the last "ggt dev", "ggt push", or "ggt pull" run locally.
 
-    Changes are calculated from the last time you ran
-    "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
+    If your local files don't match your environment's files, you will
+    be prompted to push your local files before you can deploy.
 
-    If your environment has also made changes since the last sync,
-    you will be prompted to discard them or abort the deploy.
-
-    If any problems are detected, you will be prompted to continue,
-    or abort the deploy.
+    If your environment has un-pulled changes, and "--force" is not
+    passed, you will be prompted to {underline discard them} or abort the deploy.
 
     {bold USAGE}
 
       ggt deploy [--app=<name>] [--from=<env>] [--force]
-                 [--allow-problems]
+                 [--allow-problems] [--allow-charges]
 
     {bold EXAMPLES}
 
@@ -83,6 +79,7 @@ export const usage: Usage = (ctx) => {
       $ ggt deploy --from=staging
       $ ggt deploy --from=staging --force
       $ ggt deploy --from=staging --force --allow-problems
+      $ ggt deploy --from=staging --force --allow-problems --allow-charges
 
     {bold FLAGS}
 
@@ -92,8 +89,8 @@ export const usage: Usage = (ctx) => {
         Defaults to the application within the ".gadget/sync.json"
         file in the current directory or any parent directories.
 
-      -e, --from, --env, --environment=<name>
-        The development environment to deploy from.
+      -e, --env, --environment, --from=<name>
+        The environment to deploy from.
 
         Defaults to the environment within the ".gadget/sync.json"
         file in the current directory or any parent directories.
@@ -105,8 +102,8 @@ export const usage: Usage = (ctx) => {
         Defaults to false.
 
       --allow-problems, --allow-issues
-        Deploy your development environment to production regardless
-        of any problems it may have.
+        Deploy your environment to production regardless of any problems
+        it may have.
 
         These problems may include:
           • Gelly syntax errors
@@ -116,8 +113,8 @@ export const usage: Usage = (ctx) => {
         Defaults to false.
 
       --allow-charges
-        Deploy your development environment to production even if
-        doing so will add charges to your account.
+        Allows "ggt deploy" to continue when deploying your environment
+        to production will add charges to your account.
 
         Defaults to false.
 
@@ -129,7 +126,7 @@ export const usage: Usage = (ctx) => {
         Defaults to false.
 
       --allow-different-app
-        Allows "ggt push" to continue with a different --app than the
+        Allows "ggt deploy" to continue with a different "--app" than the
         one found within the ".gadget/sync.json" file.
 
         Defaults to false.
@@ -168,14 +165,14 @@ export const command: Command<DeployArgs> = async (ctx) => {
       let message: string;
       switch (true) {
         case hashes.bothChanged:
-          message = sprint`Would you like to push your local changes and discard your environment's changes now?`;
+          message = sprint`Would you like to push your local changes and {underline discard your environment's} changes now?`;
           implicitForce = true;
           break;
         case hashes.localChangesToPush.size > 0:
           message = sprint`Would you like to push your local changes now?`;
           break;
-        case hashes.gadgetChanges.size > 0:
-          message = sprint`Do you want to discard your environment's changes now?`;
+        case hashes.environmentChanges.size > 0:
+          message = sprint`Do you want to {underline discard your environment's} changes now?`;
           implicitForce = true;
           break;
         default:

@@ -11,7 +11,6 @@ import type { Promisable } from "type-fest";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
 import type { DevArgs } from "../../commands/dev.js";
 import type { PullArgs } from "../../commands/pull.js";
-import type { PushArgs } from "../../commands/push.js";
 import { type EditSubscription } from "../app/edit/edit.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -25,7 +24,7 @@ import { config } from "../config/config.js";
 import { confirm } from "../output/confirm.js";
 import { println } from "../output/print.js";
 import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.js";
-import { MaybeExpectedError } from "../output/report.js";
+import { EdgeCaseError } from "../output/report.js";
 import { select } from "../output/select.js";
 import { spin, type spinner } from "../output/spinner.js";
 import { sprint, sprintln } from "../output/sprint.js";
@@ -36,27 +35,93 @@ import { serializeError } from "../util/object.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
-import { TooManySyncAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
+import { TooManyMergeAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
 import type { File } from "./file.js";
 import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 import { MergeConflictPreference } from "./strategy.js";
 import { type SyncJson, type SyncJsonArgs } from "./sync-json.js";
 
-export type FileSyncArgs = DevArgs | PushArgs | PullArgs;
+/**
+ * The maximum attempts to automatically merge local and environment
+ * file changes when a FilesVersionMismatchError is encountered before
+ * throwing a {@linkcode TooManyMergeAttemptsError}.
+ */
+export const MAX_MERGE_ATTEMPTS = 10;
+
+/**
+ * The maximum length of file content that can be pushed to Gadget in a
+ * single request.
+ */
+export const MAX_PUSH_CONTENT_LENGTH = 50 * 1024 * 1024; // 50mb
 
 export type FileSyncHashes = {
+  /**
+   * Whether the local filesystem is in sync with the environment's
+   * filesystem.
+   */
   inSync: boolean;
-  filesVersionHashes: Hashes;
-  localHashes: Hashes;
-  localChanges: ChangesWithHash;
-  localChangesToPush: Changes | ChangesWithHash;
-  // TODO: rename to environmentHashes
-  gadgetHashes: Hashes;
-  gadgetChanges: ChangesWithHash;
-  gadgetChangesToPull: Changes | ChangesWithHash;
-  gadgetFilesVersion: bigint;
-  onlyDotGadgetFilesChanged: boolean;
+
+  /**
+   * Whether the local filesystem and the environment's filesystem have
+   * both changed since the last sync.
+   */
   bothChanged: boolean;
+
+  /**
+   * Whether only .gadget/ files have changed on the environment's
+   * filesystem.
+   */
+  onlyDotGadgetFilesChanged: boolean;
+
+  /**
+   * The hashes of the files at the local filesVersion.
+   */
+  localFilesVersionHashes: Hashes;
+
+  /**
+   * The hashes of the files on the local filesystem.
+   */
+  localHashes: Hashes;
+
+  /**
+   * The changes the local filesystem has made since the last sync.
+   */
+  localChanges: ChangesWithHash;
+
+  /**
+   * The changes the local filesystem needs to push to make the
+   * environment's filesystem in sync with the local filesystem.
+   *
+   * NOTE: If the environment's filesystem has changed since the last
+   * sync, these changes will undo those changes.
+   */
+  localChangesToPush: Changes | ChangesWithHash;
+
+  /**
+   * The filesVersion of the environment's filesystem.
+   */
+  environmentFilesVersion: bigint;
+
+  /**
+   * The hashes of the files on the environment's filesystem.
+   */
+  environmentHashes: Hashes;
+
+  /**
+   * The changes the environment's filesystem has made since the last
+   * sync.
+   */
+  environmentChanges: ChangesWithHash;
+
+  /**
+   * The changes the local filesystem needs to pull from the
+   * environment's filesystem to be in sync with the environment's
+   * filesystem.
+   *
+   * NOTE: If the local filesystem has changed since the last sync,
+   * these changes will undo those changes.
+   */
+  environmentChangesToPull: Changes | ChangesWithHash;
 };
 
 export class FileSync {
@@ -74,72 +139,75 @@ export class FileSync {
     `;
 
     try {
-      const [localHashes, { filesVersionHashes, gadgetHashes, gadgetFilesVersion }] = await Promise.all([
+      const [localHashes, { localFilesVersionHashes, environmentHashes, environmentFilesVersion }] = await Promise.all([
         // get the hashes of our local files
         this.syncJson.directory.hashes(),
         // get the hashes of our local filesVersion and the latest filesVersion
         (async () => {
-          let gadgetFilesVersion: bigint;
-          let gadgetHashes: Hashes;
-          let filesVersionHashes: Hashes;
+          let localFilesVersionHashes: Hashes;
+          let environmentHashes: Hashes;
+          let environmentFilesVersion: bigint;
 
           if (this.syncJson.filesVersion === 0n) {
             // we're either syncing for the first time or we're syncing a
             // non-empty directory without a `.gadget/sync.json` file,
-            // regardless just get the hashes of the latest filesVersion
+            // regardless get the hashes of the latest filesVersion
             const { fileSyncHashes } = await this.syncJson.edit.query({ query: FILE_SYNC_HASHES_QUERY });
-            gadgetFilesVersion = BigInt(fileSyncHashes.filesVersion);
-            gadgetHashes = fileSyncHashes.hashes;
-            filesVersionHashes = {};
+            environmentFilesVersion = BigInt(fileSyncHashes.filesVersion);
+            environmentHashes = fileSyncHashes.hashes;
+            localFilesVersionHashes = {}; // represents an empty directory
           } else {
-            // this isn't the first time we're syncing, so get the hashes
-            // of the files at our local filesVersion and the latest
-            // filesVersion
+            // this isn't the first time we're syncing, so get the
+            // hashes of the files at our local filesVersion and the
+            // latest filesVersion
             const { fileSyncComparisonHashes } = await this.syncJson.edit.query({
               query: FILE_SYNC_COMPARISON_HASHES_QUERY,
               variables: { filesVersion: String(this.syncJson.filesVersion) },
             });
-            gadgetFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
-            gadgetHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
-            filesVersionHashes = fileSyncComparisonHashes.filesVersionHashes.hashes;
+
+            localFilesVersionHashes = fileSyncComparisonHashes.filesVersionHashes.hashes;
+            environmentHashes = fileSyncComparisonHashes.latestFilesVersionHashes.hashes;
+            environmentFilesVersion = BigInt(fileSyncComparisonHashes.latestFilesVersionHashes.filesVersion);
           }
 
-          return { filesVersionHashes, gadgetHashes, gadgetFilesVersion };
+          return { localFilesVersionHashes, environmentHashes, environmentFilesVersion };
         })(),
       ]);
 
-      const inSync = isEqualHashes(ctx, localHashes, gadgetHashes);
+      const inSync = isEqualHashes(ctx, localHashes, environmentHashes);
 
       const localChanges = getNecessaryChanges(ctx, {
-        from: filesVersionHashes,
+        from: localFilesVersionHashes,
         to: localHashes,
-        existing: gadgetHashes,
-        ignore: [".gadget/"],
+        existing: environmentHashes,
+        ignore: [".gadget/"], // gadget manages these files
       });
 
-      let gadgetChanges = getNecessaryChanges(ctx, {
-        from: filesVersionHashes,
-        to: gadgetHashes,
+      let environmentChanges = getNecessaryChanges(ctx, {
+        from: localFilesVersionHashes,
+        to: environmentHashes,
         existing: localHashes,
       });
 
-      if (!inSync && localChanges.size === 0 && gadgetChanges.size === 0) {
-        // the local filesystem is missing .gadget/ files
-        gadgetChanges = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
-        assert(gadgetChanges.size > 0, "expected gadgetChanges to have changes");
+      if (!inSync && localChanges.size === 0 && environmentChanges.size === 0) {
+        // we're not in sync, but neither the local filesystem nor the
+        // environment's filesystem have any changes; this is only
+        // possible if the local filesystem has modified .gadget/ files
+        environmentChanges = getNecessaryChanges(ctx, { from: localHashes, to: environmentHashes });
+        assert(environmentChanges.size > 0, "expected environmentChanges to have changes");
         assert(
-          Array.from(gadgetChanges.keys()).every((path) => path.startsWith(".gadget/")),
-          "expected all gadgetChanges to be .gadget/ files",
+          Array.from(environmentChanges.keys()).every((path) => path.startsWith(".gadget/")),
+          "expected all environmentChanges to be .gadget/ files",
         );
       }
 
-      assert(inSync || localChanges.size > 0 || gadgetChanges.size > 0, "there must be changes if hashes don't match");
+      assert(inSync || localChanges.size > 0 || environmentChanges.size > 0, "there must be changes if hashes don't match");
 
-      const localChangesToPush = getNecessaryChanges(ctx, { from: gadgetHashes, to: localHashes, ignore: [".gadget/"] });
-      const gadgetChangesToPull = getNecessaryChanges(ctx, { from: localHashes, to: gadgetHashes });
+      const localChangesToPush = getNecessaryChanges(ctx, { from: environmentHashes, to: localHashes, ignore: [".gadget/"] });
+      const environmentChangesToPull = getNecessaryChanges(ctx, { from: localHashes, to: environmentHashes });
 
-      const onlyDotGadgetFilesChanged = Array.from(gadgetChangesToPull.keys()).every((filepath) => filepath.startsWith(".gadget/"));
-      const bothChanged = localChanges.size > 0 && gadgetChanges.size > 0 && !onlyDotGadgetFilesChanged;
+      const onlyDotGadgetFilesChanged = Array.from(environmentChangesToPull.keys()).every((filepath) => filepath.startsWith(".gadget/"));
+      const bothChanged = localChanges.size > 0 && environmentChanges.size > 0 && !onlyDotGadgetFilesChanged;
 
       if (inSync) {
         spinner.succeed`Your files are up to date. ${ts()}`;
@@ -149,14 +217,14 @@ export class FileSync {
 
       return {
         inSync,
-        filesVersionHashes,
+        localFilesVersionHashes,
         localHashes,
         localChanges,
         localChangesToPush,
-        gadgetHashes,
-        gadgetChanges,
-        gadgetChangesToPull,
-        gadgetFilesVersion,
+        environmentHashes,
+        environmentChanges,
+        environmentChangesToPull,
+        environmentFilesVersion,
         onlyDotGadgetFilesChanged,
         bothChanged,
       };
@@ -167,7 +235,7 @@ export class FileSync {
   }
 
   async print(ctx: Context<SyncJsonArgs>, { hashes }: { hashes?: FileSyncHashes } = {}): Promise<void> {
-    const { inSync, localChanges, gadgetChanges, onlyDotGadgetFilesChanged, bothChanged } = hashes ?? (await this.hashes(ctx));
+    const { inSync, localChanges, environmentChanges, onlyDotGadgetFilesChanged, bothChanged } = hashes ?? (await this.hashes(ctx));
     if (inSync) {
       // the spinner in hashes will have already printed that we're in sync
       return;
@@ -185,9 +253,9 @@ export class FileSync {
       `;
     }
 
-    if (gadgetChanges.size > 0 && !onlyDotGadgetFilesChanged) {
+    if (environmentChanges.size > 0 && !onlyDotGadgetFilesChanged) {
       printChanges(ctx, {
-        changes: gadgetChanges,
+        changes: environmentChanges,
         tense: "past",
         title: sprint`Your environment's files {underline have}${bothChanged ? " also" : ""} changed.`,
       });
@@ -214,30 +282,30 @@ export class FileSync {
    * @param options - The options to use.
    * @param options.changes - The changes to send.
    * @param options.printLocalChangesOptions - The options to use when printing the local changes.
-   * @param options.printGadgetChangesOptions - The options to use when printing the changes from Gadget.
+   * @param options.printEnvironmentChangesOptions - The options to use when printing the changes from Gadget.
    * @returns A promise that resolves when the changes have been sent.
    */
-  async mergeChangesWithGadget(
+  async mergeChangesWithEnvironment(
     ctx: Context<DevArgs>,
     {
       changes,
       printLocalChangesOptions,
-      printGadgetChangesOptions,
+      printEnvironmentChangesOptions,
     }: {
       changes: Changes;
       printLocalChangesOptions?: Partial<PrintChangesOptions>;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
+      printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
     },
   ): Promise<void> {
     await this._syncOperations.add(async () => {
       try {
-        await this._sendChangesToGadget(ctx, { changes, printLocalChangesOptions });
+        await this._sendChangesToEnvironment(ctx, { changes, printLocalChangesOptions });
       } catch (error) {
         swallowFilesVersionMismatch(ctx, error);
         // we either sent the wrong expectedFilesVersion or we received
         // a filesVersion that is greater than the expectedFilesVersion
         // + 1, so we need to stop what we're doing and get in sync
-        await this.sync(ctx, { printGadgetChangesOptions });
+        await this.merge(ctx, { printEnvironmentChangesOptions });
       }
     });
   }
@@ -251,19 +319,19 @@ export class FileSync {
    * @param options.beforeChanges - A callback that is called before the changes occur.
    * @param options.afterChanges - A callback that is called after the changes occur.
    * @param options.onError - A callback that is called if an error occurs.
-   * @param options.printGadgetChangesOptions - The options to use when printing the changes from Gadget.
+   * @param options.printEnvironmentChangesOptions - The options to use when printing the changes from Gadget.
    * @returns A function that unsubscribes from changes on Gadget.
    */
-  subscribeToGadgetChanges(
+  subscribeToEnvironmentChanges(
     ctx: Context<DevArgs>,
     {
       beforeChanges = noop,
-      printGadgetChangesOptions,
+      printEnvironmentChangesOptions,
       afterChanges = noop,
       onError,
     }: {
       beforeChanges?: (data: { changed: string[]; deleted: string[] }) => Promisable<void>;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
+      printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
       afterChanges?: (data: { changes: Changes }) => Promisable<void>;
       onError: (error: unknown) => void;
     },
@@ -316,12 +384,12 @@ export class FileSync {
               filesVersion: remoteFilesVersion,
               files: changed,
               delete: deleted.map((file) => file.path),
-              printGadgetChangesOptions: {
+              printEnvironmentChangesOptions: {
                 tense: "past",
                 ensureEmptyLineAbove: true,
                 title: sprintln`{green ${symbol.tick}} Pulled ${pluralize("file", changed.length + deleted.length)}. ${symbol.arrowLeft} ${ts()}`,
                 limit: 5,
-                ...printGadgetChangesOptions,
+                ...printEnvironmentChangesOptions,
               },
             });
 
@@ -338,19 +406,18 @@ export class FileSync {
    * - Conflicts are resolved by prompting the user to either keep their local changes or keep Gadget's changes.
    * - This function will not return until the filesystem is in sync.
    */
-  // TODO: rename to merge
-  async sync(
+  async merge(
     ctx: Context<DevArgs>,
     {
       hashes,
       maxAttempts = 10,
       printLocalChangesOptions,
-      printGadgetChangesOptions,
+      printEnvironmentChangesOptions,
     }: {
       hashes?: FileSyncHashes;
       maxAttempts?: number;
       printLocalChangesOptions?: Partial<PrintChangesOptions>;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
+      printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
     } = {},
   ): Promise<void> {
     let attempt = 0;
@@ -365,7 +432,7 @@ export class FileSync {
       if (hashes.inSync) {
         this._syncOperations.clear();
         ctx.log.info("filesystem in sync");
-        await this.syncJson.save(hashes.gadgetFilesVersion);
+        await this.syncJson.save(hashes.environmentFilesVersion);
         return;
       }
 
@@ -373,7 +440,7 @@ export class FileSync {
       ctx.log.info("merging", { attempt, ...hashes });
 
       try {
-        await this._merge(ctx, { hashes, printLocalChangesOptions, printGadgetChangesOptions });
+        await this._merge(ctx, { hashes, printLocalChangesOptions, printEnvironmentChangesOptions });
       } catch (error) {
         swallowFilesVersionMismatch(ctx, error);
         // we either sent the wrong expectedFilesVersion or we received
@@ -382,7 +449,7 @@ export class FileSync {
       }
     } while (attempt < maxAttempts);
 
-    throw new TooManySyncAttemptsError(maxAttempts);
+    throw new TooManyMergeAttemptsError(maxAttempts);
   }
 
   /**
@@ -404,7 +471,8 @@ export class FileSync {
       printLocalChangesOptions?: PrintChangesOptions;
     } = {},
   ): Promise<void> {
-    const { localChangesToPush, gadgetChanges, gadgetFilesVersion, onlyDotGadgetFilesChanged } = hashes ?? (await this.hashes(ctx));
+    const { localChangesToPush, environmentChanges, environmentFilesVersion, onlyDotGadgetFilesChanged } =
+      hashes ?? (await this.hashes(ctx));
     assert(localChangesToPush.size > 0, "cannot push if there are no changes");
 
     // TODO: lift this check up to the push command
@@ -412,7 +480,7 @@ export class FileSync {
       // they didn't pass --force
       !(force ?? ctx.args["--force"]) &&
       // their environment's files have changed
-      gadgetChanges.size > 0 &&
+      environmentChanges.size > 0 &&
       // some of the changes aren't .gadget/ files
       !onlyDotGadgetFilesChanged
     ) {
@@ -422,11 +490,11 @@ export class FileSync {
     }
 
     try {
-      await this._sendChangesToGadget(ctx, {
+      await this._sendChangesToEnvironment(ctx, {
         // what changes need to be made to your local files to make
         // them match the environment's files
         changes: localChangesToPush,
-        expectedFilesVersion: gadgetFilesVersion,
+        expectedFilesVersion: environmentFilesVersion,
         printLocalChangesOptions,
       });
     } catch (error) {
@@ -435,7 +503,7 @@ export class FileSync {
       // environment's files have changed since we last checked, so
       // throw a nicer error message
       // TODO: we don't have to do this if only .gadget/ files changed
-      throw new MaybeExpectedError(sprint`
+      throw new EdgeCaseError(sprint`
         Your environment's files have changed since we last checked.
 
         Please re-run "ggt ${ctx.command}" to see the changes and try again.
@@ -448,15 +516,15 @@ export class FileSync {
     {
       hashes,
       force,
-      printGadgetChangesOptions,
+      printEnvironmentChangesOptions,
     }: {
       hashes?: FileSyncHashes;
       force?: boolean;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
+      printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
     } = {},
   ): Promise<void> {
-    const { localChanges, gadgetChangesToPull, gadgetFilesVersion } = hashes ?? (await this.hashes(ctx));
-    assert(gadgetChangesToPull.size > 0, "cannot push if there are no changes");
+    const { localChanges, environmentChangesToPull, environmentFilesVersion } = hashes ?? (await this.hashes(ctx));
+    assert(environmentChangesToPull.size > 0, "cannot push if there are no changes");
 
     // TODO: lift this check up to the pull command
     if (localChanges.size > 0 && !(force ?? ctx.args["--force"])) {
@@ -465,26 +533,26 @@ export class FileSync {
       `;
     }
 
-    await this._getChangesFromGadget(ctx, {
-      changes: gadgetChangesToPull,
-      filesVersion: gadgetFilesVersion,
-      printGadgetChangesOptions,
+    await this._getChangesFromEnvironment(ctx, {
+      changes: environmentChangesToPull,
+      filesVersion: environmentFilesVersion,
+      printEnvironmentChangesOptions,
     });
   }
 
   private async _merge(
     ctx: Context<DevArgs>,
     {
-      hashes: { localChanges, gadgetChanges, gadgetFilesVersion },
+      hashes: { localChanges, environmentChanges, environmentFilesVersion },
       printLocalChangesOptions,
-      printGadgetChangesOptions,
+      printEnvironmentChangesOptions,
     }: {
       hashes: FileSyncHashes;
       printLocalChangesOptions?: Partial<PrintChangesOptions>;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
+      printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
     },
   ): Promise<void> {
-    const conflicts = getConflicts({ localChanges, gadgetChanges });
+    const conflicts = getConflicts({ localChanges, environmentChanges });
     if (conflicts.size > 0) {
       ctx.log.debug("conflicts detected", { conflicts });
 
@@ -502,44 +570,43 @@ export class FileSync {
           break;
         }
         case MergeConflictPreference.LOCAL: {
-          gadgetChanges = withoutConflictingChanges({ conflicts, changes: gadgetChanges });
+          environmentChanges = withoutConflictingChanges({ conflicts, changes: environmentChanges });
           break;
         }
-        case MergeConflictPreference.GADGET: {
+        case MergeConflictPreference.ENVIRONMENT: {
           localChanges = withoutConflictingChanges({ conflicts, changes: localChanges });
           break;
         }
       }
     }
 
-    if (gadgetChanges.size > 0) {
-      await this._getChangesFromGadget(ctx, {
-        changes: gadgetChanges,
-        filesVersion: gadgetFilesVersion,
-        printGadgetChangesOptions,
+    if (environmentChanges.size > 0) {
+      await this._getChangesFromEnvironment(ctx, {
+        changes: environmentChanges,
+        filesVersion: environmentFilesVersion,
+        printEnvironmentChangesOptions,
       });
     }
 
     if (localChanges.size > 0) {
-      await this._sendChangesToGadget(ctx, {
+      await this._sendChangesToEnvironment(ctx, {
         changes: localChanges,
-        expectedFilesVersion: gadgetFilesVersion,
+        expectedFilesVersion: environmentFilesVersion,
         printLocalChangesOptions,
       });
     }
   }
 
-  // TODO: rename to _getChangesFromEnvironment
-  private async _getChangesFromGadget(
+  private async _getChangesFromEnvironment(
     ctx: Context<SyncJsonArgs>,
     {
       filesVersion,
       changes,
-      printGadgetChangesOptions,
+      printEnvironmentChangesOptions,
     }: {
       filesVersion: bigint;
       changes: Changes | ChangesWithHash;
-      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
+      printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
     },
   ): Promise<void> {
     ctx.log.debug("getting changes from gadget", { filesVersion, changes });
@@ -551,7 +618,7 @@ export class FileSync {
         changes,
         tense: "present",
         title: sprint`Pulling ${pluralize("file", changes.size)}. ${symbol.arrowLeft}`,
-        ...printGadgetChangesOptions,
+        ...printEnvironmentChangesOptions,
       }),
     );
 
@@ -575,7 +642,7 @@ export class FileSync {
         files,
         delete: changes.deleted(),
         spinner,
-        printGadgetChangesOptions,
+        printEnvironmentChangesOptions,
       });
     } catch (error) {
       spinner.fail();
@@ -583,7 +650,7 @@ export class FileSync {
     }
   }
 
-  private async _sendChangesToGadget(
+  private async _sendChangesToEnvironment(
     ctx: Context<SyncJsonArgs>,
     {
       changes,
@@ -638,6 +705,16 @@ export class FileSync {
     if (changed.length === 0 && deleted.length === 0) {
       ctx.log.debug("skipping send because there are no changes");
       return;
+    }
+
+    const contentLength = changed.map((change) => change.content.length).reduce((a, b) => a + b, 0);
+    if (contentLength > MAX_PUSH_CONTENT_LENGTH) {
+      throw new EdgeCaseError(sprint`
+        {underline Your file changes are too large to push.}
+
+        Run "ggt status" to see your changes and consider
+        ignoring some files or pushing in smaller batches.
+      `);
     }
 
     const spinner = spin({ ensureEmptyLineAbove: true })(
@@ -724,7 +801,7 @@ export class FileSync {
       filesVersion: bigint | string;
       files: File[];
       delete: string[];
-      printGadgetChangesOptions?: Partial<PrintChangesOptions>;
+      printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
       spinner?: spinner;
     },
   ): Promise<Changes> {
@@ -812,7 +889,7 @@ export class FileSync {
       changes,
       tense: "past",
       title: sprint`{green ${symbol.tick}} Pulled ${pluralize("file", changes.size)}. ${symbol.arrowLeft} ${ts()}`,
-      ...options.printGadgetChangesOptions,
+      ...options.printEnvironmentChangesOptions,
     });
 
     if (changes.has("yarn.lock")) {

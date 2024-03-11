@@ -15,37 +15,34 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Push changes from your local filesystem to your environment's filesystem.
-
-      Changes are calculated from the last time you ran
-      "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
+      Push your local files to your environment's filesystem.
+      Changes are tracked from the last "ggt dev", "ggt push", or
+      "ggt pull" run locally.
 
       {bold USAGE}
         ggt push
 
       {bold EXAMPLES}
         $ ggt push
-        $ ggt push --force
-        $ ggt push --force --env=staging
-        $ ggt push --force --env=staging --allow-unknown-directory
+        $ ggt push --env=staging
+        $ ggt push --env=staging --force
 
       {bold FLAGS}
         -a, --app=<name>   The application to push files to
         -e, --env=<name>   The environment to push files to
-            --force        Discard un-synchronized environment changes
+            --force        Discard changes to your environment's filesystem
 
         Run "ggt push --help" for more information.
     `;
   }
 
   return sprint`
-    Push changes from your local filesystem to your environment's filesystem.
+    Push your local files to your environment's filesystem.
+    Changes are tracked from the last "ggt dev", "ggt push", or
+    "ggt pull" run locally.
 
-    Changes are calculated from the last time you ran
-    "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
-
-    If your environment has also made changes since the last sync,
-    you will be prompted to discard them or abort the push.
+    If your environment has un-pulled changes, and "--force" is not passed,
+    you will be prompted to {underline discard them} or abort the push.
 
     {bold USAGE}
 
@@ -55,9 +52,9 @@ export const usage: Usage = (ctx) => {
     {bold EXAMPLES}
 
       $ ggt push
-      $ ggt push --force
-      $ ggt push --force --env=staging
-      $ ggt push --force --env=staging --allow-unknown-directory
+      $ ggt push --env=staging
+      $ ggt push --env=staging --force
+      $ ggt push --env=staging --force --allow-unknown-directory
 
     {bold FLAGS}
 
@@ -68,7 +65,7 @@ export const usage: Usage = (ctx) => {
         file in the current directory or any parent directories.
 
       -e, --env, --environment=<name>
-        The development environment to push files to.
+        The environment to push files to.
 
         Defaults to the environment within the ".gadget/sync.json"
         file in the current directory or any parent directories.
@@ -87,7 +84,7 @@ export const usage: Usage = (ctx) => {
         Defaults to false.
 
       --allow-different-app
-        Allows "ggt push" to continue with a different --app than the
+        Allows "ggt push" to continue with a different "--app" than the
         one found within the ".gadget/sync.json" file.
 
         Defaults to false.
@@ -103,8 +100,6 @@ export const command: Command<typeof args> = async (ctx) => {
 
       If you are trying to push changes from a specific directory,
       you must "cd" to that directory and then run "ggt push".
-
-      Run "ggt push -h" for more information.
     `);
   }
 
@@ -120,7 +115,7 @@ export const command: Command<typeof args> = async (ctx) => {
     return;
   }
 
-  if (hashes.gadgetChangesToPull.size > 0 && !hashes.onlyDotGadgetFilesChanged) {
+  if (hashes.environmentChangesToPull.size > 0 && !hashes.onlyDotGadgetFilesChanged) {
     // show them the environment changes they will discard
     await filesync.print(ctx, { hashes });
   }

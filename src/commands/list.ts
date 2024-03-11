@@ -1,7 +1,9 @@
 import { getApps } from "../services/app/app.js";
 import type { Command, Usage } from "../services/command/command.js";
+import { output } from "../services/output/output.js";
 import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
+import { sprint, sprintln } from "../services/output/sprint.js";
+import { printTable } from "../services/output/table.js";
 import { getUserOrLogin } from "../services/user/user.js";
 
 export const usage: Usage = () => sprint`
@@ -27,17 +29,18 @@ export const command: Command = async (ctx) => {
     return;
   }
 
-  let longestSlug = 0;
-  let longestDomain = 0;
+  if (output.isInteractive) {
+    printTable({
+      json: apps,
+      headers: ["Name", "Domain"],
+      rows: apps.map((app) => [app.slug, app.primaryDomain]),
+    });
+  } else {
+    let simpleOutput = "";
+    for (const app of apps) {
+      simpleOutput += sprintln`${app.slug}\t${app.primaryDomain}`;
+    }
 
-  for (const app of apps) {
-    longestSlug = Math.max(longestSlug, app.slug.length);
-    longestDomain = Math.max(longestDomain, app.primaryDomain.length);
-  }
-
-  println`{bold Slug}${" ".repeat(longestSlug - 4)} {bold Domain}`;
-  println`${"─".repeat(Math.max(longestSlug, 4))} ${"─".repeat(Math.max(longestDomain, 6))}`;
-  for (const app of apps.sort((a, b) => a.slug.localeCompare(b.slug))) {
-    println`${app.slug}${" ".repeat(longestSlug - app.slug.length)} ${app.primaryDomain}`;
+    println({ json: apps })(simpleOutput);
   }
 };

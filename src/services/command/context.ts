@@ -1,6 +1,6 @@
 import type { EmptyObject } from "type-fest";
 import type { RootArgs } from "../../commands/root.js";
-import type { App, Environment } from "../app/app.js";
+import type { Application, Environment } from "../app/app.js";
 import { createLogger, type Logger } from "../output/log/logger.js";
 import type { StructuredLoggerOptions } from "../output/log/structured.js";
 import type { User } from "../user/user.js";
@@ -89,7 +89,7 @@ export class Context<
   /**
    * The app this command is running against, if any.
    */
-  #app?: App;
+  #app?: Application;
 
   /**
    * The environment this command is running against, if any.
@@ -173,11 +173,11 @@ export class Context<
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  get app(): App | undefined {
+  get app(): Application | undefined {
     return this.#app ?? this.#parent?.app;
   }
 
-  set app(app: App) {
+  set app(app: Application) {
     this.#app = app;
     if (this.#parent) {
       this.#parent.app = app;

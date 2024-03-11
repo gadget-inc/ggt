@@ -1,13 +1,13 @@
 import nock from "nock";
 import { expect } from "vitest";
-import { EnvironmentType, type App } from "../../src/services/app/app.js";
+import { EnvironmentType, type Application, type Environment } from "../../src/services/app/app.js";
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
 
 /**
  * A Gadget app to use in tests.
  */
-export const testApp: App = Object.freeze({
+export const testApp: Application = Object.freeze({
   id: 1n,
   slug: "test",
   primaryDomain: "test.gadget.app",
@@ -38,9 +38,14 @@ export const testApp: App = Object.freeze({
 });
 
 /**
+ * The first environment of the {@linkcode testApp}.
+ */
+export const testEnvironment: Environment = testApp.environments[0]!;
+
+/**
  * A Gadget app to use in tests with a different ID and slug.
  */
-export const testApp2: App = Object.freeze({
+export const testApp2: Application = Object.freeze({
   ...testApp,
   id: 2n,
   slug: "test2",
@@ -50,7 +55,7 @@ export const testApp2: App = Object.freeze({
 /**
  * A Gadget app to use when testing apps with only 2 environments.
  */
-export const testAppWith2Environments: App = Object.freeze({
+export const testAppWith2Environments: Application = Object.freeze({
   id: 2n,
   slug: "test-with-2-environments",
   primaryDomain: "test-with-2-environments.gadget.app",
@@ -73,7 +78,7 @@ export const testAppWith2Environments: App = Object.freeze({
 /**
  * A Gadget app to use when testing apps without environments.
  */
-export const testAppWith0Environments: App = Object.freeze({
+export const testAppWith0Environments: Application = Object.freeze({
   id: 3n,
   slug: "test-with-0-environments",
   primaryDomain: "test-with-0-environments.gadget.app",

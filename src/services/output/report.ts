@@ -7,7 +7,7 @@ import terminalLink from "terminal-link";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { env } from "../config/env.js";
-import { parseBoolean } from "../util/boolean.js";
+import { packageJson } from "../config/package-json.js";
 import { isAbortError } from "../util/is.js";
 import { serializeError } from "../util/object.js";
 import { workspaceRoot } from "../util/paths.js";
@@ -23,7 +23,7 @@ export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<
   ctx.log.error("reporting error and exiting", { error: cause });
 
   try {
-    const error = CLIError.from(cause);
+    const error = GGTError.from(cause);
     error.print();
 
     if (error.isBug === IsBug.NO) {
@@ -45,7 +45,7 @@ export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<
           environment: env.value,
           platform: config.platform,
           shell: config.shell,
-          version: config.version,
+          version: packageJson.version,
         },
         contexts: {
           ctx: {
@@ -54,8 +54,8 @@ export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<
           },
           cause: error.cause ? serializeError(error.cause) : undefined,
           app: {
-            app_name: config.name,
-            app_version: config.version,
+            app_name: packageJson.name,
+            app_version: packageJson.version,
           },
           device: {
             name: os.hostname(),
@@ -81,9 +81,9 @@ export const installErrorHandlers = (ctx: Context): void => {
 
   Sentry.init({
     dsn: "https://0c26e0d8afd94e77a88ee1c3aa9e7065@o250689.ingest.sentry.io/6703266",
-    release: config.version,
-    enabled: env.productionLike && parseBoolean(process.env["GGT_SENTRY_ENABLED"] ?? "true"),
-    environment: config.version.includes("experimental") ? "experimental" : "production",
+    enabled: env.productionLike && ctx.args["--telemetry"],
+    release: packageJson.version,
+    environment: packageJson.version.includes("experimental") ? "experimental" : "production",
   });
 
   const handleError = (error: unknown) => void reportErrorAndExit(ctx, error);
@@ -102,7 +102,7 @@ export type IsBug = (typeof IsBug)[keyof typeof IsBug];
 /**
  * Base class for all errors.
  */
-export abstract class CLIError extends Error {
+export abstract class GGTError extends Error {
   /**
    * The ID for this error.
    */
@@ -130,12 +130,12 @@ export abstract class CLIError extends Error {
   }
 
   /**
-   * Constructs a CLIError from an unknown cause.
+   * Constructs a GGTError from an unknown cause.
    *
    * @param cause - The cause of the error.
    */
-  static from(cause: unknown): CLIError {
-    if (cause instanceof CLIError) {
+  static from(cause: unknown): GGTError {
+    if (cause instanceof GGTError) {
       return cause;
     }
     return new UnexpectedError(cause);
@@ -187,7 +187,7 @@ export abstract class CLIError extends Error {
  * either fix it or add a more specific error so that we can provide
  * more useful information.
  */
-export class UnexpectedError extends CLIError {
+export class UnexpectedError extends GGTError {
   isBug = IsBug.YES;
 
   constructor(override cause: unknown) {
@@ -204,7 +204,7 @@ export class UnexpectedError extends CLIError {
 /**
  * An error that is expected to happen sometimes.
  */
-export class MaybeExpectedError extends CLIError {
+export class EdgeCaseError extends GGTError {
   isBug = IsBug.MAYBE;
 
   constructor(

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable func-style */
-import mimicFunction from "mimic-fn";
+import mimicFunction from "mimic-function";
 import assert from "node:assert";
 import type { SetReturnType } from "type-fest";
 import { isFunction } from "./is.js";

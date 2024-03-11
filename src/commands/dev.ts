@@ -41,11 +41,9 @@ export const args = {
 export const usage: Usage = (ctx) => {
   if (ctx.args["-h"]) {
     return sprint`
-      Start developing your application by merging your local files
-      with your environment's files, in real-time.
-
-      File changes are calculated from the last time you ran
-      "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
+      Develop your app by synchronizing your local files with your
+      environment's files, in real-time. Changes are tracked from
+      the last "ggt dev", "ggt push", or "ggt pull" run locally.
 
       {bold USAGE}
         ggt dev [DIRECTORY]
@@ -58,48 +56,44 @@ export const usage: Usage = (ctx) => {
         $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
 
       {bold ARGUMENTS}
-        DIRECTORY    The directory to merge files to (default: ".")
+        DIRECTORY    The directory to synchronize files to (default: ".")
 
       {bold FLAGS}
-        -a, --app=<name>           The application to merge files to
-        -e, --env=<name>           The environment to merge files to
-            --prefer=<filesystem>  Prefer "local" or "gadget" conflicting changes
+        -a, --app=<name>           The application to synchronize files with
+        -e, --env=<name>           The environment to synchronize files with
+            --prefer=<filesystem>  Prefer "local" or "environment" conflicting changes
 
         Run "ggt dev --help" for more information.
     `;
   }
 
   return sprint`
-    Start developing your application by merging your local files
-    with your environment's files, in real-time.
-
-    File changes are calculated from the last time you ran
-    "ggt dev", "ggt push", or "ggt pull" on your local filesystem.
-
-    If conflicting changes are detected, you will be prompted to
-    choose which changes to keep before "ggt dev" resumes.
+    Develop your app by synchronizing your local files with your
+    environment's files, in real-time. Changes are tracked from
+    the last "ggt dev", "ggt push", or "ggt pull" run locally.
 
     While "ggt dev" is running, changes on your local filesystem are
-    immediately reflected on your environment, while file changes on
-    your environment are immediately reflected on your local filesystem.
+    immediately pushed to your environment, while file changes on
+    your environment are immediately pulled to your local filesystem.
 
-    Ideal for:
-      • Local development with editors like VSCode
-      • Storing source code in a Git repository like GitHub
+    If conflicting changes are detected, and "--prefer" is not passed,
+    you will be prompted to choose which changes to keep before
+    "ggt dev" resumes.
 
-    "ggt dev" looks for a ".ignore" file to exclude files and directories
-    from being merged. The format is identical to Git's.
+    "ggt dev" looks for an ".ignore" file to exclude files and
+    directories from being pushed or pulled. The format is identical
+    to Git's.
 
-    These files are always ignored:
+    The following files and directories are always ignored:
       • .DS_Store
       • .gadget
       • .git
       • node_modules
 
     Note:
-      • Only works with development environments
-      • Only supports "yarn" v1 for installing dependencies
-      • Avoid deleting or moving all your files while "ggt dev" is running
+      • "ggt dev" only works with development environments
+      • "ggt dev" only supports "yarn" v1 for installing dependencies
+      • Avoid deleting or moving all of your files while "ggt dev" is running
 
     {bold USAGE}
 
@@ -117,7 +111,7 @@ export const usage: Usage = (ctx) => {
     {bold ARGUMENTS}
 
       DIRECTORY
-        The path to the directory to merge files to.
+        The path to the directory to synchronize files to.
         The directory will be created if it does not exist.
 
         Defaults to the current working directory. (default: ".")
@@ -125,22 +119,22 @@ export const usage: Usage = (ctx) => {
     {bold FLAGS}
 
       -a, --app, --application=<name>
-        The application to merge files to.
+        The application to synchronize files with.
 
         Defaults to the application within the ".gadget/sync.json"
-        file in the current directory or any parent directories.
+        file in the chosen directory or any parent directories.
 
       -e, --env, --environment=<name>
-        The development environment to merge files to.
+        The development environment to synchronize files with.
 
         Defaults to the environment within the ".gadget/sync.json"
-        file in the current directory or any parent directories.
+        file in the chosen directory or any parent directories.
 
       --prefer=<filesystem>
         Which filesystem's changes to automatically keep when
         conflicting changes are detected.
 
-        Must be one of "local" or "gadget".
+        Must be one of "local" or "environment".
 
         If not provided, "ggt dev" will pause when conflicting changes
         are detected and you will be prompted to choose which changes to
@@ -154,7 +148,7 @@ export const usage: Usage = (ctx) => {
         Defaults to false.
 
       --allow-different-app
-        Allows "ggt dev" to continue with a different --app than the
+        Allows "ggt dev" to continue with a different "--app" than the
         one found within the ".gadget/sync.json" file.
 
         Defaults to false.
@@ -164,7 +158,7 @@ export const usage: Usage = (ctx) => {
 };
 
 export const command: Command<DevArgs> = async (ctx) => {
-  if (!which.sync("yarn", { nothrow: true })) {
+  if (!(await which("yarn", { nothrow: true }))) {
     throw new YarnNotFoundError();
   }
 
@@ -183,12 +177,12 @@ export const command: Command<DevArgs> = async (ctx) => {
       //   - we're developing on the same environment as last time
       //   - we're developing on a different environment, but only .gadget/ files have changed
       //  merge the changes (if any) and continue
-      await filesync.sync(ctx, {
+      await filesync.merge(ctx, {
         hashes,
         printLocalChangesOptions: {
           limit: 5,
         },
-        printGadgetChangesOptions: {
+        printEnvironmentChangesOptions: {
           limit: 5,
         },
       });
@@ -213,7 +207,7 @@ export const command: Command<DevArgs> = async (ctx) => {
                   return sprint`Push local changes and {underline discard environment's} changes`;
                 case hashes.localChanges.size > 0:
                   return sprint`Push local changes`;
-                case hashes.gadgetChanges.size > 0:
+                case hashes.environmentChanges.size > 0:
                   return sprint`Discard environment's changes`;
                 default:
                   return unreachable("no changes to push or discard");
@@ -224,7 +218,7 @@ export const command: Command<DevArgs> = async (ctx) => {
                   return sprint`Pull environment's changes and {underline discard local} changes`;
                 case hashes.localChanges.size > 0:
                   return sprint`Discard local changes`;
-                case hashes.gadgetChanges.size > 0:
+                case hashes.environmentChanges.size > 0:
                   return sprint`Pull environment's changes`;
                 default:
                   return unreachable("no changes to pull or discard");
@@ -240,7 +234,7 @@ export const command: Command<DevArgs> = async (ctx) => {
           process.exit(0);
           break;
         case FileSyncStrategy.MERGE:
-          await filesync.sync(ctx, { hashes });
+          await filesync.merge(ctx, { hashes });
           break;
         case FileSyncStrategy.PUSH:
           await filesync.push(ctx as unknown as Context<PushArgs>, { hashes, force: true });
@@ -272,7 +266,7 @@ export const command: Command<DevArgs> = async (ctx) => {
    * Subscribe to file changes on Gadget and apply them to the local
    * filesystem.
    */
-  const filesyncSubscription = filesync.subscribeToGadgetChanges(ctx, {
+  const filesyncSubscription = filesync.subscribeToEnvironmentChanges(ctx, {
     onError: (error) => ctx.abort(error),
     beforeChanges: ({ changed, deleted }) => {
       // add all the files and directories we're about to touch to
@@ -298,7 +292,7 @@ export const command: Command<DevArgs> = async (ctx) => {
   /**
    * A debounced function that sends the local file changes to Gadget.
    */
-  const mergeChangesWithGadget = debounceAsync(ctx.args["--file-push-delay"], async (): Promise<void> => {
+  const mergeChangesWithEnvironment = debounceAsync(ctx.args["--file-push-delay"], async (): Promise<void> => {
     try {
       const lastGitBranch = syncJson.gitBranch;
       await syncJson.loadGitBranch();
@@ -320,7 +314,7 @@ export const command: Command<DevArgs> = async (ctx) => {
       const changes = new Changes(localChangesBuffer.entries());
       localChangesBuffer.clear();
 
-      await filesync.mergeChangesWithGadget(ctx, { changes });
+      await filesync.mergeChangesWithEnvironment(ctx, { changes });
     } catch (error) {
       ctx.log.error("error sending changes to gadget", { error });
       ctx.abort(error);
@@ -389,7 +383,7 @@ export const command: Command<DevArgs> = async (ctx) => {
         }
       }
 
-      mergeChangesWithGadget();
+      mergeChangesWithEnvironment();
     },
   ).once("error", (error) => ctx.abort(error));
 
@@ -399,7 +393,7 @@ export const command: Command<DevArgs> = async (ctx) => {
     filesyncSubscription.unsubscribe();
     fileWatcher.close();
     clearInterval(clearRecentWritesInterval);
-    await mergeChangesWithGadget.flush();
+    await mergeChangesWithEnvironment.flush();
 
     try {
       await filesync.idle();

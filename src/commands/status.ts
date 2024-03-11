@@ -48,7 +48,7 @@ export const command: Command<StatusArgs> = async (ctx) => {
   const hashes = await filesync.hashes(ctx);
   await filesync.print(ctx, { hashes });
 
-  const conflicts = getConflicts({ localChanges: hashes.localChanges, gadgetChanges: hashes.gadgetChanges });
+  const conflicts = getConflicts({ localChanges: hashes.localChanges, environmentChanges: hashes.environmentChanges });
   if (conflicts.size > 0) {
     ctx.log.debug("conflicts detected", { conflicts });
     printConflicts({ conflicts });

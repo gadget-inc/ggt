@@ -1,6 +1,6 @@
 import arg from "arg";
 import type { Simplify } from "type-fest";
-import { CLIError, IsBug, UnexpectedError } from "../output/report.js";
+import { GGTError, IsBug, UnexpectedError } from "../output/report.js";
 import { isNil } from "../util/is.js";
 
 export type ArgsDefinition = Record<string, ArgDefinition>;
@@ -67,18 +67,18 @@ export const parseArgs = <Args extends ArgsDefinition>(args: Args, options?: arg
     return parsed as ArgsDefinitionResult<Args>;
   } catch (error: unknown) {
     if (error instanceof arg.ArgError) {
-      // convert arg.ArgError to CLIError
+      // convert arg.ArgError to GGTError
       // eslint-disable-next-line no-ex-assign
       error = new ArgError(error.message);
     }
-    if (error instanceof CLIError) {
+    if (error instanceof GGTError) {
       throw error;
     }
     throw new UnexpectedError(error);
   }
 };
 
-export class ArgError extends CLIError {
+export class ArgError extends GGTError {
   isBug = IsBug.NO;
 
   protected override render(): string {

@@ -67,10 +67,11 @@ describe("root", () => {
 
       COMMANDS
         dev              Start developing your application
+        deploy           Deploy your environment to production
         status           Show your local and environment's file changes
         push             Push your local files to your environment
         pull             Pull your environment's files to your local computer
-        deploy           Deploy your environment to production
+        open             Open a Gadget location in your browser
         list             List your available applications
         login            Log in to your account
         logout           Log out of your account
@@ -80,7 +81,6 @@ describe("root", () => {
       FLAGS
         -h, --help       Print how to use a command
         -v, --verbose    Print more verbose output
-            --json       Print all output as newline-delimited JSON
             --telemetry  Enable telemetry
 
       Run "ggt [COMMAND] -h" for more information about a specific command.
@@ -96,7 +96,7 @@ describe("root", () => {
     expectStdout().toMatchInlineSnapshot(`
       "Unknown command foobar
 
-      Did you mean login?
+      Did you mean open?
 
       Run ggt --help for usage
       "

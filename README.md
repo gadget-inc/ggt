@@ -45,7 +45,7 @@ Assuming you have a Gadget application named `example`, run the following to clo
 npx ggt@latest dev ~/gadget/example --app=example
 ```
 
-While "ggt dev" is running, `~/gadget/example` will synchronized with your application's filesystem in Gadget's cloud. Any file changes you make locally will be immediately reflected by your application's API and actions if you re-run them.
+While `ggt dev` is running, `~/gadget/example` will synchronized with your application's filesystem in Gadget's cloud. Any file changes you make locally will be immediately reflected by your application's API and actions if you re-run them.
 
 ## Usage
 

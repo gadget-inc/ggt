@@ -817,6 +817,29 @@ export class FileSync {
     const created: string[] = [];
     const updated: string[] = [];
 
+    const renamedFiles: { oldAbsolutePath: string; newAbsolutePath: string }[] = [];
+
+    const isFileRenamed = async (updatedFiles: File[], deletedFileAbsolutePath: string) => {
+      println(`12341234 ${JSON.stringify(updatedFiles)} ${deletedFileAbsolutePath}`);
+      if (deletedFileAbsolutePath.endsWith("/")) {
+        // Deleted empty folder. Rename has no special behavior
+        return { isRenamed: false };
+      }
+      const updatedFilesWithMatchingContent = [];
+      for (const updatedFile of updatedFiles) {
+        if (updatedFile.content === (await fs.readFile(deletedFileAbsolutePath, { encoding: "base64" }))) {
+          updatedFilesWithMatchingContent.push(updatedFile.path);
+        }
+      }
+
+      if (updatedFilesWithMatchingContent.length === 1) {
+        return { isRenamed: true, newAbsolutePath: this.syncJson.directory.absolute(updatedFilesWithMatchingContent[0]!) };
+      } else {
+        // Length > 1 is ambiguous so not considered a rename
+        return { isRenamed: false };
+      }
+    };
+
     await pMap(options.delete, async (filepath) => {
       const currentPath = this.syncJson.directory.absolute(filepath);
       const backupPath = this.syncJson.directory.absolute(".gadget/backup", this.syncJson.directory.relative(filepath));
@@ -831,7 +854,15 @@ export class FileSync {
             // remove the current backup file in case it exists and is a
             // different type (file vs directory)
             await fs.remove(backupPath);
-            await fs.move(currentPath, backupPath);
+
+            const { isRenamed, newAbsolutePath } = await isFileRenamed(options.files, currentPath);
+
+            if (isRenamed) {
+              renamedFiles.push({ oldAbsolutePath: currentPath, newAbsolutePath: newAbsolutePath! });
+              await fs.copy(currentPath, backupPath);
+            } else {
+              await fs.move(currentPath, backupPath);
+            }
           } catch (error) {
             // replicate the behavior of `rm -rf` and ignore ENOENT
             swallowEnoent(error);
@@ -857,8 +888,20 @@ export class FileSync {
         created.push(file.path);
       }
 
+      // When we detect that a file is renamed here, we gotta be sure that the
+      const fileRenamed = renamedFiles.find((renamed) => renamed.newAbsolutePath === absolutePath);
+      println(`12341234 ${JSON.stringify(fileRenamed)}`);
+
       if (file.path.endsWith("/")) {
-        await fs.ensureDir(absolutePath);
+        // File representing empty folder received. Ensure that it is empty locally
+        await fs.emptyDir(absolutePath);
+      } else if (fileRenamed) {
+        // await fs.ensureDir(path.dirname(absolutePath));
+        // await fs.outputFile(absolutePath, Buffer.from(file.content, file.encoding));
+        await fs.rename(fileRenamed.oldAbsolutePath, absolutePath);
+
+        // This still has some leftovers from the original source since we don't have a means to force create the parent DIR
+        // Might need a `deleteEmpty and climb upwards` system similar to other PR here
       } else {
         await fs.outputFile(absolutePath, Buffer.from(file.content, file.encoding));
       }

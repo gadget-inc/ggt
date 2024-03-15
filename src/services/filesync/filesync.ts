@@ -2,6 +2,7 @@ import { execa } from "execa";
 import fs from "fs-extra";
 import ms from "ms";
 import assert from "node:assert";
+import path from "node:path";
 import process from "node:process";
 import pMap from "p-map";
 import PQueue from "p-queue";
@@ -31,6 +32,7 @@ import { sprint, sprintln } from "../output/sprint.js";
 import { symbol } from "../output/symbols.js";
 import { ts } from "../output/timestamp.js";
 import { noop } from "../util/function.js";
+import { isObject } from "../util/is.js";
 import { serializeError } from "../util/object.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
@@ -814,12 +816,20 @@ export class FileSync {
       delete: options.delete,
     });
 
-    const created: string[] = [];
-    const updated: string[] = [];
+    const changes = new Changes();
+    const directoriesWithDeletedFiles = new Set<string>();
 
-    await pMap(options.delete, async (filepath) => {
-      const currentPath = this.syncJson.directory.absolute(filepath);
-      const backupPath = this.syncJson.directory.absolute(".gadget/backup", this.syncJson.directory.relative(filepath));
+    await pMap(options.delete, async (pathToDelete) => {
+      // add all the directories that contain this file to
+      // directoriesWithDeletedFiles so we can clean them up later
+      let dir = path.dirname(pathToDelete);
+      while (dir !== ".") {
+        directoriesWithDeletedFiles.add(this.syncJson.directory.normalize(dir, true));
+        dir = path.dirname(dir);
+      }
+
+      const currentPath = this.syncJson.directory.absolute(pathToDelete);
+      const backupPath = this.syncJson.directory.absolute(".gadget/backup", this.syncJson.directory.relative(pathToDelete));
 
       // rather than `rm -rf`ing files, we move them to
       // `.gadget/backup/` so that users can recover them if something
@@ -832,6 +842,7 @@ export class FileSync {
             // different type (file vs directory)
             await fs.remove(backupPath);
             await fs.move(currentPath, backupPath);
+            changes.set(pathToDelete, { type: "delete" });
           } catch (error) {
             // replicate the behavior of `rm -rf` and ignore ENOENT
             swallowEnoent(error);
@@ -849,12 +860,37 @@ export class FileSync {
       );
     });
 
+    for (const directoryWithDeletedFile of Array.from(directoriesWithDeletedFiles.values()).sort().reverse()) {
+      if (options.files.some((file) => file.path === directoryWithDeletedFile)) {
+        // we're about to create this directory, so we don't need to
+        // clean it up
+        continue;
+      }
+
+      try {
+        // delete any empty directories that contained a deleted file.
+        // if the empty directory should continue to exist, we would
+        // have received an event to create it above
+        await fs.rmdir(this.syncJson.directory.absolute(directoryWithDeletedFile));
+        changes.set(directoryWithDeletedFile, { type: "delete" });
+      } catch (error) {
+        if (isObject(error) && "code" in error && (error.code === "ENOENT" || error.code === "ENOTEMPTY")) {
+          // noop if the directory doesn't exist or isn't empty
+          continue;
+        }
+        throw error;
+      }
+    }
+
     await pMap(options.files, async (file) => {
       const absolutePath = this.syncJson.directory.absolute(file.path);
       if (await fs.pathExists(absolutePath)) {
-        updated.push(file.path);
+        if (!file.path.endsWith("/")) {
+          // only track file updates, not directory updates
+          changes.set(file.path, { type: "update" });
+        }
       } else {
-        created.push(file.path);
+        changes.set(file.path, { type: "create" });
       }
 
       if (file.path.endsWith("/")) {
@@ -876,12 +912,6 @@ export class FileSync {
     });
 
     await this.syncJson.save(String(filesVersion));
-
-    const changes = new Changes([
-      ...created.map((path) => [path, { type: "create" }] as const),
-      ...updated.map((path) => [path, { type: "update" }] as const),
-      ...options.delete.map((path) => [path, { type: "delete" }] as const),
-    ]);
 
     options.spinner?.clear();
 

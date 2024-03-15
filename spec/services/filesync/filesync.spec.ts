@@ -111,6 +111,153 @@ describe("FileSync._writeToLocalFilesystem", () => {
     expect(filesync.syncJson.filesVersion).toBe(1n);
   });
 
+  it("cleans up empty directories 1", async () => {
+    await writeToLocalFilesystem(ctx, {
+      filesVersion: 1n,
+      files: [makeFile({ path: "some/deeply/nested/directory/file.txt" })],
+      delete: [],
+    });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+      "some/": "",
+      "some/deeply/": "",
+      "some/deeply/nested/": "",
+      "some/deeply/nested/directory/": "",
+      "some/deeply/nested/directory/file.txt": "",
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(1n);
+
+    // simulate someone deleting "some/deeply/nested/" in the editor
+    await writeToLocalFilesystem(ctx, {
+      filesVersion: 2n,
+      files: [makeFile({ path: "some/deeply/" })],
+      delete: ["some/deeply/nested/directory/file.txt"],
+    });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/backup/": "",
+      ".gadget/backup/some/": "",
+      ".gadget/backup/some/deeply/": "",
+      ".gadget/backup/some/deeply/nested/": "",
+      ".gadget/backup/some/deeply/nested/directory/": "",
+      ".gadget/backup/some/deeply/nested/directory/file.txt": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+      "some/": "",
+      "some/deeply/": "",
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(2n);
+  });
+
+  it("cleans up empty directories 2", async () => {
+    await writeToLocalFilesystem(ctx, {
+      filesVersion: 1n,
+      files: [
+        makeFile({ path: "api/models/foo/actions/create.js" }),
+        makeFile({ path: "api/models/foo/actions/delete.js" }),
+        makeFile({ path: "api/models/foo/actions/update.js" }),
+        makeFile({ path: "api/models/foo/schema.gadget.ts" }),
+      ],
+      delete: [],
+    });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+      "api/": "",
+      "api/models/": "",
+      "api/models/foo/": "",
+      "api/models/foo/actions/": "",
+      "api/models/foo/actions/create.js": "",
+      "api/models/foo/actions/delete.js": "",
+      "api/models/foo/actions/update.js": "",
+      "api/models/foo/schema.gadget.ts": "",
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(1n);
+
+    // simulate someone renaming "api/models/foo" -> "api/models/bar" in the editor
+    await writeToLocalFilesystem(ctx, {
+      filesVersion: 2n,
+      files: [
+        makeFile({ path: "api/models/bar/actions/create.js" }),
+        makeFile({ path: "api/models/bar/actions/delete.js" }),
+        makeFile({ path: "api/models/bar/actions/update.js" }),
+        makeFile({ path: "api/models/bar/schema.gadget.ts" }),
+      ],
+      delete: [
+        "api/models/foo/actions/create.js",
+        "api/models/foo/actions/delete.js",
+        "api/models/foo/actions/update.js",
+        "api/models/foo/schema.gadget.ts",
+      ],
+    });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/backup/": "",
+      ".gadget/backup/api/": "",
+      ".gadget/backup/api/models/": "",
+      ".gadget/backup/api/models/foo/": "",
+      ".gadget/backup/api/models/foo/actions/": "",
+      ".gadget/backup/api/models/foo/actions/create.js": "",
+      ".gadget/backup/api/models/foo/actions/delete.js": "",
+      ".gadget/backup/api/models/foo/actions/update.js": "",
+      ".gadget/backup/api/models/foo/schema.gadget.ts": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+      "api/": "",
+      "api/models/": "",
+      "api/models/bar/": "",
+      "api/models/bar/actions/": "",
+      "api/models/bar/actions/create.js": "",
+      "api/models/bar/actions/delete.js": "",
+      "api/models/bar/actions/update.js": "",
+      "api/models/bar/schema.gadget.ts": "",
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(2n);
+  });
+
+  it("cleans up empty directories 3", async () => {
+    await writeToLocalFilesystem(ctx, {
+      filesVersion: 1n,
+      files: [makeFile({ path: "some/nested/file.txt" })],
+      delete: [],
+    });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+      "some/": "",
+      "some/nested/": "",
+      "some/nested/file.txt": "",
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(1n);
+
+    // simulate someone deleting "some/" in the editor
+    await writeToLocalFilesystem(ctx, {
+      filesVersion: 2n,
+      files: [],
+      delete: ["some/nested/file.txt"],
+    });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/backup/": "",
+      ".gadget/backup/some/": "",
+      ".gadget/backup/some/nested/": "",
+      ".gadget/backup/some/nested/file.txt": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(2n);
+  });
+
   it("deletes files", async () => {
     await writeDir(localDir, {
       "file.js": "foo",
@@ -129,7 +276,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     await writeToLocalFilesystem(ctx, {
       filesVersion: 1n,
-      files: [],
+      files: [makeFile({ path: "some/deeply/nested/" })],
       delete: ["file.js", "some/deeply/nested/file.js"],
     });
 

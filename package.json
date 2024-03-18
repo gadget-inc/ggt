@@ -83,7 +83,7 @@
     "pluralize": "^8.0.0",
     "semver": "^7.6.0",
     "serialize-error": "^11.0.3",
-    "simple-git": "^3.22.0",
+    "simple-git": "^3.23.0",
     "stdin-discarder": "^0.2.2",
     "string-width": "^7.1.0",
     "strip-ansi": "^7.1.0",

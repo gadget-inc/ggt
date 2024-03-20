@@ -1,5 +1,27 @@
 # @gadgetinc/ggt
 
+## 1.0.1
+
+### Patch Changes
+
+- ccf9e4d: Bump simple-git from 3.22.0 to 3.23.0
+- 0944809: Bump @sentry/node from 7.106.1 to 7.107.0
+- 8c9672f: Bump mimic-function from 5.0.0 to 5.0.1
+- 50af8a5: Bump @sentry/node from 7.106.0 to 7.106.1
+- e1abd14: Cleanup empty directories.
+
+  We've improved how `ggt` calculates which empty directories need to be removed. This should result in fewer empty directories being left behind while running `ggt dev`.
+
+- b838cd3: Bump get-port from 7.0.0 to 7.1.0
+- 2bedcf2: Bump @swc/helpers from 0.5.6 to 0.5.7
+- e3d3ca6: Handle existing files in the `.gadget/backup/` directory.
+
+  When `ggt` needs to backup a file that already exists in the `.gadget/backup/` directory, it will now remove the existing file before creating the backup. This should prevent the following error from occurring:
+
+  ```
+  Error: ENOTDIR: not a directory, lstat '.gadget/backup/routes/webhooks/POST-github.js'
+  ```
+
 ## 1.0.0
 
 ### Major Changes

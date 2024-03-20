@@ -384,6 +384,68 @@ describe("FileSync._writeToLocalFilesystem", () => {
       ".gadget/backup/": "",
       ".gadget/backup/foo.js": "// foo",
     });
+
+    expect(filesync.syncJson.filesVersion).toBe(1n);
+  });
+
+  it("removes old backup files that aren't directories before moving new files into place", async () => {
+    // create a route file without an extension (this is a common mistake in the editor)
+    await fs.outputFile(filesync.syncJson.directory.absolute("api/routes/webhooks"), "");
+
+    // mimic the user deleting the file in the editor
+    await writeToLocalFilesystem(ctx, { filesVersion: 1n, files: [], delete: ["api/routes/webhooks"] });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+      ".gadget/backup/": "",
+      ".gadget/backup/api/": "",
+      ".gadget/backup/api/routes/": "",
+      ".gadget/backup/api/routes/webhooks": "", // this is a file, not a directory
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(1n);
+
+    // mimic the user re-creating the route with a nested path
+    await writeToLocalFilesystem(ctx, {
+      filesVersion: 2n,
+      files: [makeFile({ path: "api/routes/webhooks/POST-github.js" })],
+      delete: [],
+    });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+      ".gadget/backup/": "",
+      ".gadget/backup/api/": "",
+      ".gadget/backup/api/routes/": "",
+      ".gadget/backup/api/routes/webhooks": "",
+      "api/": "",
+      "api/routes/": "",
+      "api/routes/webhooks/": "",
+      "api/routes/webhooks/POST-github.js": "",
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(2n);
+
+    // now mimic the user deleting the file in the editor
+    await writeToLocalFilesystem(ctx, {
+      filesVersion: 3n,
+      files: [],
+      delete: ["api/routes/webhooks/POST-github.js"],
+    });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+      ".gadget/backup/": "",
+      ".gadget/backup/api/": "",
+      ".gadget/backup/api/routes/": "",
+      ".gadget/backup/api/routes/webhooks/": "", // now it's a directory
+      ".gadget/backup/api/routes/webhooks/POST-github.js": "",
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(3n);
   });
 
   it("ensures the filesVersion is greater than or equal to the current filesVersion", async () => {

@@ -43,20 +43,22 @@ describe("UnexpectedError", () => {
     const cause = new Error("Whoops!");
 
     const error = new UnexpectedError(cause);
-    expect(error.sprint()).toMatchInlineSnapshot(`
+    const rendered = error.sprint();
+
+    expect(rendered.replace(/at .*node_modules.*$/gm, "at ...")).toMatchInlineSnapshot(`
       "An unexpected error occurred.
 
       Error: Whoops!
           at spec/services/output/report.spec.ts:43:19
-          at node_modules/@vitest/runner/dist/index.js:134:14
-          at node_modules/@vitest/runner/dist/index.js:59:26
-          at runTest (node_modules/@vitest/runner/dist/index.js:719:17)
-          at runSuite (node_modules/@vitest/runner/dist/index.js:847:15)
-          at runSuite (node_modules/@vitest/runner/dist/index.js:847:15)
-          at runFiles (node_modules/@vitest/runner/dist/index.js:896:5)
-          at startTests (node_modules/@vitest/runner/dist/index.js:905:3)
-          at node_modules/vitest/dist/chunks/runtime-runBaseTests.9RbsHRbU.js:114:7
-          at withEnv (node_modules/vitest/dist/chunks/runtime-runBaseTests.9RbsHRbU.js:82:5)
+          at ...
+          at ...
+          at ...
+          at ...
+          at ...
+          at ...
+          at ...
+          at ...
+          at ...
 
       This is a bug, use the link below to create an issue on GitHub.
 

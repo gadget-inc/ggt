@@ -71,6 +71,22 @@ export const isAbortError = (error: unknown): error is Error | Event => {
   return (error instanceof Error && error.name === "AbortError") || (error instanceof Event && error.type === "abort");
 };
 
+export const isENOENTError = (error: unknown): error is { code: "ENOENT" } => {
+  return isObject(error) && "code" in error && error.code === "ENOENT";
+};
+
+export const isENOTEMPTYError = (error: unknown): error is { code: "ENOTEMPTY" } => {
+  return isObject(error) && "code" in error && error.code === "ENOTEMPTY";
+};
+
+export const isENOTDIRError = (error: unknown): error is { code: "ENOTDIR" } => {
+  return isObject(error) && "code" in error && error.code === "ENOTDIR";
+};
+
+export const isEEXISTError = (error: unknown): error is { code: "EEXIST" } => {
+  return isObject(error) && "code" in error && error.code === "EEXIST";
+};
+
 export const isJavaScriptFile = (filepath: string): boolean => {
   return [".js", ".jsx", ".cjs", ".mjs"].some((ext) => filepath.endsWith(ext));
 };

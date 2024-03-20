@@ -32,7 +32,7 @@ import { sprint, sprintln } from "../output/sprint.js";
 import { symbol } from "../output/symbols.js";
 import { ts } from "../output/timestamp.js";
 import { noop } from "../util/function.js";
-import { isObject } from "../util/is.js";
+import { isEEXISTError, isENOENTError, isENOTDIRError, isENOTEMPTYError } from "../util/is.js";
 import { serializeError } from "../util/object.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
@@ -844,8 +844,30 @@ export class FileSync {
             await fs.move(currentPath, backupPath);
             changes.set(pathToDelete, { type: "delete" });
           } catch (error) {
-            // replicate the behavior of `rm -rf` and ignore ENOENT
-            swallowEnoent(error);
+            if (isENOENTError(error)) {
+              // replicate the behavior of `rm -rf` and ignore ENOENT
+              return;
+            }
+
+            if (isENOTDIRError(error) || isEEXISTError(error)) {
+              // the backup path already exists and ends in a file
+              // rather than a directory, so we have to remove the file
+              // before we can move the current path to the backup path
+              let dir = path.dirname(backupPath);
+              while (dir !== this.syncJson.directory.absolute(".gadget/backup")) {
+                const stats = await fs.stat(dir);
+                // eslint-disable-next-line max-depth
+                if (!stats.isDirectory()) {
+                  // this file is in the way, so remove it
+                  ctx.log.debug("removing file in the way of backup path", { currentPath, backupPath, file: dir });
+                  await fs.remove(dir);
+                }
+                dir = path.dirname(dir);
+              }
+              // still throw the error so we retry
+            }
+
+            throw error;
           }
         },
         {
@@ -874,7 +896,7 @@ export class FileSync {
         await fs.rmdir(this.syncJson.directory.absolute(directoryWithDeletedFile));
         changes.set(directoryWithDeletedFile, { type: "delete" });
       } catch (error) {
-        if (isObject(error) && "code" in error && (error.code === "ENOENT" || error.code === "ENOTEMPTY")) {
+        if (isENOENTError(error) || isENOTEMPTYError(error)) {
           // noop if the directory doesn't exist or isn't empty
           continue;
         }

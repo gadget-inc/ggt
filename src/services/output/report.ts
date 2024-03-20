@@ -81,7 +81,7 @@ export const installErrorHandlers = (ctx: Context): void => {
 
   Sentry.init({
     dsn: "https://0c26e0d8afd94e77a88ee1c3aa9e7065@o250689.ingest.sentry.io/6703266",
-    enabled: env.productionLike && ctx.args["--telemetry"],
+    enabled: env.productionLike && (ctx.args["--telemetry"] ?? false),
     release: packageJson.version,
     environment: packageJson.version.includes("experimental") ? "experimental" : "production",
   });

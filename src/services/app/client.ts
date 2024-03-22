@@ -41,13 +41,8 @@ export class Client {
 
     this.endpoint = endpoint;
 
-    let subdomain = ctx.app.slug;
-    if (ctx.app.hasSplitEnvironments) {
-      subdomain += "--development";
-    }
-
     this._graphqlWsClient = createClient({
-      url: `wss://${subdomain}.${config.domains.app}/edit/api/graphql-ws`,
+      url: `wss://${ctx.app.slug}.${config.domains.app}/edit/api/graphql-ws`,
       shouldRetry: () => true,
       connectionParams: {
         environment: ctx.env.name,

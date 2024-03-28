@@ -1,5 +1,16 @@
 # @gadgetinc/ggt
 
+## 1.0.3
+
+### Patch Changes
+
+- 55ec815: Bump simple-git from 3.23.0 to 3.24.0
+- 6a4d322: Bump graphql-ws from 5.15.0 to 5.16.0
+- 998ca41: Bump @sentry/node from 7.107.0 to 7.108.0
+- a1f4716: Bump cli-table3 from 0.6.3 to 0.6.4
+- c26fdd1: Bump @swc/helpers from 0.5.7 to 0.5.8
+- b3211ae: Bump ansi-escapes from 6.2.0 to 6.2.1
+
 ## 1.0.2
 
 ### Patch Changes

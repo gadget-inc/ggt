@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import ms from "ms";
 import notifier from "node-notifier";
+import pMap from "p-map";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
 import { args, command as sync, type DevArgs } from "../../src/commands/dev.js";
@@ -946,13 +947,15 @@ describe("dev", () => {
       `);
 
       // add a bunch of files
-      const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
-
-      // sleep a bit between each one to simulate a slow filesystem
-      for (const filename of files) {
-        await fs.outputFile(localDir.absolute(filename), filename);
-        await sleep("5ms");
-      }
+      await pMap(
+        Array.from({ length: 10 }, (_, i) => {
+          if (i < 9) {
+            return `file-0${i + 1}.txt`;
+          }
+          return `file-${i + 1}.txt`;
+        }),
+        async (filename) => fs.outputFile(localDir.absolute(filename), filename),
+      );
 
       await waitUntilGadgetFilesVersion(9n);
       await expectDirs().resolves.toMatchInlineSnapshot(`
@@ -989,44 +992,44 @@ describe("dev", () => {
             },
             "9": {
               ".gadget/": "",
-              "file1.txt": "file1.txt",
-              "file10.txt": "file10.txt",
-              "file2.txt": "file2.txt",
-              "file3.txt": "file3.txt",
-              "file4.txt": "file4.txt",
-              "file5.txt": "file5.txt",
-              "file6.txt": "file6.txt",
-              "file7.txt": "file7.txt",
-              "file8.txt": "file8.txt",
-              "file9.txt": "file9.txt",
+              "file-01.txt": "file-01.txt",
+              "file-02.txt": "file-02.txt",
+              "file-03.txt": "file-03.txt",
+              "file-04.txt": "file-04.txt",
+              "file-05.txt": "file-05.txt",
+              "file-06.txt": "file-06.txt",
+              "file-07.txt": "file-07.txt",
+              "file-08.txt": "file-08.txt",
+              "file-09.txt": "file-09.txt",
+              "file-10.txt": "file-10.txt",
             },
           },
           "gadgetDir": {
             ".gadget/": "",
-            "file1.txt": "file1.txt",
-            "file10.txt": "file10.txt",
-            "file2.txt": "file2.txt",
-            "file3.txt": "file3.txt",
-            "file4.txt": "file4.txt",
-            "file5.txt": "file5.txt",
-            "file6.txt": "file6.txt",
-            "file7.txt": "file7.txt",
-            "file8.txt": "file8.txt",
-            "file9.txt": "file9.txt",
+            "file-01.txt": "file-01.txt",
+            "file-02.txt": "file-02.txt",
+            "file-03.txt": "file-03.txt",
+            "file-04.txt": "file-04.txt",
+            "file-05.txt": "file-05.txt",
+            "file-06.txt": "file-06.txt",
+            "file-07.txt": "file-07.txt",
+            "file-08.txt": "file-08.txt",
+            "file-09.txt": "file-09.txt",
+            "file-10.txt": "file-10.txt",
           },
           "localDir": {
             ".gadget/": "",
             ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"9"}},"app":"test","filesVersion":"9"}",
-            "file1.txt": "file1.txt",
-            "file10.txt": "file10.txt",
-            "file2.txt": "file2.txt",
-            "file3.txt": "file3.txt",
-            "file4.txt": "file4.txt",
-            "file5.txt": "file5.txt",
-            "file6.txt": "file6.txt",
-            "file7.txt": "file7.txt",
-            "file8.txt": "file8.txt",
-            "file9.txt": "file9.txt",
+            "file-01.txt": "file-01.txt",
+            "file-02.txt": "file-02.txt",
+            "file-03.txt": "file-03.txt",
+            "file-04.txt": "file-04.txt",
+            "file-05.txt": "file-05.txt",
+            "file-06.txt": "file-06.txt",
+            "file-07.txt": "file-07.txt",
+            "file-08.txt": "file-08.txt",
+            "file-09.txt": "file-09.txt",
+            "file-10.txt": "file-10.txt",
           },
         }
       `);
@@ -1105,10 +1108,15 @@ describe("dev", () => {
       await fs.remove(localDir.absolute("tmp/renamed-directory"));
 
       // add a bunch of files
-      const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
-      for (const filename of files) {
-        await fs.outputFile(localDir.absolute(`tmp/${filename}`), filename);
-      }
+      await pMap(
+        Array.from({ length: 10 }, (_, i) => {
+          if (i < 9) {
+            return `file-0${i + 1}.txt`;
+          }
+          return `file-${i + 1}.txt`;
+        }),
+        async (filename) => fs.outputFile(localDir.absolute(`tmp/${filename}`), filename),
+      );
 
       // give the watcher a chance to see the changes
       await sleep(timeoutMs("2.5s"));
@@ -1130,16 +1138,16 @@ describe("dev", () => {
             ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}},"app":"test","filesVersion":"1"}",
             ".ignore": "**/tmp",
             "tmp/": "",
-            "tmp/file1.txt": "file1.txt",
-            "tmp/file10.txt": "file10.txt",
-            "tmp/file2.txt": "file2.txt",
-            "tmp/file3.txt": "file3.txt",
-            "tmp/file4.txt": "file4.txt",
-            "tmp/file5.txt": "file5.txt",
-            "tmp/file6.txt": "file6.txt",
-            "tmp/file7.txt": "file7.txt",
-            "tmp/file8.txt": "file8.txt",
-            "tmp/file9.txt": "file9.txt",
+            "tmp/file-01.txt": "file-01.txt",
+            "tmp/file-02.txt": "file-02.txt",
+            "tmp/file-03.txt": "file-03.txt",
+            "tmp/file-04.txt": "file-04.txt",
+            "tmp/file-05.txt": "file-05.txt",
+            "tmp/file-06.txt": "file-06.txt",
+            "tmp/file-07.txt": "file-07.txt",
+            "tmp/file-08.txt": "file-08.txt",
+            "tmp/file-09.txt": "file-09.txt",
+            "tmp/file-10.txt": "file-10.txt",
           },
         }
       `);

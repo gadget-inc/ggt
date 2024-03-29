@@ -44,7 +44,7 @@
     "version": "changeset version && npm install --package-lock-only && ./scripts/generate-readme.ts"
   },
   "dependencies": {
-    "@sentry/node": "^7.108.0",
+    "@sentry/node": "^7.109.0",
     "@swc/helpers": "^0.5.8",
     "ansi-escapes": "^6.2.1",
     "arg": "^5.0.2",

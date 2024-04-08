@@ -54,7 +54,7 @@
         "strip-ansi": "^7.1.0",
         "terminal-link": "^3.0.0",
         "ts-dedent": "^2.2.0",
-        "watcher": "^2.3.0",
+        "watcher": "^2.3.1",
         "which": "^4.0.0",
         "ws": "^8.16.0",
         "zod": "^3.22.4"
@@ -8296,9 +8296,9 @@
       }
     },
     "node_modules/dettle": {
-      "version": "1.0.1",
-      "resolved": "https://registry.npmjs.org/dettle/-/dettle-1.0.1.tgz",
-      "integrity": "sha512-/oD3At60ZfhgzpofJtyClNTrIACyMdRe+ih0YiHzAniN0IZnLdLpEzgR6RtGs3kowxUkTnvV/4t1FBxXMUdusQ=="
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/dettle/-/dettle-1.0.2.tgz",
+      "integrity": "sha512-pIVcNUx2/R7P45l3wEUsyrZcfbVUCKBmctUN41syh2asCXmrRndJEiNng9+8socNOAEBiBRqsQCh3HhCkOFwwg=="
     },
     "node_modules/devlop": {
       "version": "1.1.0",
@@ -13812,6 +13812,11 @@
         "asap": "~2.0.3"
       }
     },
+    "node_modules/promise-make-naked": {
+      "version": "2.1.2",
+      "resolved": "https://registry.npmjs.org/promise-make-naked/-/promise-make-naked-2.1.2.tgz",
+      "integrity": "sha512-y7s8ZuHIG56JYspB24be9GFkXA1zXL85Ur9u1DKrW/tvyUoPxWgBjnalK6Nc6l7wHBcAW0c3PO07+XOsWTRuhg=="
+    },
     "node_modules/propagate": {
       "version": "2.0.1",
       "resolved": "https://registry.npmjs.org/propagate/-/propagate-2.0.1.tgz",
@@ -15739,9 +15744,12 @@
       "license": "MIT"
     },
     "node_modules/tiny-readdir": {
-      "version": "2.2.0",
-      "resolved": "https://registry.npmjs.org/tiny-readdir/-/tiny-readdir-2.2.0.tgz",
-      "integrity": "sha512-bO4IgID5M2x5YQFBru/wREgT30YuA8aoOd/F8Rd6LKRIn1gOe9aREjT74J9EVukHqI/2RB+4SM1RgXM0gwxoWw=="
+      "version": "2.7.2",
+      "resolved": "https://registry.npmjs.org/tiny-readdir/-/tiny-readdir-2.7.2.tgz",
+      "integrity": "sha512-211Pbj4W3EVVIrIkABDPlEyLNzAz1Zb921qwmkKQvx7YR90ma3wuzojFx62nptlrAlI/ict1f++r9E/+9DcWnQ==",
+      "dependencies": {
+        "promise-make-naked": "^2.1.1"
+      }
     },
     "node_modules/tinybench": {
       "version": "2.6.0",
@@ -16588,13 +16596,13 @@
       "dev": true
     },
     "node_modules/watcher": {
-      "version": "2.3.0",
-      "resolved": "https://registry.npmjs.org/watcher/-/watcher-2.3.0.tgz",
-      "integrity": "sha512-6hVpT1OhmYTZhsgUND2o2gTL79TosB1rH8DWzDO7KBlyR9Yuxg/LXUGeHJqjjvwpnyHT7uUdDwWczprJuqae9Q==",
+      "version": "2.3.1",
+      "resolved": "https://registry.npmjs.org/watcher/-/watcher-2.3.1.tgz",
+      "integrity": "sha512-d3yl+ey35h05r5EFP0TafE2jsmQUJ9cc2aernRVyAkZiu0J3+3TbNugNcqdUJDoWOfL2p+bNsN427stsBC/HnA==",
       "dependencies": {
-        "dettle": "^1.0.1",
+        "dettle": "^1.0.2",
         "stubborn-fs": "^1.2.5",
-        "tiny-readdir": "^2.2.0"
+        "tiny-readdir": "^2.7.2"
       }
     },
     "node_modules/wcwidth": {
@@ -23012,9 +23020,9 @@
       "dev": true
     },
     "dettle": {
-      "version": "1.0.1",
-      "resolved": "https://registry.npmjs.org/dettle/-/dettle-1.0.1.tgz",
-      "integrity": "sha512-/oD3At60ZfhgzpofJtyClNTrIACyMdRe+ih0YiHzAniN0IZnLdLpEzgR6RtGs3kowxUkTnvV/4t1FBxXMUdusQ=="
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/dettle/-/dettle-1.0.2.tgz",
+      "integrity": "sha512-pIVcNUx2/R7P45l3wEUsyrZcfbVUCKBmctUN41syh2asCXmrRndJEiNng9+8socNOAEBiBRqsQCh3HhCkOFwwg=="
     },
     "devlop": {
       "version": "1.1.0",
@@ -26828,6 +26836,11 @@
         "asap": "~2.0.3"
       }
     },
+    "promise-make-naked": {
+      "version": "2.1.2",
+      "resolved": "https://registry.npmjs.org/promise-make-naked/-/promise-make-naked-2.1.2.tgz",
+      "integrity": "sha512-y7s8ZuHIG56JYspB24be9GFkXA1zXL85Ur9u1DKrW/tvyUoPxWgBjnalK6Nc6l7wHBcAW0c3PO07+XOsWTRuhg=="
+    },
     "propagate": {
       "version": "2.0.1",
       "resolved": "https://registry.npmjs.org/propagate/-/propagate-2.0.1.tgz",
@@ -28240,9 +28253,12 @@
       "dev": true
     },
     "tiny-readdir": {
-      "version": "2.2.0",
-      "resolved": "https://registry.npmjs.org/tiny-readdir/-/tiny-readdir-2.2.0.tgz",
-      "integrity": "sha512-bO4IgID5M2x5YQFBru/wREgT30YuA8aoOd/F8Rd6LKRIn1gOe9aREjT74J9EVukHqI/2RB+4SM1RgXM0gwxoWw=="
+      "version": "2.7.2",
+      "resolved": "https://registry.npmjs.org/tiny-readdir/-/tiny-readdir-2.7.2.tgz",
+      "integrity": "sha512-211Pbj4W3EVVIrIkABDPlEyLNzAz1Zb921qwmkKQvx7YR90ma3wuzojFx62nptlrAlI/ict1f++r9E/+9DcWnQ==",
+      "requires": {
+        "promise-make-naked": "^2.1.1"
+      }
     },
     "tinybench": {
       "version": "2.6.0",
@@ -28803,13 +28819,13 @@
       "dev": true
     },
     "watcher": {
-      "version": "2.3.0",
-      "resolved": "https://registry.npmjs.org/watcher/-/watcher-2.3.0.tgz",
-      "integrity": "sha512-6hVpT1OhmYTZhsgUND2o2gTL79TosB1rH8DWzDO7KBlyR9Yuxg/LXUGeHJqjjvwpnyHT7uUdDwWczprJuqae9Q==",
+      "version": "2.3.1",
+      "resolved": "https://registry.npmjs.org/watcher/-/watcher-2.3.1.tgz",
+      "integrity": "sha512-d3yl+ey35h05r5EFP0TafE2jsmQUJ9cc2aernRVyAkZiu0J3+3TbNugNcqdUJDoWOfL2p+bNsN427stsBC/HnA==",
       "requires": {
-        "dettle": "^1.0.1",
+        "dettle": "^1.0.2",
         "stubborn-fs": "^1.2.5",
-        "tiny-readdir": "^2.2.0"
+        "tiny-readdir": "^2.7.2"
       }
     },
     "wcwidth": {

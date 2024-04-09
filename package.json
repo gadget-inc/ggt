@@ -107,7 +107,7 @@
     "@types/fast-levenshtein": "^0.0.4",
     "@types/fs-extra": "^11.0.4",
     "@types/ms": "^0.7.34",
-    "@types/node": "^18.19.30",
+    "@types/node": "^18.19.31",
     "@types/node-notifier": "^8.0.5",
     "@types/normalize-path": "^3.0.2",
     "@types/pluralize": "^0.0.33",

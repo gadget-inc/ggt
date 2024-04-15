@@ -10,7 +10,7 @@
       "license": "MIT",
       "dependencies": {
         "@sentry/node": "^7.110.0",
-        "@swc/helpers": "^0.5.9",
+        "@swc/helpers": "^0.5.10",
         "ansi-escapes": "^6.2.1",
         "arg": "^5.0.2",
         "boxen": "^7.1.1",
@@ -5436,9 +5436,9 @@
       "dev": true
     },
     "node_modules/@swc/helpers": {
-      "version": "0.5.9",
-      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.9.tgz",
-      "integrity": "sha512-XI76sLwMJoLjJTOK5RblBZkouOJG3X3hjxLCzLnyN1ifAiKQc6Hck3uvnU4Z/dV/Dyk36Ffj8FLvDLV2oWvKTw==",
+      "version": "0.5.10",
+      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.10.tgz",
+      "integrity": "sha512-CU+RF9FySljn7HVSkkjiB84hWkvTaI3rtLvF433+jRSBL2hMu3zX5bGhHS8C80SM++h4xy8hBSnUHFQHmRXSBw==",
       "dependencies": {
         "tslib": "^2.4.0"
       }
@@ -20971,9 +20971,9 @@
       "dev": true
     },
     "@swc/helpers": {
-      "version": "0.5.9",
-      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.9.tgz",
-      "integrity": "sha512-XI76sLwMJoLjJTOK5RblBZkouOJG3X3hjxLCzLnyN1ifAiKQc6Hck3uvnU4Z/dV/Dyk36Ffj8FLvDLV2oWvKTw==",
+      "version": "0.5.10",
+      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.10.tgz",
+      "integrity": "sha512-CU+RF9FySljn7HVSkkjiB84hWkvTaI3rtLvF433+jRSBL2hMu3zX5bGhHS8C80SM++h4xy8hBSnUHFQHmRXSBw==",
       "requires": {
         "tslib": "^2.4.0"
       }

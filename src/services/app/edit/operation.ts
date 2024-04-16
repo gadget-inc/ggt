@@ -1,6 +1,13 @@
 import type { ExecutionResult } from "graphql-ws";
 import type { JsonObject } from "type-fest";
 import type {
+  CreateActionMutation,
+  CreateActionMutationVariables,
+  CreateModelFieldsMutation,
+  CreateModelMutation,
+  CreateModelMutationVariables,
+  CreateRouteMutation,
+  CreateRouteMutationVariables,
   FileSyncComparisonHashesQuery,
   FileSyncComparisonHashesQueryVariables,
   FileSyncFilesQuery,
@@ -192,3 +199,67 @@ export const PUBLISH_STATUS_SUBSCRIPTION = sprint(/* GraphQL */ `
 `) as GraphQLSubscription<PublishStatusSubscription, PublishStatusSubscriptionVariables>;
 
 export type PUBLISH_STATUS_SUBSCRIPTION = typeof PUBLISH_STATUS_SUBSCRIPTION;
+
+export const CREATE_MODEL_MUTATION = sprint(/* GraphQL */ `
+  mutation createModel($path: String!, $fields: [CreateModelFieldsInput!]) {
+    createModel(path: $path, fields: $fields) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+    }
+  }
+`) as GraphQLMutation<CreateModelMutation, CreateModelMutationVariables>;
+
+export type CREATE_MODEL_MUTATION = typeof CREATE_MODEL_MUTATION;
+
+export const CREATE_ACTION_MUTATION = sprint(/* GraphQL */ `
+  mutation createAction($path: String!) {
+    createAction(path: $path) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+    }
+  }
+`) as GraphQLMutation<CreateActionMutation, CreateActionMutationVariables>;
+
+export type CREATE_ACTION_MUTATION = typeof CREATE_ACTION_MUTATION;
+
+export const CREATE_ROUTE_MUTATION = sprint(/* GraphQL */ `
+  mutation createRoute($method: String!, $path: String!) {
+    createRoute(method: $method, path: $path) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+    }
+  }
+`) as GraphQLMutation<CreateRouteMutation, CreateRouteMutationVariables>;
+
+export type CREATE_ROUTE_MUTATION = typeof CREATE_ROUTE_MUTATION;
+
+export const CREATE_MODEL_FIELDS_MUTATION = sprint(/* GraphQL */ `
+  mutation createModelFields($path: String!, $fields: [CreateModelFieldsInput!]!) {
+    createModelFields(path: $path, fields: $fields) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+    }
+  }
+`) as GraphQLMutation<CreateModelFieldsMutation, CreateModelMutationVariables>;
+
+export type CREATE_MODEL_FIELDS_MUTATION = typeof CREATE_MODEL_FIELDS_MUTATION;

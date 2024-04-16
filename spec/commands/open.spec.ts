@@ -138,7 +138,7 @@ describe("open", () => {
       const error: ArgError = await expectError(() => openCommand(ctx));
       expect(error).toBeInstanceOf(ArgError);
       expect(error.sprint()).toMatchInlineSnapshot(`
-        "Unknown model use
+        "✘ Unknown model use
 
         Did you mean user?
 
@@ -151,7 +151,7 @@ describe("open", () => {
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const nockGetModels = () => {
+export const nockGetModels = () => {
   return nockApiResponse({
     operation: GADGET_META_MODELS_QUERY,
     response: {

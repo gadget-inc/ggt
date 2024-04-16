@@ -5,7 +5,7 @@ import { config } from "../config/config.js";
 import { loadAuthHeaders } from "../http/auth.js";
 import { http } from "../http/http.js";
 import { Api } from "./api/api.js";
-import { GADGET_META_MODELS_QUERY } from "./api/operation.js";
+import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "./api/operation.js";
 
 export const EnvironmentType = Object.freeze({
   Development: "development",
@@ -36,9 +36,17 @@ export type Application = z.infer<typeof Application>;
 
 export const ModelApiIdentifier = z.object({
   apiIdentifier: z.string(),
+  namespace: z.nullable(z.array(z.string())).optional(),
 });
 
 export type ModelApiIdentifier = z.infer<typeof ModelApiIdentifier>;
+
+export const GlobalActionApiIdentifier = z.object({
+  apiIdentifier: z.string(),
+  namespace: z.nullable(z.array(z.string())).optional(),
+});
+
+export type GlobalActionApiIdentifier = z.infer<typeof GlobalActionApiIdentifier>;
 
 /**
  * Retrieves a list of apps for the given user. If the user is not
@@ -78,4 +86,20 @@ export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []
   const api = new Api(ctx);
   const { gadgetMeta } = await api.query({ query: GADGET_META_MODELS_QUERY });
   return gadgetMeta.models;
+};
+
+export const getGlobalActions = async (ctx: Context): Promise<GlobalActionApiIdentifier[] | []> => {
+  const headers = loadAuthHeaders();
+  if (!headers) {
+    return [];
+  }
+
+  assert(ctx.user, "must get user before getting models");
+
+  const api = new Api(ctx);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { gadgetMeta } = await api.query({ query: GADGET_GLOBAL_ACTIONS_QUERY });
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+  return gadgetMeta.globalActions;
 };

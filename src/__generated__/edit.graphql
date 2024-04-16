@@ -18,6 +18,14 @@ type APIUpgradeConvergePlanResult {
   success: Boolean!
 }
 
+type AccessToken {
+  createdAt: DateTime!
+  creator: PlatformAccessTokenUser!
+  id: String!
+  name: String!
+  tokenPrefix: String!
+}
+
 type AddApplicationTagResult {
   reason: String
   success: Boolean!
@@ -26,6 +34,12 @@ type AddApplicationTagResult {
 type AddUserTagResult {
   reason: String
   success: Boolean!
+}
+
+type AppDomain {
+  environmentType: String!
+  host: String!
+  isPrimary: Boolean!
 }
 
 type BackgroundAction {
@@ -41,6 +55,7 @@ type BackgroundAction {
   payload: JSON!
   priority: String!
   queue: String
+  result: JSON
   retryPolicy: JSON!
   state: BackgroundActionState!
   type: String!
@@ -48,6 +63,7 @@ type BackgroundAction {
 
 type BackgroundActionAttempt {
   attemptNumber: Int!
+  createdDate: DateTime
   details: JSON!
   failureReason: JSON
   failureSummary: String
@@ -61,6 +77,11 @@ enum BackgroundActionAttemptState {
   FAILED
   RUNNING
   SUCCEEDED
+}
+
+type BackgroundActionBulkResult {
+  failedCount: Int!
+  successCount: Int!
 }
 
 type BackgroundActionConnection {
@@ -90,10 +111,26 @@ type ChangeAppDomainResult {
   success: Boolean!
 }
 
+type ChangeEnvironmentSlugResult {
+  onlyValidate: Boolean
+  reason: String
+  success: Boolean!
+}
+
 type ContributorResult {
   email: String!
   isOwner: Boolean!
   isPending: Boolean!
+}
+
+input CreateModelFieldsInput {
+  fieldType: String!
+  name: String!
+}
+
+input CreateModelInput {
+  fields: [CreateModelFieldsInput!]!
+  path: String!
 }
 
 """
@@ -218,6 +255,19 @@ type GadgetRole {
   selectable: Boolean!
 }
 
+type GadgetV1MigrationEligibilityResult {
+  eligible: Boolean!
+  reason: String
+}
+
+type GeneratePlatformAccessTokenResult {
+  createdAt: DateTime!
+  creator: PlatformAccessTokenUser!
+  id: String!
+  name: String!
+  token: String!
+}
+
 type IdentifySupportConversationResult {
   identificationEmail: String!
   identificationToken: String!
@@ -239,9 +289,22 @@ type MigrateEnvironmentsResult {
   success: Boolean!
 }
 
-type MigrateFBAResult {
+type MigrateGadgetV1Result {
+  installDependenciesOperationKey: String
   reason: String
   success: Boolean!
+}
+
+type MigrateGadgetV1Status {
+  inProgress: Boolean!
+  progress: String
+  progressDetails: MigrateGadgetV1StatusProgressDetails
+  success: Boolean!
+}
+
+type MigrateGadgetV1StatusProgressDetails {
+  current: Int!
+  total: Int!
 }
 
 enum ModelExportFormat {
@@ -252,18 +315,29 @@ enum ModelExportFormat {
 type Mutation {
   addApplicationTag(tag: String!): AddApplicationTagResult
   addUserTag(replaceMatches: [String!], tag: String!): AddUserTagResult
+  bulkCancelBackgroundActions(filter: BackgroundActionFilter!): BackgroundActionBulkResult!
+  bulkDeleteBackgroundActions(filter: BackgroundActionFilter!): BackgroundActionBulkResult!
+  bulkStartNextBackgroundActionAttemptsNow(filter: BackgroundActionFilter!): BackgroundActionBulkResult!
   cancelBackgroundAction(id: String!): BackgroundAction!
   changeAppDomain(newSubdomain: String!, onlyValidate: Boolean): ChangeAppDomainResult
+  changeEnvironmentSlug(newSlug: String!, onlyValidate: Boolean): ChangeEnvironmentSlugResult
   convergePackages: Boolean!
+  createAction(path: String!): RemoteFileSyncEvents!
   createEnvironment(environment: EnvironmentInput!): Environment!
+  createModel(fields: [CreateModelFieldsInput!], path: String!): RemoteFileSyncEvents!
+  createModelFields(fields: [CreateModelFieldsInput!]!, path: String!): RemoteFileSyncEvents!
+  createRoute(method: String!, path: String!): RemoteFileSyncEvents!
   deleteApp(onlyProduction: Boolean): DeleteAppStatusResult
   deleteBackgroundAction(id: String!): Boolean!
   deleteEnvironment(slug: String!): Boolean!
+  deletePlatformAccessTokens(tokens: [String!]!): Boolean!
   enableFrontend(hasShopifyConnection: Boolean!): EnableFrontendResult @deprecated(reason: "enabling frontends on legacy apps is no longer supported")
   exportModelData(filterSort: JSON, format: ModelExportFormat, modelApiIdentifier: String!, selection: [String!]): Boolean!
+  gadgetV1MigrationEligibility: GadgetV1MigrationEligibilityResult
+  generatePlatformAccessToken(name: String!): GeneratePlatformAccessTokenResult!
   migrateAAC: MigrateAACResult
   migrateEnvironments(existingToProduction: Boolean!): MigrateEnvironmentsResult @deprecated(reason: "legacy environments are no longer supported")
-  migrateFBA: MigrateFBAResult
+  migrateGadgetV1: MigrateGadgetV1Result
   patchEnvironmentTree(clientID: EnvironmentTreeClientId!, patches: [JSON!]!, txID: String): EnvironmentPatchResult
   publish: EnvironmentPublishResult
   publishFileSyncEvents(input: PublishFileSyncEventsInput!): PublishFileSyncEventsResult!
@@ -278,6 +352,7 @@ type Mutation {
   triggerRunShopifySync(shopIds: [String!]!): TriggerRunShopifySyncResult
   uninstallShop(shopId: String!): UninstallShopResult
   unregisterWebhooks(apiKeys: [String!], connectionKey: String!, modelKeys: [String!]): UnregisterWebhooksResult
+  updatePlatformAccessTokens(tokens: [PlatformAccessTokenInput!]!): [AccessToken!]!
   uploadFiles(files: [UploadFile!]!): UploadFilesResult!
   uploadTemplateAsset(file: Upload!): UploadTemplateAssetResult!
 }
@@ -287,6 +362,23 @@ type OffsetPageInfo {
   hasPreviousPage: Boolean!
   page: Int!
   total: Int!
+  """
+  If the total is less than the real total, this will be true.
+  
+  Can be used, for example, to show a "100+" in the UI.
+  """
+  totalIncomplete: Boolean!
+}
+
+input PlatformAccessTokenInput {
+  id: String!
+  name: String!
+}
+
+type PlatformAccessTokenUser {
+  email: String!
+  id: String!
+  name: String
 }
 
 type Problem {
@@ -345,6 +437,7 @@ type PublishStatusState {
 
 type Query {
   apiUpgradeConvergePlan(currentVersion: String!, targetVersion: String!): APIUpgradeConvergePlanResult
+  appDomains: [AppDomain!]!
   backgroundAction(id: String!): BackgroundAction
   backgroundActions(filter: BackgroundActionFilter, page: Int): BackgroundActionConnection!
   currentUser: User!
@@ -358,6 +451,7 @@ type Query {
   initialSnapshot: JSON!
   listContributors: [ContributorResult!]! @deprecated(reason: "use team")
   logsSearch(direction: String, end: DateTime, limit: Int, query: String!, start: DateTime, step: Int): LogSearchResult!
+  platformAccessTokens: [AccessToken!]!
   publishIssues: [PublishIssue!]!
   remoteFilesVersion: String!
   roles: [GadgetRole!]!
@@ -397,6 +491,8 @@ type SetFrameworkVersionResult {
 type Subscription {
   environmentTreePathPatches(clientID: EnvironmentTreeClientId!, path: String!): EnvironmentSubscriptionResult
   logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
+  migrateGadgetV1Status: MigrateGadgetV1Status
+  openBackgroundActions: Int!
   publishStatus(allowCharges: Boolean, force: Boolean, localFilesVersion: String!): PublishStatusState
   remoteFileSyncEvents(encoding: FileSyncEncoding, localFilesVersion: String!): RemoteFileSyncEvents!
   reportClientPresence(clientID: EnvironmentTreeClientId!): Boolean

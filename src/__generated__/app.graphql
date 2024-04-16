@@ -217,6 +217,7 @@ type GadgetGlobalAction {
   apiIdentifier: String!
   examples: GadgetGlobalActionGraphQLType
   name: String!
+  namespace: [String!]
   requiresInput: Boolean!
   triggers: [GadgetTrigger!]
 }
@@ -276,6 +277,7 @@ type GadgetModel {
   initialCreatedState: String
   key: String!
   name: String!
+  namespace: [String!]
   pluralApiIdentifier: String!
   pluralName: String!
   searchable: Boolean!

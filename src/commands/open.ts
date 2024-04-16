@@ -88,7 +88,7 @@ export const command: Command<OpenArgs> = async (ctx) => {
 
       Did you mean {blueBright ${closest}}?
 
-      Run "ggt open -h" for usage.
+      Run "ggt open --help" for usage
     `);
   }
 

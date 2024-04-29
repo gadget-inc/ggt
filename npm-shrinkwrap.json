@@ -20,7 +20,7 @@
         "cli-cursor": "^4.0.0",
         "cli-spinners": "^2.9.2",
         "cli-table3": "^0.6.4",
-        "dayjs": "^1.11.10",
+        "dayjs": "^1.11.11",
         "execa": "^8.0.1",
         "fast-levenshtein": "^3.0.0",
         "figures": "^6.1.0",
@@ -8122,9 +8122,9 @@
       }
     },
     "node_modules/dayjs": {
-      "version": "1.11.10",
-      "resolved": "https://registry.npmjs.org/dayjs/-/dayjs-1.11.10.tgz",
-      "integrity": "sha512-vjAczensTgRcqDERK0SR2XMwsF/tSvnvlv6VcF2GIhg6Sx4yOIt/irsr1RDJsKiIyBzJDpCoXiWWq28MqH2cnQ=="
+      "version": "1.11.11",
+      "resolved": "https://registry.npmjs.org/dayjs/-/dayjs-1.11.11.tgz",
+      "integrity": "sha512-okzr3f11N6WuqYtZSvm+F776mB41wRZMhKP+hc34YdW+KmtYYK9iqvHSwo2k9FEH3fhGXvOPV6yz2IcSrfRUDg=="
     },
     "node_modules/debounce": {
       "version": "1.2.1",
@@ -22986,9 +22986,9 @@
       }
     },
     "dayjs": {
-      "version": "1.11.10",
-      "resolved": "https://registry.npmjs.org/dayjs/-/dayjs-1.11.10.tgz",
-      "integrity": "sha512-vjAczensTgRcqDERK0SR2XMwsF/tSvnvlv6VcF2GIhg6Sx4yOIt/irsr1RDJsKiIyBzJDpCoXiWWq28MqH2cnQ=="
+      "version": "1.11.11",
+      "resolved": "https://registry.npmjs.org/dayjs/-/dayjs-1.11.11.tgz",
+      "integrity": "sha512-okzr3f11N6WuqYtZSvm+F776mB41wRZMhKP+hc34YdW+KmtYYK9iqvHSwo2k9FEH3fhGXvOPV6yz2IcSrfRUDg=="
     },
     "debounce": {
       "version": "1.2.1",

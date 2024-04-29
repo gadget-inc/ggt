@@ -55,7 +55,7 @@
     "cli-cursor": "^4.0.0",
     "cli-spinners": "^2.9.2",
     "cli-table3": "^0.6.4",
-    "dayjs": "^1.11.10",
+    "dayjs": "^1.11.11",
     "execa": "^8.0.1",
     "fast-levenshtein": "^3.0.0",
     "figures": "^6.1.0",

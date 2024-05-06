@@ -75,7 +75,7 @@
         "@types/fast-levenshtein": "^0.0.4",
         "@types/fs-extra": "^11.0.4",
         "@types/ms": "^0.7.34",
-        "@types/node": "^18.19.31",
+        "@types/node": "^18.19.32",
         "@types/node-notifier": "^8.0.5",
         "@types/normalize-path": "^3.0.2",
         "@types/pluralize": "^0.0.33",
@@ -5628,9 +5628,9 @@
       "dev": true
     },
     "node_modules/@types/node": {
-      "version": "18.19.31",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.19.31.tgz",
-      "integrity": "sha512-ArgCD39YpyyrtFKIqMDvjz79jto5fcI/SVUs2HwB+f0dAzq68yqOdyaSivLiLugSziTpNXLQrVb7RZFmdZzbhA==",
+      "version": "18.19.32",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.19.32.tgz",
+      "integrity": "sha512-2bkg93YBSDKk8DLmmHnmj/Rwr18TLx7/n+I23BigFwgexUJoMHZOd8X1OFxuF/W3NN0S2W2E5sVabI5CPinNvA==",
       "dev": true,
       "dependencies": {
         "undici-types": "~5.26.4"
@@ -21218,9 +21218,9 @@
       "dev": true
     },
     "@types/node": {
-      "version": "18.19.31",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.19.31.tgz",
-      "integrity": "sha512-ArgCD39YpyyrtFKIqMDvjz79jto5fcI/SVUs2HwB+f0dAzq68yqOdyaSivLiLugSziTpNXLQrVb7RZFmdZzbhA==",
+      "version": "18.19.32",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.19.32.tgz",
+      "integrity": "sha512-2bkg93YBSDKk8DLmmHnmj/Rwr18TLx7/n+I23BigFwgexUJoMHZOd8X1OFxuF/W3NN0S2W2E5sVabI5CPinNvA==",
       "dev": true,
       "requires": {
         "undici-types": "~5.26.4"

@@ -38,7 +38,7 @@
         "mimic-function": "^5.0.1",
         "ms": "^2.1.3",
         "node-notifier": "^10.0.1",
-        "normalize-package-data": "^6.0.0",
+        "normalize-package-data": "^6.0.1",
         "normalize-path": "^3.0.0",
         "open": "^10.1.0",
         "p-map": "^7.0.2",
@@ -13003,9 +13003,9 @@
       "dev": true
     },
     "node_modules/normalize-package-data": {
-      "version": "6.0.0",
-      "resolved": "https://registry.npmjs.org/normalize-package-data/-/normalize-package-data-6.0.0.tgz",
-      "integrity": "sha512-UL7ELRVxYBHBgYEtZCXjxuD5vPxnmvMGq0jp/dGPKKrN7tfsBh2IY7TlJ15WWwdjRWD3RJbnsygUurTK3xkPkg==",
+      "version": "6.0.1",
+      "resolved": "https://registry.npmjs.org/normalize-package-data/-/normalize-package-data-6.0.1.tgz",
+      "integrity": "sha512-6rvCfeRW+OEZagAB4lMLSNuTNYZWLVtKccK79VSTf//yTY5VOCgcpH80O+bZK8Neps7pUnd5G+QlMg1yV/2iZQ==",
       "dependencies": {
         "hosted-git-info": "^7.0.0",
         "is-core-module": "^2.8.1",
@@ -26397,9 +26397,9 @@
       "dev": true
     },
     "normalize-package-data": {
-      "version": "6.0.0",
-      "resolved": "https://registry.npmjs.org/normalize-package-data/-/normalize-package-data-6.0.0.tgz",
-      "integrity": "sha512-UL7ELRVxYBHBgYEtZCXjxuD5vPxnmvMGq0jp/dGPKKrN7tfsBh2IY7TlJ15WWwdjRWD3RJbnsygUurTK3xkPkg==",
+      "version": "6.0.1",
+      "resolved": "https://registry.npmjs.org/normalize-package-data/-/normalize-package-data-6.0.1.tgz",
+      "integrity": "sha512-6rvCfeRW+OEZagAB4lMLSNuTNYZWLVtKccK79VSTf//yTY5VOCgcpH80O+bZK8Neps7pUnd5G+QlMg1yV/2iZQ==",
       "requires": {
         "hosted-git-info": "^7.0.0",
         "is-core-module": "^2.8.1",

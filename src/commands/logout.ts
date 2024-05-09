@@ -6,11 +6,8 @@ import { readSession, writeSession } from "../services/user/session.js";
 export const usage: Usage = () => sprint`
     Log out of your account.
 
-    {bold USAGE}
-      ggt logout
-
-    {bold EXAMPLES}
-      $ ggt logout
+    {bold Usage}
+          ggt logout
 `;
 
 export const command: Command = (_ctx) => {

@@ -6,11 +6,8 @@ import { getUser } from "../services/user/user.js";
 export const usage: Usage = () => sprint`
     Show the name and email address of the currently logged in user.
 
-    {bold USAGE}
-      ggt whoami
-
-    {bold EXAMPLES}
-      $ ggt whoami
+    {gray Usage}
+          ggt whoami
 `;
 
 export const command: Command = async (ctx) => {

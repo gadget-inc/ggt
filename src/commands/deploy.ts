@@ -26,112 +26,29 @@ export const args = {
   "--allow-charges": { type: Boolean },
 };
 
-export const usage: Usage = (ctx) => {
-  if (ctx.args["-h"]) {
-    return sprint`
-      Deploy an environment to production.
-
-      Your local files must match your environment's files
-      before you can deploy. Changes are tracked from
-      the last "ggt dev", "ggt push", or "ggt pull" run locally.
-
-      {bold USAGE}
-        ggt deploy
-
-      {bold EXAMPLES}
-        $ ggt deploy
-        $ ggt deploy --from=staging
-        $ ggt deploy --from=staging --force
-        $ ggt deploy --from=staging --force --allow-problems
-
-      {bold FLAGS}
-        -a, --app=<name>      The application to deploy
-        -e, --from=<env>      The environment to deploy from
-            --force           Discard changes to your environment's filesystem
-            --allow-problems  Deploy regardless of any problems the environment has
-            --allow-charges   Deploy even if doing so will add charges to your account
-
-      Run "ggt deploy --help" for more information.
-    `;
-  }
-
+export const usage: Usage = (_ctx) => {
   return sprint`
-    Deploy an environment to production.
+  Deploys your app to production.
 
-    Your local files must match your environment's files
-    before you can deploy. Changes are tracked from
-    the last "ggt dev", "ggt push", or "ggt pull" run locally.
+  This command first performs a sync to ensure that your local and environment directories
+  match, changes are tracked since last sync. If any conflicts are detected, they must be
+  resolved before deployment.
 
-    If your local files don't match your environment's files, you will
-    be prompted to push your local files before you can deploy.
-
-    If your environment has un-pulled changes, and "--force" is not
-    passed, you will be prompted to {underline discard them} or abort the deploy.
-
-    {bold USAGE}
-
-      ggt deploy [--app=<name>] [--from=<env>] [--force]
-                 [--allow-problems] [--allow-charges]
-
-    {bold EXAMPLES}
-
-      $ ggt deploy
-      $ ggt deploy --from=staging
-      $ ggt deploy --from=staging --force
-      $ ggt deploy --from=staging --force --allow-problems
-      $ ggt deploy --from=staging --force --allow-problems --allow-charges
-
-    {bold FLAGS}
-
-      -a, --app, --application=<name>
-        The application to deploy.
-
-        Defaults to the application within the ".gadget/sync.json"
-        file in the current directory or any parent directories.
-
-      -e, --env, --environment, --from=<name>
-        The environment to deploy from.
-
-        Defaults to the environment within the ".gadget/sync.json"
-        file in the current directory or any parent directories.
-
-      -f, --force
-        Discard any changes made to your environment's filesystem
-        since the last "ggt dev", "ggt push", or "ggt pull".
-
-        Defaults to false.
-
-      --allow-problems, --allow-issues
-        Deploy your environment to production regardless of any problems
-        it may have.
-
-        These problems may include:
-          • Gelly syntax errors
-          • TypeScript errors
-          • Models with missing fields
-
-        Defaults to false.
-
-      --allow-charges
-        Allows "ggt deploy" to continue when deploying your environment
-        to production will add charges to your account.
-
-        Defaults to false.
-
-      --allow-unknown-directory
-        Allows "ggt deploy" to continue when the current directory, nor
-        any parent directories, contain a ".gadget/sync.json" file
-        within it.
-
-        Defaults to false.
-
-      --allow-different-app
-        Allows "ggt deploy" to continue with a different "--app" than the
-        one found within the ".gadget/sync.json" file.
-
-        Defaults to false.
-
-    Run "ggt deploy -h" for less information.
+  {gray Usage}
+        $ ggt deploy [options]
+  
+  {gray Options}
+        -a, --app <app_name>           Selects a specific app to deploy. Default set on ".gadget/sync.json"
+        --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Default set on ".gadget/sync.json"
+        --force                        Deploys by discarding any changes made to the environment directory since last sync
+        --allow-different-directory    Deploys from any local directory with existing files, even if the ".gadget/sync.json" file is missing
+        --allow-different-app          Deploys a different app using the --app command, instead of the one specified in the “.gadget/sync.json” file
+        --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
+        --allow-charges                Deploys even if it results in additional charges to your plan
+  
+  {gray Examples}
+        Deploys code from the staging environment of a myBlog
+        {cyanBright $ ggt deploy -a myBlog -from staging} 
 `;
 };
 

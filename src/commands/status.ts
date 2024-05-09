@@ -12,15 +12,10 @@ export const args = SyncJsonArgs;
 
 export const usage: Usage = () => {
   return sprint`
-    Show file changes since your last dev, push, or pull.
+    Shows file changes since last sync (e.g. $ggt dev, push, deploy etc.)
 
-    {bold USAGE}
-
-      ggt status
-
-    {bold EXAMPLES}
-
-      $ ggt status
+    {gray Usage}
+          ggt status
   `;
 };
 

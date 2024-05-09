@@ -17,93 +17,51 @@ export const args = {
   "--show-all": { type: Boolean },
 };
 
-export const usage: Usage = (ctx) => {
-  if (ctx.args["-h"]) {
-    return sprint`
-      Open a Gadget location in your browser.
-
-      {bold USAGE}
-        ggt open [LOCATION] [MODEL]
-
-      {bold EXAMPLES}
-        $ ggt open
-        $ ggt open logs
-        $ ggt open permissions
-        $ ggt open data modelA
-        $ ggt open schema modelA
-        $ ggt open data --show-all
-        $ ggt open schema --show-all
-
-      {bold ARGUMENTS}
-        LOCATION    The location to open
-        MODEL       The model to open
-
-      {bold FLAGS}
-        -a, --app=<name>      The application to open
-        -e, --env=<env>       The environment to open
-            --show-all        Show all available models to open
-
-      Run "ggt open --help" for more information.
-    `;
-  }
-
+export const usage: Usage = (_ctx) => {
   return sprint`
-    Open a Gadget location in your browser.
+  This command opens a specific Gadget page in your browser, allowing you to directly access
+  various parts of your application's interface such as logs, permissions, data views, or
+  schemas.
 
-    {bold USAGE}
+  {gray Usage}
+        ggt open [LOCATION] [model_name] [--show-all] [options]
+  
+        LOCATION: specifies the part of Gadget to open, by default it'll open the apps home page:
 
-      ggt open [LOCATION] [MODEL] [--show-all]
-               [--app=<name>] [--env=<name>]
+        + logs                Opens logs
+        + permissions         Opens permissions
+        + data                Opens data editor for a specific model
+        + schema              Opens schema editor for a specific model
 
-    {bold EXAMPLES}
+  {gray Options}
+        -a, --app <app_name>   Selects the application to open in your browser. Default set on ".gadget/sync.json"
+        -e, --env <env_name>   Selects the environment to open in your browser. Default set on ".gadget/sync.json"
+        --show-all             Shows all schema, or data options by listing your available models
+  
+  {gray Examples}
+        Opens editor home
+        {cyanBright $ ggt open}
 
-      $ ggt open
-      $ ggt open logs
-      $ ggt open permissions
-      $ ggt open data modelA
-      $ ggt open schema modelA
-      $ ggt open data --show-all
-      $ ggt open schema --show-all
-
-    {bold ARGUMENTS}
-
-      LOCATION
-        The location to open in the browser.
-
-        Can be one of the following:
-          logs         The log viewer
-          permissions  The permissions settings
-          data         The data viewer for the chosen model
-          schema       The schema viewer for the chosen model
-
-        Defaults to opening the editor.
-
-      MODEL
-        The model to open in the browser.
-
-        Only required for the "data" and "schema" locations.
-
-    {bold FLAGS}
-
-      -a, --app, --application=<name>
-        The application to open.
-
-        Defaults to the application within the ".gadget/sync.json"
-        file in the current directory or any parent directories.
-
-      -e, --env, --environment=<name>
-        The environment to open.
-
-        Defaults to the environment within the ".gadget/sync.json"
-        file in the current directory or any parent directories.
-
-      --show-all
-        Makes "ggt open" display available models to open rather than
-        exiting with an error if a model is not specified.
-
-        Defaults to false.
-
-    Run "ggt open -h" for less information.
+        Opens logs 
+        {cyanBright $ ggt open logs} 
+        
+        Opens permissions
+        {cyanBright $ ggt open permissions}
+        
+        Opens data editor for the 'post' model
+        {cyanBright $ ggt open data post}
+        
+        Opens schema for 'post' model
+        {cyanBright $ ggt open schema post}
+        
+        Shows all models available in the data editor
+        {cyanBright $ ggt open data -show-all}
+        
+        Shows all models available in the schema viewer
+        {cyanBright $ ggt open schema --show-all}
+        
+        Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment 
+        {cyanBright $ ggt open data post --app myBlog --env staging}
   `;
 };
 

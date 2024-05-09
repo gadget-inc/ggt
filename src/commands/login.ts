@@ -12,11 +12,8 @@ import { getUser } from "../services/user/user.js";
 export const usage: Usage = () => sprint`
     Log in to your account.
 
-    {bold USAGE}
-      ggt login
-
-    {bold EXAMPLES}
-      $ ggt login
+    {bold Usage}
+          ggt login
 `;
 
 export const login: Command = async (ctx): Promise<void> => {

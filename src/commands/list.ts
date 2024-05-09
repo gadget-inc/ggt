@@ -7,13 +7,10 @@ import { printTable } from "../services/output/table.js";
 import { getUserOrLogin } from "../services/user/user.js";
 
 export const usage: Usage = () => sprint`
-    List your available applications.
+    List the apps available to the currently logged-in user.
 
-    {bold USAGE}
-      ggt list
-
-    {bold EXAMPLES}
-      $ ggt list
+    {bold Usage}
+          ggt list
 `;
 
 export const command: Command = async (ctx) => {

@@ -24,10 +24,10 @@ export const usage: Usage = () => {
   return sprint`
     The command-line interface for Gadget.
 
-    {bold USAGE}
+    {gray Usage}
       ggt [COMMAND]
 
-    {bold COMMANDS}
+    {gray Commands}
       dev              Start developing your application
       deploy           Deploy your environment to production
       status           Show your local and environment's file changes
@@ -40,7 +40,7 @@ export const usage: Usage = () => {
       whoami           Print the currently logged in account
       version          Print this version of ggt
 
-    {bold FLAGS}
+    {gray Flags}
       -h, --help       Print how to use a command
       -v, --verbose    Print more verbose output
           --telemetry  Enable telemetry

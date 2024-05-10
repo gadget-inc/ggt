@@ -12,84 +12,26 @@ export const args = {
   "--force": { type: Boolean, alias: "-f" },
 } satisfies ArgsDefinition;
 
-export const usage: Usage = (ctx) => {
-  if (ctx.args["-h"]) {
-    return sprint`
-      Push your local files to your environment's filesystem.
-      Changes are tracked from the last "ggt dev", "ggt push", or
-      "ggt pull" run locally.
-
-      {bold USAGE}
-        ggt push
-
-      {bold EXAMPLES}
-        $ ggt push
-        $ ggt push --env=staging
-        $ ggt push --env=staging --force
-
-      {bold FLAGS}
-        -a, --app=<name>   The application to push files to
-        -e, --env=<name>   The environment to push files to
-            --force        Discard changes to your environment's filesystem
-
-        Run "ggt push --help" for more information.
-    `;
-  }
-
+export const usage: Usage = (_ctx) => {
   return sprint`
-    Push your local files to your environment's filesystem.
-    Changes are tracked from the last "ggt dev", "ggt push", or
-    "ggt pull" run locally.
+  Pushes your local files to your environment directory.
 
-    If your environment has un-pulled changes, and "--force" is not passed,
-    you will be prompted to {underline discard them} or abort the push.
+  This command first tracks changes in your environment directory since the last sync.
+  If changes are detected, you will be prompted to discard them or abort the push.
 
-    {bold USAGE}
-
-      ggt push [--app=<name>] [--env=<name>] [--force]
-               [--allow-unknown-directory] [--allow-different-app]
-
-    {bold EXAMPLES}
-
-      $ ggt push
-      $ ggt push --env=staging
-      $ ggt push --env=staging --force
-      $ ggt push --env=staging --force --allow-unknown-directory
-
-    {bold FLAGS}
-
-      -a, --app, --application=<name>
-        The application to push files to.
-
-        Defaults to the application within the ".gadget/sync.json"
-        file in the current directory or any parent directories.
-
-      -e, --env, --environment=<name>
-        The environment to push files to.
-
-        Defaults to the environment within the ".gadget/sync.json"
-        file in the current directory or any parent directories.
-
-      -f, --force
-        Discard any changes made to your environment's filesystem
-        since the last "ggt dev", "ggt push", or "ggt pull".
-
-        Defaults to false.
-
-      --allow-unknown-directory
-        Allows "ggt push" to continue when the current directory, nor
-        any parent directories, contain a ".gadget/sync.json" file
-        within it.
-
-        Defaults to false.
-
-      --allow-different-app
-        Allows "ggt push" to continue with a different "--app" than the
-        one found within the ".gadget/sync.json" file.
-
-        Defaults to false.
-
-    Run "ggt push -h" for less information.
+  {gray Usage}
+        ggt push [options]
+  
+  {gray Options}
+        -a, --app <app_name>           Selects the app to push local changes to. Default set on ".gadget/sync.json"
+        --from, -e, --env <env_name>   Selects the environment to push local changes to. Default set on ".gadget/sync.json"
+        --force                        Forces a push by discarding any changes made on your environment directory since last sync
+        --allow-different-directory    Pushes changes from any local directory with existing files, even if the ".gadget/sync.json" file is missing
+        --allow-different-app          Pushes changes to an app using --app command, instead of the one in the “.gadget/sync.json” file
+  
+  {gray Examples}
+        Push all local changes to the main environment by discarding any changes made on main
+        {cyanBright $ ggt push --env main --force}
   `;
 };
 

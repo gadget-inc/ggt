@@ -62,10 +62,10 @@ describe("root", () => {
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget.
 
-      USAGE
+      Usage
         ggt [COMMAND]
 
-      COMMANDS
+      Commands
         dev              Start developing your application
         deploy           Deploy your environment to production
         status           Show your local and environment's file changes
@@ -78,7 +78,7 @@ describe("root", () => {
         whoami           Print the currently logged in account
         version          Print this version of ggt
 
-      FLAGS
+      Flags
         -h, --help       Print how to use a command
         -v, --verbose    Print more verbose output
             --telemetry  Enable telemetry

@@ -38,122 +38,50 @@ export const args = {
   "--file-watch-rename-timeout": { type: Number, default: ms("1.25s") },
 } satisfies ArgsDefinition;
 
-export const usage: Usage = (ctx) => {
-  if (ctx.args["-h"]) {
-    return sprint`
-      Develop your app by synchronizing your local files with your
-      environment's files, in real-time. Changes are tracked from
-      the last "ggt dev", "ggt push", or "ggt pull" run locally.
-
-      {bold USAGE}
-        ggt dev [DIRECTORY]
-
-      {bold EXAMPLES}
-        $ ggt dev
-        $ ggt dev ~/gadget/example
-        $ ggt dev ~/gadget/example
-        $ ggt dev ~/gadget/example --app=example
-        $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
-
-      {bold ARGUMENTS}
-        DIRECTORY    The directory to synchronize files to (default: ".")
-
-      {bold FLAGS}
-        -a, --app=<name>           The application to synchronize files with
-        -e, --env=<name>           The environment to synchronize files with
-            --prefer=<filesystem>  Prefer "local" or "environment" conflicting changes
-
-        Run "ggt dev --help" for more information.
-    `;
-  }
-
+export const usage: Usage = (_ctx) => {
   return sprint`
-    Develop your app by synchronizing your local files with your
-    environment's files, in real-time. Changes are tracked from
-    the last "ggt dev", "ggt push", or "ggt pull" run locally.
+  Clones your Gadget environment's files to your local machine and keeps it in sync, in order to
+  enable local development with your text editor and source code with Git.
 
-    While "ggt dev" is running, changes on your local filesystem are
-    immediately pushed to your environment, while file changes on
-    your environment are immediately pulled to your local filesystem.
+  If your app's local directory already exists, this command first performs a sync to ensure
+  that your local and environment directories match, changes are tracked since last sync. If any 
+  conflicts are detected, they must be resolved before development starts.
 
-    If conflicting changes are detected, and "--prefer" is not passed,
-    you will be prompted to choose which changes to keep before
-    "ggt dev" resumes.
+  {gray Usage}
+        $ ggt dev [DIRECTORY] [options]
 
-    "ggt dev" looks for an ".ignore" file to exclude files and
-    directories from being pushed or pulled. The format is identical
-    to Git's.
+        DIRECTORY: The directory to sync files to (default: the current directory)
+  
+  {gray Options}
+        -a, --app <app_name>        Selects the app to sync files with. Default set on ".gadget/sync.json"
+        -e, --env <env_name>        Selects the environment to sync files with. Default set on ".gadget/sync.json"
+        --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
+        --allow-unknown-directory   Syncs to any local directory with existing files, even if the ".gadget/sync.json" file is missing
+        --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
 
-    The following files and directories are always ignored:
-      • .DS_Store
-      • .gadget
-      • .git
-      • node_modules
+  {gray Ignoring files}
+        ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and 
+        folders from syncing. These files are always ignored:
 
-    Note:
-      • "ggt dev" only works with development environments
-      • "ggt dev" only supports "yarn" v1 for installing dependencies
-      • Avoid deleting or moving all of your files while "ggt dev" is running
+        • .DS_Store
+        • .gadget
+        • .git
+        • node_modules
+  
+  {gray Notes}
+        • "ggt dev" only works with development environments
+        • "ggt dev" only supports "yarn" v1 for installing dependencies
+        • Avoid deleting or moving all of your files while "ggt dev" is running
+  
+  {gray Examples}
+        sync an app in a custom path 
+        {cyanBright $ ggt dev ~/myGadgetApps/myBlog --app myBlogApp}
+        
+        sync with a specific environment and preselect all local changes on conflicts
+        {cyanBright $ ggt dev --env main --prefer local}
 
-    {bold USAGE}
-
-      ggt dev [DIRECTORY] [--app=<name>] [--env=<name>] [--prefer=<filesystem>]
-                          [--allow-unknown-directory] [--allow-different-app]
-
-    {bold EXAMPLES}
-
-      $ ggt dev
-      $ ggt dev ~/gadget/example
-      $ ggt dev ~/gadget/example
-      $ ggt dev ~/gadget/example --app=example
-      $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
-
-    {bold ARGUMENTS}
-
-      DIRECTORY
-        The path to the directory to synchronize files to.
-        The directory will be created if it does not exist.
-
-        Defaults to the current working directory. (default: ".")
-
-    {bold FLAGS}
-
-      -a, --app, --application=<name>
-        The application to synchronize files with.
-
-        Defaults to the application within the ".gadget/sync.json"
-        file in the chosen directory or any parent directories.
-
-      -e, --env, --environment=<name>
-        The development environment to synchronize files with.
-
-        Defaults to the environment within the ".gadget/sync.json"
-        file in the chosen directory or any parent directories.
-
-      --prefer=<filesystem>
-        Which filesystem's changes to automatically keep when
-        conflicting changes are detected.
-
-        Must be one of "local" or "environment".
-
-        If not provided, "ggt dev" will pause when conflicting changes
-        are detected and you will be prompted to choose which changes to
-        keep before "ggt dev" resumes.
-
-      --allow-unknown-directory
-        Allows "ggt dev" to continue when the chosen directory, nor
-        any parent directories, contain a ".gadget/sync.json" file
-        within it.
-
-        Defaults to false.
-
-      --allow-different-app
-        Allows "ggt dev" to continue with a different "--app" than the
-        one found within the ".gadget/sync.json" file.
-
-        Defaults to false.
-
-    Run "ggt dev -h" for less information.
+        sync a custom path with a specific app, environment and preselect all changes from local on conflicts
+        {cyanBright $ ggt dev ~/gadget/example --app=example --env=development --prefer=local}
   `;
 };
 

@@ -19,7 +19,7 @@
         "clean-stack": "^5.2.0",
         "cli-cursor": "^4.0.0",
         "cli-spinners": "^3.0.0",
-        "cli-table3": "^0.6.4",
+        "cli-table3": "^0.6.5",
         "dayjs": "^1.11.11",
         "execa": "^9.0.2",
         "fast-levenshtein": "^3.0.0",
@@ -7427,9 +7427,9 @@
       }
     },
     "node_modules/cli-table3": {
-      "version": "0.6.4",
-      "resolved": "https://registry.npmjs.org/cli-table3/-/cli-table3-0.6.4.tgz",
-      "integrity": "sha512-Lm3L0p+/npIQWNIiyF/nAn7T5dnOwR3xNTHXYEBFBFVPXzCVNZ5lqEC/1eo/EVfpDsQ1I+TX4ORPQgp+UI0CRw==",
+      "version": "0.6.5",
+      "resolved": "https://registry.npmjs.org/cli-table3/-/cli-table3-0.6.5.tgz",
+      "integrity": "sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==",
       "dependencies": {
         "string-width": "^4.2.0"
       },
@@ -22615,9 +22615,9 @@
       "integrity": "sha512-5p/5f8xOjTiyEpdc5KNulSLl5dOOgPQa/m4Rj6fF5UZubWIAvpVIJlnROBbJw+PZHKHlRlYv3KSfGYlecD7qrQ=="
     },
     "cli-table3": {
-      "version": "0.6.4",
-      "resolved": "https://registry.npmjs.org/cli-table3/-/cli-table3-0.6.4.tgz",
-      "integrity": "sha512-Lm3L0p+/npIQWNIiyF/nAn7T5dnOwR3xNTHXYEBFBFVPXzCVNZ5lqEC/1eo/EVfpDsQ1I+TX4ORPQgp+UI0CRw==",
+      "version": "0.6.5",
+      "resolved": "https://registry.npmjs.org/cli-table3/-/cli-table3-0.6.5.tgz",
+      "integrity": "sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==",
       "requires": {
         "@colors/colors": "1.5.0",
         "string-width": "^4.2.0"

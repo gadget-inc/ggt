@@ -17,6 +17,7 @@ updates:
       - dependency-name: "cli-spinners" # requires node >= 18.20, but ggt supports >= 18.0
         update-types:
           - "version-update:semver-major"
+      - dependency-name: "@swc-node/register" # https://github.com/swc-project/swc-node/issues/772
 
   - package-ecosystem: github-actions
     directory: /

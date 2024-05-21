@@ -11,7 +11,10 @@ updates:
         patterns:
           - "@typescript-eslint/*"
     ignore:
-      - dependency-name: "@types/node"
+      - dependency-name: "@types/node" # manually updated
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "cli-spinners" # requires node >= 18.20, but ggt supports >= 18.0
         update-types:
           - "version-update:semver-major"
 

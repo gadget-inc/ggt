@@ -46,8 +46,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
   let syncJson: SyncJson;
   let filesync: FileSync;
 
-  // @ts-expect-error _writeToLocalFilesystem is private
-  let writeToLocalFilesystem: typeof FileSync.prototype._writeToLocalFilesystem;
+  let writeToLocalFilesystem: typeof FileSync.prototype.writeToLocalFilesystem;
 
   beforeEach(async () => {
     loginTestUser();
@@ -58,8 +57,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
     syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
     filesync = new FileSync(syncJson);
 
-    // @ts-expect-error _writeToLocalFilesystem is private
-    writeToLocalFilesystem = filesync._writeToLocalFilesystem.bind(filesync);
+    writeToLocalFilesystem = filesync.writeToLocalFilesystem.bind(filesync);
   });
 
   it("writes files", async () => {

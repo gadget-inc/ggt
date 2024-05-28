@@ -1,6 +1,8 @@
 import arg from "arg";
+import chalk from "chalk";
 import type { Simplify } from "type-fest";
 import { GGTError, IsBug, UnexpectedError } from "../output/report.js";
+import { symbol } from "../output/symbols.js";
 import { isNil } from "../util/is.js";
 
 export type ArgsDefinition = Record<string, ArgDefinition>;
@@ -82,7 +84,7 @@ export class ArgError extends GGTError {
   isBug = IsBug.NO;
 
   protected override render(): string {
-    return this.message;
+    return `${chalk.redBright(symbol.cross)} ` + this.message;
   }
 }
 

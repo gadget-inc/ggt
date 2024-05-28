@@ -13,7 +13,7 @@ import type { Context } from "./context.js";
  * 1. Every command corresponds to a file inside of src/commands/
  * 2. The order determines the order of commands in the README
  */
-export const Commands = ["dev", "deploy", "status", "push", "pull", "open", "list", "login", "logout", "whoami", "version"] as const;
+export const Commands = ["dev", "deploy", "status", "push", "pull", "add", "open", "list", "login", "logout", "whoami", "version"] as const;
 
 /**
  * One of the commands in {@link Commands}.

@@ -1,5 +1,85 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`root > when add is given > prints the usage when --help is passed 1`] = `
+"Adds models, fields, actions and routes to your app.
+
+This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync. 
+If any conflicts are detected, they must be resolved before adding models, fields, actions or routes.
+
+Usage
+  ggt add model <model_name> [field_name:field_type ...]
+
+  ggt add action [CONTEXT]/<action_name>
+  CONTEXT:Specifies the kind of action. Use "model" for model actions otherwise use "action".
+
+  ggt add route <HTTP_METHOD> <route_path>
+
+  ggt add field <model_path>/<field_name>:<field_type>
+
+Options
+  -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
+
+Examples
+  Add a new model 'post' with out fields:
+  $ ggt add model modelA
+
+  Add a new model 'post' with 2 new 'string' type fields 'title' and 'body':
+  $ ggt add model post title:string body:string
+
+  Add new action 'publish' to the 'post' model:
+  ggt add action model/post/publish
+
+  Add a new action 'audit'
+  ggt add action action/audit
+
+  Add a new route 'howdy'
+  ggt add route GET howdy
+
+  Add a new 'boolean' type field 'published' to an existing model
+  ggt add field post/published:boolean
+"
+`;
+
+exports[`root > when add is given > prints the usage when -h is passed 1`] = `
+"Adds models, fields, actions and routes to your app.
+
+This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync. 
+If any conflicts are detected, they must be resolved before adding models, fields, actions or routes.
+
+Usage
+  ggt add model <model_name> [field_name:field_type ...]
+
+  ggt add action [CONTEXT]/<action_name>
+  CONTEXT:Specifies the kind of action. Use "model" for model actions otherwise use "action".
+
+  ggt add route <HTTP_METHOD> <route_path>
+
+  ggt add field <model_path>/<field_name>:<field_type>
+
+Options
+  -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
+
+Examples
+  Add a new model 'post' with out fields:
+  $ ggt add model modelA
+
+  Add a new model 'post' with 2 new 'string' type fields 'title' and 'body':
+  $ ggt add model post title:string body:string
+
+  Add new action 'publish' to the 'post' model:
+  ggt add action model/post/publish
+
+  Add a new action 'audit'
+  ggt add action action/audit
+
+  Add a new route 'howdy'
+  ggt add route GET howdy
+
+  Add a new 'boolean' type field 'published' to an existing model
+  ggt add field post/published:boolean
+"
+`;
+
 exports[`root > when deploy is given > prints the usage when --help is passed 1`] = `
 "Deploys your app to production.
 

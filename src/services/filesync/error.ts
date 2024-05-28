@@ -40,6 +40,7 @@ export class UnknownDirectoryError extends GGTError {
     const dir = this.opts.directory.path;
 
     switch (cmd) {
+      case "add":
       case "open":
       case "status":
         return sprint`

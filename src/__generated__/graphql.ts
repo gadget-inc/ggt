@@ -46,6 +46,15 @@ export type ApiUpgradeConvergePlanResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type AccessToken = {
+  __typename?: 'AccessToken';
+  createdAt: Scalars['DateTime']['output'];
+  creator: PlatformAccessTokenUser;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  tokenPrefix: Scalars['String']['output'];
+};
+
 export type AddApplicationTagResult = {
   __typename?: 'AddApplicationTagResult';
   reason?: Maybe<Scalars['String']['output']>;
@@ -56,6 +65,13 @@ export type AddUserTagResult = {
   __typename?: 'AddUserTagResult';
   reason?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type AppDomain = {
+  __typename?: 'AppDomain';
+  environmentType: Scalars['String']['output'];
+  host: Scalars['String']['output'];
+  isPrimary: Scalars['Boolean']['output'];
 };
 
 export type BackgroundAction = {
@@ -72,6 +88,7 @@ export type BackgroundAction = {
   payload: Scalars['JSON']['output'];
   priority: Scalars['String']['output'];
   queue?: Maybe<Scalars['String']['output']>;
+  result?: Maybe<Scalars['JSON']['output']>;
   retryPolicy: Scalars['JSON']['output'];
   state: BackgroundActionState;
   type: Scalars['String']['output'];
@@ -80,6 +97,7 @@ export type BackgroundAction = {
 export type BackgroundActionAttempt = {
   __typename?: 'BackgroundActionAttempt';
   attemptNumber: Scalars['Int']['output'];
+  createdDate?: Maybe<Scalars['DateTime']['output']>;
   details: Scalars['JSON']['output'];
   failureReason?: Maybe<Scalars['JSON']['output']>;
   failureSummary?: Maybe<Scalars['String']['output']>;
@@ -94,6 +112,12 @@ export enum BackgroundActionAttemptState {
   Running = 'RUNNING',
   Succeeded = 'SUCCEEDED'
 }
+
+export type BackgroundActionBulkResult = {
+  __typename?: 'BackgroundActionBulkResult';
+  failedCount: Scalars['Int']['output'];
+  successCount: Scalars['Int']['output'];
+};
 
 export type BackgroundActionConnection = {
   __typename?: 'BackgroundActionConnection';
@@ -124,11 +148,28 @@ export type ChangeAppDomainResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ChangeEnvironmentSlugResult = {
+  __typename?: 'ChangeEnvironmentSlugResult';
+  onlyValidate?: Maybe<Scalars['Boolean']['output']>;
+  reason?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type ContributorResult = {
   __typename?: 'ContributorResult';
   email: Scalars['String']['output'];
   isOwner: Scalars['Boolean']['output'];
   isPending: Scalars['Boolean']['output'];
+};
+
+export type CreateModelFieldsInput = {
+  fieldType: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type CreateModelInput = {
+  fields: Array<CreateModelFieldsInput>;
+  path: Scalars['String']['input'];
 };
 
 export type DeleteAppStatusResult = {
@@ -459,6 +500,7 @@ export type GadgetGlobalAction = {
   apiIdentifier: Scalars['String']['output'];
   examples?: Maybe<GadgetGlobalActionGraphQlType>;
   name: Scalars['String']['output'];
+  namespace: Array<Scalars['String']['output']>;
   requiresInput: Scalars['Boolean']['output'];
   triggers?: Maybe<Array<GadgetTrigger>>;
 };
@@ -519,6 +561,7 @@ export type GadgetModel = {
   initialCreatedState?: Maybe<Scalars['String']['output']>;
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  namespace?: Maybe<Array<Scalars['String']['output']>>;
   pluralApiIdentifier: Scalars['String']['output'];
   pluralName: Scalars['String']['output'];
   searchable: Scalars['Boolean']['output'];
@@ -589,6 +632,21 @@ export type GadgetRole = {
 export type GadgetTrigger = {
   __typename?: 'GadgetTrigger';
   specID: Scalars['String']['output'];
+};
+
+export type GadgetV1MigrationEligibilityResult = {
+  __typename?: 'GadgetV1MigrationEligibilityResult';
+  eligible: Scalars['Boolean']['output'];
+  reason?: Maybe<Scalars['String']['output']>;
+};
+
+export type GeneratePlatformAccessTokenResult = {
+  __typename?: 'GeneratePlatformAccessTokenResult';
+  createdAt: Scalars['DateTime']['output'];
+  creator: PlatformAccessTokenUser;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  token: Scalars['String']['output'];
 };
 
 export type IdentifySupportConversationResult = {
@@ -775,10 +833,25 @@ export type MigrateEnvironmentsResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type MigrateFbaResult = {
-  __typename?: 'MigrateFBAResult';
+export type MigrateGadgetV1Result = {
+  __typename?: 'MigrateGadgetV1Result';
+  installDependenciesOperationKey?: Maybe<Scalars['String']['output']>;
   reason?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type MigrateGadgetV1Status = {
+  __typename?: 'MigrateGadgetV1Status';
+  inProgress: Scalars['Boolean']['output'];
+  progress?: Maybe<Scalars['String']['output']>;
+  progressDetails?: Maybe<MigrateGadgetV1StatusProgressDetails>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type MigrateGadgetV1StatusProgressDetails = {
+  __typename?: 'MigrateGadgetV1StatusProgressDetails';
+  current: Scalars['Int']['output'];
+  total: Scalars['Int']['output'];
 };
 
 export enum ModelExportFormat {
@@ -790,23 +863,34 @@ export type Mutation = {
   __typename?: 'Mutation';
   addApplicationTag?: Maybe<AddApplicationTagResult>;
   addUserTag?: Maybe<AddUserTagResult>;
+  bulkCancelBackgroundActions: BackgroundActionBulkResult;
+  bulkDeleteBackgroundActions: BackgroundActionBulkResult;
+  bulkStartNextBackgroundActionAttemptsNow: BackgroundActionBulkResult;
   cancelBackgroundAction: BackgroundAction;
   changeAppDomain?: Maybe<ChangeAppDomainResult>;
+  changeEnvironmentSlug?: Maybe<ChangeEnvironmentSlugResult>;
   convergePackages: Scalars['Boolean']['output'];
+  createAction: RemoteFileSyncEvents;
   createEnvironment: Environment;
+  createModel: RemoteFileSyncEvents;
+  createModelFields: RemoteFileSyncEvents;
+  createRoute: RemoteFileSyncEvents;
   deleteApp?: Maybe<DeleteAppStatusResult>;
   deleteBackgroundAction: Scalars['Boolean']['output'];
   deleteEnvironment: Scalars['Boolean']['output'];
+  deletePlatformAccessTokens: Scalars['Boolean']['output'];
   /** @deprecated enabling frontends on legacy apps is no longer supported */
   enableFrontend?: Maybe<EnableFrontendResult>;
   exportModelData: Scalars['Boolean']['output'];
   /** Meta information about the application, like it's name, schema, and other internal details. */
   gadgetMeta: GadgetApplicationMeta;
+  gadgetV1MigrationEligibility?: Maybe<GadgetV1MigrationEligibilityResult>;
+  generatePlatformAccessToken: GeneratePlatformAccessTokenResult;
   internal?: Maybe<InternalMutations>;
   migrateAAC?: Maybe<MigrateAacResult>;
   /** @deprecated legacy environments are no longer supported */
   migrateEnvironments?: Maybe<MigrateEnvironmentsResult>;
-  migrateFBA?: Maybe<MigrateFbaResult>;
+  migrateGadgetV1?: Maybe<MigrateGadgetV1Result>;
   patchEnvironmentTree?: Maybe<EnvironmentPatchResult>;
   publish?: Maybe<EnvironmentPublishResult>;
   publishFileSyncEvents: PublishFileSyncEventsResult;
@@ -823,6 +907,7 @@ export type Mutation = {
   triggerRunShopifySync?: Maybe<TriggerRunShopifySyncResult>;
   uninstallShop?: Maybe<UninstallShopResult>;
   unregisterWebhooks?: Maybe<UnregisterWebhooksResult>;
+  updatePlatformAccessTokens: Array<AccessToken>;
   uploadFiles: UploadFilesResult;
   uploadTemplateAsset: UploadTemplateAssetResult;
 };
@@ -839,6 +924,21 @@ export type MutationAddUserTagArgs = {
 };
 
 
+export type MutationBulkCancelBackgroundActionsArgs = {
+  filter: BackgroundActionFilter;
+};
+
+
+export type MutationBulkDeleteBackgroundActionsArgs = {
+  filter: BackgroundActionFilter;
+};
+
+
+export type MutationBulkStartNextBackgroundActionAttemptsNowArgs = {
+  filter: BackgroundActionFilter;
+};
+
+
 export type MutationCancelBackgroundActionArgs = {
   id: Scalars['String']['input'];
 };
@@ -850,8 +950,37 @@ export type MutationChangeAppDomainArgs = {
 };
 
 
+export type MutationChangeEnvironmentSlugArgs = {
+  newSlug: Scalars['String']['input'];
+  onlyValidate?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
+export type MutationCreateActionArgs = {
+  path: Scalars['String']['input'];
+};
+
+
 export type MutationCreateEnvironmentArgs = {
   environment: EnvironmentInput;
+};
+
+
+export type MutationCreateModelArgs = {
+  fields?: InputMaybe<Array<CreateModelFieldsInput>>;
+  path: Scalars['String']['input'];
+};
+
+
+export type MutationCreateModelFieldsArgs = {
+  fields: Array<CreateModelFieldsInput>;
+  path: Scalars['String']['input'];
+};
+
+
+export type MutationCreateRouteArgs = {
+  method: Scalars['String']['input'];
+  path: Scalars['String']['input'];
 };
 
 
@@ -870,6 +999,11 @@ export type MutationDeleteEnvironmentArgs = {
 };
 
 
+export type MutationDeletePlatformAccessTokensArgs = {
+  tokens: Array<Scalars['String']['input']>;
+};
+
+
 export type MutationEnableFrontendArgs = {
   hasShopifyConnection: Scalars['Boolean']['input'];
 };
@@ -880,6 +1014,11 @@ export type MutationExportModelDataArgs = {
   format?: InputMaybe<ModelExportFormat>;
   modelApiIdentifier: Scalars['String']['input'];
   selection?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+export type MutationGeneratePlatformAccessTokenArgs = {
+  name: Scalars['String']['input'];
 };
 
 
@@ -962,6 +1101,11 @@ export type MutationUnregisterWebhooksArgs = {
 };
 
 
+export type MutationUpdatePlatformAccessTokensArgs = {
+  tokens: Array<PlatformAccessTokenInput>;
+};
+
+
 export type MutationUploadFilesArgs = {
   files: Array<UploadFile>;
 };
@@ -977,6 +1121,12 @@ export type OffsetPageInfo = {
   hasPreviousPage: Scalars['Boolean']['output'];
   page: Scalars['Int']['output'];
   total: Scalars['Int']['output'];
+  /**
+   * If the total is less than the real total, this will be true.
+   *
+   * Can be used, for example, to show a "100+" in the UI.
+   */
+  totalIncomplete: Scalars['Boolean']['output'];
 };
 
 /** Information about pagination in a connection. */
@@ -990,6 +1140,18 @@ export type PageInfo = {
   hasPreviousPage: Scalars['Boolean']['output'];
   /** When paginating backwards, the cursor to continue. */
   startCursor?: Maybe<Scalars['String']['output']>;
+};
+
+export type PlatformAccessTokenInput = {
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type PlatformAccessTokenUser = {
+  __typename?: 'PlatformAccessTokenUser';
+  email: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name?: Maybe<Scalars['String']['output']>;
 };
 
 export type Problem = {
@@ -1056,6 +1218,7 @@ export type PublishStatusState = {
 export type Query = {
   __typename?: 'Query';
   apiUpgradeConvergePlan?: Maybe<ApiUpgradeConvergePlanResult>;
+  appDomains: Array<AppDomain>;
   backgroundAction?: Maybe<BackgroundAction>;
   backgroundActions: BackgroundActionConnection;
   currentSession?: Maybe<Session>;
@@ -1074,6 +1237,7 @@ export type Query = {
   /** @deprecated use team */
   listContributors: Array<ContributorResult>;
   logsSearch: LogSearchResult;
+  platformAccessTokens: Array<AccessToken>;
   publishIssues: Array<PublishIssue>;
   remoteFilesVersion: Scalars['String']['output'];
   roles: Array<GadgetRole>;
@@ -1247,6 +1411,8 @@ export type Subscription = {
   __typename?: 'Subscription';
   environmentTreePathPatches?: Maybe<EnvironmentSubscriptionResult>;
   logsSearch: LogSearchResult;
+  migrateGadgetV1Status?: Maybe<MigrateGadgetV1Status>;
+  openBackgroundActions: Scalars['Int']['output'];
   publishStatus?: Maybe<PublishStatusState>;
   remoteFileSyncEvents: RemoteFileSyncEvents;
   reportClientPresence?: Maybe<Scalars['Boolean']['output']>;
@@ -1365,7 +1531,12 @@ export type User = {
 export type GadgetMetaModelsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GadgetMetaModelsQuery = { __typename?: 'Query', gadgetMeta: { __typename?: 'GadgetApplicationMeta', models: Array<{ __typename?: 'GadgetModel', apiIdentifier: string }> } };
+export type GadgetMetaModelsQuery = { __typename?: 'Query', gadgetMeta: { __typename?: 'GadgetApplicationMeta', models: Array<{ __typename?: 'GadgetModel', apiIdentifier: string, namespace?: Array<string> | null }> } };
+
+export type GadgetMetaGlobalActionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GadgetMetaGlobalActionsQuery = { __typename?: 'Query', gadgetMeta: { __typename?: 'GadgetApplicationMeta', globalActions: Array<{ __typename?: 'GadgetGlobalAction', apiIdentifier: string, namespace: Array<string> }> } };
 
 export type RemoteFileSyncEventsSubscriptionVariables = Exact<{
   localFilesVersion: Scalars['String']['input'];
@@ -1417,3 +1588,34 @@ export type PublishStatusSubscriptionVariables = Exact<{
 
 
 export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', publishStarted: boolean, remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null, nodeLabels?: Array<{ __typename?: 'PublishIssueNodeLabel', type?: string | null, identifier?: string | null } | null> | null }>, status?: { __typename?: 'PublishStatus', code?: string | null, message?: string | null, output?: string | null } | null } | null };
+
+export type CreateModelMutationVariables = Exact<{
+  path: Scalars['String']['input'];
+  fields?: InputMaybe<Array<CreateModelFieldsInput> | CreateModelFieldsInput>;
+}>;
+
+
+export type CreateModelMutation = { __typename?: 'Mutation', createModel: { __typename?: 'RemoteFileSyncEvents', remoteFilesVersion: string, changed: Array<{ __typename?: 'FileSyncChangedEvent', path: string, mode: number, content: string, encoding: FileSyncEncoding }> } };
+
+export type CreateActionMutationVariables = Exact<{
+  path: Scalars['String']['input'];
+}>;
+
+
+export type CreateActionMutation = { __typename?: 'Mutation', createAction: { __typename?: 'RemoteFileSyncEvents', remoteFilesVersion: string, changed: Array<{ __typename?: 'FileSyncChangedEvent', path: string, mode: number, content: string, encoding: FileSyncEncoding }> } };
+
+export type CreateRouteMutationVariables = Exact<{
+  method: Scalars['String']['input'];
+  path: Scalars['String']['input'];
+}>;
+
+
+export type CreateRouteMutation = { __typename?: 'Mutation', createRoute: { __typename?: 'RemoteFileSyncEvents', remoteFilesVersion: string, changed: Array<{ __typename?: 'FileSyncChangedEvent', path: string, mode: number, content: string, encoding: FileSyncEncoding }> } };
+
+export type CreateModelFieldsMutationVariables = Exact<{
+  path: Scalars['String']['input'];
+  fields: Array<CreateModelFieldsInput> | CreateModelFieldsInput;
+}>;
+
+
+export type CreateModelFieldsMutation = { __typename?: 'Mutation', createModelFields: { __typename?: 'RemoteFileSyncEvents', remoteFilesVersion: string, changed: Array<{ __typename?: 'FileSyncChangedEvent', path: string, mode: number, content: string, encoding: FileSyncEncoding }> } };

@@ -135,10 +135,12 @@ export class FileSync {
 
   constructor(readonly syncJson: SyncJson) {}
 
-  async hashes(ctx: Context<SyncJsonArgs>): Promise<FileSyncHashes> {
-    const spinner = spin({ ensureEmptyLineAbove: true })`
+  async hashes(ctx: Context<SyncJsonArgs>, quietly?: boolean): Promise<FileSyncHashes> {
+    const spinner = !quietly
+      ? spin({ ensureEmptyLineAbove: true })`
       Calculating file changes.
-    `;
+    `
+      : undefined;
 
     try {
       const [localHashes, { localFilesVersionHashes, environmentHashes, environmentFilesVersion }] = await Promise.all([
@@ -211,10 +213,12 @@ export class FileSync {
       const onlyDotGadgetFilesChanged = Array.from(environmentChangesToPull.keys()).every((filepath) => filepath.startsWith(".gadget/"));
       const bothChanged = localChanges.size > 0 && environmentChanges.size > 0 && !onlyDotGadgetFilesChanged;
 
-      if (inSync) {
-        spinner.succeed`Your files are up to date. ${ts()}`;
-      } else {
-        spinner.succeed`Calculated file changes. ${ts()}`;
+      if (spinner) {
+        if (inSync) {
+          spinner.succeed`Your files are up to date. ${ts()}`;
+        } else {
+          spinner.succeed`Calculated file changes. ${ts()}`;
+        }
       }
 
       return {
@@ -231,7 +235,9 @@ export class FileSync {
         bothChanged,
       };
     } catch (error) {
-      spinner.fail();
+      if (spinner) {
+        spinner.fail();
+      }
       throw error;
     }
   }
@@ -382,14 +388,14 @@ export class FileSync {
               deleted: deleted.map((file) => file.path),
             });
 
-            const changes = await this._writeToLocalFilesystem(ctx, {
+            const changes = await this.writeToLocalFilesystem(ctx, {
               filesVersion: remoteFilesVersion,
               files: changed,
               delete: deleted.map((file) => file.path),
               printEnvironmentChangesOptions: {
                 tense: "past",
                 ensureEmptyLineAbove: true,
-                title: sprintln`{green ${symbol.tick}} Pulled ${pluralize("file", changed.length + deleted.length)}. ${symbol.arrowLeft} ${ts()}`,
+                title: sprintln`{greenBright ${symbol.tick}} Pulled ${pluralize("file", changed.length + deleted.length)}. ${ts()}`,
                 limit: 5,
                 ...printEnvironmentChangesOptions,
               },
@@ -415,20 +421,22 @@ export class FileSync {
       maxAttempts = 10,
       printLocalChangesOptions,
       printEnvironmentChangesOptions,
+      quietly,
     }: {
       hashes?: FileSyncHashes;
       maxAttempts?: number;
       printLocalChangesOptions?: Partial<PrintChangesOptions>;
       printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
+      quietly?: boolean | undefined;
     } = {},
   ): Promise<void> {
     let attempt = 0;
 
     do {
       if (attempt === 0) {
-        hashes ??= await this.hashes(ctx);
+        hashes ??= await this.hashes(ctx, quietly);
       } else {
-        hashes = await this.hashes(ctx);
+        hashes = await this.hashes(ctx, quietly);
       }
 
       if (hashes.inSync) {
@@ -542,6 +550,174 @@ export class FileSync {
     });
   }
 
+  async writeToLocalFilesystem(
+    ctx: Context<SyncJsonArgs>,
+    options: {
+      filesVersion: bigint | string;
+      files: File[];
+      delete: string[];
+      printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
+      spinner?: spinner;
+    },
+  ): Promise<Changes> {
+    const filesVersion = BigInt(options.filesVersion);
+    assert(filesVersion >= this.syncJson.filesVersion, "filesVersion must be greater than or equal to current filesVersion");
+
+    ctx.log.debug("writing to local filesystem", {
+      filesVersion,
+      files: options.files.map((file) => file.path),
+      delete: options.delete,
+    });
+
+    const changes = new Changes();
+    const directoriesWithDeletedFiles = new Set<string>();
+
+    await pMap(options.delete, async (pathToDelete) => {
+      // add all the directories that contain this file to
+      // directoriesWithDeletedFiles so we can clean them up later
+      let dir = path.dirname(pathToDelete);
+      while (dir !== ".") {
+        directoriesWithDeletedFiles.add(this.syncJson.directory.normalize(dir, true));
+        dir = path.dirname(dir);
+      }
+
+      const currentPath = this.syncJson.directory.absolute(pathToDelete);
+      const backupPath = this.syncJson.directory.absolute(".gadget/backup", this.syncJson.directory.relative(pathToDelete));
+
+      // rather than `rm -rf`ing files, we move them to
+      // `.gadget/backup/` so that users can recover them if something
+      // goes wrong. We've seen a lot of EBUSY/EINVAL errors when moving
+      // files so we retry a few times.
+      await pRetry(
+        async () => {
+          try {
+            // remove the current backup file in case it exists and is a
+            // different type (file vs directory)
+            await fs.remove(backupPath);
+            await fs.move(currentPath, backupPath);
+            changes.set(pathToDelete, { type: "delete" });
+          } catch (error) {
+            if (isENOENTError(error)) {
+              // replicate the behavior of `rm -rf` and ignore ENOENT
+              return;
+            }
+
+            if (isENOTDIRError(error) || isEEXISTError(error)) {
+              // the backup path already exists and ends in a file
+              // rather than a directory, so we have to remove the file
+              // before we can move the current path to the backup path
+              let dir = path.dirname(backupPath);
+              while (dir !== this.syncJson.directory.absolute(".gadget/backup")) {
+                const stats = await fs.stat(dir);
+                // eslint-disable-next-line max-depth
+                if (!stats.isDirectory()) {
+                  // this file is in the way, so remove it
+                  ctx.log.debug("removing file in the way of backup path", { currentPath, backupPath, file: dir });
+                  await fs.remove(dir);
+                }
+                dir = path.dirname(dir);
+              }
+              // still throw the error so we retry
+            }
+
+            throw error;
+          }
+        },
+        {
+          // windows tends to run into these issues way more often than
+          // mac/linux, so we retry more times
+          retries: config.windows ? 4 : 2,
+          minTimeout: ms("100ms"),
+          onFailedAttempt: (error) => {
+            ctx.log.warn("failed to move file to backup", { error, currentPath, backupPath });
+          },
+        },
+      );
+    });
+
+    for (const directoryWithDeletedFile of Array.from(directoriesWithDeletedFiles.values()).sort().reverse()) {
+      if (options.files.some((file) => file.path === directoryWithDeletedFile)) {
+        // we're about to create this directory, so we don't need to
+        // clean it up
+        continue;
+      }
+
+      try {
+        // delete any empty directories that contained a deleted file.
+        // if the empty directory should continue to exist, we would
+        // have received an event to create it above
+        await fs.rmdir(this.syncJson.directory.absolute(directoryWithDeletedFile));
+        changes.set(directoryWithDeletedFile, { type: "delete" });
+      } catch (error) {
+        if (isENOENTError(error) || isENOTEMPTYError(error)) {
+          // noop if the directory doesn't exist or isn't empty
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    await pMap(options.files, async (file) => {
+      const absolutePath = this.syncJson.directory.absolute(file.path);
+      if (await fs.pathExists(absolutePath)) {
+        if (!file.path.endsWith("/")) {
+          // only track file updates, not directory updates
+          changes.set(file.path, { type: "update" });
+        }
+      } else {
+        changes.set(file.path, { type: "create" });
+      }
+
+      if (file.path.endsWith("/")) {
+        await fs.ensureDir(absolutePath);
+      } else {
+        await fs.outputFile(absolutePath, Buffer.from(file.content, file.encoding));
+      }
+
+      if (supportsPermissions) {
+        // the os's default umask makes setting the mode during creation
+        // not work, so an additional fs.chmod call is necessary to
+        // ensure the file has the correct mode
+        await fs.chmod(absolutePath, file.mode & 0o777);
+      }
+
+      if (absolutePath === this.syncJson.directory.absolute(".ignore")) {
+        await this.syncJson.directory.loadIgnoreFile();
+      }
+    });
+
+    await this.syncJson.save(String(filesVersion));
+
+    options.spinner?.clear();
+
+    printChanges(ctx, {
+      changes,
+      tense: "past",
+      title: sprint`{greenBright ${symbol.arrowDown}} Pulled ${pluralize("file", changes.size)}. ${ts()}`,
+      ...options.printEnvironmentChangesOptions,
+      includeDotGadget: !!ctx.args["--verbose"],
+    });
+
+    if (changes.has("yarn.lock")) {
+      const spinner = spin({ ensureEmptyLineAbove: true })('Running "yarn install --check-files"');
+
+      try {
+        await execa("yarn", ["install", "--check-files"], { cwd: this.syncJson.directory.path });
+        spinner.succeed`Ran "yarn install --check-files" ${ts()}`;
+      } catch (error) {
+        spinner.fail();
+        ctx.log.error("yarn install failed", { error });
+
+        const message = serializeError(error).message;
+        if (message) {
+          println({ ensureEmptyLineAbove: true, indent: 2 })(message);
+        }
+      }
+    }
+
+    return changes;
+  }
+
   private async _merge(
     ctx: Context<DevArgs>,
     {
@@ -619,7 +795,7 @@ export class FileSync {
       sprintChanges(ctx, {
         changes,
         tense: "present",
-        title: sprint`Pulling ${pluralize("file", changes.size)}. ${symbol.arrowLeft}`,
+        title: sprint`Pulling ${pluralize("file", changes.size)}.`,
         ...printEnvironmentChangesOptions,
       }),
     );
@@ -639,7 +815,7 @@ export class FileSync {
         files = fileSyncFiles.files;
       }
 
-      await this._writeToLocalFilesystem(ctx, {
+      await this.writeToLocalFilesystem(ctx, {
         filesVersion,
         files,
         delete: changes.deleted(),
@@ -795,172 +971,5 @@ export class FileSync {
 
       throw error;
     }
-  }
-
-  private async _writeToLocalFilesystem(
-    ctx: Context<SyncJsonArgs>,
-    options: {
-      filesVersion: bigint | string;
-      files: File[];
-      delete: string[];
-      printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
-      spinner?: spinner;
-    },
-  ): Promise<Changes> {
-    const filesVersion = BigInt(options.filesVersion);
-    assert(filesVersion >= this.syncJson.filesVersion, "filesVersion must be greater than or equal to current filesVersion");
-
-    ctx.log.debug("writing to local filesystem", {
-      filesVersion,
-      files: options.files.map((file) => file.path),
-      delete: options.delete,
-    });
-
-    const changes = new Changes();
-    const directoriesWithDeletedFiles = new Set<string>();
-
-    await pMap(options.delete, async (pathToDelete) => {
-      // add all the directories that contain this file to
-      // directoriesWithDeletedFiles so we can clean them up later
-      let dir = path.dirname(pathToDelete);
-      while (dir !== ".") {
-        directoriesWithDeletedFiles.add(this.syncJson.directory.normalize(dir, true));
-        dir = path.dirname(dir);
-      }
-
-      const currentPath = this.syncJson.directory.absolute(pathToDelete);
-      const backupPath = this.syncJson.directory.absolute(".gadget/backup", this.syncJson.directory.relative(pathToDelete));
-
-      // rather than `rm -rf`ing files, we move them to
-      // `.gadget/backup/` so that users can recover them if something
-      // goes wrong. We've seen a lot of EBUSY/EINVAL errors when moving
-      // files so we retry a few times.
-      await pRetry(
-        async () => {
-          try {
-            // remove the current backup file in case it exists and is a
-            // different type (file vs directory)
-            await fs.remove(backupPath);
-            await fs.move(currentPath, backupPath);
-            changes.set(pathToDelete, { type: "delete" });
-          } catch (error) {
-            if (isENOENTError(error)) {
-              // replicate the behavior of `rm -rf` and ignore ENOENT
-              return;
-            }
-
-            if (isENOTDIRError(error) || isEEXISTError(error)) {
-              // the backup path already exists and ends in a file
-              // rather than a directory, so we have to remove the file
-              // before we can move the current path to the backup path
-              let dir = path.dirname(backupPath);
-              while (dir !== this.syncJson.directory.absolute(".gadget/backup")) {
-                const stats = await fs.stat(dir);
-                // eslint-disable-next-line max-depth
-                if (!stats.isDirectory()) {
-                  // this file is in the way, so remove it
-                  ctx.log.debug("removing file in the way of backup path", { currentPath, backupPath, file: dir });
-                  await fs.remove(dir);
-                }
-                dir = path.dirname(dir);
-              }
-              // still throw the error so we retry
-            }
-
-            throw error;
-          }
-        },
-        {
-          // windows tends to run into these issues way more often than
-          // mac/linux, so we retry more times
-          retries: config.windows ? 4 : 2,
-          minTimeout: ms("100ms"),
-          onFailedAttempt: (error) => {
-            ctx.log.warn("failed to move file to backup", { error, currentPath, backupPath });
-          },
-        },
-      );
-    });
-
-    for (const directoryWithDeletedFile of Array.from(directoriesWithDeletedFiles.values()).sort().reverse()) {
-      if (options.files.some((file) => file.path === directoryWithDeletedFile)) {
-        // we're about to create this directory, so we don't need to
-        // clean it up
-        continue;
-      }
-
-      try {
-        // delete any empty directories that contained a deleted file.
-        // if the empty directory should continue to exist, we would
-        // have received an event to create it above
-        await fs.rmdir(this.syncJson.directory.absolute(directoryWithDeletedFile));
-        changes.set(directoryWithDeletedFile, { type: "delete" });
-      } catch (error) {
-        if (isENOENTError(error) || isENOTEMPTYError(error)) {
-          // noop if the directory doesn't exist or isn't empty
-          continue;
-        }
-        throw error;
-      }
-    }
-
-    await pMap(options.files, async (file) => {
-      const absolutePath = this.syncJson.directory.absolute(file.path);
-      if (await fs.pathExists(absolutePath)) {
-        if (!file.path.endsWith("/")) {
-          // only track file updates, not directory updates
-          changes.set(file.path, { type: "update" });
-        }
-      } else {
-        changes.set(file.path, { type: "create" });
-      }
-
-      if (file.path.endsWith("/")) {
-        await fs.ensureDir(absolutePath);
-      } else {
-        await fs.outputFile(absolutePath, Buffer.from(file.content, file.encoding));
-      }
-
-      if (supportsPermissions) {
-        // the os's default umask makes setting the mode during creation
-        // not work, so an additional fs.chmod call is necessary to
-        // ensure the file has the correct mode
-        await fs.chmod(absolutePath, file.mode & 0o777);
-      }
-
-      if (absolutePath === this.syncJson.directory.absolute(".ignore")) {
-        await this.syncJson.directory.loadIgnoreFile();
-      }
-    });
-
-    await this.syncJson.save(String(filesVersion));
-
-    options.spinner?.clear();
-
-    printChanges(ctx, {
-      changes,
-      tense: "past",
-      title: sprint`{green ${symbol.tick}} Pulled ${pluralize("file", changes.size)}. ${symbol.arrowLeft} ${ts()}`,
-      ...options.printEnvironmentChangesOptions,
-    });
-
-    if (changes.has("yarn.lock")) {
-      const spinner = spin({ ensureEmptyLineAbove: true })('Running "yarn install --check-files"');
-
-      try {
-        await execa("yarn", ["install", "--check-files"], { cwd: this.syncJson.directory.path });
-        spinner.succeed`Ran "yarn install --check-files" ${ts()}`;
-      } catch (error) {
-        spinner.fail();
-        ctx.log.error("yarn install failed", { error });
-
-        const message = serializeError(error).message;
-        if (message) {
-          println({ ensureEmptyLineAbove: true, indent: 2 })(message);
-        }
-      }
-    }
-
-    return changes;
   }
 }

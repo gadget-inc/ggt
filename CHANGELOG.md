@@ -1,5 +1,44 @@
 # @gadgetinc/ggt
 
+## 1.0.3
+
+### Patch Changes
+
+- 55ec815: Bump simple-git from 3.23.0 to 3.24.0
+- 74c891e: Bump ws from 8.16.0 to 8.17.0
+- abe0c7b: Bump @sentry/node from 7.110.0 to 7.110.1
+- b13336e: Bump zod from 3.23.0 to 3.23.4
+- 7d1c6dc: Bump watcher from 2.3.0 to 2.3.1
+- 4d064ad: Bump zod from 3.23.4 to 3.23.5
+- aa0c6e6: Bump cli-table3 from 0.6.4 to 0.6.5
+- e7969d5: Bump p-map from 7.0.1 to 7.0.2
+- 48400d8: Bump ansi-escapes from 6.2.1 to 7.0.0
+- 6a4d322: Bump graphql-ws from 5.15.0 to 5.16.0
+- 655a5ea: Bump dayjs from 1.11.10 to 1.11.11
+- f33d833: Bump zod from 3.22.4 to 3.22.5
+- 998ca41: Bump @sentry/node from 7.107.0 to 7.108.0
+- a1f4716: Bump cli-table3 from 0.6.3 to 0.6.4
+- 3fec44a: Bump @swc/helpers from 0.5.8 to 0.5.9
+- 40e4d1f: Bump @sentry/node from 7.111.0 to 7.112.1
+- 8f751b1: Bump @sentry/node from 7.109.0 to 7.110.0
+- b844d41: Bump @sentry/node from 7.112.1 to 7.112.2
+- c26fdd1: Bump @swc/helpers from 0.5.7 to 0.5.8
+- f2c6a85: Bump @sentry/node from 7.113.0 to 7.114.0
+- 41e9fe6: Bump @sentry/node from 7.112.2 to 7.113.0
+- b3211ae: Bump ansi-escapes from 6.2.0 to 6.2.1
+- bb2e48b: Bump execa from 8.0.1 to 9.0.2
+- f28f41b: Bump @sentry/node from 7.110.1 to 7.111.0
+- 82819ab: Bump zod from 3.23.6 to 3.23.8
+- 6bfe832: Bump @sentry/node from 7.108.0 to 7.109.0
+- ee3256c: Bump zod from 3.23.5 to 3.23.6
+- 25e8de0: Bump zod from 3.22.5 to 3.23.0
+- 3ef52c3: Bump semver from 7.6.1 to 7.6.2
+- b9a643a: Bump execa from 9.0.2 to 9.1.0
+- e5ae6e3: Bump semver from 7.6.0 to 7.6.1
+- 8d8d922: New command! `ggt add`
+
+  The `ggt add` command enables you to conveniently add a model, action, or route to your gadget project directly from your local development environment.
+
 ## 1.0.2
 
 ### Patch Changes

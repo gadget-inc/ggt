@@ -35,7 +35,7 @@
 - 3ef52c3: Bump semver from 7.6.1 to 7.6.2
 - b9a643a: Bump execa from 9.0.2 to 9.1.0
 - e5ae6e3: Bump semver from 7.6.0 to 7.6.1
-- 8d8d922: ## New command! `ggt add`
+- 8d8d922: New command! `ggt add`
 
   The `ggt add` command enables you to conveniently add a model, action, or route to your gadget project directly from your local development environment.
 

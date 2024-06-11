@@ -93,7 +93,7 @@
         "eslint-plugin-only-warn": "^1.1.0",
         "eslint-plugin-unicorn": "^53.0.0",
         "nock": "^13.5.4",
-        "prettier": "^3.3.1",
+        "prettier": "^3.3.2",
         "prettier-plugin-organize-imports": "^3.2.4",
         "prettier-plugin-packagejson": "^2.5.0",
         "remark": "^15.0.1",
@@ -13862,9 +13862,9 @@
       }
     },
     "node_modules/prettier": {
-      "version": "3.3.1",
-      "resolved": "https://registry.npmjs.org/prettier/-/prettier-3.3.1.tgz",
-      "integrity": "sha512-7CAwy5dRsxs8PHXT3twixW9/OEll8MLE0VRPCJyl7CkS6VHGPSlsVaWTiASPTyGyYRyApxlaWTzwUxVNrhcwDg==",
+      "version": "3.3.2",
+      "resolved": "https://registry.npmjs.org/prettier/-/prettier-3.3.2.tgz",
+      "integrity": "sha512-rAVeHYMcv8ATV5d508CFdn+8/pHPpXeIid1DdrPwXnaAdH7cqjVbpJaT5eq4yRAFU/lsbwYwSF/n5iNrdJHPQA==",
       "dev": true,
       "bin": {
         "prettier": "bin/prettier.cjs"
@@ -27124,9 +27124,9 @@
       "dev": true
     },
     "prettier": {
-      "version": "3.3.1",
-      "resolved": "https://registry.npmjs.org/prettier/-/prettier-3.3.1.tgz",
-      "integrity": "sha512-7CAwy5dRsxs8PHXT3twixW9/OEll8MLE0VRPCJyl7CkS6VHGPSlsVaWTiASPTyGyYRyApxlaWTzwUxVNrhcwDg==",
+      "version": "3.3.2",
+      "resolved": "https://registry.npmjs.org/prettier/-/prettier-3.3.2.tgz",
+      "integrity": "sha512-rAVeHYMcv8ATV5d508CFdn+8/pHPpXeIid1DdrPwXnaAdH7cqjVbpJaT5eq4yRAFU/lsbwYwSF/n5iNrdJHPQA==",
       "dev": true
     },
     "prettier-plugin-organize-imports": {

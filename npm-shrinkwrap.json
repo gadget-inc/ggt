@@ -28,7 +28,7 @@
         "fs-extra": "^11.2.0",
         "get-port": "^7.1.0",
         "got": "^13.0.0",
-        "graphql": "^16.8.1",
+        "graphql": "^16.8.2",
         "graphql-ws": "^5.16.0",
         "ignore": "^5.3.1",
         "indent-string": "^5.0.0",
@@ -10223,9 +10223,9 @@
       "dev": true
     },
     "node_modules/graphql": {
-      "version": "16.8.1",
-      "resolved": "https://registry.npmjs.org/graphql/-/graphql-16.8.1.tgz",
-      "integrity": "sha512-59LZHPdGZVh695Ud9lRzPBVTtlX9ZCV150Er2W43ro37wVof0ctenSaskPPjN7lVTIN8mSZt8PHUNKZuNQUuxw==",
+      "version": "16.8.2",
+      "resolved": "https://registry.npmjs.org/graphql/-/graphql-16.8.2.tgz",
+      "integrity": "sha512-cvVIBILwuoSyD54U4cF/UXDh5yAobhNV/tPygI4lZhgOIJQE/WLWC4waBRb4I6bDVYb3OVx3lfHbaQOEoUD5sg==",
       "engines": {
         "node": "^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0"
       }
@@ -24656,9 +24656,9 @@
       "dev": true
     },
     "graphql": {
-      "version": "16.8.1",
-      "resolved": "https://registry.npmjs.org/graphql/-/graphql-16.8.1.tgz",
-      "integrity": "sha512-59LZHPdGZVh695Ud9lRzPBVTtlX9ZCV150Er2W43ro37wVof0ctenSaskPPjN7lVTIN8mSZt8PHUNKZuNQUuxw=="
+      "version": "16.8.2",
+      "resolved": "https://registry.npmjs.org/graphql/-/graphql-16.8.2.tgz",
+      "integrity": "sha512-cvVIBILwuoSyD54U4cF/UXDh5yAobhNV/tPygI4lZhgOIJQE/WLWC4waBRb4I6bDVYb3OVx3lfHbaQOEoUD5sg=="
     },
     "graphql-config": {
       "version": "5.0.2",

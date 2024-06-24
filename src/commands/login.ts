@@ -65,6 +65,7 @@ export const login: Command = async (ctx): Promise<void> => {
     url.searchParams.set("returnTo", `https://${config.domains.services}/auth/cli/callback?port=${port}`);
 
     try {
+      ctx.log.info("opening browser", { url: url.toString() });
       await open(url.toString());
       println({ ensureEmptyLineAbove: true })`
         We've opened Gadget's login page using your default browser.

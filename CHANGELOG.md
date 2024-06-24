@@ -1,5 +1,15 @@
 # @gadgetinc/ggt
 
+## 1.0.4
+
+### Patch Changes
+
+- 9574bf5: Bump execa from 9.1.0 to 9.2.0
+- 4332f75: Bump graphql from 16.8.1 to 16.8.2
+- d9bf026: Bump ws from 8.17.0 to 8.17.1
+- 9f3fd75: Bump simple-git from 3.24.0 to 3.25.0
+- 2a3389e: Log the login URL for manual login in case of browser opening failure.
+
 ## 1.0.3
 
 ### Patch Changes

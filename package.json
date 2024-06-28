@@ -99,7 +99,7 @@
     "@graphql-codegen/add": "^5.0.3",
     "@graphql-codegen/cli": "^5.0.2",
     "@graphql-codegen/typescript": "^4.0.7",
-    "@graphql-codegen/typescript-operations": "^4.2.1",
+    "@graphql-codegen/typescript-operations": "^4.2.2",
     "@swc-node/register": "1.9.0",
     "@swc/cli": "^0.3.14",
     "@swc/core": "^1.6.5",

@@ -28,20 +28,20 @@
     "/README.md"
   ],
   "scripts": {
-    "build": "npm run clean && swc src -d lib --strip-leading-paths",
+    "build": "npm run clean && swc src --out-dir=lib --strip-leading-paths",
     "changeset": "changeset",
     "clean": "rimraf lib tmp/spec",
     "dev": "vitest --watch",
-    "generate:graphql": "graphql-codegen --config graphql-codegen.yml",
-    "lint": "concurrently --group --names --prefix-colors=auto 'npm:lint:*(!fix)'",
-    "lint:cspell": "cspell --no-progress --show-suggestions --show-context '**'",
-    "lint:eslint": "eslint --max-warnings 0 .",
-    "lint:fix": "eslint --fix . && prettier --write .",
-    "lint:prettier": "prettier --check .",
+    "generate:graphql": "graphql-codegen --config=graphql-codegen.yml",
+    "lint": "concurrently 'npm:lint:*(!fix)' --group --names --prefix-colors=auto",
+    "lint:cspell": "cspell . --no-progress --show-suggestions --show-context",
+    "lint:eslint": "eslint . --max-warnings=0 --cache --cache-location=node_modules/.cache/eslint/.eslintcache",
+    "lint:fix": "eslint . --fix --cache && prettier . --write --cache",
+    "lint:prettier": "prettier . --check --cache",
     "lint:typescript": "tsc --project tsconfig.json",
     "release": "npm run build && changeset publish",
     "test": "vitest",
-    "version": "changeset version && npm install --package-lock-only && ./scripts/generate-readme.ts"
+    "version": "changeset version && npm install --package-lock-only && scripts/generate-readme.ts"
   },
   "dependencies": {
     "@sentry/node": "^7.114.0",

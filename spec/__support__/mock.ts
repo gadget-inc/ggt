@@ -5,7 +5,7 @@ import * as select from "../../src/services/output/select.js";
 import { isSprintOptions, sprint, sprintln, type SprintOptions } from "../../src/services/output/sprint.js";
 import { noop } from "../../src/services/util/function.js";
 import { isString } from "../../src/services/util/is.js";
-import type { ArgsType, FunctionPropertyNames } from "../../src/services/util/types.js";
+import type { FunctionPropertyNames } from "../../src/services/util/types.js";
 import { printStackTraceAndFail } from "./debug.js";
 
 export type Mock = {
@@ -19,7 +19,7 @@ export type Mock = {
   <Fn extends (...args: any[]) => any, Impl extends (...args: Parameters<Fn>) => ReturnType<Fn> | Awaited<ReturnType<Fn>>>(
     fn: Fn,
     impl: Impl,
-  ): MockInstance<ArgsType<Fn>, ReturnType<Fn>>;
+  ): MockInstance<Fn>;
 
   /**
    * Mocks a method on an object. If the method is already mocked,
@@ -38,7 +38,7 @@ export type Mock = {
     target: Target,
     property: Property,
     impl: Impl,
-  ): MockInstance<ArgsType<Fn>, ReturnType<Fn>>;
+  ): MockInstance<Fn>;
 
   /**
    * Mocks a getter on an object. If the getter is already mocked,
@@ -54,7 +54,7 @@ export type Mock = {
     property: Property,
     accessor: "get",
     impl: Impl,
-  ): MockInstance<[], Property>;
+  ): MockInstance<() => Field>;
 
   /**
    * Mocks a setter on an object. If the setter is already mocked,
@@ -70,7 +70,7 @@ export type Mock = {
     property: Property,
     accessor: "set",
     impl: Impl,
-  ): MockInstance<[Property], void>;
+  ): MockInstance<(value: Field) => void>;
 };
 
 /**
@@ -187,7 +187,7 @@ export const mockSideEffects = (): void => {
   });
 };
 
-export const mockConfirm = (impl = noop): MockInstance<[options: SprintOptions], confirm.confirm> => {
+export const mockConfirm = (impl = noop): MockInstance<(options: SprintOptions) => confirm.confirm> => {
   const mockedConfirm = (optionsOrStr: any, ...values: unknown[]): any => {
     if (isSprintOptions(optionsOrStr)) {
       return mockedConfirm;
@@ -203,7 +203,7 @@ export const mockConfirm = (impl = noop): MockInstance<[options: SprintOptions],
   return mock(confirm, "confirm", mockedConfirm);
 };
 
-export const mockConfirmOnce = (impl = noop): MockInstance<[options: SprintOptions], confirm.confirm> => {
+export const mockConfirmOnce = (impl = noop): MockInstance<(options: SprintOptions) => confirm.confirm> => {
   let options: SprintOptions = {
     ensureEmptyLineAbove: true,
   };
@@ -226,7 +226,7 @@ export const mockConfirmOnce = (impl = noop): MockInstance<[options: SprintOptio
 
 export const mockSelect = <Choice extends string>(
   choice: Choice,
-): MockInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
+): MockInstance<(options: select.SelectOptions<string>) => select.selectWithChoices<string>> => {
   return mock(select, "select", (_options) => {
     return (_str) => {
       return Promise.resolve(choice);
@@ -236,7 +236,7 @@ export const mockSelect = <Choice extends string>(
 
 export const mockSelectOnce = <Choice extends string>(
   choice: Choice,
-): MockInstance<[options: select.SelectOptions<string>], select.selectWithChoices<string>> => {
+): MockInstance<(options: select.SelectOptions<string>) => select.selectWithChoices<string>> => {
   return mockOnce(select, "select", (_options) => {
     return (_str) => {
       return Promise.resolve(choice);

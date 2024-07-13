@@ -1,5 +1,6 @@
 import cleanStack from "clean-stack";
 import assert from "node:assert";
+import path from "node:path";
 import { expect } from "vitest";
 import { createLogger } from "../../src/services/output/log/logger.js";
 import { workspaceRoot } from "../../src/services/util/paths.js";
@@ -14,13 +15,16 @@ export const log = createLogger({ name: "test" });
  * @returns The current test name, describes, and filepath.
  */
 export const getCurrentTest = (): { name: string; describes: string[]; filepath: string } => {
-  const currentTestName = expect.getState().currentTestName;
-  assert(currentTestName, "expected currentTestName to be defined");
+  const { testPath, currentTestName } = expect.getState();
 
-  const [filepath, ...rest] = currentTestName.split(" > ");
-  const describes = rest.length > 1 ? rest.slice(0, -1) : [];
-  const name = rest.at(-1)?.replace(/[^\s\w+-]/g, "");
-  assert(filepath && name, "expected test file and test name to be defined");
+  assert(testPath, "expected testPath to be defined");
+  const filepath = path.relative(workspaceRoot, testPath);
+
+  assert(currentTestName, "expected currentTestName to be defined");
+  const segments = currentTestName.split(" > ");
+  const describes = segments.length > 1 ? segments.slice(0, -1) : [];
+  const name = segments.at(-1)?.replace(/[^\s\w+-]/g, "");
+  assert(name, "expected name to be defined");
 
   return { name, describes, filepath };
 };

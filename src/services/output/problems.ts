@@ -90,10 +90,8 @@ export const publishIssuesToProblems = (issues: PublishIssue[]): Problems => {
   const problems: Problems = {};
   for (const issue of issues) {
     const name = issue.node?.apiIdentifier ?? issue.node?.name ?? "Other";
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     problems[name] ??= [];
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    problems[name]!.push({
+    problems[name].push({
       type: issue.node?.type ?? "Unknown",
       severity: issue.severity as ProblemSeverity,
       message: issue.message,

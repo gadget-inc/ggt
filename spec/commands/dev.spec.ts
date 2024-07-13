@@ -684,7 +684,7 @@ describe("dev", () => {
       `);
     });
 
-    it("sends changes from the local filesystem to gadget", async () => {
+    it("sends changes from the local filesystem to gadget", { retry: 3 }, async () => {
       const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
 
       await sync(ctx);

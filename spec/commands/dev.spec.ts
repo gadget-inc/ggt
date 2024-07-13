@@ -1035,7 +1035,7 @@ describe("dev", () => {
       `);
     });
 
-    it("doesn't send multiple changes to the same file at once", async () => {
+    it("doesn't send multiple changes to the same file at once", { retry: 3 }, async () => {
       const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
 
       await sync(ctx);

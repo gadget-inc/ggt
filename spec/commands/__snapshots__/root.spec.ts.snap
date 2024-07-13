@@ -135,7 +135,7 @@ exports[`root > when dev is given > prints the usage when --help is passed 1`] =
 enable local development with your text editor and source code with Git.
 
 If your app's local directory already exists, this command first performs a sync to ensure
-that your local and environment directories match, changes are tracked since last sync. If any 
+that your local and environment directories match, changes are tracked since last sync. If any
 conflicts are detected, they must be resolved before development starts.
 
 Usage
@@ -151,7 +151,7 @@ Options
       --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
 
 Ignoring files
-      ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and 
+      ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and
       folders from syncing. These files are always ignored:
 
       • .DS_Store
@@ -165,9 +165,9 @@ Notes
       • Avoid deleting or moving all of your files while "ggt dev" is running
 
 Examples
-      sync an app in a custom path 
+      sync an app in a custom path
       $ ggt dev ~/myGadgetApps/myBlog --app myBlogApp
-      
+
       sync with a specific environment and preselect all local changes on conflicts
       $ ggt dev --env main --prefer local
 
@@ -181,7 +181,7 @@ exports[`root > when dev is given > prints the usage when -h is passed 1`] = `
 enable local development with your text editor and source code with Git.
 
 If your app's local directory already exists, this command first performs a sync to ensure
-that your local and environment directories match, changes are tracked since last sync. If any 
+that your local and environment directories match, changes are tracked since last sync. If any
 conflicts are detected, they must be resolved before development starts.
 
 Usage
@@ -197,7 +197,7 @@ Options
       --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
 
 Ignoring files
-      ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and 
+      ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and
       folders from syncing. These files are always ignored:
 
       • .DS_Store
@@ -211,9 +211,9 @@ Notes
       • Avoid deleting or moving all of your files while "ggt dev" is running
 
 Examples
-      sync an app in a custom path 
+      sync an app in a custom path
       $ ggt dev ~/myGadgetApps/myBlog --app myBlogApp
-      
+
       sync with a specific environment and preselect all local changes on conflicts
       $ ggt dev --env main --prefer local
 

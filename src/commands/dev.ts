@@ -44,14 +44,14 @@ export const usage: Usage = (_ctx) => {
   enable local development with your text editor and source code with Git.
 
   If your app's local directory already exists, this command first performs a sync to ensure
-  that your local and environment directories match, changes are tracked since last sync. If any 
+  that your local and environment directories match, changes are tracked since last sync. If any
   conflicts are detected, they must be resolved before development starts.
 
   {gray Usage}
         $ ggt dev [DIRECTORY] [options]
 
         DIRECTORY: The directory to sync files to (default: the current directory)
-  
+
   {gray Options}
         -a, --app <app_name>        Selects the app to sync files with. Default set on ".gadget/sync.json"
         -e, --env <env_name>        Selects the environment to sync files with. Default set on ".gadget/sync.json"
@@ -60,23 +60,23 @@ export const usage: Usage = (_ctx) => {
         --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
 
   {gray Ignoring files}
-        ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and 
+        ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and
         folders from syncing. These files are always ignored:
 
         • .DS_Store
         • .gadget
         • .git
         • node_modules
-  
+
   {gray Notes}
         • "ggt dev" only works with development environments
         • "ggt dev" only supports "yarn" v1 for installing dependencies
         • Avoid deleting or moving all of your files while "ggt dev" is running
-  
+
   {gray Examples}
-        sync an app in a custom path 
+        sync an app in a custom path
         {cyanBright $ ggt dev ~/myGadgetApps/myBlog --app myBlogApp}
-        
+
         sync with a specific environment and preselect all local changes on conflicts
         {cyanBright $ ggt dev --env main --prefer local}
 
@@ -279,7 +279,7 @@ export const command: Command<DevArgs> = async (ctx) => {
       ctx.log.trace("file event", { event, isDirectory, path: normalizedPath });
 
       if (filepath === syncJson.directory.absolute(".ignore")) {
-        syncJson.directory.loadIgnoreFile().catch((error) => ctx.abort(error));
+        syncJson.directory.loadIgnoreFile().catch((error: unknown) => ctx.abort(error));
       } else if (syncJson.directory.ignores(filepath)) {
         return;
       }

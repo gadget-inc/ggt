@@ -24,7 +24,7 @@ export class PromiseWrapper<T> {
         this.resolution = res;
         return res;
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         this.rejection = err;
       })
       .finally(() => {
@@ -36,7 +36,7 @@ export class PromiseWrapper<T> {
     if (this.pendingPromise) {
       return await this.pendingPromise;
     } else if (this.rejection) {
-      // eslint-disable-next-line @typescript-eslint/no-throw-literal
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw this.rejection;
     } else {
       return this.resolution as T;

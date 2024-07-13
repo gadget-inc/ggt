@@ -248,7 +248,7 @@ export const unthunk = <T, Args extends any[]>(value: Thunk<T, Args>, ...args: A
  * A function that does nothing and returns nothing.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-export const noop = (..._args: any[]): void => {};
+export const noop = (..._args: unknown[]): void => {};
 
 /**
  * A function that does nothing and returns `this`.

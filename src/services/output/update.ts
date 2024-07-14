@@ -8,8 +8,8 @@ import semver from "semver";
 import { z } from "zod";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { packageJson } from "../config/package-json.js";
 import { http } from "../http/http.js";
+import { packageJson } from "../util/package-json.js";
 import { println } from "./print.js";
 import { sprint } from "./sprint.js";
 

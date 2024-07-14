@@ -3,8 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { Level, parseLevel } from "../output/log/level.js";
+import { packageJson } from "../util/package-json.js";
 import { env } from "./env.js";
-import { packageJson } from "./package-json.js";
 
 export const config = {
   get logLevel() {

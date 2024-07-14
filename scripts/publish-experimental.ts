@@ -2,9 +2,9 @@
 
 import { $ } from "execa";
 import fs from "fs-extra";
-import { packageJson } from "../src/services/config/package-json.js";
 import { println } from "../src/services/output/print.js";
 import { spin } from "../src/services/output/spinner.js";
+import { packageJson } from "../src/services/util/package-json.js";
 import { workspacePath } from "../src/services/util/paths.js";
 
 const status = await $`git status --porcelain`;

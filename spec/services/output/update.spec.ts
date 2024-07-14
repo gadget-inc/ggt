@@ -5,8 +5,8 @@ import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Context } from "../../../src/services/command/context.js";
 import { config } from "../../../src/services/config/config.js";
-import { packageJson } from "../../../src/services/config/package-json.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
+import { packageJson } from "../../../src/services/util/package-json.js";
 import { makeContext } from "../../__support__/context.js";
 import { expectStdout } from "../../__support__/output.js";
 

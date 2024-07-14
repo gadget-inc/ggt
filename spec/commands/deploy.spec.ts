@@ -4,7 +4,7 @@ import { beforeEach, describe, it } from "vitest";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
-import { args, command as deploy } from "../../src/commands/deploy.js";
+import { args, run as deploy } from "../../src/commands/deploy.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";

@@ -1,7 +1,7 @@
 import open from "open";
 import { getModels } from "../services/app/app.js";
 import { ArgError } from "../services/command/arg.js";
-import type { Command, Usage } from "../services/command/command.js";
+import type { Run, Usage } from "../services/command/command.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { println } from "../services/output/print.js";
@@ -25,7 +25,7 @@ export const usage: Usage = (_ctx) => {
 
   {gray Usage}
         ggt open [LOCATION] [model_name] [--show-all] [options]
-  
+
         LOCATION: specifies the part of Gadget to open, by default it'll open the apps home page:
 
         + logs                Opens logs
@@ -37,35 +37,35 @@ export const usage: Usage = (_ctx) => {
         -a, --app <app_name>   Selects the application to open in your browser. Default set on ".gadget/sync.json"
         -e, --env <env_name>   Selects the environment to open in your browser. Default set on ".gadget/sync.json"
         --show-all             Shows all schema, or data options by listing your available models
-  
+
   {gray Examples}
         Opens editor home
         {cyanBright $ ggt open}
 
-        Opens logs 
-        {cyanBright $ ggt open logs} 
-        
+        Opens logs
+        {cyanBright $ ggt open logs}
+
         Opens permissions
         {cyanBright $ ggt open permissions}
-        
+
         Opens data editor for the 'post' model
         {cyanBright $ ggt open data post}
-        
+
         Opens schema for 'post' model
         {cyanBright $ ggt open schema post}
-        
+
         Shows all models available in the data editor
         {cyanBright $ ggt open data -show-all}
-        
+
         Shows all models available in the schema viewer
         {cyanBright $ ggt open schema --show-all}
-        
-        Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment 
+
+        Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment
         {cyanBright $ ggt open data post --app myBlog --env staging}
   `;
 };
 
-export const command: Command<OpenArgs> = async (ctx) => {
+export const run: Run<OpenArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
   const syncJson = await SyncJson.load(ctx, { directory });
   if (!syncJson) {

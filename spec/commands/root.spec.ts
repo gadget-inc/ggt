@@ -1,6 +1,6 @@
 import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { command as root } from "../../src/commands/root.js";
+import { run as root } from "../../src/commands/root.js";
 import * as command from "../../src/services/command/command.js";
 import { importCommand, type CommandModule } from "../../src/services/command/command.js";
 import { config } from "../../src/services/config/config.js";
@@ -71,7 +71,7 @@ describe("root", () => {
         status           Show your local and environment's file changes
         push             Push your local files to your environment
         pull             Pull your environment's files to your local computer
-        add              Add models, fields, actions and routes to your app 
+        add              Add models, fields, actions and routes to your app
         open             Open a Gadget location in your browser
         list             List your available applications
         login            Log in to your account
@@ -109,7 +109,7 @@ describe("root", () => {
 
     beforeEach(async () => {
       cmd = await importCommand(name);
-      mock(cmd, "command", noop);
+      mock(cmd, "run", noop);
     });
 
     it.each(["--help", "-h"])("prints the usage when %s is passed", async (flag) => {
@@ -125,12 +125,12 @@ describe("root", () => {
 
       await root(makeRootContext());
 
-      expect(cmd.command).toHaveBeenCalled();
+      expect(cmd.run).toHaveBeenCalled();
     });
 
     it("reports and exits if an error occurs", async () => {
       const error = new Error("boom!");
-      mock(cmd, "command", () => {
+      mock(cmd, "run", () => {
         throw error;
       });
 
@@ -139,7 +139,7 @@ describe("root", () => {
       void root(makeRootContext());
       await waitForReportErrorAndExit(error);
 
-      expect(cmd.command).toHaveBeenCalled();
+      expect(cmd.run).toHaveBeenCalled();
     });
   });
 });

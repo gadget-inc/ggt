@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
-import { type Command, type Usage } from "../services/command/command.js";
+import { type Run, type Usage } from "../services/command/command.js";
 import { DeployDisallowedError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
@@ -36,7 +36,7 @@ export const usage: Usage = (_ctx) => {
 
   {gray Usage}
         $ ggt deploy [options]
-  
+
   {gray Options}
         -a, --app <app_name>           Selects a specific app to deploy. Default set on ".gadget/sync.json"
         --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Default set on ".gadget/sync.json"
@@ -45,14 +45,14 @@ export const usage: Usage = (_ctx) => {
         --allow-different-app          Deploys a different app using the --app command, instead of the one specified in the “.gadget/sync.json” file
         --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
         --allow-charges                Deploys even if it results in additional charges to your plan
-  
+
   {gray Examples}
         Deploys code from the staging environment of a myBlog
-        {cyanBright $ ggt deploy -a myBlog -from staging} 
+        {cyanBright $ ggt deploy -a myBlog -from staging}
 `;
 };
 
-export const command: Command<DeployArgs> = async (ctx) => {
+export const run: Run<DeployArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
 

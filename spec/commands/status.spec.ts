@@ -1,5 +1,5 @@
 import { beforeEach, describe, it } from "vitest";
-import { args, command as status, type StatusArgs } from "../../src/commands/status.js";
+import { args, run as status, type StatusArgs } from "../../src/commands/status.js";
 import type { Context } from "../../src/services/command/context.js";
 import { makeContext } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";

@@ -1,7 +1,7 @@
 import arg from "arg";
 import type { EmptyObject } from "type-fest";
 import type { ArgsDefinition } from "../services/command/arg.js";
-import { Commands, importCommand, isAvailableCommand, type Command, type Usage } from "../services/command/command.js";
+import { Commands, importCommand, isCommand, type Run, type Usage } from "../services/command/command.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
@@ -33,7 +33,7 @@ export const usage: Usage = () => {
       status           Show your local and environment's file changes
       push             Push your local files to your environment
       pull             Pull your environment's files to your local computer
-      add              Add models, fields, actions and routes to your app 
+      add              Add models, fields, actions and routes to your app
       open             Open a Gadget location in your browser
       list             List your available applications
       login            Log in to your account
@@ -50,7 +50,7 @@ export const usage: Usage = () => {
   `;
 };
 
-export const command: Command<EmptyObject, EmptyObject> = async (parent): Promise<void> => {
+export const run: Run<EmptyObject, EmptyObject> = async (parent): Promise<void> => {
   const ctx = parent.child({
     name: "root",
     parse: args,
@@ -79,7 +79,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
     cmd = "dev";
   }
 
-  if (!isAvailableCommand(cmd)) {
+  if (!isCommand(cmd)) {
     const [closest] = sortBySimilar(cmd, Commands);
     println`
       Unknown command {yellow ${cmd}}
@@ -99,7 +99,7 @@ export const command: Command<EmptyObject, EmptyObject> = async (parent): Promis
   }
 
   try {
-    await subcommand.command(ctx.child({ command: cmd, name: cmd, parse: subcommand.args }));
+    await subcommand.run(ctx.child({ command: cmd, name: cmd, parse: subcommand.args }));
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

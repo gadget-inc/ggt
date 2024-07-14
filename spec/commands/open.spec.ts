@@ -4,7 +4,7 @@ import { testApp, testEnvironment } from "../../spec/__support__/app.js";
 import { makeContext } from "../../spec/__support__/context.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { mockSelectOnce } from "../../spec/__support__/mock.js";
-import { args, command as openCommand } from "../../src/commands/open.js";
+import { args, run as openCommand } from "../../src/commands/open.js";
 import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
 import { ArgError } from "../../src/services/command/arg.js";
 import { expectError } from "../__support__/error.js";

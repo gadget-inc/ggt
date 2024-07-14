@@ -4,7 +4,7 @@ import notifier from "node-notifier";
 import pMap from "p-map";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
-import { args, command as sync, type DevArgs } from "../../src/commands/dev.js";
+import { args, run as sync, type DevArgs } from "../../src/commands/dev.js";
 import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
 import { type Context } from "../../src/services/command/context.js";

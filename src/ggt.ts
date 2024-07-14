@@ -57,7 +57,7 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
       });
     }
 
-    await root.command(ctx);
+    await root.run(ctx);
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

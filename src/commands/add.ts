@@ -10,7 +10,7 @@ import {
 } from "../services/app/edit/operation.js";
 import { ClientError } from "../services/app/error.js";
 import { ArgError } from "../services/command/arg.js";
-import type { Command, Usage } from "../services/command/command.js";
+import type { Run, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
@@ -57,7 +57,7 @@ export const usage: Usage = () => {
   return sprint`
   Adds models, fields, actions and routes to your app.
 
-  This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync. 
+  This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync.
   If any conflicts are detected, they must be resolved before adding models, fields, actions or routes.
 
   {gray Usage}
@@ -72,7 +72,7 @@ export const usage: Usage = () => {
 
   {gray Options}
     -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
-  
+
   {gray Examples}
     Add a new model 'post' with out fields:
     {cyanBright $ ggt add model modelA}
@@ -94,7 +94,7 @@ export const usage: Usage = () => {
   `;
 };
 
-export const command: Command<AddArgs> = async (ctx) => {
+export const run: Run<AddArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
   const syncJson = await SyncJson.load(ctx, { directory });
   if (!syncJson) {
@@ -183,7 +183,7 @@ const modelSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
       throw new ArgError(sprint`
         Failed to add model:
              • ${problems.join("\n             • ")}
-        
+
         {gray Usage}
             {cyanBright ggt add model ${modelApiIdentifier} [field_name:field_type ...]}`);
     }
@@ -365,7 +365,7 @@ const fieldSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
 
   if (!splitPathAndField) {
     throw new ArgError(sprint`Failed to add field, invalid field path definition
-    
+
     {gray Usage}
         {cyanBright ggt add field <model_path>/<field_name>:<field_type>}`);
   }
@@ -379,7 +379,7 @@ const fieldSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
       throw new ArgError(sprint`
       Failed to add field:
           • ${problems.join("\n    •")}
-      
+
       {gray Usage}
           {cyanBright ggt add field ${splitPathAndField[0]}/<field_name>:<field_type>}`);
     }
@@ -387,7 +387,7 @@ const fieldSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
     modelFieldsList.push(...modelFields);
   } else {
     throw new ArgError(sprint`Failed to add field, invalid field definition
-    
+
     {gray Usage}
         {cyanBright ggt add field ${splitPathAndField[0]}/<field_name>:<field_type>}`);
   }

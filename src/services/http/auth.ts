@@ -36,14 +36,13 @@ export const loadCookie = (): string | undefined => {
 export const loadAuthHeaders = (): Record<string, string> | undefined => {
   const cookie = loadCookie();
   if (cookie) {
-    log.trace("loading cookie as auth header", { cookie });
+    log.trace("using cookie as auth header", {}, { cookie });
     return { cookie };
   }
 
   const token = readToken();
-
   if (token) {
-    log.trace("loading token as auth header", { token });
+    log.trace("using token as auth header", {}, { token });
     return { "x-platform-access-token": token };
   }
 

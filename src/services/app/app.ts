@@ -55,7 +55,6 @@ export type GlobalActionApiIdentifier = z.infer<typeof GlobalActionApiIdentifier
  * @param ctx - The current context.
  * @returns A promise that resolves to an array of Application objects.
  */
-// TODO: cache this
 export const getApps = async (ctx: Context): Promise<Application[]> => {
   const headers = loadAuthHeaders();
   if (!headers) {
@@ -97,9 +96,6 @@ export const getGlobalActions = async (ctx: Context): Promise<GlobalActionApiIde
   assert(ctx.user, "must get user before getting models");
 
   const api = new Api(ctx);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { gadgetMeta } = await api.query({ query: GADGET_GLOBAL_ACTIONS_QUERY });
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
   return gadgetMeta.globalActions;
 };

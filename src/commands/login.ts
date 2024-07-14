@@ -2,7 +2,7 @@ import getPort from "get-port";
 import assert from "node:assert";
 import http, { type Server } from "node:http";
 import open from "open";
-import type { Command, Usage } from "../services/command/command.js";
+import type { Run, Usage } from "../services/command/command.js";
 import { config } from "../services/config/config.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
@@ -16,7 +16,7 @@ export const usage: Usage = () => sprint`
           ggt login
 `;
 
-export const login: Command = async (ctx): Promise<void> => {
+export const run: Run = async (ctx): Promise<void> => {
   let server: Server | undefined;
 
   try {
@@ -89,4 +89,5 @@ export const login: Command = async (ctx): Promise<void> => {
   }
 };
 
-export const command = login;
+// alias
+export const login = run;

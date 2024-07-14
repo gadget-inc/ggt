@@ -9,14 +9,14 @@ describe.each(Commands)("%s", (command) => {
     cmd = await importCommand(command);
   });
 
-  it("has a usage", () => {
+  it("has a usage function", () => {
     expect(cmd.usage).toBeDefined();
     expect(cmd.usage).toBeInstanceOf(Function);
     expect(cmd.usage(makeRootContext())).toBeTypeOf("string");
   });
 
-  it("has a command", () => {
-    expect(cmd.command).toBeDefined();
-    expect(cmd.command).toBeInstanceOf(Function);
+  it("has a run function", () => {
+    expect(cmd.run).toBeDefined();
+    expect(cmd.run).toBeInstanceOf(Function);
   });
 });

@@ -1,5 +1,5 @@
 import { ArgError } from "../services/command/arg.js";
-import type { Command, Usage } from "../services/command/command.js";
+import type { Run, Usage } from "../services/command/command.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
@@ -19,7 +19,7 @@ export const usage: Usage = () => {
   `;
 };
 
-export const command: Command<StatusArgs> = async (ctx) => {
+export const run: Run<StatusArgs> = async (ctx) => {
   if (ctx.args._.length > 0) {
     throw new ArgError(sprint`
       "ggt status" does not take any positional arguments.

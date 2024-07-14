@@ -1,5 +1,5 @@
 import { beforeEach, describe, it } from "vitest";
-import { command as list } from "../../src/commands/list.js";
+import { run as list } from "../../src/commands/list.js";
 import * as app from "../../src/services/app/app.js";
 import { type Context } from "../../src/services/command/context.js";
 import { output } from "../../src/services/output/output.js";

@@ -18,7 +18,7 @@ export const Commands = ["dev", "deploy", "status", "push", "pull", "add", "open
 /**
  * One of the commands in {@link Commands}.
  */
-export type AvailableCommand = (typeof Commands)[number];
+export type Command = (typeof Commands)[number];
 
 /**
  * Checks if a string is a valid command.
@@ -26,8 +26,8 @@ export type AvailableCommand = (typeof Commands)[number];
  * @param command - The string to check
  * @returns Whether the string is a valid command
  */
-export const isAvailableCommand = (command: string): command is AvailableCommand => {
-  return Commands.includes(command as AvailableCommand);
+export const isCommand = (command: string): command is Command => {
+  return Commands.includes(command as Command);
 };
 
 /**
@@ -45,11 +45,9 @@ export type CommandModule<Args extends ArgsDefinition = EmptyObject, ParentArgs 
   usage: Usage;
 
   /**
-   * The command's {@link Command command}.
-   *
-   * TODO: rename this to `run`.
+   * The command's {@link Run command}.
    */
-  command: Command<Args, ParentArgs>;
+  run: Run<Args, ParentArgs>;
 };
 
 /**
@@ -64,7 +62,7 @@ export type Usage = (ctx: Context) => string;
  *
  * @param ctx - A {@linkcode Context} with the command's {@linkcode Args} and {@linkcode ParentArgs}.
  */
-export type Command<Args extends ArgsDefinition = EmptyObject, ParentArgs extends ArgsDefinition = RootArgs> = (
+export type Run<Args extends ArgsDefinition = EmptyObject, ParentArgs extends ArgsDefinition = RootArgs> = (
   ctx: Context<Args, ParentArgs>,
 ) => Promisable<void>;
 
@@ -74,8 +72,8 @@ export type Command<Args extends ArgsDefinition = EmptyObject, ParentArgs extend
  * @param cmd - The command to import
  * @see {@linkcode CommandModule}
  */
-export const importCommand = async (cmd: AvailableCommand): Promise<CommandModule> => {
-  assert(isAvailableCommand(cmd), `invalid command: ${cmd}`);
+export const importCommand = async (cmd: Command): Promise<CommandModule> => {
+  assert(isCommand(cmd), `invalid command: ${cmd}`);
   let commandPath = relativeToThisFile(`../../commands/${cmd}.js`);
   if (config.windows) {
     // https://github.com/nodejs/node/issues/31710

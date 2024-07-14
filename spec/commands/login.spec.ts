@@ -2,7 +2,7 @@ import getPort from "get-port";
 import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { command } from "../../src/commands/login.js";
+import { run } from "../../src/commands/login.js";
 import { type Context } from "../../src/services/command/context.js";
 import { config } from "../../src/services/config/config.js";
 import { readSession, writeSession } from "../../src/services/user/session.js";
@@ -46,7 +46,7 @@ describe("login", () => {
     writeSession(undefined);
     mock(user, "getUser", () => testUser);
 
-    void command(ctx);
+    void run(ctx);
     await serverListening;
 
     expect(getPort).toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe("login", () => {
       throw new Error("boom");
     });
 
-    void command(ctx);
+    void run(ctx);
     await serverListening;
 
     expect(getPort).toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe("login", () => {
       throw new Error("boom");
     });
 
-    void Promise.resolve(command(ctx)).catch(noop);
+    void Promise.resolve(run(ctx)).catch(noop);
     await serverListening;
 
     expect(getPort).toHaveBeenCalled();

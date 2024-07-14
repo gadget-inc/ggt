@@ -1,4 +1,4 @@
-import type { Command, Usage } from "../services/command/command.js";
+import type { Run, Usage } from "../services/command/command.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 import { getUser } from "../services/user/user.js";
@@ -10,7 +10,7 @@ export const usage: Usage = () => sprint`
           ggt whoami
 `;
 
-export const command: Command = async (ctx) => {
+export const run: Run = async (ctx) => {
   const user = await getUser(ctx);
   if (!user) {
     println`You are not logged in`;

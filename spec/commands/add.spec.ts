@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { command as addCommand, args } from "../../src/commands/add.js";
+import { run as addCommand, args } from "../../src/commands/add.js";
 import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
 import {
   CREATE_ACTION_MUTATION,

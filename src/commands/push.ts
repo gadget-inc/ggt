@@ -1,5 +1,5 @@
 import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
-import type { Command, Usage } from "../services/command/command.js";
+import type { Run, Usage } from "../services/command/command.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { println } from "../services/output/print.js";
@@ -21,21 +21,21 @@ export const usage: Usage = (_ctx) => {
 
   {gray Usage}
         ggt push [options]
-  
+
   {gray Options}
         -a, --app <app_name>           Selects the app to push local changes to. Default set on ".gadget/sync.json"
         --from, -e, --env <env_name>   Selects the environment to push local changes to. Default set on ".gadget/sync.json"
         --force                        Forces a push by discarding any changes made on your environment directory since last sync
         --allow-different-directory    Pushes changes from any local directory with existing files, even if the ".gadget/sync.json" file is missing
         --allow-different-app          Pushes changes to an app using --app command, instead of the one in the “.gadget/sync.json” file
-  
+
   {gray Examples}
         Push all local changes to the main environment by discarding any changes made on main
         {cyanBright $ ggt push --env main --force}
   `;
 };
 
-export const command: Command<typeof args> = async (ctx) => {
+export const run: Run<typeof args> = async (ctx) => {
   if (ctx.args._.length > 0) {
     throw new ArgError(sprint`
       "ggt push" does not take any positional arguments.

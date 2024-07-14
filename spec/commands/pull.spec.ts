@@ -1,5 +1,5 @@
 import { beforeEach, describe, it } from "vitest";
-import { args, command as pull, type PullArgs } from "../../src/commands/pull.js";
+import { args, run as pull, type PullArgs } from "../../src/commands/pull.js";
 import { type Context } from "../../src/services/command/context.js";
 import { makeContext } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";

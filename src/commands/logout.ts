@@ -1,4 +1,4 @@
-import type { Command, Usage } from "../services/command/command.js";
+import type { Run, Usage } from "../services/command/command.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 import { readSession, writeSession } from "../services/user/session.js";
@@ -10,7 +10,7 @@ export const usage: Usage = () => sprint`
           ggt logout
 `;
 
-export const command: Command = (_ctx) => {
+export const run: Run = (_ctx) => {
   const token = readSession();
   if (token) {
     writeSession(undefined);

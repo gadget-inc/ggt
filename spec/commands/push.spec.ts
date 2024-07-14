@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import { beforeEach, describe, it } from "vitest";
-import { args, command as push, type PushArgs } from "../../src/commands/push.js";
+import { args, run as push, type PushArgs } from "../../src/commands/push.js";
 import { type Context } from "../../src/services/command/context.js";
 import { makeContext } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";

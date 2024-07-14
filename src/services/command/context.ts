@@ -8,7 +8,7 @@ import { defaults, pick } from "../util/object.js";
 import { PromiseSignal } from "../util/promise.js";
 import type { AnyVoid } from "../util/types.js";
 import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult, type ParseArgsOptions } from "./arg.js";
-import type { AvailableCommand } from "./command.js";
+import type { Command } from "./command.js";
 
 /**
  * Represents the options that can be passed to {@linkcode Context.init}.
@@ -18,7 +18,7 @@ export type ContextInit<Args extends ArgsDefinition> = ParseArgsOptions &
     /**
      * The command that this context is running.
      */
-    command?: AvailableCommand;
+    command?: Command;
 
     /**
      * The {@linkcode ArgsDefinition} to use to parse the arguments (`argv`).
@@ -79,7 +79,7 @@ export class Context<
   /**
    * The command that this context is running.
    */
-  #command?: AvailableCommand;
+  #command?: Command;
 
   /**
    * The user who is running this command, if any.
@@ -103,7 +103,7 @@ export class Context<
     log,
   }: {
     parent?: Context<ArgsDefinition, ParentArgs>;
-    command?: AvailableCommand;
+    command?: Command;
     args: ArgsDefinitionResult<ThisArgs>;
     log: Logger;
   }) {
@@ -152,7 +152,7 @@ export class Context<
     return this.#log;
   }
 
-  get command(): AvailableCommand | "root" {
+  get command(): Command | "root" {
     return this.#command ?? this.#parent?.command ?? "root";
   }
 

@@ -3,7 +3,7 @@
 exports[`root > when add is given > prints the usage when --help is passed 1`] = `
 "Adds models, fields, actions and routes to your app.
 
-This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync. 
+This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync.
 If any conflicts are detected, they must be resolved before adding models, fields, actions or routes.
 
 Usage
@@ -43,7 +43,7 @@ Examples
 exports[`root > when add is given > prints the usage when -h is passed 1`] = `
 "Adds models, fields, actions and routes to your app.
 
-This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync. 
+This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync.
 If any conflicts are detected, they must be resolved before adding models, fields, actions or routes.
 
 Usage
@@ -101,7 +101,7 @@ Options
 
 Examples
       Deploys code from the staging environment of a myBlog
-      $ ggt deploy -a myBlog -from staging 
+      $ ggt deploy -a myBlog -from staging
 "
 `;
 
@@ -126,7 +126,7 @@ Options
 
 Examples
       Deploys code from the staging environment of a myBlog
-      $ ggt deploy -a myBlog -from staging 
+      $ ggt deploy -a myBlog -from staging
 "
 `;
 
@@ -294,25 +294,25 @@ Examples
       Opens editor home
       $ ggt open
 
-      Opens logs 
-      $ ggt open logs 
-      
+      Opens logs
+      $ ggt open logs
+
       Opens permissions
       $ ggt open permissions
-      
+
       Opens data editor for the 'post' model
       $ ggt open data post
-      
+
       Opens schema for 'post' model
       $ ggt open schema post
-      
+
       Shows all models available in the data editor
       $ ggt open data -show-all
-      
+
       Shows all models available in the schema viewer
       $ ggt open schema --show-all
-      
-      Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment 
+
+      Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment
       $ ggt open data post --app myBlog --env staging
 "
 `;
@@ -341,25 +341,25 @@ Examples
       Opens editor home
       $ ggt open
 
-      Opens logs 
-      $ ggt open logs 
-      
+      Opens logs
+      $ ggt open logs
+
       Opens permissions
       $ ggt open permissions
-      
+
       Opens data editor for the 'post' model
       $ ggt open data post
-      
+
       Opens schema for 'post' model
       $ ggt open schema post
-      
+
       Shows all models available in the data editor
       $ ggt open data -show-all
-      
+
       Shows all models available in the schema viewer
       $ ggt open schema --show-all
-      
-      Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment 
+
+      Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment
       $ ggt open data post --app myBlog --env staging
 "
 `;

@@ -1,5 +1,5 @@
 import { getApps } from "../services/app/app.js";
-import type { Command, Usage } from "../services/command/command.js";
+import type { Run, Usage } from "../services/command/command.js";
 import { output } from "../services/output/output.js";
 import { println } from "../services/output/print.js";
 import { sprint, sprintln } from "../services/output/sprint.js";
@@ -13,7 +13,7 @@ export const usage: Usage = () => sprint`
           ggt list
 `;
 
-export const command: Command = async (ctx) => {
+export const run: Run = async (ctx) => {
   await getUserOrLogin(ctx);
 
   const apps = await getApps(ctx);

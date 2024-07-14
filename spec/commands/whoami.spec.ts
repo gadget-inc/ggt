@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { command } from "../../src/commands/whoami.js";
+import { run } from "../../src/commands/whoami.js";
 import { type Context } from "../../src/services/command/context.js";
 import * as user from "../../src/services/user/user.js";
 import { makeContext } from "../__support__/context.js";
@@ -16,7 +16,7 @@ describe("whoami", () => {
   it("outputs the current user", async () => {
     mock(user, "getUser", () => ({ id: 1, email: "test@example.com", name: "Jane Doe" }));
 
-    await command(ctx);
+    await run(ctx);
 
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
@@ -28,7 +28,7 @@ describe("whoami", () => {
   it("outputs only the email if the current user's name is missing", async () => {
     mock(user, "getUser", () => ({ id: 1, email: "test@example.com" }));
 
-    await command(ctx);
+    await run(ctx);
 
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
@@ -40,7 +40,7 @@ describe("whoami", () => {
   it("outputs 'not logged in' if the current user is undefined", async () => {
     mock(user, "getUser", () => undefined);
 
-    await command(ctx);
+    await run(ctx);
 
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`

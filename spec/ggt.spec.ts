@@ -21,8 +21,8 @@ describe("ggt", () => {
   const signals = ["SIGINT", "SIGTERM"] as const;
   it.each(signals)("calls ctx.abort() on %s", async (expectedSignal) => {
     const aborted = new PromiseSignal();
-    mock(command, "isAvailableCommand", () => true);
-    mock(root, "command", (ctx) => {
+    mock(command, "isCommand", () => true);
+    mock(root, "run", (ctx) => {
       ctx.signal.addEventListener("abort", (reason) => {
         assert(isAbortError(reason), `reason isn't an AbortError: ${inspect(reason)}`);
         aborted.resolve();

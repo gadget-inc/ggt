@@ -4,7 +4,7 @@ import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
 import type { ArgsDefinition } from "../services/command/arg.js";
-import type { Command, Usage } from "../services/command/command.js";
+import type { Run, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import { Changes } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
@@ -85,7 +85,7 @@ export const usage: Usage = (_ctx) => {
   `;
 };
 
-export const command: Command<DevArgs> = async (ctx) => {
+export const run: Run<DevArgs> = async (ctx) => {
   if (!(await which("yarn", { nothrow: true }))) {
     throw new YarnNotFoundError();
   }

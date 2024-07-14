@@ -4,7 +4,7 @@ import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { GraphQLQuery } from "../../../src/services/app/edit/operation.js";
 import { ClientError } from "../../../src/services/app/error.js";
-import type { AvailableCommand } from "../../../src/services/command/command.js";
+import type { Command } from "../../../src/services/command/command.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import {
   TooManyMergeAttemptsError,
@@ -34,7 +34,7 @@ describe(YarnNotFoundError.name, () => {
 // these tests are skipped on Windows because the snapshot contains a
 // Unix path that keeps failing in CI
 describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
-  const makeSyncJson = async (command: AvailableCommand): Promise<SyncJson> => {
+  const makeSyncJson = async (command: Command): Promise<SyncJson> => {
     const application = testApp.slug;
     const environment = testApp.environments[0]!.name;
 

@@ -1,9 +1,6 @@
 import assert from "node:assert";
-import { pathToFileURL } from "node:url";
 import type { EmptyObject, Promisable } from "type-fest";
 import type { RootArgs } from "../../commands/root.js";
-import { config } from "../config/config.js";
-import { relativeToThisFile } from "../util/paths.js";
 import type { ArgsDefinition } from "./arg.js";
 import type { Context } from "./context.js";
 
@@ -74,10 +71,46 @@ export type Run<Args extends ArgsDefinition = EmptyObject, ParentArgs extends Ar
  */
 export const importCommand = async (cmd: Command): Promise<CommandModule> => {
   assert(isCommand(cmd), `invalid command: ${cmd}`);
-  let commandPath = relativeToThisFile(`../../commands/${cmd}.js`);
-  if (config.windows) {
-    // https://github.com/nodejs/node/issues/31710
-    commandPath = pathToFileURL(commandPath).toString();
+
+  let module;
+  switch (cmd) {
+    case "dev":
+      module = await import("../../commands/dev.js");
+      break;
+    case "deploy":
+      module = await import("../../commands/deploy.js");
+      break;
+    case "status":
+      module = await import("../../commands/status.js");
+      break;
+    case "push":
+      module = await import("../../commands/push.js");
+      break;
+    case "pull":
+      module = await import("../../commands/pull.js");
+      break;
+    case "add":
+      module = await import("../../commands/add.js");
+      break;
+    case "open":
+      module = await import("../../commands/open.js");
+      break;
+    case "list":
+      module = await import("../../commands/list.js");
+      break;
+    case "login":
+      module = await import("../../commands/login.js");
+      break;
+    case "logout":
+      module = await import("../../commands/logout.js");
+      break;
+    case "whoami":
+      module = await import("../../commands/whoami.js");
+      break;
+    case "version":
+      module = await import("../../commands/version.js");
+      break;
   }
-  return (await import(commandPath)) as CommandModule;
+
+  return module as CommandModule;
 };

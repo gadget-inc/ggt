@@ -9,7 +9,7 @@ import { installJsonExtensions } from "./services/util/json.js";
 
 export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> => {
   installJsonExtensions();
-  installErrorHandlers(ctx);
+  await installErrorHandlers(ctx);
 
   try {
     let stopping = false;

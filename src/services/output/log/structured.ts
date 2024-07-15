@@ -1,9 +1,9 @@
-import { addBreadcrumb as addSentryBreadcrumb } from "@sentry/node";
 import { config } from "../../config/config.js";
 import { env } from "../../config/env.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { serializeError } from "../../util/object.js";
 import { output } from "../output.js";
+import { addSentryBreadcrumb } from "../sentry.js";
 import type { Fields } from "./field.js";
 import { formatters } from "./format/format.js";
 import { Level } from "./level.js";

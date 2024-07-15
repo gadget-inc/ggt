@@ -112,7 +112,7 @@
     "@types/normalize-path": "^3.0.2",
     "@types/pluralize": "^0.0.33",
     "@types/which": "^3.0.4",
-    "@types/ws": "^8.5.10",
+    "@types/ws": "^8.5.11",
     "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.16.1",
     "concurrently": "^8.2.2",

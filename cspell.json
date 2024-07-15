@@ -7,9 +7,9 @@
     "__fixtures__",
     "__generated__",
     "__snapshots__",
+    "dist",
     "flake.lock",
     "flake.nix",
-    "lib",
     "node_modules",
     "npm-shrinkwrap.json",
     "tmp"

@@ -29,6 +29,7 @@ nothrow
 notificationcenter
 notifysend
 oclif
+outdir
 packagejson
 pagedown
 pageup
@@ -41,7 +42,6 @@ sorhus
 sourcemaps
 sprintln
 sprintlns
-swcrc
 typecheck
 unmock
 unstub

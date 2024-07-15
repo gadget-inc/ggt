@@ -1,4 +1,4 @@
-#!/usr/bin/env -S FORCE_COLOR=0 SWCRC=true SWC_NODE_PROJECT=./tsconfig.json node --loader @swc-node/register/esm --no-warnings
+#!/usr/bin/env node --loader=ts-node/esm --no-warnings
 
 import { $ } from "execa";
 import fs from "fs-extra";

@@ -1,6 +1,6 @@
 __fixtures__
 __generated__
-lib
+dist
 tmp/*
 !tmp/apps
 npm-shrinkwrap.json

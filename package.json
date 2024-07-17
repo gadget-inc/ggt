@@ -81,7 +81,7 @@
     "p-retry": "^6.2.0",
     "p-timeout": "^6.1.2",
     "pluralize": "^8.0.0",
-    "semver": "^7.6.2",
+    "semver": "^7.6.3",
     "serialize-error": "^11.0.3",
     "simple-git": "^3.25.0",
     "stdin-discarder": "^0.2.2",

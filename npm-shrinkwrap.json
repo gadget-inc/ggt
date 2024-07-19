@@ -89,7 +89,7 @@
         "eslint-config-prettier": "^9.1.0",
         "eslint-import-resolver-typescript": "^3.6.1",
         "eslint-plugin-import": "^2.29.1",
-        "eslint-plugin-jsdoc": "^48.7.0",
+        "eslint-plugin-jsdoc": "^48.8.0",
         "eslint-plugin-only-warn": "^1.1.0",
         "eslint-plugin-unicorn": "^54.0.0",
         "nock": "^13.5.4",
@@ -9136,9 +9136,9 @@
       }
     },
     "node_modules/eslint-plugin-jsdoc": {
-      "version": "48.7.0",
-      "resolved": "https://registry.npmjs.org/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-48.7.0.tgz",
-      "integrity": "sha512-5oiVf7Y+ZxGYQTlLq81X72n+S+hjvS/u0upAdbpPEeaIZILK3MKN8lm/6QqKioBjm/qZ0B5XpMQUtc2fUkqXAg==",
+      "version": "48.8.0",
+      "resolved": "https://registry.npmjs.org/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-48.8.0.tgz",
+      "integrity": "sha512-hR32IgxAh1A+JYqU4txIIP3q1s3qekLEjiXyY9OX6xV+Kwo0+hG1VHqn8N0SvDzHNZyhoipYRzaoJk5HtdfmtA==",
       "dev": true,
       "dependencies": {
         "@es-joy/jsdoccomment": "~0.46.0",
@@ -9148,9 +9148,9 @@
         "escape-string-regexp": "^4.0.0",
         "esquery": "^1.6.0",
         "parse-imports": "^2.1.1",
-        "semver": "^7.6.2",
+        "semver": "^7.6.3",
         "spdx-expression-parse": "^4.0.0",
-        "synckit": "^0.9.0"
+        "synckit": "^0.9.1"
       },
       "engines": {
         "node": ">=18"
@@ -23793,9 +23793,9 @@
       }
     },
     "eslint-plugin-jsdoc": {
-      "version": "48.7.0",
-      "resolved": "https://registry.npmjs.org/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-48.7.0.tgz",
-      "integrity": "sha512-5oiVf7Y+ZxGYQTlLq81X72n+S+hjvS/u0upAdbpPEeaIZILK3MKN8lm/6QqKioBjm/qZ0B5XpMQUtc2fUkqXAg==",
+      "version": "48.8.0",
+      "resolved": "https://registry.npmjs.org/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-48.8.0.tgz",
+      "integrity": "sha512-hR32IgxAh1A+JYqU4txIIP3q1s3qekLEjiXyY9OX6xV+Kwo0+hG1VHqn8N0SvDzHNZyhoipYRzaoJk5HtdfmtA==",
       "dev": true,
       "requires": {
         "@es-joy/jsdoccomment": "~0.46.0",
@@ -23805,9 +23805,9 @@
         "escape-string-regexp": "^4.0.0",
         "esquery": "^1.6.0",
         "parse-imports": "^2.1.1",
-        "semver": "^7.6.2",
+        "semver": "^7.6.3",
         "spdx-expression-parse": "^4.0.0",
-        "synckit": "^0.9.0"
+        "synckit": "^0.9.1"
       },
       "dependencies": {
         "spdx-expression-parse": {

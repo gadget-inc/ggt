@@ -22,11 +22,11 @@
           yarn = pkgs.yarn.override { nodejs = flake.packages.nodejs; };
 
           ggt = pkgs.writeShellScriptBin "ggt" ''
-            GGT_ENV=production node --loader @swc-node/register/esm --no-warnings "$WORKSPACE_ROOT"/src/main.ts "$@"
+            GGT_ENV=production "$WORKSPACE_ROOT"/dist/main.js "$@"
           '';
 
           dggt = pkgs.writeShellScriptBin "dggt" ''
-            GGT_ENV=development node --loader @swc-node/register/esm --no-warnings "$WORKSPACE_ROOT"/src/main.ts "$@"
+            GGT_ENV=development "$WORKSPACE_ROOT"/dist/main.js
           '';
         };
 

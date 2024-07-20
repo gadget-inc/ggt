@@ -57,7 +57,7 @@ jobs:
         with:
           environment: production
           version: ${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          sourcemaps: ./lib
+          sourcemaps: ./dist
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: gadget

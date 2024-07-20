@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/eslintrc",
-  "ignorePatterns": ["node_modules", "lib", "tmp", "__fixtures__", "__generated__", ".direnv", "bin/run.js"],
+  "ignorePatterns": ["node_modules", "dist", "tmp", "__fixtures__", "__generated__", ".direnv", "bin/run.js"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": true
@@ -86,8 +86,7 @@
               }
             ]
           }
-        ],
-        "import/no-extraneous-dependencies": ["warn", { "devDependencies": false }]
+        ]
       }
     },
     {

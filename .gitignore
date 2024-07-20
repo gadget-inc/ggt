@@ -3,6 +3,7 @@
 .log
 .nyc_output
 .vscode
+dist
 lib
 node_modules
 tmp

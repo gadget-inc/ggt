@@ -123,7 +123,7 @@
     "terminal-link": "^3.0.0",
     "ts-dedent": "^2.2.0",
     "ts-node": "^10.9.2",
-    "type-fest": "^4.20.1",
+    "type-fest": "^4.23.0",
     "typescript": "^5.5.3",
     "vitest": "^2.0.4",
     "watcher": "^2.3.1",

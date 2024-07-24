@@ -35,12 +35,12 @@
     "lint": "concurrently 'npm:lint:*(!fix)' --group --names --prefix-colors=auto",
     "lint:cspell": "cspell . --no-progress --show-suggestions --show-context",
     "lint:eslint": "eslint . --max-warnings=0 --cache --cache-location=node_modules/.cache/eslint/.eslintcache",
-    "lint:fix": "eslint . --fix --cache && prettier . --write --cache",
+    "lint:fix": "prettier . --write --cache && eslint . --fix --cache --cache-location=node_modules/.cache/eslint/.eslintcache",
     "lint:prettier": "prettier . --check --cache",
     "lint:typescript": "tsc --project tsconfig.json",
     "release": "npm run build && changeset publish",
     "test": "vitest",
-    "version": "changeset version && npm install --package-lock-only"
+    "version": "changeset version && npm install --package-lock-only && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.7",

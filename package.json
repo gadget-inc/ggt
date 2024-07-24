@@ -40,7 +40,7 @@
     "lint:typescript": "tsc --project tsconfig.json",
     "release": "npm run build && changeset publish",
     "test": "vitest",
-    "version": "changeset version && npm install --package-lock-only && scripts/generate-readme.ts"
+    "version": "changeset version && npm install --package-lock-only"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.7",

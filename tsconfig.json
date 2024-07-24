@@ -2,6 +2,9 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "include": ["bin/dev.js", "scripts", "shims", "spec", "src", "*.js", "*.cjs", ".*.cjs"],
   "exclude": ["node_modules", "spec/__fixtures__"],
+  "ts-node": {
+    "transpileOnly": true
+  },
   "compilerOptions": {
     /* Type Checking */
     "noFallthroughCasesInSwitch": true,

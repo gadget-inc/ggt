@@ -33,6 +33,8 @@ jobs:
         uses: changesets/action@v1
         id: changesets
         with:
+          title: Release
+          commit: Release
           version: npm run version
           publish: npm run release
         env:

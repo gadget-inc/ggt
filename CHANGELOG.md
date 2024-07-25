@@ -1,5 +1,24 @@
 # @gadgetinc/ggt
 
+## 1.0.5
+
+### Patch Changes
+
+- 18fb3ca: Bump semver from 7.6.2 to 7.6.3
+- c7632e3: Bump @sentry/node from 8.18.0 to 8.19.0
+- 269554f: Bump dayjs from 1.11.11 to 1.11.12
+- 35cfaf7: Bump boxen from 7.1.1 to 8.0.0
+- 1a82708: Bump normalize-package-data from 6.0.0 to 6.0.2
+- 90ba3fd: Bump ws from 8.17.1 to 8.18.0
+- 0063723: Bump @sentry/node from 7.114.0 to 8.17.0
+- dc39c5d: Downgrade execa from 9.3.0 to 8.0.1 to support Node.js 18 versions lower than 18.18.0
+- 557f56b: Use esbuild to bundle, minify, and tree-shake code and dependencies
+- 8d649a1: Bump @sentry/node from 8.17.0 to 8.18.0
+- 72d7d39: Bump graphql from 16.8.2 to 16.9.0
+- 15d1ad9: Bump string-width from 7.1.0 to 7.2.0
+- 7a64bd8: Fixed an issue causing `ggt deploy` to hang after deploying an app.
+- 323b386: Fixed an issue causing `ggt dev` to print "Pulled files." when only hidden files were pulled.
+
 ## 1.0.4
 
 ### Patch Changes

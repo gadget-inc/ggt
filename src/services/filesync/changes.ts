@@ -43,13 +43,6 @@ export type PrintChangesOptions = Partial<SprintTableOptions> & {
   tense: "past" | "present";
 
   /**
-   * Whether to include `.gadget/` files in the output.
-   *
-   * @default undefined (true if there are no other changes, false otherwise)
-   */
-  includeDotGadget?: boolean;
-
-  /**
    * The maximum number of changes to print.
    *
    * @default Infinity
@@ -70,24 +63,16 @@ const renameSymbol = chalk.yellowBright("→");
  */
 export const sprintChanges = (
   _ctx: Context,
-  { changes, tense, includeDotGadget, limit = Infinity, ...tableOptions }: { changes: Changes | ChangesWithHash } & PrintChangesOptions,
+  { changes, tense, limit = Infinity, ...tableOptions }: { changes: Changes | ChangesWithHash } & PrintChangesOptions,
 ): string => {
   if (config.logLevel <= Level.TRACE) {
     // print all changes when tracing
     limit = Infinity;
   }
 
-  let changesToPrint = Array.from(changes.entries());
-
-  if (includeDotGadget === undefined && changesToPrint.every(([filepath]) => filepath.startsWith(".gadget/"))) {
-    // we weren't explicitly told to exclude `.gadget/` files, and all
-    // the changes are to files within `.gadget/`, so include them since
-    // there's nothing else to show
-    includeDotGadget = true;
-  }
-
-  if (!includeDotGadget) {
-    changesToPrint = changesToPrint.filter(([filepath]) => !filepath.startsWith(".gadget/"));
+  const changesToPrint = Array.from(changes.entries()).filter(([filepath]) => !filepath.startsWith(".gadget/"));
+  if (changesToPrint.length === 0) {
+    return "";
   }
 
   const renamed = chalk.yellowBright(tense === "past" ? "renamed" : "rename");
@@ -162,5 +147,12 @@ export const sprintChanges = (
  * @see {@linkcode SprintChangesOptions}
  */
 export const printChanges = (_ctx: Context, options: { changes: Changes | ChangesWithHash } & PrintChangesOptions): void => {
-  println(sprintChanges(_ctx, options));
+  const text = sprintChanges(_ctx, options);
+
+  // if all the changes were in the .gadget/ directory then
+  // sprintChanges will return an empty string. in that case we don't
+  // want to print anything
+  if (text) {
+    println(text);
+  }
 };

@@ -138,8 +138,8 @@ export class FileSync {
   async hashes(ctx: Context<SyncJsonArgs>, quietly?: boolean): Promise<FileSyncHashes> {
     const spinner = !quietly
       ? spin({ ensureEmptyLineAbove: true })`
-      Calculating file changes.
-    `
+        Calculating file changes.
+      `
       : undefined;
 
     try {
@@ -210,11 +210,17 @@ export class FileSync {
       const localChangesToPush = getNecessaryChanges(ctx, { from: environmentHashes, to: localHashes, ignore: [".gadget/"] });
       const environmentChangesToPull = getNecessaryChanges(ctx, { from: localHashes, to: environmentHashes });
 
-      const onlyDotGadgetFilesChanged = Array.from(environmentChangesToPull.keys()).every((filepath) => filepath.startsWith(".gadget/"));
+      const onlyDotGadgetFilesChanged =
+        environmentChangesToPull.size > 0 &&
+        Array.from(environmentChangesToPull.keys()).every((filepath) => filepath.startsWith(".gadget/"));
+
       const bothChanged = localChanges.size > 0 && environmentChanges.size > 0 && !onlyDotGadgetFilesChanged;
 
       if (spinner) {
-        if (inSync) {
+        if (onlyDotGadgetFilesChanged) {
+          // only .gadget/ files changed, so pretend like nothing happened
+          spinner.clear();
+        } else if (inSync) {
           spinner.succeed`Your files are up to date. ${ts()}`;
         } else {
           spinner.succeed`Calculated file changes. ${ts()}`;
@@ -695,7 +701,6 @@ export class FileSync {
       tense: "past",
       title: sprint`{greenBright ${symbol.arrowDown}} Pulled ${pluralize("file", changes.size)}. ${ts()}`,
       ...options.printEnvironmentChangesOptions,
-      includeDotGadget: !!ctx.args["--verbose"],
     });
 
     if (changes.has("yarn.lock")) {

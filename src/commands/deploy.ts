@@ -210,6 +210,9 @@ export const run: Run<DeployArgs> = async (ctx) => {
         currentStep = step as AppDeploymentSteps;
       }
     },
+    onComplete: async () => {
+      await syncJson.edit.dispose();
+    },
   });
 };
 

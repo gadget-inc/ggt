@@ -3,5 +3,5 @@ __generated__
 dist
 tmp/*
 !tmp/apps
-npm-shrinkwrap.json
+pnpm-lock.yaml
 .direnv

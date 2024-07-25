@@ -2,7 +2,7 @@
  * ======================================================
  * THIS IS A GENERATED FILE! DO NOT EDIT IT MANUALLY!
  *
- * You can regenerate it by running `npm run generate-graphql`.
+ * You can regenerate it by running `pnpm run generate-graphql`.
  * ======================================================
  */
 

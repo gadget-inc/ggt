@@ -13,6 +13,7 @@
       in
       {
         packages = {
+          corepack = pkgs.corepack;
           direnv = pkgs.direnv;
           git = pkgs.git;
           mkcert = pkgs.mkcert;

@@ -19,19 +19,19 @@ if (status.stdout.trim() !== "") {
 }
 
 let spinner = spin("Installing dependencies");
-await $`npm install`;
+await $`pnpm install`;
 spinner.succeed();
 
 spinner = spin("Linting");
-await $`npm run lint`;
+await $`pnpm run lint`;
 spinner.succeed();
 
 spinner = spin("Testing");
-await $`npm run test`;
+await $`pnpm run test`;
 spinner.succeed();
 
 spinner = spin("Building");
-await $`npm run build`;
+await $`pnpm run build`;
 spinner.succeed();
 
 try {
@@ -40,7 +40,7 @@ try {
   await fs.writeJSON(workspacePath("package.json"), packageJson, { spaces: 2 });
 
   println({ ensureEmptyLineAbove: true })("Publishing experimental release:");
-  await $({ stdio: "inherit" })`npm publish --tag=experimental`;
+  await $({ stdio: "inherit" })`pnpm publish --tag=experimental`;
 } finally {
   // undo changes to package.json
   await $`git checkout package.json`;

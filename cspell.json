@@ -11,7 +11,7 @@
     "flake.lock",
     "flake.nix",
     "node_modules",
-    "npm-shrinkwrap.json",
+    "pnpm-lock.yaml",
     "tmp"
   ]
 }

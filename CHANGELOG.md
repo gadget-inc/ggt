@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 1.0.6
+
+### Patch Changes
+
+- 09c1010: Fix `ggt deploy` immediately exiting after confirmation.
+
 ## 1.0.5
 
 ### Patch Changes

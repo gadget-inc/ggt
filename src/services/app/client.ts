@@ -144,6 +144,7 @@ export class Client {
     return () => {
       ctx.log.trace("unsubscribing from graphql subscription");
       removeConnectedListener();
+      queue.clear();
       unsubscribe();
     };
   }

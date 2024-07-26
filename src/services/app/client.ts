@@ -123,11 +123,11 @@ export class Client {
       onComplete?: () => Promisable<void>;
     },
   ): () => void {
-    let request = { query: subscription, variables: unthunk(variables) };
+    const payload = { query: subscription, variables: unthunk(variables) };
 
     const removeConnectedListener = this._graphqlWsClient.on("connected", () => {
       if (this.status === ConnectionStatus.RECONNECTING) {
-        request = { query: subscription, variables: unthunk(variables) };
+        payload.variables = unthunk(variables);
         ctx.log.info("re-subscribing to graphql subscription");
       }
     });
@@ -135,7 +135,7 @@ export class Client {
     const queue = new PQueue({ concurrency: 1 });
     const onError = (error: unknown): Promisable<void> => optionsOnError(new ClientError(subscription, error));
 
-    const unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(request, {
+    const unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(payload, {
       next: (response) => void queue.add(() => onResponse(response)).catch(onError),
       error: (error) => void queue.add(() => onError(error)),
       complete: () => void queue.add(() => onComplete()).catch(onError),

@@ -165,7 +165,9 @@ export class Edit {
     let unsubscribe = this.#client.subscribe(ctx, { ...options, onResponse });
 
     return {
-      unsubscribe,
+      unsubscribe: () => {
+        unsubscribe();
+      },
       resubscribe: (variables) => {
         unsubscribe();
 

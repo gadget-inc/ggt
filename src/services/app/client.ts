@@ -51,7 +51,6 @@ export class Client {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
           // this cookie should be available since we were given an app which requires a cookie to load
           const headers = loadAuthHeaders();
-
           assert(headers, "missing headers when connecting to GraphQL API");
 
           super(address, protocols, {
@@ -137,15 +136,13 @@ export class Client {
     const onError = (error: unknown): Promisable<void> => optionsOnError(new ClientError(subscription, error));
 
     const unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(request, {
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      next: (response) => queue.add(() => onResponse(response)).catch(onError),
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      error: (error) => queue.add(() => onError(error)),
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      complete: () => queue.add(() => onComplete()).catch(onError),
+      next: (response) => void queue.add(() => onResponse(response)).catch(onError),
+      error: (error) => void queue.add(() => onError(error)),
+      complete: () => void queue.add(() => onComplete()).catch(onError),
     });
 
     return () => {
+      ctx.log.trace("unsubscribing from graphql subscription");
       removeConnectedListener();
       unsubscribe();
     };

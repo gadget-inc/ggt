@@ -172,7 +172,6 @@ export const run: Run<DeployArgs> = async (ctx) => {
       }
 
       if (status?.code === "Errored") {
-        subscription.unsubscribe();
         spinner?.fail(stepToSpinnerStart(syncJson, currentStep) + " " + ts());
 
         if (status.message) {
@@ -185,7 +184,6 @@ export const run: Run<DeployArgs> = async (ctx) => {
       }
 
       if (step === AppDeploymentSteps.COMPLETED) {
-        subscription.unsubscribe();
         spinner?.succeed(stepToSpinnerEnd(syncJson, currentStep));
 
         let message = sprint`{green Deploy successful!}`;
@@ -210,8 +208,8 @@ export const run: Run<DeployArgs> = async (ctx) => {
         currentStep = step as AppDeploymentSteps;
       }
     },
-    onComplete: async () => {
-      await syncJson.edit.dispose();
+    onComplete: () => {
+      subscription.unsubscribe();
     },
   });
 };

@@ -53,9 +53,7 @@ export const run: Run<PullArgs> = async (ctx) => {
   const hashes = await filesync.hashes(ctx);
 
   if (hashes.environmentChangesToPull.size === 0) {
-    println({ ensureEmptyLineAbove: true })`
-      Nothing to pull.
-    `;
+    println({ ensureEmptyLineAbove: true, content: "Nothing to pull." });
     return;
   }
 

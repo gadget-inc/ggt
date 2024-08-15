@@ -51,9 +51,7 @@ export const run: Run<typeof args> = async (ctx) => {
   const hashes = await filesync.hashes(ctx);
 
   if (hashes.localChangesToPush.size === 0) {
-    println({ ensureEmptyLineAbove: true })`
-      Nothing to push.
-    `;
+    println({ ensureEmptyLineAbove: true, content: "Nothing to push." });
     return;
   }
 

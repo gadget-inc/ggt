@@ -1,9 +1,10 @@
 import { config } from "../config/config.js";
+import { isString } from "../util/is.js";
 import type { Field } from "./log/field.js";
 import { output } from "./output.js";
-import { isSprintOptions, sprint, type SprintOptions } from "./sprint.js";
+import { isSprintOptions, sprint, type SprintOptionsWithContent } from "./sprint.js";
 
-export type PrintOptions = SprintOptions & {
+export type PrintOptions = SprintOptionsWithContent & {
   /**
    * What to print if --json was passed.
    *
@@ -79,29 +80,28 @@ export type print = {
    * ```
    * @see PrintOptions
    */
-  (options: PrintOptions): print;
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  (options: PrintOptions): void;
 };
 
-const createPrint = (options: PrintOptions): print => {
-  return ((templateOrOptions: PrintOptions | string | TemplateStringsArray, ...values: unknown[]): print | undefined => {
-    if (isSprintOptions(templateOrOptions)) {
-      return createPrint({ ...options, ...templateOrOptions });
+export const print = ((optionsOrString: PrintOptions | string | TemplateStringsArray, ...values: unknown[]): void => {
+  if (config.logFormat === "json") {
+    if (isSprintOptions(optionsOrString) && optionsOrString.json) {
+      output.writeStdout(JSON.stringify(optionsOrString.json) + "\n");
     }
-
-    const { json, ...sprintOptions } = options;
-
-    if (config.logFormat === "json") {
-      if (json) {
-        output.writeStdout(JSON.stringify(json) + "\n");
-      }
-      return;
-    }
-
-    const text = sprint(sprintOptions)(templateOrOptions as TemplateStringsArray, ...values);
-    output.writeStdout(text);
     return;
-  }) as print;
-};
+  }
 
-export const print = createPrint({ ensureNewLine: false });
-export const println = createPrint({ ensureNewLine: true });
+  const text = sprint(optionsOrString as TemplateStringsArray, ...values);
+  output.writeStdout(text);
+}) as print;
+
+export const println = ((optionsOrString: PrintOptions | string | TemplateStringsArray, ...values: unknown[]): void => {
+  if (isSprintOptions(optionsOrString)) {
+    print({ ensureNewLine: true, ...optionsOrString });
+  } else if (isString(optionsOrString)) {
+    print({ ensureNewLine: true, content: optionsOrString });
+  } else {
+    print({ ensureNewLine: true, content: sprint(optionsOrString, ...values) });
+  }
+}) as print;

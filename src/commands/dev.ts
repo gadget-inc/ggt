@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import dayjs from "dayjs";
 import ms from "ms";
 import path from "node:path";
@@ -92,7 +93,7 @@ export const run: Run<DevArgs> = async (ctx) => {
 
   const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
-  footer({ ensureEmptyLineAbove: true })(syncJson.sprint());
+  footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
@@ -123,6 +124,7 @@ export const run: Run<DevArgs> = async (ctx) => {
       const strategy = await select({
         ensureEmptyLineAbove: true,
         choices: hashes.bothChanged ? choices : choices.filter((choice) => choice !== FileSyncStrategy.MERGE),
+        content: chalk.bold("What do you want to do?"),
         formatChoice: (choice) => {
           switch (choice) {
             case FileSyncStrategy.CANCEL:
@@ -153,9 +155,7 @@ export const run: Run<DevArgs> = async (ctx) => {
               }
           }
         },
-      })`
-        {bold What do you want to do?}
-      `;
+      });
 
       switch (strategy) {
         case FileSyncStrategy.CANCEL:
@@ -226,15 +226,18 @@ export const run: Run<DevArgs> = async (ctx) => {
       await syncJson.loadGitBranch();
 
       if (lastGitBranch !== syncJson.gitBranch) {
-        println({ ensureEmptyLineAbove: true })`
-          Your git branch changed.
+        println({
+          ensureEmptyLineAbove: true,
+          content: sprint`
+            Your git branch changed.
 
-          ${lastGitBranch} → ${syncJson.gitBranch}
-        `;
+            ${lastGitBranch} → ${syncJson.gitBranch}
+          `,
+        });
 
         // we need all the changes to be sent in a single batch, so wait
         // a bit in case there are changes the watcher hasn't seen yet
-        const spinner = spin({ ensureEmptyLineAbove: true })("Waiting for file changes to settle.");
+        const spinner = spin({ ensureEmptyLineAbove: true, content: "Waiting for file changes to settle." });
         await delay("3s"); // this time was chosen arbitrarily
         spinner.succeed();
       }
@@ -337,9 +340,12 @@ export const run: Run<DevArgs> = async (ctx) => {
     await reportErrorAndExit(ctx, reason);
   });
 
-  footer({ ensureEmptyLineAbove: true })`
+  footer({
+    ensureEmptyLineAbove: true,
+    content: sprint`
 ${syncJson.sprint({ indent: 4 })}
 
     Waiting for file changes${symbol.ellipsis} {gray Press Ctrl+C to stop}
-  `;
+  `,
+  });
 };

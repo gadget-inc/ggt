@@ -8,7 +8,7 @@ import { serializeError } from "../util/object.js";
 import { workspaceRoot } from "../util/paths.js";
 import { println } from "./print.js";
 import { initSentry, sendErrorToSentry } from "./sentry.js";
-import { sprintln, type SprintOptions } from "./sprint.js";
+import { sprint, sprintln, type SprintOptions } from "./sprint.js";
 
 export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<never> => {
   if (isAbortError(cause)) {
@@ -92,33 +92,39 @@ export abstract class GGTError extends Error {
   }
 
   sprint(): string {
-    let rendered = this.render();
+    let content = this.render();
 
     if (this.isBug !== IsBug.NO) {
       // ensure the rendered message ends with a newline
-      rendered = sprintln(rendered);
+      content = sprintln(content);
 
       const thisIsABug = this.isBug === IsBug.YES ? "This is a bug" : "If you think this is a bug";
       const issueLink = `https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=${this.id}`;
 
       if (terminalLink.isSupported) {
-        rendered += sprintln({ ensureEmptyLineAbove: true })`
-          ${thisIsABug}, ${terminalLink("click here", issueLink)} to create an issue on GitHub.
-        `;
+        content += sprintln({
+          ensureEmptyLineAbove: true,
+          content: sprint`
+            ${thisIsABug}, ${terminalLink("click here", issueLink)} to create an issue on GitHub.
+          `,
+        });
       } else {
-        rendered += sprintln({ ensureEmptyLineAbove: true })`
-          ${thisIsABug}, use the link below to create an issue on GitHub.
+        content += sprintln({
+          ensureEmptyLineAbove: true,
+          content: sprint`
+            ${thisIsABug}, use the link below to create an issue on GitHub.
 
-          ${issueLink}
-        `;
+            ${issueLink}
+          `,
+        });
       }
     }
 
-    return rendered;
+    return content;
   }
 
   print(options?: SprintOptions): void {
-    println({ ensureEmptyLineAbove: true, ...options })(this.sprint());
+    println({ ensureEmptyLineAbove: true, ...options, content: this.sprint() });
   }
 
   /**

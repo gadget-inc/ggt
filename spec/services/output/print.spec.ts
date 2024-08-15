@@ -59,7 +59,7 @@ describe("print", () => {
 
   it("prints json when GGT_LOG_FORMAT=json", () => {
     withEnv({ GGT_LOG_FORMAT: "json" }, () => {
-      print({ json: { hello: "world" } })("Hello, world!");
+      print({ content: "Hello, world!", json: { hello: "world" } });
       expectStdout().toMatchInlineSnapshot(`
         "{"hello":"world"}
         "
@@ -69,7 +69,7 @@ describe("print", () => {
 
   describe("with ensureNewLine", () => {
     it("adds a newline after the content", () => {
-      print({ ensureNewLine: true })("Hello, world!");
+      print({ ensureNewLine: true, content: "Hello, world!" });
       expectStdout().toMatchInlineSnapshot(`
         "Hello, world!
         "
@@ -77,7 +77,7 @@ describe("print", () => {
     });
 
     it("does not add a newline after the content when the content already ends with a newline", () => {
-      print({ ensureNewLine: true })("Hello, world!\n");
+      print({ ensureNewLine: true, content: "Hello, world!\n" });
       expectStdout().toMatchInlineSnapshot(`
         "Hello, world!
         "
@@ -87,12 +87,12 @@ describe("print", () => {
 
   describe("with ensureEmptyLineAbove", () => {
     it("adds a newline before the content", () => {
-      print({ ensureEmptyLineAbove: true })("Hello, world!");
+      print({ ensureEmptyLineAbove: true, content: "Hello, world!" });
       expectStdout().toMatchInlineSnapshot('"Hello, world!"');
     });
 
     it("does not add a newline before the content when the content already begins with a newline", () => {
-      print({ ensureEmptyLineAbove: true })("\nHello, world!");
+      print({ ensureEmptyLineAbove: true, content: "\nHello, world!" });
       expectStdout().toMatchInlineSnapshot('"Hello, world!"');
     });
   });

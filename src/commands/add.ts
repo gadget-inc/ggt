@@ -117,7 +117,7 @@ export const run: Run<AddArgs> = async (ctx) => {
     });
   }
 
-  println({ ensureEmptyLineAbove: true })`${chalk.greenBright(symbol.tick)} Sync completed ${ts()}`;
+  println({ ensureEmptyLineAbove: true, content: `${chalk.greenBright(symbol.tick)} Sync completed ${ts()}` });
 
   const actionType = ctx.args._[0] as AddActionType | undefined;
   if (!actionType) {
@@ -214,7 +214,7 @@ const modelSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
     }
   }
 
-  println({ ensureEmptyLineAbove: true })`${chalk.gray("New model created in environment.")}`;
+  println({ ensureEmptyLineAbove: true, content: chalk.gray("New model created in environment.") });
 
   await filesync.writeToLocalFilesystem(ctx, {
     filesVersion: result.remoteFilesVersion,
@@ -225,7 +225,11 @@ const modelSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
   const modelPrintout = terminalLink.isSupported
     ? terminalLink(modelApiIdentifier, `https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}/model/${modelApiIdentifier}/schema`)
     : modelApiIdentifier;
-  println({ ensureEmptyLineAbove: true })`${chalk.greenBright(symbol.tick)} Model ${chalk.cyanBright(modelPrintout)} added successfully.`;
+
+  println({
+    ensureEmptyLineAbove: true,
+    content: `${chalk.greenBright(symbol.tick)} Model ${chalk.cyanBright(modelPrintout)} added successfully.`,
+  });
 };
 
 const actionSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promise<void> => {
@@ -265,7 +269,12 @@ const actionSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Prom
   if (conflictingModel && conflictingActionNamespace) {
     const joinedParsedPaths = parsedPaths.join("/");
     overrideContextAction = await select({
-      choices: Object.values(["models", "actions"]),
+      choices: ["models", "actions"] as const,
+      content: sprint`
+        {bold Namespace Conflict:} The action '${parsedAction}.js' cannot be automatically added due to a namespace conflict.
+
+        How would you like to proceed?:
+      `,
       formatChoice: (choice) => {
         switch (choice) {
           case "models": {
@@ -276,15 +285,12 @@ const actionSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Prom
           }
         }
       },
-    })`
-        {bold Namespace Conflict:} The action '${parsedAction}.js' cannot be automatically added due to a namespace conflict.
-
-        How would you like to proceed?:
-        `;
+    });
 
     println({
       ensureEmptyLineAbove: true,
-    })`${chalk.yellowBright(symbol.info)} You can override the context of the action by specifying the context in the path. For example: {gray ggt add action ${overrideContextAction}/${path}}`;
+      content: sprint`${chalk.yellowBright(symbol.info)} You can override the context of the action by specifying the context in the path. For example: {gray ggt add action ${overrideContextAction}/${path}}`,
+    });
   }
 
   try {
@@ -308,9 +314,10 @@ const actionSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Prom
     }
   }
 
-  println({ ensureEmptyLineAbove: true })`
-        Action {cyanBright ${path}} added successfully.
-      `;
+  println({
+    ensureEmptyLineAbove: true,
+    content: `Action ${chalk.cyanBright(path)} added successfully.`,
+  });
 };
 
 const routeSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promise<void> => {
@@ -353,9 +360,10 @@ const routeSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
     }
   }
 
-  println({ ensureEmptyLineAbove: true })`
-        Route {cyanBright ${routePath}} added successfully.
-      `;
+  println({
+    ensureEmptyLineAbove: true,
+    content: `Route ${chalk.cyanBright(routePath)} added successfully.`,
+  });
 };
 
 const fieldSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promise<void> => {
@@ -420,7 +428,8 @@ const fieldSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
     }
   }
 
-  println({ ensureEmptyLineAbove: true })`
-        Field {cyanBright ${modelFieldsList[0]?.name}} added successfully.
-      `;
+  println({
+    ensureEmptyLineAbove: true,
+    content: `Field ${chalk.cyanBright(modelFieldsList[0]?.name)} added successfully.`,
+  });
 };

@@ -39,34 +39,34 @@ export type PrintProblemsOptions = SprintOptions & {
 };
 
 export const sprintProblems = ({ problems: groupedProblems, showFileTypes, ...sprintOptions }: PrintProblemsOptions): string => {
-  let output = "";
+  let content = "";
 
   for (const [name, problems] of Object.entries(groupedProblems)) {
-    output += sprintln("");
-    output += sprintln`• {cyan ${name}} {redBright ${pluralize("problem", problems.length, true)}}`;
+    content += sprintln("");
+    content += sprintln`• {cyan ${name}} {redBright ${pluralize("problem", problems.length, true)}}`;
     for (const problem of problems) {
       const [message, ...lines] = problem.message.split("\n") as [string, ...string[]];
 
-      output += sprint`  {red ✖} `;
+      content += sprint`  {red ✖} `;
       if (showFileTypes ?? problem.type === "SourceFile") {
-        output += sprint`${filetype(name)} `;
+        content += sprint`${filetype(name)} `;
       }
-      output += sprint(message);
+      content += sprint(message);
 
       for (const line of lines) {
-        output += sprintln("");
-        output += sprint`    ${line}`;
+        content += sprintln("");
+        content += sprint`    ${line}`;
       }
 
       for (const label of problem.labels) {
-        output += sprint` {dim ${label}}`;
+        content += sprint` {dim ${label}}`;
       }
 
-      output += sprintln("");
+      content += sprintln("");
     }
   }
 
-  return sprintln(sprintOptions)(output);
+  return sprintln({ ...sprintOptions, content });
 };
 
 export const printProblems = (options: PrintProblemsOptions): void => {

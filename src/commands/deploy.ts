@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import assert from "node:assert";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
@@ -56,9 +57,10 @@ export const run: Run<DeployArgs> = async (ctx) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { directory });
 
-  println({ ensureEmptyLineAbove: true })`
-    Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}
-  `;
+  println({
+    ensureEmptyLineAbove: true,
+    content: `Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}`,
+  });
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
@@ -69,9 +71,10 @@ export const run: Run<DeployArgs> = async (ctx) => {
     //  therefor, we need to push before we can deploy
     await filesync.print(ctx, { hashes });
 
-    println({ ensureEmptyLineAbove: true })`
-      Your environment's files must match your local files before you can deploy.
-    `;
+    println({
+      ensureEmptyLineAbove: true,
+      content: "Your environment's files must match your local files before you can deploy.",
+    });
 
     // some scenarios make the confirmation to push changes imply the
     // --force flag (e.g. when both local and environment files have
@@ -79,28 +82,29 @@ export const run: Run<DeployArgs> = async (ctx) => {
     let implicitForce = false;
 
     if (output.isInteractive) {
-      let message: string;
+      let content: string;
       switch (true) {
         case hashes.bothChanged:
-          message = sprint`Would you like to push your local changes and {underline discard your environment's} changes now?`;
+          content = sprint`Would you like to push your local changes and {underline discard your environment's} changes now?`;
           implicitForce = true;
           break;
         case hashes.localChangesToPush.size > 0:
-          message = sprint`Would you like to push your local changes now?`;
+          content = sprint`Would you like to push your local changes now?`;
           break;
         case hashes.environmentChanges.size > 0:
-          message = sprint`Do you want to {underline discard your environment's} changes now?`;
+          content = sprint`Do you want to {underline discard your environment's} changes now?`;
           implicitForce = true;
           break;
         default:
           unreachable("no changes to push or discard");
       }
 
-      await confirm({ ensureEmptyLineAbove: true })(message);
+      await confirm(content);
     } else {
-      println({ ensureEmptyLineAbove: true })`
-        Assuming you want to push your local files now.
-      `;
+      println({
+        ensureEmptyLineAbove: true,
+        content: "Assuming you want to push your local files now.",
+      });
     }
 
     await filesync.push(ctx, { hashes, force: implicitForce || ctx.args["--force"] });
@@ -129,12 +133,12 @@ export const run: Run<DeployArgs> = async (ctx) => {
 
         switch (true) {
           case graphqlError.extensions["requiresUpgrade"]:
-            println({ ensureEmptyLineAbove: true })(graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, ""));
+            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
             process.exit(1);
             break;
           case graphqlError.extensions["requiresAdditionalCharge"]:
-            println({ ensureEmptyLineAbove: true })(graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, ""));
-            await confirm({ ensureEmptyLineAbove: true })("Do you want to continue?");
+            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
+            await confirm({ ensureEmptyLineAbove: true, content: "Do you want to continue?" });
             subscription.resubscribe({ ...variables, allowCharges: true });
             return;
         }
@@ -157,7 +161,7 @@ export const run: Run<DeployArgs> = async (ctx) => {
           await reportErrorAndExit(ctx, new DeployDisallowedError(publishIssuesToProblems(fatalIssues)));
         }
 
-        println({ ensureEmptyLineAbove: true })`{bold Problems found.}`;
+        println({ ensureEmptyLineAbove: true, content: chalk.bold("Problems found.") });
         printProblems({ problems: publishIssuesToProblems(issues) });
 
         if (!publishStarted) {
@@ -165,7 +169,10 @@ export const run: Run<DeployArgs> = async (ctx) => {
           subscription.resubscribe({ ...variables, force: true });
         } else {
           assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");
-          println({ ensureEmptyLineAbove: true })`Deploying regardless of problems because {bold "--allow-problems"} was passed.`;
+          println({
+            ensureEmptyLineAbove: true,
+            content: sprint`Deploying regardless of problems because {bold "--allow-problems"} was passed.`,
+          });
         }
 
         return;
@@ -175,10 +182,10 @@ export const run: Run<DeployArgs> = async (ctx) => {
         spinner?.fail(stepToSpinnerStart(syncJson, currentStep) + " " + ts());
 
         if (status.message) {
-          println({ ensureEmptyLineAbove: true })`{red ${status.message}}`;
+          println({ ensureEmptyLineAbove: true, content: chalk.red(status.message) });
         }
         if (status.output) {
-          println({ ensureEmptyLineAbove: true })`${terminalLink("Check logs", status.output)}`;
+          println({ ensureEmptyLineAbove: true, content: sprint`${terminalLink("Check logs", status.output)}` });
         }
         return;
       }
@@ -186,12 +193,12 @@ export const run: Run<DeployArgs> = async (ctx) => {
       if (step === AppDeploymentSteps.COMPLETED) {
         spinner?.succeed(stepToSpinnerEnd(syncJson, currentStep));
 
-        let message = sprint`{green Deploy successful!}`;
+        let content = chalk.green("Deploy successful!");
         if (status?.output) {
-          message += ` ${terminalLink("Check logs", status.output)}.`;
+          content += ` ${terminalLink("Check logs", status.output)}.`;
         }
 
-        println({ ensureEmptyLineAbove: true })(message);
+        println({ ensureEmptyLineAbove: true, content });
         return;
       }
 
@@ -202,7 +209,7 @@ export const run: Run<DeployArgs> = async (ctx) => {
           spinner?.succeed(stepToSpinnerEnd(syncJson, currentStep));
 
           const ensureEmptyLineAbove = currentStep === AppDeploymentSteps.NOT_STARTED || !output.isInteractive;
-          spinner = spin({ ensureEmptyLineAbove })(spinnerText);
+          spinner = spin({ ensureEmptyLineAbove, content: spinnerText });
         }
 
         currentStep = step as AppDeploymentSteps;

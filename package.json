@@ -75,7 +75,7 @@
     "concurrently": "^8.2.2",
     "cspell": "^8.13.3",
     "dayjs": "^1.11.12",
-    "esbuild": "^0.23.0",
+    "esbuild": "^0.23.1",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.6.1",

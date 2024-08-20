@@ -130,7 +130,7 @@ export class Context<
           try {
             await callback(this.signal.reason);
           } catch (e: unknown) {
-            error = e;
+            error ??= e;
             this.log.error("error during abort", { error });
           }
         }

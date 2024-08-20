@@ -2,9 +2,8 @@ import { assert, beforeEach, expect, vi, type MockInstance } from "vitest";
 import * as confirm from "../../src/services/output/confirm.js";
 import { output } from "../../src/services/output/output.js";
 import * as select from "../../src/services/output/select.js";
-import { isSprintOptions, sprint, sprintln, type SprintOptions } from "../../src/services/output/sprint.js";
+import { sprintln } from "../../src/services/output/sprint.js";
 import { noop } from "../../src/services/util/function.js";
-import { isString } from "../../src/services/util/is.js";
 import type { FunctionPropertyNames } from "../../src/services/util/types.js";
 import { printStackTraceAndFail } from "./debug.js";
 
@@ -187,59 +186,28 @@ export const mockSideEffects = (): void => {
   });
 };
 
-export const mockConfirm = (impl = noop): MockInstance<(options: SprintOptions) => confirm.confirm> => {
-  const mockedConfirm = (optionsOrStr: any, ...values: unknown[]): any => {
-    if (isSprintOptions(optionsOrStr)) {
-      return mockedConfirm;
-    }
-    if (!isString(optionsOrStr)) {
-      optionsOrStr = sprint(optionsOrStr, ...values);
-    }
+export const mockConfirm = (impl = noop): MockInstance<confirm.confirm> => {
+  return mock(confirm, "confirm", (maybeOptions) => {
+    const options = typeof maybeOptions === "string" ? { content: maybeOptions } : maybeOptions;
     // TODO: this is actually printed to stderr
-    output.writeStdout(optionsOrStr);
+    output.writeStdout(sprintln({ ensureEmptyLineAbove: true, ...options }));
     impl();
-  };
-
-  return mock(confirm, "confirm", mockedConfirm);
-};
-
-export const mockConfirmOnce = (impl = noop): MockInstance<(options: SprintOptions) => confirm.confirm> => {
-  let options: SprintOptions = {
-    ensureEmptyLineAbove: true,
-  };
-
-  const mockedConfirm = (optionsOrStr: any, ...values: unknown[]): any => {
-    if (isSprintOptions(optionsOrStr)) {
-      options = { ...options, ...optionsOrStr };
-      return mockedConfirm;
-    }
-    if (!isString(optionsOrStr)) {
-      optionsOrStr = sprintln(options)(optionsOrStr, ...values);
-    }
-    // TODO: this is actually printed to stderr
-    output.writeStdout(optionsOrStr);
-    impl();
-  };
-
-  return mockOnce(confirm, "confirm", mockedConfirm);
-};
-
-export const mockSelect = <Choice extends string>(
-  choice: Choice,
-): MockInstance<(options: select.SelectOptions<string>) => select.selectWithChoices<string>> => {
-  return mock(select, "select", (_options) => {
-    return (_str) => {
-      return Promise.resolve(choice);
-    };
   });
 };
 
-export const mockSelectOnce = <Choice extends string>(
-  choice: Choice,
-): MockInstance<(options: select.SelectOptions<string>) => select.selectWithChoices<string>> => {
-  return mockOnce(select, "select", (_options) => {
-    return (_str) => {
-      return Promise.resolve(choice);
-    };
+export const mockConfirmOnce = (impl = noop): MockInstance<confirm.confirm> => {
+  return mockOnce(confirm, "confirm", (maybeOptions) => {
+    const options = typeof maybeOptions === "string" ? { content: maybeOptions } : maybeOptions;
+    // TODO: this is actually printed to stderr
+    output.writeStdout(sprintln({ ensureEmptyLineAbove: true, ...options }));
+    impl();
   });
+};
+
+export const mockSelect = <Choice extends string>(choice: Choice): MockInstance<select.select> => {
+  return mock(select, "select", () => Promise.resolve(choice));
+};
+
+export const mockSelectOnce = <Choice extends string>(choice: Choice): MockInstance<select.select> => {
+  return mockOnce(select, "select", () => Promise.resolve(choice));
 };

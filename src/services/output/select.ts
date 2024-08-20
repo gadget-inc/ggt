@@ -2,59 +2,42 @@ import chalk from "chalk";
 import indentString from "indent-string";
 import assert from "node:assert";
 import process from "node:process";
-import { isString } from "../util/is.js";
 import { defaults } from "../util/object.js";
 import { output } from "./output.js";
 import { println } from "./print.js";
 import { entriesToDisplay, Prompt, type StdinKey } from "./prompt.js";
-import { sprint, sprintln, type SprintOptions } from "./sprint.js";
+import { sprintln, type SprintOptionsWithContent } from "./sprint.js";
 import { symbol } from "./symbols.js";
 
-export type SelectOptions<Choice extends string> = SprintOptions & {
+export type SelectOptions<Choice extends string> = SprintOptionsWithContent & {
   choices: Choice[];
   formatChoice?: (choice: Choice) => string;
   formatSelection?: (choice: Choice) => string;
 };
 
-export type select<Choice extends string> = (options: SelectOptions<Choice>) => selectWithChoices<Choice>;
+export type select = typeof select;
 
-export type selectWithChoices<Choice extends string> = {
-  (str: string): Promise<Choice>;
-  (template: TemplateStringsArray, ...values: unknown[]): Promise<Choice>;
-};
-
-// TODO: i regret this api... don't make it the same as println... just make it take ctx and options
-export const select = <Choice extends string>(options: SelectOptions<Choice>): selectWithChoices<Choice> => {
+export const select = <Choice extends string>(options: SelectOptions<Choice>): Promise<Choice> => {
   options = defaults(options, {
     ensureEmptyLineAbove: true,
   });
 
-  return ((template: string | TemplateStringsArray, ...values: unknown[]): Promise<Choice> => {
-    let text = template as string;
-    if (!isString(text)) {
-      text = sprint(template as TemplateStringsArray, ...values);
-    }
+  if (!output.isInteractive) {
+    println(options);
+    println({ ensureEmptyLineAbove: true, content: "Aborting because ggt is not running in an interactive terminal." });
+    process.exit(1);
+  }
 
-    if (!output.isInteractive) {
-      // TODO: log an error here
-      println(options)(text);
-      println({ ensureEmptyLineAbove: true })`
-        Aborting because ggt is not running in an interactive terminal.
-      `;
-      process.exit(1);
-    }
-
-    return new Promise((resolve) => {
-      const sel = new Select(text, {
-        formatChoice: (choice) => choice,
-        formatSelection: (choice) => choice,
-        ...options,
-      });
-      sel.on("submit", resolve);
-      sel.on("exit", () => process.exit(0));
-      sel.on("abort", () => process.exit(0));
+  return new Promise((resolve) => {
+    const sel = new Select({
+      formatChoice: (choice) => choice,
+      formatSelection: (choice) => choice,
+      ...options,
     });
-  }) as selectWithChoices<Choice>;
+    sel.on("submit", resolve);
+    sel.on("exit", () => process.exit(0));
+    sel.on("abort", () => process.exit(0));
+  });
 };
 
 /**
@@ -89,10 +72,7 @@ class Select<Choice extends string> extends Prompt {
   optionsPerPage = 10;
   options;
 
-  constructor(
-    readonly text: string,
-    options: SelectOptions<Choice>,
-  ) {
+  constructor(options: SelectOptions<Choice>) {
     super();
 
     this.options = defaults(options, {
@@ -101,9 +81,9 @@ class Select<Choice extends string> extends Prompt {
       ...options,
     });
 
-    if (this.options.ensureEmptyLineAbove) {
-      this.text = "\n" + this.text;
-    }
+    // if (this.options.ensureEmptyLineAbove) {
+    //   this.text = "\n" + this.text;
+    // }
 
     this.render();
   }
@@ -192,11 +172,14 @@ class Select<Choice extends string> extends Prompt {
 
     super.render();
 
-    let question = this.text;
+    let question = this.options.content;
     if (this.done) {
-      output.persistPrompt(sprintln`
-        ${question.trimEnd()} ${this.options.formatChoice(selection ?? this.selection)}
-      `);
+      output.persistPrompt(
+        sprintln({
+          ...this.options,
+          content: `${question.trimEnd()} ${this.options.formatChoice(selection ?? this.selection)}`,
+        }),
+      );
       return;
     }
 

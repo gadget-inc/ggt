@@ -205,11 +205,14 @@ export class SyncJson {
     let previousEnvironment: string | undefined;
     if (state.environment !== ctx.env.name) {
       // the user specified a different environment, update the state
-      println({ ensureEmptyLineAbove: true })`
-        Changing environment.
+      println({
+        ensureEmptyLineAbove: true,
+        content: sprint`
+          Changing environment.
 
-          ${state.environment} → ${ctx.env.name}
-      `;
+            ${state.environment} → ${ctx.env.name}
+        `,
+      });
 
       previousEnvironment = state.environment;
       state.environment = ctx.env.name;
@@ -305,21 +308,22 @@ export class SyncJson {
   }
 
   sprint(options: SprintOptions = {}): string {
-    let str = sprintln`
+    let content = sprintln`
       Application  ${this.app.slug}
       Environment  ${this.env.name}
     `;
 
     if (this.gitBranch) {
-      str += sprintln({ indent: 5 })`Branch  ${this.gitBranch}`;
+      content += sprintln({ indent: 5, content: `Branch  ${this.gitBranch}` });
     }
 
     if (terminalLink.isSupported) {
-      str += sprintln({ ensureEmptyLineAbove: true })`
-        ${terminalLink("Preview", `https://${this.app.slug}--${this.env.name}.gadget.app`)}  ${terminalLink("Editor", `https://${this.app.primaryDomain}/edit/${this.env.name}`)}  ${terminalLink("Playground", `https://${this.app.primaryDomain}/api/playground/graphql?environment=${this.env.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${this.app.slug}`)}
-      `;
+      content += sprintln({
+        ensureEmptyLineAbove: true,
+        content: `${terminalLink("Preview", `https://${this.app.slug}--${this.env.name}.gadget.app`)}  ${terminalLink("Editor", `https://${this.app.primaryDomain}/edit/${this.env.name}`)}  ${terminalLink("Playground", `https://${this.app.primaryDomain}/api/playground/graphql?environment=${this.env.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${this.app.slug}`)}`,
+      });
     } else {
-      str += sprintln`
+      content += sprintln`
           ------------------------
            Preview     https://${this.app.slug}--${this.env.name}.gadget.app
            Editor      https://${this.app.primaryDomain}/edit/${this.env.name}
@@ -328,7 +332,7 @@ export class SyncJson {
       `;
     }
 
-    return sprintln(options)(str);
+    return sprintln({ ...options, content });
   }
 
   print(options?: SprintOptions): void {
@@ -364,9 +368,10 @@ const loadApp = async (
   let appSlug = ctx.args["--app"] || state?.application;
   if (!appSlug) {
     // the user didn't specify an app, ask them to select one
-    appSlug = await select({ choices: availableApps.map((x) => x.slug) })`
-      Which application do you want to develop?
-    `;
+    appSlug = await select({
+      choices: availableApps.map((x) => x.slug),
+      content: "Which application do you want to develop?",
+    });
   }
 
   const app = availableApps.find((app) => app.slug === appSlug);
@@ -418,9 +423,10 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: Applic
   let envName = ctx.args["--env"] || state?.environment;
   if (!envName) {
     // user didn't specify an environment, ask them to select one
-    envName = await select({ choices: devEnvs.map((x) => x.name) })`
-      Which environment do you want to develop on?
-    `;
+    envName = await select({
+      choices: devEnvs.map((x) => x.name),
+      content: "Which environment do you want to develop on?",
+    });
   }
 
   if (envName.toLowerCase() === "production") {

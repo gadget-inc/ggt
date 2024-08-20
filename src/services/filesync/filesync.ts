@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { execa } from "execa";
 import fs from "fs-extra";
 import ms from "ms";
@@ -136,11 +137,7 @@ export class FileSync {
   constructor(readonly syncJson: SyncJson) {}
 
   async hashes(ctx: Context<SyncJsonArgs>, quietly?: boolean): Promise<FileSyncHashes> {
-    const spinner = !quietly
-      ? spin({ ensureEmptyLineAbove: true })`
-        Calculating file changes.
-      `
-      : undefined;
+    const spinner = !quietly ? spin({ ensureEmptyLineAbove: true, content: "Calculating file changes." }) : undefined;
 
     try {
       const [localHashes, { localFilesVersionHashes, environmentHashes, environmentFilesVersion }] = await Promise.all([
@@ -221,9 +218,9 @@ export class FileSync {
           // only .gadget/ files changed, so pretend like nothing happened
           spinner.clear();
         } else if (inSync) {
-          spinner.succeed`Your files are up to date. ${ts()}`;
+          spinner.succeed(`Your files are up to date. ${ts()}`);
         } else {
-          spinner.succeed`Calculated file changes. ${ts()}`;
+          spinner.succeed(`Calculated file changes. ${ts()}`);
         }
       }
 
@@ -262,9 +259,7 @@ export class FileSync {
         title: sprint`Your local files {underline have} changed.`,
       });
     } else {
-      println({ ensureEmptyLineAbove: true })`
-        Your local files {underline have not} changed.
-      `;
+      println({ ensureEmptyLineAbove: true, content: sprint`Your local files {underline have not} changed.` });
     }
 
     if (environmentChanges.size > 0 && !onlyDotGadgetFilesChanged) {
@@ -274,9 +269,7 @@ export class FileSync {
         title: sprint`Your environment's files {underline have}${bothChanged ? " also" : ""} changed.`,
       });
     } else {
-      println({ ensureEmptyLineAbove: true })`
-        Your environment's files {underline have not} changed.
-      `;
+      println({ ensureEmptyLineAbove: true, content: sprint`Your environment's files {underline have not} changed.` });
     }
   }
 
@@ -500,9 +493,10 @@ export class FileSync {
       // some of the changes aren't .gadget/ files
       !onlyDotGadgetFilesChanged
     ) {
-      await confirm({ ensureEmptyLineAbove: true })`
-        Are you sure you want to {underline discard} your environment's changes?
-      `;
+      await confirm({
+        ensureEmptyLineAbove: true,
+        content: sprint`Are you sure you want to {underline discard} your environment's changes?`,
+      });
     }
 
     try {
@@ -544,9 +538,9 @@ export class FileSync {
 
     // TODO: lift this check up to the pull command
     if (localChanges.size > 0 && !(force ?? ctx.args["--force"])) {
-      await confirm`
+      await confirm(sprint`
         Are you sure you want to {underline discard} your local changes?
-      `;
+      `);
     }
 
     await this._getChangesFromEnvironment(ctx, {
@@ -704,18 +698,18 @@ export class FileSync {
     });
 
     if (changes.has("yarn.lock")) {
-      const spinner = spin({ ensureEmptyLineAbove: true })('Running "yarn install --check-files"');
+      const spinner = spin({ ensureEmptyLineAbove: true, content: 'Running "yarn install --check-files"' });
 
       try {
         await execa("yarn", ["install", "--check-files"], { cwd: this.syncJson.directory.path });
-        spinner.succeed`Ran "yarn install --check-files" ${ts()}`;
+        spinner.succeed(`Ran "yarn install --check-files" ${ts()}`);
       } catch (error) {
         spinner.fail();
         ctx.log.error("yarn install failed", { error });
 
-        const message = serializeError(error).message;
-        if (message) {
-          println({ ensureEmptyLineAbove: true, indent: 2 })(message);
+        const content = serializeError(error).message;
+        if (content) {
+          println({ ensureEmptyLineAbove: true, indent: 2, content });
         }
       }
     }
@@ -742,9 +736,10 @@ export class FileSync {
       let preference = ctx.args["--prefer"];
       if (!preference) {
         printConflicts({ conflicts });
-        preference = await select({ choices: Object.values(MergeConflictPreference) })`
-          {bold How should we resolve these conflicts?}
-        `;
+        preference = await select({
+          choices: Object.values(MergeConflictPreference),
+          content: chalk.bold("How should we resolve these conflicts?"),
+        });
       }
 
       switch (preference) {
@@ -796,14 +791,15 @@ export class FileSync {
     const created = changes.created();
     const updated = changes.updated();
 
-    const spinner = spin({ ensureEmptyLineAbove: true })(
-      sprintChanges(ctx, {
+    const spinner = spin({
+      ensureEmptyLineAbove: true,
+      content: sprintChanges(ctx, {
         changes,
         tense: "present",
         title: sprint`Pulling ${pluralize("file", changes.size)}.`,
         ...printEnvironmentChangesOptions,
       }),
-    );
+    });
 
     try {
       let files: File[] = [];
@@ -900,14 +896,15 @@ export class FileSync {
       `);
     }
 
-    const spinner = spin({ ensureEmptyLineAbove: true })(
-      sprintChanges(ctx, {
+    const spinner = spin({
+      ensureEmptyLineAbove: true,
+      content: sprintChanges(ctx, {
         changes,
         tense: "present",
         title: sprintln`Pushing ${pluralize("file", changed.length + deleted.length)}. ${symbol.arrowRight}`,
         ...printLocalChangesOptions,
       }),
-    );
+    });
 
     try {
       const {
@@ -955,17 +952,20 @@ export class FileSync {
       );
 
       if (filesyncProblems.length > 0) {
-        println({ ensureEmptyLineAbove: true })`
-          {red Gadget has detected the following fatal errors with your files:}
+        println({
+          ensureEmptyLineAbove: true,
+          content: sprint`
+            {red Gadget has detected the following fatal errors with your files:}
 
-          ${sprintProblems({
-            problems: filesyncProblemsToProblems(filesyncProblems),
-            showFileTypes: false,
-            indent: 10,
-          })}
+            ${sprintProblems({
+              problems: filesyncProblemsToProblems(filesyncProblems),
+              showFileTypes: false,
+              indent: 12,
+            })}
 
-          {red Your app will not be operational until all fatal errors are fixed.}
-        `;
+            {red Your app will not be operational until all fatal errors are fixed.}
+          `,
+        });
       }
     } catch (error) {
       if (isFilesVersionMismatchError(error)) {

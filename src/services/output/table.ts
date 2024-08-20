@@ -84,37 +84,37 @@ export const sprintTable = ({
 
   table.push(...rows);
 
-  let text = table.toString() + "\n";
+  let content = table.toString() + "\n";
   if (borderType === "none") {
     // remove the left padding
-    text = dedent(text).slice(1);
+    content = dedent(content).slice(1);
   }
 
   // remove the right padding
-  text = text
+  content = content
     .split("\n")
     .map((line) => line.trimEnd())
     .join("\n");
 
   if (indent) {
-    text = indentString(text, indent);
+    content = indentString(content, indent);
   }
 
   if (title) {
-    text = sprintln(title) + sprintln({ ensureEmptyLineAbove: ensureEmptyLineAboveBody })(text);
+    content = sprintln(title) + sprintln({ content, ensureEmptyLineAbove: ensureEmptyLineAboveBody });
   }
 
   if (footer) {
-    text = sprintln(text) + sprintln({ ensureEmptyLineAbove: ensureEmptyLineAboveFooter })(footer);
+    content = sprintln(content) + sprintln({ content: footer, ensureEmptyLineAbove: ensureEmptyLineAboveFooter });
   }
 
-  return sprintln(printOptions)(text);
+  return sprintln({ content, ...printOptions });
 };
 
-export type PrintTableOptions = PrintOptions & SprintTableOptions;
+export type PrintTableOptions = Omit<PrintOptions, "content"> & SprintTableOptions;
 
 export const printTable = (options: PrintTableOptions): void => {
-  println(options)(sprintTable(options));
+  println(sprintTable(options));
 };
 
 // prettier-ignore

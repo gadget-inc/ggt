@@ -39,7 +39,7 @@ try {
   packageJson.version = `0.0.0-experimental.${gitSha.stdout.trim()}`;
   await fs.writeJSON(workspacePath("package.json"), packageJson, { spaces: 2 });
 
-  println({ ensureEmptyLineAbove: true })("Publishing experimental release:");
+  println({ ensureEmptyLineAbove: true, content: "Publishing experimental release:" });
   await $({ stdio: "inherit" })`npm publish --tag=experimental`;
 } finally {
   // undo changes to package.json

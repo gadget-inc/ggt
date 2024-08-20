@@ -38,6 +38,6 @@ export const run: Run = async (ctx) => {
       simpleOutput += sprintln`${app.slug}\t${app.primaryDomain}`;
     }
 
-    println({ json: apps })(simpleOutput);
+    println({ json: apps, content: simpleOutput });
   }
 };

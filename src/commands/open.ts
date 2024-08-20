@@ -115,7 +115,7 @@ export const run: Run<OpenArgs> = async (ctx) => {
       let modelApiIdentifier = ctx.args._[1];
       if (!modelApiIdentifier) {
         if (ctx.args["--show-all"]) {
-          modelApiIdentifier = await select({ choices: remoteModelApiIdentifiers })("Which model do you wish to open?");
+          modelApiIdentifier = await select({ choices: remoteModelApiIdentifiers, content: "Which model do you wish to open?" });
         } else {
           throw new ArgError(sprint`
             "ggt open ${view}" requires a model to be specified.

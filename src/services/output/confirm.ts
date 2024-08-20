@@ -1,14 +1,14 @@
 import chalk from "chalk";
 import process from "node:process";
 import type { Promisable } from "type-fest";
-import { isString } from "../util/is.js";
 import { defaults } from "../util/object.js";
+import type { PartialExcept } from "../util/types.js";
 import { output } from "./output.js";
-import { println } from "./print.js";
+import { println, type PrintOptions } from "./print.js";
 import { Prompt, type StdinKey } from "./prompt.js";
-import { isSprintOptions, sprint, sprintln, type SprintOptions } from "./sprint.js";
+import { sprintln } from "./sprint.js";
 
-export type ConfirmOptions = SprintOptions & {
+export type ConfirmOptions = PrintOptions & {
   /**
    * If `true`, ggt will exit if the user selects "No".
    *
@@ -30,54 +30,41 @@ export type ConfirmOptions = SprintOptions & {
   whenNotInteractive?: () => Promisable<void>;
 };
 
-export type confirm = {
-  (str: string): Promise<void>;
-  (template: TemplateStringsArray, ...values: unknown[]): Promise<void>;
-  (options: ConfirmOptions): confirm;
-};
+export type confirm = typeof confirm;
 
-// TODO: i regret this api... don't make it the same as println... just make it take ctx and options
-const createConfirm = (options: ConfirmOptions): confirm => {
+export const confirm = (contentOrOptions: string | ConfirmOptions): Promise<void> => {
+  let options: ConfirmOptions;
+  if (typeof contentOrOptions === "string") {
+    options = { content: contentOrOptions };
+  } else {
+    options = contentOrOptions;
+  }
+
   options = defaults(options, {
     ensureEmptyLineAbove: true,
+    ensureNewLine: true,
     exitWhenNo: true,
   });
 
-  return ((templateOrOptions: ConfirmOptions | string | TemplateStringsArray, ...values: unknown[]): confirm | Promise<void> => {
-    if (isSprintOptions(templateOrOptions)) {
-      return createConfirm({ ...options, ...templateOrOptions });
-    }
-
-    let text = templateOrOptions as string;
-    if (!isString(text)) {
-      text = sprint(templateOrOptions as TemplateStringsArray, ...values);
-    }
-
+  if (!output.isInteractive) {
     const whenNotInteractive =
       options.whenNotInteractive ??
       (() => {
-        // TODO: log an error here
-        println(options)(text);
-        println({ ensureEmptyLineAbove: true })`
-          Aborting because ggt is not running in an interactive terminal.
-        `;
+        println(options);
+        println({ ensureEmptyLineAbove: true, content: "Aborting because ggt is not running in an interactive terminal." });
         process.exit(1);
       });
 
-    if (!output.isInteractive) {
-      return Promise.resolve(whenNotInteractive());
-    }
+    return Promise.resolve(whenNotInteractive());
+  }
 
-    return new Promise((resolve) => {
-      const conf = new Confirm(text, options);
-      conf.on("submit", resolve);
-      conf.on("exit", () => process.exit(0));
-      conf.on("abort", () => process.exit(1));
-    });
-  }) as confirm;
+  return new Promise((resolve) => {
+    const conf = new Confirm(options);
+    conf.on("submit", resolve);
+    conf.on("exit", () => process.exit(0));
+    conf.on("abort", () => process.exit(1));
+  });
 };
-
-export const confirm = createConfirm({});
 
 /**
  * Inspired by `prompts`:
@@ -110,20 +97,13 @@ export class Confirm extends Prompt {
   defaultValue = false;
   options;
 
-  constructor(
-    readonly text: string,
-    options: Partial<ConfirmOptions>,
-  ) {
+  constructor(options: PartialExcept<ConfirmOptions, "content">) {
     super();
 
     this.options = defaults(options, {
       exitWhenNo: true,
       ensureEmptyLineAbove: true,
     });
-
-    if (this.options.ensureEmptyLineAbove) {
-      this.text = "\n" + this.text;
-    }
 
     this.render();
   }
@@ -183,14 +163,20 @@ export class Confirm extends Prompt {
     super.render();
 
     if (this.done) {
-      output.persistPrompt(sprintln`
-        ${this.text} ${value ? chalk.bold.greenBright("Yes.") : chalk.bold.redBright("No.")}
-      `);
+      output.persistPrompt(
+        sprintln({
+          ...this.options,
+          content: `${this.options.content} ${value ? chalk.bold.greenBright("Yes.") : chalk.bold.redBright("No.")}`,
+        }),
+      );
       return;
     }
 
-    output.updatePrompt(sprintln`
-      ${this.text} ${this.defaultValue ? "[Y/n] " : "[y/N] "}
-    `);
+    output.updatePrompt(
+      sprintln({
+        ...this.options,
+        content: `${this.options.content} ${this.defaultValue ? "[Y/n] " : "[y/N] "}`,
+      }),
+    );
   }
 }

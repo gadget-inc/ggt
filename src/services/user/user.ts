@@ -66,12 +66,12 @@ export const getUserOrLogin = async (ctx: Context): Promise<User> => {
   }
 
   ctx.log.info("prompting user to log in");
+  println({
+    ensureEmptyLineAbove: true,
+    content: `You must be logged in to use "ggt ${ctx.command}".`,
+  });
 
-  println({ ensureEmptyLineAbove: true })`
-    You must be logged in to use "ggt ${ctx.command}".
-  `;
-
-  await confirm({ ensureEmptyLineAbove: true })("Would you like to log in?");
+  await confirm({ ensureEmptyLineAbove: true, content: "Would you like to log in?" });
 
   await login(ctx);
 

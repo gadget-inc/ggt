@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import ms from "ms";
 import * as root from "./commands/root.js";
 import { Context } from "./services/command/context.js";
@@ -42,9 +43,10 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
         activeSpinner?.clear();
         output.persistFooter();
 
-        const spinner = spin({ successSymbol: "👋" })`
-          Stopping {gray Press Ctrl+C again to force}
-        `;
+        const spinner = spin({
+          successSymbol: "👋",
+          content: `Stopping ${chalk.gray("Press Ctrl+C again to force")}`,
+        });
 
         try {
           ctx.abort();

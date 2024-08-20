@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { ClientError } from "../app/error.js";
 import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
@@ -109,7 +110,7 @@ export class DeployDisallowedError extends GGTError {
   protected render(): string {
     let output = sprintln`{red Gadget has detected the following fatal errors with your files:}`;
     output += sprintProblems({ ensureEmptyLineAbove: true, problems: this.fatalErrors, showFileTypes: false });
-    output += sprintln({ ensureEmptyLineAbove: true })`{red Please fix these errors and try again.}`;
+    output += sprintln({ ensureEmptyLineAbove: true, content: chalk.red("Please fix these errors and try again.") });
     return output;
   }
 }

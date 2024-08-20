@@ -37,9 +37,9 @@ export const run: Run = async (ctx): Promise<void> => {
           assert(user, "missing user after successful login");
 
           if (user.name) {
-            println({ ensureEmptyLineAbove: true })`Hello, ${user.name} {gray (${user.email})}`;
+            println({ ensureEmptyLineAbove: true, content: sprint`Hello, ${user.name} {gray (${user.email})}` });
           } else {
-            println({ ensureEmptyLineAbove: true })`Hello, ${user.email}`;
+            println({ ensureEmptyLineAbove: true, content: `Hello, ${user.email}` });
           }
 
           landingPage.searchParams.set("success", "true");
@@ -67,20 +67,26 @@ export const run: Run = async (ctx): Promise<void> => {
     try {
       ctx.log.info("opening browser", { url: url.toString() });
       await open(url.toString());
-      println({ ensureEmptyLineAbove: true })`
-        We've opened Gadget's login page using your default browser.
+      println({
+        ensureEmptyLineAbove: true,
+        content: sprint`
+          We've opened Gadget's login page using your default browser.
 
-        Please log in and then return to this terminal.
-      `;
+          Please log in and then return to this terminal.
+        `,
+      });
     } catch (error) {
       ctx.log.error("failed to open browser", { error });
-      println({ ensureEmptyLineAbove: true })`
-        Please open the following URL in your browser and log in:
+      println({
+        ensureEmptyLineAbove: true,
+        content: sprint`
+          Please open the following URL in your browser and log in:
 
-          {gray ${url.toString()}}
+            {gray ${url.toString()}}
 
-        Once logged in, return to this terminal.
-      `;
+          Once logged in, return to this terminal.
+        `,
+      });
     }
 
     await receiveSession;

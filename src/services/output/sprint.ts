@@ -4,6 +4,7 @@ import chalkTemplate from "chalk-template";
 import indentString from "indent-string";
 import { dedent } from "ts-dedent";
 import { isArray, isString } from "../util/is.js";
+import { omit } from "../util/object.js";
 
 export type SprintOptions = {
   /**
@@ -35,48 +36,63 @@ export type SprintOptions = {
   boxen?: BoxenOptions;
 };
 
+export type SprintOptionsWithContent = SprintOptions & {
+  content: string;
+};
+
 export type sprint = {
-  (str: string): string;
+  (str: string | SprintOptionsWithContent): string;
   (template: TemplateStringsArray, ...values: unknown[]): string;
-  (options: SprintOptions): sprint;
 };
 
 export const isSprintOptions = <const T extends SprintOptions>(value: string | TemplateStringsArray | SprintOptions): value is T => {
   return !isString(value) && !isArray(value);
 };
 
-const createSprint = (options: SprintOptions): sprint => {
-  return ((optionsOrString: SprintOptions | string | TemplateStringsArray, ...values: unknown[]): sprint | string => {
-    if (isSprintOptions(optionsOrString)) {
-      return createSprint({ ...options, ...optionsOrString });
-    }
+export const sprint = ((
+  optionsOrString: SprintOptionsWithContent | string | TemplateStringsArray,
+  ...values: unknown[]
+): sprint | string => {
+  let str: string;
+  let options: SprintOptions = { ensureNewLine: false, ensureEmptyLineAbove: false, indent: 0 };
 
-    const { ensureNewLine = false, ensureEmptyLineAbove = false, indent = 0, boxen: boxenOptions } = options;
+  if (isSprintOptions(optionsOrString)) {
+    str = optionsOrString.content;
+    options = { ...options, ...omit(optionsOrString, ["content"]) };
+  } else if (isString(optionsOrString)) {
+    str = optionsOrString;
+  } else {
+    str = dedent(chalkTemplate(optionsOrString, ...values));
+  }
 
-    let str = optionsOrString as string;
-    if (!isString(str)) {
-      str = dedent(chalkTemplate(str, ...values));
-    }
+  if (options.ensureEmptyLineAbove && !str.startsWith("\n")) {
+    str = "\n" + str;
+  }
 
-    if (ensureEmptyLineAbove && !str.startsWith("\n")) {
-      str = "\n" + str;
-    }
+  if (options.ensureNewLine && !str.endsWith("\n")) {
+    str += "\n";
+  }
 
-    if (ensureNewLine && !str.endsWith("\n")) {
-      str += "\n";
-    }
+  if (options.boxen) {
+    str = boxen(str, options.boxen);
+  }
 
-    if (boxenOptions) {
-      str = boxen(str, boxenOptions);
-    }
+  if (options.indent && options.indent > 0) {
+    str = indentString(str, options.indent);
+  }
 
-    if (indent > 0) {
-      str = indentString(str, indent);
-    }
+  return str;
+}) as sprint;
 
-    return str;
-  }) as sprint;
-};
-
-export const sprint = createSprint({ ensureNewLine: false });
-export const sprintln = createSprint({ ensureNewLine: true });
+export const sprintln = ((
+  optionsOrString: SprintOptionsWithContent | string | TemplateStringsArray,
+  ...values: unknown[]
+): sprint | string => {
+  if (isSprintOptions(optionsOrString)) {
+    return sprint({ ensureNewLine: true, ...optionsOrString });
+  } else if (isString(optionsOrString)) {
+    return sprint({ ensureNewLine: true, content: optionsOrString });
+  } else {
+    return sprint({ ensureNewLine: true, content: dedent(chalkTemplate(optionsOrString, ...values)) });
+  }
+}) as sprint;

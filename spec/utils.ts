@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 import { config } from "../src/services/config/config.js";
 import { readToken } from "../src/services/user/session.js";
 import { nockTestApps, testApp, testApp2, testAppWith0Environments, testAppWith2Environments } from "./__support__/app.js";
+import { testCtx } from "./__support__/context.js";
 import { loginTestUser, testUser } from "./__support__/user.js";
 
 export const describeWithAuth = createWithAuthSuite();
@@ -49,7 +50,7 @@ const describeWithTokenAuth = (fn: () => void) =>
       nock(`https://${config.domains.services}`)
         .get("/auth/api/current-user")
         .matchHeader("x-platform-access-token", (value) => {
-          const token = readToken();
+          const token = readToken(testCtx);
           return value === token;
         })
         .optionally(false)
@@ -60,7 +61,7 @@ const describeWithTokenAuth = (fn: () => void) =>
         .get("/auth/api/apps")
         .optionally(false)
         .matchHeader("x-platform-access-token", (value) => {
-          const token = readToken();
+          const token = readToken(testCtx);
           return value === token;
         })
         .reply(200, [testApp, testApp2, testAppWith2Environments, testAppWith0Environments])

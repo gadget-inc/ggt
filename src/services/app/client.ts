@@ -1,6 +1,5 @@
 import type { ExecutionResult } from "graphql-ws";
 import { createClient } from "graphql-ws";
-import assert from "node:assert";
 import type { ClientRequestArgs } from "node:http";
 import PQueue from "p-queue";
 import type { Promisable } from "type-fest";
@@ -11,6 +10,7 @@ import { loadAuthHeaders } from "../http/auth.js";
 import { http, type HttpOptions } from "../http/http.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
 import { isObject } from "../util/is.js";
+import { getCurrentApp, getCurrentEnv } from "./context.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
 import { ClientError } from "./error.js";
 
@@ -36,30 +36,25 @@ export class Client {
 
   constructor(ctx: Context, endpoint: string) {
     this.ctx = ctx.child({ name: "client" });
-    assert(ctx.app, "app must be set on Client context");
-    assert(ctx.env, "env must be set on Client context");
-
     this.endpoint = endpoint;
+    const app = getCurrentApp(this.ctx);
+    const env = getCurrentEnv(this.ctx);
 
     this._graphqlWsClient = createClient({
-      url: `wss://${ctx.app.slug}.${config.domains.app}/edit/api/graphql-ws`,
+      url: `wss://${app.slug}.${config.domains.app}/edit/api/graphql-ws`,
       shouldRetry: () => true,
       connectionParams: {
-        environment: ctx.env.name,
+        environment: env.name,
       },
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
-          // this cookie should be available since we were given an app which requires a cookie to load
-          const headers = loadAuthHeaders();
-          assert(headers, "missing headers when connecting to GraphQL API");
-
           super(address, protocols, {
             signal: ctx.signal,
             ...wsOptions,
             headers: {
               ...wsOptions?.headers,
               "user-agent": config.versionFull,
-              ...headers,
+              ...loadAuthHeaders(ctx),
             },
           });
         }
@@ -160,16 +155,13 @@ export class Client {
       http?: HttpOptions;
     },
   ): Promise<ExecutionResult<Operation["Data"], Operation["Extensions"]>> {
-    assert(ctx.app, "missing app when executing GraphQL query");
-    assert(ctx.env, "missing env when executing GraphQL query");
+    const app = getCurrentApp(this.ctx);
+    const env = getCurrentEnv(this.ctx);
 
-    const headers = loadAuthHeaders();
-    assert(headers, "missing headers when executing GraphQL request");
-
-    let subdomain = ctx.app.slug;
-    if (ctx.app.multiEnvironmentEnabled) {
-      subdomain += `--${ctx.env.name}`;
-    } else if (ctx.app.hasSplitEnvironments) {
+    let subdomain = app.slug;
+    if (app.multiEnvironmentEnabled) {
+      subdomain += `--${env.name}`;
+    } else if (app.hasSplitEnvironments) {
       subdomain += "--development";
     }
 
@@ -178,7 +170,7 @@ export class Client {
         context: { ctx },
         method: "POST",
         url: `https://${subdomain}.${config.domains.app}${this.endpoint}`,
-        headers: { ...headers, "x-gadget-environment": ctx.env.name },
+        headers: { ...loadAuthHeaders(ctx), "x-gadget-environment": env.name },
         json: { query: request.operation, variables: unthunk(request.variables) },
         responseType: "json",
         resolveBodyOnly: true,

@@ -12,6 +12,7 @@ import {
   type MutationPublishFileSyncEventsArgs,
 } from "../../src/__generated__/graphql.js";
 import { args, type DevArgs } from "../../src/commands/dev.js";
+import { getCurrentApp, getCurrentEnv } from "../../src/services/app/context.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -265,8 +266,8 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
   };
 
   nockEditResponse({
-    app: ctx.app,
-    env: ctx.env,
+    app: getCurrentApp(ctx),
+    env: getCurrentEnv(ctx),
     optional: true,
     persist: true,
     operation: FILE_SYNC_HASHES_QUERY,
@@ -299,8 +300,8 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
   });
 
   nockEditResponse({
-    app: ctx.app,
-    env: ctx.env,
+    app: getCurrentApp(ctx),
+    env: getCurrentEnv(ctx),
     optional: true,
     persist: true,
     operation: FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -331,8 +332,8 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
   });
 
   nockEditResponse({
-    app: ctx.app,
-    env: ctx.env,
+    app: getCurrentApp(ctx),
+    env: getCurrentEnv(ctx),
     optional: true,
     persist: true,
     operation: FILE_SYNC_FILES_QUERY,
@@ -373,8 +374,8 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
   });
 
   nockEditResponse({
-    app: ctx.app,
-    env: ctx.env,
+    app: getCurrentApp(ctx),
+    env: getCurrentEnv(ctx),
     optional: true,
     persist: true,
     operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,

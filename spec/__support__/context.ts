@@ -1,7 +1,7 @@
 import { beforeEach, expect } from "vitest";
 import { args } from "../../src/commands/root.js";
 import type { ArgsDefinition } from "../../src/services/command/arg.js";
-import { Commands, type Command } from "../../src/services/command/command.js";
+import { Commands, setCurrentCommand, type Command } from "../../src/services/command/command.js";
 import { Context } from "../../src/services/command/context.js";
 
 /**
@@ -52,11 +52,12 @@ export const makeContext = <Args extends ArgsDefinition>({
   const ctx = makeRootContext();
 
   // replicate the root command's behavior of shifting the command name
-  const cmd = ctx.args._.shift() as Command | undefined;
-  if (cmd) {
+  const commandName = ctx.args._.shift() as Command | undefined;
+  if (commandName) {
     // ensure the command was valid
-    expect(Commands).toContain(cmd);
+    expect(Commands).toContain(commandName);
+    setCurrentCommand(ctx, commandName);
   }
 
-  return ctx.child({ command: cmd, name: cmd, parse });
+  return ctx.child({ name: commandName, parse });
 };

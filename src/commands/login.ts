@@ -31,7 +31,7 @@ export const run: Run = async (ctx): Promise<void> => {
           const session = new URL(req.url, `http://localhost:${port}`).searchParams.get("session");
           assert(session, "missing session");
 
-          writeSession(session);
+          writeSession(ctx, session);
 
           const user = await getUser(ctx);
           assert(user, "missing user after successful login");
@@ -45,7 +45,7 @@ export const run: Run = async (ctx): Promise<void> => {
           landingPage.searchParams.set("success", "true");
           resolve();
         } catch (error) {
-          writeSession(undefined);
+          writeSession(ctx, undefined);
           landingPage.searchParams.set("success", "false");
           reject(error as Error);
         } finally {

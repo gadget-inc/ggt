@@ -7,8 +7,10 @@ import terminalLink from "terminal-link";
 import { z } from "zod";
 import { EnvironmentType, getApps, type Application, type Environment } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
+import { getCurrentApp, getCurrentEnv, setCurrentApp, setCurrentEnv } from "../app/context.js";
 import { Edit } from "../app/edit/edit.js";
 import { ArgError, type ArgsDefinition } from "../command/arg.js";
+import { maybeGetCurrentCommand } from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
 import { println } from "../output/print.js";
@@ -101,12 +103,8 @@ export class SyncJson {
       }),
     });
 
-    assert(this.ctx.app, "app must be set on syncJson context");
-    this.app = this.ctx.app;
-
-    assert(this.ctx.env, "env must be set on syncJson context");
-    this.env = this.ctx.env;
-
+    this.app = getCurrentApp(ctx);
+    this.env = getCurrentEnv(ctx);
     this.edit = new Edit(this.ctx);
   }
 
@@ -164,19 +162,22 @@ export class SyncJson {
       return undefined;
     }
 
-    ctx.app = await loadApp(ctx, { availableApps, state });
-    ctx.env = await loadEnv(ctx, { app: ctx.app, state });
+    const app = await loadApp(ctx, { availableApps, state });
+    setCurrentApp(ctx, app);
 
-    if (state.application !== ctx.app.slug) {
+    const env = await loadEnv(ctx, { app, state });
+    setCurrentEnv(ctx, env);
+
+    if (state.application !== app.slug) {
       // .gadget/sync.json is associated with a different app
       if (ctx.args["--allow-different-app"]) {
         // the user passed --allow-different-app, so use the application
         // and environment they specified and clobber everything
         const syncJson = new SyncJson(ctx, directory, undefined, {
-          application: ctx.app.slug,
-          environment: ctx.env.name,
+          application: app.slug,
+          environment: env.name,
           environments: {
-            [ctx.env.name]: { filesVersion: "0" },
+            [env.name]: { filesVersion: "0" },
           },
         });
 
@@ -188,7 +189,7 @@ export class SyncJson {
       throw new ArgError(sprint`
           You were about to sync the following app to the following directory:
 
-              ${ctx.app.slug} (${ctx.env.name}) → ${directory.path}
+              ${app.slug} (${env.name}) → ${directory.path}
 
           However, that directory has already been synced with this app:
 
@@ -196,29 +197,29 @@ export class SyncJson {
 
           If you're sure that you want to sync:
 
-              ${ctx.app.slug} (${ctx.env.name}) → ${directory.path}
+              ${app.slug} (${env.name}) → ${directory.path}
 
           Run "ggt dev" with the {bold --allow-different-app} flag.
       `);
     }
 
     let previousEnvironment: string | undefined;
-    if (state.environment !== ctx.env.name) {
+    if (state.environment !== env.name) {
       // the user specified a different environment, update the state
       println({
         ensureEmptyLineAbove: true,
         content: sprint`
           Changing environment.
 
-            ${state.environment} → ${ctx.env.name}
+            ${state.environment} → ${env.name}
         `,
       });
 
       previousEnvironment = state.environment;
-      state.environment = ctx.env.name;
-      if (!state.environments[ctx.env.name]) {
+      state.environment = env.name;
+      if (!state.environments[env.name]) {
         // the user has never synced to this environment before
-        state.environments[ctx.env.name] = { filesVersion: "0" };
+        state.environments[env.name] = { filesVersion: "0" };
       }
     }
 
@@ -253,8 +254,11 @@ export class SyncJson {
       throw new UnknownDirectoryError(ctx, { directory });
     }
 
-    ctx.app = await loadApp(ctx, { availableApps: await getApps(ctx) });
-    ctx.env = await loadEnv(ctx, { app: ctx.app });
+    const app = await loadApp(ctx, { availableApps: await getApps(ctx) });
+    setCurrentApp(ctx, app);
+
+    const env = await loadEnv(ctx, { app });
+    setCurrentEnv(ctx, env);
 
     // the directory is empty or the user passed
     // --allow-unknown-directory, either way ensure the directory exists
@@ -262,10 +266,10 @@ export class SyncJson {
     await fs.ensureDir(directory.path);
 
     syncJson = new SyncJson(ctx, directory, undefined, {
-      application: ctx.app.slug,
-      environment: ctx.env.name,
+      application: app.slug,
+      environment: env.name,
       environments: {
-        [ctx.env.name]: { filesVersion: "0" },
+        [env.name]: { filesVersion: "0" },
       },
     });
 
@@ -433,7 +437,7 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: Applic
     // specifically call out that they can't dev, push, or pull to prod
     throw new ArgError(
       sprint`
-        You cannot "ggt ${ctx.command}" your {bold production} environment.
+        You cannot "ggt ${maybeGetCurrentCommand(ctx)}" your {bold production} environment.
       `,
     );
   }

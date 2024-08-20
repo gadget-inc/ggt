@@ -30,18 +30,18 @@ describe("loadUser", () => {
   });
 
   it("returns undefined if the session is not set", async () => {
-    writeSession(undefined);
+    writeSession(ctx, undefined);
     const user = await getUser(ctx);
     expect(user).toBeUndefined();
   });
 
   it("returns undefined if the session is invalid or expired", async () => {
-    writeSession("test");
+    writeSession(ctx, "test");
 
     nock(`https://${config.domains.services}`)
       .get("/auth/api/current-user")
       .matchHeader("cookie", (value) => {
-        const cookie = loadCookie();
+        const cookie = loadCookie(ctx);
         expect(cookie).toBeTruthy();
         return value === cookie;
       })
@@ -51,7 +51,7 @@ describe("loadUser", () => {
 
     expect(nock.pendingMocks()).toEqual([]);
     expect(user).toBeUndefined();
-    expect(readSession()).toBeUndefined();
+    expect(readSession(ctx)).toBeUndefined();
   });
 });
 
@@ -78,7 +78,7 @@ describe("getUserOrLogin", () => {
       loginTestUser({ optional: false });
     });
 
-    writeSession(undefined);
+    writeSession(ctx, undefined);
 
     const returnedUser = await getUserOrLogin(ctx);
 
@@ -98,7 +98,7 @@ describe("getUserOrLogin", () => {
 
     nock(`https://${config.domains.services}`).get("/auth/api/current-user").reply(401);
 
-    writeSession("test");
+    writeSession(ctx, "test");
     await expect(getUserOrLogin(ctx)).resolves.toEqual(testUser);
 
     expect(nock.pendingMocks()).toEqual([]);
@@ -108,7 +108,7 @@ describe("getUserOrLogin", () => {
   });
 
   it("calls process.exit if the user declines to log in", async () => {
-    writeSession(undefined);
+    writeSession(ctx, undefined);
     mock(confirm, () => process.exit(0));
     mock(login, "login", () => {
       loginTestUser({ optional: false });

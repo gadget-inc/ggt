@@ -1,10 +1,8 @@
 import { HTTPError, type OptionsInit } from "got";
+import assert from "node:assert";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { createLogger } from "../output/log/logger.js";
 import { readSession, readToken } from "../user/session.js";
-
-const log = createLogger({ name: "auth" });
 
 /**
  * Determines whether the given request options are for a Gadget
@@ -23,9 +21,15 @@ export const isGadgetServicesRequest = (options: OptionsInit): boolean => {
  *
  * @returns The cookie string or undefined if there is no session.
  */
-export const loadCookie = (): string | undefined => {
-  const token = readSession();
+export const loadCookie = (ctx: Context): string | undefined => {
+  const token = readSession(ctx);
   return token && `session=${encodeURIComponent(token)};`;
+};
+
+export const loadAuthHeaders = (ctx: Context): Record<string, string> => {
+  const headers = maybeLoadAuthHeaders(ctx);
+  assert(headers, "missing auth headers");
+  return headers;
 };
 
 /**
@@ -33,16 +37,16 @@ export const loadCookie = (): string | undefined => {
  *
  * @returns The authentication headers as a record of key-value pairs, or undefined if no headers are available.
  */
-export const loadAuthHeaders = (): Record<string, string> | undefined => {
-  const cookie = loadCookie();
+export const maybeLoadAuthHeaders = (ctx: Context): Record<string, string> | undefined => {
+  const cookie = loadCookie(ctx);
   if (cookie) {
-    log.trace("using cookie as auth header", {}, { cookie });
+    ctx.log.trace("using cookie as auth header", {}, { cookie });
     return { cookie };
   }
 
-  const token = readToken();
+  const token = readToken(ctx);
   if (token) {
-    log.trace("using token as auth header", {}, { token });
+    ctx.log.trace("using token as auth header", {}, { token });
     return { "x-platform-access-token": token };
   }
 

@@ -5,6 +5,7 @@ import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
 import { writeSession } from "../../src/services/user/session.js";
 import type { User } from "../../src/services/user/user.js";
+import { testCtx } from "./context.js";
 
 /**
  * A test user to use in tests.
@@ -19,13 +20,13 @@ export const testUser: User = Object.freeze({
  * Sets up a response for the current-user endpoint that `getUser` uses.
  */
 export const loginTestUser = ({ optional = true } = {}): void => {
-  writeSession(randomUUID());
+  writeSession(testCtx, randomUUID());
 
   nock(`https://${config.domains.services}`)
     .get("/auth/api/current-user")
     .optionally(optional)
     .matchHeader("cookie", (value) => {
-      const cookie = loadCookie();
+      const cookie = loadCookie(testCtx);
       expect(cookie).toBeTruthy();
       return value === cookie;
     })

@@ -114,7 +114,7 @@ export const http = got.extend({
 
         if (response.statusCode === 401 && isGadgetServicesRequest(response.request.options)) {
           // clear the session if the request was unauthorized
-          writeSession(undefined);
+          writeSession(ctx, undefined);
         }
 
         return response;

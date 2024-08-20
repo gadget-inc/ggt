@@ -1,25 +1,17 @@
 import type { EmptyObject } from "type-fest";
 import type { RootArgs } from "../../commands/root.js";
-import type { Application, Environment } from "../app/app.js";
 import { createLogger, type Logger } from "../output/log/logger.js";
 import type { StructuredLoggerOptions } from "../output/log/structured.js";
-import type { User } from "../user/user.js";
 import { defaults, pick } from "../util/object.js";
 import { PromiseSignal } from "../util/promise.js";
 import type { AnyVoid } from "../util/types.js";
 import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult, type ParseArgsOptions } from "./arg.js";
-import type { Command } from "./command.js";
 
 /**
  * Represents the options that can be passed to {@linkcode Context.init}.
  */
 export type ContextInit<Args extends ArgsDefinition> = ParseArgsOptions &
   StructuredLoggerOptions & {
-    /**
-     * The command that this context is running.
-     */
-    command?: Command;
-
     /**
      * The {@linkcode ArgsDefinition} to use to parse the arguments (`argv`).
      */
@@ -67,51 +59,20 @@ export class Context<
   #log: Logger;
 
   /**
+   * The values that have been set on this context.
+   */
+  #values: Record<symbol, unknown>;
+
+  /**
    * The callbacks that will be called when this context is aborted.
    */
   #onAborts: OnAbort[] = [];
 
-  /**
-   * The parent context, if any.
-   */
-  #parent?: Context<ArgsDefinition, ParentArgs>;
-
-  /**
-   * The command that this context is running.
-   */
-  #command?: Command;
-
-  /**
-   * The user who is running this command, if any.
-   */
-  #user?: User;
-
-  /**
-   * The app this command is running against, if any.
-   */
-  #app?: Application;
-
-  /**
-   * The environment this command is running against, if any.
-   */
-  #env?: Environment;
-
-  private constructor({
-    parent,
-    command,
-    args,
-    log,
-  }: {
-    parent?: Context<ArgsDefinition, ParentArgs>;
-    command?: Command;
-    args: ArgsDefinitionResult<ThisArgs>;
-    log: Logger;
-  }) {
+  private constructor({ args, log, values }: { args: ArgsDefinitionResult<ThisArgs>; log: Logger; values: Record<symbol, unknown> }) {
     super();
     this.args = args;
     this.#log = log;
-    this.#parent = parent;
-    this.#command = command;
+    this.#values = values;
 
     // in case this context is ...spread into another object
     this.abort = this.abort.bind(this);
@@ -152,54 +113,6 @@ export class Context<
     return this.#log;
   }
 
-  get command(): Command | "root" {
-    return this.#command ?? this.#parent?.command ?? "root";
-  }
-
-  get user(): User | undefined {
-    return this.#user ?? this.#parent?.user;
-  }
-
-  set user(user: User) {
-    this.#user = user;
-    if (this.#parent) {
-      this.#parent.user = user;
-    }
-
-    this.#log = this.#log.child({
-      fields: { user: { id: user.id } },
-      devFields: { user },
-    });
-  }
-
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  get app(): Application | undefined {
-    return this.#app ?? this.#parent?.app;
-  }
-
-  set app(app: Application) {
-    this.#app = app;
-    if (this.#parent) {
-      this.#parent.app = app;
-    }
-
-    this.#log = this.#log.child({ fields: { app } });
-  }
-
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  get env(): Environment | undefined {
-    return this.#env ?? this.#parent?.env;
-  }
-
-  set env(env: Environment) {
-    this.#env = env;
-    if (this.#parent) {
-      this.#parent.env = env;
-    }
-
-    this.#log = this.#log.child({ fields: { env } });
-  }
-
   /**
    * Initializes a new context.
    *
@@ -209,7 +122,16 @@ export class Context<
     return new Context({
       args: spec ? parseArgs(spec, pick(options, ["argv", "permissive", "stopAtPositional"])) : ({} as ArgsDefinitionResult<Args>),
       log: createLogger(pick(options, ["name", "fields", "devFields"])),
+      values: {},
     });
+  }
+
+  get(key: symbol): unknown {
+    return this.#values[key];
+  }
+
+  set(key: symbol, value: unknown): void {
+    this.#values[key] = value;
   }
 
   /**
@@ -219,12 +141,9 @@ export class Context<
    */
   child<ChildArgs extends ArgsDefinition = EmptyObject>({
     parse: spec,
-    command = this.#command,
     ...options
   }: ChildContextInit<ChildArgs, ArgsDefinitionResult<ThisArgs>>): Context<ChildArgs, ThisArgs> {
     const ctx = new Context<ChildArgs, ThisArgs>({
-      parent: this,
-      command,
       args: {
         ...this.args,
         ...options.overwrite,
@@ -233,6 +152,7 @@ export class Context<
           : ({} as ArgsDefinitionResult<ChildArgs>)),
       },
       log: this.log.child(pick(options, ["name", "fields", "devFields"])),
+      values: this.#values,
     });
 
     this.onAbort(() => ctx.abort());

@@ -1,8 +1,7 @@
-import assert from "node:assert";
 import { z } from "zod";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
-import { loadAuthHeaders } from "../http/auth.js";
+import { maybeLoadAuthHeaders } from "../http/auth.js";
 import { http } from "../http/http.js";
 import { Api } from "./api/api.js";
 import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "./api/operation.js";
@@ -56,12 +55,10 @@ export type GlobalActionApiIdentifier = z.infer<typeof GlobalActionApiIdentifier
  * @returns A promise that resolves to an array of Application objects.
  */
 export const getApps = async (ctx: Context): Promise<Application[]> => {
-  const headers = loadAuthHeaders();
+  const headers = maybeLoadAuthHeaders(ctx);
   if (!headers) {
     return [];
   }
-
-  assert(ctx.user, "must get user before getting apps");
 
   const json = await http({
     context: { ctx },
@@ -75,12 +72,10 @@ export const getApps = async (ctx: Context): Promise<Application[]> => {
 };
 
 export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []> => {
-  const headers = loadAuthHeaders();
+  const headers = maybeLoadAuthHeaders(ctx);
   if (!headers) {
     return [];
   }
-
-  assert(ctx.user, "must get user before getting models");
 
   const api = new Api(ctx);
   const { gadgetMeta } = await api.query({ query: GADGET_META_MODELS_QUERY });
@@ -88,12 +83,10 @@ export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []
 };
 
 export const getGlobalActions = async (ctx: Context): Promise<GlobalActionApiIdentifier[] | []> => {
-  const headers = loadAuthHeaders();
+  const headers = maybeLoadAuthHeaders(ctx);
   if (!headers) {
     return [];
   }
-
-  assert(ctx.user, "must get user before getting models");
 
   const api = new Api(ctx);
   const { gadgetMeta } = await api.query({ query: GADGET_GLOBAL_ACTIONS_QUERY });

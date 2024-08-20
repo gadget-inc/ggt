@@ -1,9 +1,11 @@
 import type * as SentryModule from "@sentry/node";
 import ms from "ms";
 import os from "node:os";
+import { maybeGetCurrentApp, maybeGetCurrentEnv } from "../app/context.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { env } from "../config/env.js";
+import { maybeGetCurrentUser } from "../user/user.js";
 import { serializeError } from "../util/object.js";
 import { packageJson } from "../util/package-json.js";
 import type { GGTError } from "./report.js";
@@ -30,16 +32,19 @@ export const sendErrorToSentry = async (ctx: Context, error: GGTError): Promise<
     return;
   }
 
+  const user = maybeGetCurrentUser(ctx);
+
   Sentry.captureException(error, {
     event_id: error.id,
     captureContext: {
-      user: ctx.user && {
-        id: String(ctx.user.id),
-        email: ctx.user.email,
-        username: ctx.user.name ?? undefined,
+      user: user && {
+        id: String(user.id),
+        email: user.email,
+        username: user.name ?? undefined,
       },
       tags: {
-        application_id: ctx.app?.id,
+        application_id: maybeGetCurrentApp(ctx)?.id,
+        environment_id: maybeGetCurrentEnv(ctx)?.id,
         arch: config.arch,
         bug: error.isBug,
         environment: env.value,

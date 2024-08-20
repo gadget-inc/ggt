@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import os from "node:os";
 import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
+import { setCurrentApp, setCurrentEnv } from "../../../src/services/app/context.js";
 import type { GraphQLQuery } from "../../../src/services/app/edit/operation.js";
 import { ClientError } from "../../../src/services/app/error.js";
 import type { Command } from "../../../src/services/command/command.js";
@@ -39,8 +40,8 @@ describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
     const environment = testApp.environments[0]!.name;
 
     const ctx = makeContext({ parse: SyncJsonArgs, argv: [command, `--app=${application}`, `--env=${environment}`] });
-    ctx.app = testApp;
-    ctx.env = testApp.environments[0]!;
+    setCurrentApp(ctx, testApp);
+    setCurrentEnv(ctx, testApp.environments[0]!);
 
     const directory = await Directory.init(path.resolve("/Users/jane/doe/"));
 

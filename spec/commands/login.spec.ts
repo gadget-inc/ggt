@@ -43,7 +43,7 @@ describe("login", () => {
   });
 
   it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
-    writeSession(undefined);
+    writeSession(ctx, undefined);
     mock(user, "getUser", () => testUser);
 
     void run(ctx);
@@ -67,7 +67,7 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(readSession()).toBeUndefined();
+    expect(readSession(ctx)).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(undefined as any);
@@ -80,7 +80,7 @@ describe("login", () => {
     requestListener!(req, res);
 
     await serverClosed;
-    expect(readSession()).toBe("test");
+    expect(readSession(ctx)).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "We've opened Gadget's login page using your default browser.
@@ -96,7 +96,7 @@ describe("login", () => {
   });
 
   it("prints the login page when open fails, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
-    writeSession(undefined);
+    writeSession(ctx, undefined);
     mock(user, "getUser", () => testUser);
 
     mock(open, () => {
@@ -127,7 +127,7 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(readSession()).toBeUndefined();
+    expect(readSession(ctx)).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(undefined as any);
@@ -140,7 +140,7 @@ describe("login", () => {
     requestListener!(req, res);
 
     await serverClosed;
-    expect(readSession()).toBe("test");
+    expect(readSession(ctx)).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "Please open the following URL in your browser and log in:
@@ -158,7 +158,7 @@ describe("login", () => {
   });
 
   it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
-    writeSession(undefined);
+    writeSession(ctx, undefined);
     mock(user, "getUser", () => {
       throw new Error("boom");
     });
@@ -184,7 +184,7 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(readSession()).toBeUndefined();
+    expect(readSession(ctx)).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(undefined as any);
@@ -197,7 +197,7 @@ describe("login", () => {
     requestListener!(req, res);
 
     await serverClosed;
-    expect(readSession()).toBeUndefined();
+    expect(readSession(ctx)).toBeUndefined();
     expect(user.getUser).toHaveBeenCalled();
     expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=false` });
     expect(res.end).toHaveBeenCalled();

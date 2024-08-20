@@ -10,10 +10,10 @@ export const usage: Usage = () => sprint`
           ggt logout
 `;
 
-export const run: Run = (_ctx) => {
-  const token = readSession();
+export const run: Run = (ctx) => {
+  const token = readSession(ctx);
   if (token) {
-    writeSession(undefined);
+    writeSession(ctx, undefined);
     println("Goodbye");
   } else {
     println("You are not logged in");

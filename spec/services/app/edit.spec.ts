@@ -2,6 +2,7 @@ import { GraphQLError } from "graphql";
 import nock from "nock";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { CloseEvent, ErrorEvent } from "ws";
+import { setCurrentApp, setCurrentEnv } from "../../../src/services/app/context.js";
 import { Edit } from "../../../src/services/app/edit/edit.js";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
@@ -24,8 +25,8 @@ describe("Edit", () => {
   beforeEach(() => {
     loginTestUser();
     ctx = makeContext();
-    ctx.app = testApp;
-    ctx.env = testApp.environments[0]!;
+    setCurrentApp(ctx, testApp);
+    setCurrentEnv(ctx, testApp.environments[0]!);
   });
 
   it("retries queries when it receives a 500", async () => {
@@ -86,7 +87,7 @@ describe("Edit", () => {
   it("throws EditError when it receives invalid json", async () => {
     nock(`https://${testApp.slug}--development.${config.domains.app}`)
       .post("/edit/api/graphql")
-      .matchHeader("cookie", (cookie) => loadCookie() === cookie)
+      .matchHeader("cookie", (cookie) => loadCookie(ctx) === cookie)
       .reply(503, "Service Unavailable", { "content-type": "text/plain" });
 
     const editGraphQL = new Edit(ctx);

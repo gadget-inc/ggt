@@ -3,6 +3,7 @@ import { expect } from "vitest";
 import { EnvironmentType, type Application, type Environment } from "../../src/services/app/app.js";
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
+import { testCtx } from "./context.js";
 
 /**
  * A Gadget app to use in tests.
@@ -95,7 +96,7 @@ export const nockTestApps = ({ optional = true, persist = true } = {}): void => 
     .get("/auth/api/apps")
     .optionally(optional)
     .matchHeader("cookie", (value) => {
-      const cookie = loadCookie();
+      const cookie = loadCookie(testCtx);
       expect(cookie).toBeTruthy();
       return value === cookie;
     })

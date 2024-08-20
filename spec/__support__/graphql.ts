@@ -12,6 +12,7 @@ import { noop, unthunk, type Thunk } from "../../src/services/util/function.js";
 import { isFunction } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { testApp } from "./app.js";
+import { testCtx } from "./context.js";
 import { log } from "./debug.js";
 import { mock } from "./mock.js";
 
@@ -122,7 +123,7 @@ export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation
 
   const scope = nock(`https://${subdomain}.${config.domains.app}`)
     .post(endpoint, (body) => body.query === operation)
-    .matchHeader("cookie", (cookie) => loadCookie() === cookie)
+    .matchHeader("cookie", (cookie) => loadCookie(testCtx) === cookie)
     .matchHeader("x-gadget-environment", env.name)
     .optionally(optional)
     .times(times)

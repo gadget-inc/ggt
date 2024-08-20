@@ -1,7 +1,7 @@
 import arg from "arg";
 import type { EmptyObject } from "type-fest";
 import type { ArgsDefinition } from "../services/command/arg.js";
-import { Commands, importCommand, isCommand, type Run, type Usage } from "../services/command/command.js";
+import { Commands, importCommand, isCommand, setCurrentCommand, type Run, type Usage } from "../services/command/command.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
@@ -68,21 +68,21 @@ export const run: Run<EmptyObject, EmptyObject> = async (parent): Promise<void> 
 
   await warnIfUpdateAvailable(ctx);
 
-  let cmd = ctx.args._.shift();
-  if (isNil(cmd)) {
+  let commandName = ctx.args._.shift();
+  if (isNil(commandName)) {
     println(usage(ctx));
     process.exit(0);
   }
 
-  if (cmd === "sync") {
+  if (commandName === "sync") {
     ctx.log.debug('renaming "sync" to "dev" for backwards compatibility');
-    cmd = "dev";
+    commandName = "dev";
   }
 
-  if (!isCommand(cmd)) {
-    const [closest] = sortBySimilar(cmd, Commands);
+  if (!isCommand(commandName)) {
+    const [closest] = sortBySimilar(commandName, Commands);
     println`
-      Unknown command {yellow ${cmd}}
+      Unknown command {yellow ${commandName}}
 
       Did you mean {blueBright ${closest}}?
 
@@ -91,15 +91,16 @@ export const run: Run<EmptyObject, EmptyObject> = async (parent): Promise<void> 
     process.exit(1);
   }
 
-  const subcommand = await importCommand(cmd);
+  const command = await importCommand(commandName);
+  setCurrentCommand(ctx, commandName);
 
   if (ctx.args["-h"] ?? ctx.args["--help"]) {
-    println(subcommand.usage(ctx));
+    println(command.usage(ctx));
     process.exit(0);
   }
 
   try {
-    await subcommand.run(ctx.child({ command: cmd, name: cmd, parse: subcommand.args }));
+    await command.run(ctx.child({ name: commandName, parse: command.args }));
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

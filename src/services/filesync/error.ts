@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { ClientError } from "../app/error.js";
+import { maybeGetCurrentCommand } from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
 import { GGTError, IsBug } from "../output/report.js";
@@ -37,7 +38,7 @@ export class UnknownDirectoryError extends GGTError {
   }
 
   protected render(): string {
-    const cmd = this.ctx.command;
+    const cmd = maybeGetCurrentCommand(this.ctx);
     const dir = this.opts.directory.path;
 
     switch (cmd) {

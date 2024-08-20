@@ -1,6 +1,7 @@
 .direnv
 .idea
 .log
+*.local.*
 .nyc_output
 .vscode
 dist

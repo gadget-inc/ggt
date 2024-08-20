@@ -43,7 +43,7 @@ export class Api {
     variables?: Thunk<Query["Variables"]> | null;
     http?: HttpOptions;
   }): Promise<Query["Data"]> {
-    const name = query.match(/query (\w+)/)?.[1];
+    const name = /query (\w+)/.exec(query)?.[1];
     assert(name, "query name not found");
 
     const ctx = this.ctx.child({
@@ -94,7 +94,7 @@ export class Api {
     variables?: Thunk<Mutation["Variables"]> | null;
     http?: HttpOptions;
   }): Promise<Mutation["Data"]> {
-    const name = mutation.match(/mutation (\w+)/)?.[1];
+    const name = /mutation (\w+)/.exec(mutation)?.[1];
     assert(name, "mutation name not found");
 
     const ctx = this.ctx.child({
@@ -137,7 +137,7 @@ export class Api {
     onError: (error: ClientError) => Promisable<void>;
     onComplete?: () => Promisable<void>;
   }): EditSubscription<Subscription> {
-    const name = options.subscription.match(/subscription (\w+)/)?.[1];
+    const name = /subscription (\w+)/.exec(options.subscription)?.[1];
     assert(name, "subscription name not found");
 
     let ctx = this.ctx.child({

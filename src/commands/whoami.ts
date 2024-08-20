@@ -13,13 +13,13 @@ export const usage: Usage = () => sprint`
 export const run: Run = async (ctx) => {
   const user = await getUser(ctx);
   if (!user) {
-    println`You are not logged in`;
+    println("You are not logged in");
     return;
   }
 
   if (user.name) {
-    println`You are logged in as ${user.name} (${user.email})`;
+    println(`You are logged in as ${user.name} (${user.email})`);
   } else {
-    println`You are logged in as ${user.email}`;
+    println(`You are logged in as ${user.email}`);
   }
 };

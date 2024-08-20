@@ -119,13 +119,7 @@ export const run: Run<AddArgs> = async (ctx) => {
 
   println({ ensureEmptyLineAbove: true, content: `${chalk.greenBright(symbol.tick)} Sync completed ${ts()}` });
 
-  const actionType = ctx.args._[0] as AddActionType | undefined;
-  if (!actionType) {
-    println(usage(ctx));
-    return;
-  }
-
-  switch (actionType) {
+  switch (ctx.args._[0]) {
     case "model":
       await modelSubCommand(ctx, filesync);
       break;
@@ -144,16 +138,12 @@ export const run: Run<AddArgs> = async (ctx) => {
   }
 };
 
-const addActionType = ["model", "action", "route", "field"] as const;
-
-type AddActionType = (typeof addActionType)[number];
-
 const parseFieldValues = (fields: string[]): [{ name: string; fieldType: string }[], problems: string[]] => {
   const problems: string[] = [];
   const modelFields: { name: string; fieldType: string }[] = [];
 
   fields.forEach((field) => {
-    const matches = field.match(/^(.*):+(.*)$/);
+    const matches = /^(.*):+(.*)$/.exec(field);
     if (!matches || matches.length !== 3 || !matches[1] || !matches[2]) {
       problems.push(sprint`${field} is not a valid field definition`);
     } else {

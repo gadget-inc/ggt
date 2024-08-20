@@ -40,12 +40,13 @@ export const getDistTags = async (ctx: Context): Promise<Registry["dist-tags"]> 
   return Registry.parse(json)["dist-tags"];
 };
 
-export const shouldCheckForUpdate = async (): Promise<boolean> => {
+export const shouldCheckForUpdate = async (ctx: Context): Promise<boolean> => {
   try {
     const lastCheck = Number(await fs.readFile(path.join(config.cacheDir, "last-update-check"), "utf8"));
     assert(!Number.isNaN(lastCheck));
     return dayjs().isAfter(lastCheck + UPDATE_CHECK_FREQUENCY);
   } catch (error) {
+    ctx.log.trace("failed to check for updates", { error });
     return true;
   }
 };
@@ -59,7 +60,7 @@ export const shouldCheckForUpdate = async (): Promise<boolean> => {
  */
 export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
   try {
-    const shouldCheck = await shouldCheckForUpdate();
+    const shouldCheck = await shouldCheckForUpdate(ctx);
     if (!shouldCheck) {
       return;
     }

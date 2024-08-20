@@ -59,7 +59,7 @@ export function memo<Fn extends AnyFunction>(fn: Fn): MemoizedFn<Fn>;
  * @param keyFn - A function that returns a key for the arguments.
  * @param fn - The function to memoize.
  */
-export function memo<Fn extends AnyFunction, KeyFn extends (...args: Parameters<Fn>) => string>(keyFn: KeyFn, fn: Fn): MemoizedFn<Fn>;
+export function memo<Fn extends AnyFunction>(keyFn: (...args: Parameters<Fn>) => string, fn: Fn): MemoizedFn<Fn>;
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function memo<Fn extends AnyFunction, KeyFn extends (...args: Parameters<Fn>) => string>(

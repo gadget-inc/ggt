@@ -45,7 +45,7 @@ export type sprint = {
   (template: TemplateStringsArray, ...values: unknown[]): string;
 };
 
-export const isSprintOptions = <const T extends SprintOptions>(value: string | TemplateStringsArray | SprintOptions): value is T => {
+export const isSprintOptions = (value: string | TemplateStringsArray | SprintOptions): value is SprintOptions => {
   return !isString(value) && !isArray(value);
 };
 

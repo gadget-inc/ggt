@@ -15,9 +15,9 @@ export type Mock = {
    * @param fn - The mocked function.
    * @param impl - The implementation to use.
    */
-  <Fn extends (...args: any[]) => any, Impl extends (...args: Parameters<Fn>) => ReturnType<Fn> | Awaited<ReturnType<Fn>>>(
+  <Fn extends (...args: any[]) => any>(
     fn: Fn,
-    impl: Impl,
+    impl: (...args: Parameters<Fn>) => ReturnType<Fn> | Awaited<ReturnType<Fn>>,
   ): MockInstance<Fn>;
 
   /**
@@ -32,11 +32,10 @@ export type Mock = {
     Target extends object,
     Property extends FunctionPropertyNames<Target>,
     Fn extends Target[Property] extends (...args: any[]) => any ? Target[Property] : never,
-    Impl extends (...args: Parameters<Fn>) => ReturnType<Fn> | Awaited<ReturnType<Fn>>,
   >(
     target: Target,
     property: Property,
-    impl: Impl,
+    impl: (...args: Parameters<Fn>) => ReturnType<Fn> | Awaited<ReturnType<Fn>>,
   ): MockInstance<Fn>;
 
   /**
@@ -48,11 +47,11 @@ export type Mock = {
    * @param accessor - The accessor to mock.
    * @param impl - The implementation to use.
    */
-  <Target extends object, Property extends keyof Target, Field extends Target[Property], Impl extends () => Field>(
+  <Target extends object, Property extends keyof Target, Field extends Target[Property]>(
     target: Target,
     property: Property,
     accessor: "get",
-    impl: Impl,
+    impl: () => Field,
   ): MockInstance<() => Field>;
 
   /**
@@ -64,11 +63,11 @@ export type Mock = {
    * @param accessor - The accessor to mock.
    * @param impl - The implementation to use.
    */
-  <Target extends object, Property extends keyof Target, Field extends Target[Property], Impl extends (value: Field) => void>(
+  <Target extends object, Property extends keyof Target, Field extends Target[Property]>(
     target: Target,
     property: Property,
     accessor: "set",
-    impl: Impl,
+    impl: (value: Field) => void,
   ): MockInstance<(value: Field) => void>;
 };
 
@@ -204,10 +203,10 @@ export const mockConfirmOnce = (impl = noop): MockInstance<confirm.confirm> => {
   });
 };
 
-export const mockSelect = <Choice extends string>(choice: Choice): MockInstance<select.select> => {
+export const mockSelect = (choice: string): MockInstance<select.select> => {
   return mock(select, "select", () => Promise.resolve(choice));
 };
 
-export const mockSelectOnce = <Choice extends string>(choice: Choice): MockInstance<select.select> => {
+export const mockSelectOnce = (choice: string): MockInstance<select.select> => {
   return mockOnce(select, "select", () => Promise.resolve(choice));
 };

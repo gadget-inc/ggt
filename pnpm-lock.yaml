@@ -174,8 +174,8 @@ devDependencies:
     specifier: ^2.1.3
     version: 2.1.3
   nock:
-    specifier: ^13.5.4
-    version: 13.5.4
+    specifier: ^13.5.5
+    version: 13.5.5
   node-notifier:
     specifier: ^10.0.1
     version: 10.0.1
@@ -7331,11 +7331,11 @@ packages:
       tslib: 2.6.3
     dev: true
 
-  /nock@13.5.4:
-    resolution: {integrity: sha512-yAyTfdeNJGGBFxWdzSKCBYxs5FxLbCg5X5Q4ets974hcQzG1+qCxvIyOo4j2Ry6MUlhWVMX4OoYDefAIIwupjw==}
+  /nock@13.5.5:
+    resolution: {integrity: sha512-XKYnqUrCwXC8DGG1xX4YH5yNIrlh9c065uaMZZHUoeUUINTOyt+x/G+ezYk0Ft6ExSREVIs+qBJDK503viTfFA==}
     engines: {node: '>= 10.13'}
     dependencies:
-      debug: 4.3.5
+      debug: 4.3.6
       json-stringify-safe: 5.0.1
       propagate: 2.0.1
     transitivePeerDependencies:

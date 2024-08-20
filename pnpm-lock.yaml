@@ -99,8 +99,8 @@ devDependencies:
     specifier: ^8.14.2
     version: 8.14.2
   dayjs:
-    specifier: ^1.11.12
-    version: 1.11.12
+    specifier: ^1.11.13
+    version: 1.11.13
   esbuild:
     specifier: ^0.23.1
     version: 0.23.1
@@ -4773,8 +4773,8 @@ packages:
       '@babel/runtime': 7.21.5
     dev: true
 
-  /dayjs@1.11.12:
-    resolution: {integrity: sha512-Rt2g+nTbLlDWZTwwrIXjy9MeiZmSDI375FvZs72ngxx8PDC6YXOeR3q5LAuPzjZQxhiWdRKac7RKV+YyQYfYIg==}
+  /dayjs@1.11.13:
+    resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
     dev: true
 
   /debounce@1.2.1:

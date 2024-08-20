@@ -90,7 +90,7 @@ const describeWithCookieAuth = (fn: () => void) =>
   });
 
 // Very much taken from vitest's own `createChainable` function - packages/runner/src/utils/chain.ts
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type ChainableFunction<T extends string, F extends (...args: any) => any, C = {}> = F & {
   [x in T]: ChainableFunction<T, F, C>;
 } & {

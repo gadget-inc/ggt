@@ -7,7 +7,7 @@ import type { Context } from "../../../src/services/command/context.js";
 import { config } from "../../../src/services/config/config.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
 import { packageJson } from "../../../src/services/util/package-json.js";
-import { makeContext } from "../../__support__/context.js";
+import { makeContext, testCtx } from "../../__support__/context.js";
 import { expectStdout } from "../../__support__/output.js";
 
 describe("getDistTags", () => {
@@ -52,7 +52,7 @@ describe("shouldCheckForUpdate", () => {
 
     await fs.outputFile(path.join(config.cacheDir, "last-update-check"), String(lastCheck));
 
-    await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
+    await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
   });
 
   it("returns false if the last check was less than 12 hours ago", async () => {
@@ -60,7 +60,7 @@ describe("shouldCheckForUpdate", () => {
 
     await fs.outputFile(path.join(config.cacheDir, "last-update-check"), String(lastCheck));
 
-    await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
+    await expect(shouldCheckForUpdate(testCtx)).resolves.toBeFalsy();
   });
 });
 
@@ -84,11 +84,11 @@ describe("warnIfUpdateAvailable", () => {
         },
       });
 
-    await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
+    await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
 
     await warnIfUpdateAvailable(ctx);
 
-    await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
+    await expect(shouldCheckForUpdate(testCtx)).resolves.toBeFalsy();
 
     expectStdout().toMatchInlineSnapshot(`
       "╭──────────────────────────────────────────────────────────────────────╮
@@ -115,11 +115,11 @@ describe("warnIfUpdateAvailable", () => {
         },
       });
 
-    await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
+    await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
 
     await warnIfUpdateAvailable(ctx);
 
-    await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
+    await expect(shouldCheckForUpdate(testCtx)).resolves.toBeFalsy();
 
     try {
       expectStdout().toMatchInlineSnapshot(`
@@ -159,11 +159,11 @@ describe("warnIfUpdateAvailable", () => {
         },
       });
 
-    await expect(shouldCheckForUpdate()).resolves.toBeTruthy();
+    await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
 
     await warnIfUpdateAvailable(ctx);
 
-    await expect(shouldCheckForUpdate()).resolves.toBeFalsy();
+    await expect(shouldCheckForUpdate(testCtx)).resolves.toBeFalsy();
 
     expectStdout().toBe("");
   });

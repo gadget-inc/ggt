@@ -27,7 +27,7 @@
           '';
 
           dggt = pkgs.writeShellScriptBin "dggt" ''
-            GGT_ENV=development "$WORKSPACE_ROOT"/dist/main.js
+            GGT_ENV=development "$WORKSPACE_ROOT"/dist/main.js "$@"
           '';
         };
 

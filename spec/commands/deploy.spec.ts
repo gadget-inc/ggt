@@ -137,7 +137,7 @@ describe("deploy", () => {
         ⠙ Calculating file changes.
         ✔ Your files are up to date. 12:00:00 AM
 
-        Problems found.
+        ! Issues found in your development app
 
         • routes/GET-hello.js 1 problem
           ✖ JavaScript Unexpected keyword or identifier. line 13
@@ -306,12 +306,226 @@ describe("deploy", () => {
         ⠙ Calculating file changes.
         ✔ Your files are up to date. 12:00:00 AM
 
-        Problems found.
+        ! Issues found in your development app
 
         • Other 1 problem
           ✖ Add google keys for production
-
         Deploying regardless of problems because "--allow-problems" was passed.
+
+        ⠙ Building frontend assets.
+        ✔ Built frontend assets. 12:00:00 AM
+
+        ⠙ Setting up database.
+        ✔ Setup database. 12:00:00 AM
+
+        ⠙ Copying development.
+        ✔ Copied development. 12:00:00 AM
+
+        ⠙ Restarting app.
+        ✔ Restarted app. 12:00:00 AM
+
+        Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
+        "
+      `);
+    });
+
+    it("does not try to deploy if any deleted data will occur and displays the soon to be deleted data", async () => {
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      await deploy(ctx);
+
+      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+      await expectProcessExit(
+        () =>
+          publishStatus.emitResponse({
+            data: {
+              publishStatus: {
+                publishStarted: false,
+                remoteFilesVersion: "1",
+                progress: "NOT_STARTED",
+                issues: [],
+                deletedModelsAndFields: {
+                  deletedModels: ["modelA"],
+                  deletedModelFields: [],
+                },
+                status: undefined,
+              },
+            },
+          }),
+        1,
+      );
+
+      expectStdout().toMatchInlineSnapshot(`
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
+
+        ! Data deleted on deploy
+
+        These changes will be applied to production based on the app you're deploying.
+              - modelA  deleted
+
+        Do you want to continue?
+
+        Aborting because ggt is not running in an interactive terminal.
+        "
+      `);
+    });
+
+    it("deploys even if there are problems when --allow-data-delete is passed", async () => {
+      ctx = ctx.child({ overwrite: { "--allow-data-delete": true } });
+
+      await makeSyncScenario({ localFiles: { ".gadget/": "" }, ctx });
+
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      await deploy(ctx);
+
+      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+      await publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            publishStarted: true,
+            remoteFilesVersion: "1",
+            progress: "NOT_STARTED",
+            issues: [],
+            deletedModelsAndFields: {
+              deletedModels: ["modelA"],
+              deletedModelFields: [],
+            },
+            status: undefined,
+          },
+        },
+      });
+
+      await publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            publishStarted: true,
+            remoteFilesVersion: "1",
+            progress: "STARTING",
+            issues: [],
+            status: {
+              code: "Pending",
+              message: undefined,
+              output: "https://test.gadget.app/url/to/logs/with/traceId",
+            },
+          },
+        },
+      });
+
+      await publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            publishStarted: true,
+            remoteFilesVersion: "1",
+            progress: "BUILDING_ASSETS",
+            issues: [],
+            status: {
+              code: "Pending",
+              message: undefined,
+              output: "https://test.gadget.app/url/to/logs/with/traceId",
+            },
+          },
+        },
+      });
+
+      await publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            publishStarted: true,
+            remoteFilesVersion: "1",
+            progress: "UPLOADING_ASSETS",
+            issues: [],
+            status: {
+              code: "Pending",
+              message: undefined,
+              output: "https://test.gadget.app/url/to/logs/with/traceId",
+            },
+          },
+        },
+      });
+
+      await publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            publishStarted: true,
+            remoteFilesVersion: "1",
+            progress: "CONVERGING_STORAGE",
+            issues: [],
+            status: {
+              code: "Pending",
+              message: undefined,
+              output: "https://test.gadget.app/url/to/logs/with/traceId",
+            },
+          },
+        },
+      });
+
+      await publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            publishStarted: true,
+            remoteFilesVersion: "1",
+            progress: "PUBLISHING_TREE",
+            issues: [],
+            status: {
+              code: "Pending",
+              message: undefined,
+              output: "https://test.gadget.app/url/to/logs/with/traceId",
+            },
+          },
+        },
+      });
+
+      await publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            publishStarted: true,
+            remoteFilesVersion: "1",
+            progress: "RELOADING_SANDBOX",
+            issues: [],
+            status: {
+              code: "Pending",
+              message: undefined,
+              output: "https://test.gadget.app/url/to/logs/with/traceId",
+            },
+          },
+        },
+      });
+
+      await publishStatus.emitResponse({
+        data: {
+          publishStatus: {
+            publishStarted: true,
+            remoteFilesVersion: "1",
+            progress: "COMPLETED",
+            issues: [],
+            status: {
+              code: "Pending",
+              message: undefined,
+              output: "https://test.gadget.app/url/to/logs/with/traceId",
+            },
+          },
+        },
+      });
+
+      expectStdout().toMatchInlineSnapshot(`
+        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
+        ⠙ Calculating file changes.
+        ✔ Your files are up to date. 12:00:00 AM
+
+        ! Data deleted on deploy
+
+        These changes will be applied to production based on the app you're deploying.
+              - modelA  deleted
+        Deploying regardless of deleted data because "--allow-data-delete" was passed.
 
         ⠙ Building frontend assets.
         ✔ Built frontend assets. 12:00:00 AM

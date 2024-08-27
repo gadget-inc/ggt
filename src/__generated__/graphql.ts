@@ -2,7 +2,7 @@
  * ======================================================
  * THIS IS A GENERATED FILE! DO NOT EDIT IT MANUALLY!
  *
- * You can regenerate it by running `pnpm run generate-graphql`.
+ * You can regenerate it by running `npm run generate-graphql`.
  * ======================================================
  */
 
@@ -177,6 +177,18 @@ export type DeleteAppStatusResult = {
   isNotCreator?: Maybe<Scalars['Boolean']['output']>;
   isNotOwner?: Maybe<Scalars['Boolean']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type DeletedModelField = {
+  __typename?: 'DeletedModelField';
+  fields: Array<Scalars['String']['output']>;
+  modelIdentifier: Scalars['String']['output'];
+};
+
+export type DeletedModelsAndFields = {
+  __typename?: 'DeletedModelsAndFields';
+  deletedModelFields: Array<DeletedModelField>;
+  deletedModels: Array<Scalars['String']['output']>;
 };
 
 /** One upload target to use for the Direct Upload style of sending files to Gadget */
@@ -500,7 +512,7 @@ export type GadgetGlobalAction = {
   apiIdentifier: Scalars['String']['output'];
   examples?: Maybe<GadgetGlobalActionGraphQlType>;
   name: Scalars['String']['output'];
-  namespace: Array<Scalars['String']['output']>;
+  namespace?: Maybe<Array<Scalars['String']['output']>>;
   requiresInput: Scalars['Boolean']['output'];
   triggers?: Maybe<Array<GadgetTrigger>>;
 };
@@ -1208,6 +1220,7 @@ export type PublishStatus = {
 
 export type PublishStatusState = {
   __typename?: 'PublishStatusState';
+  deletedModelsAndFields?: Maybe<DeletedModelsAndFields>;
   issues: Array<PublishIssue>;
   progress: Scalars['String']['output'];
   publishStarted: Scalars['Boolean']['output'];
@@ -1435,6 +1448,7 @@ export type SubscriptionLogsSearchArgs = {
 
 export type SubscriptionPublishStatusArgs = {
   allowCharges?: InputMaybe<Scalars['Boolean']['input']>;
+  allowDeletedData?: InputMaybe<Scalars['Boolean']['input']>;
   force?: InputMaybe<Scalars['Boolean']['input']>;
   localFilesVersion: Scalars['String']['input'];
 };
@@ -1536,7 +1550,7 @@ export type GadgetMetaModelsQuery = { __typename?: 'Query', gadgetMeta: { __type
 export type GadgetMetaGlobalActionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GadgetMetaGlobalActionsQuery = { __typename?: 'Query', gadgetMeta: { __typename?: 'GadgetApplicationMeta', globalActions: Array<{ __typename?: 'GadgetGlobalAction', apiIdentifier: string, namespace: Array<string> }> } };
+export type GadgetMetaGlobalActionsQuery = { __typename?: 'Query', gadgetMeta: { __typename?: 'GadgetApplicationMeta', globalActions: Array<{ __typename?: 'GadgetGlobalAction', apiIdentifier: string, namespace?: Array<string> | null }> } };
 
 export type RemoteFileSyncEventsSubscriptionVariables = Exact<{
   localFilesVersion: Scalars['String']['input'];
@@ -1584,10 +1598,11 @@ export type PublishStatusSubscriptionVariables = Exact<{
   localFilesVersion: Scalars['String']['input'];
   force?: InputMaybe<Scalars['Boolean']['input']>;
   allowCharges?: InputMaybe<Scalars['Boolean']['input']>;
+  allowDeletedData?: InputMaybe<Scalars['Boolean']['input']>;
 }>;
 
 
-export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', publishStarted: boolean, remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null, nodeLabels?: Array<{ __typename?: 'PublishIssueNodeLabel', type?: string | null, identifier?: string | null } | null> | null }>, status?: { __typename?: 'PublishStatus', code?: string | null, message?: string | null, output?: string | null } | null } | null };
+export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', publishStarted: boolean, remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null, nodeLabels?: Array<{ __typename?: 'PublishIssueNodeLabel', type?: string | null, identifier?: string | null } | null> | null }>, deletedModelsAndFields?: { __typename?: 'DeletedModelsAndFields', deletedModels: Array<string>, deletedModelFields: Array<{ __typename?: 'DeletedModelField', modelIdentifier: string, fields: Array<string> }> } | null, status?: { __typename?: 'PublishStatus', code?: string | null, message?: string | null, output?: string | null } | null } | null };
 
 export type CreateModelMutationVariables = Exact<{
   path: Scalars['String']['input'];

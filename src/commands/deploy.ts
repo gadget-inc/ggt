@@ -1,8 +1,10 @@
 import chalk from "chalk";
+import indentString from "indent-string";
 import assert from "node:assert";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { type Run, type Usage } from "../services/command/command.js";
+import { deletedSymbol, updatedSymbol } from "../services/filesync/changes.js";
 import { DeployDisallowedError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
@@ -10,7 +12,7 @@ import { confirm } from "../services/output/confirm.js";
 import { output } from "../services/output/output.js";
 import { println } from "../services/output/print.js";
 import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.js";
-import { reportErrorAndExit } from "../services/output/report.js";
+import { UnexpectedError, reportErrorAndExit } from "../services/output/report.js";
 import { spin, type spinner } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { ts } from "../services/output/timestamp.js";
@@ -25,6 +27,7 @@ export const args = {
   "--env": { type: String, alias: ["-e", "--environment", "--from"] },
   "--allow-problems": { type: Boolean, alias: "--allow-issues" },
   "--allow-charges": { type: Boolean },
+  "--allow-data-delete": { type: Boolean },
 };
 
 export const usage: Usage = (_ctx) => {
@@ -45,6 +48,7 @@ export const usage: Usage = (_ctx) => {
         --allow-different-directory    Deploys from any local directory with existing files, even if the ".gadget/sync.json" file is missing
         --allow-different-app          Deploys a different app using the --app command, instead of the one specified in the “.gadget/sync.json” file
         --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
+        --allow-data-delete            Deploys even if it results in the deletion of data in production
         --allow-charges                Deploys even if it results in additional charges to your plan
 
   {gray Examples}
@@ -113,6 +117,7 @@ export const run: Run<DeployArgs> = async (ctx) => {
   const variables = {
     localFilesVersion: String(syncJson.filesVersion),
     force: ctx.args["--allow-problems"],
+    allowDeletedData: ctx.args["--allow-data-delete"],
     allowCharges: ctx.args["--allow-charges"],
   };
 
@@ -131,16 +136,19 @@ export const run: Run<DeployArgs> = async (ctx) => {
         const graphqlError = error.cause[0];
         assert(graphqlError, "expected graphqlError to be defined");
 
-        switch (true) {
-          case graphqlError.extensions["requiresUpgrade"]:
-            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
-            process.exit(1);
-            break;
-          case graphqlError.extensions["requiresAdditionalCharge"]:
-            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
-            await confirm({ ensureEmptyLineAbove: true, content: "Do you want to continue?" });
-            subscription.resubscribe({ ...variables, allowCharges: true });
-            return;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- TODO: extensions is typed as never undefined, but it can be.
+        if (graphqlError.extensions) {
+          switch (true) {
+            case graphqlError.extensions["requiresUpgrade"]:
+              println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
+              process.exit(1);
+              break;
+            case graphqlError.extensions["requiresAdditionalCharge"]:
+              println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
+              await confirm({ ensureEmptyLineAbove: true, content: "Do you want to continue?" });
+              subscription.resubscribe({ ...variables, allowCharges: true });
+              return;
+          }
         }
       }
 
@@ -152,8 +160,13 @@ export const run: Run<DeployArgs> = async (ctx) => {
         return;
       }
 
-      const { publishStarted, progress: step, issues, status } = publishStatus;
-      if (!printedProblems && issues.length > 0) {
+      const { publishStarted, progress: step, issues, status, deletedModelsAndFields } = publishStatus;
+      const hasIssues = issues.length > 0;
+
+      const { deletedModels, deletedModelFields } = deletedModelsAndFields ?? { deletedModels: [], deletedModelFields: [] };
+      const hasDataLoss = deletedModels.length > 0 || deletedModelFields.length > 0;
+
+      if (!printedProblems && (hasIssues || hasDataLoss)) {
         printedProblems = true;
 
         const fatalIssues = issues.filter((issue) => issue.severity === ProblemSeverity.Fatal);
@@ -161,18 +174,70 @@ export const run: Run<DeployArgs> = async (ctx) => {
           await reportErrorAndExit(ctx, new DeployDisallowedError(publishIssuesToProblems(fatalIssues)));
         }
 
-        println({ ensureEmptyLineAbove: true, content: chalk.bold("Problems found.") });
-        printProblems({ problems: publishIssuesToProblems(issues) });
+        if (hasIssues) {
+          println({ ensureEmptyLineAbove: true, content: sprint`{bold.yellow !} {bold Issues found in your development app}` });
+          printProblems({ problems: publishIssuesToProblems(issues) });
+        }
+
+        if (hasDataLoss) {
+          println({
+            ensureEmptyLineAbove: true,
+            content: sprint`{bold.yellow !} {bold Data deleted on deploy}`,
+          });
+
+          const updated = chalk.blueBright("updated");
+          const deleted = chalk.redBright("deleted");
+
+          const rows: { symbol: string; name: string; action: string; indent: number }[] = [];
+
+          deletedModels.forEach((model: string) => {
+            rows.push({ symbol: deletedSymbol, name: chalk.red(model), action: deleted, indent: 0 });
+          });
+
+          deletedModelFields.forEach(({ modelIdentifier, fields }) => {
+            rows.push({ symbol: updatedSymbol, name: chalk.blue(modelIdentifier), action: updated, indent: 0 });
+            fields.forEach((field) => {
+              rows.push({ symbol: deletedSymbol, name: chalk.red(field), action: deleted, indent: 2 });
+            });
+          });
+
+          const longestNameLength = rows.reduce((longest, row) => Math.max(longest, row.name.length), 0);
+          const longestIndent = rows.reduce((longest, row) => Math.max(longest, row.indent), 0);
+          const indentSize = 2;
+
+          println({
+            ensureEmptyLineAbove: true,
+            content: chalk.gray("These changes will be applied to production based on the app you're deploying."),
+          });
+          for (const row of rows) {
+            const indentation = " ".repeat(row.indent * indentSize);
+            const namePadding = " ".repeat(longestNameLength - row.name.length + 2);
+            const actionPadding = " ".repeat((longestIndent - row.indent) * indentSize);
+            println({
+              ensureEmptyLineAbove: false,
+              content: indentString(`${indentation}${row.symbol} ${row.name}${namePadding}${actionPadding}${row.action}`, 6),
+            });
+          }
+        }
 
         if (!publishStarted) {
           await confirm("Do you want to continue?");
-          subscription.resubscribe({ ...variables, force: true });
+          subscription.resubscribe({ ...variables, force: true, allowDeletedData: true });
         } else {
-          assert(ctx.args["--allow-problems"], "expected --allow-problems to be true");
-          println({
-            ensureEmptyLineAbove: true,
-            content: sprint`Deploying regardless of problems because {bold "--allow-problems"} was passed.`,
-          });
+          const allowDataDelete = ctx.args["--allow-data-delete"];
+          const allowProblems = ctx.args["--allow-problems"];
+
+          if (!allowDataDelete && !allowProblems) {
+            throw new UnexpectedError("expected --allow-data-delete or --allow-problems to be true");
+          }
+
+          if (allowProblems) {
+            println(sprint`Deploying regardless of problems because "${chalk.gray("--allow-problems")}" was passed.`);
+          }
+
+          if (allowDataDelete) {
+            println(sprint`Deploying regardless of deleted data because "${chalk.gray("--allow-data-delete")}" was passed.`);
+          }
         }
 
         return;

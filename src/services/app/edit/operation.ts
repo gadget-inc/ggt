@@ -167,8 +167,8 @@ export const FILE_SYNC_COMPARISON_HASHES_QUERY = sprint(/* GraphQL */ `
 export type FILE_SYNC_COMPARISON_HASHES_QUERY = typeof FILE_SYNC_COMPARISON_HASHES_QUERY;
 
 export const PUBLISH_STATUS_SUBSCRIPTION = sprint(/* GraphQL */ `
-  subscription PublishStatus($localFilesVersion: String!, $force: Boolean, $allowCharges: Boolean) {
-    publishStatus(localFilesVersion: $localFilesVersion, force: $force, allowCharges: $allowCharges) {
+  subscription PublishStatus($localFilesVersion: String!, $force: Boolean, $allowCharges: Boolean, $allowDeletedData: Boolean) {
+    publishStatus(localFilesVersion: $localFilesVersion, force: $force, allowCharges: $allowCharges, allowDeletedData: $allowDeletedData) {
       publishStarted
       remoteFilesVersion
       progress
@@ -187,6 +187,13 @@ export const PUBLISH_STATUS_SUBSCRIPTION = sprint(/* GraphQL */ `
         nodeLabels {
           type
           identifier
+        }
+      }
+      deletedModelsAndFields {
+        deletedModels
+        deletedModelFields {
+          modelIdentifier
+          fields
         }
       }
       status {

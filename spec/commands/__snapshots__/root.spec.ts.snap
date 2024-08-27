@@ -97,6 +97,7 @@ Options
       --allow-different-directory    Deploys from any local directory with existing files, even if the ".gadget/sync.json" file is missing
       --allow-different-app          Deploys a different app using the --app command, instead of the one specified in the “.gadget/sync.json” file
       --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
+      --allow-data-delete            Deploys even if it results in the deletion of data in production
       --allow-charges                Deploys even if it results in additional charges to your plan
 
 Examples
@@ -122,6 +123,7 @@ Options
       --allow-different-directory    Deploys from any local directory with existing files, even if the ".gadget/sync.json" file is missing
       --allow-different-app          Deploys a different app using the --app command, instead of the one specified in the “.gadget/sync.json” file
       --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
+      --allow-data-delete            Deploys even if it results in the deletion of data in production
       --allow-charges                Deploys even if it results in additional charges to your plan
 
 Examples

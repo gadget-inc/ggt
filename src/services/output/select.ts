@@ -3,17 +3,27 @@ import indentString from "indent-string";
 import assert from "node:assert";
 import process from "node:process";
 import { defaults } from "../util/object.js";
+import type { XOR } from "../util/types.js";
 import { output } from "./output.js";
 import { println } from "./print.js";
 import { entriesToDisplay, Prompt, type StdinKey } from "./prompt.js";
 import { sprintln, type SprintOptionsWithContent } from "./sprint.js";
 import { symbol } from "./symbols.js";
 
-export type SelectOptions<Choice extends string> = SprintOptionsWithContent & {
-  choices: Choice[];
+type BaseSelectOptions<Choice extends string> = SprintOptionsWithContent & {
   formatChoice?: (choice: Choice) => string;
   formatSelection?: (choice: Choice) => string;
 };
+
+type FlatChoices<Choice extends string> = {
+  choices: Choice[];
+};
+
+type GroupedChoices<Choice extends string> = {
+  groupedChoices: [string, Choice[]][];
+};
+
+export type SelectOptions<Choice extends string> = BaseSelectOptions<Choice> & XOR<FlatChoices<Choice>, GroupedChoices<Choice>>;
 
 export type select = typeof select;
 
@@ -23,7 +33,8 @@ export const select = <Choice extends string>(options: SelectOptions<Choice>): P
   });
 
   if (!output.isInteractive) {
-    println(options);
+    println(options.content);
+    println(JSON.stringify(options.choices ?? options.groupedChoices, undefined, 2));
     println({ ensureEmptyLineAbove: true, content: "Aborting because ggt is not running in an interactive terminal." });
     process.exit(1);
   }
@@ -71,6 +82,8 @@ class Select<Choice extends string> extends Prompt {
   cursor = 0;
   optionsPerPage = 10;
   options;
+  currentChoices: Choice[];
+  groupedChoicesTitleIndexMap = new Map<number, string>();
 
   constructor(options: SelectOptions<Choice>) {
     super();
@@ -81,6 +94,24 @@ class Select<Choice extends string> extends Prompt {
       ...options,
     });
 
+    if (this.options.choices) {
+      this.currentChoices = this.options.choices;
+    } else {
+      this.currentChoices = this.options.groupedChoices.flatMap(([_, choices]) => choices);
+
+      let currentIndex = 0;
+      this.options.groupedChoices.forEach((group) => {
+        const [title, choices] = group;
+
+        choices.forEach((_, index) => {
+          if (index === 0) {
+            this.groupedChoicesTitleIndexMap.set(currentIndex, title);
+          }
+          currentIndex++;
+        });
+      });
+    }
+
     // if (this.options.ensureEmptyLineAbove) {
     //   this.text = "\n" + this.text;
     // }
@@ -89,7 +120,7 @@ class Select<Choice extends string> extends Prompt {
   }
 
   get selection(): Choice {
-    const choice = this.options.choices[this.cursor];
+    const choice = this.currentChoices[this.cursor];
     assert(choice, `choices[${this.cursor}] is not defined`);
     return choice;
   }
@@ -131,13 +162,13 @@ class Select<Choice extends string> extends Prompt {
   }
 
   last(): void {
-    this.moveCursor(this.options.choices.length - 1);
+    this.moveCursor(this.currentChoices.length - 1);
     this.render();
   }
 
   up(): void {
     if (this.cursor === 0) {
-      this.moveCursor(this.options.choices.length - 1);
+      this.moveCursor(this.currentChoices.length - 1);
     } else {
       this.moveCursor(this.cursor - 1);
     }
@@ -145,7 +176,7 @@ class Select<Choice extends string> extends Prompt {
   }
 
   down(): void {
-    if (this.cursor === this.options.choices.length - 1) {
+    if (this.cursor === this.currentChoices.length - 1) {
       this.moveCursor(0);
     } else {
       this.moveCursor(this.cursor + 1);
@@ -154,7 +185,7 @@ class Select<Choice extends string> extends Prompt {
   }
 
   next(): void {
-    this.moveCursor((this.cursor + 1) % this.options.choices.length);
+    this.moveCursor((this.cursor + 1) % this.currentChoices.length);
     this.render();
   }
 
@@ -186,7 +217,7 @@ class Select<Choice extends string> extends Prompt {
     question += ` ${chalk.gray("Use arrow keys to move")}\n\n`;
 
     let choices = "";
-    const { startIndex, endIndex } = entriesToDisplay(this.cursor, this.options.choices.length, this.optionsPerPage);
+    const { startIndex, endIndex } = entriesToDisplay(this.cursor, this.currentChoices.length, this.optionsPerPage);
     for (let index = startIndex; index < endIndex; index++) {
       // determine whether to display "more choices" indicators
       let prefix: string;
@@ -194,13 +225,13 @@ class Select<Choice extends string> extends Prompt {
         prefix = `${symbol.arrowRight} `;
       } else if (index === startIndex && startIndex > 0) {
         prefix = `${symbol.arrowUp} `;
-      } else if (index === endIndex - 1 && endIndex < this.options.choices.length) {
+      } else if (index === endIndex - 1 && endIndex < this.currentChoices.length) {
         prefix = `${symbol.arrowDown} `;
       } else {
         prefix = "  ";
       }
 
-      const choice_ = this.options.choices[index];
+      const choice_ = this.currentChoices[index];
       assert(choice_, `choices[${index}] is not defined`);
 
       let choice = this.options.formatChoice(choice_);
@@ -208,6 +239,13 @@ class Select<Choice extends string> extends Prompt {
         choice = chalk.blue.underline(choice);
       }
 
+      if (this.groupedChoicesTitleIndexMap.has(index)) {
+        if (index !== startIndex) {
+          choices += "\n";
+        }
+
+        choices += `${chalk.grey(this.groupedChoicesTitleIndexMap.get(index))}\n`;
+      }
       choices += `${prefix}${choice}\n`;
     }
 

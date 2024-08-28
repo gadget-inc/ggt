@@ -13,6 +13,7 @@ import { makeContext } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
 import { makeSyncScenario } from "../../__support__/filesync.js";
 import { mockOnce } from "../../__support__/mock.js";
+import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { loginTestUser } from "../../__support__/user.js";
 
@@ -46,6 +47,34 @@ describe("SyncJson.loadOrInit", () => {
     const syncJson = await SyncJson.loadOrInit(ctx, { directory: localDir });
 
     expect(syncJson.state).toEqual(state);
+  });
+
+  it("shows apps that the user can load", async () => {
+    const ctx = makeContext({ parse: SyncJsonArgs, argv: ["dev"] });
+    await expectError(async () => await SyncJson.loadOrInit(ctx, { directory: localDir }));
+
+    expectStdout().toMatchInlineSnapshot(`
+      "Which application do you want to develop?
+      [
+        [
+          "first-test-team",
+          [
+            "test",
+            "test2",
+            "test-with-0-environments"
+          ]
+        ],
+        [
+          "second-test-team",
+          [
+            "test-with-2-environments"
+          ]
+        ]
+      ]
+
+      Aborting because ggt is not running in an interactive terminal.
+      "
+    `);
   });
 
   it("loads state from .gadget/sync.json (v0.4)", async () => {

@@ -1,4 +1,4 @@
-import { getApps } from "../services/app/app.js";
+import { getApps, parseAppListToTeamMap } from "../services/app/app.js";
 import type { Run, Usage } from "../services/command/command.js";
 import { output } from "../services/output/output.js";
 import { println } from "../services/output/print.js";
@@ -26,11 +26,17 @@ export const run: Run = async (ctx) => {
     return;
   }
 
+  const appTeamMap = parseAppListToTeamMap(apps);
+
   if (output.isInteractive) {
-    printTable({
-      json: apps,
-      headers: ["Name", "Domain"],
-      rows: apps.map((app) => [app.slug, app.primaryDomain]),
+    appTeamMap.forEach((apps, teamName) => {
+      println(sprint`{grey ${teamName}}`);
+      printTable({
+        json: apps,
+        headers: ["Name", "Domain"],
+        rows: apps.map((app) => [app.slug, app.primaryDomain]),
+      });
+      println("");
     });
   } else {
     let simpleOutput = "";

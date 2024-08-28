@@ -11,6 +11,8 @@ import { testCtx } from "./context.js";
 export const testApp: Application = Object.freeze({
   id: 1n,
   slug: "test",
+  teamId: 1n,
+  teamName: "first-test-team",
   primaryDomain: "test.gadget.app",
   hasSplitEnvironments: true,
   multiEnvironmentEnabled: true,
@@ -59,6 +61,8 @@ export const testApp2: Application = Object.freeze({
 export const testAppWith2Environments: Application = Object.freeze({
   id: 2n,
   slug: "test-with-2-environments",
+  teamId: 2n,
+  teamName: "second-test-team",
   primaryDomain: "test-with-2-environments.gadget.app",
   hasSplitEnvironments: true,
   multiEnvironmentEnabled: false,
@@ -82,6 +86,8 @@ export const testAppWith2Environments: Application = Object.freeze({
 export const testAppWith0Environments: Application = Object.freeze({
   id: 3n,
   slug: "test-with-0-environments",
+  teamId: 1n,
+  teamName: "first-test-team",
   primaryDomain: "test-with-0-environments.gadget.app",
   hasSplitEnvironments: false,
   multiEnvironmentEnabled: false,

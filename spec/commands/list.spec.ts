@@ -24,11 +24,16 @@ describe("list", () => {
     await list(ctx);
 
     expectStdout().toMatchInlineSnapshot(`
-      "Name                      Domain
+      "first-test-team
+      Name                      Domain
       test                      test.gadget.app
       test2                     test2.gadget.app
-      test-with-2-environments  test-with-2-environments.gadget.app
       test-with-0-environments  test-with-0-environments.gadget.app
+
+      second-test-team
+      Name                      Domain
+      test-with-2-environments  test-with-2-environments.gadget.app
+
       "
     `);
   });

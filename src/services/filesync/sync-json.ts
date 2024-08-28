@@ -5,7 +5,7 @@ import path from "node:path";
 import { simpleGit } from "simple-git";
 import terminalLink from "terminal-link";
 import { z } from "zod";
-import { EnvironmentType, getApps, type Application, type Environment } from "../app/app.js";
+import { EnvironmentType, getApps, parseAppListToTeamMap, type Application, type Environment } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
 import { getCurrentApp, getCurrentEnv, setCurrentApp, setCurrentEnv } from "../app/context.js";
 import { Edit } from "../app/edit/edit.js";
@@ -347,8 +347,13 @@ const loadApp = async (
   let appSlug = ctx.args["--app"] || state?.application;
   if (!appSlug) {
     // the user didn't specify an app, ask them to select one
+    const groupedChoices: [string, string[]][] = Array.from(parseAppListToTeamMap(availableApps)).map(([teamName, apps]) => [
+      teamName,
+      apps.map((app) => app.slug),
+    ]);
+
     appSlug = await select({
-      choices: availableApps.map((x) => x.slug),
+      groupedChoices,
       content: "Which application do you want to develop?",
     });
   }

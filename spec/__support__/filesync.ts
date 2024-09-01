@@ -28,7 +28,7 @@ import { isEqualHashes } from "../../src/services/filesync/hashes.js";
 import { SyncJson, type SyncJsonArgs, type SyncJsonState } from "../../src/services/filesync/sync-json.js";
 import { noop } from "../../src/services/util/function.js";
 import { isNil } from "../../src/services/util/is.js";
-import { defaults, omit } from "../../src/services/util/object.js";
+import { defaults } from "../../src/services/util/object.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import type { PartialExcept } from "../../src/services/util/types.js";
 import { testApp } from "./app.js";
@@ -512,9 +512,8 @@ export const makeSyncScenario = async <Args extends SyncJsonArgs = DevArgs>({
             throw error;
           }
 
-          // omit mtime from the snapshot
-          const withoutMtime = omit(JSON.parse(local[".gadget/sync.json"]!), ["mtime"]);
-          local[".gadget/sync.json"] = JSON.stringify(withoutMtime);
+          // format .gadget/sync.json on a single line so inline snapshots are easier to read
+          local[".gadget/sync.json"] = JSON.stringify(JSON.parse(local[".gadget/sync.json"]!));
 
           return {
             localDir: local,
@@ -581,15 +580,7 @@ export const makeFile = (options: PartialExcept<File, "path">): File => {
 
 export const expectSyncJson = (filesync: FileSync, expected: Partial<SyncJsonState> = {}): string => {
   expect(filesync.syncJson.state).toMatchObject(expected);
-  return prettyJSON({
-    ...filesync.syncJson.state,
-
-    // deprecated
-    app: filesync.syncJson.app.slug,
-    filesVersion: String(filesync.syncJson.filesVersion),
-    // @ts-expect-error - mtime is private
-    mtime: filesync.syncJson._mtime,
-  });
+  return prettyJSON(filesync.syncJson.state);
 };
 
 export const expectPublishVariables = (expected: MutationPublishFileSyncEventsArgs): ZodSchema<MutationPublishFileSyncEventsArgs> => {

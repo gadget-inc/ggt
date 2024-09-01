@@ -7,7 +7,7 @@ import { ArgError } from "../../../src/services/command/arg.js";
 import type { Context } from "../../../src/services/command/context.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import { UnknownDirectoryError } from "../../../src/services/filesync/error.js";
-import { SyncJson, SyncJsonArgs, type AnySyncJsonState, type SyncJsonStateV05 } from "../../../src/services/filesync/sync-json.js";
+import { SyncJson, SyncJsonArgs, type AnySyncJsonState } from "../../../src/services/filesync/sync-json.js";
 import { nockTestApps, testApp, testApp2, testAppWith2Environments } from "../../__support__/app.js";
 import { makeContext } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
@@ -63,7 +63,7 @@ describe("SyncJson.loadOrInit", () => {
       environments: {
         development: { filesVersion: "77" },
       },
-    } as SyncJsonStateV05);
+    });
   });
 
   it("uses default state if .gadget/sync.json does not exist and the directory is empty", async () => {

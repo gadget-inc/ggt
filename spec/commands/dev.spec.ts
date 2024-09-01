@@ -79,7 +79,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}},"app":"test","filesVersion":"2"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
             "file.txt": "file v2",
           },
         }
@@ -115,7 +115,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}},"app":"test","filesVersion":"3"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}}}",
             "file.txt": "file v3",
           },
         }
@@ -155,7 +155,7 @@ describe("dev", () => {
             ".gadget/": "",
             ".gadget/backup/": "",
             ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"4"}},"app":"test","filesVersion":"4"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"4"}}}",
           },
         }
       `);
@@ -199,7 +199,7 @@ describe("dev", () => {
             ".gadget/": "",
             ".gadget/backup/": "",
             ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"5"}},"app":"test","filesVersion":"5"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"5"}}}",
             "directory/": "",
           },
         }
@@ -247,7 +247,7 @@ describe("dev", () => {
             ".gadget/backup/": "",
             ".gadget/backup/directory/": "",
             ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"6"}},"app":"test","filesVersion":"6"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"6"}}}",
           },
         }
       `);
@@ -318,7 +318,7 @@ describe("dev", () => {
             ".gadget/backup/": "",
             ".gadget/backup/directory/": "",
             ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}},"app":"test","filesVersion":"7"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
             "file1.txt": "file1.txt",
             "file10.txt": "file10.txt",
             "file2.txt": "file2.txt",
@@ -442,7 +442,7 @@ describe("dev", () => {
             ".gadget/backup/": "",
             ".gadget/backup/directory/": "",
             ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}},"app":"test","filesVersion":"7"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
             "file1.txt": "file1.txt",
             "file10.txt": "file10.txt",
             "file2.txt": "file2.txt",
@@ -573,7 +573,7 @@ describe("dev", () => {
             ".gadget/backup/": "",
             ".gadget/backup/directory/": "",
             ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}},"app":"test","filesVersion":"7"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
             "file.js": "file v2",
             "file1.txt": "file1.txt",
             "file10.txt": "file10.txt",
@@ -636,7 +636,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}},"app":"test","filesVersion":"2"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
             ".ignore": "**/tmp",
           },
         }
@@ -677,7 +677,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}},"app":"test","filesVersion":"3"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}}}",
             ".ignore": "**/tmp",
           },
         }
@@ -709,7 +709,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}},"app":"test","filesVersion":"2"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
             "file.txt": "file v2",
           },
         }
@@ -739,7 +739,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}},"app":"test","filesVersion":"3"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}}}",
             "file.txt": "file v3",
           },
         }
@@ -773,7 +773,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"4"}},"app":"test","filesVersion":"4"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"4"}}}",
             "renamed-file.txt": "file v3",
           },
         }
@@ -809,7 +809,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"5"}},"app":"test","filesVersion":"5"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"5"}}}",
           },
         }
       `);
@@ -849,7 +849,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"6"}},"app":"test","filesVersion":"6"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"6"}}}",
             "directory/": "",
           },
         }
@@ -894,7 +894,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}},"app":"test","filesVersion":"7"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
             "renamed-directory/": "",
           },
         }
@@ -941,7 +941,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"8"}},"app":"test","filesVersion":"8"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"8"}}}",
           },
         }
       `);
@@ -1019,7 +1019,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"9"}},"app":"test","filesVersion":"9"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"9"}}}",
             "file-01.txt": "file-01.txt",
             "file-02.txt": "file-02.txt",
             "file-03.txt": "file-03.txt",
@@ -1064,7 +1064,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}},"app":"test","filesVersion":"2"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
             "file.txt": "v10",
           },
         }
@@ -1135,7 +1135,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}},"app":"test","filesVersion":"1"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}}}",
             ".ignore": "**/tmp",
             "tmp/": "",
             "tmp/file-01.txt": "file-01.txt",
@@ -1180,7 +1180,7 @@ describe("dev", () => {
           },
           "localDir": {
             ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}},"app":"test","filesVersion":"2"}",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
             ".ignore": "# watch it all",
           },
         }

@@ -59,15 +59,6 @@ export class SyncJson {
    */
   readonly edit: Edit;
 
-  /**
-   * The last time the `.gadget/sync.json` file was modified.
-   *
-   * @deprecated
-   * We don't use this anymore, it's only here because older versions
-   * of ggt expect it to be in the .gadget/sync.json file.
-   */
-  private _mtime: number | undefined;
-
   private constructor(
     /**
      * The {@linkcode Context} that was used to initialize this
@@ -279,12 +270,8 @@ export class SyncJson {
     return syncJson;
   }
 
-  // TODO: just asks the user to select an app and environment, doesn't create a .gadget/sync.json file
-  // static async loadOrAsk(ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<SyncJson | undefined> {
-  // }
-
   /**
-   * Updates {@linkcode _syncJson} and saves it to `.gadget/sync.json`.
+   * Updates {@linkcode state} and saves it to `.gadget/sync.json`.
    */
   async save(filesVersion: string | bigint): Promise<void> {
     const environment = this.state.environments[this.state.environment];
@@ -292,19 +279,7 @@ export class SyncJson {
     environment.filesVersion = String(filesVersion);
 
     this.ctx.log.debug("saving .gadget/sync.json");
-    this._mtime = Date.now();
-    await fs.outputJSON(
-      this.directory.absolute(".gadget/sync.json"),
-      {
-        ...this.state,
-
-        // v0.4
-        app: this.state.application,
-        filesVersion: String(filesVersion),
-        mtime: this._mtime,
-      },
-      { spaces: 2 },
-    );
+    await fs.outputJSON(this.directory.absolute(".gadget/sync.json"), this.state, { spaces: 2 });
   }
 
   async loadGitBranch(): Promise<void> {
@@ -485,7 +460,7 @@ const loadBranch = async (ctx: Context<SyncJsonArgs>, { directory }: { directory
   }
 };
 
-export const SyncJsonStateV05 = z.object({
+export const SyncJsonStateV1 = z.object({
   application: z.string(),
   environment: z.string(),
   environments: z.record(z.object({ filesVersion: z.string() })),
@@ -497,15 +472,15 @@ export const SyncJsonStateV04 = z.object({
   mtime: z.number(),
 });
 
-export const AnySyncJsonState = z.union([SyncJsonStateV05, SyncJsonStateV04]);
+export const AnySyncJsonState = z.union([SyncJsonStateV1, SyncJsonStateV04]);
 
-export const SyncJsonState = AnySyncJsonState.transform((state): SyncJsonStateV05 => {
+export const SyncJsonState = AnySyncJsonState.transform((state): SyncJsonStateV1 => {
   if ("environment" in state) {
-    // it's a v0.5 state
+    // it's a v1 state
     return state;
   }
 
-  // it's a v0.4 state, transform it to a v0.5 state
+  // it's a v0.4 state, transform it to a v1 state
   return {
     application: state.app,
     environment: "development",
@@ -513,7 +488,7 @@ export const SyncJsonState = AnySyncJsonState.transform((state): SyncJsonStateV0
   };
 });
 
-export type SyncJsonStateV05 = z.infer<typeof SyncJsonStateV05>;
+export type SyncJsonStateV1 = z.infer<typeof SyncJsonStateV1>;
 export type SyncJsonStateV04 = z.infer<typeof SyncJsonStateV04>;
 export type AnySyncJsonState = z.infer<typeof AnySyncJsonState>;
 export type SyncJsonState = z.infer<typeof SyncJsonState>;

@@ -118,7 +118,7 @@
     "rimraf": "^5.0.7",
     "semver": "^7.6.3",
     "serialize-error": "^11.0.3",
-    "simple-git": "^3.25.0",
+    "simple-git": "^3.26.0",
     "stdin-discarder": "^0.2.2",
     "string-width": "^7.2.0",
     "strip-ansi": "^7.1.0",

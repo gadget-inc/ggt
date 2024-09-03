@@ -1,5 +1,5 @@
 ---
-"ggt": patch
+"ggt": minor
 ---
 
 `ggt deploy` will now show a deleted data warning when pushing changes to production that would cause data loss.

@@ -309,7 +309,7 @@ const hash = async (absolutePath: string): Promise<Hash> => {
         }
       }
 
-      callback(undefined, filteredChunk.slice(0, i));
+      callback(undefined, filteredChunk.subarray(0, i));
     },
   });
 

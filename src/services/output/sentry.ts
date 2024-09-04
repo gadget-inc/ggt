@@ -1,11 +1,9 @@
 import type * as SentryModule from "@sentry/node";
 import ms from "ms";
 import os from "node:os";
-import { maybeGetCurrentApp, maybeGetCurrentEnv } from "../app/context.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { env } from "../config/env.js";
-import { maybeGetCurrentUser } from "../user/user.js";
 import { serializeError } from "../util/object.js";
 import { packageJson } from "../util/package-json.js";
 import type { GGTError } from "./report.js";
@@ -31,6 +29,9 @@ export const sendErrorToSentry = async (ctx: Context, error: GGTError): Promise<
   if (!Sentry) {
     return;
   }
+
+  const { maybeGetCurrentApp, maybeGetCurrentEnv } = await import("../app/context.js");
+  const { maybeGetCurrentUser } = await import("../user/user.js");
 
   const user = maybeGetCurrentUser(ctx);
 

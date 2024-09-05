@@ -25,12 +25,14 @@ export type Environment = z.infer<typeof Environment>;
 export const Application = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
   slug: z.string(),
-  teamId: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
-  teamName: z.string(),
   primaryDomain: z.string(),
   hasSplitEnvironments: z.boolean(),
   multiEnvironmentEnabled: z.boolean(),
   environments: z.array(Environment),
+  team: z.object({
+    id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
+    name: z.string(),
+  }),
 });
 
 export type Application = z.infer<typeof Application>;
@@ -74,17 +76,10 @@ export const getApps = async (ctx: Context): Promise<Application[]> => {
 };
 
 export const parseAppListToTeamMap = (apps: Application[]): Map<string, Application[]> => {
-  const teamMap = new Map<string, Application[]>();
-
-  for (const app of apps) {
-    if (teamMap.has(app.teamName)) {
-      teamMap.get(app.teamName)?.push(app);
-    } else {
-      teamMap.set(app.teamName, [app]);
-    }
-  }
-
-  return teamMap;
+  return apps.reduce((teamMap, app) => {
+    teamMap.set(app.team.name, [...(teamMap.get(app.team.name) ?? []), app]);
+    return teamMap;
+  }, new Map<string, Application[]>());
 };
 
 export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []> => {

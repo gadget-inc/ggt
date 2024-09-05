@@ -50,10 +50,10 @@ export type PrintChangesOptions = Partial<SprintTableOptions> & {
   limit?: number;
 };
 
-const createdSymbol = chalk.greenBright("+");
-const updatedSymbol = chalk.blueBright("±");
-const deletedSymbol = chalk.redBright("-");
-const renameSymbol = chalk.yellowBright("→");
+export const createdSymbol = chalk.greenBright("+");
+export const updatedSymbol = chalk.blueBright("±");
+export const deletedSymbol = chalk.redBright("-");
+export const renameSymbol = chalk.yellowBright("→");
 
 /**
  * Prints the changes to the console.

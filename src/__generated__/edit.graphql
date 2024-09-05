@@ -149,6 +149,16 @@ type DeleteAppStatusResult {
   success: Boolean!
 }
 
+type DeletedModelFieldsSummary {
+  fields: [String!]!
+  modelIdentifier: String!
+}
+
+type DeletedModelsAndFields {
+  deletedModelFields: [DeletedModelFieldsSummary!]!
+  deletedModels: [String!]!
+}
+
 type EnableFrontendResult {
   reason: String
   success: Boolean!
@@ -428,6 +438,7 @@ type PublishStatus {
 }
 
 type PublishStatusState {
+  deletedModelsAndFields: DeletedModelsAndFields
   issues: [PublishIssue!]!
   progress: String!
   publishStarted: Boolean!
@@ -493,7 +504,7 @@ type Subscription {
   logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
   migrateGadgetV1Status: MigrateGadgetV1Status
   openBackgroundActions: Int!
-  publishStatus(allowCharges: Boolean, force: Boolean, localFilesVersion: String!): PublishStatusState
+  publishStatus(allowCharges: Boolean, allowDeletedData: Boolean, force: Boolean, localFilesVersion: String!): PublishStatusState
   remoteFileSyncEvents(encoding: FileSyncEncoding, localFilesVersion: String!): RemoteFileSyncEvents!
   reportClientPresence(clientID: EnvironmentTreeClientId!): Boolean
   typesManifestStream: TypesManifest!

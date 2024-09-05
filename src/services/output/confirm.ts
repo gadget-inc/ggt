@@ -175,7 +175,7 @@ export class Confirm extends Prompt {
     output.updatePrompt(
       sprintln({
         ...this.options,
-        content: `${this.options.content} ${this.defaultValue ? "[Y/n] " : "[y/N] "}`,
+        content: `${this.options.content} ${this.defaultValue ? chalk.blueBright("[Y/n] ") : chalk.blueBright("[y/N] ")}`,
       }),
     );
   }

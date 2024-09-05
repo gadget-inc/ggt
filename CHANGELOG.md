@@ -1,5 +1,19 @@
 # @gadgetinc/ggt
 
+## 1.1.0
+
+### Minor Changes
+
+- 87875c9: Dropped support for downgrading to ggt v0.4.x
+
+  ggt v1.1.x will no longer output a `.gadget/sync.json` file that is compatible with ggt v0.4.x. This means local directories that are synced with ggt v1.1.x will no longer be able to be synced with ggt v0.4.x. This change was made to simplify and reduce the complexity of the codebase.
+
+### Patch Changes
+
+- e83ea58: Updated app select to show apps grouped by team!
+
+  ![CleanShot 2024-08-30 at 17 44 39@2x](https://github.com/user-attachments/assets/ca15c319-77a9-4c8b-a6a9-5eef55a72869)
+
 ## 1.0.6
 
 ### Patch Changes

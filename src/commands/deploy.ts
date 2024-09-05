@@ -191,13 +191,13 @@ export const run: Run<DeployArgs> = async (ctx) => {
           const rows: { symbol: string; name: string; action: string; indent: number }[] = [];
 
           deletedModels.forEach((model: string) => {
-            rows.push({ symbol: deletedSymbol, name: chalk.red(model), action: deleted, indent: 0 });
+            rows.push({ symbol: deletedSymbol, name: chalk.redBright(model), action: deleted, indent: 0 });
           });
 
           deletedModelFields.forEach(({ modelIdentifier, fields }) => {
-            rows.push({ symbol: updatedSymbol, name: chalk.blue(modelIdentifier), action: updated, indent: 0 });
+            rows.push({ symbol: updatedSymbol, name: chalk.blueBright(modelIdentifier), action: updated, indent: 0 });
             fields.forEach((field) => {
-              rows.push({ symbol: deletedSymbol, name: chalk.red(field), action: deleted, indent: 2 });
+              rows.push({ symbol: deletedSymbol, name: chalk.redBright(field), action: deleted, indent: 2 });
             });
           });
 

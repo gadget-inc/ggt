@@ -179,15 +179,15 @@ export type DeleteAppStatusResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type DeletedModelField = {
-  __typename?: 'DeletedModelField';
+export type DeletedModelFieldsSummary = {
+  __typename?: 'DeletedModelFieldsSummary';
   fields: Array<Scalars['String']['output']>;
   modelIdentifier: Scalars['String']['output'];
 };
 
 export type DeletedModelsAndFields = {
   __typename?: 'DeletedModelsAndFields';
-  deletedModelFields: Array<DeletedModelField>;
+  deletedModelFields: Array<DeletedModelFieldsSummary>;
   deletedModels: Array<Scalars['String']['output']>;
 };
 
@@ -1602,7 +1602,7 @@ export type PublishStatusSubscriptionVariables = Exact<{
 }>;
 
 
-export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', publishStarted: boolean, remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null, nodeLabels?: Array<{ __typename?: 'PublishIssueNodeLabel', type?: string | null, identifier?: string | null } | null> | null }>, deletedModelsAndFields?: { __typename?: 'DeletedModelsAndFields', deletedModels: Array<string>, deletedModelFields: Array<{ __typename?: 'DeletedModelField', modelIdentifier: string, fields: Array<string> }> } | null, status?: { __typename?: 'PublishStatus', code?: string | null, message?: string | null, output?: string | null } | null } | null };
+export type PublishStatusSubscription = { __typename?: 'Subscription', publishStatus?: { __typename?: 'PublishStatusState', publishStarted: boolean, remoteFilesVersion: string, progress: string, issues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null, nodeLabels?: Array<{ __typename?: 'PublishIssueNodeLabel', type?: string | null, identifier?: string | null } | null> | null }>, deletedModelsAndFields?: { __typename?: 'DeletedModelsAndFields', deletedModels: Array<string>, deletedModelFields: Array<{ __typename?: 'DeletedModelFieldsSummary', modelIdentifier: string, fields: Array<string> }> } | null, status?: { __typename?: 'PublishStatus', code?: string | null, message?: string | null, output?: string | null } | null } | null };
 
 export type CreateModelMutationVariables = Exact<{
   path: Scalars['String']['input'];

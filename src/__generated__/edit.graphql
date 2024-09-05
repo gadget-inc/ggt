@@ -149,13 +149,13 @@ type DeleteAppStatusResult {
   success: Boolean!
 }
 
-type DeletedModelField {
+type DeletedModelFieldsSummary {
   fields: [String!]!
   modelIdentifier: String!
 }
 
 type DeletedModelsAndFields {
-  deletedModelFields: [DeletedModelField!]!
+  deletedModelFields: [DeletedModelFieldsSummary!]!
   deletedModels: [String!]!
 }
 

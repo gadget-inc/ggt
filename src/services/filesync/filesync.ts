@@ -13,6 +13,7 @@ import type { Promisable } from "type-fest";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
 import { type EditSubscription } from "../app/edit/edit.js";
 import {
+  ENVIRONMENT_LOGS_SUBSCRIPTION,
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
   FILE_SYNC_HASHES_QUERY,
@@ -23,6 +24,9 @@ import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { confirm } from "../output/confirm.js";
+import type { Fields } from "../output/log/field.js";
+import { Level } from "../output/log/level.js";
+import { createEnvironmentStructuredLogger, type LoggingArgsResult } from "../output/log/structured.js";
 import { println } from "../output/print.js";
 import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.js";
 import { EdgeCaseError } from "../output/report.js";
@@ -37,7 +41,7 @@ import { serializeError } from "../util/object.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
-import { TooManyMergeAttemptsError, isFilesVersionMismatchError, swallowFilesVersionMismatch } from "./error.js";
+import { isFilesVersionMismatchError, swallowFilesVersionMismatch, TooManyMergeAttemptsError } from "./error.js";
 import type { File } from "./file.js";
 import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 import { MergeConflictPreference } from "./strategy.js";
@@ -313,6 +317,49 @@ export class FileSync {
         // + 1, so we need to stop what we're doing and get in sync
         await this.merge(ctx, { printEnvironmentChangesOptions });
       }
+    });
+  }
+
+  subscribeToEnvironmentLogs(
+    args: LoggingArgsResult,
+    {
+      onError,
+    }: {
+      onError: (error: unknown) => void;
+    },
+  ): EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> {
+    const logger = createEnvironmentStructuredLogger(this.syncJson.environment);
+
+    const includedLevels = Object.entries(Level)
+      .filter(([_, value]) => {
+        return value >= args["--log-level"];
+      })
+      .map(([key]) => key.toLowerCase())
+      .join("|");
+
+    return this.syncJson.edit.subscribe({
+      subscription: ENVIRONMENT_LOGS_SUBSCRIPTION,
+      variables: () => ({
+        query: `{environment_id="${this.syncJson.environment.id}"} | json | level=~"${includedLevels}"${args["--my-logs"] ? ' | source="user"' : ""}`,
+        start: new Date(),
+      }),
+      onError,
+      onData: ({ logsSearchV2 }) => {
+        for (const log of logsSearchV2.data["messages"] as [string, string][]) {
+          const message: unknown = JSON.parse(log[1]);
+          const { msg, name, level, ...fields } = message as Record<string, unknown>;
+
+          logger(
+            level as string,
+            name as string,
+            msg as Lowercase<string>,
+            {
+              ...fields,
+            } as Fields,
+            new Date(Number(log[0]) / 1_000_000),
+          );
+        }
+      },
     });
   }
 

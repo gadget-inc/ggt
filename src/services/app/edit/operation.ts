@@ -8,6 +8,8 @@ import type {
   CreateModelMutationVariables,
   CreateRouteMutation,
   CreateRouteMutationVariables,
+  EnvironmentLogsSubscription,
+  EnvironmentLogsSubscriptionVariables,
   FileSyncComparisonHashesQuery,
   FileSyncComparisonHashesQueryVariables,
   FileSyncFilesQuery,
@@ -18,10 +20,10 @@ import type {
   PublishFileSyncEventsMutationVariables,
   PublishStatusSubscription,
   PublishStatusSubscriptionVariables,
-  RemoteFileSyncEventsSubscription,
-  RemoteFileSyncEventsSubscriptionVariables,
   RemoteFilesVersionQuery,
   RemoteFilesVersionQueryVariables,
+  RemoteFileSyncEventsSubscription,
+  RemoteFileSyncEventsSubscriptionVariables,
 } from "../../../__generated__/graphql.js";
 import { sprint } from "../../output/sprint.js";
 
@@ -78,6 +80,17 @@ export type GraphQLSubscription<
   Extensions: Extensions;
   Response: Response;
 };
+
+export const ENVIRONMENT_LOGS_SUBSCRIPTION = sprint(/* GraphQL */ `
+  subscription EnvironmentLogs($query: String!, $start: DateTime, $limit: Int) {
+    logsSearchV2(query: $query, start: $start, limit: $limit) {
+      status
+      data
+    }
+  }
+`) as GraphQLSubscription<EnvironmentLogsSubscription, EnvironmentLogsSubscriptionVariables>;
+
+export type ENVIRONMENT_LOGS_SUBSCRIPTION = typeof ENVIRONMENT_LOGS_SUBSCRIPTION;
 
 export const REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION = sprint(/* GraphQL */ `
   subscription RemoteFileSyncEvents($localFilesVersion: String!) {

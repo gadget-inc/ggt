@@ -296,7 +296,7 @@ describe("sprintSyncJson", () => {
       Environment  development
            Branch  test-branch
 
-      Preview (​https://test--development.gadget.app​)  Editor (​https://test.gadget.app/edit/development​)  Playground (​https://test.gadget.app/api/playground/graphql?environment=development​)  Docs (​https://docs.gadget.dev/api/test​)
+      Preview (​https://test--development.ggt.pub​)  Editor (​https://test.gadget.app/edit/development​)  Playground (​https://test.gadget.app/api/playground/javascript?environment=development​)  Docs (​https://docs.gadget.dev/api/test​)
       "
     `);
   });
@@ -307,9 +307,9 @@ describe("sprintSyncJson", () => {
       Environment  development
            Branch  test-branch
       ------------------------
-       Preview     https://test--development.gadget.app
+       Preview     https://test--development.ggt.pub
        Editor      https://test.gadget.app/edit/development
-       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Playground  https://test.gadget.app/api/playground/javascript?environment=development
        Docs        https://docs.gadget.dev/api/test
       "
     `);

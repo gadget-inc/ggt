@@ -4,7 +4,9 @@ import ms from "ms";
 import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
-import type { ArgsDefinition, ArgsDefinitionResult } from "../services/command/arg.js";
+import type { EditSubscription } from "../services/app/edit/edit.js";
+import type { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../services/app/edit/operation.js";
+import { type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
 import { Changes } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
@@ -12,6 +14,7 @@ import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { footer } from "../services/output/footer.js";
+import { LoggingArgs } from "../services/output/log/structured.js";
 import { notify } from "../services/output/notify.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
@@ -29,12 +32,14 @@ export type DevArgsResult = ArgsDefinitionResult<DevArgs>;
 
 export const args = {
   ...SyncJsonArgs,
+  ...LoggingArgs,
   "--prefer": MergeConflictPreferenceArg,
   "--file-push-delay": { type: Number, default: ms("100ms") },
   "--file-watch-debounce": { type: Number, default: ms("300ms") },
   "--file-watch-poll-interval": { type: Number, default: ms("3s") },
   "--file-watch-poll-timeout": { type: Number, default: ms("20s") },
   "--file-watch-rename-timeout": { type: Number, default: ms("1.25s") },
+  "--no-logs": Boolean,
 } satisfies ArgsDefinition;
 
 export const usage: Usage = (_ctx) => {
@@ -57,6 +62,9 @@ export const usage: Usage = (_ctx) => {
         --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
         --allow-unknown-directory   Syncs to any local directory with existing files, even if the ".gadget/sync.json" file is missing
         --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
+        --log-level <level>         Sets the log level for incoming application logs (default: info)
+        --no-logs                   Disables outputting application logs to the console
+        --my-logs                   Only outputs user sourced logs
 
   {gray Ignoring files}
         ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and
@@ -210,6 +218,16 @@ export const run: Run<DevArgs> = async (ctx, args) => {
     },
   });
 
+  let logsSubscription: EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> | undefined;
+
+  if (!args["--no-logs"]) {
+    logsSubscription = filesync.subscribeToEnvironmentLogs(args, {
+      onError: (error) => {
+        ctx.abort(error);
+      },
+    });
+  }
+
   /**
    * A buffer of local file changes to send to Gadget.
    */
@@ -319,6 +337,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   ctx.onAbort(async (reason) => {
     ctx.log.info("stopping", { reason });
 
+    logsSubscription?.unsubscribe();
     filesyncSubscription.unsubscribe();
     fileWatcher.close();
     clearInterval(clearRecentWritesInterval);

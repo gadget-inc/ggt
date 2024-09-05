@@ -30,9 +30,9 @@ describe("status", () => {
       Environment  development
            Branch  test-branch
       ------------------------
-       Preview     https://test--development.gadget.app
+       Preview     https://test--development.ggt.pub
        Editor      https://test.gadget.app/edit/development
-       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Playground  https://test.gadget.app/api/playground/javascript?environment=development
        Docs        https://docs.gadget.dev/api/test
 
       ⠙ Calculating file changes.
@@ -56,9 +56,9 @@ describe("status", () => {
       Environment  development
            Branch  test-branch
       ------------------------
-       Preview     https://test--development.gadget.app
+       Preview     https://test--development.ggt.pub
        Editor      https://test.gadget.app/edit/development
-       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Playground  https://test.gadget.app/api/playground/javascript?environment=development
        Docs        https://docs.gadget.dev/api/test
 
       ⠙ Calculating file changes.
@@ -89,9 +89,9 @@ describe("status", () => {
       Environment  development
            Branch  test-branch
       ------------------------
-       Preview     https://test--development.gadget.app
+       Preview     https://test--development.ggt.pub
        Editor      https://test.gadget.app/edit/development
-       Playground  https://test.gadget.app/api/playground/graphql?environment=development
+       Playground  https://test.gadget.app/api/playground/javascript?environment=development
        Docs        https://docs.gadget.dev/api/test
 
       ⠙ Calculating file changes.
@@ -119,24 +119,24 @@ describe("status", () => {
     await status.run(testCtx, makeArgs(status.args));
 
     expectStdout().toMatchInlineSnapshot(`
-        "Application  test
-        Environment  development
-             Branch  test-branch
-        ------------------------
-         Preview     https://test--development.gadget.app
-         Editor      https://test.gadget.app/edit/development
-         Playground  https://test.gadget.app/api/playground/graphql?environment=development
-         Docs        https://docs.gadget.dev/api/test
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.ggt.pub
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/javascript?environment=development
+       Docs        https://docs.gadget.dev/api/test
 
-        ⠙ Calculating file changes.
-        ✔ Calculated file changes. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Calculated file changes. 12:00:00 AM
 
-        Your local files have changed.
-        +  local-file.txt  created
+      Your local files have changed.
+      +  local-file.txt  created
 
-        Your environment's files have also changed.
-        +  gadget-file.txt  created
-        "
-      `);
+      Your environment's files have also changed.
+      +  gadget-file.txt  created
+      "
+    `);
   });
 });

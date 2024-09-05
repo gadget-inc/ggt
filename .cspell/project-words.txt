@@ -47,3 +47,8 @@ unmock
 unstub
 unthunk
 usagestop
+PRIN
+TRAC
+DEBU
+ERRO
+Logql

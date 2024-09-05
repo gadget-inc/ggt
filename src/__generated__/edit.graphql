@@ -501,7 +501,7 @@ type SetFrameworkVersionResult {
 
 type Subscription {
   environmentTreePathPatches(clientID: EnvironmentTreeClientId!, path: String!): EnvironmentSubscriptionResult
-  logsSearch(limit: Int, query: String!, start: DateTime): LogSearchResult!
+  logsSearchV2(limit: Int, query: String!, start: DateTime): LogSearchResult!
   migrateGadgetV1Status: MigrateGadgetV1Status
   openBackgroundActions: Int!
   publishStatus(allowCharges: Boolean, allowDeletedData: Boolean, force: Boolean, localFilesVersion: String!): PublishStatusState

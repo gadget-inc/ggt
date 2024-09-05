@@ -36,6 +36,10 @@ export const testApp: Application = Object.freeze({
       type: EnvironmentType.Development,
     },
   ],
+  team: {
+    id: 1n,
+    name: "first-test-team",
+  },
 });
 
 /**
@@ -74,6 +78,10 @@ export const testAppWith2Environments: Application = Object.freeze({
       type: EnvironmentType.Production,
     },
   ],
+  team: {
+    id: 2n,
+    name: "second-test-team",
+  },
 });
 
 /**
@@ -86,6 +94,10 @@ export const testAppWith0Environments: Application = Object.freeze({
   hasSplitEnvironments: false,
   multiEnvironmentEnabled: false,
   environments: [],
+  team: {
+    id: 1n,
+    name: "first-test-team",
+  },
 });
 
 /**

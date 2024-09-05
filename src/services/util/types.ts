@@ -29,3 +29,9 @@ export type FunctionPropertyNames<T> = {
  * Returns the arguments of a function.
  */
 export type ArgsType<T> = T extends (...args: infer A) => any ? A : never;
+
+type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
+/**
+ * Represents a type that is either T or U, but not both.
+ */
+export type XOR<T, U> = T | U extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U;

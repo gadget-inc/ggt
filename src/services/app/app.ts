@@ -29,6 +29,10 @@ export const Application = z.object({
   hasSplitEnvironments: z.boolean(),
   multiEnvironmentEnabled: z.boolean(),
   environments: z.array(Environment),
+  team: z.object({
+    id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
+    name: z.string(),
+  }),
 });
 
 export type Application = z.infer<typeof Application>;
@@ -69,6 +73,13 @@ export const getApps = async (ctx: Context): Promise<Application[]> => {
   });
 
   return z.array(Application).parse(json);
+};
+
+export const parseAppListToTeamMap = (apps: Application[]): Map<string, Application[]> => {
+  return apps.reduce((teamMap, app) => {
+    teamMap.set(app.team.name, [...(teamMap.get(app.team.name) ?? []), app]);
+    return teamMap;
+  }, new Map<string, Application[]>());
 };
 
 export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []> => {

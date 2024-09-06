@@ -1,52 +1,12 @@
-import type { EmptyObject } from "type-fest";
-import type { RootArgs } from "../../commands/root.js";
 import { createLogger, type Logger } from "../output/log/logger.js";
 import type { StructuredLoggerOptions } from "../output/log/structured.js";
-import { defaults, pick } from "../util/object.js";
 import { PromiseSignal } from "../util/promise.js";
 import type { AnyVoid } from "../util/types.js";
-import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult, type ParseArgsOptions } from "./arg.js";
-
-/**
- * Represents the options that can be passed to {@linkcode Context.init}.
- */
-export type ContextInit<Args extends ArgsDefinition> = ParseArgsOptions &
-  StructuredLoggerOptions & {
-    /**
-     * The {@linkcode ArgsDefinition} to use to parse the arguments (`argv`).
-     */
-    parse?: Args;
-  };
-
-/**
- * Represents the options that can be passed to {@linkcode Context.child}.
- *
- * @see {@linkcode Context.child}
- * @see {@linkcode ContextInit}
- */
-export type ChildContextInit<Args extends ArgsDefinition, Parsed extends ArgsDefinitionResult<ArgsDefinition>> = Partial<
-  ContextInit<Args>
-> & {
-  /**
-   * Replaces the parsed arguments of the parent context.
-   */
-  overwrite?: Partial<Omit<Parsed, "_">>;
-};
 
 /**
  * Represents the context of a command-line operation.
  */
-export class Context<
-  Args extends ArgsDefinition = EmptyObject,
-  ParentArgs extends ArgsDefinition = RootArgs,
-  ThisArgs extends ArgsDefinition = ParentArgs & Args,
-> extends AbortController {
-  /**
-   * The parsed command-line arguments for the current context and any
-   * parent contexts.
-   */
-  readonly args: ArgsDefinitionResult<ThisArgs>;
-
+export class Context extends AbortController {
   /**
    * A promise that resolves when the context is aborted and all the
    * registered onAbort callbacks have finished.
@@ -68,9 +28,8 @@ export class Context<
    */
   #onAborts: OnAbort[] = [];
 
-  private constructor({ args, log, values }: { args: ArgsDefinitionResult<ThisArgs>; log: Logger; values: Record<symbol, unknown> }) {
+  private constructor({ log, values }: { log: Logger; values: Record<symbol, unknown> }) {
     super();
-    this.args = args;
     this.#log = log;
     this.#values = values;
 
@@ -115,13 +74,10 @@ export class Context<
 
   /**
    * Initializes a new context.
-   *
-   * @see {@linkcode ContextInit}
    */
-  static init<Args extends ArgsDefinition = EmptyObject>({ parse: spec, ...options }: ContextInit<Args>): Context<Args> {
+  static init(options: StructuredLoggerOptions): Context {
     return new Context({
-      args: spec ? parseArgs(spec, pick(options, ["argv", "permissive", "stopAtPositional"])) : ({} as ArgsDefinitionResult<Args>),
-      log: createLogger(pick(options, ["name", "fields", "devFields"])),
+      log: createLogger(options),
       values: {},
     });
   }
@@ -137,21 +93,11 @@ export class Context<
   /**
    * Returns a new context that is a child of the current context.
    *
-   * @see {@linkcode ChildContextInit}
+   * @see {@linkcode ContextInit}
    */
-  child<ChildArgs extends ArgsDefinition = EmptyObject>({
-    parse: spec,
-    ...options
-  }: ChildContextInit<ChildArgs, ArgsDefinitionResult<ThisArgs>>): Context<ChildArgs, ThisArgs> {
-    const ctx = new Context<ChildArgs, ThisArgs>({
-      args: {
-        ...this.args,
-        ...options.overwrite,
-        ...(spec
-          ? parseArgs(spec, defaults(pick(options, ["argv", "permissive", "stopAtPositional"]), { argv: this.args._ }))
-          : ({} as ArgsDefinitionResult<ChildArgs>)),
-      },
-      log: this.log.child(pick(options, ["name", "fields", "devFields"])),
+  child(options: StructuredLoggerOptions): Context {
+    const ctx = new Context({
+      log: this.log.child(options),
       values: this.#values,
     });
 

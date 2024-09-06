@@ -1,4 +1,4 @@
-import { ArgError } from "../services/command/arg.js";
+import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
@@ -7,6 +7,7 @@ import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/files
 import { sprint } from "../services/output/sprint.js";
 
 export type StatusArgs = typeof args;
+export type StatusArgsResult = ArgsDefinitionResult<StatusArgs>;
 
 export const args = SyncJsonArgs;
 
@@ -19,8 +20,8 @@ export const usage: Usage = () => {
   `;
 };
 
-export const run: Run<StatusArgs> = async (ctx) => {
-  if (ctx.args._.length > 0) {
+export const run: Run<StatusArgs> = async (ctx, args) => {
+  if (args._.length > 0) {
     throw new ArgError(sprint`
       "ggt status" does not take any positional arguments.
 
@@ -32,9 +33,9 @@ export const run: Run<StatusArgs> = async (ctx) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { directory });
+  const syncJson = await SyncJson.load(ctx, { args, directory });
   if (!syncJson) {
-    throw new UnknownDirectoryError(ctx, { directory });
+    throw new UnknownDirectoryError(ctx, { args, directory });
   }
 
   syncJson.print();

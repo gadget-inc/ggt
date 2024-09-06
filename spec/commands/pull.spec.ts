@@ -1,18 +1,12 @@
-import { beforeEach, describe, it } from "vitest";
-import { args, run as pull, type PullArgs } from "../../src/commands/pull.js";
-import { type Context } from "../../src/services/command/context.js";
-import { makeContext } from "../__support__/context.js";
+import { describe, it } from "vitest";
+import * as pull from "../../src/commands/pull.js";
+import { makeArgs } from "../__support__/arg.js";
+import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { describeWithAuth } from "../utils.js";
 
 describe("pull", () => {
-  let ctx: Context<PullArgs>;
-
   describeWithAuth(() => {
-    beforeEach(() => {
-      ctx = makeContext({ parse: args, argv: ["pull"] });
-    });
-
     it("writes changes from gadget to the local filesystem", async () => {
       const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
 
@@ -65,7 +59,7 @@ describe("pull", () => {
         }
       `);
 
-      await pull(ctx);
+      await pull.run(testCtx, makeArgs(pull.args));
 
       await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -165,7 +159,7 @@ describe("pull", () => {
         }
       `);
 
-      await pull(ctx);
+      await pull.run(testCtx, makeArgs(pull.args));
 
       await expectDirs().resolves.toMatchInlineSnapshot(`
         {

@@ -25,7 +25,7 @@ const getContext = (options: HttpOptions): Context => {
     `),
   );
 
-  return options.context["ctx"] as Context;
+  return options.context["ctx"];
 };
 
 /**

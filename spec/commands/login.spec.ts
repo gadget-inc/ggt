@@ -2,20 +2,19 @@ import getPort from "get-port";
 import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { run } from "../../src/commands/login.js";
-import { type Context } from "../../src/services/command/context.js";
+import * as login from "../../src/commands/login.js";
 import { config } from "../../src/services/config/config.js";
 import { readSession, writeSession } from "../../src/services/user/session.js";
 import * as user from "../../src/services/user/user.js";
 import { noop } from "../../src/services/util/function.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
-import { makeContext } from "../__support__/context.js";
+import { makeRootArgs } from "../__support__/arg.js";
+import { testCtx } from "../__support__/context.js";
 import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { testUser } from "../__support__/user.js";
 
 describe("login", () => {
-  let ctx: Context;
   let port: number;
   let server: http.Server;
   let serverListening: PromiseSignal;
@@ -24,7 +23,6 @@ describe("login", () => {
   let openedBrowser: PromiseSignal;
 
   beforeEach(async () => {
-    ctx = makeContext();
     port = await getPort();
     serverListening = new PromiseSignal();
     serverClosed = new PromiseSignal();
@@ -43,10 +41,10 @@ describe("login", () => {
   });
 
   it("opens a browser to the login page, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
-    writeSession(ctx, undefined);
+    writeSession(testCtx, undefined);
     mock(user, "getUser", () => testUser);
 
-    void run(ctx);
+    void login.run(testCtx, makeRootArgs());
     await serverListening;
 
     expect(getPort).toHaveBeenCalled();
@@ -67,7 +65,7 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(readSession(ctx)).toBeUndefined();
+    expect(readSession(testCtx)).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(undefined as any);
@@ -80,7 +78,7 @@ describe("login", () => {
     requestListener!(req, res);
 
     await serverClosed;
-    expect(readSession(ctx)).toBe("test");
+    expect(readSession(testCtx)).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "We've opened Gadget's login page using your default browser.
@@ -96,7 +94,7 @@ describe("login", () => {
   });
 
   it("prints the login page when open fails, waits for the user to login, set's the returned session, and redirects to /auth/cli?success=true", async () => {
-    writeSession(ctx, undefined);
+    writeSession(testCtx, undefined);
     mock(user, "getUser", () => testUser);
 
     mock(open, () => {
@@ -104,7 +102,7 @@ describe("login", () => {
       throw new Error("boom");
     });
 
-    void run(ctx);
+    void login.run(testCtx, makeRootArgs());
     await serverListening;
 
     expect(getPort).toHaveBeenCalled();
@@ -127,7 +125,7 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(readSession(ctx)).toBeUndefined();
+    expect(readSession(testCtx)).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(undefined as any);
@@ -140,7 +138,7 @@ describe("login", () => {
     requestListener!(req, res);
 
     await serverClosed;
-    expect(readSession(ctx)).toBe("test");
+    expect(readSession(testCtx)).toBe("test");
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
       "Please open the following URL in your browser and log in:
@@ -158,12 +156,12 @@ describe("login", () => {
   });
 
   it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
-    writeSession(ctx, undefined);
+    writeSession(testCtx, undefined);
     mock(user, "getUser", () => {
       throw new Error("boom");
     });
 
-    void Promise.resolve(run(ctx)).catch(noop);
+    void Promise.resolve(login.run(testCtx, makeRootArgs())).catch(noop);
     await serverListening;
 
     expect(getPort).toHaveBeenCalled();
@@ -184,7 +182,7 @@ describe("login", () => {
     `);
 
     // we should be at `await receiveSession`
-    expect(readSession(ctx)).toBeUndefined();
+    expect(readSession(testCtx)).toBeUndefined();
     expect(user.getUser).not.toHaveBeenCalled();
 
     const req = new http.IncomingMessage(undefined as any);
@@ -197,7 +195,7 @@ describe("login", () => {
     requestListener!(req, res);
 
     await serverClosed;
-    expect(readSession(ctx)).toBeUndefined();
+    expect(readSession(testCtx)).toBeUndefined();
     expect(user.getUser).toHaveBeenCalled();
     expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=false` });
     expect(res.end).toHaveBeenCalled();

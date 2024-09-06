@@ -11,8 +11,6 @@ import pRetry from "p-retry";
 import pluralize from "pluralize";
 import type { Promisable } from "type-fest";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
-import type { DevArgs } from "../../commands/dev.js";
-import type { PullArgs } from "../../commands/pull.js";
 import { type EditSubscription } from "../app/edit/edit.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -43,7 +41,7 @@ import { TooManyMergeAttemptsError, isFilesVersionMismatchError, swallowFilesVer
 import type { File } from "./file.js";
 import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 import { MergeConflictPreference } from "./strategy.js";
-import { type SyncJson, type SyncJsonArgs } from "./sync-json.js";
+import { type SyncJson } from "./sync-json.js";
 
 /**
  * The maximum attempts to automatically merge local and environment
@@ -137,7 +135,7 @@ export class FileSync {
 
   constructor(readonly syncJson: SyncJson) {}
 
-  async hashes(ctx: Context<SyncJsonArgs>, quietly?: boolean): Promise<FileSyncHashes> {
+  async hashes(ctx: Context, quietly?: boolean): Promise<FileSyncHashes> {
     const spinner = !quietly ? spin({ ensureEmptyLineAbove: true, content: "Calculating file changes." }) : undefined;
 
     try {
@@ -246,7 +244,7 @@ export class FileSync {
     }
   }
 
-  async print(ctx: Context<SyncJsonArgs>, { hashes }: { hashes?: FileSyncHashes } = {}): Promise<void> {
+  async print(ctx: Context, { hashes }: { hashes?: FileSyncHashes } = {}): Promise<void> {
     const { inSync, localChanges, environmentChanges, onlyDotGadgetFilesChanged, bothChanged } = hashes ?? (await this.hashes(ctx));
     if (inSync) {
       // the spinner in hashes will have already printed that we're in sync
@@ -294,7 +292,7 @@ export class FileSync {
    * @returns A promise that resolves when the changes have been sent.
    */
   async mergeChangesWithEnvironment(
-    ctx: Context<DevArgs>,
+    ctx: Context,
     {
       changes,
       printLocalChangesOptions,
@@ -331,7 +329,7 @@ export class FileSync {
    * @returns A function that unsubscribes from changes on Gadget.
    */
   subscribeToEnvironmentChanges(
-    ctx: Context<DevArgs>,
+    ctx: Context,
     {
       beforeChanges = noop,
       printEnvironmentChangesOptions,
@@ -415,15 +413,17 @@ export class FileSync {
    * - This function will not return until the filesystem is in sync.
    */
   async merge(
-    ctx: Context<DevArgs>,
+    ctx: Context,
     {
       hashes,
+      prefer,
       maxAttempts = 10,
       printLocalChangesOptions,
       printEnvironmentChangesOptions,
       quietly,
     }: {
       hashes?: FileSyncHashes;
+      prefer?: MergeConflictPreference;
       maxAttempts?: number;
       printLocalChangesOptions?: Partial<PrintChangesOptions>;
       printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
@@ -450,7 +450,7 @@ export class FileSync {
       ctx.log.info("merging", { attempt, ...hashes });
 
       try {
-        await this._merge(ctx, { hashes, printLocalChangesOptions, printEnvironmentChangesOptions });
+        await this._merge(ctx, { hashes, prefer, printLocalChangesOptions, printEnvironmentChangesOptions });
       } catch (error) {
         swallowFilesVersionMismatch(ctx, error);
         // we either sent the wrong expectedFilesVersion or we received
@@ -470,7 +470,7 @@ export class FileSync {
    * was not passed, the user will be prompted to discard them.
    */
   async push(
-    ctx: Context<PullArgs>,
+    ctx: Context,
     {
       hashes,
       force,
@@ -488,7 +488,7 @@ export class FileSync {
     // TODO: lift this check up to the push command
     if (
       // they didn't pass --force
-      !(force ?? ctx.args["--force"]) &&
+      !force &&
       // their environment's files have changed
       environmentChanges.size > 0 &&
       // some of the changes aren't .gadget/ files
@@ -523,7 +523,7 @@ export class FileSync {
   }
 
   async pull(
-    ctx: Context<PullArgs>,
+    ctx: Context,
     {
       hashes,
       force,
@@ -538,7 +538,7 @@ export class FileSync {
     assert(environmentChangesToPull.size > 0, "cannot push if there are no changes");
 
     // TODO: lift this check up to the pull command
-    if (localChanges.size > 0 && !(force ?? ctx.args["--force"])) {
+    if (localChanges.size > 0 && !force) {
       await confirm(sprint`
         Are you sure you want to {underline discard} your local changes?
       `);
@@ -552,7 +552,7 @@ export class FileSync {
   }
 
   async writeToLocalFilesystem(
-    ctx: Context<SyncJsonArgs>,
+    ctx: Context,
     options: {
       filesVersion: bigint | string;
       files: File[];
@@ -719,13 +719,15 @@ export class FileSync {
   }
 
   private async _merge(
-    ctx: Context<DevArgs>,
+    ctx: Context,
     {
       hashes: { localChanges, environmentChanges, environmentFilesVersion },
+      prefer: preference,
       printLocalChangesOptions,
       printEnvironmentChangesOptions,
     }: {
       hashes: FileSyncHashes;
+      prefer?: MergeConflictPreference;
       printLocalChangesOptions?: Partial<PrintChangesOptions>;
       printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
     },
@@ -734,7 +736,6 @@ export class FileSync {
     if (conflicts.size > 0) {
       ctx.log.debug("conflicts detected", { conflicts });
 
-      let preference = ctx.args["--prefer"];
       if (!preference) {
         printConflicts({ conflicts });
         preference = await select({
@@ -777,7 +778,7 @@ export class FileSync {
   }
 
   private async _getChangesFromEnvironment(
-    ctx: Context<SyncJsonArgs>,
+    ctx: Context,
     {
       filesVersion,
       changes,
@@ -831,7 +832,7 @@ export class FileSync {
   }
 
   private async _sendChangesToEnvironment(
-    ctx: Context<SyncJsonArgs>,
+    ctx: Context,
     {
       changes,
       expectedFilesVersion = this.syncJson.filesVersion,

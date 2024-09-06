@@ -1,17 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { beforeEach, describe, expect, it } from "vitest";
-import type { Context } from "../../../src/services/command/context.js";
+import { describe, expect, it } from "vitest";
 import { getNecessaryChanges, isEqualHash, isEqualHashes, withoutUnnecessaryChanges } from "../../../src/services/filesync/hashes.js";
-import { makeContext } from "../../__support__/context.js";
+import { testCtx } from "../../__support__/context.js";
 import { makeHashes } from "../../__support__/filesync.js";
 
 describe("getChanges", () => {
-  let ctx: Context;
-
-  beforeEach(() => {
-    ctx = makeContext();
-  });
-
   it("returns no changes if hashes are equal", async () => {
     const files = {
       "foo.js": "// foo",
@@ -22,7 +15,7 @@ describe("getChanges", () => {
     };
 
     const { localFilesVersionHashes, localHashes } = await makeHashes({ filesVersionFiles: files, localFiles: files });
-    const changes = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes });
+    const changes = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: localHashes });
     expect(Object.fromEntries(changes)).toEqual({});
     expect(changes.size).toBe(0);
   });
@@ -39,7 +32,7 @@ describe("getChanges", () => {
       },
     });
 
-    const changes = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes });
+    const changes = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: localHashes });
     expect(Object.fromEntries(changes)).toEqual({
       "foo.js": { type: "delete", sourceHash: localFilesVersionHashes["foo.js"] },
       "bar.js": { type: "update", sourceHash: localFilesVersionHashes["bar.js"], targetHash: localHashes["bar.js"] },
@@ -62,7 +55,7 @@ describe("getChanges", () => {
       },
     });
 
-    const changes = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes, ignore: [".gadget/"] });
+    const changes = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: localHashes, ignore: [".gadget/"] });
     expect(Object.fromEntries(changes)).toEqual({
       "foo.js": { type: "delete", sourceHash: localFilesVersionHashes["foo.js"] },
       "bar.js": { type: "update", sourceHash: localFilesVersionHashes["bar.js"], targetHash: localHashes["bar.js"] },
@@ -85,7 +78,7 @@ describe("getChanges", () => {
     delete localHashes["some/"];
     delete localHashes["some/nested/"];
 
-    const changes = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes });
+    const changes = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: localHashes });
     expect(Object.fromEntries(changes)).toEqual({
       "some/nested/other-file.js": { type: "delete", sourceHash: localFilesVersionHashes["some/nested/other-file.js"] },
     });
@@ -108,7 +101,7 @@ describe("getChanges", () => {
       },
     });
 
-    const changes = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes, existing: environmentHashes });
+    const changes = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: localHashes, existing: environmentHashes });
     expect(Object.fromEntries(changes)).toEqual({
       "qux.js": { type: "create", targetHash: localHashes["qux.js"] },
     });
@@ -116,12 +109,6 @@ describe("getChanges", () => {
 });
 
 describe("withoutUnnecessaryChanges", () => {
-  let ctx: Context;
-
-  beforeEach(() => {
-    ctx = makeContext();
-  });
-
   it("removes changes that existing already has", async () => {
     const { localFilesVersionHashes, localHashes, environmentHashes } = await makeHashes({
       filesVersionFiles: {
@@ -137,24 +124,24 @@ describe("withoutUnnecessaryChanges", () => {
       },
     });
 
-    const localChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes });
+    const localChanges = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: localHashes });
     expect(Object.fromEntries(localChanges)).toEqual({
       "foo.js": { type: "update", sourceHash: localFilesVersionHashes["foo.js"], targetHash: localHashes["foo.js"] },
       "bar.js": { type: "create", targetHash: localHashes["bar.js"] },
     });
 
-    const environmentChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: environmentHashes });
+    const environmentChanges = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: environmentHashes });
     expect(Object.fromEntries(environmentChanges)).toEqual({
       "foo.js": { type: "update", sourceHash: localFilesVersionHashes["foo.js"], targetHash: environmentHashes["foo.js"] },
       "bar.js": { type: "create", targetHash: environmentHashes["bar.js"] },
     });
 
-    const localWithoutUnnecessaryChanges = withoutUnnecessaryChanges(ctx, { changes: localChanges, existing: environmentHashes });
+    const localWithoutUnnecessaryChanges = withoutUnnecessaryChanges(testCtx, { changes: localChanges, existing: environmentHashes });
     expect(Object.fromEntries(localWithoutUnnecessaryChanges)).toEqual({
       "foo.js": { type: "update", sourceHash: localFilesVersionHashes["foo.js"], targetHash: localHashes["foo.js"] },
     });
 
-    const gadgetWithoutUnnecessaryChanges = withoutUnnecessaryChanges(ctx, { changes: environmentChanges, existing: localHashes });
+    const gadgetWithoutUnnecessaryChanges = withoutUnnecessaryChanges(testCtx, { changes: environmentChanges, existing: localHashes });
     expect(Object.fromEntries(gadgetWithoutUnnecessaryChanges)).toEqual({
       "foo.js": { type: "update", sourceHash: localFilesVersionHashes["foo.js"], targetHash: environmentHashes["foo.js"] },
     });
@@ -185,34 +172,28 @@ describe("isEqualHash", () => {
 });
 
 describe("isEqualHashes", () => {
-  let ctx: Context;
-
-  beforeEach(() => {
-    ctx = makeContext();
-  });
-
   it("returns true if all sha1s are equal", () => {
     const sha1 = randomUUID();
 
-    expect(isEqualHashes(ctx, { "file.txt": { sha1 } }, { "file.txt": { sha1 } })).toBe(true);
-    expect(isEqualHashes(ctx, { "file.txt": { sha1, permissions: 0o664 } }, { "file.txt": { sha1, permissions: 0o644 } })).toBe(true);
-    expect(isEqualHashes(ctx, { "file.txt": { sha1, permissions: 0o644 } }, { "file.txt": { sha1, permissions: 0o744 } })).toBe(true);
-    expect(isEqualHashes(ctx, { "file.txt": { sha1 } }, { "file.txt": { sha1, permissions: 0o644 } })).toBe(true);
-    expect(isEqualHashes(ctx, { "file.txt": { sha1, permissions: 0o644 } }, { "file.txt": { sha1 } })).toBe(true);
+    expect(isEqualHashes(testCtx, { "file.txt": { sha1 } }, { "file.txt": { sha1 } })).toBe(true);
+    expect(isEqualHashes(testCtx, { "file.txt": { sha1, permissions: 0o664 } }, { "file.txt": { sha1, permissions: 0o644 } })).toBe(true);
+    expect(isEqualHashes(testCtx, { "file.txt": { sha1, permissions: 0o644 } }, { "file.txt": { sha1, permissions: 0o744 } })).toBe(true);
+    expect(isEqualHashes(testCtx, { "file.txt": { sha1 } }, { "file.txt": { sha1, permissions: 0o644 } })).toBe(true);
+    expect(isEqualHashes(testCtx, { "file.txt": { sha1, permissions: 0o644 } }, { "file.txt": { sha1 } })).toBe(true);
   });
 
   it("returns true if any sha1s are not equal", () => {
     const sha1 = randomUUID();
     const otherSha1 = randomUUID();
 
-    expect(isEqualHashes(ctx, { "file.txt": { sha1 } }, { "file.txt": { sha1: otherSha1 } })).toBe(false);
-    expect(isEqualHashes(ctx, { "file.txt": { sha1, permissions: 0o664 } }, { "file.txt": { sha1: otherSha1, permissions: 0o644 } })).toBe(
-      false,
-    );
-    expect(isEqualHashes(ctx, { "file.txt": { sha1, permissions: 0o644 } }, { "file.txt": { sha1: otherSha1, permissions: 0o744 } })).toBe(
-      false,
-    );
-    expect(isEqualHashes(ctx, { "file.txt": { sha1 } }, { "file.txt": { sha1: otherSha1, permissions: 0o644 } })).toBe(false);
-    expect(isEqualHashes(ctx, { "file.txt": { sha1, permissions: 0o644 } }, { "file.txt": { sha1: otherSha1 } })).toBe(false);
+    expect(isEqualHashes(testCtx, { "file.txt": { sha1 } }, { "file.txt": { sha1: otherSha1 } })).toBe(false);
+    expect(
+      isEqualHashes(testCtx, { "file.txt": { sha1, permissions: 0o664 } }, { "file.txt": { sha1: otherSha1, permissions: 0o644 } }),
+    ).toBe(false);
+    expect(
+      isEqualHashes(testCtx, { "file.txt": { sha1, permissions: 0o644 } }, { "file.txt": { sha1: otherSha1, permissions: 0o744 } }),
+    ).toBe(false);
+    expect(isEqualHashes(testCtx, { "file.txt": { sha1 } }, { "file.txt": { sha1: otherSha1, permissions: 0o644 } })).toBe(false);
+    expect(isEqualHashes(testCtx, { "file.txt": { sha1, permissions: 0o644 } }, { "file.txt": { sha1: otherSha1 } })).toBe(false);
   });
 });

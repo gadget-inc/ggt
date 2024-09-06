@@ -1,13 +1,14 @@
 import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { run as root } from "../../src/commands/root.js";
+import * as root from "../../src/commands/root.js";
 import * as command from "../../src/services/command/command.js";
 import { importCommand, type CommandModule } from "../../src/services/command/command.js";
 import { config } from "../../src/services/config/config.js";
 import { Level } from "../../src/services/output/log/level.js";
 import * as update from "../../src/services/output/update.js";
 import { noop, noopThis } from "../../src/services/util/function.js";
-import { makeRootContext } from "../__support__/context.js";
+import { makeRootArgs } from "../__support__/arg.js";
+import { testCtx } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
 import { waitForReportErrorAndExit } from "../__support__/error.js";
 import { mock } from "../__support__/mock.js";
@@ -30,8 +31,7 @@ describe("root", () => {
     await withEnv({ GGT_LOG_FORMAT: undefined }, async () => {
       expect(config.logFormat).toBe("pretty");
 
-      process.argv = ["node", "ggt", "--json"];
-      await expectProcessExit(() => root(makeRootContext()));
+      await expectProcessExit(() => root.run(testCtx, makeRootArgs("--json")));
 
       expect(process.env["GGT_LOG_FORMAT"]).toBe("json");
       expect(config.logFormat).toBe("json");
@@ -46,8 +46,7 @@ describe("root", () => {
     await withEnv({ GGT_LOG_LEVEL: undefined }, async () => {
       expect(config.logLevel).toBe(Level.PRINT);
 
-      process.argv = ["node", "ggt", flag];
-      await expectProcessExit(() => root(makeRootContext()));
+      await expectProcessExit(() => root.run(testCtx, makeRootArgs(flag)));
 
       expect(process.env["GGT_LOG_LEVEL"]).toBe(String(level));
       expect(config.logLevel).toBe(level);
@@ -55,9 +54,7 @@ describe("root", () => {
   });
 
   it("prints root usage when no command is given", async () => {
-    process.argv = ["node", "ggt"];
-
-    await expectProcessExit(() => root(makeRootContext()));
+    await expectProcessExit(() => root.run(testCtx, makeRootArgs()));
 
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget.
@@ -90,9 +87,7 @@ describe("root", () => {
   });
 
   it("prints out a helpful message when an unknown command is given", async () => {
-    process.argv = ["node", "ggt", "foobar"];
-
-    await expectProcessExit(() => root(makeRootContext()), 1);
+    await expectProcessExit(() => root.run(testCtx, makeRootArgs("foobar")), 1);
 
     expectStdout().toMatchInlineSnapshot(`
       "Unknown command foobar
@@ -113,17 +108,13 @@ describe("root", () => {
     });
 
     it.each(["--help", "-h"])("prints the usage when %s is passed", async (flag) => {
-      process.argv = ["node", "ggt", name, flag];
-
-      await expectProcessExit(() => root(makeRootContext()));
+      await expectProcessExit(() => root.run(testCtx, makeRootArgs(name, flag)));
 
       expectStdout().toMatchSnapshot();
     });
 
     it("runs the command", async () => {
-      process.argv = ["node", "ggt", name];
-
-      await root(makeRootContext());
+      await root.run(testCtx, makeRootArgs(name));
 
       expect(cmd.run).toHaveBeenCalled();
     });
@@ -134,9 +125,7 @@ describe("root", () => {
         throw error;
       });
 
-      process.argv = ["node", "ggt", name];
-
-      void root(makeRootContext());
+      void root.run(testCtx, makeRootArgs(name));
       await waitForReportErrorAndExit(error);
 
       expect(cmd.run).toHaveBeenCalled();

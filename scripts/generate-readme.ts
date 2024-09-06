@@ -6,11 +6,11 @@ import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkToc from "remark-toc";
 import { dedent } from "ts-dedent";
-import { args, usage } from "../src/commands/root.js";
+import { usage } from "../src/commands/root.js";
 import { Commands, importCommand } from "../src/services/command/command.js";
 import { Context } from "../src/services/command/context.js";
 
-const ctx = Context.init({ name: "readme", parse: args, argv: ["-h"] });
+const ctx = Context.init({ name: "readme" });
 let readme = await fs.readFile("README.md", "utf8");
 
 readme = readme.replace(

@@ -1,19 +1,16 @@
 import { beforeEach, describe, it } from "vitest";
-import { run as list } from "../../src/commands/list.js";
+import * as list from "../../src/commands/list.js";
 import * as app from "../../src/services/app/app.js";
-import { type Context } from "../../src/services/command/context.js";
 import { output } from "../../src/services/output/output.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeContext } from "../__support__/context.js";
+import { makeRootArgs } from "../__support__/arg.js";
+import { testCtx } from "../__support__/context.js";
 import { mock, mockOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("list", () => {
-  let ctx: Context;
-
   beforeEach(() => {
-    ctx = makeContext();
     loginTestUser();
     nockTestApps();
   });
@@ -21,7 +18,7 @@ describe("list", () => {
   it("lists apps with tabs when output.isInteractive = true", async () => {
     mockOnce(output, "isInteractive", "get", () => true);
 
-    await list(ctx);
+    await list.run(testCtx, makeRootArgs());
 
     expectStdout().toMatchInlineSnapshot(`
       "first-test-team
@@ -41,7 +38,7 @@ describe("list", () => {
   it("lists apps with tabs when output.isInteractive = false", async () => {
     mockOnce(output, "isInteractive", "get", () => false);
 
-    await list(ctx);
+    await list.run(testCtx, makeRootArgs());
 
     expectStdout().toMatchInlineSnapshot(`
       "test	test.gadget.app
@@ -55,7 +52,7 @@ describe("list", () => {
   it("lists no apps if the user doesn't have any", async () => {
     mock(app, "getApps", () => []);
 
-    await list(ctx);
+    await list.run(testCtx, makeRootArgs());
 
     expectStdout().toMatchInlineSnapshot(`
       "It doesn't look like you have any applications.

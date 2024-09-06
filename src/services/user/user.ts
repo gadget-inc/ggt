@@ -90,7 +90,7 @@ export const getUserOrLogin = async (ctx: Context): Promise<User> => {
   });
 
   await confirm({ ensureEmptyLineAbove: true, content: "Would you like to log in?" });
-  await login(ctx);
+  await login(ctx, { _: [] });
 
   user = await getUser(ctx);
   assert(user, "missing user after successful login");

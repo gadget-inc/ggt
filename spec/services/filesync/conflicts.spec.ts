@@ -1,17 +1,10 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import type { Context } from "../../../src/services/command/context.js";
+import { describe, expect, it } from "vitest";
 import { getConflicts } from "../../../src/services/filesync/conflicts.js";
 import { getNecessaryChanges } from "../../../src/services/filesync/hashes.js";
-import { makeContext } from "../../__support__/context.js";
+import { testCtx } from "../../__support__/context.js";
 import { makeHashes } from "../../__support__/filesync.js";
 
 describe("getConflicts", () => {
-  let ctx: Context;
-
-  beforeEach(() => {
-    ctx = makeContext();
-  });
-
   it("returns conflicting changes", async () => {
     const { localFilesVersionHashes, environmentHashes, localHashes } = await makeHashes({
       filesVersionFiles: {
@@ -31,8 +24,8 @@ describe("getConflicts", () => {
       },
     });
 
-    const localChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes });
-    const environmentChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: environmentHashes });
+    const localChanges = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: localHashes });
+    const environmentChanges = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: environmentHashes });
     const conflicts = getConflicts({ localChanges, environmentChanges });
 
     expect(Object.fromEntries(conflicts)).toEqual({
@@ -76,8 +69,8 @@ describe("getConflicts", () => {
       },
     });
 
-    const localChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: localHashes });
-    const environmentChanges = getNecessaryChanges(ctx, { from: localFilesVersionHashes, to: environmentHashes });
+    const localChanges = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: localHashes });
+    const environmentChanges = getNecessaryChanges(testCtx, { from: localFilesVersionHashes, to: environmentHashes });
     const conflicts = getConflicts({ localChanges, environmentChanges });
 
     expect(Object.fromEntries(conflicts)).toEqual({});

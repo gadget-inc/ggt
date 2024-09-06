@@ -35,8 +35,8 @@ export const usage: Usage = (_ctx) => {
   `;
 };
 
-export const run: Run<PullArgs> = async (ctx) => {
-  if (ctx.args._.length > 0) {
+export const run: Run<PullArgs> = async (ctx, args) => {
+  if (args._.length > 0) {
     throw new ArgError(sprint`
       "ggt pull" does not take any positional arguments.
 
@@ -48,7 +48,7 @@ export const run: Run<PullArgs> = async (ctx) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+  const syncJson = await SyncJson.loadOrInit(ctx, { args, directory });
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
 

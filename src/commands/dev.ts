@@ -4,9 +4,8 @@ import ms from "ms";
 import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
-import type { ArgsDefinition } from "../services/command/arg.js";
+import type { ArgsDefinition, ArgsDefinitionResult } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
 import { Changes } from "../services/filesync/changes.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
@@ -24,10 +23,9 @@ import { unreachable } from "../services/util/assert.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 import { delay } from "../services/util/promise.js";
-import type { PullArgs } from "./pull.js";
-import type { PushArgs } from "./push.js";
 
 export type DevArgs = typeof args;
+export type DevArgsResult = ArgsDefinitionResult<DevArgs>;
 
 export const args = {
   ...SyncJsonArgs,
@@ -86,13 +84,13 @@ export const usage: Usage = (_ctx) => {
   `;
 };
 
-export const run: Run<DevArgs> = async (ctx) => {
+export const run: Run<DevArgs> = async (ctx, args) => {
   if (!(await which("yarn", { nothrow: true }))) {
     throw new YarnNotFoundError();
   }
 
-  const directory = await loadSyncJsonDirectory(ctx.args._[0] || process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+  const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
+  const syncJson = await SyncJson.loadOrInit(ctx, { args, directory });
   footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });
 
   const filesync = new FileSync(syncJson);
@@ -165,10 +163,10 @@ export const run: Run<DevArgs> = async (ctx) => {
           await filesync.merge(ctx, { hashes });
           break;
         case FileSyncStrategy.PUSH:
-          await filesync.push(ctx as unknown as Context<PushArgs>, { hashes, force: true });
+          await filesync.push(ctx, { hashes, force: true });
           break;
         case FileSyncStrategy.PULL:
-          await filesync.pull(ctx as unknown as Context<PullArgs>, { hashes, force: true });
+          await filesync.pull(ctx, { hashes, force: true });
           break;
       }
     }
@@ -220,7 +218,7 @@ export const run: Run<DevArgs> = async (ctx) => {
   /**
    * A debounced function that sends the local file changes to Gadget.
    */
-  const mergeChangesWithEnvironment = debounceAsync(ctx.args["--file-push-delay"], async (): Promise<void> => {
+  const mergeChangesWithEnvironment = debounceAsync(args["--file-push-delay"], async (): Promise<void> => {
     try {
       const lastGitBranch = syncJson.gitBranch;
       await syncJson.loadGitBranch();
@@ -270,9 +268,9 @@ export const run: Run<DevArgs> = async (ctx) => {
       renameDetection: true,
       // how long to wait for an add event to be followed by an unlink
       // event, and vice versa (i.e. a rename event)
-      renameTimeout: ctx.args["--file-watch-rename-timeout"],
+      renameTimeout: args["--file-watch-rename-timeout"],
       // how long to wait before emitting a change event (helps avoid duplicate events)
-      debounce: ctx.args["--file-watch-debounce"],
+      debounce: args["--file-watch-debounce"],
     },
     (event: string, absolutePath: string, renamedPath: string) => {
       const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;

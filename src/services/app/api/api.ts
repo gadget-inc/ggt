@@ -47,6 +47,7 @@ export class Api {
     assert(name, "query name not found");
 
     const ctx = this.ctx.child({
+      name: "api",
       fields: { edit: { query: name } },
       devFields: { edit: { query: name, variables: unthunk(variables) } },
     });
@@ -85,6 +86,7 @@ export class Api {
    * @param request.http - {@linkcode HttpOptions} to pass to http.
    * @returns The data returned by the server.
    */
+  // TODO: remove this -- it isn't used, and we shouldn't be mutating a Gadget app's data anyway
   async mutate<Mutation extends GraphQLMutation>({
     mutation,
     variables,
@@ -98,6 +100,7 @@ export class Api {
     assert(name, "mutation name not found");
 
     const ctx = this.ctx.child({
+      name: "api",
       fields: { edit: { mutation: name } },
       devFields: { edit: { mutation: name, variables: unthunk(variables) } },
     });
@@ -127,6 +130,7 @@ export class Api {
    * @param options.onComplete - A callback that will be called when the subscription ends.
    * @returns A function to unsubscribe from the subscription.
    */
+  // TODO: remove this -- it isn't used
   subscribe<Subscription extends GraphQLSubscription>({
     onData,
     ...options
@@ -141,6 +145,7 @@ export class Api {
     assert(name, "subscription name not found");
 
     let ctx = this.ctx.child({
+      name: "api",
       fields: { edit: { subscription: name } },
       devFields: { edit: { subscription: name, variables: unthunk(options.variables) } },
     });
@@ -174,6 +179,7 @@ export class Api {
         }
 
         ctx = this.ctx.child({
+          name: "api",
           fields: { edit: { subscription: name } },
           devFields: { edit: { subscription: name, variables: unthunk(options.variables) } },
         });

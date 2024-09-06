@@ -9,7 +9,7 @@ import {
   CREATE_ROUTE_MUTATION,
 } from "../services/app/edit/operation.js";
 import { ClientError } from "../services/app/error.js";
-import { ArgError } from "../services/command/arg.js";
+import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
@@ -23,7 +23,6 @@ import { symbol } from "../services/output/symbols.js";
 import { ts } from "../services/output/timestamp.js";
 import { uniq } from "../services/util/collection.js";
 import { isGraphQLErrors } from "../services/util/is.js";
-import type { DevArgs } from "./dev.js";
 
 export class AddClientError extends GGTError {
   isBug = IsBug.NO;
@@ -48,6 +47,7 @@ export class AddClientError extends GGTError {
 }
 
 export type AddArgs = typeof args;
+export type AddArgsResult = ArgsDefinitionResult<AddArgs>;
 
 export const args = {
   ...SyncJsonArgs,
@@ -94,18 +94,18 @@ export const usage: Usage = () => {
   `;
 };
 
-export const run: Run<AddArgs> = async (ctx) => {
+export const run: Run<AddArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { directory });
+  const syncJson = await SyncJson.load(ctx, { args, directory });
   if (!syncJson) {
-    throw new UnknownDirectoryError(ctx, { directory });
+    throw new UnknownDirectoryError(ctx, { args, directory });
   }
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx, true);
 
   if (!hashes.inSync) {
-    await filesync.merge(ctx as unknown as Context<DevArgs>, {
+    await filesync.merge(ctx, {
       hashes,
       printEnvironmentChangesOptions: {
         limit: 5,
@@ -119,18 +119,18 @@ export const run: Run<AddArgs> = async (ctx) => {
 
   println({ ensureEmptyLineAbove: true, content: `${chalk.greenBright(symbol.tick)} Sync completed ${ts()}` });
 
-  switch (ctx.args._[0]) {
+  switch (args._[0]) {
     case "model":
-      await modelSubCommand(ctx, filesync);
+      await modelSubCommand(ctx, { args, filesync });
       break;
     case "action":
-      await actionSubCommand(ctx, filesync);
+      await actionSubCommand(ctx, { args, filesync });
       break;
     case "route":
-      await routeSubCommand(ctx, filesync);
+      await routeSubCommand(ctx, { args, filesync });
       break;
     case "field":
-      await fieldSubCommand(ctx, filesync);
+      await fieldSubCommand(ctx, { args, filesync });
       break;
     default:
       println(usage(ctx));
@@ -154,9 +154,9 @@ const parseFieldValues = (fields: string[]): [{ name: string; fieldType: string 
   return [modelFields, problems];
 };
 
-const modelSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promise<void> => {
+const modelSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
   const syncJson = filesync.syncJson;
-  const modelApiIdentifier = ctx.args._[1];
+  const modelApiIdentifier = args._[1];
 
   if (!modelApiIdentifier) {
     throw new ArgError(sprint`Failed to add model, missing model path
@@ -166,8 +166,8 @@ const modelSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
   }
 
   const modelFieldsList: { name: string; fieldType: string }[] = [];
-  if (ctx.args._.length > 2) {
-    const [modelFields, problems] = parseFieldValues(ctx.args._.slice(2));
+  if (args._.length > 2) {
+    const [modelFields, problems] = parseFieldValues(args._.slice(2));
 
     if (problems.length > 0) {
       throw new ArgError(sprint`
@@ -222,9 +222,9 @@ const modelSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
   });
 };
 
-const actionSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promise<void> => {
+const actionSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
   const syncJson = filesync.syncJson;
-  const path = ctx.args._[1];
+  const path = args._[1];
 
   if (!path) {
     throw new ArgError(sprint`Failed to add action, missing action path
@@ -310,10 +310,10 @@ const actionSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Prom
   });
 };
 
-const routeSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promise<void> => {
+const routeSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
   const syncJson = filesync.syncJson;
-  const routeMethod = ctx.args._[1];
-  const routePath = ctx.args._[2];
+  const routeMethod = args._[1];
+  const routePath = args._[2];
 
   if (!routeMethod) {
     throw new ArgError(sprint`Failed to add route, missing route method
@@ -356,10 +356,10 @@ const routeSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promi
   });
 };
 
-const fieldSubCommand = async (ctx: Context<AddArgs>, filesync: FileSync): Promise<void> => {
+const fieldSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
   const syncJson = filesync.syncJson;
 
-  const splitPathAndField = ctx.args._[1]?.split("/");
+  const splitPathAndField = args._[1]?.split("/");
 
   if (!splitPathAndField) {
     throw new ArgError(sprint`Failed to add field, invalid field path definition

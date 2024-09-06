@@ -1,6 +1,5 @@
 import arg from "arg";
-import type { EmptyObject } from "type-fest";
-import type { ArgsDefinition } from "../services/command/arg.js";
+import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
 import { Commands, importCommand, isCommand, setCurrentCommand, type Run, type Usage } from "../services/command/command.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
@@ -11,6 +10,7 @@ import { sortBySimilar } from "../services/util/collection.js";
 import { isNil } from "../services/util/is.js";
 
 export type RootArgs = typeof args;
+export type RootArgsResult = ArgsDefinitionResult<RootArgs>;
 
 export const args = {
   "-h": { type: Boolean },
@@ -50,25 +50,20 @@ export const usage: Usage = () => {
   `;
 };
 
-export const run: Run<EmptyObject, EmptyObject> = async (parent): Promise<void> => {
-  const ctx = parent.child({
-    name: "root",
-    parse: args,
-    argv: process.argv.slice(2),
-    permissive: true,
-  });
+export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
+  const ctx = parent.child({ name: "root" });
 
-  if (ctx.args["--json"]) {
+  if (args["--json"]) {
     process.env["GGT_LOG_FORMAT"] = "json";
   }
 
-  if (ctx.args["--verbose"]) {
-    process.env["GGT_LOG_LEVEL"] = verbosityToLevel(ctx.args["--verbose"]).toString();
+  if (args["--verbose"]) {
+    process.env["GGT_LOG_LEVEL"] = verbosityToLevel(args["--verbose"]).toString();
   }
 
   await warnIfUpdateAvailable(ctx);
 
-  let commandName = ctx.args._.shift();
+  let commandName = args._.shift();
   if (isNil(commandName)) {
     println(usage(ctx));
     process.exit(0);
@@ -94,13 +89,13 @@ export const run: Run<EmptyObject, EmptyObject> = async (parent): Promise<void> 
   const command = await importCommand(commandName);
   setCurrentCommand(ctx, commandName);
 
-  if (ctx.args["-h"] ?? ctx.args["--help"]) {
+  if (args["-h"] ?? args["--help"]) {
     println(command.usage(ctx));
     process.exit(0);
   }
 
   try {
-    await command.run(ctx.child({ name: commandName, parse: command.args }));
+    await command.run(ctx.child({ name: commandName }), parseArgs(command.args ?? {}, { argv: args._ }));
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

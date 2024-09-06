@@ -1,13 +1,13 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable no-irregular-whitespace */
-import { beforeEach, describe, it } from "vitest";
-import { makeContext } from "../../spec/__support__/context.js";
+import { describe, it } from "vitest";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
-import { args, run as deploy } from "../../src/commands/deploy.js";
+import * as deploy from "../../src/commands/deploy.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
-import { type Context } from "../../src/services/command/context.js";
+import { makeArgs } from "../__support__/arg.js";
+import { testCtx } from "../__support__/context.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
 import { expectStdout } from "../__support__/output.js";
 import { mockSystemTime } from "../__support__/time.js";
@@ -17,18 +17,12 @@ describe("deploy", () => {
   mockSystemTime();
 
   describeWithAuth(() => {
-    let ctx: Context<typeof args>;
-
-    beforeEach(() => {
-      ctx = makeContext({ parse: args });
-    });
-
     it("does not try to deploy if any problems were detected and displays the problems", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args));
 
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
@@ -160,13 +154,11 @@ describe("deploy", () => {
     });
 
     it("deploys even if there are problems when --allow-problems is passed", async () => {
-      ctx = ctx.child({ overwrite: { "--allow-problems": true } });
-
-      await makeSyncScenario({ localFiles: { ".gadget/": "" }, ctx });
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args, "deploy", "--allow-problems"));
 
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
@@ -334,7 +326,7 @@ describe("deploy", () => {
 
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args));
 
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
@@ -377,13 +369,11 @@ describe("deploy", () => {
     });
 
     it("deploys even if there are problems when --allow-data-delete is passed", async () => {
-      ctx = ctx.child({ overwrite: { "--allow-data-delete": true } });
-
-      await makeSyncScenario({ localFiles: { ".gadget/": "" }, ctx });
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args, "deploy", "--allow-data-delete"));
 
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
@@ -549,7 +539,8 @@ describe("deploy", () => {
 
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args));
+
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
       await publishStatus.emitResponse({
@@ -712,7 +703,8 @@ describe("deploy", () => {
         },
       ]);
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args));
+
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
       await expectProcessExit(() => publishStatus.emitError(error), 1);
@@ -741,7 +733,8 @@ describe("deploy", () => {
         },
       ]);
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args));
+
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
       await expectProcessExit(() => publishStatus.emitError(error), 1);
@@ -775,7 +768,8 @@ describe("deploy", () => {
 
       const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, cause);
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args));
+
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
       await publishStatus.emitResponse({
@@ -849,7 +843,8 @@ describe("deploy", () => {
 
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args));
+
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
       await publishStatus.emitResponse({
@@ -933,7 +928,7 @@ describe("deploy", () => {
 
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      await deploy(ctx);
+      await deploy.run(testCtx, makeArgs(deploy.args));
 
       const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 

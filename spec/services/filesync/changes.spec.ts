@@ -1,24 +1,17 @@
 import figures from "figures";
-import { beforeEach, describe, it } from "vitest";
-import type { Context } from "../../../src/services/command/context.js";
+import { describe, it } from "vitest";
 import { Changes, printChanges } from "../../../src/services/filesync/changes.js";
-import { makeContext } from "../../__support__/context.js";
+import { testCtx } from "../../__support__/context.js";
 import { expectStdout } from "../../__support__/output.js";
 
 describe("printChanges", () => {
-  let ctx: Context;
-
-  beforeEach(() => {
-    ctx = makeContext();
-  });
-
   it("prints the changes in present tense", () => {
     const changes = new Changes();
     changes.set("foo", { type: "create" });
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "present", title: "→ Sent to example (staging) 12:00:00 PM" });
+    printChanges(testCtx, { changes, tense: "present", title: "→ Sent to example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
       "→ Sent to example (staging) 12:00:00 PM
       ±  bar  update
@@ -34,7 +27,7 @@ describe("printChanges", () => {
     changes.set("bar", { type: "update" });
     changes.set("baz", { type: "delete" });
 
-    printChanges(ctx, { changes, tense: "past", title: `Pulled files. ${figures.arrowLeft} 12:00:00 PM` });
+    printChanges(testCtx, { changes, tense: "past", title: `Pulled files. ${figures.arrowLeft} 12:00:00 PM` });
     expectStdout().toMatchInlineSnapshot(`
       "Pulled files. ← 12:00:00 PM
       ±  bar  updated
@@ -62,7 +55,7 @@ describe("printChanges", () => {
       ["file-12", { type: "delete" }],
     ]);
 
-    printChanges(ctx, { changes, tense: "present", title: "→ Sent to example (staging) 12:00:00 PM" });
+    printChanges(testCtx, { changes, tense: "present", title: "→ Sent to example (staging) 12:00:00 PM" });
     expectStdout().toMatchInlineSnapshot(`
       "→ Sent to example (staging) 12:00:00 PM
       +  file-01  create

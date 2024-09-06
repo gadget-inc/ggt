@@ -1,7 +1,7 @@
-import { beforeEach, describe, it } from "vitest";
-import { args, run as status, type StatusArgs } from "../../src/commands/status.js";
-import type { Context } from "../../src/services/command/context.js";
-import { makeContext } from "../__support__/context.js";
+import { describe, it } from "vitest";
+import * as status from "../../src/commands/status.js";
+import { makeArgs } from "../__support__/arg.js";
+import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { expectStdout } from "../__support__/output.js";
 import { mockSystemTime } from "../__support__/time.js";
@@ -10,16 +10,7 @@ import { describeWithAuth } from "../utils.js";
 describe("status", () => {
   mockSystemTime();
 
-  let ctx: Context<StatusArgs>;
-
   describeWithAuth(() => {
-    beforeEach(() => {
-      ctx = makeContext({
-        parse: args,
-        argv: ["status"],
-      });
-    });
-
     it("prints the expected message when nothing has changed", async () => {
       await makeSyncScenario({
         localFiles: {
@@ -27,7 +18,7 @@ describe("status", () => {
         },
       });
 
-      await status(ctx);
+      await status.run(testCtx, makeArgs(status.args));
 
       expectStdout().toMatchInlineSnapshot(`
       "Application  test
@@ -53,7 +44,7 @@ describe("status", () => {
         },
       });
 
-      await status(ctx);
+      await status.run(testCtx, makeArgs(status.args));
 
       expectStdout().toMatchInlineSnapshot(`
       "Application  test
@@ -86,7 +77,7 @@ describe("status", () => {
         },
       });
 
-      await status(ctx);
+      await status.run(testCtx, makeArgs(status.args));
 
       expectStdout().toMatchInlineSnapshot(`
       "Application  test
@@ -120,7 +111,7 @@ describe("status", () => {
         },
       });
 
-      await status(ctx);
+      await status.run(testCtx, makeArgs(status.args));
 
       expectStdout().toMatchInlineSnapshot(`
         "Application  test

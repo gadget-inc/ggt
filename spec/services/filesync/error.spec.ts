@@ -15,7 +15,8 @@ import {
 } from "../../../src/services/filesync/error.js";
 import { SyncJson, SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
-import { makeContext } from "../../__support__/context.js";
+import { makeArgs } from "../../__support__/arg.js";
+import { testCtx } from "../../__support__/context.js";
 import { mockOnce } from "../../__support__/mock.js";
 import { loginTestUser } from "../../__support__/user.js";
 
@@ -39,14 +40,14 @@ describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
     const application = testApp.slug;
     const environment = testApp.environments[0]!.name;
 
-    const ctx = makeContext({ parse: SyncJsonArgs, argv: [command, `--app=${application}`, `--env=${environment}`] });
-    setCurrentApp(ctx, testApp);
-    setCurrentEnv(ctx, testApp.environments[0]!);
+    setCurrentApp(testCtx, testApp);
+    setCurrentEnv(testCtx, testApp.environments[0]!);
 
+    const args = makeArgs(SyncJsonArgs, command, `--app=${application}`, `--env=${environment}`);
     const directory = await Directory.init(path.resolve("/Users/jane/doe/"));
 
     // @ts-expect-error - SyncJson's constructor is private
-    const syncJson: SyncJson = new SyncJson(ctx, directory, undefined, {
+    const syncJson: SyncJson = new SyncJson(testCtx, args, directory, undefined, {
       application,
       environment,
       environments: {
@@ -64,14 +65,14 @@ describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
 
   it.each(["dev", "deploy", "push", "pull", "status", "open"] as const)("renders correctly when %s is passed", async (command) => {
     const syncJson = await makeSyncJson(command);
-    const error = new UnknownDirectoryError(syncJson.ctx, { directory: syncJson.directory });
+    const error = new UnknownDirectoryError(syncJson.ctx, { args: syncJson.args, directory: syncJson.directory });
     expect(error.sprint()).toMatchSnapshot();
   });
 
   it("renders correctly when the file exists but is invalid", async () => {
     mockOnce(fs, "existsSync", () => true);
     const syncJson = await makeSyncJson("dev");
-    const error = new UnknownDirectoryError(syncJson.ctx, { directory: syncJson.directory });
+    const error = new UnknownDirectoryError(syncJson.ctx, { args: syncJson.args, directory: syncJson.directory });
     expect(error.sprint()).toMatchSnapshot();
   });
 });

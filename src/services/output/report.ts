@@ -1,6 +1,7 @@
 import cleanStack from "clean-stack";
 import { randomUUID } from "node:crypto";
 import terminalLink from "terminal-link";
+import type { RootArgsResult } from "../../commands/root.js";
 import type { Context } from "../command/context.js";
 import { env } from "../config/env.js";
 import { isAbortError } from "../util/is.js";
@@ -32,9 +33,9 @@ export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<
   }
 };
 
-export const installErrorHandlers = async (ctx: Context): Promise<void> => {
+export const installErrorHandlers = async (ctx: Context, args: RootArgsResult): Promise<void> => {
   ctx.log.debug("installing error handlers");
-  await initSentry(ctx);
+  await initSentry(ctx, args);
 
   const handleError = (error: unknown) => void reportErrorAndExit(ctx, error);
   process.once("uncaughtException", handleError);

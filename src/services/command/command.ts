@@ -1,7 +1,6 @@
 import assert from "node:assert";
 import type { EmptyObject, Promisable } from "type-fest";
-import type { RootArgs } from "../../commands/root.js";
-import type { ArgsDefinition } from "./arg.js";
+import type { ArgsDefinition, ArgsDefinitionResult } from "./arg.js";
 import type { Context } from "./context.js";
 
 /**
@@ -30,7 +29,7 @@ export const isCommand = (command: string): command is Command => {
 /**
  * A command module is a file in the src/commands/ directory.
  */
-export type CommandModule<Args extends ArgsDefinition = EmptyObject, ParentArgs extends ArgsDefinition = RootArgs> = {
+export type CommandModule<Args extends ArgsDefinition = EmptyObject> = {
   /**
    * The command's {@link ArgsDefinition args}.
    */
@@ -42,26 +41,21 @@ export type CommandModule<Args extends ArgsDefinition = EmptyObject, ParentArgs 
   usage: Usage;
 
   /**
-   * The command's {@link Run command}.
+   * The command's {@link Run run} function.
    */
-  run: Run<Args, ParentArgs>;
+  run: Run<Args>;
 };
 
 /**
  * A {@linkcode Command command}'s usage is a function that returns a
- * string describing how to use the command. The function receives its
- * parent command's context.
+ * string describing how to use the command.
  */
 export type Usage = (ctx: Context) => string;
 
 /**
  * The function that is run when the command is called.
- *
- * @param ctx - A {@linkcode Context} with the command's {@linkcode Args} and {@linkcode ParentArgs}.
  */
-export type Run<Args extends ArgsDefinition = EmptyObject, ParentArgs extends ArgsDefinition = RootArgs> = (
-  ctx: Context<Args, ParentArgs>,
-) => Promisable<void>;
+export type Run<Args extends ArgsDefinition = EmptyObject> = (ctx: Context, args: ArgsDefinitionResult<Args>) => Promisable<void>;
 
 /**
  * Imports a command module.

@@ -9,7 +9,7 @@ import { isAbortError } from "../src/services/util/is.js";
 import * as json from "../src/services/util/json.js";
 import { PromiseSignal } from "../src/services/util/promise.js";
 import type { AnyFunction } from "../src/services/util/types.js";
-import { makeRootContext } from "./__support__/context.js";
+import { testCtx } from "./__support__/context.js";
 import { mock } from "./__support__/mock.js";
 
 describe("ggt", () => {
@@ -39,8 +39,7 @@ describe("ggt", () => {
       return process;
     });
 
-    process.argv = ["node", "ggt", "test"];
-    await ggt(makeRootContext());
+    await ggt(testCtx);
 
     expect(signalled).toBe(true);
     onSignal!();

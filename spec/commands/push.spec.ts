@@ -1,19 +1,13 @@
 import fs from "fs-extra";
-import { beforeEach, describe, it } from "vitest";
-import { args, run as push, type PushArgs } from "../../src/commands/push.js";
-import { type Context } from "../../src/services/command/context.js";
-import { makeContext } from "../__support__/context.js";
+import { describe, it } from "vitest";
+import * as push from "../../src/commands/push.js";
+import { makeArgs } from "../__support__/arg.js";
+import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { describeWithAuth } from "../utils.js";
 
 describe("push", () => {
-  let ctx: Context<PushArgs>;
-
   describeWithAuth(() => {
-    beforeEach(() => {
-      ctx = makeContext({ parse: args, argv: ["push"] });
-    });
-
     it("sends changes from the local filesystem to gadget", async () => {
       const { localDir, expectDirs } = await makeSyncScenario({
         localFiles: {
@@ -44,7 +38,7 @@ describe("push", () => {
         await fs.outputFile(localDir.absolute(filename), filename);
       }
 
-      await push(ctx);
+      await push.run(testCtx, makeArgs(push.args));
 
       await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -136,7 +130,7 @@ describe("push", () => {
         await fs.outputFile(localDir.absolute(`tmp/${filename}`), filename);
       }
 
-      await push(ctx);
+      await push.run(testCtx, makeArgs(push.args));
 
       await expectDirs().resolves.toMatchInlineSnapshot(`
         {

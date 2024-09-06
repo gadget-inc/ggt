@@ -47,6 +47,7 @@ export class Edit {
     assert(name, "query name not found");
 
     const ctx = this.ctx.child({
+      name: "edit",
       fields: { edit: { query: name } },
       devFields: { edit: { query: name, variables: unthunk(variables) } },
     });
@@ -98,6 +99,7 @@ export class Edit {
     assert(name, "mutation name not found");
 
     const ctx = this.ctx.child({
+      name: "edit",
       fields: { edit: { mutation: name } },
       devFields: { edit: { mutation: name, variables: unthunk(variables) } },
     });
@@ -141,6 +143,7 @@ export class Edit {
     assert(name, "subscription name not found");
 
     let ctx = this.ctx.child({
+      name: "edit",
       fields: { edit: { subscription: name } },
       devFields: { edit: { subscription: name, variables: unthunk(options.variables) } },
     });
@@ -176,6 +179,7 @@ export class Edit {
         }
 
         ctx = this.ctx.child({
+          name: "edit",
           fields: { edit: { subscription: name } },
           devFields: { edit: { subscription: name, variables: unthunk(options.variables) } },
         });

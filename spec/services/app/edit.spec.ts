@@ -10,23 +10,19 @@ import {
   type GraphQLQuery,
 } from "../../../src/services/app/edit/operation.js";
 import { ClientError } from "../../../src/services/app/error.js";
-import type { Context } from "../../../src/services/command/context.js";
 import { config } from "../../../src/services/config/config.js";
 import { loadCookie } from "../../../src/services/http/auth.js";
 import { testApp } from "../../__support__/app.js";
-import { makeContext } from "../../__support__/context.js";
+import { testCtx } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
 import { nockEditResponse } from "../../__support__/graphql.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe("Edit", () => {
-  let ctx: Context;
-
   beforeEach(() => {
     loginTestUser();
-    ctx = makeContext();
-    setCurrentApp(ctx, testApp);
-    setCurrentEnv(ctx, testApp.environments[0]!);
+    setCurrentApp(testCtx, testApp);
+    setCurrentEnv(testCtx, testApp.environments[0]!);
   });
 
   it("retries queries when it receives a 500", async () => {
@@ -46,7 +42,7 @@ describe("Edit", () => {
       },
     });
 
-    const edit = new Edit(ctx);
+    const edit = new Edit(testCtx);
 
     await expect(edit.query({ query: REMOTE_FILES_VERSION_QUERY })).resolves.not.toThrow();
 
@@ -61,7 +57,7 @@ describe("Edit", () => {
       },
     });
 
-    const edit = new Edit(ctx);
+    const edit = new Edit(testCtx);
 
     const error: ClientError = await expectError(() => edit.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
     expect(error).toBeInstanceOf(ClientError);
@@ -77,7 +73,7 @@ describe("Edit", () => {
       statusCode: 500,
     });
 
-    const editGraphQL = new Edit(ctx);
+    const editGraphQL = new Edit(testCtx);
 
     const error: ClientError = await expectError(() => editGraphQL.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
     expect(error).toBeInstanceOf(ClientError);
@@ -87,10 +83,10 @@ describe("Edit", () => {
   it("throws EditError when it receives invalid json", async () => {
     nock(`https://${testApp.slug}--development.${config.domains.app}`)
       .post("/edit/api/graphql")
-      .matchHeader("cookie", (cookie) => loadCookie(ctx) === cookie)
+      .matchHeader("cookie", (cookie) => loadCookie(testCtx) === cookie)
       .reply(503, "Service Unavailable", { "content-type": "text/plain" });
 
-    const editGraphQL = new Edit(ctx);
+    const editGraphQL = new Edit(testCtx);
 
     const error: ClientError = await expectError(() => editGraphQL.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
     expect(error).toBeInstanceOf(ClientError);

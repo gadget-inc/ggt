@@ -65,14 +65,14 @@ export const usage: Usage = (_ctx) => {
   `;
 };
 
-export const run: Run<OpenArgs> = async (ctx) => {
+export const run: Run<OpenArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { directory });
+  const syncJson = await SyncJson.load(ctx, { args, directory });
   if (!syncJson) {
-    throw new UnknownDirectoryError(ctx, { directory });
+    throw new UnknownDirectoryError(ctx, { args, directory });
   }
 
-  const location = ctx.args._[0] as Location | undefined;
+  const location = args._[0] as Location | undefined;
   if (!location) {
     await open(`https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}`);
     println`
@@ -109,12 +109,12 @@ export const run: Run<OpenArgs> = async (ctx) => {
     }
     case "data":
     case "schema": {
-      const view = ctx.args._[0];
+      const view = args._[0];
       const remoteModelApiIdentifiers = (await getModels(ctx)).map((e) => e.apiIdentifier);
 
-      let modelApiIdentifier = ctx.args._[1];
+      let modelApiIdentifier = args._[1];
       if (!modelApiIdentifier) {
-        if (ctx.args["--show-all"]) {
+        if (args["--show-all"]) {
           modelApiIdentifier = await select({ choices: remoteModelApiIdentifiers, content: "Which model do you wish to open?" });
         } else {
           throw new ArgError(sprint`

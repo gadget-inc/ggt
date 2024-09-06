@@ -1,14 +1,13 @@
-import * as Sentry from "@sentry/node";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { GGTError, IsBug, UnexpectedError, reportErrorAndExit } from "../../../src/services/output/report.js";
-import { makeContext } from "../../__support__/context.js";
+import { testCtx } from "../../__support__/context.js";
 import { expectStdout } from "../../__support__/output.js";
 import { expectProcessExit } from "../../__support__/process.js";
 
 describe("reportErrorAndExit", () => {
-  // Cannot redefine property: captureException
-  it("renders and reports errors then exits", { skip: true }, async () => {
-    vi.spyOn(Sentry, "captureException");
+  it("renders and reports errors then exits", async () => {
+    // Cannot redefine property: captureException
+    // vi.spyOn(Sentry, "captureException");
 
     class TestError extends GGTError {
       override isBug = IsBug.MAYBE;
@@ -24,7 +23,7 @@ describe("reportErrorAndExit", () => {
 
     const error = new TestError();
 
-    await expectProcessExit(() => reportErrorAndExit(makeContext(), error), 1);
+    await expectProcessExit(() => reportErrorAndExit(testCtx, error), 1);
 
     expectStdout().toMatchInlineSnapshot(`
       "Boom!
@@ -35,7 +34,7 @@ describe("reportErrorAndExit", () => {
       "
     `);
 
-    expect(Sentry.captureException).toHaveBeenCalledWith(error, expect.objectContaining({ event_id: error.id }));
+    // expect(Sentry.captureException).toHaveBeenCalledWith(error, expect.objectContaining({ event_id: error.id }));
   });
 });
 
@@ -50,7 +49,7 @@ describe("UnexpectedError", () => {
       "An unexpected error occurred.
 
       Error: Whoops!
-          at spec/services/output/report.spec.ts:44:19
+          at spec/services/output/report.spec.ts:43:19
           at ...
           at ...
           at ...

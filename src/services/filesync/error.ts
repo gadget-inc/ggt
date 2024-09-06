@@ -7,7 +7,7 @@ import { GGTError, IsBug } from "../output/report.js";
 import { sprint, sprintln } from "../output/sprint.js";
 import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
 import type { Directory } from "./directory.js";
-import type { SyncJsonArgs } from "./sync-json.js";
+import type { SyncJsonArgsResult } from "./sync-json.js";
 
 export class YarnNotFoundError extends GGTError {
   isBug = IsBug.NO;
@@ -31,8 +31,8 @@ export class UnknownDirectoryError extends GGTError {
   isBug = IsBug.NO;
 
   constructor(
-    readonly ctx: Context<SyncJsonArgs>,
-    readonly opts: { directory: Directory },
+    readonly ctx: Context,
+    readonly opts: { directory: Directory; args: SyncJsonArgsResult },
   ) {
     super('The ".gadget/sync.json" file was invalid or not found');
   }
@@ -62,7 +62,7 @@ export class UnknownDirectoryError extends GGTError {
           If you're running "ggt dev" for the first time, we recommend
           using a gadget specific directory like this:
 
-            ggt dev ~/gadget/${this.ctx.args["--app"] ?? "<name>"}
+            ggt dev ~/gadget/${this.opts.args["--app"] ?? "<name>"}
 
           To use a non-empty directory without a ".gadget/sync.json" file,
           run "ggt dev" again with the "--allow-unknown-directory" flag:

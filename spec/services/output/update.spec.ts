@@ -2,21 +2,14 @@ import fs from "fs-extra";
 import ms from "ms";
 import nock from "nock";
 import path from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
-import type { Context } from "../../../src/services/command/context.js";
+import { describe, expect, it } from "vitest";
 import { config } from "../../../src/services/config/config.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
 import { packageJson } from "../../../src/services/util/package-json.js";
-import { makeContext, testCtx } from "../../__support__/context.js";
+import { testCtx } from "../../__support__/context.js";
 import { expectStdout } from "../../__support__/output.js";
 
 describe("getDistTags", () => {
-  let ctx: Context;
-
-  beforeEach(() => {
-    ctx = makeContext();
-  });
-
   it("returns the dist tags", async () => {
     const distTags = {
       latest: "1.0.0",
@@ -28,7 +21,7 @@ describe("getDistTags", () => {
       "dist-tags": distTags,
     });
 
-    await expect(getDistTags(ctx)).resolves.toEqual(distTags);
+    await expect(getDistTags(testCtx)).resolves.toEqual(distTags);
   });
 
   it("throws if the response is invalid", async () => {
@@ -42,7 +35,7 @@ describe("getDistTags", () => {
         },
       });
 
-    await expect(getDistTags(ctx)).rejects.toThrow();
+    await expect(getDistTags(testCtx)).rejects.toThrow();
   });
 });
 
@@ -65,12 +58,6 @@ describe("shouldCheckForUpdate", () => {
 });
 
 describe("warnIfUpdateAvailable", () => {
-  let ctx: Context;
-
-  beforeEach(() => {
-    ctx = makeContext();
-  });
-
   it("logs a warning if an update is available (latest)", async () => {
     packageJson.version = "1.0.0";
 
@@ -86,7 +73,7 @@ describe("warnIfUpdateAvailable", () => {
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
 
-    await warnIfUpdateAvailable(ctx);
+    await warnIfUpdateAvailable(testCtx);
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeFalsy();
 
@@ -117,7 +104,7 @@ describe("warnIfUpdateAvailable", () => {
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
 
-    await warnIfUpdateAvailable(ctx);
+    await warnIfUpdateAvailable(testCtx);
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeFalsy();
 
@@ -161,7 +148,7 @@ describe("warnIfUpdateAvailable", () => {
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
 
-    await warnIfUpdateAvailable(ctx);
+    await warnIfUpdateAvailable(testCtx);
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeFalsy();
 

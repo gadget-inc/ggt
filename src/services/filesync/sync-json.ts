@@ -9,7 +9,7 @@ import { EnvironmentType, getApps, parseAppListToTeamMap, type Application, type
 import { AppArg } from "../app/arg.js";
 import { getCurrentApp, getCurrentEnv, setCurrentApp, setCurrentEnv } from "../app/context.js";
 import { Edit } from "../app/edit/edit.js";
-import { ArgError, type ArgsDefinition } from "../command/arg.js";
+import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../command/arg.js";
 import { maybeGetCurrentCommand } from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
@@ -30,6 +30,7 @@ export const SyncJsonArgs = {
 } satisfies ArgsDefinition;
 
 export type SyncJsonArgs = typeof SyncJsonArgs;
+export type SyncJsonArgsResult = ArgsDefinitionResult<SyncJsonArgs>;
 
 /**
  * The state of the filesystem.
@@ -64,7 +65,12 @@ export class SyncJson {
      * The {@linkcode Context} that was used to initialize this
      * {@linkcode SyncJson} instance.
      */
-    readonly ctx: Context<SyncJsonArgs>,
+    readonly ctx: Context,
+
+    /**
+     * The parsed {@linkcode SyncJsonArgs} that the user passed to ggt.
+     */
+    readonly args: SyncJsonArgsResult,
 
     /**
      * The root directory of the local filesystem, or in other words,
@@ -85,6 +91,7 @@ export class SyncJson {
     readonly state: SyncJsonState,
   ) {
     this.ctx = ctx.child({
+      name: "sync-json",
       fields: () => ({
         syncJson: {
           directory: this.directory.path,
@@ -117,7 +124,7 @@ export class SyncJson {
    * Returns undefined if the directory doesn't exist, is empty, or
    * doesn't contain a `.gadget/sync.json` file.
    */
-  static async load(ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<SyncJson | undefined> {
+  static async load(ctx: Context, { args, directory }: { args: SyncJsonArgsResult; directory: Directory }): Promise<SyncJson | undefined> {
     ctx = ctx.child({ name: "sync-json" });
 
     const user = await getUserOrLogin(ctx);
@@ -153,18 +160,18 @@ export class SyncJson {
       return undefined;
     }
 
-    const app = await loadApp(ctx, { availableApps, state });
+    const app = await loadApp(ctx, { args, availableApps, state });
     setCurrentApp(ctx, app);
 
-    const env = await loadEnv(ctx, { app, state });
+    const env = await loadEnv(ctx, { args, app, state });
     setCurrentEnv(ctx, env);
 
     if (state.application !== app.slug) {
       // .gadget/sync.json is associated with a different app
-      if (ctx.args["--allow-different-app"]) {
+      if (args["--allow-different-app"]) {
         // the user passed --allow-different-app, so use the application
         // and environment they specified and clobber everything
-        const syncJson = new SyncJson(ctx, directory, undefined, {
+        const syncJson = new SyncJson(ctx, args, directory, undefined, {
           application: app.slug,
           environment: env.name,
           environments: {
@@ -214,7 +221,7 @@ export class SyncJson {
       }
     }
 
-    const syncJson = new SyncJson(ctx, directory, previousEnvironment, state);
+    const syncJson = new SyncJson(ctx, args, directory, previousEnvironment, state);
     await syncJson.save(syncJson.filesVersion);
     await syncJson.loadGitBranch();
     return syncJson;
@@ -231,24 +238,24 @@ export class SyncJson {
    * - Ensures the specified app matches the app the directory previously synced to, unless --allow-different-app was passed
    */
   // TODO: rename to loadOrAskAndInit
-  static async loadOrInit(ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<SyncJson> {
+  static async loadOrInit(ctx: Context, { args, directory }: { args: SyncJsonArgsResult; directory: Directory }): Promise<SyncJson> {
     ctx = ctx.child({ name: "sync-json" });
 
-    let syncJson = await SyncJson.load(ctx, { directory });
+    let syncJson = await SyncJson.load(ctx, { args, directory });
     if (syncJson) {
       // the .gadget/sync.json file already exists and is valid
       return syncJson;
     }
 
-    if ((await directory.hasFiles()) && !ctx.args["--allow-unknown-directory"]) {
+    if ((await directory.hasFiles()) && !args["--allow-unknown-directory"]) {
       // the directory isn't empty and the user didn't pass --allow-unknown-directory
-      throw new UnknownDirectoryError(ctx, { directory });
+      throw new UnknownDirectoryError(ctx, { args, directory });
     }
 
-    const app = await loadApp(ctx, { availableApps: await getApps(ctx) });
+    const app = await loadApp(ctx, { args, availableApps: await getApps(ctx) });
     setCurrentApp(ctx, app);
 
-    const env = await loadEnv(ctx, { app });
+    const env = await loadEnv(ctx, { args, app });
     setCurrentEnv(ctx, env);
 
     // the directory is empty or the user passed
@@ -256,7 +263,7 @@ export class SyncJson {
     // and create a fresh .gadget/sync.json file
     await fs.ensureDir(directory.path);
 
-    syncJson = new SyncJson(ctx, directory, undefined, {
+    syncJson = new SyncJson(ctx, args, directory, undefined, {
       application: app.slug,
       environment: env.name,
       environments: {
@@ -341,10 +348,10 @@ export const loadSyncJsonDirectory = async (dir: string): Promise<Directory> => 
 
 // ensure the selected app is valid
 const loadApp = async (
-  ctx: Context<SyncJsonArgs>,
-  { availableApps, state }: { availableApps: Application[]; state?: SyncJsonState },
+  _ctx: Context,
+  { args, availableApps, state }: { args: SyncJsonArgsResult; availableApps: Application[]; state?: SyncJsonState },
 ): Promise<Application> => {
-  let appSlug = ctx.args["--app"] || state?.application;
+  let appSlug = args["--app"] || state?.application;
   if (!appSlug) {
     // the user didn't specify an app, ask them to select one
     const groupedChoices: [string, string[]][] = Array.from(parseAppListToTeamMap(availableApps)).map(([teamName, apps]) => [
@@ -388,8 +395,11 @@ const loadApp = async (
   );
 };
 
-const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: Application; state?: SyncJsonState }): Promise<Environment> => {
-  if (ctx.args["--env"] && !app.multiEnvironmentEnabled) {
+const loadEnv = async (
+  ctx: Context,
+  { args, app, state }: { args: SyncJsonArgsResult; app: Application; state?: SyncJsonState },
+): Promise<Environment> => {
+  if (args["--env"] && !app.multiEnvironmentEnabled) {
     // this is a legacy app that only has 1 development environment, so
     // let them know now rather than running into a weird error later
     // TODO: come back to this
@@ -404,7 +414,7 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: Applic
 
   const devEnvs = app.environments.filter((env) => env.type === EnvironmentType.Development);
 
-  let envName = ctx.args["--env"] || state?.environment;
+  let envName = args["--env"] || state?.environment;
   if (!envName) {
     // user didn't specify an environment, ask them to select one
     envName = await select({
@@ -455,7 +465,7 @@ const loadEnv = async (ctx: Context<SyncJsonArgs>, { app, state }: { app: Applic
  * Returns the current git branch of the directory or undefined if
  * the directory isn't a git repository.
  */
-const loadBranch = async (ctx: Context<SyncJsonArgs>, { directory }: { directory: Directory }): Promise<string | undefined> => {
+const loadBranch = async (ctx: Context, { directory }: { directory: Directory }): Promise<string | undefined> => {
   try {
     const branch = await simpleGit(directory.path).revparse(["--abbrev-ref", "HEAD"]);
     return branch;

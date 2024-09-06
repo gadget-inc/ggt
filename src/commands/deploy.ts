@@ -57,9 +57,9 @@ export const usage: Usage = (_ctx) => {
 `;
 };
 
-export const run: Run<DeployArgs> = async (ctx) => {
+export const run: Run<DeployArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { directory });
+  const syncJson = await SyncJson.loadOrInit(ctx, { args, directory });
 
   println({
     ensureEmptyLineAbove: true,
@@ -111,14 +111,14 @@ export const run: Run<DeployArgs> = async (ctx) => {
       });
     }
 
-    await filesync.push(ctx, { hashes, force: implicitForce || ctx.args["--force"] });
+    await filesync.push(ctx, { hashes, force: implicitForce || args["--force"] });
   }
 
   const variables = {
     localFilesVersion: String(syncJson.filesVersion),
-    force: ctx.args["--allow-problems"],
-    allowDeletedData: ctx.args["--allow-data-delete"],
-    allowCharges: ctx.args["--allow-charges"],
+    force: args["--allow-problems"],
+    allowDeletedData: args["--allow-data-delete"],
+    allowCharges: args["--allow-charges"],
   };
 
   let spinner: spinner | undefined;
@@ -224,8 +224,8 @@ export const run: Run<DeployArgs> = async (ctx) => {
           await confirm("Do you want to continue?");
           subscription.resubscribe({ ...variables, force: true, allowDeletedData: true });
         } else {
-          const allowDataDelete = ctx.args["--allow-data-delete"];
-          const allowProblems = ctx.args["--allow-problems"];
+          const allowDataDelete = args["--allow-data-delete"];
+          const allowProblems = args["--allow-problems"];
 
           if (!allowDataDelete && !allowProblems) {
             throw new UnexpectedError("expected --allow-data-delete or --allow-problems to be true");

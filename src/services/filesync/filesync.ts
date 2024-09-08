@@ -19,7 +19,7 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit/operation.js";
-import { maybeGetCurrentCommand } from "../command/command.js";
+import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { confirm } from "../output/confirm.js";
@@ -472,14 +472,16 @@ export class FileSync {
   async push(
     ctx: Context,
     {
+      command,
       hashes,
       force,
       printLocalChangesOptions,
     }: {
+      command: Command;
       hashes?: FileSyncHashes;
       force?: boolean;
       printLocalChangesOptions?: PrintChangesOptions;
-    } = {},
+    },
   ): Promise<void> {
     const { localChangesToPush, environmentChanges, environmentFilesVersion, onlyDotGadgetFilesChanged } =
       hashes ?? (await this.hashes(ctx));
@@ -517,7 +519,7 @@ export class FileSync {
       throw new EdgeCaseError(sprint`
         Your environment's files have changed since we last checked.
 
-        Please re-run "ggt ${maybeGetCurrentCommand(ctx)}" to see the changes and try again.
+        Please re-run "ggt ${command}" to see the changes and try again.
       `);
     }
   }

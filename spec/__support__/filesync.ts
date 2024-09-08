@@ -11,7 +11,6 @@ import {
   type FileSyncDeletedEventInput,
   type MutationPublishFileSyncEventsArgs,
 } from "../../src/__generated__/graphql.js";
-import { getCurrentApp, getCurrentEnv } from "../../src/services/app/context.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
@@ -19,6 +18,7 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit/operation.js";
+import type { Command } from "../../src/services/command/command.js";
 import { Directory, swallowEnoent, type Hashes } from "../../src/services/filesync/directory.js";
 import type { File } from "../../src/services/filesync/file.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
@@ -29,7 +29,7 @@ import { isNil } from "../../src/services/util/is.js";
 import { defaults } from "../../src/services/util/object.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import type { PartialExcept } from "../../src/services/util/types.js";
-import { testApp } from "./app.js";
+import { testApp, testEnvironment } from "./app.js";
 import { makeArgs } from "./arg.js";
 import { testCtx } from "./context.js";
 import { assertOrFail, log } from "./debug.js";
@@ -41,6 +41,18 @@ import { testDirPath } from "./paths.js";
 import { timeoutMs } from "./sleep.js";
 
 export type FileSyncScenarioOptions = {
+  /**
+   * The command to pass to the {@linkcode SyncJson} instance.
+   *
+   * @default "dev"
+   */
+  command?: Command;
+
+  /**
+   * The arguments to pass to the {@linkcode SyncJson} instance.
+   *
+   * @default { _: [testDirPath("local")], ["--app"]: testEnvironment.application.slug, ["--env"]: testEnvironment.name }
+   */
   args?: SyncJsonArgsResult;
 
   /**
@@ -168,6 +180,7 @@ export type SyncScenario = {
  * @see {@linkcode SyncScenario}
  */
 export const makeSyncScenario = async ({
+  command,
   args,
   filesVersion1Files,
   localFiles,
@@ -175,7 +188,14 @@ export const makeSyncScenario = async ({
   beforePublishFileSyncEvents,
   afterPublishFileSyncEvents,
 }: Partial<FileSyncScenarioOptions> = {}): Promise<SyncScenario> => {
-  args ??= makeArgs(SyncJsonArgs, "dev", testDirPath("local"), `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`);
+  command ??= "dev";
+  args ??= makeArgs(
+    SyncJsonArgs,
+    command,
+    testDirPath("local"),
+    `--app=${testEnvironment.application.slug}`,
+    `--env=${testEnvironment.name}`,
+  );
 
   let environmentFilesVersion = 1n;
   await writeDir(testDirPath("gadget"), { ".gadget/": "", ...gadgetFiles });
@@ -220,7 +240,7 @@ export const makeSyncScenario = async ({
   }
 
   mockRestore(SyncJson.load);
-  const syncJson = await SyncJson.loadOrInit(testCtx, { args, directory: localDir });
+  const syncJson = await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir });
   mock(SyncJson, "load", () => syncJson);
 
   const filesync = new FileSync(syncJson);
@@ -255,8 +275,7 @@ export const makeSyncScenario = async ({
   };
 
   nockEditResponse({
-    app: getCurrentApp(testCtx),
-    env: getCurrentEnv(testCtx),
+    environment: syncJson.environment,
     optional: true,
     persist: true,
     operation: FILE_SYNC_HASHES_QUERY,
@@ -289,8 +308,7 @@ export const makeSyncScenario = async ({
   });
 
   nockEditResponse({
-    app: getCurrentApp(testCtx),
-    env: getCurrentEnv(testCtx),
+    environment: syncJson.environment,
     optional: true,
     persist: true,
     operation: FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -321,8 +339,7 @@ export const makeSyncScenario = async ({
   });
 
   nockEditResponse({
-    app: getCurrentApp(testCtx),
-    env: getCurrentEnv(testCtx),
+    environment: syncJson.environment,
     optional: true,
     persist: true,
     operation: FILE_SYNC_FILES_QUERY,
@@ -363,8 +380,7 @@ export const makeSyncScenario = async ({
   });
 
   nockEditResponse({
-    app: getCurrentApp(testCtx),
-    env: getCurrentEnv(testCtx),
+    environment: syncJson.environment,
     optional: true,
     persist: true,
     operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,

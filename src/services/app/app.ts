@@ -20,7 +20,9 @@ export const Environment = z.object({
   type: z.nativeEnum(EnvironmentType),
 });
 
-export type Environment = z.infer<typeof Environment>;
+export type Environment = z.infer<typeof Environment> & {
+  application: Application;
+};
 
 export const Application = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
@@ -58,7 +60,7 @@ export type GlobalActionApiIdentifier = z.infer<typeof GlobalActionApiIdentifier
  * @param ctx - The current context.
  * @returns A promise that resolves to an array of Application objects.
  */
-export const getApps = async (ctx: Context): Promise<Application[]> => {
+export const getApplications = async (ctx: Context): Promise<Application[]> => {
   const headers = maybeLoadAuthHeaders(ctx);
   if (!headers) {
     return [];
@@ -82,24 +84,24 @@ export const parseAppListToTeamMap = (apps: Application[]): Map<string, Applicat
   }, new Map<string, Application[]>());
 };
 
-export const getModels = async (ctx: Context): Promise<ModelApiIdentifier[] | []> => {
+export const getModels = async (ctx: Context, environment: Environment): Promise<ModelApiIdentifier[] | []> => {
   const headers = maybeLoadAuthHeaders(ctx);
   if (!headers) {
     return [];
   }
 
-  const api = new Api(ctx);
+  const api = new Api(ctx, environment);
   const { gadgetMeta } = await api.query({ query: GADGET_META_MODELS_QUERY });
   return gadgetMeta.models;
 };
 
-export const getGlobalActions = async (ctx: Context): Promise<GlobalActionApiIdentifier[] | []> => {
+export const getGlobalActions = async (ctx: Context, environment: Environment): Promise<GlobalActionApiIdentifier[] | []> => {
   const headers = maybeLoadAuthHeaders(ctx);
   if (!headers) {
     return [];
   }
 
-  const api = new Api(ctx);
+  const api = new Api(ctx, environment);
   const { gadgetMeta } = await api.query({ query: GADGET_GLOBAL_ACTIONS_QUERY });
   return gadgetMeta.globalActions;
 };

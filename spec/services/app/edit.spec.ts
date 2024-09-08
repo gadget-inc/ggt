@@ -2,7 +2,6 @@ import { GraphQLError } from "graphql";
 import nock from "nock";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { CloseEvent, ErrorEvent } from "ws";
-import { setCurrentApp, setCurrentEnv } from "../../../src/services/app/context.js";
 import { Edit } from "../../../src/services/app/edit/edit.js";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
@@ -12,7 +11,7 @@ import {
 import { ClientError } from "../../../src/services/app/error.js";
 import { config } from "../../../src/services/config/config.js";
 import { loadCookie } from "../../../src/services/http/auth.js";
-import { testApp } from "../../__support__/app.js";
+import { testApp, testEnvironment } from "../../__support__/app.js";
 import { testCtx } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
 import { nockEditResponse } from "../../__support__/graphql.js";
@@ -21,8 +20,6 @@ import { loginTestUser } from "../../__support__/user.js";
 describe("Edit", () => {
   beforeEach(() => {
     loginTestUser();
-    setCurrentApp(testCtx, testApp);
-    setCurrentEnv(testCtx, testApp.environments[0]!);
   });
 
   it("retries queries when it receives a 500", async () => {
@@ -42,7 +39,7 @@ describe("Edit", () => {
       },
     });
 
-    const edit = new Edit(testCtx);
+    const edit = new Edit(testCtx, testEnvironment);
 
     await expect(edit.query({ query: REMOTE_FILES_VERSION_QUERY })).resolves.not.toThrow();
 
@@ -57,7 +54,7 @@ describe("Edit", () => {
       },
     });
 
-    const edit = new Edit(testCtx);
+    const edit = new Edit(testCtx, testEnvironment);
 
     const error: ClientError = await expectError(() => edit.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
     expect(error).toBeInstanceOf(ClientError);
@@ -73,7 +70,7 @@ describe("Edit", () => {
       statusCode: 500,
     });
 
-    const editGraphQL = new Edit(testCtx);
+    const editGraphQL = new Edit(testCtx, testEnvironment);
 
     const error: ClientError = await expectError(() => editGraphQL.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
     expect(error).toBeInstanceOf(ClientError);
@@ -86,7 +83,7 @@ describe("Edit", () => {
       .matchHeader("cookie", (cookie) => loadCookie(testCtx) === cookie)
       .reply(503, "Service Unavailable", { "content-type": "text/plain" });
 
-    const editGraphQL = new Edit(testCtx);
+    const editGraphQL = new Edit(testCtx, testEnvironment);
 
     const error: ClientError = await expectError(() => editGraphQL.mutate({ mutation: PUBLISH_FILE_SYNC_EVENTS_MUTATION }));
     expect(error).toBeInstanceOf(ClientError);

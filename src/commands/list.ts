@@ -1,4 +1,4 @@
-import { getApps, parseAppListToTeamMap } from "../services/app/app.js";
+import { getApplications, parseAppListToTeamMap } from "../services/app/app.js";
 import type { Run, Usage } from "../services/command/command.js";
 import { output } from "../services/output/output.js";
 import { println } from "../services/output/print.js";
@@ -14,9 +14,9 @@ export const usage: Usage = () => sprint`
 `;
 
 export const run: Run = async (ctx) => {
-  await getUserOrLogin(ctx);
+  await getUserOrLogin(ctx, "list");
 
-  const apps = await getApps(ctx);
+  const apps = await getApplications(ctx);
   if (apps.length === 0) {
     println`
         It doesn't look like you have any applications.

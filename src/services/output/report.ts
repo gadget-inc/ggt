@@ -27,7 +27,7 @@ export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<
       return undefined as never;
     }
 
-    await sendErrorToSentry(ctx, error);
+    await sendErrorToSentry(error);
   } finally {
     process.exit(1);
   }

@@ -108,13 +108,3 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
 
   return module as CommandModule;
 };
-
-const kCommand = Symbol.for("command");
-
-export const maybeGetCurrentCommand = (ctx: Context): Command | undefined => {
-  return ctx.get(kCommand) as Command | undefined;
-};
-
-export const setCurrentCommand = (ctx: Context, command: Command): void => {
-  ctx.set(kCommand, command);
-};

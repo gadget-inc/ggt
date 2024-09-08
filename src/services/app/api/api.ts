@@ -2,6 +2,7 @@ import assert from "node:assert";
 import type { Context } from "../../command/context.js";
 import type { HttpOptions } from "../../http/http.js";
 import { unthunk, type Thunk } from "../../util/function.js";
+import type { Environment } from "../app.js";
 import { Client } from "../client.js";
 import type { GraphQLQuery } from "../edit/operation.js";
 import { ClientError } from "../error.js";
@@ -18,9 +19,9 @@ export class Api {
    */
   #client: Client;
 
-  constructor(ctx: Context) {
+  constructor(ctx: Context, environment: Environment) {
     this.ctx = ctx.child({ name: "api" });
-    this.#client = new Client(this.ctx, "/api/graphql");
+    this.#client = new Client(this.ctx, environment, "/api/graphql");
   }
 
   /**

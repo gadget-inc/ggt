@@ -51,7 +51,7 @@ describe("loadUser", () => {
 describe("getUserOrLogin", () => {
   it("returns the user if the session is set", async () => {
     loginTestUser({ optional: false });
-    const user = await getUserOrLogin(testCtx);
+    const user = await getUserOrLogin(testCtx, "dev");
 
     expect(nock.pendingMocks()).toEqual([]);
     expect(user).toEqual(testUser);
@@ -67,7 +67,7 @@ describe("getUserOrLogin", () => {
 
     writeSession(testCtx, undefined);
 
-    const returnedUser = await getUserOrLogin(testCtx);
+    const returnedUser = await getUserOrLogin(testCtx, "dev");
 
     expect(confirm).toHaveBeenCalled();
     expect(process.exit).not.toHaveBeenCalled();
@@ -86,7 +86,7 @@ describe("getUserOrLogin", () => {
     nock(`https://${config.domains.services}`).get("/auth/api/current-user").reply(401);
 
     writeSession(testCtx, "test");
-    await expect(getUserOrLogin(testCtx)).resolves.toEqual(testUser);
+    await expect(getUserOrLogin(testCtx, "dev")).resolves.toEqual(testUser);
 
     expect(nock.pendingMocks()).toEqual([]);
     expect(confirm).toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe("getUserOrLogin", () => {
       return Promise.resolve();
     });
 
-    await expectProcessExit(() => getUserOrLogin(testCtx));
+    await expectProcessExit(() => getUserOrLogin(testCtx, "dev"));
 
     expect(confirm).toHaveBeenCalled();
     expect(login.login).not.toHaveBeenCalled();

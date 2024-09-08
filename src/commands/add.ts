@@ -96,9 +96,9 @@ export const usage: Usage = () => {
 
 export const run: Run<AddArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { args, directory });
+  const syncJson = await SyncJson.load(ctx, { command: "add", args, directory });
   if (!syncJson) {
-    throw new UnknownDirectoryError(ctx, { args, directory });
+    throw new UnknownDirectoryError({ command: "add", args, directory });
   }
 
   const filesync = new FileSync(syncJson);
@@ -213,7 +213,10 @@ const modelSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
   });
 
   const modelPrintout = terminalLink.isSupported
-    ? terminalLink(modelApiIdentifier, `https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}/model/${modelApiIdentifier}/schema`)
+    ? terminalLink(
+        modelApiIdentifier,
+        `https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}/model/${modelApiIdentifier}/schema`,
+      )
     : modelApiIdentifier;
 
   println({
@@ -234,8 +237,8 @@ const actionSubCommand = async (ctx: Context, { args, filesync }: { args: AddArg
       CONTEXT:Specifies the kind of action. Use "model" for model actions otherwise use "action".}`);
   }
 
-  const models = await getModels(ctx);
-  const globalActions = await getGlobalActions(ctx);
+  const models = await getModels(ctx, syncJson.environment);
+  const globalActions = await getGlobalActions(ctx, syncJson.environment);
   const splitPath = path.split("/");
 
   let overrideContextAction: "models" | "actions" | undefined;

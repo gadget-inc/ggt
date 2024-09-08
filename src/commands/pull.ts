@@ -48,7 +48,7 @@ export const run: Run<PullArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { args, directory });
+  const syncJson = await SyncJson.loadOrInit(ctx, { command: "pull", args, directory });
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
 

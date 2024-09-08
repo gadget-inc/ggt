@@ -11,7 +11,7 @@ import { loadCookie } from "../../src/services/http/auth.js";
 import { noop, unthunk, type Thunk } from "../../src/services/util/function.js";
 import { isFunction } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
-import { testApp } from "./app.js";
+import { testEnvironment } from "./app.js";
 import { testCtx } from "./context.js";
 import { log } from "./debug.js";
 import { mock } from "./mock.js";
@@ -38,16 +38,16 @@ export type NockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLM
   /**
    * The app to respond to.
    *
-   * @default testApp
+   * @default testEnvironment.application
    */
-  app?: Application;
+  application?: Application;
 
   /**
    * The environment to respond to.
    *
-   * @default testApp.environments[0]
+   * @default testEnvironment
    */
-  env?: Environment;
+  environment?: Environment;
 
   /**
    * Whether to keep responding to requests after the first one.
@@ -85,8 +85,8 @@ export type NockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLM
  */
 export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   operation,
-  app = testApp,
-  env = app.environments[0]!,
+  environment = testEnvironment,
+  application = environment.application,
   optional = false,
   persist = false,
   times = 1,
@@ -94,10 +94,10 @@ export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation
   endpoint,
   ...opts
 }: NockGraphQLResponseOptions<Query> & { endpoint: string }): Scope & { responded: PromiseSignal } => {
-  let subdomain = app.slug;
-  if (app.multiEnvironmentEnabled) {
-    subdomain += `--${env.name}`;
-  } else if (app.hasSplitEnvironments) {
+  let subdomain = application.slug;
+  if (application.multiEnvironmentEnabled) {
+    subdomain += `--${environment.name}`;
+  } else if (application.hasSplitEnvironments) {
     subdomain += "--development";
   }
 
@@ -124,7 +124,7 @@ export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation
   const scope = nock(`https://${subdomain}.${config.domains.app}`)
     .post(endpoint, (body) => body.query === operation)
     .matchHeader("cookie", (cookie) => loadCookie(testCtx) === cookie)
-    .matchHeader("x-gadget-environment", env.name)
+    .matchHeader("x-gadget-environment", environment.name)
     .optionally(optional)
     .times(times)
     .reply(statusCode, async (_uri, rawBody) => {

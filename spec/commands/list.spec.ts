@@ -50,7 +50,7 @@ describe("list", () => {
   });
 
   it("lists no apps if the user doesn't have any", async () => {
-    mock(app, "getApps", () => []);
+    mock(app, "getApplications", () => []);
 
     await list.run(testCtx, makeRootArgs());
 

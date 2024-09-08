@@ -52,6 +52,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrInit(testCtx, {
+      command: "dev",
       args: makeArgs(DevArgs, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,
     });
@@ -542,6 +543,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
 
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrInit(testCtx, {
+      command: "dev",
       args: makeArgs(DevArgs, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,
     });
@@ -1898,7 +1900,7 @@ describe("FileSync.push", () => {
         },
       });
 
-      await filesync.push(testCtx);
+      await filesync.push(testCtx, { command: "push" });
 
       await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -1939,7 +1941,7 @@ describe("FileSync.push", () => {
 
       mockConfirmOnce();
 
-      await filesync.push(testCtx);
+      await filesync.push(testCtx, { command: "push" });
 
       await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -1984,7 +1986,7 @@ describe("FileSync.push", () => {
         },
       });
 
-      await filesync.push(testCtx, { force: true });
+      await filesync.push(testCtx, { command: "push", force: true });
 
       await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -2031,7 +2033,7 @@ describe("FileSync.push", () => {
         },
       });
 
-      await filesync.push(testCtx, { force: true });
+      await filesync.push(testCtx, { command: "push", force: true });
 
       await expectDirs().resolves.toMatchInlineSnapshot(`
         {

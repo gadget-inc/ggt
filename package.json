@@ -72,7 +72,7 @@
     "cli-cursor": "^5.0.0",
     "cli-spinners": "^2.9.2",
     "cli-table3": "^0.6.5",
-    "concurrently": "^8.2.2",
+    "concurrently": "^9.0.0",
     "cspell": "^8.14.2",
     "dayjs": "^1.11.13",
     "esbuild": "^0.23.1",

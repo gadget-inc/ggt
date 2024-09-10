@@ -45,7 +45,10 @@ export const testApp: Application = Object.freeze({
 /**
  * The first environment of the {@linkcode testApp}.
  */
-export const testEnvironment: Environment = testApp.environments[0]!;
+export const testEnvironment: Environment = {
+  ...testApp.environments[0]!,
+  application: testApp,
+};
 
 /**
  * A Gadget app to use in tests with a different ID and slug.

@@ -19,19 +19,13 @@ export class Context extends AbortController {
   #log: Logger;
 
   /**
-   * The values that have been set on this context.
-   */
-  #values: Record<symbol, unknown>;
-
-  /**
    * The callbacks that will be called when this context is aborted.
    */
   #onAborts: OnAbort[] = [];
 
-  private constructor({ log, values }: { log: Logger; values: Record<symbol, unknown> }) {
+  private constructor({ log }: { log: Logger }) {
     super();
     this.#log = log;
-    this.#values = values;
 
     // in case this context is ...spread into another object
     this.abort = this.abort.bind(this);
@@ -76,18 +70,7 @@ export class Context extends AbortController {
    * Initializes a new context.
    */
   static init(options: StructuredLoggerOptions): Context {
-    return new Context({
-      log: createLogger(options),
-      values: {},
-    });
-  }
-
-  get(key: symbol): unknown {
-    return this.#values[key];
-  }
-
-  set(key: symbol, value: unknown): void {
-    this.#values[key] = value;
+    return new Context({ log: createLogger(options) });
   }
 
   /**
@@ -96,10 +79,7 @@ export class Context extends AbortController {
    * @see {@linkcode ContextInit}
    */
   child(options: StructuredLoggerOptions): Context {
-    const ctx = new Context({
-      log: this.log.child(options),
-      values: this.#values,
-    });
+    const ctx = new Context({ log: this.log.child(options) });
 
     this.onAbort(() => ctx.abort());
 

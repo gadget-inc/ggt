@@ -33,9 +33,9 @@ export const run: Run<StatusArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { args, directory });
+  const syncJson = await SyncJson.load(ctx, { command: "status", args, directory });
   if (!syncJson) {
-    throw new UnknownDirectoryError(ctx, { args, directory });
+    throw new UnknownDirectoryError({ command: "status", args, directory });
   }
 
   syncJson.print();

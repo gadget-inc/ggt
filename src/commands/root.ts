@@ -1,6 +1,6 @@
 import arg from "arg";
 import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
-import { Commands, importCommand, isCommand, setCurrentCommand, type Run, type Usage } from "../services/command/command.js";
+import { Commands, importCommand, isCommand, type Run, type Usage } from "../services/command/command.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
@@ -87,7 +87,6 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
   }
 
   const command = await importCommand(commandName);
-  setCurrentCommand(ctx, commandName);
 
   if (args["-h"] ?? args["--help"]) {
     println(command.usage(ctx));

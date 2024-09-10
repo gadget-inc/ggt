@@ -90,7 +90,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { args, directory });
+  const syncJson = await SyncJson.loadOrInit(ctx, { command: "dev", args, directory });
   footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });
 
   const filesync = new FileSync(syncJson);
@@ -163,7 +163,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
           await filesync.merge(ctx, { hashes });
           break;
         case FileSyncStrategy.PUSH:
-          await filesync.push(ctx, { hashes, force: true });
+          await filesync.push(ctx, { command: "dev", hashes, force: true });
           break;
         case FileSyncStrategy.PULL:
           await filesync.pull(ctx, { hashes, force: true });

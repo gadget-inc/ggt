@@ -4,6 +4,7 @@ import type { Promisable } from "type-fest";
 import type { Context } from "../../command/context.js";
 import { type HttpOptions } from "../../http/http.js";
 import { unthunk, type Thunk } from "../../util/function.js";
+import type { Environment } from "../app.js";
 import { Client } from "../client.js";
 import { ClientError } from "../error.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
@@ -20,9 +21,9 @@ export class Edit {
    */
   #client: Client;
 
-  constructor(ctx: Context) {
+  constructor(ctx: Context, environment: Environment) {
     this.ctx = ctx.child({ name: "edit" });
-    this.#client = new Client(this.ctx, "/edit/api/graphql");
+    this.#client = new Client(this.ctx, environment, "/edit/api/graphql");
   }
 
   /**

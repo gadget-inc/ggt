@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { ClientError } from "../app/error.js";
-import { maybeGetCurrentCommand } from "../command/command.js";
+import { type Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
 import { GGTError, IsBug } from "../output/report.js";
@@ -30,18 +30,14 @@ export class YarnNotFoundError extends GGTError {
 export class UnknownDirectoryError extends GGTError {
   isBug = IsBug.NO;
 
-  constructor(
-    readonly ctx: Context,
-    readonly opts: { directory: Directory; args: SyncJsonArgsResult },
-  ) {
+  constructor(readonly details: { command: Command; directory: Directory; args: SyncJsonArgsResult }) {
     super('The ".gadget/sync.json" file was invalid or not found');
   }
 
   protected render(): string {
-    const cmd = maybeGetCurrentCommand(this.ctx);
-    const dir = this.opts.directory.path;
+    const dir = this.details.directory.path;
 
-    switch (cmd) {
+    switch (this.details.command) {
       case "add":
       case "open":
       case "status":
@@ -50,7 +46,7 @@ export class UnknownDirectoryError extends GGTError {
 
             ${dir}
 
-          In order to use "ggt ${cmd}", you must run it within a directory
+          In order to use "ggt ${this.details.command}", you must run it within a directory
           that has already been initialized with "ggt dev".
         `;
       case "dev":
@@ -62,7 +58,7 @@ export class UnknownDirectoryError extends GGTError {
           If you're running "ggt dev" for the first time, we recommend
           using a gadget specific directory like this:
 
-            ggt dev ~/gadget/${this.opts.args["--app"] ?? "<name>"}
+            ggt dev ~/gadget/${this.details.args["--app"] ?? "<name>"}
 
           To use a non-empty directory without a ".gadget/sync.json" file,
           run "ggt dev" again with the "--allow-unknown-directory" flag:
@@ -76,9 +72,9 @@ export class UnknownDirectoryError extends GGTError {
             ${dir}
 
           If you're certain you want to use this directory, you can run
-          "ggt ${cmd}" again with the "--allow-unknown-directory" flag:
+          "ggt ${this.details.command}" again with the "--allow-unknown-directory" flag:
 
-            ggt ${cmd} --allow-unknown-directory
+            ggt ${this.details.command} --allow-unknown-directory
         `;
     }
   }

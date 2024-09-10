@@ -46,7 +46,7 @@ export const run: Run<typeof args> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { args, directory });
+  const syncJson = await SyncJson.loadOrInit(ctx, { command: "push", args, directory });
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
 
@@ -60,5 +60,5 @@ export const run: Run<typeof args> = async (ctx, args) => {
     await filesync.print(ctx, { hashes });
   }
 
-  await filesync.push(ctx, { hashes });
+  await filesync.push(ctx, { command: "push", hashes });
 };

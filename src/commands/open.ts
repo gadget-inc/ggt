@@ -67,16 +67,16 @@ export const usage: Usage = (_ctx) => {
 
 export const run: Run<OpenArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { args, directory });
+  const syncJson = await SyncJson.load(ctx, { command: "open", args, directory });
   if (!syncJson) {
-    throw new UnknownDirectoryError(ctx, { args, directory });
+    throw new UnknownDirectoryError({ command: "open", args, directory });
   }
 
   const location = args._[0] as Location | undefined;
   if (!location) {
-    await open(`https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}`);
+    await open(`https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}`);
     println`
-      Opened editor for environment {cyanBright ${syncJson.env.name}}.
+      Opened editor for environment {cyanBright ${syncJson.environment.name}}.
     `;
     return;
   }
@@ -94,23 +94,23 @@ export const run: Run<OpenArgs> = async (ctx, args) => {
 
   switch (location) {
     case "logs": {
-      await open(`https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}/logs`);
+      await open(`https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}/logs`);
       println`
-        Opened log viewer for environment {cyanBright ${syncJson.env.name}}.
+        Opened log viewer for environment {cyanBright ${syncJson.environment.name}}.
       `;
       break;
     }
     case "permissions": {
-      await open(`https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}/settings/permissions`);
+      await open(`https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}/settings/permissions`);
       println`
-        Opened permissions settings for environment {cyanBright ${syncJson.env.name}}.
+        Opened permissions settings for environment {cyanBright ${syncJson.environment.name}}.
       `;
       break;
     }
     case "data":
     case "schema": {
       const view = args._[0];
-      const remoteModelApiIdentifiers = (await getModels(ctx)).map((e) => e.apiIdentifier);
+      const remoteModelApiIdentifiers = (await getModels(ctx, syncJson.environment)).map((e) => e.apiIdentifier);
 
       let modelApiIdentifier = args._[1];
       if (!modelApiIdentifier) {
@@ -140,9 +140,11 @@ export const run: Run<OpenArgs> = async (ctx, args) => {
         `);
       }
 
-      await open(`https://${syncJson.app.primaryDomain}/edit/${syncJson.env.name}/model/${modelApiIdentifier}/${view}`);
+      await open(
+        `https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}/model/${modelApiIdentifier}/${view}`,
+      );
       println`
-        Opened ${view} viewer for environment {cyanBright ${syncJson.env.name}} for model {cyanBright ${modelApiIdentifier}}.
+        Opened ${view} viewer for environment {cyanBright ${syncJson.environment.name}} for model {cyanBright ${modelApiIdentifier}}.
       `;
       break;
     }

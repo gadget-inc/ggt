@@ -1,13 +1,14 @@
 import assert from "node:assert";
 import { z } from "zod";
 import { login } from "../../commands/login.js";
-import { maybeGetCurrentCommand } from "../command/command.js";
+import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { maybeLoadAuthHeaders, swallowUnauthorized } from "../http/auth.js";
 import { http } from "../http/http.js";
 import { confirm } from "../output/confirm.js";
 import { println } from "../output/print.js";
+import { setSentryUser } from "../output/sentry.js";
 
 const User = z.object({
   id: z.union([z.string(), z.number()]).transform(Number),
@@ -17,22 +18,6 @@ const User = z.object({
 
 export type User = z.infer<typeof User>;
 
-const kUser = Symbol.for("user");
-
-export const maybeGetCurrentUser = (ctx: Context): User | undefined => {
-  return ctx.get(kUser) as User | undefined;
-};
-
-export const getCurrentUser = (ctx: Context): User => {
-  const user = maybeGetCurrentUser(ctx);
-  assert(user, "missing user");
-  return user;
-};
-
-export const setCurrentUser = (ctx: Context, user: User): void => {
-  ctx.set(kUser, user);
-};
-
 /**
  * Retrieves the currently logged in user from Gadgets API.
  *
@@ -40,11 +25,6 @@ export const setCurrentUser = (ctx: Context, user: User): void => {
  * current user, or undefined if the user is not authenticated.
  */
 export const getUser = async (ctx: Context): Promise<User | undefined> => {
-  let user = maybeGetCurrentUser(ctx);
-  if (user) {
-    return user;
-  }
-
   const headers = maybeLoadAuthHeaders(ctx);
   if (!headers) {
     return undefined;
@@ -59,9 +39,10 @@ export const getUser = async (ctx: Context): Promise<User | undefined> => {
       resolveBodyOnly: true,
     });
 
-    user = User.parse(json);
-    ctx.set(kUser, user);
-    ctx.log.info("loaded user");
+    const user = User.parse(json);
+    ctx.log.info("loaded user", { user: { id: user.id } }, { user });
+
+    setSentryUser(user);
 
     return user;
   } catch (error) {
@@ -77,7 +58,7 @@ export const getUser = async (ctx: Context): Promise<User | undefined> => {
  * @param ctx - The current context.
  * @returns A Promise that resolves to the current user.
  */
-export const getUserOrLogin = async (ctx: Context): Promise<User> => {
+export const getUserOrLogin = async (ctx: Context, command: Command): Promise<User> => {
   let user = await getUser(ctx);
   if (user) {
     return user;
@@ -86,7 +67,7 @@ export const getUserOrLogin = async (ctx: Context): Promise<User> => {
   ctx.log.info("prompting user to log in");
   println({
     ensureEmptyLineAbove: true,
-    content: `You must be logged in to use "ggt ${maybeGetCurrentCommand(ctx)}".`,
+    content: `You must be logged in to use "ggt ${command}".`,
   });
 
   await confirm({ ensureEmptyLineAbove: true, content: "Would you like to log in?" });

@@ -10,7 +10,7 @@ import { loadAuthHeaders } from "../http/auth.js";
 import { http, type HttpOptions } from "../http/http.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
 import { isObject } from "../util/is.js";
-import { getCurrentApp, getCurrentEnv } from "./context.js";
+import type { Environment } from "./app.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
 import { ClientError } from "./error.js";
 
@@ -30,21 +30,20 @@ export class Client {
 
   readonly ctx: Context;
 
-  readonly endpoint: string;
-
   private _graphqlWsClient: ReturnType<typeof createClient>;
 
-  constructor(ctx: Context, endpoint: string) {
+  constructor(
+    ctx: Context,
+    readonly environment: Environment,
+    readonly endpoint: string,
+  ) {
     this.ctx = ctx.child({ name: "client" });
-    this.endpoint = endpoint;
-    const app = getCurrentApp(this.ctx);
-    const env = getCurrentEnv(this.ctx);
 
     this._graphqlWsClient = createClient({
-      url: `wss://${app.slug}.${config.domains.app}/edit/api/graphql-ws`,
+      url: `wss://${environment.application.slug}.${config.domains.app}/edit/api/graphql-ws`, // FIXME: this assumes this is an Edit client
       shouldRetry: () => true,
       connectionParams: {
-        environment: env.name,
+        environment: environment.name,
       },
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
@@ -155,13 +154,10 @@ export class Client {
       http?: HttpOptions;
     },
   ): Promise<ExecutionResult<Operation["Data"], Operation["Extensions"]>> {
-    const app = getCurrentApp(this.ctx);
-    const env = getCurrentEnv(this.ctx);
-
-    let subdomain = app.slug;
-    if (app.multiEnvironmentEnabled) {
-      subdomain += `--${env.name}`;
-    } else if (app.hasSplitEnvironments) {
+    let subdomain = this.environment.application.slug;
+    if (this.environment.application.multiEnvironmentEnabled) {
+      subdomain += `--${this.environment.name}`;
+    } else if (this.environment.application.hasSplitEnvironments) {
       subdomain += "--development";
     }
 
@@ -170,7 +166,7 @@ export class Client {
         context: { ctx },
         method: "POST",
         url: `https://${subdomain}.${config.domains.app}${this.endpoint}`,
-        headers: { ...loadAuthHeaders(ctx), "x-gadget-environment": env.name },
+        headers: { ...loadAuthHeaders(ctx), "x-gadget-environment": this.environment.name },
         json: { query: request.operation, variables: unthunk(request.variables) },
         responseType: "json",
         resolveBodyOnly: true,

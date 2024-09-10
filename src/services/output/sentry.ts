@@ -7,6 +7,7 @@ import { config } from "../config/config.js";
 import { env } from "../config/env.js";
 import { serializeError } from "../util/object.js";
 import { packageJson } from "../util/package-json.js";
+import type { FieldPrimitive } from "./log/field.js";
 import type { GGTError } from "./report.js";
 
 let Sentry: typeof SentryModule | undefined;
@@ -26,27 +27,15 @@ export const initSentry = async (_ctx: Context, args: RootArgsResult): Promise<v
   });
 };
 
-export const sendErrorToSentry = async (ctx: Context, error: GGTError): Promise<void> => {
+export const sendErrorToSentry = async (error: GGTError): Promise<void> => {
   if (!Sentry) {
     return;
   }
 
-  const { maybeGetCurrentApp, maybeGetCurrentEnv } = await import("../app/context.js");
-  const { maybeGetCurrentUser } = await import("../user/user.js");
-
-  const user = maybeGetCurrentUser(ctx);
-
   Sentry.captureException(error, {
     event_id: error.id,
     captureContext: {
-      user: user && {
-        id: String(user.id),
-        email: user.email,
-        username: user.name ?? undefined,
-      },
       tags: {
-        application_id: maybeGetCurrentApp(ctx)?.id,
-        environment_id: maybeGetCurrentEnv(ctx)?.id,
         arch: config.arch,
         bug: error.isBug,
         environment: env.value,
@@ -85,4 +74,20 @@ export const addSentryBreadcrumb = (breadcrumb: SentryModule.Breadcrumb): void =
   }
 
   Sentry.addBreadcrumb(breadcrumb);
+};
+
+export const setSentryUser = (user: SentryModule.User): void => {
+  if (!Sentry) {
+    return;
+  }
+
+  Sentry.setUser(user);
+};
+
+export const setSentryTags = (tags: Record<string, FieldPrimitive>): void => {
+  if (!Sentry) {
+    return;
+  }
+
+  Sentry.setTags(tags);
 };

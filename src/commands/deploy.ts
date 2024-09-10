@@ -59,11 +59,11 @@ export const usage: Usage = (_ctx) => {
 
 export const run: Run<DeployArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { args, directory });
+  const syncJson = await SyncJson.loadOrInit(ctx, { command: "deploy", args, directory });
 
   println({
     ensureEmptyLineAbove: true,
-    content: `Deploying ${syncJson.env.name} to ${terminalLink(syncJson.app.primaryDomain, `https://${syncJson.app.primaryDomain}/`)}`,
+    content: `Deploying ${syncJson.environment.name} to ${terminalLink(syncJson.environment.application.primaryDomain, `https://${syncJson.environment.application.primaryDomain}/`)}`,
   });
 
   const filesync = new FileSync(syncJson);
@@ -111,7 +111,7 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
       });
     }
 
-    await filesync.push(ctx, { hashes, force: implicitForce || args["--force"] });
+    await filesync.push(ctx, { command: "deploy", hashes, force: implicitForce || args["--force"] });
   }
 
   const variables = {
@@ -309,7 +309,7 @@ export const stepToSpinnerStart = (syncJson: SyncJson, step: string): string => 
     case AppDeploymentSteps.CONVERGING_STORAGE:
       return "Setting up database.";
     case AppDeploymentSteps.PUBLISHING_TREE:
-      return `Copying ${syncJson.env.name}.`;
+      return `Copying ${syncJson.environment.name}.`;
     case AppDeploymentSteps.RELOADING_SANDBOX:
       return "Restarting app.";
     case AppDeploymentSteps.COMPLETED:
@@ -329,7 +329,7 @@ export const stepToSpinnerEnd = (syncJson: SyncJson, step: string): string => {
     case AppDeploymentSteps.CONVERGING_STORAGE:
       return `Setup database. ${ts()}`;
     case AppDeploymentSteps.PUBLISHING_TREE:
-      return `Copied ${syncJson.env.name}. ${ts()}`;
+      return `Copied ${syncJson.environment.name}. ${ts()}`;
     case AppDeploymentSteps.RELOADING_SANDBOX:
       return `Restarted app. ${ts()}`;
     case AppDeploymentSteps.COMPLETED:

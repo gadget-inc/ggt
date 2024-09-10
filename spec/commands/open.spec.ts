@@ -1,6 +1,6 @@
 import { default as openApp } from "open";
 import { beforeEach, describe, expect, it } from "vitest";
-import { testApp, testEnvironment } from "../../spec/__support__/app.js";
+import { nockTestApps, testApp, testEnvironment } from "../../spec/__support__/app.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { mockSelectOnce } from "../../spec/__support__/mock.js";
 import * as open from "../../src/commands/open.js";
@@ -11,103 +11,104 @@ import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
 import { nockApiResponse } from "../__support__/graphql.js";
 import { expectStdout } from "../__support__/output.js";
-import { describeWithAuth } from "../utils.js";
+import { loginTestUser } from "../__support__/user.js";
 
 describe("open", () => {
-  describeWithAuth(() => {
-    beforeEach(async () => {
-      await makeSyncScenario();
-    });
+  beforeEach(async () => {
+    loginTestUser();
+    nockTestApps();
+    await makeSyncScenario();
+  });
 
-    it("opens a browser to the app's editor", async () => {
-      await open.run(testCtx, makeArgs(open.args));
+  it("opens a browser to the app's editor", async () => {
+    await open.run(testCtx, makeArgs(open.args));
 
-      expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}`);
+    expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}`);
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Opened editor for environment development.
         "
       `);
-    });
+  });
 
-    it("opens a browser to the app's logs viewer", async () => {
-      await open.run(testCtx, makeArgs(open.args, "open", "logs"));
+  it("opens a browser to the app's logs viewer", async () => {
+    await open.run(testCtx, makeArgs(open.args, "open", "logs"));
 
-      expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/logs`);
+    expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/logs`);
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Opened log viewer for environment development.
         "
       `);
-    });
+  });
 
-    it("opens a browser to the app's permissions settings page", async () => {
-      await open.run(testCtx, makeArgs(open.args, "open", "permissions"));
+  it("opens a browser to the app's permissions settings page", async () => {
+    await open.run(testCtx, makeArgs(open.args, "open", "permissions"));
 
-      expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/settings/permissions`);
+    expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/settings/permissions`);
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Opened permissions settings for environment development.
         "
       `);
-    });
+  });
 
-    it("opens a browser to the app's data page for a specified model", async () => {
-      nockGetModels();
+  it("opens a browser to the app's data page for a specified model", async () => {
+    nockGetModels();
 
-      await open.run(testCtx, makeArgs(open.args, "open", "data", "modelA"));
+    await open.run(testCtx, makeArgs(open.args, "open", "data", "modelA"));
 
-      expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/model/modelA/data`);
+    expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/model/modelA/data`);
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Opened data viewer for environment development for model modelA.
         "
       `);
-    });
+  });
 
-    it("opens a browser to the app's schema page for a specified model", async () => {
-      nockGetModels();
+  it("opens a browser to the app's schema page for a specified model", async () => {
+    nockGetModels();
 
-      await open.run(testCtx, makeArgs(open.args, "open", "schema", "modelA"));
+    await open.run(testCtx, makeArgs(open.args, "open", "schema", "modelA"));
 
-      expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/model/modelA/schema`);
+    expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/model/modelA/schema`);
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Opened schema viewer for environment development for model modelA.
         "
       `);
-    });
+  });
 
-    it("to the model's data page based on user selection from a list of available models if --show-all flag is passed", async () => {
-      nockGetModels();
-      mockSelectOnce("user");
+  it("to the model's data page based on user selection from a list of available models if --show-all flag is passed", async () => {
+    nockGetModels();
+    mockSelectOnce("user");
 
-      await open.run(testCtx, makeArgs(open.args, "open", "data", "--show-all"));
+    await open.run(testCtx, makeArgs(open.args, "open", "data", "--show-all"));
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Opened data viewer for environment development for model user.
         "
       `);
-    });
+  });
 
-    it("to the model's schema page based on user selection from a list of available models if --show-all flag is passed", async () => {
-      nockGetModels();
-      mockSelectOnce("user");
+  it("to the model's schema page based on user selection from a list of available models if --show-all flag is passed", async () => {
+    nockGetModels();
+    mockSelectOnce("user");
 
-      await open.run(testCtx, makeArgs(open.args, "open", "schema", "--show-all"));
+    await open.run(testCtx, makeArgs(open.args, "open", "schema", "--show-all"));
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Opened schema viewer for environment development for model user.
         "
       `);
-    });
+  });
 
-    it("displays the closest match for a model that does not exist", async () => {
-      nockGetModels();
+  it("displays the closest match for a model that does not exist", async () => {
+    nockGetModels();
 
-      const error: ArgError = await expectError(() => open.run(testCtx, makeArgs(open.args, "open", "data", "use")));
-      expect(error).toBeInstanceOf(ArgError);
-      expect(error.sprint()).toMatchInlineSnapshot(`
+    const error: ArgError = await expectError(() => open.run(testCtx, makeArgs(open.args, "open", "data", "use")));
+    expect(error).toBeInstanceOf(ArgError);
+    expect(error.sprint()).toMatchInlineSnapshot(`
         "✘ Unknown model use
 
         Did you mean user?
@@ -116,7 +117,6 @@ describe("open", () => {
 
           ggt open data --show-all"
       `);
-    });
   });
 });
 

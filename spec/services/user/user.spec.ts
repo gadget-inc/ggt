@@ -10,7 +10,7 @@ import { getUser, getUserOrLogin } from "../../../src/services/user/user.js";
 import { testCtx } from "../../__support__/context.js";
 import { mock, mockConfirmOnce } from "../../__support__/mock.js";
 import { expectProcessExit } from "../../__support__/process.js";
-import { loginTestUser, testUser } from "../../__support__/user.js";
+import { loginTestUser, loginTestUserWithCookie, testUser } from "../../__support__/user.js";
 
 describe("loadUser", () => {
   it("returns the user if the session is set", async () => {
@@ -62,7 +62,7 @@ describe("getUserOrLogin", () => {
     vi.spyOn(process, "exit");
 
     mock(login, "login", () => {
-      loginTestUser({ optional: false });
+      loginTestUserWithCookie({ optional: false });
     });
 
     writeSession(testCtx, undefined);

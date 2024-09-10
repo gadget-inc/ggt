@@ -36,7 +36,6 @@ import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { mockSystemTime } from "../../__support__/time.js";
 import { loginTestUser } from "../../__support__/user.js";
-import { describeWithAuth } from "../../utils.js";
 
 describe("FileSync._writeToLocalFilesystem", () => {
   // let testCtx: Context<SyncJsonArgs>;
@@ -1892,17 +1891,21 @@ describe("FileSync.sync", () => {
 });
 
 describe("FileSync.push", () => {
-  describeWithAuth(() => {
-    it("automatically sends local changes to gadget when gadget hasn't made any changes", async () => {
-      const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-        localFiles: {
-          "local-file.js": "// local",
-        },
-      });
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
+  });
 
-      await filesync.push(testCtx, { command: "push" });
+  it("automatically sends local changes to gadget when gadget hasn't made any changes", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      localFiles: {
+        "local-file.js": "// local",
+      },
+    });
 
-      await expectDirs().resolves.toMatchInlineSnapshot(`
+    await filesync.push(testCtx, { command: "push" });
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {
             "1": {
@@ -1925,25 +1928,25 @@ describe("FileSync.push", () => {
         }
       `);
 
-      await expectLocalAndGadgetHashesMatch();
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("discards gadget changes and sends local changes to gadget after confirmation", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {},
+      localFiles: {
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        "gadget-file.js": "// gadget",
+      },
     });
 
-    it("discards gadget changes and sends local changes to gadget after confirmation", async () => {
-      const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-        filesVersion1Files: {},
-        localFiles: {
-          "local-file.js": "// local",
-        },
-        gadgetFiles: {
-          "gadget-file.js": "// gadget",
-        },
-      });
+    mockConfirmOnce();
 
-      mockConfirmOnce();
+    await filesync.push(testCtx, { command: "push" });
 
-      await filesync.push(testCtx, { command: "push" });
-
-      await expectDirs().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {
             "1": {
@@ -1970,25 +1973,25 @@ describe("FileSync.push", () => {
         }
       `);
 
-      await expectLocalAndGadgetHashesMatch();
+    await expectLocalAndGadgetHashesMatch();
 
-      expect(confirm).toHaveBeenCalledTimes(1);
+    expect(confirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("discards gadget changes and sends local changes to gadget if --force is passed", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {},
+      localFiles: {
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        "gadget-file.js": "// gadget",
+      },
     });
 
-    it("discards gadget changes and sends local changes to gadget if --force is passed", async () => {
-      const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-        filesVersion1Files: {},
-        localFiles: {
-          "local-file.js": "// local",
-        },
-        gadgetFiles: {
-          "gadget-file.js": "// gadget",
-        },
-      });
+    await filesync.push(testCtx, { command: "push", force: true });
 
-      await filesync.push(testCtx, { command: "push", force: true });
-
-      await expectDirs().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {
             "1": {
@@ -2015,27 +2018,27 @@ describe("FileSync.push", () => {
         }
       `);
 
-      await expectLocalAndGadgetHashesMatch();
+    await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("discards gadget changes and sends local changes to gadget if --force is passed, except for .gadget/ files", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".gadget/client.js": "// client",
+      },
+      localFiles: {
+        ".gadget/client.js": "// client",
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        ".gadget/client.js": "// client v2",
+        "gadget-file.js": "// gadget",
+      },
     });
 
-    it("discards gadget changes and sends local changes to gadget if --force is passed, except for .gadget/ files", async () => {
-      const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-        filesVersion1Files: {
-          ".gadget/client.js": "// client",
-        },
-        localFiles: {
-          ".gadget/client.js": "// client",
-          "local-file.js": "// local",
-        },
-        gadgetFiles: {
-          ".gadget/client.js": "// client v2",
-          "gadget-file.js": "// gadget",
-        },
-      });
+    await filesync.push(testCtx, { command: "push", force: true });
 
-      await filesync.push(testCtx, { command: "push", force: true });
-
-      await expectDirs().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {
             "1": {
@@ -2067,8 +2070,7 @@ describe("FileSync.push", () => {
         }
       `);
 
-      await expect(expectLocalAndGadgetHashesMatch()).rejects.toThrowError();
-    });
+    await expect(expectLocalAndGadgetHashesMatch()).rejects.toThrowError();
   });
 });
 

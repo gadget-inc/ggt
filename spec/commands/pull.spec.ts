@@ -1,25 +1,30 @@
-import { describe, it } from "vitest";
+import { beforeEach, describe, it } from "vitest";
 import * as pull from "../../src/commands/pull.js";
+import { nockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
-import { describeWithAuth } from "../utils.js";
+import { loginTestUser } from "../__support__/user.js";
 
 describe("pull", () => {
-  describeWithAuth(() => {
-    it("writes changes from gadget to the local filesystem", async () => {
-      const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
+  });
 
-      const { expectDirs } = await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-        gadgetFiles: {
-          ...files.reduce((acc, filename) => ({ ...acc, [filename]: filename }), {}),
-        },
-      });
+  it("writes changes from gadget to the local filesystem", async () => {
+    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
 
-      await expectDirs().resolves.toMatchInlineSnapshot(`
+    const { expectDirs } = await makeSyncScenario({
+      localFiles: {
+        ".gadget/": "",
+      },
+      gadgetFiles: {
+        ...files.reduce((acc, filename) => ({ ...acc, [filename]: filename }), {}),
+      },
+    });
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {
             "1": {
@@ -59,9 +64,9 @@ describe("pull", () => {
         }
       `);
 
-      await pull.run(testCtx, makeArgs(pull.args));
+    await pull.run(testCtx, makeArgs(pull.args));
 
-      await expectDirs().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {
             "1": {
@@ -110,25 +115,25 @@ describe("pull", () => {
           },
         }
       `);
+  });
+
+  it("doesn't write changes from gadget to the local filesystem if the file is ignored", async () => {
+    const files = Array.from({ length: 10 }, (_, i) => `tmp/file${i + 1}.txt`);
+
+    const { expectDirs } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".ignore": "**/tmp",
+      },
+      gadgetFiles: {
+        ".ignore": "**/tmp",
+        ...files.reduce((acc, filename) => ({ ...acc, [filename]: filename }), {}),
+      },
+      localFiles: {
+        ".ignore": "**/tmp",
+      },
     });
 
-    it("doesn't write changes from gadget to the local filesystem if the file is ignored", async () => {
-      const files = Array.from({ length: 10 }, (_, i) => `tmp/file${i + 1}.txt`);
-
-      const { expectDirs } = await makeSyncScenario({
-        filesVersion1Files: {
-          ".ignore": "**/tmp",
-        },
-        gadgetFiles: {
-          ".ignore": "**/tmp",
-          ...files.reduce((acc, filename) => ({ ...acc, [filename]: filename }), {}),
-        },
-        localFiles: {
-          ".ignore": "**/tmp",
-        },
-      });
-
-      await expectDirs().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {
             "1": {
@@ -159,9 +164,9 @@ describe("pull", () => {
         }
       `);
 
-      await pull.run(testCtx, makeArgs(pull.args));
+    await pull.run(testCtx, makeArgs(pull.args));
 
-      await expectDirs().resolves.toMatchInlineSnapshot(`
+    await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {
             "1": {
@@ -191,6 +196,5 @@ describe("pull", () => {
           },
         }
       `);
-    });
   });
 });

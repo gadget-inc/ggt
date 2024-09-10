@@ -1,9 +1,7 @@
 import nock from "nock";
-import { expect } from "vitest";
 import { EnvironmentType, type Application, type Environment } from "../../src/services/app/app.js";
 import { config } from "../../src/services/config/config.js";
-import { loadCookie } from "../../src/services/http/auth.js";
-import { testCtx } from "./context.js";
+import { matchAuthHeader } from "./user.js";
 
 /**
  * A Gadget app to use in tests.
@@ -107,14 +105,11 @@ export const testAppWith0Environments: Application = Object.freeze({
  * Sets up a response for the apps endpoint that `getApps` uses.
  */
 export const nockTestApps = ({ optional = true, persist = true } = {}): void => {
-  nock(`https://${config.domains.services}`)
-    .get("/auth/api/apps")
-    .optionally(optional)
-    .matchHeader("cookie", (value) => {
-      const cookie = loadCookie(testCtx);
-      expect(cookie).toBeTruthy();
-      return value === cookie;
-    })
-    .reply(200, [testApp, testApp2, testAppWith2Environments, testAppWith0Environments])
-    .persist(persist);
+  matchAuthHeader(
+    nock(`https://${config.domains.services}`)
+      .get("/auth/api/apps")
+      .optionally(optional)
+      .reply(200, [testApp, testApp2, testAppWith2Environments, testAppWith0Environments])
+      .persist(persist),
+  );
 };

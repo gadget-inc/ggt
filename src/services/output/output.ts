@@ -119,19 +119,7 @@ export class Output {
       return;
     }
 
-    if (!env.testLike) {
-      process.stdout.write(text);
-      return;
-    }
-
-    // we use console.log/error in tests since vitest doesn't display
-    // process.stdout/stderr correctly, so we need to remove the
-    // trailing newline because console.log/error adds one
-    if (text.endsWith("\n")) {
-      text = text.slice(0, -1);
-    }
-
-    console.log(text);
+    process.stdout.write(text);
   }
 
   private _writeStderr(text: string): void {
@@ -139,19 +127,7 @@ export class Output {
       return;
     }
 
-    if (!env.testLike) {
-      process.stderr.write(text);
-      return;
-    }
-
-    // we use console.log/error in tests since vitest doesn't display
-    // process.stdout/stderr correctly, so we need to remove the
-    // trailing newline because console.log/error adds one
-    if (text.endsWith("\n")) {
-      text = text.slice(0, -1);
-    }
-
-    console.error(text);
+    process.stderr.write(text);
   }
 
   private _clearStickyText(): void {

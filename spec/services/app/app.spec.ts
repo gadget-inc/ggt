@@ -5,14 +5,14 @@ import { config } from "../../../src/services/config/config.js";
 import { loadCookie } from "../../../src/services/http/auth.js";
 import { testApp } from "../../__support__/app.js";
 import { testCtx } from "../../__support__/context.js";
-import { loginTestUser } from "../../__support__/user.js";
+import { loginTestUser, matchAuthHeader } from "../../__support__/user.js";
 
 describe("getApplications", () => {
   it("returns the available apps if the session is set", async () => {
     loginTestUser();
 
     const apps = [testApp];
-    nock(`https://${config.domains.services}`).get("/auth/api/apps").matchHeader("cookie", loadCookie(testCtx)!).reply(200, apps);
+    matchAuthHeader(nock(`https://${config.domains.services}`).get("/auth/api/apps").reply(200, apps));
 
     await expect(getApplications(testCtx)).resolves.toEqual(apps);
     expect(nock.isDone()).toBe(true);

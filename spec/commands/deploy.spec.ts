@@ -1,131 +1,136 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable no-irregular-whitespace */
-import { describe, it } from "vitest";
+import { beforeEach, describe, it } from "vitest";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
 import * as deploy from "../../src/commands/deploy.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
+import { nockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
 import { expectStdout } from "../__support__/output.js";
 import { mockSystemTime } from "../__support__/time.js";
-import { describeWithAuth } from "../utils.js";
+import { loginTestUser } from "../__support__/user.js";
 
 describe("deploy", () => {
   mockSystemTime();
 
-  describeWithAuth(() => {
-    it("does not try to deploy if any problems were detected and displays the problems", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
+  });
 
-      const mockEditGraphQL = makeMockEditSubscriptions();
+  it("does not try to deploy if any problems were detected and displays the problems", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      await deploy.run(testCtx, makeArgs(deploy.args));
+    const mockEditGraphQL = makeMockEditSubscriptions();
 
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+    await deploy.run(testCtx, makeArgs(deploy.args));
 
-      await expectProcessExit(
-        () =>
-          publishStatus.emitResponse({
-            data: {
-              publishStatus: {
-                publishStarted: false,
-                remoteFilesVersion: "1",
-                progress: "NOT_STARTED",
-                issues: [
-                  {
-                    severity: "Error",
-                    message: "Unexpected keyword or identifier.",
-                    node: {
-                      type: "SourceFile",
-                      key: "routes/GET-hello.js",
-                      apiIdentifier: "routes/GET-hello.js",
-                      name: null,
-                      fieldType: null,
-                      parentKey: null,
-                      parentApiIdentifier: null,
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+    await expectProcessExit(
+      () =>
+        publishStatus.emitResponse({
+          data: {
+            publishStatus: {
+              publishStarted: false,
+              remoteFilesVersion: "1",
+              progress: "NOT_STARTED",
+              issues: [
+                {
+                  severity: "Error",
+                  message: "Unexpected keyword or identifier.",
+                  node: {
+                    type: "SourceFile",
+                    key: "routes/GET-hello.js",
+                    apiIdentifier: "routes/GET-hello.js",
+                    name: null,
+                    fieldType: null,
+                    parentKey: null,
+                    parentApiIdentifier: null,
+                  },
+                  nodeLabels: [
+                    {
+                      type: "File",
+                      identifier: "line 13",
                     },
-                    nodeLabels: [
-                      {
-                        type: "File",
-                        identifier: "line 13",
-                      },
-                    ],
+                  ],
+                },
+                {
+                  severity: "Error",
+                  message: "Identifier expected.",
+                  node: {
+                    type: "SourceFile",
+                    key: "routes/GET-test.ts",
+                    apiIdentifier: "routes/GET-test.ts",
+                    name: null,
+                    fieldType: null,
+                    parentKey: null,
+                    parentApiIdentifier: null,
                   },
-                  {
-                    severity: "Error",
-                    message: "Identifier expected.",
-                    node: {
-                      type: "SourceFile",
-                      key: "routes/GET-test.ts",
-                      apiIdentifier: "routes/GET-test.ts",
-                      name: null,
-                      fieldType: null,
-                      parentKey: null,
-                      parentApiIdentifier: null,
+                  nodeLabels: [
+                    {
+                      type: "File",
+                      identifier: "line 10",
                     },
-                    nodeLabels: [
-                      {
-                        type: "File",
-                        identifier: "line 10",
-                      },
-                    ],
+                  ],
+                },
+                {
+                  severity: "Error",
+                  message: "Expression expected.",
+                  node: {
+                    type: "SourceFile",
+                    key: "routes/GET-test.ts",
+                    apiIdentifier: "routes/GET-test.ts",
+                    name: null,
+                    fieldType: null,
+                    parentKey: null,
+                    parentApiIdentifier: null,
                   },
-                  {
-                    severity: "Error",
-                    message: "Expression expected.",
-                    node: {
-                      type: "SourceFile",
-                      key: "routes/GET-test.ts",
-                      apiIdentifier: "routes/GET-test.ts",
-                      name: null,
-                      fieldType: null,
-                      parentKey: null,
-                      parentApiIdentifier: null,
+                  nodeLabels: [
+                    {
+                      type: "File",
+                      identifier: "line 15",
                     },
-                    nodeLabels: [
-                      {
-                        type: "File",
-                        identifier: "line 15",
-                      },
-                    ],
+                  ],
+                },
+                {
+                  severity: "Error",
+                  message: 'Unknown identifier "tru"',
+                  node: {
+                    type: "SourceFile",
+                    key: "models/example/comp.gelly",
+                    apiIdentifier: "models/example/comp.gelly",
+                    name: null,
+                    fieldType: null,
+                    parentKey: null,
+                    parentApiIdentifier: null,
                   },
-                  {
-                    severity: "Error",
-                    message: 'Unknown identifier "tru"',
-                    node: {
-                      type: "SourceFile",
-                      key: "models/example/comp.gelly",
-                      apiIdentifier: "models/example/comp.gelly",
-                      name: null,
-                      fieldType: null,
-                      parentKey: null,
-                      parentApiIdentifier: null,
+                  nodeLabels: [
+                    {
+                      type: "File",
+                      identifier: "",
                     },
-                    nodeLabels: [
-                      {
-                        type: "File",
-                        identifier: "",
-                      },
-                    ],
-                  },
-                  {
-                    severity: "Error",
-                    message: "Add google keys for production",
-                    node: null,
-                    nodeLabels: null,
-                  },
-                ],
-                status: undefined,
-              },
+                  ],
+                },
+                {
+                  severity: "Error",
+                  message: "Add google keys for production",
+                  node: null,
+                  nodeLabels: null,
+                },
+              ],
+              status: undefined,
             },
-          }),
-        1,
-      );
+          },
+        }),
+      1,
+    );
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -151,148 +156,148 @@ describe("deploy", () => {
         Aborting because ggt is not running in an interactive terminal.
         "
       `);
+  });
+
+  it("deploys even if there are problems when --allow-problems is passed", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditSubscriptions();
+
+    await deploy.run(testCtx, makeArgs(deploy.args, "deploy", "--allow-problems"));
+
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "NOT_STARTED",
+          issues: [
+            {
+              severity: "Error",
+              message: "Add google keys for production",
+              node: undefined,
+            },
+          ],
+          status: undefined,
+        },
+      },
     });
 
-    it("deploys even if there are problems when --allow-problems is passed", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const mockEditGraphQL = makeMockEditSubscriptions();
-
-      await deploy.run(testCtx, makeArgs(deploy.args, "deploy", "--allow-problems"));
-
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
-
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "NOT_STARTED",
-            issues: [
-              {
-                severity: "Error",
-                message: "Add google keys for production",
-                node: undefined,
-              },
-            ],
-            status: undefined,
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "STARTING",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "BUILDING_ASSETS",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "UPLOADING_ASSETS",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "UPLOADING_ASSETS",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "CONVERGING_STORAGE",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "CONVERGING_STORAGE",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "PUBLISHING_TREE",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "PUBLISHING_TREE",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "RELOADING_SANDBOX",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "RELOADING_SANDBOX",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "COMPLETED",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "COMPLETED",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
-          },
-        },
-      });
-
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -319,38 +324,38 @@ describe("deploy", () => {
         Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
         "
       `);
-    });
+  });
 
-    it("does not try to deploy if any deleted data will occur and displays the soon to be deleted data", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+  it("does not try to deploy if any deleted data will occur and displays the soon to be deleted data", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      const mockEditGraphQL = makeMockEditSubscriptions();
+    const mockEditGraphQL = makeMockEditSubscriptions();
 
-      await deploy.run(testCtx, makeArgs(deploy.args));
+    await deploy.run(testCtx, makeArgs(deploy.args));
 
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
-      await expectProcessExit(
-        () =>
-          publishStatus.emitResponse({
-            data: {
-              publishStatus: {
-                publishStarted: false,
-                remoteFilesVersion: "1",
-                progress: "NOT_STARTED",
-                issues: [],
-                deletedModelsAndFields: {
-                  deletedModels: ["modelA"],
-                  deletedModelFields: [],
-                },
-                status: undefined,
+    await expectProcessExit(
+      () =>
+        publishStatus.emitResponse({
+          data: {
+            publishStatus: {
+              publishStarted: false,
+              remoteFilesVersion: "1",
+              progress: "NOT_STARTED",
+              issues: [],
+              deletedModelsAndFields: {
+                deletedModels: ["modelA"],
+                deletedModelFields: [],
               },
+              status: undefined,
             },
-          }),
-        1,
-      );
+          },
+        }),
+      1,
+    );
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -366,146 +371,146 @@ describe("deploy", () => {
         Aborting because ggt is not running in an interactive terminal.
         "
       `);
+  });
+
+  it("deploys even if there are problems when --allow-data-delete is passed", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditSubscriptions();
+
+    await deploy.run(testCtx, makeArgs(deploy.args, "deploy", "--allow-data-delete"));
+
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "NOT_STARTED",
+          issues: [],
+          deletedModelsAndFields: {
+            deletedModels: ["modelA"],
+            deletedModelFields: [],
+          },
+          status: undefined,
+        },
+      },
     });
 
-    it("deploys even if there are problems when --allow-data-delete is passed", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const mockEditGraphQL = makeMockEditSubscriptions();
-
-      await deploy.run(testCtx, makeArgs(deploy.args, "deploy", "--allow-data-delete"));
-
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
-
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "NOT_STARTED",
-            issues: [],
-            deletedModelsAndFields: {
-              deletedModels: ["modelA"],
-              deletedModelFields: [],
-            },
-            status: undefined,
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "STARTING",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "BUILDING_ASSETS",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "UPLOADING_ASSETS",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "UPLOADING_ASSETS",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "CONVERGING_STORAGE",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "CONVERGING_STORAGE",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "PUBLISHING_TREE",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "PUBLISHING_TREE",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "RELOADING_SANDBOX",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "RELOADING_SANDBOX",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "COMPLETED",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "COMPLETED",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
-          },
-        },
-      });
-
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -532,142 +537,142 @@ describe("deploy", () => {
         Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
         "
       `);
+  });
+
+  it("deploys if there are no problems with the app", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditSubscriptions();
+
+    await deploy.run(testCtx, makeArgs(deploy.args));
+
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "NOT_STARTED",
+          issues: [],
+          status: undefined,
+        },
+      },
     });
 
-    it("deploys if there are no problems with the app", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const mockEditGraphQL = makeMockEditSubscriptions();
-
-      await deploy.run(testCtx, makeArgs(deploy.args));
-
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
-
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "NOT_STARTED",
-            issues: [],
-            status: undefined,
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "STARTING",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "BUILDING_ASSETS",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "UPLOADING_ASSETS",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "UPLOADING_ASSETS",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "CONVERGING_STORAGE",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "CONVERGING_STORAGE",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "PUBLISHING_TREE",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "PUBLISHING_TREE",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "RELOADING_SANDBOX",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "RELOADING_SANDBOX",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "COMPLETED",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "COMPLETED",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
-          },
-        },
-      });
-
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -688,28 +693,28 @@ describe("deploy", () => {
         Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
         "
       `);
-    });
+  });
 
-    it("can not deploy if the maximum number of applications has been reached", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+  it("can not deploy if the maximum number of applications has been reached", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      const mockEditGraphQL = makeMockEditSubscriptions();
-      const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, [
-        {
-          message: "GGT_PAYMENT_REQUIRED: Production environment limit reached. Upgrade your plan to deploy.",
-          extensions: {
-            requiresUpgrade: true,
-          },
+    const mockEditGraphQL = makeMockEditSubscriptions();
+    const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, [
+      {
+        message: "GGT_PAYMENT_REQUIRED: Production environment limit reached. Upgrade your plan to deploy.",
+        extensions: {
+          requiresUpgrade: true,
         },
-      ]);
+      },
+    ]);
 
-      await deploy.run(testCtx, makeArgs(deploy.args));
+    await deploy.run(testCtx, makeArgs(deploy.args));
 
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
-      await expectProcessExit(() => publishStatus.emitError(error), 1);
+    await expectProcessExit(() => publishStatus.emitError(error), 1);
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -718,28 +723,28 @@ describe("deploy", () => {
         Production environment limit reached. Upgrade your plan to deploy.
         "
       `);
-    });
+  });
 
-    it("prompts the user to confirm if there is going to be a deploy charge", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+  it("prompts the user to confirm if there is going to be a deploy charge", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      const mockEditGraphQL = makeMockEditSubscriptions();
-      const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, [
-        {
-          message: "GGT_PAYMENT_REQUIRED: Deploying this app to production will add $25.00 to your existing monthly plan.",
-          extensions: {
-            requiresAdditionalCharge: true,
-          },
+    const mockEditGraphQL = makeMockEditSubscriptions();
+    const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, [
+      {
+        message: "GGT_PAYMENT_REQUIRED: Deploying this app to production will add $25.00 to your existing monthly plan.",
+        extensions: {
+          requiresAdditionalCharge: true,
         },
-      ]);
+      },
+    ]);
 
-      await deploy.run(testCtx, makeArgs(deploy.args));
+    await deploy.run(testCtx, makeArgs(deploy.args));
 
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
-      await expectProcessExit(() => publishStatus.emitError(error), 1);
+    await expectProcessExit(() => publishStatus.emitError(error), 1);
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -752,73 +757,73 @@ describe("deploy", () => {
         Aborting because ggt is not running in an interactive terminal.
         "
       `);
+  });
+
+  it("exits if the subscription unexpectedly closes due to an Internal Error", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditSubscriptions();
+
+    const cause = {
+      type: "close",
+      code: 4500,
+      reason: "Internal Error",
+      wasClean: true,
+    };
+
+    const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, cause);
+
+    await deploy.run(testCtx, makeArgs(deploy.args));
+
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "NOT_STARTED",
+          issues: [],
+          status: undefined,
+        },
+      },
     });
 
-    it("exits if the subscription unexpectedly closes due to an Internal Error", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const mockEditGraphQL = makeMockEditSubscriptions();
-
-      const cause = {
-        type: "close",
-        code: 4500,
-        reason: "Internal Error",
-        wasClean: true,
-      };
-
-      const error = new ClientError(PUBLISH_STATUS_SUBSCRIPTION, cause);
-
-      await deploy.run(testCtx, makeArgs(deploy.args));
-
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
-
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "NOT_STARTED",
-            issues: [],
-            status: undefined,
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "STARTING",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "BUILDING_ASSETS",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
-          },
-        },
-      });
+    await expectProcessExit(() => publishStatus.emitError(error), 1);
 
-      await expectProcessExit(() => publishStatus.emitError(error), 1);
-
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -836,78 +841,78 @@ describe("deploy", () => {
         https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
         "
       `);
+  });
+
+  it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditSubscriptions();
+
+    await deploy.run(testCtx, makeArgs(deploy.args));
+
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "NOT_STARTED",
+          issues: [],
+          status: undefined,
+        },
+      },
     });
 
-    it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const mockEditGraphQL = makeMockEditSubscriptions();
-
-      await deploy.run(testCtx, makeArgs(deploy.args));
-
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
-
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "NOT_STARTED",
-            issues: [],
-            status: undefined,
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "STARTING",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: undefined,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: true,
-            remoteFilesVersion: "1",
-            progress: "BUILDING_ASSETS",
-            issues: [],
-            status: {
-              code: "Pending",
-              message: undefined,
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: false,
+          remoteFilesVersion: "1",
+          progress: "BUILDING_ASSETS",
+          issues: [],
+          status: {
+            code: "Errored",
+            message: "GGT_ASSET_BUILD_FAILED: An error occurred while building production assets",
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
           },
         },
-      });
+      },
+    });
 
-      await publishStatus.emitResponse({
-        data: {
-          publishStatus: {
-            publishStarted: false,
-            remoteFilesVersion: "1",
-            progress: "BUILDING_ASSETS",
-            issues: [],
-            status: {
-              code: "Errored",
-              message: "GGT_ASSET_BUILD_FAILED: An error occurred while building production assets",
-              output: "https://test.gadget.app/url/to/logs/with/traceId",
-            },
-          },
-        },
-      });
-
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -921,62 +926,62 @@ describe("deploy", () => {
         Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
         "
       `);
-    });
+  });
 
-    it("prints out fatal errors in the terminal and exit with code 1 if there are fatal errors", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+  it("prints out fatal errors in the terminal and exit with code 1 if there are fatal errors", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      const mockEditGraphQL = makeMockEditSubscriptions();
+    const mockEditGraphQL = makeMockEditSubscriptions();
 
-      await deploy.run(testCtx, makeArgs(deploy.args));
+    await deploy.run(testCtx, makeArgs(deploy.args));
 
-      const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
 
-      await expectProcessExit(
-        () =>
-          publishStatus.emitResponse({
-            data: {
-              publishStatus: {
-                publishStarted: false,
-                remoteFilesVersion: "1",
-                progress: "NOT_STARTED",
-                issues: [
-                  {
-                    severity: "Fatal",
-                    message: "Something went wrong",
-                    node: {
-                      type: "SourceFile",
-                      key: "access-control.gadget.ts",
-                      apiIdentifier: "access-control.gadget.ts",
-                    },
+    await expectProcessExit(
+      () =>
+        publishStatus.emitResponse({
+          data: {
+            publishStatus: {
+              publishStarted: false,
+              remoteFilesVersion: "1",
+              progress: "NOT_STARTED",
+              issues: [
+                {
+                  severity: "Fatal",
+                  message: "Something went wrong",
+                  node: {
+                    type: "SourceFile",
+                    key: "access-control.gadget.ts",
+                    apiIdentifier: "access-control.gadget.ts",
                   },
-                  {
-                    severity: "Fatal",
-                    message: "Another message",
-                    node: {
-                      type: "SourceFile",
-                      key: "access-control.gadget.ts",
-                      apiIdentifier: "access-control.gadget.ts",
-                    },
+                },
+                {
+                  severity: "Fatal",
+                  message: "Another message",
+                  node: {
+                    type: "SourceFile",
+                    key: "access-control.gadget.ts",
+                    apiIdentifier: "access-control.gadget.ts",
                   },
-                  {
-                    severity: "Fatal",
-                    message: "Message from another file",
-                    node: {
-                      type: "SourceFile",
-                      key: "settings.gadget.ts",
-                      apiIdentifier: "settings.gadget.ts",
-                    },
+                },
+                {
+                  severity: "Fatal",
+                  message: "Message from another file",
+                  node: {
+                    type: "SourceFile",
+                    key: "settings.gadget.ts",
+                    apiIdentifier: "settings.gadget.ts",
                   },
-                ],
-                status: undefined,
-              },
+                },
+              ],
+              status: undefined,
             },
-          }),
-        1, // ggt should exit with code 1 if there are fatal errors
-      );
+          },
+        }),
+      1, // ggt should exit with code 1 if there are fatal errors
+    );
 
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
         "Deploying development to test.gadget.app (​https://test.gadget.app/​)
 
         ⠙ Calculating file changes.
@@ -998,6 +1003,5 @@ describe("deploy", () => {
         https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
         "
       `);
-    });
   });
 });

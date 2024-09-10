@@ -15,6 +15,7 @@ import { testEnvironment } from "./app.js";
 import { testCtx } from "./context.js";
 import { log } from "./debug.js";
 import { mock } from "./mock.js";
+import { matchAuthHeader } from "./user.js";
 
 export type NockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLMutation> = {
   /**
@@ -121,26 +122,29 @@ export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation
 
   const responded = new PromiseSignal();
 
-  const scope = nock(`https://${subdomain}.${config.domains.app}`)
-    .post(endpoint, (body) => body.query === operation)
-    .matchHeader("cookie", (cookie) => loadCookie(testCtx) === cookie)
-    .matchHeader("x-gadget-environment", environment.name)
-    .optionally(optional)
-    .times(times)
-    .reply(statusCode, async (_uri, rawBody) => {
-      try {
-        const body = z.object({ query: z.literal(operation), variables: z.record(z.unknown()).optional() }).parse(rawBody);
-        const variables = expectVariables(body.variables);
-        const response = await generateResponse(variables);
-        return response;
-      } catch (error) {
-        log.error("failed to generate response", { error });
-        throw error;
-      } finally {
-        responded.resolve();
-      }
-    })
-    .persist(persist) as ReturnType<typeof nockGraphQLResponse>;
+  const scope = matchAuthHeader(
+    nock(`https://${subdomain}.${config.domains.app}`)
+      .post(endpoint, (body) => body.query === operation)
+      .matchHeader("cookie", (cookie) => loadCookie(testCtx) === cookie)
+      .matchHeader("x-gadget-environment", environment.name)
+      .optionally(optional)
+      .times(times)
+      .reply(statusCode, async (_uri, rawBody) => {
+        try {
+          const body = z.object({ query: z.literal(operation), variables: z.record(z.unknown()).optional() }).parse(rawBody);
+          const variables = expectVariables(body.variables);
+          const response = await generateResponse(variables);
+          return response;
+        } catch (error) {
+          log.error("failed to generate response", { error });
+          throw error;
+        } finally {
+          responded.resolve();
+        }
+      })
+      .persist(persist),
+  ) as ReturnType<typeof nockGraphQLResponse>;
+
   scope.responded = responded;
 
   return scope;

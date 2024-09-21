@@ -1654,6 +1654,51 @@ describe("FileSync.sync", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
+  it("fetches .gadget/ files even if they are ignored", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".gadget/client.js": "// client",
+      },
+      localFiles: {
+        ".ignore": ".gadget/",
+      },
+      gadgetFiles: {
+        ".gadget/client.js": "// client",
+      },
+    });
+
+    await filesync.merge(testCtx);
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+          },
+          "2": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            ".ignore": ".gadget/",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          ".ignore": ".gadget/",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
+          ".ignore": ".gadget/",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
   it("merges files when .gadget/sync.json doesn't exist and --allow-unknown-directory is passed", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       args: makeArgs(

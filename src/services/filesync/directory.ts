@@ -15,6 +15,11 @@ import { pipeline } from "node:stream/promises";
 import normalizePath from "normalize-path";
 
 /**
+ * Paths that are never ignored, regardless of the contents of the `.ignore` file.
+ */
+export const NEVER_IGNORE_PATHS = [".gadget/"] as const;
+
+/**
  * Paths that are always ignored, regardless of the contents of the `.ignore` file.
  */
 export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
@@ -158,6 +163,11 @@ export class Directory {
     if (this._isHashing && HASHING_IGNORE_PATHS.some((ignored) => filepath.startsWith(ignored))) {
       // special case for hashing
       return true;
+    }
+
+    if (NEVER_IGNORE_PATHS.some((neverIgnored) => filepath.startsWith(neverIgnored))) {
+      // special case for never ignored paths
+      return false;
     }
 
     return this._ignorer.ignores(filepath);

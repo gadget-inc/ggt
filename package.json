@@ -110,7 +110,7 @@
     "p-timeout": "^6.1.2",
     "pluralize": "^8.0.0",
     "prettier": "^3.3.3",
-    "prettier-plugin-organize-imports": "^4.0.0",
+    "prettier-plugin-organize-imports": "^4.1.0",
     "prettier-plugin-packagejson": "^2.5.2",
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.0",

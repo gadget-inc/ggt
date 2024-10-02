@@ -4,9 +4,9 @@
 
 ### Minor Changes
 
-- 04fcce2: # `ggt dev` now outputs application logs!
+- 04fcce2: `ggt dev` now outputs application logs!
 
-  In our push to make your local development experience as streamlined as possible, we've now included application logs, by default, to ouput during a sync session!
+  In our push to make your local development experience as streamlined as possible, we've now included application logs, by default, to output during a sync session!
 
   ![CleanShot 2024-10-02 at 16 04 03@2x](https://github.com/user-attachments/assets/840c23fd-8532-4b99-ad30-e0bb936afc10)
 

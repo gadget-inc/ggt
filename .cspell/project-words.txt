@@ -47,3 +47,4 @@ unmock
 unstub
 unthunk
 usagestop
+Logql

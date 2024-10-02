@@ -48,7 +48,7 @@ describe("structured", () => {
       const structuredLogger = createStructuredLogger({ name: "structured", fields: { logger: true, field: "logger" } });
       structuredLogger.trace("first message");
       expectStderr().toMatchInlineSnapshot(`
-        "12:00:00 TRACE structured: first message
+        "12:00:00  TRACE  structured: first message
           logger: true
           field: 'logger'
         "
@@ -56,10 +56,10 @@ describe("structured", () => {
 
       structuredLogger.trace("second message", { message: true, field: "message" });
       expectStderr().toMatchInlineSnapshot(`
-        "12:00:00 TRACE structured: first message
+        "12:00:00  TRACE  structured: first message
           logger: true
           field: 'logger'
-        12:00:00 TRACE structured: second message
+        12:00:00  TRACE  structured: second message
           logger: true
           field: 'message'
           message: true

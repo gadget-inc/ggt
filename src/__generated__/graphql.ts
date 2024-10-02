@@ -1423,7 +1423,7 @@ export type SimpleError = ExecutionError & {
 export type Subscription = {
   __typename?: 'Subscription';
   environmentTreePathPatches?: Maybe<EnvironmentSubscriptionResult>;
-  logsSearch: LogSearchResult;
+  logsSearchV2: LogSearchResult;
   migrateGadgetV1Status?: Maybe<MigrateGadgetV1Status>;
   openBackgroundActions: Scalars['Int']['output'];
   publishStatus?: Maybe<PublishStatusState>;
@@ -1439,7 +1439,7 @@ export type SubscriptionEnvironmentTreePathPatchesArgs = {
 };
 
 
-export type SubscriptionLogsSearchArgs = {
+export type SubscriptionLogsSearchV2Args = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   query: Scalars['String']['input'];
   start?: InputMaybe<Scalars['DateTime']['input']>;
@@ -1551,6 +1551,15 @@ export type GadgetMetaGlobalActionsQueryVariables = Exact<{ [key: string]: never
 
 
 export type GadgetMetaGlobalActionsQuery = { __typename?: 'Query', gadgetMeta: { __typename?: 'GadgetApplicationMeta', globalActions: Array<{ __typename?: 'GadgetGlobalAction', apiIdentifier: string, namespace?: Array<string> | null }> } };
+
+export type EnvironmentLogsSubscriptionVariables = Exact<{
+  query: Scalars['String']['input'];
+  start?: InputMaybe<Scalars['DateTime']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type EnvironmentLogsSubscription = { __typename?: 'Subscription', logsSearchV2: { __typename?: 'LogSearchResult', status: string, data: { [key: string]: any } } };
 
 export type RemoteFileSyncEventsSubscriptionVariables = Exact<{
   localFilesVersion: Scalars['String']['input'];

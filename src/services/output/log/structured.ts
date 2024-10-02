@@ -1,3 +1,6 @@
+import assert from "node:assert";
+import type { Environment } from "../../app/app.js";
+import type { ArgsDefinition, ArgsDefinitionResult } from "../../command/arg.js";
 import { config } from "../../config/config.js";
 import { env } from "../../config/env.js";
 import { unthunk, type Thunk } from "../../util/function.js";
@@ -6,7 +9,15 @@ import { output } from "../output.js";
 import { addSentryBreadcrumb } from "../sentry.js";
 import type { Fields } from "./field.js";
 import { formatters } from "./format/format.js";
-import { Level } from "./level.js";
+import { Level, parseLevel } from "./level.js";
+
+export const LoggingArgs = {
+  "--log-level": { type: (value) => parseLevel(value, Level.INFO), alias: ["-ll"], default: Level.INFO },
+  "--my-logs": { type: Boolean },
+} satisfies ArgsDefinition;
+
+export type LoggingArgs = typeof LoggingArgs;
+export type LoggingArgsResult = ArgsDefinitionResult<LoggingArgs>;
 
 type StructuredLog = (msg: Lowercase<string>, fields?: Fields, devFields?: Fields) => void;
 
@@ -34,6 +45,37 @@ export type StructuredLoggerOptions = {
    * development or test environments.
    */
   devFields?: Thunk<Fields>;
+};
+
+type StructuredEnvironmentLog = (level: string, name: string, msg: Lowercase<string>, fields?: Fields, timestamp?: Date) => void;
+
+// Less bulky mapping of log levels, specifically for environment logs.
+const levelMap: Record<string, Level> = {
+  trace: Level.TRACE,
+  debug: Level.DEBUG,
+  info: Level.INFO,
+  warn: Level.WARN,
+  error: Level.ERROR,
+};
+
+export const createEnvironmentStructuredLogger = (environment: Environment): StructuredEnvironmentLog => {
+  return (level, name, msg, messageFields, timestamp) => {
+    const fields = { ...messageFields };
+
+    if ("error" in fields) {
+      fields.error = serializeError(fields.error);
+    }
+
+    if ("reason" in fields) {
+      fields.reason = serializeError(fields.reason);
+    }
+
+    const format = formatters[config.logFormat];
+    const parsedLevel = levelMap[level.toLowerCase()];
+    assert(parsedLevel, `Unknown level: ${level}`);
+
+    output.writeStdout(format(parsedLevel, name, msg, fields, timestamp, environment));
+  };
 };
 
 export const createStructuredLogger = ({

@@ -7,6 +7,23 @@ import { mockSystemTime } from "../../../../__support__/time.js";
 describe("formatPretty", () => {
   mockSystemTime();
 
+  it("always print trace_id key first when printing fields", () => {
+    const fields = {} as Record<string, any>;
+
+    fields["random"] = "random";
+    fields["trace_id"] = "1234567890";
+    fields["random2"] = "random2";
+
+    expect(formatPretty(Level.INFO, "test", "some message", { fields })).toMatchInlineSnapshot(`
+      "12:00:00  INFO  test: some message
+        fields:
+          trace_id: 1234567890
+          random: 'random'
+          random2: 'random2'
+      "
+    `);
+  });
+
   it("truncates objects when it has more than 10 keys", () => {
     const obj = {} as Record<string, number>;
     for (let i = 0; i < 100; i++) {
@@ -14,7 +31,7 @@ describe("formatPretty", () => {
     }
 
     expect(formatPretty(Level.INFO, "test", "some message", { obj })).toMatchInlineSnapshot(`
-      "12:00:00 INFO test: some message
+      "12:00:00  INFO  test: some message
         obj:
           property0: 0
           property1: 1
@@ -38,7 +55,7 @@ describe("formatPretty", () => {
     }
 
     expect(formatPretty(Level.INFO, "test", "some message", { arr })).toMatchInlineSnapshot(`
-      "12:00:00 INFO test: some message
+      "12:00:00  INFO  test: some message
         arr:
           0: 0
           1: 1
@@ -62,7 +79,7 @@ describe("formatPretty", () => {
     }
 
     expect(formatPretty(Level.INFO, "test", "some message", { obj })).toMatchInlineSnapshot(`
-      "12:00:00 INFO test: some message
+      "12:00:00  INFO  test: some message
         obj:
           property0: 0
           property1: 1
@@ -80,7 +97,7 @@ describe("formatPretty", () => {
     }
 
     expect(formatPretty(Level.INFO, "test", "some message", { arr })).toMatchInlineSnapshot(`
-      "12:00:00 INFO test: some message
+      "12:00:00  INFO  test: some message
         arr:
           0: 0
           1: 1
@@ -99,7 +116,7 @@ describe("formatPretty", () => {
       }
 
       expect(formatPretty(Level.INFO, "test", "some message", { obj })).toMatchInlineSnapshot(`
-        "12:00:00 INFO test: some message
+        "12:00:00  INFO  test: some message
           obj:
             property0: 0
             property1: 1
@@ -134,7 +151,7 @@ describe("formatPretty", () => {
       }
 
       expect(formatPretty(Level.INFO, "test", "some message", { arr })).toMatchInlineSnapshot(`
-        "12:00:00 INFO test: some message
+        "12:00:00  INFO  test: some message
           arr:
             0: 0
             1: 1

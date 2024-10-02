@@ -12,6 +12,7 @@ import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../com
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
+import colors from "../output/colors.js";
 import { println } from "../output/print.js";
 import { select } from "../output/select.js";
 import { setSentryTags } from "../output/sentry.js";
@@ -303,17 +304,19 @@ export class SyncJson {
       content += sprintln({ indent: 5, content: `Branch  ${this.gitBranch}` });
     }
 
+    const domain = config.domains.app;
+
     if (terminalLink.isSupported) {
       content += sprintln({
         ensureEmptyLineAbove: true,
-        content: `${terminalLink("Preview", `https://${this.environment.application.slug}--${this.environment.name}.gadget.app`)}  ${terminalLink("Editor", `https://${this.environment.application.primaryDomain}/edit/${this.environment.name}`)}  ${terminalLink("Playground", `https://${this.environment.application.primaryDomain}/api/playground/graphql?environment=${this.environment.name}`)}  ${terminalLink("Docs", `https://docs.gadget.dev/api/${this.environment.application.slug}`)}`,
+        content: `${terminalLink(colors.link("Preview"), `https://${this.environment.application.slug}--${this.environment.name}.${domain}`)}  ${terminalLink(colors.link("Editor"), `https://${this.environment.application.primaryDomain}/edit/${this.environment.name}`)}  ${terminalLink(colors.link("Playground"), `https://${this.environment.application.primaryDomain}/api/playground/javascript?environment=${this.environment.name}`)}  ${terminalLink(colors.link("Docs"), `https://docs.gadget.dev/api/${this.environment.application.slug}`)}`,
       });
     } else {
       content += sprintln`
           ------------------------
-           Preview     https://${this.environment.application.slug}--${this.environment.name}.gadget.app
+           Preview     https://${this.environment.application.slug}--${this.environment.name}.${domain}
            Editor      https://${this.environment.application.primaryDomain}/edit/${this.environment.name}
-           Playground  https://${this.environment.application.primaryDomain}/api/playground/graphql?environment=${this.environment.name}
+           Playground  https://${this.environment.application.primaryDomain}/api/playground/javascript?environment=${this.environment.name}
            Docs        https://docs.gadget.dev/api/${this.environment.application.slug}
       `;
     }

@@ -109,6 +109,9 @@ Options
       --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
       --allow-unknown-directory   Syncs to any local directory with existing files, even if the ".gadget/sync.json" file is missing
       --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
+      --log-level <level>         Sets the log level for incoming application logs (default: info)
+      --no-logs                   Disables outputting application logs to the console
+      --my-logs                   Only outputs user sourced logs
 
 Ignoring files
       ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and

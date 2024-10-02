@@ -15,7 +15,7 @@ describe("formatPretty", () => {
     fields["random2"] = "random2";
 
     expect(formatPretty(Level.INFO, "test", "some message", { fields })).toMatchInlineSnapshot(`
-      "12:00:00 INFO test: some message
+      "12:00:00  INFO  test: some message
         fields:
           trace_id: 1234567890
           random: 'random'
@@ -31,7 +31,7 @@ describe("formatPretty", () => {
     }
 
     expect(formatPretty(Level.INFO, "test", "some message", { obj })).toMatchInlineSnapshot(`
-      "12:00:00 INFO test: some message
+      "12:00:00  INFO  test: some message
         obj:
           property0: 0
           property1: 1
@@ -55,7 +55,7 @@ describe("formatPretty", () => {
     }
 
     expect(formatPretty(Level.INFO, "test", "some message", { arr })).toMatchInlineSnapshot(`
-      "12:00:00 INFO test: some message
+      "12:00:00  INFO  test: some message
         arr:
           0: 0
           1: 1
@@ -79,7 +79,7 @@ describe("formatPretty", () => {
     }
 
     expect(formatPretty(Level.INFO, "test", "some message", { obj })).toMatchInlineSnapshot(`
-      "12:00:00 INFO test: some message
+      "12:00:00  INFO  test: some message
         obj:
           property0: 0
           property1: 1
@@ -97,7 +97,7 @@ describe("formatPretty", () => {
     }
 
     expect(formatPretty(Level.INFO, "test", "some message", { arr })).toMatchInlineSnapshot(`
-      "12:00:00 INFO test: some message
+      "12:00:00  INFO  test: some message
         arr:
           0: 0
           1: 1
@@ -116,7 +116,7 @@ describe("formatPretty", () => {
       }
 
       expect(formatPretty(Level.INFO, "test", "some message", { obj })).toMatchInlineSnapshot(`
-        "12:00:00 INFO test: some message
+        "12:00:00  INFO  test: some message
           obj:
             property0: 0
             property1: 1
@@ -151,7 +151,7 @@ describe("formatPretty", () => {
       }
 
       expect(formatPretty(Level.INFO, "test", "some message", { arr })).toMatchInlineSnapshot(`
-        "12:00:00 INFO test: some message
+        "12:00:00  INFO  test: some message
           arr:
             0: 0
             1: 1

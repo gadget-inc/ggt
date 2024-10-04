@@ -123,8 +123,8 @@ devDependencies:
     specifier: ^1.1.0
     version: 1.1.0
   eslint-plugin-unicorn:
-    specifier: ^55.0.0
-    version: 55.0.0(eslint@8.57.1)
+    specifier: ^56.0.0
+    version: 56.0.0(eslint@8.57.1)
   execa:
     specifier: ^8.0.1
     version: 8.0.1
@@ -5234,8 +5234,8 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /eslint-plugin-unicorn@55.0.0(eslint@8.57.1):
-    resolution: {integrity: sha512-n3AKiVpY2/uDcGrS3+QsYDkjPfaOrNrsfQxU9nt5nitd9KuvVXrfAvgCO9DYPSfap+Gqjw9EOrXIsBp5tlHZjA==}
+  /eslint-plugin-unicorn@56.0.0(eslint@8.57.1):
+    resolution: {integrity: sha512-aXpddVz/PQMmd69uxO98PA4iidiVNvA0xOtbpUoz1WhBd4RxOQQYqN618v68drY0hmy5uU2jy1bheKEVWBjlPw==}
     engines: {node: '>=18.18'}
     peerDependencies:
       eslint: '>=8.56.0'

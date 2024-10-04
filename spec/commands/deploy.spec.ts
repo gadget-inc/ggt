@@ -1,15 +1,17 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable no-irregular-whitespace */
-import { beforeEach, describe, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
 import * as deploy from "../../src/commands/deploy.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
+import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
+import { mockConfirmOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { mockSystemTime } from "../__support__/time.js";
 import { loginTestUser } from "../__support__/user.js";
@@ -1003,5 +1005,214 @@ describe("deploy", () => {
         https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
         "
       `);
+  });
+
+  it("discards gadget changes and sends local changes to gadget after confirmation", async () => {
+    const { expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {},
+      localFiles: {
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    mockConfirmOnce();
+
+    await deploy.run(testCtx, makeArgs(deploy.args));
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+        {
+          "filesVersionDirs": {
+            "1": {
+              ".gadget/": "",
+            },
+            "2": {
+              ".gadget/": "",
+              "gadget-file.js": "// gadget",
+            },
+            "3": {
+              ".gadget/": "",
+              "local-file.js": "// local",
+            },
+          },
+          "gadgetDir": {
+            ".gadget/": "",
+            "local-file.js": "// local",
+          },
+          "localDir": {
+            ".gadget/": "",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}}}",
+            "local-file.js": "// local",
+          },
+        }
+      `);
+
+    await expectLocalAndGadgetHashesMatch();
+
+    expect(confirm).toHaveBeenCalledTimes(1);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
+      ⠙ Calculating file changes.
+      ✔ Calculated file changes. 12:00:00 AM
+
+      Your local files have changed.
+      +  local-file.js  created
+
+      Your environment's files have also changed.
+      +  gadget-file.js  created
+
+      Your environment's files must match your local files before you can deploy.
+
+      Would you like to push your local changes and discard your environment's changes now?
+
+      ⠙ Pushing files. →
+      -  gadget-file.js  delete
+      +  local-file.js   create
+      ✔ Pushed files. → 12:00:00 AM
+      -  gadget-file.js  deleted
+      +  local-file.js   created
+      "
+    `);
+  });
+
+  it("discards gadget changes and sends local changes to gadget if --force is passed", async () => {
+    const { expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {},
+      localFiles: {
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    await deploy.run(testCtx, makeArgs(deploy.args, "deploy", "--force"));
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+        {
+          "filesVersionDirs": {
+            "1": {
+              ".gadget/": "",
+            },
+            "2": {
+              ".gadget/": "",
+              "gadget-file.js": "// gadget",
+            },
+            "3": {
+              ".gadget/": "",
+              "local-file.js": "// local",
+            },
+          },
+          "gadgetDir": {
+            ".gadget/": "",
+            "local-file.js": "// local",
+          },
+          "localDir": {
+            ".gadget/": "",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}}}",
+            "local-file.js": "// local",
+          },
+        }
+      `);
+
+    await expectLocalAndGadgetHashesMatch();
+
+    expectStdout().toMatchInlineSnapshot(`
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
+      ⠙ Calculating file changes.
+      ✔ Calculated file changes. 12:00:00 AM
+
+      Your local files have changed.
+      +  local-file.js  created
+
+      Your environment's files have also changed.
+      +  gadget-file.js  created
+
+      ⠙ Pushing files. →
+      -  gadget-file.js  delete
+      +  local-file.js   create
+      ✔ Pushed files. → 12:00:00 AM
+      -  gadget-file.js  deleted
+      +  local-file.js   created
+      "
+    `);
+  });
+
+  it("discards gadget changes and sends local changes to gadget if --force is passed, except for .gadget/ files", async () => {
+    const { expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".gadget/client.js": "// client",
+      },
+      localFiles: {
+        ".gadget/client.js": "// client",
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        ".gadget/client.js": "// client v2",
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    await deploy.run(testCtx, makeArgs(deploy.args, "deploy", "--force"));
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+        {
+          "filesVersionDirs": {
+            "1": {
+              ".gadget/": "",
+              ".gadget/client.js": "// client",
+            },
+            "2": {
+              ".gadget/": "",
+              ".gadget/client.js": "// client v2",
+              "gadget-file.js": "// gadget",
+            },
+            "3": {
+              ".gadget/": "",
+              ".gadget/client.js": "// client v2",
+              "local-file.js": "// local",
+            },
+          },
+          "gadgetDir": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client v2",
+            "local-file.js": "// local",
+          },
+          "localDir": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}}}",
+            "local-file.js": "// local",
+          },
+        }
+      `);
+
+    await expect(expectLocalAndGadgetHashesMatch()).rejects.toThrowError();
+
+    expectStdout().toMatchInlineSnapshot(`
+      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+
+      ⠙ Calculating file changes.
+      ✔ Calculated file changes. 12:00:00 AM
+
+      Your local files have changed.
+      +  local-file.js  created
+
+      Your environment's files have also changed.
+      +  gadget-file.js  created
+
+      ⠙ Pushing files. →
+      -  gadget-file.js  delete
+      +  local-file.js   create
+      ✔ Pushed files. → 12:00:00 AM
+      -  gadget-file.js  deleted
+      +  local-file.js   created
+      "
+    `);
   });
 });

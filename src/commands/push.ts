@@ -60,5 +60,5 @@ export const run: Run<typeof args> = async (ctx, args) => {
     await filesync.print(ctx, { hashes });
   }
 
-  await filesync.push(ctx, { command: "push", hashes });
+  await filesync.push(ctx, { command: "push", hashes, force: args["--force"] });
 };

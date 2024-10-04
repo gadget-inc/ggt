@@ -1,5 +1,15 @@
 # @gadgetinc/ggt
 
+## 1.3.1
+
+### Patch Changes
+
+- c7cc65e: Make `ggt deploy --force` skip asking for confirmation to push.
+
+  `ggt deploy --force` implies that you want to discard any existing changes on the environment you are deploying from, so it should not ask for confirmation to push.
+
+- b3752b6: Fix `ggt push --force` still asking for confirmation.
+
 ## 1.3.0
 
 ### Minor Changes

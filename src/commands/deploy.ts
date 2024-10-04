@@ -4,6 +4,7 @@ import assert from "node:assert";
 import terminalLink from "terminal-link";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { type Run, type Usage } from "../services/command/command.js";
+import { env } from "../services/config/env.js";
 import { deletedSymbol, updatedSymbol } from "../services/filesync/changes.js";
 import { DeployDisallowedError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
@@ -75,43 +76,45 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
     //  therefor, we need to push before we can deploy
     await filesync.print(ctx, { hashes });
 
-    println({
-      ensureEmptyLineAbove: true,
-      content: "Your environment's files must match your local files before you can deploy.",
-    });
-
-    // some scenarios make the confirmation to push changes imply the
-    // --force flag (e.g. when both local and environment files have
-    // changed, or when only environment files have changed)
-    let implicitForce = false;
-
-    if (output.isInteractive) {
-      let content: string;
-      switch (true) {
-        case hashes.bothChanged:
-          content = sprint`Would you like to push your local changes and {underline discard your environment's} changes now?`;
-          implicitForce = true;
-          break;
-        case hashes.localChangesToPush.size > 0:
-          content = sprint`Would you like to push your local changes now?`;
-          break;
-        case hashes.environmentChanges.size > 0:
-          content = sprint`Do you want to {underline discard your environment's} changes now?`;
-          implicitForce = true;
-          break;
-        default:
-          unreachable("no changes to push or discard");
-      }
-
-      await confirm(content);
-    } else {
+    if (!args["--force"]) {
+      // they didn't pass --force, so we need to ask them if they want to push
       println({
         ensureEmptyLineAbove: true,
-        content: "Assuming you want to push your local files now.",
+        content: "Your environment's files must match your local files before you can deploy.",
       });
+
+      if (output.isInteractive || env.testLike) {
+        // we're interactive, so ask them what they want to do
+        let content: string;
+        // eslint-disable-next-line max-depth
+        switch (true) {
+          case hashes.bothChanged:
+            content = sprint`Would you like to push your local changes and {underline discard your environment's} changes now?`;
+            args["--force"] = true; // accepting this confirmation implies --force
+            break;
+          case hashes.localChangesToPush.size > 0:
+            content = sprint`Would you like to push your local changes now?`;
+            break;
+          case hashes.environmentChanges.size > 0:
+            content = sprint`Do you want to {underline discard your environment's} changes now?`;
+            args["--force"] = true; // same as above
+            break;
+          default:
+            unreachable("no changes to push or discard");
+        }
+
+        await confirm(content);
+      } else {
+        // we're not interactive, so we're likely in a CI/CD environment
+        // assume they want to push
+        println({
+          ensureEmptyLineAbove: true,
+          content: "Assuming you want to push your local files now.",
+        });
+      }
     }
 
-    await filesync.push(ctx, { command: "deploy", hashes, force: implicitForce || args["--force"] });
+    await filesync.push(ctx, { command: "deploy", hashes, force: args["--force"] });
   }
 
   const variables = {

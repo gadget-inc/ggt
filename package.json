@@ -46,7 +46,7 @@
     "@changesets/cli": "^2.27.8",
     "@graphql-codegen/add": "^5.0.3",
     "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/typescript": "^4.0.9",
+    "@graphql-codegen/typescript": "^4.1.0",
     "@graphql-codegen/typescript-operations": "^4.2.3",
     "@sentry/node": "^8.33.0",
     "@types/eslint": "^8.56.7",

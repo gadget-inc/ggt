@@ -2126,40 +2126,108 @@ describe("FileSync.pull", () => {
   });
 
   it("receives gadget's changes", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      filesVersion1Files: {},
-      localFiles: {},
+    const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
+
+    const { filesync, expectDirs } = await makeSyncScenario({
+      localFiles: {
+        ".gadget/": "",
+      },
       gadgetFiles: {
-        "gadget-file.js": "// gadget",
+        ...files.reduce((acc, filename) => ({ ...acc, [filename]: filename }), {}),
       },
     });
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+        {
+          "filesVersionDirs": {
+            "1": {
+              ".gadget/": "",
+            },
+            "2": {
+              ".gadget/": "",
+              "file1.txt": "file1.txt",
+              "file10.txt": "file10.txt",
+              "file2.txt": "file2.txt",
+              "file3.txt": "file3.txt",
+              "file4.txt": "file4.txt",
+              "file5.txt": "file5.txt",
+              "file6.txt": "file6.txt",
+              "file7.txt": "file7.txt",
+              "file8.txt": "file8.txt",
+              "file9.txt": "file9.txt",
+            },
+          },
+          "gadgetDir": {
+            ".gadget/": "",
+            "file1.txt": "file1.txt",
+            "file10.txt": "file10.txt",
+            "file2.txt": "file2.txt",
+            "file3.txt": "file3.txt",
+            "file4.txt": "file4.txt",
+            "file5.txt": "file5.txt",
+            "file6.txt": "file6.txt",
+            "file7.txt": "file7.txt",
+            "file8.txt": "file8.txt",
+            "file9.txt": "file9.txt",
+          },
+          "localDir": {
+            ".gadget/": "",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}}}",
+          },
+        }
+      `);
 
     await filesync.pull(testCtx);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-      {
-        "filesVersionDirs": {
-          "1": {
-            ".gadget/": "",
+        {
+          "filesVersionDirs": {
+            "1": {
+              ".gadget/": "",
+            },
+            "2": {
+              ".gadget/": "",
+              "file1.txt": "file1.txt",
+              "file10.txt": "file10.txt",
+              "file2.txt": "file2.txt",
+              "file3.txt": "file3.txt",
+              "file4.txt": "file4.txt",
+              "file5.txt": "file5.txt",
+              "file6.txt": "file6.txt",
+              "file7.txt": "file7.txt",
+              "file8.txt": "file8.txt",
+              "file9.txt": "file9.txt",
+            },
           },
-          "2": {
+          "gadgetDir": {
             ".gadget/": "",
-            "gadget-file.js": "// gadget",
+            "file1.txt": "file1.txt",
+            "file10.txt": "file10.txt",
+            "file2.txt": "file2.txt",
+            "file3.txt": "file3.txt",
+            "file4.txt": "file4.txt",
+            "file5.txt": "file5.txt",
+            "file6.txt": "file6.txt",
+            "file7.txt": "file7.txt",
+            "file8.txt": "file8.txt",
+            "file9.txt": "file9.txt",
           },
-        },
-        "gadgetDir": {
-          ".gadget/": "",
-          "gadget-file.js": "// gadget",
-        },
-        "localDir": {
-          ".gadget/": "",
-          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
-          "gadget-file.js": "// gadget",
-        },
-      }
-    `);
-
-    await expectLocalAndGadgetHashesMatch();
+          "localDir": {
+            ".gadget/": "",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
+            "file1.txt": "file1.txt",
+            "file10.txt": "file10.txt",
+            "file2.txt": "file2.txt",
+            "file3.txt": "file3.txt",
+            "file4.txt": "file4.txt",
+            "file5.txt": "file5.txt",
+            "file6.txt": "file6.txt",
+            "file7.txt": "file7.txt",
+            "file8.txt": "file8.txt",
+            "file9.txt": "file9.txt",
+          },
+        }
+      `);
   });
 
   it("receives gadget's changes and discards local changes after confirmation", async () => {

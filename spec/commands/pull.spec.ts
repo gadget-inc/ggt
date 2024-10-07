@@ -1,9 +1,11 @@
-import { beforeEach, describe, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import * as pull from "../../src/commands/pull.js";
+import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
+import { mockConfirmOnce } from "../__support__/mock.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("pull", () => {
@@ -12,7 +14,7 @@ describe("pull", () => {
     nockTestApps();
   });
 
-  it("writes changes from gadget to the local filesystem", async () => {
+  it("receives gadget's changes", async () => {
     const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
 
     const { expectDirs } = await makeSyncScenario({
@@ -117,6 +119,92 @@ describe("pull", () => {
       `);
   });
 
+  it("receives gadget's changes and discards local changes after confirmation", async () => {
+    const { expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {},
+      localFiles: {
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    mockConfirmOnce();
+
+    await pull.run(testCtx, makeArgs(pull.args));
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "gadget-file.js": "// gadget",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget-file.js": "// gadget",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/local-file.js": "// local",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
+          "gadget-file.js": "// gadget",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+
+    expect(confirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("receives gadget's changes and discards local changes if --force is passed", async () => {
+    const { expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {},
+      localFiles: {
+        "local-file.js": "// local",
+      },
+      gadgetFiles: {
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    await pull.run(testCtx, makeArgs(pull.args, "pull", "--force"));
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "gadget-file.js": "// gadget",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget-file.js": "// gadget",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/local-file.js": "// local",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
+          "gadget-file.js": "// gadget",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
   it("doesn't write changes from gadget to the local filesystem if the file is ignored", async () => {
     const files = Array.from({ length: 10 }, (_, i) => `tmp/file${i + 1}.txt`);
 
@@ -196,5 +284,47 @@ describe("pull", () => {
           },
         }
       `);
+  });
+
+  it("discards local .gadget/ changes without confirmation", async () => {
+    const { expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {},
+      localFiles: {
+        ".gadget/local.js": "// .gadget/local",
+      },
+      gadgetFiles: {
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    await pull.run(testCtx, makeArgs(pull.args));
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "gadget-file.js": "// gadget",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget-file.js": "// gadget",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/backup/": "",
+          ".gadget/backup/.gadget/": "",
+          ".gadget/backup/.gadget/local.js": "// .gadget/local",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
+          "gadget-file.js": "// gadget",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
   });
 });

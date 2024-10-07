@@ -584,7 +584,7 @@ export class FileSync {
     } = {},
   ): Promise<void> {
     const { localChanges, environmentChangesToPull, environmentFilesVersion } = hashes ?? (await this.hashes(ctx));
-    assert(environmentChangesToPull.size > 0, "cannot push if there are no changes");
+    assert(environmentChangesToPull.size > 0, "cannot pull if there are no changes");
 
     // TODO: lift this check up to the pull command
     if (localChanges.size > 0 && !force) {

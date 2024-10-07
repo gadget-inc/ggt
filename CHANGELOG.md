@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 1.3.2
+
+### Patch Changes
+
+- 11eca08: Fix `ggt pull --force` still asking for confirmation.
+
 ## 1.3.1
 
 ### Patch Changes

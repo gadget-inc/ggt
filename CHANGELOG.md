@@ -1,5 +1,19 @@
 # @gadgetinc/ggt
 
+## 1.3.3
+
+### Patch Changes
+
+- da25b70: Fix the following assertion error from occurring:
+
+  ```
+  An error occurred while communicating with Gadget
+
+  '' == true
+
+  If you think this is a bug, click here to create an issue on GitHub.
+  ```
+
 ## 1.3.2
 
 ### Patch Changes

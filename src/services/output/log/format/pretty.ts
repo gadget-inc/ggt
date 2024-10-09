@@ -4,7 +4,7 @@ import terminalLink from "terminal-link";
 import { type Environment } from "../../../app/app.js";
 
 import { config } from "../../../config/config.js";
-import { isObject } from "../../../util/is.js";
+import { isNil, isObject } from "../../../util/is.js";
 import { serializeObjectToHTTPQuery } from "../../../util/querystring.js";
 import colors from "../../colors.js";
 import { symbol } from "../../symbols.js";
@@ -47,7 +47,7 @@ const formatValue = (value: string, color: (s: string) => string, indent: number
 
   const buf: string[] = [];
   const firstLine = lines.shift();
-  assert(firstLine);
+  assert(!isNil(firstLine), "first line is nil");
   buf.push(color(firstLine));
 
   // color the rest of the lines

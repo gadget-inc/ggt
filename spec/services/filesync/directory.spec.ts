@@ -8,7 +8,13 @@ import fs from "fs-extra";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { ALWAYS_IGNORE_PATHS, Directory, HASHING_IGNORE_PATHS, supportsPermissions } from "../../../src/services/filesync/directory.js";
+import {
+  ALWAYS_IGNORE_PATHS,
+  Directory,
+  HASHING_IGNORE_PATHS,
+  NEVER_IGNORE_PATHS,
+  supportsPermissions,
+} from "../../../src/services/filesync/directory.js";
 import { mapValues } from "../../../src/services/util/object.js";
 import { writeDir, type Files } from "../../__support__/files.js";
 import { appFixturePath, testDirPath } from "../../__support__/paths.js";
@@ -219,6 +225,19 @@ describe("Directory.ignores", () => {
     expect(directory.ignores(filepath)).toBe(true);
   });
 
+  it("returns false for all paths in NEVER_IGNORE_PATHS", async () => {
+    const dir = testDirPath();
+    await writeDir(dir, {
+      ".ignore": NEVER_IGNORE_PATHS.join("\n"),
+    });
+
+    const directory = await Directory.init(dir);
+
+    for (const filepath of NEVER_IGNORE_PATHS) {
+      expect(directory.ignores(filepath)).toBe(false);
+    }
+  });
+
   it("returns true for all paths in ALWAYS_IGNORE_PATHS", async () => {
     const dir = testDirPath();
     const directory = await Directory.init(dir);
@@ -317,6 +336,16 @@ describe("Directory.hashes", () => {
     } else {
       expect(mapValues(hashes, (hash) => hash.permissions)).toEqual(mapValues(hashes, () => undefined));
     }
+  });
+});
+
+describe("NEVER_IGNORE_PATHS", () => {
+  it("contains the expected paths", () => {
+    expect(NEVER_IGNORE_PATHS).toMatchInlineSnapshot(`
+      [
+        ".gadget/",
+      ]
+    `);
   });
 });
 

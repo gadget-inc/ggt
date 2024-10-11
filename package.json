@@ -73,7 +73,7 @@
     "cli-spinners": "^2.9.2",
     "cli-table3": "^0.6.5",
     "concurrently": "^9.0.1",
-    "cspell": "^8.14.4",
+    "cspell": "^8.15.1",
     "dayjs": "^1.11.13",
     "esbuild": "^0.24.0",
     "eslint": "^8.57.0",

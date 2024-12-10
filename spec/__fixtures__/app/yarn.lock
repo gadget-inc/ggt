@@ -138,8 +138,9 @@
     fastify-plugin "^3.0.0"
 
 "@gadget-client-development/test@link:.gadget/client":
-  version "0.0.0"
-  uid ""
+  version "1.4.0"
+  dependencies:
+    "@gadgetinc/api-client-core" "0.15.11"
 
 "@gadgetinc/api-client-core@0.15.11", "@gadgetinc/api-client-core@^0.15.11":
   version "0.15.11"
@@ -568,8 +569,13 @@ fsevents@~2.3.2:
   integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
 
 "gadget-server@link:.gadget/server":
-  version "0.0.0"
-  uid ""
+  version "1.4.0"
+  dependencies:
+    "@fastify/request-context" "^3.0.0"
+    "@gadget-client-development/test" "link:.gadget/client"
+    "@gadgetinc/api-client-core" "0.15.11"
+    "@types/node" "^18.11.9"
+    fastify "^3.29.0"
 
 graphql-ws@^5.13.1:
   version "5.14.2"
@@ -641,9 +647,9 @@ ms@2.1.2:
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
 
 nanoid@^3.3.6:
-  version "3.3.6"
-  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.6.tgz#443380c856d6e9f9824267d960b4236ad583ea4c"
-  integrity sha512-BGcqMMJuToF7i1rt+2PWSNVnWIkGCU78jBG3RxO/bZlnZPK2Cmi2QaffxGO/2RvWi9sL+FAiRiXMgsyxQ1DIDA==
+  version "3.3.8"
+  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.8.tgz#b1be3030bee36aaff18bacb375e5cce521684baf"
+  integrity sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==
 
 node-fetch@^2.6.12:
   version "2.7.0"

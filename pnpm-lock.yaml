@@ -201,8 +201,8 @@ devDependencies:
     specifier: ^6.2.1
     version: 6.2.1
   p-timeout:
-    specifier: ^6.1.3
-    version: 6.1.3
+    specifier: ^6.1.4
+    version: 6.1.4
   pluralize:
     specifier: ^8.0.0
     version: 8.0.0
@@ -7517,7 +7517,7 @@ packages:
     engines: {node: '>=18'}
     dependencies:
       eventemitter3: 5.0.1
-      p-timeout: 6.1.3
+      p-timeout: 6.1.4
     dev: true
 
   /p-retry@6.2.1:
@@ -7529,8 +7529,8 @@ packages:
       retry: 0.13.1
     dev: true
 
-  /p-timeout@6.1.3:
-    resolution: {integrity: sha512-UJUyfKbwvr/uZSV6btANfb+0t/mOhKV/KXcCUTp8FcQI+v/0d+wXqH4htrW0E4rR6WiEO/EPvUFiV9D5OI4vlw==}
+  /p-timeout@6.1.4:
+    resolution: {integrity: sha512-MyIV3ZA/PmyBN/ud8vV9XzwTrNtR4jFrObymZYnZqMmW0zA8Z17vnT0rBgFE/TlohB+YCHqXMgZzb3Csp49vqg==}
     engines: {node: '>=14.16'}
     dev: true
 

@@ -21,8 +21,8 @@ devDependencies:
     specifier: ^4.4.0
     version: 4.4.0(graphql@16.10.0)
   '@sentry/node':
-    specifier: ^8.47.0
-    version: 8.47.0
+    specifier: ^8.48.0
+    version: 8.48.0
   '@types/eslint':
     specifier: ^8.56.7
     version: 8.56.12
@@ -3280,13 +3280,13 @@ packages:
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
     dev: true
 
-  /@sentry/core@8.47.0:
-    resolution: {integrity: sha512-iSEJZMe3DOcqBFZQAqgA3NB2lCWBc4Gv5x/SCri/TVg96wAlss4VrUunSI2Mp0J4jJ5nJcJ2ChqHSBAU48k3FA==}
+  /@sentry/core@8.48.0:
+    resolution: {integrity: sha512-VGwYgTfLpvJ5LRO5A+qWo1gpo6SfqaGXL9TOzVgBucAdpzbrYHpZ87sEarDVq/4275uk1b0S293/mfsskFczyw==}
     engines: {node: '>=14.18'}
     dev: true
 
-  /@sentry/node@8.47.0:
-    resolution: {integrity: sha512-tMzeU3KkmDi2OVvSu+Ah5pwoi7srsSyc1DovBbRQU96RFf/lOFzGe9JERa1MyDUqqLH95NqnPTNsa4Amb8/Vxg==}
+  /@sentry/node@8.48.0:
+    resolution: {integrity: sha512-pnprAuUOc8cxnJdZA09hutHXNsbQZoDgzf3zPyXMNx0ewB/RviFMOgfe7ViX1mIB/oVrcFenXBgO5uvTd7JwPg==}
     engines: {node: '>=14.18'}
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -3321,15 +3321,15 @@ packages:
       '@opentelemetry/sdk-trace-base': 1.29.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.28.0
       '@prisma/instrumentation': 5.22.0
-      '@sentry/core': 8.47.0
-      '@sentry/opentelemetry': 8.47.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.29.0)(@opentelemetry/instrumentation@0.56.0)(@opentelemetry/sdk-trace-base@1.29.0)(@opentelemetry/semantic-conventions@1.28.0)
+      '@sentry/core': 8.48.0
+      '@sentry/opentelemetry': 8.48.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.29.0)(@opentelemetry/instrumentation@0.56.0)(@opentelemetry/sdk-trace-base@1.29.0)(@opentelemetry/semantic-conventions@1.28.0)
       import-in-the-middle: 1.11.2
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /@sentry/opentelemetry@8.47.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.29.0)(@opentelemetry/instrumentation@0.56.0)(@opentelemetry/sdk-trace-base@1.29.0)(@opentelemetry/semantic-conventions@1.28.0):
-    resolution: {integrity: sha512-wunyBIUPeY6Kx3SFhOQqOPs+hyRADO5bztpo8aZ3N3xfzhefSTOdrgUroKvHx1DvoQO6MAlykcuUFps3yfaqmg==}
+  /@sentry/opentelemetry@8.48.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.29.0)(@opentelemetry/instrumentation@0.56.0)(@opentelemetry/sdk-trace-base@1.29.0)(@opentelemetry/semantic-conventions@1.28.0):
+    resolution: {integrity: sha512-1JLXgmIvD3T7xn9ypwWW0V3GirNy4BN2fOUbZau/nUX/Jj5DttSoPn7x7xTaPSpfaA24PiP93zXmJEfZvCk00Q==}
     engines: {node: '>=14.18'}
     peerDependencies:
       '@opentelemetry/api': ^1.9.0
@@ -3343,7 +3343,7 @@ packages:
       '@opentelemetry/instrumentation': 0.56.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 1.29.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.28.0
-      '@sentry/core': 8.47.0
+      '@sentry/core': 8.48.0
     dev: true
 
   /@sindresorhus/is@5.6.0:

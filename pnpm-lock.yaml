@@ -255,8 +255,8 @@ devDependencies:
     specifier: ^10.9.2
     version: 10.9.2(@types/node@18.19.70)(typescript@5.7.3)
   type-fest:
-    specifier: ^4.31.0
-    version: 4.31.0
+    specifier: ^4.32.0
+    version: 4.32.0
   typescript:
     specifier: ^5.7.3
     version: 5.7.3
@@ -4050,7 +4050,7 @@ packages:
       chalk: 5.4.1
       cli-boxes: 3.0.0
       string-width: 7.2.0
-      type-fest: 4.31.0
+      type-fest: 4.32.0
       widest-line: 5.0.0
       wrap-ansi: 9.0.0
     dev: true
@@ -8753,8 +8753,8 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /type-fest@4.31.0:
-    resolution: {integrity: sha512-yCxltHW07Nkhv/1F6wWBr8kz+5BGMfP+RbRSYFnegVb0qV/UMT0G0ElBloPVerqn4M2ZV80Ir1FtCcYv1cT6vQ==}
+  /type-fest@4.32.0:
+    resolution: {integrity: sha512-rfgpoi08xagF3JSdtJlCwMq9DGNDE0IMh3Mkpc1wUypg9vPi786AiqeBBKcqvIkq42azsBM85N490fyZjeUftw==}
     engines: {node: '>=16'}
     dev: true
 

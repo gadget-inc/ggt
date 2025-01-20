@@ -108,19 +108,7 @@ describe("warnIfUpdateAvailable", () => {
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeFalsy();
 
-    try {
-      expectStdout().toMatchInlineSnapshot(`
-      "╭───────────────────────────────────────────────────────────────────────────────╮
-      │                                                                               │
-      │   Update available! 0.0.0-experimental.bf3e4a3 → 0.0.0-experimental.41b05e2   │
-      │               Run "npm install -g ggt@experimental" to update.                │
-      │                                                                               │
-      ╰───────────────────────────────────────────────────────────────────────────────╯
-      "
-    `);
-    } catch {
-      // the message is wrapped differently on CI for some reason...
-      expectStdout().toMatchInlineSnapshot(`
+    expectStdout().toMatchInlineSnapshot(`
       "╭──────────────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │                Update available! 0.0.0-experimental.bf3e4a3 →                │
@@ -130,7 +118,6 @@ describe("warnIfUpdateAvailable", () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `);
-    }
   });
 
   it("does nothing if already at latest version", async () => {

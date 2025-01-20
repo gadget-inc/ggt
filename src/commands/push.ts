@@ -42,6 +42,8 @@ export const run: Run<typeof args> = async (ctx, args) => {
 
       If you are trying to push changes from a specific directory,
       you must "cd" to that directory and then run "ggt push".
+
+      Run "ggt push -h" for more information.
     `);
   }
 

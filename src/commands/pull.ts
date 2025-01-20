@@ -41,9 +41,9 @@ export const run: Run<PullArgs> = async (ctx, args) => {
       "ggt pull" does not take any positional arguments.
 
       If you are trying to pull changes to a specific directory,
-      you must "cd" to that directory and then run "ggt push".
+      you must "cd" to that directory and then run "ggt pull".
 
-       Run "ggt pull -h" for more information.
+      Run "ggt pull -h" for more information.
     `);
   }
 

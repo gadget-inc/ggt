@@ -16,6 +16,7 @@ import { makeSyncScenario } from "../../__support__/filesync.js";
 import { mockOnce } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
+import { expectProcessExit } from "../../__support__/process.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe("SyncJson.loadOrInit", () => {
@@ -54,7 +55,7 @@ describe("SyncJson.loadOrInit", () => {
 
   it("shows apps that the user can load", async () => {
     args = makeArgs(SyncJsonArgs, "dev");
-    await expectError(async () => await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir }));
+    await expectProcessExit(async () => await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir }), 1);
 
     expectStdout().toMatchInlineSnapshot(`
       "Which application do you want to develop?

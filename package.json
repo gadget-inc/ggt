@@ -43,7 +43,7 @@
     "version": "changeset version && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.11",
+    "@changesets/cli": "^2.27.12",
     "@graphql-codegen/add": "^5.0.3",
     "@graphql-codegen/cli": "^5.0.3",
     "@graphql-codegen/typescript": "^4.1.2",

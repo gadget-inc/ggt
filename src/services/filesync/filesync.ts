@@ -22,7 +22,6 @@ import {
 } from "../app/edit/operation.js";
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
-import { config } from "../config/config.js";
 import { confirm } from "../output/confirm.js";
 import type { Fields } from "../output/log/field.js";
 import { Level } from "../output/log/level.js";
@@ -622,7 +621,7 @@ export class FileSync {
     const changes = new Changes();
     const directoriesWithDeletedFiles = new Set<string>();
 
-    await pMap(options.delete, async (pathToDelete) => {
+    for (const pathToDelete of options.delete.sort().reverse()) {
       // add all the directories that contain this file to
       // directoriesWithDeletedFiles so we can clean them up later
       let dir = path.dirname(pathToDelete);
@@ -674,16 +673,14 @@ export class FileSync {
           }
         },
         {
-          // windows tends to run into these issues way more often than
-          // mac/linux, so we retry more times
-          retries: config.windows ? 4 : 2,
+          retries: 5,
           minTimeout: ms("100ms"),
           onFailedAttempt: (error) => {
             ctx.log.warn("failed to move file to backup", { error, currentPath, backupPath });
           },
         },
       );
-    });
+    }
 
     for (const directoryWithDeletedFile of Array.from(directoriesWithDeletedFiles.values()).sort().reverse()) {
       if (options.files.some((file) => file.path === directoryWithDeletedFile)) {

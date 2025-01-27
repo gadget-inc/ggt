@@ -4,10 +4,16 @@ import terminalLink from "terminal-link";
 import { beforeEach, describe, expect, it } from "vitest";
 import * as app from "../../../src/services/app/app.js";
 import { ArgError } from "../../../src/services/command/arg.js";
-import type { Command } from "../../../src/services/command/command.js";
+import { Commands, type Command } from "../../../src/services/command/command.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import { UnknownDirectoryError } from "../../../src/services/filesync/error.js";
-import { SyncJson, SyncJsonArgs, type AnySyncJsonState, type SyncJsonArgsResult } from "../../../src/services/filesync/sync-json.js";
+import {
+  EphemeralSyncJson,
+  SyncJson,
+  SyncJsonArgs,
+  type AnySyncJsonState,
+  type SyncJsonArgsResult,
+} from "../../../src/services/filesync/sync-json.js";
 import { nockTestApps, testApp, testApp2, testAppWith2Environments } from "../../__support__/app.js";
 import { makeArgs } from "../../__support__/arg.js";
 import { testCtx } from "../../__support__/context.js";
@@ -30,7 +36,7 @@ describe("SyncJson.loadOrInit", () => {
     nockTestApps();
 
     command = "dev";
-    args = makeArgs(SyncJsonArgs, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`);
+    args = makeArgs(SyncJsonArgs, command, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`);
     localDir = await Directory.init(testDirPath("local"));
 
     outputSyncJson = async (state) => {
@@ -277,6 +283,38 @@ describe("SyncJson.loadOrInit", () => {
         [testApp.environments[3]!.name]: { filesVersion: "0" },
       },
     });
+  });
+
+  it.each(Commands.filter((x) => x !== "pull"))('does not allow --env=production when the command is "%s"', async (command) => {
+    args._ = [command];
+    args["--env"] = "production";
+    await expect(SyncJson.loadOrInit(testCtx, { command, args, directory: localDir })).rejects.toThrowErrorMatchingSnapshot();
+  });
+
+  it('does allow --env=production when the command is "pull"', async () => {
+    command = "pull";
+    args._ = [command];
+    args["--env"] = "production";
+    const syncJson = await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir });
+
+    expect(syncJson.state).toEqual({
+      application: testApp.slug,
+      environment: "production",
+      environments: {
+        production: { filesVersion: "0" },
+      },
+    });
+  });
+
+  it("returns ephemeral sync json when --env=production", async () => {
+    command = "pull";
+    args._ = [command];
+    const devSyncJson = await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir });
+    expect(devSyncJson).not.toBeInstanceOf(EphemeralSyncJson);
+
+    args["--env"] = "production";
+    const prodSyncJson = await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir });
+    expect(prodSyncJson).toBeInstanceOf(EphemeralSyncJson);
   });
 });
 

@@ -9,6 +9,7 @@ export type PullArgs = typeof args;
 
 export const args = {
   ...SyncJsonArgs,
+  "--env": { type: String, alias: ["-e", "--environment", "--from"] },
   "--force": { type: Boolean, alias: "-f" },
 } satisfies ArgsDefinition;
 
@@ -24,7 +25,7 @@ export const usage: Usage = (_ctx) => {
 
   {gray Options}
         -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
-        --from, -e, --env <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+        -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
         --force                        Forces a pull by discarding any changes made on your local directory since last sync
         --allow-different-directory    Pulls changes from any environment directory, even if the ".gadget/sync.json" file is missing
         --allow-different-app          Pulls changes to a different app using --app command, instead of the one in the “.gadget/sync.json” file

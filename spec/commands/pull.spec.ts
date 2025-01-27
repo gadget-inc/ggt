@@ -327,4 +327,8 @@ describe("pull", () => {
 
     await expectLocalAndGadgetHashesMatch();
   });
+
+  // can't write these tests until makeSyncScenario supports multiple environments
+  it.todo("changes the environment when a different environment is specified");
+  it.todo("does not change the environment when the production environment is specified");
 });

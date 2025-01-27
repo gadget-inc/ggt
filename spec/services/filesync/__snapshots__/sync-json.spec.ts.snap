@@ -1,0 +1,23 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "add" 1`] = `[Error: You cannot "ggt add" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "deploy" 1`] = `[Error: You cannot "ggt deploy" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "dev" 1`] = `[Error: You cannot "ggt dev" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "list" 1`] = `[Error: You cannot "ggt list" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "login" 1`] = `[Error: You cannot "ggt login" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "logout" 1`] = `[Error: You cannot "ggt logout" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "open" 1`] = `[Error: You cannot "ggt open" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "push" 1`] = `[Error: You cannot "ggt push" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "status" 1`] = `[Error: You cannot "ggt status" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "version" 1`] = `[Error: You cannot "ggt version" your production environment.]`;
+
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "whoami" 1`] = `[Error: You cannot "ggt whoami" your production environment.]`;

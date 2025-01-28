@@ -1,5 +1,21 @@
 # @gadgetinc/ggt
 
+## 1.4.0
+
+### Minor Changes
+
+- fcb272f: Add more `--env` aliases.
+
+  - `ggt pull` now accepts `--from` as an alias for `--env`
+  - `ggt push` now accepts `--to` as an alias for `--env`
+
+- 7da5de8: Allow `ggt pull --from=production` to pull files from your production environment.
+
+### Patch Changes
+
+- 3f9b60d: Attempt to fix `Error: dest already exists.` by moving files one at a time to `.gadget/backup/`.
+- 9aa8657: Enable source maps for better error messages and debugging.
+
 ## 1.3.3
 
 ### Patch Changes

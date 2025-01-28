@@ -27,10 +27,10 @@
     "/README.md"
   ],
   "scripts": {
-    "build": "pnpm run clean && esbuild src/main.ts --outdir=dist --format=esm --platform=node --target=node20 --inject:./shims/cjs.js --bundle --splitting --minify --sourcemap",
+    "build": "pnpm run clean && esbuild src/main.ts --outdir=dist --format=esm --platform=node --target=node20 --inject:./shims/cjs.js --bundle --splitting --minify --keep-names --sourcemap",
     "changeset": "changeset",
     "clean": "rimraf dist tmp/spec",
-    "dev": "pnpm run build --minify=false --watch",
+    "dev": "pnpm run build --minify=false --sources-content=false --watch",
     "generate:graphql": "graphql-codegen --config=graphql-codegen.yml",
     "lint": "concurrently 'npm:lint:*(!fix)' --group --names --prefix-colors=auto",
     "lint:cspell": "cspell . --no-progress --show-suggestions --show-context",

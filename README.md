@@ -190,7 +190,7 @@ Usage
 
 Options
       -a, --app <app_name>           Selects the app to push local changes to. Default set on ".gadget/sync.json"
-      --from, -e, --env <env_name>   Selects the environment to push local changes to. Default set on ".gadget/sync.json"
+      -e, --env, --to <env_name>     Selects the environment to push local changes to. Default set on ".gadget/sync.json"
       --force                        Forces a push by discarding any changes made on your environment directory since last sync
       --allow-different-directory    Pushes changes from any local directory with existing files, even if the ".gadget/sync.json" file is missing
       --allow-different-app          Pushes changes to an app using --app command, instead of the one in the “.gadget/sync.json” file
@@ -214,7 +214,7 @@ Usage
 
 Options
       -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
-      --from, -e, --env <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+      -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
       --force                        Forces a pull by discarding any changes made on your local directory since last sync
       --allow-different-directory    Pulls changes from any environment directory, even if the ".gadget/sync.json" file is missing
       --allow-different-app          Pulls changes to a different app using --app command, instead of the one in the “.gadget/sync.json” file

@@ -172,13 +172,18 @@ export class SyncJson {
       if (args["--allow-different-app"]) {
         // the user passed --allow-different-app, so use the application
         // and environment they specified and clobber everything
-        const syncJson = new SyncJson(ctx, args, directory, environment, undefined, {
+        const state = {
           application: application.slug,
           environment: environment.name,
           environments: {
             [environment.name]: { filesVersion: "0" },
           },
-        });
+        };
+
+        const syncJson =
+          environment.type === "production"
+            ? new EphemeralSyncJson(ctx, args, directory, environment, undefined, state)
+            : new SyncJson(ctx, args, directory, environment, undefined, state);
 
         await syncJson.loadGitBranch();
         return syncJson;
@@ -204,16 +209,23 @@ export class SyncJson {
 
     let previousEnvironment: string | undefined;
     if (state.environment !== environment.name) {
-      // the user specified a different environment, update the state
-      println({
-        ensureEmptyLineAbove: true,
-        content: sprint`
+      // the user specified a different environment
+
+      if (environment.type !== "production") {
+        // the new environment isn't a production environment, so let
+        // the user know that we're changing environments (we're not
+        // using the EphemeralSyncJson class)
+        println({
+          ensureEmptyLineAbove: true,
+          content: sprint`
           Changing environment.
 
             ${state.environment} → ${environment.name}
         `,
-      });
+        });
+      }
 
+      // update the state to the new environment
       previousEnvironment = state.environment;
       state.environment = environment.name;
       if (!state.environments[environment.name]) {
@@ -222,7 +234,11 @@ export class SyncJson {
       }
     }
 
-    const syncJson = new SyncJson(ctx, args, directory, environment, previousEnvironment, state);
+    const syncJson =
+      environment.type === "production"
+        ? new EphemeralSyncJson(ctx, args, directory, environment, previousEnvironment, state)
+        : new SyncJson(ctx, args, directory, environment, previousEnvironment, state);
+
     await syncJson.save(syncJson.filesVersion);
     await syncJson.loadGitBranch();
     return syncJson;
@@ -264,13 +280,18 @@ export class SyncJson {
     // and create a fresh .gadget/sync.json file
     await fs.ensureDir(directory.path);
 
-    syncJson = new SyncJson(ctx, args, directory, environment, undefined, {
+    const state = {
       application: application.slug,
       environment: environment.name,
       environments: {
         [environment.name]: { filesVersion: "0" },
       },
-    });
+    };
+
+    syncJson =
+      environment.type === "production"
+        ? new EphemeralSyncJson(ctx, args, directory, environment, undefined, state)
+        : new SyncJson(ctx, args, directory, environment, undefined, state);
 
     await syncJson.save(syncJson.filesVersion);
     await syncJson.loadGitBranch();
@@ -327,6 +348,25 @@ export class SyncJson {
   print(options?: SprintOptions): void {
     options = defaults(options, { ensureEmptyLineAbove: true });
     println(this.sprint(options));
+  }
+}
+
+/**
+ * A {@linkcode SyncJson} that doesn't save its state to the filesystem.
+ *
+ * This is used when the user runs ggt pull --env=production so that we
+ * don't change the .gadget/sync.json file to point to the production
+ * environment, causing failures when they try to dev, push, etc.
+ */
+// @ts-expect-error SyncJson's constructor is private
+export class EphemeralSyncJson extends SyncJson {
+  override async save(filesVersion: string | bigint): Promise<void> {
+    const environment = this.state.environments[this.state.environment];
+    assert(environment, "environment must exist in environments");
+    environment.filesVersion = String(filesVersion);
+
+    // don't save the state to the filesystem
+    return Promise.resolve();
   }
 }
 
@@ -427,19 +467,23 @@ const loadEnvironment = async ({
     );
   }
 
-  const developmentEnvironments = application.environments.filter((env) => env.type === EnvironmentType.Development);
+  const selectableEnvironments = application.environments.filter((env) => env.type === EnvironmentType.Development);
+  if (command === "pull") {
+    // allow pulling from production environments
+    selectableEnvironments.push(...application.environments.filter((env) => env.type === EnvironmentType.Production));
+  }
 
   let selectedEnvironment = args["--env"] || state?.environment;
   if (!selectedEnvironment) {
     // user didn't specify an environment, ask them to select one
     selectedEnvironment = await select({
-      choices: developmentEnvironments.map((env) => env.name),
+      choices: selectableEnvironments.map((env) => env.name),
       content: "Which environment do you want to develop on?",
     });
   }
 
-  if (selectedEnvironment.toLowerCase() === "production") {
-    // specifically call out that they can't dev, push, or pull to prod
+  if (selectedEnvironment.toLowerCase() === "production" && command !== "pull") {
+    // specifically call out that they can't dev, push, etc. to prod
     throw new ArgError(
       sprint`
         You cannot "ggt ${command}" your {bold production} environment.
@@ -447,7 +491,7 @@ const loadEnvironment = async ({
     );
   }
 
-  const environment = developmentEnvironments.find((env) => env.name === selectedEnvironment.toLowerCase());
+  const environment = selectableEnvironments.find((env) => env.name === selectedEnvironment.toLowerCase());
   if (environment) {
     // the user specified an environment or we loaded it from the state,
     // and it exists in the app's list of environments, so return it
@@ -460,7 +504,7 @@ const loadEnvironment = async ({
   // specified
   const similarEnvironments = sortBySimilar(
     selectedEnvironment,
-    developmentEnvironments.map((env) => env.name),
+    selectableEnvironments.map((env) => env.name),
   ).slice(0, 5);
 
   throw new ArgError(

@@ -231,8 +231,8 @@ devDependencies:
     specifier: ^7.7.0
     version: 7.7.0
   serialize-error:
-    specifier: ^11.0.3
-    version: 11.0.3
+    specifier: ^12.0.0
+    version: 12.0.0
   simple-git:
     specifier: ^3.27.0
     version: 3.27.0
@@ -8382,11 +8382,11 @@ packages:
       upper-case-first: 2.0.2
     dev: true
 
-  /serialize-error@11.0.3:
-    resolution: {integrity: sha512-2G2y++21dhj2R7iHAdd0FIzjGwuKZld+7Pl/bTU6YIkrC2ZMbVUjm+luj6A6V34Rv9XfKJDKpTWu9W4Gse1D9g==}
-    engines: {node: '>=14.16'}
+  /serialize-error@12.0.0:
+    resolution: {integrity: sha512-ZYkZLAvKTKQXWuh5XpBw7CdbSzagarX39WyZ2H07CDLC5/KfsRGlIXV8d4+tfqX1M7916mRqR1QfNHSij+c9Pw==}
+    engines: {node: '>=18'}
     dependencies:
-      type-fest: 2.19.0
+      type-fest: 4.33.0
     dev: true
 
   /set-function-length@1.2.2:
@@ -8958,11 +8958,6 @@ packages:
   /type-fest@1.4.0:
     resolution: {integrity: sha512-yGSza74xk0UG8k+pLh5oeoYirvIiWo5t0/o3zHHAO2tRDiZcxWP7fywNlXhqb6/r6sWvwi+RsyQMWhVLe4BVuA==}
     engines: {node: '>=10'}
-    dev: true
-
-  /type-fest@2.19.0:
-    resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
-    engines: {node: '>=12.20'}
     dev: true
 
   /type-fest@4.33.0:

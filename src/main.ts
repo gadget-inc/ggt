@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --enable-source-maps
+#!/usr/bin/env node
 
 import { ggt } from "./ggt.js";
 

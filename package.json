@@ -52,7 +52,7 @@
     "@types/eslint": "^8.56.7",
     "@types/fast-levenshtein": "^0.0.4",
     "@types/fs-extra": "^11.0.4",
-    "@types/ms": "^0.7.34",
+    "@types/ms": "^2.1.0",
     "@types/node": "^18.19.75",
     "@types/node-notifier": "^8.0.5",
     "@types/normalize-package-data": "^2.4.4",

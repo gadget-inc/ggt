@@ -1,5 +1,5 @@
 import { inspect } from "node:util";
-import { assert, beforeEach, describe, expect, it } from "vitest";
+import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import * as root from "../src/commands/root.js";
 import { ggt } from "../src/ggt.js";
 import * as command from "../src/services/command/command.js";
@@ -11,6 +11,8 @@ import { PromiseSignal } from "../src/services/util/promise.js";
 import type { AnyFunction } from "../src/services/util/types.js";
 import { testCtx } from "./__support__/context.js";
 import { mock } from "./__support__/mock.js";
+import { expectStdout } from "./__support__/output.js";
+import { expectProcessExit } from "./__support__/process.js";
 
 describe("ggt", () => {
   beforeEach(() => {
@@ -45,5 +47,12 @@ describe("ggt", () => {
     onSignal!();
 
     await aborted;
+  });
+
+  it("exits early if running in the Gadget editor's terminal", async () => {
+    vi.stubEnv("GADGET_EDITOR_TERMINAL_SESSION_ID", "123");
+
+    await expectProcessExit(() => ggt(testCtx), 1);
+    expectStdout().toEqual("Running ggt in the Gadget editor's terminal is not supported.\n");
   });
 });

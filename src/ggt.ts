@@ -10,6 +10,11 @@ import { activeSpinner, spin } from "./services/output/spinner.js";
 import { installJsonExtensions } from "./services/util/json.js";
 
 export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> => {
+  if (process.env["GADGET_EDITOR_TERMINAL_SESSION_ID"]) {
+    println("Running ggt in the Gadget editor's terminal is not supported.");
+    return process.exit(1);
+  }
+
   try {
     const rootArgs = parseArgs(root.args, { argv: process.argv.slice(2), permissive: true });
 

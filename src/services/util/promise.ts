@@ -2,7 +2,7 @@ import ms from "ms";
 import type { TimerOptions } from "node:timers";
 import { setTimeout } from "node:timers/promises";
 
-export const delay = (duration: string, options?: TimerOptions): Promise<void> => setTimeout(ms(duration), undefined, options);
+export const delay = (duration: ms.StringValue, options?: TimerOptions): Promise<void> => setTimeout(ms(duration), undefined, options);
 
 /**
  * Long lived references to Promises stress the garbage collector in JS.

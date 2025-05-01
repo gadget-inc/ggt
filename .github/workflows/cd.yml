@@ -60,8 +60,9 @@ jobs:
         uses: getsentry/action-release@v3
         with:
           environment: production
-          version: ${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
+          release: ${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
           sourcemaps: ./dist
+          inject: false
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: gadget

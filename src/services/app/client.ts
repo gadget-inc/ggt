@@ -1,5 +1,6 @@
 import type { ExecutionResult } from "graphql-ws";
 import { createClient } from "graphql-ws";
+import ms from "ms";
 import type { ClientRequestArgs } from "node:http";
 import PQueue from "p-queue";
 import type { Promisable } from "type-fest";
@@ -41,6 +42,7 @@ export class Client {
 
     this._graphqlWsClient = createClient({
       url: `wss://${environment.application.slug}.${config.domains.app}/edit/api/graphql-ws`, // FIXME: this assumes this is an Edit client
+      keepAlive: ms("10s"),
       shouldRetry: () => true,
       connectionParams: {
         environment: environment.name,
@@ -59,6 +61,15 @@ export class Client {
         }
       },
       on: {
+        opened: () => {
+          this.ctx.log.trace("opened");
+        },
+        ping: (received) => {
+          this.ctx.log.trace("ping", { received });
+        },
+        pong: (received) => {
+          this.ctx.log.trace("pong", { received });
+        },
         connecting: () => {
           switch (this.status) {
             case ConnectionStatus.DISCONNECTED:

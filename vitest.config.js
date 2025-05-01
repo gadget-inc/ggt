@@ -3,8 +3,7 @@ import { timeoutMs } from "./spec/__support__/sleep.js";
 
 export default defineConfig({
   test: {
-    include: ["**/spec/**/*.spec.ts"],
-    exclude: [".direnv/**/*.spec.ts"],
+    include: ["./spec/**/*.spec.ts"],
     setupFiles: ["./spec/vitest.setup.ts"],
     globalSetup: "./spec/vitest.global-setup.ts",
     clearMocks: true, // so that we can `expect(someFunction).not.toHaveBeenCalled()` in tests where someFunction was called in another test

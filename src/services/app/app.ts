@@ -77,11 +77,15 @@ export const getApplications = async (ctx: Context): Promise<Application[]> => {
   return z.array(Application).parse(json);
 };
 
-export const parseAppListToTeamMap = (apps: Application[]): Map<string, Application[]> => {
-  return apps.reduce((teamMap, app) => {
-    teamMap.set(app.team.name, [...(teamMap.get(app.team.name) ?? []), app]);
-    return teamMap;
-  }, new Map<string, Application[]>());
+export const groupByTeam = (apps: Application[]): Map<string, Application[]> => {
+  const teamMap = new Map<string, Application[]>();
+  for (const app of apps) {
+    const teamName = app.team.name;
+    const teamApps = teamMap.get(teamName) ?? [];
+    teamApps.push(app);
+    teamMap.set(teamName, teamApps);
+  }
+  return teamMap;
 };
 
 export const getModels = async (ctx: Context, environment: Environment): Promise<ModelApiIdentifier[] | []> => {

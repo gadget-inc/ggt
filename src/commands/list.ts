@@ -1,4 +1,4 @@
-import { getApplications, parseAppListToTeamMap } from "../services/app/app.js";
+import { getApplications, groupByTeam } from "../services/app/app.js";
 import type { Run, Usage } from "../services/command/command.js";
 import { output } from "../services/output/output.js";
 import { println } from "../services/output/print.js";
@@ -16,8 +16,8 @@ export const usage: Usage = () => sprint`
 export const run: Run = async (ctx) => {
   await getUserOrLogin(ctx, "list");
 
-  const apps = await getApplications(ctx);
-  if (apps.length === 0) {
+  const availableApps = await getApplications(ctx);
+  if (availableApps.length === 0) {
     println`
         It doesn't look like you have any applications.
 
@@ -26,10 +26,8 @@ export const run: Run = async (ctx) => {
     return;
   }
 
-  const appTeamMap = parseAppListToTeamMap(apps);
-
   if (output.isInteractive) {
-    appTeamMap.forEach((apps, teamName) => {
+    for (const [teamName, apps] of groupByTeam(availableApps)) {
       println(sprint`{grey ${teamName}}`);
       printTable({
         json: apps,
@@ -37,13 +35,13 @@ export const run: Run = async (ctx) => {
         rows: apps.map((app) => [app.slug, app.primaryDomain]),
       });
       println("");
-    });
+    }
   } else {
     let simpleOutput = "";
-    for (const app of apps) {
+    for (const app of availableApps) {
       simpleOutput += sprintln`${app.slug}\t${app.primaryDomain}`;
     }
 
-    println({ json: apps, content: simpleOutput });
+    println({ json: availableApps, content: simpleOutput });
   }
 };

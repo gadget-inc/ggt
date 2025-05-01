@@ -5,7 +5,7 @@ import path from "node:path";
 import { simpleGit } from "simple-git";
 import terminalLink from "terminal-link";
 import { z } from "zod";
-import { EnvironmentType, getApplications, parseAppListToTeamMap, type Application, type Environment } from "../app/app.js";
+import { EnvironmentType, getApplications, groupByTeam, type Application, type Environment } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
 import { Edit } from "../app/edit/edit.js";
 import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../command/arg.js";
@@ -402,7 +402,7 @@ const loadApplication = async ({
   let appSlug = args["--app"] || state?.application;
   if (!appSlug) {
     // the user didn't specify an app, ask them to select one
-    const groupedChoices: [string, string[]][] = Array.from(parseAppListToTeamMap(availableApps)).map(([teamName, apps]) => [
+    const groupedChoices: [string, string[]][] = Array.from(groupByTeam(availableApps)).map(([teamName, apps]) => [
       teamName,
       apps.map((app) => app.slug),
     ]);

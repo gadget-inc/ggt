@@ -45,8 +45,8 @@ describe("UnexpectedError", () => {
     const error = new UnexpectedError(cause);
     const rendered = error
       .sprint()
-      // replace node_module stack lines with "at ..."
-      .replace(/at .*node_modules.*$/gm, "at ...")
+      // replace all stack lines that don't start with "at spec" with "at ..."
+      .replace(/at (?!spec).*$/gm, "at ...")
       // replace sequential "at ..." lines into a single line
       .replace(/at \.\.\.(\n\s*at \.\.\.)+/g, "at ...");
 

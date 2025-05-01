@@ -12,7 +12,7 @@ import { isString } from "../../src/services/util/is.js";
  * @returns A promise that resolves after the specified duration has
  * elapsed.
  */
-export const sleep = (duration: string | number): Promise<void> => {
+export const sleep = (duration: ms.StringValue | number): Promise<void> => {
   const milliseconds = isString(duration) ? ms(duration) : duration;
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 };
@@ -25,7 +25,7 @@ export const sleep = (duration: string | number): Promise<void> => {
  * @param duration - The duration string, e.g. '1s', '500ms', '10m'.
  * @returns The timeout duration in milliseconds.
  */
-export const timeoutMs = (duration: string | number): number => {
+export const timeoutMs = (duration: ms.StringValue | number): number => {
   if (inspector.url() !== undefined) {
     return Infinity;
   }

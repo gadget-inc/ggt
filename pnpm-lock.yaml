@@ -153,8 +153,8 @@ devDependencies:
     specifier: ^5.16.2
     version: 5.16.2(graphql@16.11.0)
   ignore:
-    specifier: ^6.0.2
-    version: 6.0.2
+    specifier: ^7.0.4
+    version: 7.0.4
   indent-string:
     specifier: ^5.0.0
     version: 5.0.0
@@ -5778,8 +5778,8 @@ packages:
     engines: {node: '>= 4'}
     dev: true
 
-  /ignore@6.0.2:
-    resolution: {integrity: sha512-InwqeHHN2XpumIkMvpl/DCJVrAHgCsG5+cn1XlnLWGwtZBm8QJfSusItfrwx81CTp5agNZqpKU2J/ccC5nGT4A==}
+  /ignore@7.0.4:
+    resolution: {integrity: sha512-gJzzk+PQNznz8ysRrC0aOkBNVRBDtE1n53IqyqEf3PXrYwomFs5q4pGMizBMJF+ykh03insJ27hB8gSrD2Hn8A==}
     engines: {node: '>= 4'}
     dev: true
 

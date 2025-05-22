@@ -8,8 +8,8 @@ Contributions to `ggt` are welcomed from all! Contributors must adhere to the Co
 
 If you don't use Nix, `ggt` needs the following system dependencies to develop:
 
-- `node` >= v16
-- `npm` >= v8
+- `node` >= v18
+- `npm` >= v10
 - `git` >= v2
 
 ### Gadget Staff
@@ -20,52 +20,88 @@ To develop against the Gadget development environment, you'll also need:
 
 ## Development
 
-We use `npm` to manage dependencies and scripts. To install dependencies, run:
+We use `pnpm` to manage dependencies and scripts. To install dependencies, run:
 
 ```shell
-npm install
+pnpm install
 ```
 
-Once dependencies are installed, you can run `ggt` via `bin/dev.js`:
+Once dependencies are installed, you can run `pnpm run dev` to build ggt into the `dist` directory and run tests in watch mode.
+
+```shell
+pnpm run dev
+```
+
+Once ggt is built, you can run it using `ggt`.
 
 ```shell-session
-$ bin/dev.js --help
-ggt v0.3.3
+$ ggt
+The command-line interface for Gadget.
 
-The command-line interface for Gadget
-
-USAGE
+Usage
   ggt [COMMAND]
 
-COMMANDS
-  sync           Sync your Gadget application's source code
-  list           List your apps
-  login          Log in to your account
-  logout         Log out of your account
-  whoami         Print the currently logged in account
-  version        Print the version of ggt
+Commands
+  dev              Start developing your application
+  deploy           Deploy your environment to production
+  status           Show your local and environment's file changes
+  push             Push your local files to your environment
+  pull             Pull your environment's files to your local computer
+  add              Add models, fields, actions and routes to your app
+  open             Open a Gadget location in your browser
+  list             List your available applications
+  login            Log in to your account
+  logout           Log out of your account
+  whoami           Print the currently logged in account
+  version          Print this version of ggt
 
-FLAGS
-  -h, --help     Print command's usage
-  -v, --verbose  Print verbose output
-      --json     Print output as JSON
+Flags
+  -h, --help       Print how to use a command
+  -v, --verbose    Print more verbose output
+      --telemetry  Enable telemetry
 
-For more information on a specific command, use 'ggt [COMMAND] --help'
+Run "ggt [COMMAND] -h" for more information about a specific command.
 ```
 
-Using `bin/dev.js` runs `ggt` using the source code in the `src` directory. This means you can make changes to the source code and see them reflected immediately every time you run `bin/dev.js`.
+Running `ggt` runs `ggt` using the bundled code in the `dist` directory. You can verify this by running `which ggt` - it should point to a path in your nix store:
 
-The other differences between `bin/dev.js` and `ggt` are:
+```shell-session
+$ which ggt
+/nix/store/.../bin/ggt
+```
 
-1. By default, `bin/dev.js` runs against the development version of Gadget used by Gadget staff. This is because `bin/dev.js` defaults the `GGT_ENV` environment variable to `"development"`. You can override `GGT_ENV` to use the production Gadget platform by using `GGT_ENV=production bin/dev.js`.
+This is because `ggt` has been aliased in `flake.nix` to run the locally built version of `ggt` from the `dist` directory.
 
-2. `bin/dev.js` looks for and stores files in a `tmp` directory at the root of the project. This directory is ignored by git, so you can use it to store temporary files without worrying about accidentally committing them.
+You can run `dggt` to run against the development version of Gadget used by Gadget staff. This is also aliased in `flake.nix` to run the locally built version of `ggt` from the `dist` directory and set the `GGT_ENV` environment variable to `"development"`.
 
-   Here's where `bin/dev.js` stores and looks for files compared to `ggt` on macOS:
+```shell-session
+$ dggt
+The command-line interface for Gadget.
 
-   - `~/Library/Caches/ggt` -> `tmp/cache`
-   - `~/.config/ggt` -> `tmp/config`
-   - `~/.data/ggt` -> `tmp/data`
+Usage
+  ggt [COMMAND]
+
+Commands
+  dev              Start developing your application
+  deploy           Deploy your environment to production
+  status           Show your local and environment's file changes
+  push             Push your local files to your environment
+  pull             Pull your environment's files to your local computer
+  add              Add models, fields, actions and routes to your app
+  open             Open a Gadget location in your browser
+  list             List your available applications
+  login            Log in to your account
+  logout           Log out of your account
+  whoami           Print the currently logged in account
+  version          Print this version of ggt
+
+Flags
+  -h, --help       Print how to use a command
+  -v, --verbose    Print more verbose output
+      --telemetry  Enable telemetry
+
+Run "ggt [COMMAND] -h" for more information about a specific command.
+```
 
 ### Environment Variables
 
@@ -122,7 +158,7 @@ The other differences between `bin/dev.js` and `ggt` are:
 - If you want more verbose output from `ggt`, you can pass the `-v, --verbose` flag:
 
   ```shell-session
-  $ bin/dev.js whoami --verbose
+  $ ggt whoami --verbose
   08:37:09 INFO http: http request
     request:
       method: 'GET'
@@ -157,39 +193,69 @@ The other differences between `bin/dev.js` and `ggt` are:
 `ggt`'s tests live in the `spec` directory and are written using [Vitest](https://vitest.dev/). You can run them via `vitest`:
 
 ```shell-session
-$ vitest
+$ pnpm run test
 
- RUN  v0.34.6 /Users/scott/Code/gadget/ggt
+> ggt@1.4.2 test /Users/scott/Code/gadget/ggt
+> vitest --cache
 
- ✓ spec/services/output/log/level.spec.ts (24)
- ✓ spec/commands/command.spec.ts (12)
- ✓ spec/services/output/log/printer.spec.ts (23)
- ✓ spec/services/filesync/directory.spec.ts (25) 398ms
- ✓ spec/services/output/update.spec.ts (6)
- ✓ spec/commands/root.spec.ts (24)
- ✓ spec/services/user/user.spec.ts (7)
- ✓ spec/commands/sync.spec.ts (13) 5448ms
- ✓ spec/services/filesync/filesync.spec.ts (26) 326ms
- ✓ spec/services/util/number.spec.ts (22)
- ✓ spec/commands/login.spec.ts (3)
- ✓ spec/services/app/app.spec.ts (2)
- ✓ spec/services/output/log/structured.spec.ts (8)
- ✓ spec/services/util/object.spec.ts (14)
- ✓ spec/services/error/error.spec.ts (9)
- ✓ spec/commands/logout.spec.ts (3)
- ✓ spec/services/util/function.spec.ts (6)
- ✓ spec/services/app/arg.spec.ts (8)
- ✓ spec/services/config/config.spec.ts (8)
- ✓ spec/services/user/session.spec.ts (4)
- ✓ spec/services/util/boolean.spec.ts (8)
- ✓ spec/commands/list.spec.ts (2)
- ✓ spec/commands/whoami.spec.ts (3)
- ✓ spec/commands/version.spec.ts (1)
 
- Test Files  24 passed (24)
-      Tests  260 passed | 1 todo (261)
-   Start at  20:45:41
-   Duration  6.44s (transform 387ms, setup 5.42s, collect 1.77s, tests 7.27s, environment 2ms, prepare 1.57s)
+ RUN  v3.1.2 /Users/scott/Code/gadget/ggt
+
+ ✓ spec/commands/login.spec.ts (3 tests) 20ms
+ ✓ spec/services/output/update.spec.ts (7 tests) 67ms
+ ✓ spec/services/filesync/hashes.spec.ts (10 tests) 72ms
+ ✓ spec/services/filesync/directory.spec.ts (27 tests) 227ms
+ ✓ spec/commands/open.spec.ts (8 tests) 252ms
+ ✓ spec/commands/push.spec.ts (5 tests) 316ms
+ ✓ spec/commands/pull.spec.ts (7 tests | 2 skipped) 319ms
+ ✓ spec/services/output/log/format/pretty.spec.ts (7 tests) 25ms
+ ✓ spec/services/filesync/error.spec.ts (14 tests) 42ms
+ ✓ spec/commands/deploy.spec.ts (13 tests) 448ms
+ ✓ spec/services/filesync/sync-json.spec.ts (30 tests) 527ms
+ ✓ spec/services/output/print.spec.ts (14 tests) 36ms
+ ✓ spec/commands/add.spec.ts (19 tests) 650ms
+ ✓ spec/commands/root.spec.ts (54 tests) 213ms
+ ✓ spec/services/util/object.spec.ts (14 tests) 27ms
+ ✓ spec/services/user/user.spec.ts (7 tests) 64ms
+ ✓ spec/services/util/function.spec.ts (6 tests) -114814663ms
+   ✓ debounce > doesn't call the function when flush is called if the function hasn't been called yet  1000ms
+ ✓ spec/commands/status.spec.ts (4 tests) 181ms
+ ✓ spec/services/filesync/conflicts.spec.ts (2 tests) 29ms
+ ✓ spec/services/filesync/changes.spec.ts (3 tests) 23ms
+ ✓ spec/services/output/log/structured.spec.ts (11 tests | 1 skipped) 28ms
+ ✓ spec/services/output/report.spec.ts (2 tests) 14ms
+ ✓ spec/ggt.spec.ts (3 tests) 12ms
+ ✓ spec/services/config/config.spec.ts (8 tests) 17ms
+ ✓ spec/commands/list.spec.ts (3 tests) 56ms
+ ✓ spec/services/command/context.spec.ts (4 tests) 15ms
+ ✓ spec/services/command/arg.spec.ts (5 tests) 12ms
+ ✓ spec/services/user/session.spec.ts (4 tests) 13ms
+ ✓ spec/commands/whoami.spec.ts (3 tests) 14ms
+ ✓ spec/services/output/log/level.spec.ts (24 tests) 36ms
+ ✓ spec/services/util/number.spec.ts (22 tests) 25ms
+ ✓ spec/commands/logout.spec.ts (3 tests) 13ms
+ ✓ spec/services/util/json.spec.ts (3 tests) 13ms
+ ✓ spec/services/app/app.spec.ts (2 tests) 25ms
+ ✓ spec/services/app/arg.spec.ts (9 tests) 16ms
+ ✓ spec/services/output/output.spec.ts (2 tests) 10ms
+ ✓ spec/services/util/boolean.spec.ts (8 tests) 12ms
+ ✓ spec/commands/version.spec.ts (1 test) 4ms
+ ✓ spec/services/command/command.spec.ts (24 tests) 63ms
+ ✓ spec/services/app/edit.spec.ts (9 tests) 3136ms
+   ✓ Edit > retries queries when it receives a 500  3099ms
+ ✓ spec/services/filesync/filesync.spec.ts (59 tests) 5060ms
+   ✓ FileSync._sendChangesToEnvironment > retries failed graphql requests  3202ms
+ ✓ spec/commands/dev.spec.ts (11 tests) 8699ms
+   ✓ dev > writes changes from gadget to the local filesystem  752ms
+   ✓ dev > sends changes from the local filesystem to gadget  3674ms
+   ✓ dev > doesn't send multiple changes to the same file at once  530ms
+   ✓ dev > doesn't send changes from the local filesystem to gadget if the file is ignored  2526ms
+   ✓ dev > reloads the ignore file when .ignore changes  635ms
+
+ Test Files  42 passed (42)
+      Tests  471 passed | 1 skipped | 2 todo (474)
+   Start at  18:33:20
+   Duration  9.57s (transform 1.09s, setup 12.58s, collect 2.79s, tests 20.83s, environment 4ms, prepare 1.88s)
 ```
 
 Tests also make use of the `tmp` directory. Every test gets its own directory in `tmp/spec/` to store temporary files. This means you can run tests in parallel without worrying about them interfering with each other.

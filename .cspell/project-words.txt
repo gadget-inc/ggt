@@ -2,6 +2,7 @@ appvalue
 codegen
 commandsstop
 dedenting
+dggt
 direnv
 discarder
 eaddrnotavail
@@ -25,6 +26,7 @@ jsonifiable
 jsonify
 linkcode
 localappdata
+Logql
 nothrow
 notificationcenter
 notifysend
@@ -47,4 +49,3 @@ unmock
 unstub
 unthunk
 usagestop
-Logql

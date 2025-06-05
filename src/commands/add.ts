@@ -4,6 +4,7 @@ import terminalLink from "terminal-link";
 import { getGlobalActions, getModels } from "../services/app/app.js";
 import {
   CREATE_ACTION_MUTATION,
+  CREATE_ENVIRONMENT_MUTATION,
   CREATE_MODEL_FIELDS_MUTATION,
   CREATE_MODEL_MUTATION,
   CREATE_ROUTE_MUTATION,
@@ -23,6 +24,7 @@ import { symbol } from "../services/output/symbols.js";
 import { ts } from "../services/output/timestamp.js";
 import { uniq } from "../services/util/collection.js";
 import { isGraphQLErrors } from "../services/util/is.js";
+import { runPull } from "./pull.js";
 
 export class AddClientError extends GGTError {
   isBug = IsBug.NO;
@@ -49,9 +51,7 @@ export class AddClientError extends GGTError {
 export type AddArgs = typeof args;
 export type AddArgsResult = ArgsDefinitionResult<AddArgs>;
 
-export const args = {
-  ...SyncJsonArgs,
-};
+export const args = { ...SyncJsonArgs };
 
 export const usage: Usage = () => {
   return sprint`
@@ -80,6 +80,9 @@ export const usage: Usage = () => {
     Add a new model 'post' with 2 new 'string' type fields 'title' and 'body':
     {cyanBright $ ggt add model post title:string body:string}
 
+    Add a new 'boolean' type field 'published' to an existing model
+    {cyanBright ggt add field post/published:boolean}
+
     Add new action 'publish' to the 'post' model:
     {cyanBright ggt add action model/post/publish}
 
@@ -89,8 +92,8 @@ export const usage: Usage = () => {
     Add a new route 'howdy'
     {cyanBright ggt add route GET howdy}
 
-    Add a new 'boolean' type field 'published' to an existing model
-    {cyanBright ggt add field post/published:boolean}
+    Clone the \`development\` environment into a new \`staging\` environment
+    {cyanBright ggt add environment staging --clone development}
   `;
 };
 
@@ -107,12 +110,8 @@ export const run: Run<AddArgs> = async (ctx, args) => {
   if (!hashes.inSync) {
     await filesync.merge(ctx, {
       hashes,
-      printEnvironmentChangesOptions: {
-        limit: 5,
-      },
-      printLocalChangesOptions: {
-        limit: 5,
-      },
+      printEnvironmentChangesOptions: { limit: 5 },
+      printLocalChangesOptions: { limit: 5 },
       quietly: true,
     });
   }
@@ -131,6 +130,10 @@ export const run: Run<AddArgs> = async (ctx, args) => {
       break;
     case "field":
       await fieldSubCommand(ctx, { args, filesync });
+      break;
+    case "environment":
+    case "env":
+      await envSubCommand(ctx, { args, filesync });
       break;
     default:
       println(usage(ctx));
@@ -189,10 +192,7 @@ const modelSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
         mutation: CREATE_MODEL_MUTATION,
         variables: {
           path: modelApiIdentifier,
-          fields: modelFieldsList.map((fields) => ({
-            name: fields.name,
-            fieldType: fields.fieldType,
-          })),
+          fields: modelFieldsList.map((fields) => ({ name: fields.name, fieldType: fields.fieldType })),
         },
       })
     ).createModel;
@@ -206,11 +206,7 @@ const modelSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
 
   println({ ensureEmptyLineAbove: true, content: chalk.gray("New model created in environment.") });
 
-  await filesync.writeToLocalFilesystem(ctx, {
-    filesVersion: result.remoteFilesVersion,
-    files: result.changed,
-    delete: [],
-  });
+  await filesync.writeToLocalFilesystem(ctx, { filesVersion: result.remoteFilesVersion, files: result.changed, delete: [] });
 
   const modelPrintout = terminalLink.isSupported
     ? terminalLink(
@@ -294,11 +290,7 @@ const actionSubCommand = async (ctx: Context, { args, filesync }: { args: AddArg
       })
     ).createAction;
 
-    await filesync.writeToLocalFilesystem(ctx, {
-      filesVersion: result.remoteFilesVersion,
-      files: result.changed,
-      delete: [],
-    });
+    await filesync.writeToLocalFilesystem(ctx, { filesVersion: result.remoteFilesVersion, files: result.changed, delete: [] });
   } catch (error) {
     if (error instanceof ClientError) {
       throw new AddClientError(error);
@@ -307,10 +299,7 @@ const actionSubCommand = async (ctx: Context, { args, filesync }: { args: AddArg
     }
   }
 
-  println({
-    ensureEmptyLineAbove: true,
-    content: `Action ${chalk.cyanBright(path)} added successfully.`,
-  });
+  println({ ensureEmptyLineAbove: true, content: `Action ${chalk.cyanBright(path)} added successfully.` });
 };
 
 const routeSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
@@ -333,18 +322,10 @@ const routeSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
   }
 
   try {
-    const result = (
-      await syncJson.edit.mutate({
-        mutation: CREATE_ROUTE_MUTATION,
-        variables: { method: routeMethod, path: routePath },
-      })
-    ).createRoute;
+    const result = (await syncJson.edit.mutate({ mutation: CREATE_ROUTE_MUTATION, variables: { method: routeMethod, path: routePath } }))
+      .createRoute;
 
-    await filesync.writeToLocalFilesystem(ctx, {
-      filesVersion: result.remoteFilesVersion,
-      files: result.changed,
-      delete: [],
-    });
+    await filesync.writeToLocalFilesystem(ctx, { filesVersion: result.remoteFilesVersion, files: result.changed, delete: [] });
   } catch (error) {
     if (error instanceof ClientError) {
       throw new AddClientError(error);
@@ -353,10 +334,7 @@ const routeSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
     }
   }
 
-  println({
-    ensureEmptyLineAbove: true,
-    content: `Route ${chalk.cyanBright(routePath)} added successfully.`,
-  });
+  println({ ensureEmptyLineAbove: true, content: `Route ${chalk.cyanBright(routePath)} added successfully.` });
 };
 
 const fieldSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
@@ -400,18 +378,31 @@ const fieldSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
         variables: {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           path: splitPathAndField[0]!,
-          fields: modelFieldsList.map((field) => ({
-            name: field.name,
-            fieldType: field.fieldType,
-          })),
+          fields: modelFieldsList.map((field) => ({ name: field.name, fieldType: field.fieldType })),
         },
       })
     ).createModelFields;
 
-    await filesync.writeToLocalFilesystem(ctx, {
-      filesVersion: result.remoteFilesVersion,
-      files: result.changed,
-      delete: [],
+    await filesync.writeToLocalFilesystem(ctx, { filesVersion: result.remoteFilesVersion, files: result.changed, delete: [] });
+  } catch (error) {
+    if (error instanceof ClientError) {
+      throw new AddClientError(error);
+    } else {
+      throw error;
+    }
+  }
+
+  println({ ensureEmptyLineAbove: true, content: `Field ${chalk.cyanBright(modelFieldsList[0]?.name)} added successfully.` });
+};
+
+const envSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
+  const syncJson = filesync.syncJson;
+  const newEnvName = args._[1] ?? makeDefaultEnvName();
+
+  try {
+    await syncJson.edit.mutate({
+      mutation: CREATE_ENVIRONMENT_MUTATION,
+      variables: { environment: { slug: newEnvName, sourceSlug: syncJson.environment.name } },
     });
   } catch (error) {
     if (error instanceof ClientError) {
@@ -421,8 +412,23 @@ const fieldSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
     }
   }
 
-  println({
-    ensureEmptyLineAbove: true,
-    content: `Field ${chalk.cyanBright(modelFieldsList[0]?.name)} added successfully.`,
+  println({ ensureEmptyLineAbove: true, content: `Environment ${chalk.cyanBright(newEnvName)} added successfully.` });
+
+  // Try to switch to newly made env
+  const pullFromNewEnvSyncJson = await SyncJson.load(ctx, {
+    command: "pull",
+    args: { _: [], "--app": undefined, "--allow-unknown-directory": undefined, "--allow-different-app": undefined, "--env": newEnvName },
+    directory: await loadSyncJsonDirectory(process.cwd()),
   });
+  if (pullFromNewEnvSyncJson) {
+    await runPull(ctx, pullFromNewEnvSyncJson, true);
+  }
+};
+
+/**
+ * Creates a default environment name based on the current date and time.
+ */
+const makeDefaultEnvName = (): string => {
+  const currentDate = new Date();
+  return `env-${currentDate.toISOString().slice(0, 10).replace(/-/g, "")}-${currentDate.toLocaleTimeString("en-US", { hour12: false }).replace(/:/g, "")}`;
 };

@@ -1,5 +1,6 @@
 import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
+import type { Context } from "../services/command/context.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { println } from "../services/output/print.js";
@@ -50,6 +51,11 @@ export const run: Run<PullArgs> = async (ctx, args) => {
 
   const directory = await loadSyncJsonDirectory(process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { command: "pull", args, directory });
+
+  await runPull(ctx, syncJson, args["--force"]);
+};
+
+export const runPull = async (ctx: Context, syncJson: SyncJson, force?: boolean): Promise<void> => {
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
 
@@ -63,5 +69,5 @@ export const run: Run<PullArgs> = async (ctx, args) => {
     await filesync.print(ctx, { hashes });
   }
 
-  await filesync.pull(ctx, { hashes, force: args["--force"] });
+  await filesync.pull(ctx, { hashes, force });
 };

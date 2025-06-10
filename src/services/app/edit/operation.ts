@@ -3,6 +3,8 @@ import type { JsonObject } from "type-fest";
 import type {
   CreateActionMutation,
   CreateActionMutationVariables,
+  CreateEnvironmentMutation,
+  CreateEnvironmentMutationVariables,
   CreateModelFieldsMutation,
   CreateModelMutation,
   CreateModelMutationVariables,
@@ -37,13 +39,7 @@ export type GraphQLQuery<
   Variables extends JsonObject = JsonObject,
   Extensions extends JsonObject = JsonObject,
   Response extends ExecutionResult<Data, Extensions> = ExecutionResult<Data, Extensions>,
-> = string & {
-  type: "query";
-  Data: Data;
-  Variables: Variables;
-  Extensions: Extensions;
-  Response: Response;
-};
+> = string & { type: "query"; Data: Data; Variables: Variables; Extensions: Extensions; Response: Response };
 
 /**
  * A GraphQL mutation with its associated types.
@@ -55,13 +51,7 @@ export type GraphQLMutation<
   Variables extends JsonObject = JsonObject,
   Extensions extends JsonObject = JsonObject,
   Response extends ExecutionResult<Data, Extensions> = ExecutionResult<Data, Extensions>,
-> = string & {
-  type: "mutation";
-  Data: Data;
-  Variables: Variables;
-  Extensions: Extensions;
-  Response: Response;
-};
+> = string & { type: "mutation"; Data: Data; Variables: Variables; Extensions: Extensions; Response: Response };
 
 /**
  * A GraphQL subscription with its associated types.
@@ -73,13 +63,7 @@ export type GraphQLSubscription<
   Variables extends JsonObject = JsonObject,
   Extensions extends JsonObject = JsonObject,
   Response extends ExecutionResult<Data, Extensions> = ExecutionResult<Data, Extensions>,
-> = string & {
-  type: "subscription";
-  Data: Data;
-  Variables: Variables;
-  Extensions: Extensions;
-  Response: Response;
-};
+> = string & { type: "subscription"; Data: Data; Variables: Variables; Extensions: Extensions; Response: Response };
 
 export const ENVIRONMENT_LOGS_SUBSCRIPTION = sprint(/* GraphQL */ `
   subscription EnvironmentLogs($query: String!, $start: DateTime, $limit: Int) {
@@ -283,3 +267,14 @@ export const CREATE_MODEL_FIELDS_MUTATION = sprint(/* GraphQL */ `
 `) as GraphQLMutation<CreateModelFieldsMutation, CreateModelMutationVariables>;
 
 export type CREATE_MODEL_FIELDS_MUTATION = typeof CREATE_MODEL_FIELDS_MUTATION;
+
+export const CREATE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
+  mutation CreateEnvironment($environment: EnvironmentInput!) {
+    createEnvironment(environment: $environment) {
+      slug
+      status
+    }
+  }
+`) as GraphQLMutation<CreateEnvironmentMutation, CreateEnvironmentMutationVariables>;
+
+export type CREATE_ENVIRONMENT_MUTATION = typeof CREATE_ENVIRONMENT_MUTATION;

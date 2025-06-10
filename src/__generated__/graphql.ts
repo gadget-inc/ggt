@@ -1643,3 +1643,10 @@ export type CreateModelFieldsMutationVariables = Exact<{
 
 
 export type CreateModelFieldsMutation = { __typename?: 'Mutation', createModelFields: { __typename?: 'RemoteFileSyncEvents', remoteFilesVersion: string, changed: Array<{ __typename?: 'FileSyncChangedEvent', path: string, mode: number, content: string, encoding: FileSyncEncoding }> } };
+
+export type CreateEnvironmentMutationVariables = Exact<{
+  environment: EnvironmentInput;
+}>;
+
+
+export type CreateEnvironmentMutation = { __typename?: 'Mutation', createEnvironment: { __typename?: 'Environment', slug: string, status: EnvironmentStatus } };

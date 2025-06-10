@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { EnvironmentStatus } from "../../src/__generated__/graphql.js";
 import * as add from "../../src/commands/add.js";
 import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
 import {
   CREATE_ACTION_MUTATION,
+  CREATE_ENVIRONMENT_MUTATION,
   CREATE_MODEL_FIELDS_MUTATION,
   CREATE_MODEL_MUTATION,
   CREATE_ROUTE_MUTATION,
@@ -201,6 +203,25 @@ describe("add", () => {
           Usage
               ggt add route GET <route_path>"
         `);
+    });
+  });
+
+  describe("environments", () => {
+    it("can add an environment with `add env`", async () => {
+      nockEditResponse({
+        operation: CREATE_ENVIRONMENT_MUTATION,
+        response: { data: { createEnvironment: { slug: "development2", status: EnvironmentStatus.Active } } },
+        expectVariables: { environment: { slug: "development2", sourceSlug: "development" } },
+      });
+      await add.run(testCtx, makeArgs(add.args, "add", "env", "development2"));
+    });
+    it("can add an environment with `add environment`", async () => {
+      nockEditResponse({
+        operation: CREATE_ENVIRONMENT_MUTATION,
+        response: { data: { createEnvironment: { slug: "development2", status: EnvironmentStatus.Active } } },
+        expectVariables: { environment: { slug: "development2", sourceSlug: "development" } },
+      });
+      await add.run(testCtx, makeArgs(add.args, "add", "environment", "development2"));
     });
   });
 });

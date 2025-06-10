@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 1.5.0
+
+### Minor Changes
+
+- 8bf2df7: New `ggt add env` command has been added to allow for environment creation.
+
 ## 1.4.2
 
 ### Patch Changes

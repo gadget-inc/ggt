@@ -243,6 +243,8 @@ Usage
 
   ggt add field <model_path>/<field_name>:<field_type>
 
+  ggt add environment <env_name> [options]
+
 Options
   -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
 
@@ -253,6 +255,9 @@ Examples
   Add a new model 'post' with 2 new 'string' type fields 'title' and 'body':
   $ ggt add model post title:string body:string
 
+  Add a new 'boolean' type field 'published' to an existing model
+  ggt add field post/published:boolean
+
   Add new action 'publish' to the 'post' model:
   ggt add action model/post/publish
 
@@ -262,8 +267,8 @@ Examples
   Add a new route 'howdy'
   ggt add route GET howdy
 
-  Add a new 'boolean' type field 'published' to an existing model
-  ggt add field post/published:boolean
+  Clone the `development` environment into a new `staging` environment
+  $ ggt add environment staging --environment development
 ```
 
 ### `ggt open`

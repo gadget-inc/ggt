@@ -243,8 +243,6 @@ Usage
 
   ggt add field <model_path>/<field_name>:<field_type>
 
-  ggt add environment <env_name> [options]
-
 Options
   -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
 
@@ -268,7 +266,7 @@ Examples
   ggt add route GET howdy
 
   Clone the `development` environment into a new `staging` environment
-  $ ggt add environment staging --environment development
+  ggt add environment staging --environment development
 ```
 
 ### `ggt open`

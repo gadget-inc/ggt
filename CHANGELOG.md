@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 1.5.1
+
+### Patch Changes
+
+- ca25131: Restrict SSL/TLS to require TLSv1.1 or better. SSLv3 will no longer be supported.
+
 ## 1.5.0
 
 ### Minor Changes

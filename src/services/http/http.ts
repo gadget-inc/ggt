@@ -35,7 +35,10 @@ const getContext = (options: HttpOptions): Context => {
 export const http = got.extend({
   agent: {
     http: new HttpAgent({ keepAlive: true }),
-    https: new HttpsAgent({ keepAlive: true }),
+    https: new HttpsAgent({
+      keepAlive: true,
+      minVersion: "TLSv1.1",
+    }),
   },
   retry: {
     limit: 10,

@@ -4,7 +4,7 @@ import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 import { printTable } from "../services/output/table.js";
 
-const printDefaultsConfig = async (defaults: DefaultsConfigData): Promise<void> => {
+const printDefaultsConfig = (defaults: DefaultsConfigData): void => {
   printTable({
     json: defaults,
     headers: ["Option", "Configured Value"],
@@ -33,7 +33,7 @@ export const usage: Usage = (_ctx) => {
 export const run: Run = async (ctx, args): Promise<void> => {
   switch (args._[0]) {
     case "show":
-      await printDefaultsConfig(await loadDefaultsConfig(ctx, false));
+      printDefaultsConfig(await loadDefaultsConfig(ctx, false));
       break;
     case "change":
       await promptDefaultsConfig(ctx);

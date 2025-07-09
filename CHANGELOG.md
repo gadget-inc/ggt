@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 1.6.0
+
+### Minor Changes
+
+- 1171831: Add a mechanism for configuring default options when running ggt commands.
+
 ## 1.5.1
 
 ### Patch Changes

@@ -37,6 +37,7 @@
   - [`ggt login`](#ggt-login)
   - [`ggt logout`](#ggt-logout)
   - [`ggt whoami`](#ggt-whoami)
+  - [`ggt configure`](#ggt-configure)
   - [`ggt version`](#ggt-version)
 
 ## Intro
@@ -356,6 +357,21 @@ Show the name and email address of the currently logged in user.
 
 Usage
       ggt whoami
+```
+
+### `ggt configure`
+
+```sh-session
+$ ggt configure -h
+Make changes to the configured defaults. This allows you to set an option on every ggt command by default without
+needing to set a flag on every command.
+
+Usage
+  ggt configure show
+
+  ggt configure change
+
+  ggt configure clear
 ```
 
 ### `ggt version`

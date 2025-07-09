@@ -3,6 +3,7 @@ import ms from "ms";
 import * as root from "./commands/root.js";
 import { parseArgs } from "./services/command/arg.js";
 import { Context } from "./services/command/context.js";
+import { loadDefaultsConfig } from "./services/config/defaults.js";
 import { output } from "./services/output/output.js";
 import { println } from "./services/output/print.js";
 import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.js";
@@ -17,6 +18,11 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
 
   try {
     const rootArgs = parseArgs(root.args, { argv: process.argv.slice(2), permissive: true });
+
+    const configData = await loadDefaultsConfig(ctx, true);
+    /* If the related arg is specified by the user, then ignore whatever the default is. */
+    rootArgs["--telemetry"] ??= configData.telemetry;
+    rootArgs["--json"] ??= configData.json;
 
     installJsonExtensions();
     await installErrorHandlers(ctx, rootArgs);

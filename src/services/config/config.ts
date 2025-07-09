@@ -90,6 +90,20 @@ export const config = {
   },
 
   /**
+   * - Unix: `~/.config/ggt/defaults.json`
+   * - Windows: `%LOCALAPPDATA%\ggt\defaults.json`
+   *
+   * Can be overridden by `GGT_CONFIG`
+   */
+  get defaultsConfigFile() {
+    let configFilePath = process.env["GGT_CONFIG"];
+    if (!configFilePath) {
+      configFilePath = configPath("defaults.json");
+    }
+    return configFilePath;
+  },
+
+  /**
    * - Linux: `~/.cache/ggt`
    * - macOS: `~/Library/Caches/ggt`
    * - Windows: `%LOCALAPPDATA%\ggt`

@@ -9,7 +9,21 @@ import type { Context } from "./context.js";
  * 1. Every command corresponds to a file inside of src/commands/
  * 2. The order determines the order of commands in the README
  */
-export const Commands = ["dev", "deploy", "status", "push", "pull", "add", "open", "list", "login", "logout", "whoami", "version"] as const;
+export const Commands = [
+  "dev",
+  "deploy",
+  "status",
+  "push",
+  "pull",
+  "add",
+  "open",
+  "list",
+  "login",
+  "logout",
+  "whoami",
+  "configure",
+  "version",
+] as const;
 
 /**
  * One of the commands in {@link Commands}.
@@ -100,6 +114,9 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
       break;
     case "whoami":
       module = await import("../../commands/whoami.js");
+      break;
+    case "configure":
+      module = await import("../../commands/configure.js");
       break;
     case "version":
       module = await import("../../commands/version.js");

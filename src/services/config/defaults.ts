@@ -1,9 +1,9 @@
-import type { Context } from "../command/context.js";
 import fs from "fs-extra";
-import { println } from "../output/print.js";
-import { select } from "../output/select.js";
+import type { Context } from "../command/context.js";
 import { swallowEnoent } from "../filesync/directory.js";
 import { output } from "../output/output.js";
+import { println } from "../output/print.js";
+import { select } from "../output/select.js";
 import { config } from "./config.js";
 
 export type DefaultsConfigData = {
@@ -20,18 +20,18 @@ export const promptDefaultsConfig = async (ctx: Context): Promise<DefaultsConfig
   const telemetrySelection = await select({
     ensureEmptyLineAbove: true,
     choices: ["enable", "disable"],
-    content: "Would you like to automatically send crash reports and telemetry to Gadget?"
+    content: "Would you like to automatically send crash reports and telemetry to Gadget?",
   });
 
   const jsonSelection = await select({
     ensureEmptyLineAbove: true,
     choices: ["disable", "enable"],
-    content: "Would you like to out as json by default?"
+    content: "Would you like to out as json by default?",
   });
 
   const selections: DefaultsConfigData = {
     telemetry: telemetrySelection === "enable",
-    json: jsonSelection === "enable"
+    json: jsonSelection === "enable",
   };
 
   fs.writeJSON(path, selections, (err) => {

@@ -3,12 +3,12 @@ import ms from "ms";
 import * as root from "./commands/root.js";
 import { parseArgs } from "./services/command/arg.js";
 import { Context } from "./services/command/context.js";
+import { loadDefaultsConfig } from "./services/config/defaults.js";
 import { output } from "./services/output/output.js";
 import { println } from "./services/output/print.js";
 import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.js";
 import { activeSpinner, spin } from "./services/output/spinner.js";
 import { installJsonExtensions } from "./services/util/json.js";
-import { loadDefaultsConfig } from "./services/config/defaults.js";
 
 export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> => {
   if (process.env["GADGET_EDITOR_TERMINAL_SESSION_ID"]) {

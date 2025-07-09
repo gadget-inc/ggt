@@ -8,6 +8,7 @@ import { println } from "./services/output/print.js";
 import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.js";
 import { activeSpinner, spin } from "./services/output/spinner.js";
 import { installJsonExtensions } from "./services/util/json.js";
+import { loadDefaultsConfig } from "./services/config/defaults.js";
 
 export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> => {
   if (process.env["GADGET_EDITOR_TERMINAL_SESSION_ID"]) {
@@ -17,6 +18,15 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
 
   try {
     const rootArgs = parseArgs(root.args, { argv: process.argv.slice(2), permissive: true });
+
+    const configData = await loadDefaultsConfig(ctx);
+    /* If the related arg is specified by the user, then ignore whatever the default is. */
+    if (rootArgs["--telemetry"] === undefined) {
+      rootArgs["--telemetry"] = configData.telemetry;
+    }
+    if (rootArgs["--json"] === undefined) {
+      rootArgs["--json"] = configData.json;
+    }
 
     installJsonExtensions();
     await installErrorHandlers(ctx, rootArgs);

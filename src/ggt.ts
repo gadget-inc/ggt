@@ -19,14 +19,10 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
   try {
     const rootArgs = parseArgs(root.args, { argv: process.argv.slice(2), permissive: true });
 
-    const configData = await loadDefaultsConfig(ctx);
+    const configData = await loadDefaultsConfig(ctx, true);
     /* If the related arg is specified by the user, then ignore whatever the default is. */
-    if (rootArgs["--telemetry"] === undefined) {
-      rootArgs["--telemetry"] = configData.telemetry;
-    }
-    if (rootArgs["--json"] === undefined) {
-      rootArgs["--json"] = configData.json;
-    }
+    rootArgs["--telemetry"] ??= configData.telemetry;
+    rootArgs["--json"] ??= configData.json;
 
     installJsonExtensions();
     await installErrorHandlers(ctx, rootArgs);

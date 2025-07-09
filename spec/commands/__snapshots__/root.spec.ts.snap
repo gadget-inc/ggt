@@ -91,8 +91,10 @@ exports[`root > when configure is given > prints the usage when --help is passed
 needing to set a flag on every command.
 
 Usage
+  ggt configure show
+
   ggt configure change
-  
+
   ggt configure clear
 "
 `;
@@ -102,8 +104,10 @@ exports[`root > when configure is given > prints the usage when -h is passed 1`]
 needing to set a flag on every command.
 
 Usage
+  ggt configure show
+
   ggt configure change
-  
+
   ggt configure clear
 "
 `;

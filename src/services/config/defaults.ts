@@ -13,50 +13,63 @@ export type DefaultsConfigData = {
 
 export const promptDefaultsConfig = async (ctx: Context): Promise<DefaultsConfigData> => {
   const path = config.defaultsConfigFile;
-  await fs.ensureFile(path);
+  let selections: DefaultsConfigData;
 
-  println({ ensureEmptyLineAbove: true, content: "Please answer the prompts to configure ggt defaults." });
-
-  const telemetrySelection = await select({
+  const defaultSelection = await select({
     ensureEmptyLineAbove: true,
-    choices: ["enable", "disable"],
-    content: "Would you like to automatically send crash reports and telemetry to Gadget?",
+    choices: ["default", "configure"],
+    content: "Default configuration from Gadget or configure manually",
   });
 
-  const jsonSelection = await select({
-    ensureEmptyLineAbove: true,
-    choices: ["disable", "enable"],
-    content: "Would you like to out as json by default?",
-  });
+  if (defaultSelection === "configure") {
+    const telemetrySelection = await select({
+      ensureEmptyLineAbove: true,
+      choices: ["enable", "disable"],
+      content: "Automatically send crash reports and telemetry to Gadget",
+    });
 
-  const selections: DefaultsConfigData = {
-    telemetry: telemetrySelection === "enable",
-    json: jsonSelection === "enable",
-  };
+    const jsonSelection = await select({
+      ensureEmptyLineAbove: true,
+      choices: ["disable", "enable"],
+      content: "ggt output as JSON",
+    });
 
-  fs.writeJSON(path, selections, (err) => {
-    if (err) {
-      ctx.log.error("failed to write config", { error: err.message });
-    } else {
+    selections = {
+      telemetry: telemetrySelection === "enable",
+      json: jsonSelection === "enable",
+    };
+  } else {
+    /* === "default" */
+    selections = {
+      telemetry: true,
+      json: false,
+    };
+  }
+
+  await fs.outputJSON(path, selections).then(
+    () => {
       println("Default arguments were saved.");
-    }
-  });
+    },
+    (err: unknown) => {
+      ctx.log.error("failed to write config", { error: (err as Error).message });
+    },
+  );
 
   return selections;
 };
 
-export const loadDefaultsConfig = async (ctx: Context): Promise<DefaultsConfigData> => {
+export const loadDefaultsConfig = async (ctx: Context, promptIfMissing: boolean): Promise<DefaultsConfigData> => {
   const configFilePath = config.defaultsConfigFile;
 
   let configData: null | DefaultsConfigData;
 
   try {
-    configData = fs.readJSONSync(configFilePath) as DefaultsConfigData;
+    configData = (await fs.readJSON(configFilePath)) as DefaultsConfigData;
   } catch (error) {
     swallowEnoent(error);
 
     /* If there's no config defaults, and it isn't interactive, we can just move on. */
-    if (output.isInteractive) {
+    if (output.isInteractive && promptIfMissing) {
       println("No ggt defaults were found to have been configured. Please answer the prompts to configure your defaults.");
       configData = await promptDefaultsConfig(ctx);
       println("To update these options later, see `ggt configure`.");
@@ -68,13 +81,14 @@ export const loadDefaultsConfig = async (ctx: Context): Promise<DefaultsConfigDa
   return configData;
 };
 
-export const clearDefaultsConfig = (ctx: Context): void => {
+export const clearDefaultsConfig = async (ctx: Context): Promise<void> => {
   const path = config.defaultsConfigFile;
-  fs.writeJSON(path, {}, (err) => {
-    if (err) {
-      ctx.log.error("failed to write config", { error: err.message });
-    } else {
-      println("Default arguments were cleared.");
-    }
-  });
+  await fs.outputJSON(path, {}).then(
+    () => {
+      println("Default arguments were saved.");
+    },
+    (err: unknown) => {
+      ctx.log.error("failed to write config", { error: (err as Error).message });
+    },
+  );
 };

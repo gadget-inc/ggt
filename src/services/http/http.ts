@@ -8,7 +8,6 @@ import { config } from "../config/config.js";
 import { sprint } from "../output/sprint.js";
 import { writeSession } from "../user/session.js";
 import { serializeError } from "../util/object.js";
-import { isGadgetServicesRequest } from "./auth.js";
 
 export type HttpOptions = OptionsInit;
 
@@ -115,7 +114,7 @@ export const http = got.extend({
           },
         });
 
-        if (response.statusCode === 401 && isGadgetServicesRequest(response.request.options)) {
+        if (response.statusCode === 401) {
           // clear the session if the request was unauthorized
           writeSession(ctx, undefined);
         }

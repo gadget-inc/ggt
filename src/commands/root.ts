@@ -39,6 +39,7 @@ export const usage: Usage = () => {
       login            Log in to your account
       logout           Log out of your account
       whoami           Print the currently logged in account
+      configure        Configure default execution options
       version          Print this version of ggt
 
     {gray Flags}

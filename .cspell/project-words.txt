@@ -11,13 +11,14 @@ ehostunreach
 enoent
 enotdir
 enotempty
+envrc
 execa
 filesync
 filesystems
 gadgetinc
 gelly
 getsentry
-ggt's
+ggt
 gjervig
 gpat
 homedrive
@@ -44,6 +45,7 @@ sorhus
 sourcemaps
 sprintln
 sprintlns
+stefanzweifel
 typecheck
 unmock
 unstub

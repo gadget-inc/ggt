@@ -3,7 +3,11 @@
   "version": "0.2",
   "dictionaryDefinitions": [{ "name": "project-words", "path": ".cspell/project-words.txt", "addWords": true }],
   "dictionaries": ["project-words"],
+  "enableGlobDot": true,
   "ignorePaths": [
+    ".direnv",
+    ".envrc",
+    ".git",
     "__fixtures__",
     "__generated__",
     "__snapshots__",

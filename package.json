@@ -74,7 +74,7 @@
     "cli-cursor": "^5.0.0",
     "cli-spinners": "^2.9.2",
     "cli-table3": "^0.6.5",
-    "cspell": "^8.17.3",
+    "cspell": "^9.1.5",
     "dayjs": "^1.11.13",
     "esbuild": "^0.25.0",
     "eslint": "^8.57.0",

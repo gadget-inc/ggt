@@ -3,7 +3,12 @@ import { isObject, isString } from "../../../util/is.js";
 import type { Formatter } from "./format.js";
 
 export const formatJson: Formatter = (level, name, msg, fields) => {
-  return JSON.stringify({ level, name, msg: stripAnsi(msg).trim(), fields: serializeFields(fields) }) + "\n";
+  if (msg) {
+    msg = stripAnsi(msg).trim();
+  } else {
+    msg = "";
+  }
+  return JSON.stringify({ level, name, msg, fields: serializeFields(fields) }) + "\n";
 };
 
 const serializeFields = (fields: Record<string, unknown>): Record<string, unknown> => {

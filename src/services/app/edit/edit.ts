@@ -1,12 +1,15 @@
+// noinspection JSCommentMatchesSignature
+
 import type { ExecutionResult } from "graphql-ws";
 import assert from "node:assert";
 import type { Promisable } from "type-fest";
 import type { Context } from "../../command/context.js";
 import { type HttpOptions } from "../../http/http.js";
 import { unthunk, type Thunk } from "../../util/function.js";
+import { isStringArray } from "../../util/is.js";
 import type { Environment } from "../app.js";
 import { Client } from "../client.js";
-import { ClientError } from "../error.js";
+import { AuthenticationError, ClientError } from "../error.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
 
 export class Edit {
@@ -109,6 +112,10 @@ export class Edit {
     const response = await this.#client.execute(ctx, { operation: mutation, variables, ...options });
 
     if (response.errors) {
+      /* If it is the specific unauthenticated error, handle it differently as nothing is broken in that case */
+      if (isStringArray(response.errors) && response.errors[0] && response.errors[0] === "Unauthenticated. No authenticated client.") {
+        throw new AuthenticationError();
+      }
       throw new ClientError(mutation, response.errors);
     }
 

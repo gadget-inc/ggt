@@ -10,15 +10,22 @@ import { serializeError } from "../util/object.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
 
 export class ClientError extends GGTError {
-  isBug = IsBug.MAYBE;
+  public isBug: IsBug;
 
   override cause: string | string[] | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent;
 
   constructor(
     readonly request: GraphQLQuery | GraphQLMutation | GraphQLSubscription,
     cause: unknown,
+    isBug?: IsBug,
   ) {
     super("An error occurred while communicating with Gadget");
+
+    if (isBug) {
+      this.isBug = isBug;
+    } else {
+      this.isBug = IsBug.MAYBE;
+    }
 
     // ErrorEvent and CloseEvent aren't serializable, so we reconstruct
     // them into an object. We discard the `target` property because
@@ -80,13 +87,8 @@ export class ClientError extends GGTError {
   }
 }
 
-export class AuthenticationError extends GGTError {
-  isBug = IsBug.NO;
-  constructor() {
-    super("Request authentication failed due to the session expiring while running the command. Please sign-in again.");
-  }
-
-  protected override render(): string {
-    return this.message;
+export class AuthenticationError extends ClientError {
+  constructor(request: GraphQLQuery | GraphQLMutation | GraphQLSubscription) {
+    super(request, "Request authentication failed due to the session expiring while running the command. Please sign-in again.", IsBug.NO);
   }
 }

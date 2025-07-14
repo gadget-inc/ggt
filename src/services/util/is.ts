@@ -24,7 +24,7 @@ export const isFunction = (val: unknown): val is Function => {
 
 export const isStringArray = (val: unknown): val is string[] => {
   return z.array(z.string()).safeParse(val).success;
-}
+};
 
 export const isError = (val: unknown): val is Error => {
   return val instanceof Error;

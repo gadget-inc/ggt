@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Use `pnpm exec vitest` to run tests in the `spec` dir.

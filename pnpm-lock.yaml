@@ -53,6 +53,9 @@ devDependencies:
   '@types/semver':
     specifier: ^7.5.8
     version: 7.5.8
+  '@types/set-cookie-parser':
+    specifier: ^2.4.10
+    version: 2.4.10
   '@types/which':
     specifier: ^3.0.4
     version: 3.0.4
@@ -233,6 +236,9 @@ devDependencies:
   serialize-error:
     specifier: ^11.0.3
     version: 11.0.3
+  set-cookie-parser:
+    specifier: ^2.7.1
+    version: 2.7.1
   simple-git:
     specifier: ^3.27.0
     version: 3.27.0
@@ -3073,6 +3079,12 @@ packages:
 
   /@types/semver@7.5.8:
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
+    dev: true
+
+  /@types/set-cookie-parser@2.4.10:
+    resolution: {integrity: sha512-GGmQVGpQWUe5qglJozEjZV/5dyxbOOZ0LHe/lqyWssB88Y4svNfst0uqBVscdDeIKl5Jy5+aPSvy7mI9tYRguw==}
+    dependencies:
+      '@types/node': 18.19.101
     dev: true
 
   /@types/shimmer@1.2.0:
@@ -7982,6 +7994,10 @@ packages:
     engines: {node: '>=14.16'}
     dependencies:
       type-fest: 2.19.0
+    dev: true
+
+  /set-cookie-parser@2.7.1:
+    resolution: {integrity: sha512-IOc8uWeOZgnb3ptbCURJWNjWUPcO3ZnTTdzsurqERrP6nPyv+paC55vJM0LpOlT2ne+Ix+9+CRG1MNLlyZ4GjQ==}
     dev: true
 
   /set-function-length@1.2.2:

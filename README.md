@@ -36,6 +36,7 @@
   - [`ggt list`](#ggt-list)
   - [`ggt login`](#ggt-login)
   - [`ggt logout`](#ggt-logout)
+  - [`ggt logs`](#ggt-logs)
   - [`ggt whoami`](#ggt-whoami)
   - [`ggt configure`](#ggt-configure)
   - [`ggt version`](#ggt-version)
@@ -75,6 +76,7 @@ Commands
   list             List your available applications
   login            Log in to your account
   logout           Log out of your account
+  logs             Stream your environment's logs
   whoami           Print the currently logged in account
   configure        Configure default execution options
   version          Print this version of ggt
@@ -348,6 +350,30 @@ Log out of your account.
 
 Usage
       ggt logout
+```
+
+### `ggt logs`
+
+```sh-session
+$ ggt logs -h
+Streams the logs for an application to.
+
+Usage
+      ggt logs [options]
+
+Options
+      -ll, --log-level <level>       Sets the log level for incoming application logs (default: info)
+      --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
+      --json                         Output logs in JSON format
+      -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
+      -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+
+Examples
+      Stream all user logs from your development environment
+      $ ggt logs --env development --my-logs
+
+      Stream all logs from your production environment in JSON format
+      $ ggt logs --env production --json
 ```
 
 ### `ggt whoami`

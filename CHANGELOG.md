@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 1.7.0
+
+### Minor Changes
+
+- ca8964b: Add a logs command to stream logs from any environment
+
 ## 1.6.1
 
 ### Patch Changes

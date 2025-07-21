@@ -285,14 +285,18 @@ describe("SyncJson.loadOrInit", () => {
     });
   });
 
-  it.each(Commands.filter((x) => x !== "pull"))('does not allow --env=production when the command is "%s"', async (command) => {
-    args._ = [command];
-    args["--env"] = "production";
-    await expect(SyncJson.loadOrInit(testCtx, { command, args, directory: localDir })).rejects.toThrowErrorMatchingSnapshot();
-  });
+  const AllowedProdCommands = ["pull", "logs"] as const;
 
-  it('does allow --env=production when the command is "pull"', async () => {
-    command = "pull";
+  it.each(Commands.filter((x) => !AllowedProdCommands.includes(x as any)))(
+    'does not allow --env=production when the command is "%s"',
+    async (command) => {
+      args._ = [command];
+      args["--env"] = "production";
+      await expect(SyncJson.loadOrInit(testCtx, { command, args, directory: localDir })).rejects.toThrowErrorMatchingSnapshot();
+    },
+  );
+
+  it.each(AllowedProdCommands)('does allow --env=production when the command is "%s"', async (command) => {
     args._ = [command];
     args["--env"] = "production";
     const syncJson = await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir });

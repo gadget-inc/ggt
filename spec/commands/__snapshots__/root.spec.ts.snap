@@ -310,6 +310,50 @@ Usage
 "
 `;
 
+exports[`root > when logs is given > prints the usage when --help is passed 1`] = `
+"Streams the logs for an application to.
+
+Usage
+      ggt logs [options]
+
+Options
+      -ll, --log-level <level>       Sets the log level for incoming application logs (default: info)
+      --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
+      --json                         Output logs in JSON format
+      -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
+      -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+
+Examples
+      Stream all user logs from your development environment
+      $ ggt logs --env development --my-logs
+
+      Stream all logs from your production environment in JSON format
+      $ ggt logs --env production --json
+"
+`;
+
+exports[`root > when logs is given > prints the usage when -h is passed 1`] = `
+"Streams the logs for an application to.
+
+Usage
+      ggt logs [options]
+
+Options
+      -ll, --log-level <level>       Sets the log level for incoming application logs (default: info)
+      --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
+      --json                         Output logs in JSON format
+      -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
+      -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+
+Examples
+      Stream all user logs from your development environment
+      $ ggt logs --env development --my-logs
+
+      Stream all logs from your production environment in JSON format
+      $ ggt logs --env production --json
+"
+`;
+
 exports[`root > when open is given > prints the usage when --help is passed 1`] = `
 "This command opens a specific Gadget page in your browser, allowing you to directly access
 various parts of your application's interface such as logs, permissions, data views, or

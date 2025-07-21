@@ -443,6 +443,8 @@ const loadApplication = async ({
   );
 };
 
+const AllowedProdCommands = ["pull", "logs"] as Command[];
+
 const loadEnvironment = async ({
   command,
   args,
@@ -468,7 +470,7 @@ const loadEnvironment = async ({
   }
 
   const selectableEnvironments = application.environments.filter((env) => env.type === EnvironmentType.Development);
-  if (command === "pull") {
+  if (AllowedProdCommands.includes(command)) {
     // allow pulling from production environments
     selectableEnvironments.push(...application.environments.filter((env) => env.type === EnvironmentType.Production));
   }
@@ -482,7 +484,7 @@ const loadEnvironment = async ({
     });
   }
 
-  if (selectedEnvironment.toLowerCase() === "production" && command !== "pull") {
+  if (selectedEnvironment.toLowerCase() === "production" && !AllowedProdCommands.includes(command)) {
     // specifically call out that they can't dev, push, etc. to prod
     throw new ArgError(
       sprint`

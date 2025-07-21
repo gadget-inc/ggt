@@ -51,3 +51,4 @@ unmock
 unstub
 unthunk
 usagestop
+vitest

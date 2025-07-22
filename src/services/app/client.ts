@@ -9,11 +9,12 @@ import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { loadAuthHeaders } from "../http/auth.js";
 import { http, type HttpOptions } from "../http/http.js";
+import { getUser } from "../user/user.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
 import { isObject } from "../util/is.js";
 import type { Environment } from "./app.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
-import { ClientError } from "./error.js";
+import { AuthenticationError, ClientError } from "./error.js";
 
 enum ConnectionStatus {
   CONNECTED,
@@ -32,6 +33,7 @@ export class Client {
   readonly ctx: Context;
 
   private _graphqlWsClient: ReturnType<typeof createClient>;
+  private _sessionUpdateInterval: NodeJS.Timeout | undefined;
 
   constructor(
     ctx: Context,
@@ -135,6 +137,23 @@ export class Client {
         payload.variables = unthunk(variables);
         ctx.log.info("re-subscribing to graphql subscription");
       }
+
+      /* A long-running websocket will not update the session without other API calls will not update the session */
+      this._sessionUpdateInterval = setInterval(() => {
+        void getUser(this.ctx)
+          .catch((error: unknown) => this.ctx.abort(error))
+          .then((res) => {
+            if (!res) {
+              /* If this 401s, then give up as we cannot just refresh */
+              this.ctx.abort(new AuthenticationError(undefined));
+            }
+          }); /* The Set-Cookie header handler from http.ts will ensure this updates the session. */
+      }, ms("30m"));
+      this.ctx.done.finally(() => {
+        if (this._sessionUpdateInterval) {
+          clearInterval(this._sessionUpdateInterval);
+        }
+      });
     });
 
     const queue = new PQueue({ concurrency: 1 });

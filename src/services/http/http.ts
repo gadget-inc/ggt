@@ -3,6 +3,7 @@ import ms from "ms";
 import assert from "node:assert";
 import { Agent as HttpAgent } from "node:http";
 import { Agent as HttpsAgent } from "node:https";
+import { parseString as parseSetCookieString } from "set-cookie-parser";
 import { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { sprint } from "../output/sprint.js";
@@ -117,6 +118,17 @@ export const http = got.extend({
         if (response.statusCode === 401) {
           // clear the session if the request was unauthorized
           writeSession(ctx, undefined);
+        }
+
+        if (response.headers["set-cookie"]) {
+          const setCookieHeader = response.headers["set-cookie"];
+          const cookies = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader];
+          cookies.forEach((cookieString) => {
+            const cookie = parseSetCookieString(cookieString);
+            if (cookie.name === "session" && (cookie.domain === "gadget.dev" || cookie.domain === "ggt.dev")) {
+              writeSession(ctx, cookie.value);
+            }
+          });
         }
 
         return response;

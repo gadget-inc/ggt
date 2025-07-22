@@ -15,7 +15,7 @@ export class ClientError extends GGTError {
   override cause: string | string[] | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent;
 
   constructor(
-    readonly request: GraphQLQuery | GraphQLMutation | GraphQLSubscription,
+    readonly request: GraphQLQuery | GraphQLMutation | GraphQLSubscription | undefined,
     cause: unknown,
     isBug?: IsBug,
   ) {
@@ -88,7 +88,7 @@ export class ClientError extends GGTError {
 }
 
 export class AuthenticationError extends ClientError {
-  constructor(request: GraphQLQuery | GraphQLMutation | GraphQLSubscription) {
+  constructor(request: GraphQLQuery | GraphQLMutation | GraphQLSubscription | undefined) {
     super(request, "Request authentication failed due to the session expiring while running the command. Please sign-in again.", IsBug.NO);
   }
 }

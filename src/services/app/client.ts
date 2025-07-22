@@ -148,7 +148,7 @@ export class Client {
               this.ctx.abort(new AuthenticationError(undefined));
             }
           }); /* The Set-Cookie header handler from http.ts will ensure this updates the session. */
-      }, ms("30m"));
+      }, ms("30m")).unref();
       this.ctx.done.finally(() => {
         if (this._sessionUpdateInterval) {
           clearInterval(this._sessionUpdateInterval);

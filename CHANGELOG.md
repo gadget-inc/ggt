@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 1.7.2
+
+### Patch Changes
+
+- 5da096a: Add `unref` to the session update interval to allow the process to exit.
+
 ## 1.7.1
 
 ### Patch Changes

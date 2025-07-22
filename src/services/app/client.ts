@@ -150,9 +150,6 @@ export class Client {
           }); /* The Set-Cookie header handler from http.ts will ensure this updates the session. */
       }, ms("30m"));
       this.ctx.done.finally(() => {
-        clearInterval(this._sessionUpdateInterval);
-      });
-      this.ctx.onAbort((_reason) => {
         if (this._sessionUpdateInterval) {
           clearInterval(this._sessionUpdateInterval);
         }

@@ -48,6 +48,7 @@ sprintlns
 stefanzweifel
 typecheck
 unmock
+unref
 unstub
 unthunk
 usagestop

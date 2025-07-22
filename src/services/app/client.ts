@@ -140,12 +140,14 @@ export class Client {
 
       /* A long-running websocket will not update the session without other API calls will not update the session */
       this._sessionUpdateInterval = setInterval(() => {
-        void getUser(this.ctx).then((res) => {
-          if (!res) {
-            /* If this 401s, then give up as we cannot just refresh */
-            this.ctx.abort(new AuthenticationError(undefined));
-          }
-        }); /* The Set-Cookie header handler from http.ts will ensure this updates the session. */
+        void getUser(this.ctx)
+          .catch((error: unknown) => this.ctx.abort(error))
+          .then((res) => {
+            if (!res) {
+              /* If this 401s, then give up as we cannot just refresh */
+              this.ctx.abort(new AuthenticationError(undefined));
+            }
+          }); /* The Set-Cookie header handler from http.ts will ensure this updates the session. */
       }, ms("30m"));
       this.ctx.done.finally(() => {
         clearInterval(this._sessionUpdateInterval);

@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 1.7.1
+
+### Patch Changes
+
+- f7076b3: Automatically refresh the authentication session to avoid expiration.
+
 ## 1.7.0
 
 ### Minor Changes

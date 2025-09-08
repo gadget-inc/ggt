@@ -22,7 +22,7 @@ export const NEVER_IGNORE_PATHS = [".gadget/"] as const;
 /**
  * Paths that are always ignored, regardless of the contents of the `.ignore` file.
  */
-export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git"] as const;
+export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git", ".shopify"] as const;
 
 /**
  * Paths that are ignored when hashing the directory.

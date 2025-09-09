@@ -126,60 +126,72 @@ describe("Directory.loadIgnoreFile", () => {
 
     // @ts-expect-error _ignorer and _rules are private
     expect(directory._ignorer._rules).toMatchInlineSnapshot(`
-        [
-          IgnoreRule {
-            "negative": false,
-            "origin": ".DS_Store",
-            "pattern": ".DS_Store",
-            "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.DS_Store\\(\\?=\\$\\|\\\\/\\$\\)/i,
-          },
-          IgnoreRule {
-            "negative": false,
-            "origin": "node_modules",
-            "pattern": "node_modules",
-            "regex": /\\(\\?:\\^\\|\\\\/\\)node_modules\\(\\?=\\$\\|\\\\/\\$\\)/i,
-          },
-          IgnoreRule {
-            "negative": false,
-            "origin": ".git",
-            "pattern": ".git",
-            "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.git\\(\\?=\\$\\|\\\\/\\$\\)/i,
-          },
-        ]
-      `);
+      [
+        IgnoreRule {
+          "negative": false,
+          "origin": ".DS_Store",
+          "pattern": ".DS_Store",
+          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.DS_Store\\(\\?=\\$\\|\\\\/\\$\\)/i,
+        },
+        IgnoreRule {
+          "negative": false,
+          "origin": "node_modules",
+          "pattern": "node_modules",
+          "regex": /\\(\\?:\\^\\|\\\\/\\)node_modules\\(\\?=\\$\\|\\\\/\\$\\)/i,
+        },
+        IgnoreRule {
+          "negative": false,
+          "origin": ".git",
+          "pattern": ".git",
+          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.git\\(\\?=\\$\\|\\\\/\\$\\)/i,
+        },
+        IgnoreRule {
+          "negative": false,
+          "origin": ".shopify",
+          "pattern": ".shopify",
+          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.shopify\\(\\?=\\$\\|\\\\/\\$\\)/i,
+        },
+      ]
+    `);
 
     await fs.outputFile(path.join(dir, ".ignore"), "foo");
     await directory.loadIgnoreFile();
 
     // @ts-expect-error _ignorer and _rules are private
     expect(directory._ignorer._rules).toMatchInlineSnapshot(`
-        [
-          IgnoreRule {
-            "negative": false,
-            "origin": ".DS_Store",
-            "pattern": ".DS_Store",
-            "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.DS_Store\\(\\?=\\$\\|\\\\/\\$\\)/i,
-          },
-          IgnoreRule {
-            "negative": false,
-            "origin": "node_modules",
-            "pattern": "node_modules",
-            "regex": /\\(\\?:\\^\\|\\\\/\\)node_modules\\(\\?=\\$\\|\\\\/\\$\\)/i,
-          },
-          IgnoreRule {
-            "negative": false,
-            "origin": ".git",
-            "pattern": ".git",
-            "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.git\\(\\?=\\$\\|\\\\/\\$\\)/i,
-          },
-          IgnoreRule {
-            "negative": false,
-            "origin": "foo",
-            "pattern": "foo",
-            "regex": /\\(\\?:\\^\\|\\\\/\\)foo\\(\\?=\\$\\|\\\\/\\$\\)/i,
-          },
-        ]
-      `);
+      [
+        IgnoreRule {
+          "negative": false,
+          "origin": ".DS_Store",
+          "pattern": ".DS_Store",
+          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.DS_Store\\(\\?=\\$\\|\\\\/\\$\\)/i,
+        },
+        IgnoreRule {
+          "negative": false,
+          "origin": "node_modules",
+          "pattern": "node_modules",
+          "regex": /\\(\\?:\\^\\|\\\\/\\)node_modules\\(\\?=\\$\\|\\\\/\\$\\)/i,
+        },
+        IgnoreRule {
+          "negative": false,
+          "origin": ".git",
+          "pattern": ".git",
+          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.git\\(\\?=\\$\\|\\\\/\\$\\)/i,
+        },
+        IgnoreRule {
+          "negative": false,
+          "origin": ".shopify",
+          "pattern": ".shopify",
+          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.shopify\\(\\?=\\$\\|\\\\/\\$\\)/i,
+        },
+        IgnoreRule {
+          "negative": false,
+          "origin": "foo",
+          "pattern": "foo",
+          "regex": /\\(\\?:\\^\\|\\\\/\\)foo\\(\\?=\\$\\|\\\\/\\$\\)/i,
+        },
+      ]
+    `);
   });
 
   it("doesn't throw if the ignore file doesn't exist", async () => {
@@ -356,6 +368,7 @@ describe("ALWAYS_IGNORE_PATHS", () => {
         ".DS_Store",
         "node_modules",
         ".git",
+        ".shopify",
       ]
     `);
   });

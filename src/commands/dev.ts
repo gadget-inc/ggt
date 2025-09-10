@@ -74,6 +74,7 @@ export const usage: Usage = (_ctx) => {
         • .gadget
         • .git
         • node_modules
+        • .shopify
 
   {gray Notes}
         • "ggt dev" only works with development environments

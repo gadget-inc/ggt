@@ -125,6 +125,7 @@ Ignoring files
       • .gadget
       • .git
       • node_modules
+      • .shopify
 
 Notes
       • "ggt dev" only works with development environments

@@ -28,7 +28,7 @@ import { isAbortError } from "../services/util/is.js";
 import { delay } from "../services/util/promise.js";
 
 export type DevArgs = typeof args;
-export type DevArgsResult = ArgsDefinitionResult<DevArgs>;
+export type DevArgsResult = ArgsDefinitionResult;
 
 export const args = {
   ...SyncJsonArgs,
@@ -74,6 +74,7 @@ export const usage: Usage = (_ctx) => {
         • .gadget
         • .git
         • node_modules
+        • .shopify
 
   {gray Notes}
         • "ggt dev" only works with development environments
@@ -92,7 +93,7 @@ export const usage: Usage = (_ctx) => {
   `;
 };
 
-export const run: Run<DevArgs> = async (ctx, args) => {
+export const run: Run = async (ctx, args) => {
   if (!(await which("yarn", { nothrow: true }))) {
     throw new YarnNotFoundError();
   }
@@ -218,7 +219,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
     },
   });
 
-  let logsSubscription: EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> | undefined;
+  let logsSubscription: EditSubscription | undefined;
 
   if (!args["--no-logs"]) {
     logsSubscription = filesync.subscribeToEnvironmentLogs(args, {
@@ -236,7 +237,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   /**
    * A debounced function that sends the local file changes to Gadget.
    */
-  const mergeChangesWithEnvironment = debounceAsync(args["--file-push-delay"], async (): Promise<void> => {
+  const mergeChangesWithEnvironment = debounceAsync(args["--file-push-delay"], async (): Promise => {
     try {
       const lastGitBranch = syncJson.gitBranch;
       await syncJson.loadGitBranch();

@@ -104,14 +104,14 @@ export const run: Run<AddArgs> = async (ctx, args) => {
   }
 
   const filesync = new FileSync(syncJson);
-  const hashes = await filesync.hashes(ctx, true);
+  const hashes = await filesync.hashes(ctx, { silent: true });
 
   if (!hashes.inSync) {
     await filesync.merge(ctx, {
       hashes,
       printEnvironmentChangesOptions: { limit: 5 },
       printLocalChangesOptions: { limit: 5 },
-      quietly: true,
+      silent: true,
     });
   }
 

@@ -90,14 +90,12 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
         switch (true) {
           case hashes.bothChanged:
             content = sprint`Would you like to push your local changes and {underline discard your environment's} changes now?`;
-            args["--force"] = true; // accepting this confirmation implies --force
             break;
           case hashes.localChangesToPush.size > 0:
             content = sprint`Would you like to push your local changes now?`;
             break;
           case hashes.environmentChanges.size > 0:
             content = sprint`Do you want to {underline discard your environment's} changes now?`;
-            args["--force"] = true; // same as above
             break;
           default:
             unreachable("no changes to push or discard");
@@ -114,7 +112,7 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
       }
     }
 
-    await filesync.push(ctx, { command: "deploy", hashes, force: args["--force"] });
+    await filesync.push(ctx, { command: "deploy", hashes });
   }
 
   const variables = {

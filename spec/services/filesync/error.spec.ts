@@ -8,6 +8,7 @@ import type { Command } from "../../../src/services/command/command.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import {
   TooManyMergeAttemptsError,
+  TooManyPushAttemptsError,
   UnknownDirectoryError,
   YarnNotFoundError,
   isFilesVersionMismatchError,
@@ -78,6 +79,23 @@ describe(TooManyMergeAttemptsError.name, () => {
       but your local and environment's files still don't match.
 
       Make sure no one else is editing files on your environment, and try again.
+
+      If you think this is a bug, use the link below to create an issue on GitHub.
+
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
+    `);
+  });
+});
+
+describe(TooManyPushAttemptsError.name, () => {
+  it("renders correctly", () => {
+    const error = new TooManyPushAttemptsError(10, "push");
+    expect(error.sprint()).toMatchInlineSnapshot(`
+      "We tried to push your local changes to your environment 10 times,
+      but your environment's files kept changing since we last checked.
+
+      Please re-run "ggt push" to see the changes and try again.
 
       If you think this is a bug, use the link below to create an issue on GitHub.
 

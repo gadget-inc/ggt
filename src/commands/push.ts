@@ -2,6 +2,7 @@ import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
@@ -58,10 +59,18 @@ export const run: Run<typeof args> = async (ctx, args) => {
     return;
   }
 
-  if (hashes.environmentChangesToPull.size > 0 && !hashes.onlyDotGadgetFilesChanged) {
+  if (hashes.environmentChanges.size > 0 && !hashes.onlyDotGadgetFilesChanged) {
     // show them the environment changes they will discard
     await filesync.print(ctx, { hashes });
+
+    if (!args["--force"]) {
+      // they didn't pass --force, so we need to ask them if they want to discard the environment changes
+      await confirm({
+        ensureEmptyLineAbove: true,
+        content: sprint`Are you sure you want to {underline discard} your environment's changes?`,
+      });
+    }
   }
 
-  await filesync.push(ctx, { command: "push", hashes, force: args["--force"] });
+  await filesync.push(ctx, { command: "push", hashes });
 };

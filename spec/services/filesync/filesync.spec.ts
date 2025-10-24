@@ -9,7 +9,7 @@ import { args as DevArgs } from "../../../src/commands/dev.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit/operation.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions, type Directory } from "../../../src/services/filesync/directory.js";
-import { TooManyMergeAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
+import { TooManyMergeAttemptsError, TooManyPushAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
 import { FileSync, MAX_PUSH_CONTENT_LENGTH } from "../../../src/services/filesync/filesync.js";
 import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.js";
 import { SyncJson, loadSyncJsonDirectory } from "../../../src/services/filesync/sync-json.js";
@@ -30,7 +30,7 @@ import {
   type FileSyncScenarioOptions,
 } from "../../__support__/filesync.js";
 import { nockEditResponse } from "../../__support__/graphql.js";
-import { mock, mockConfirmOnce, mockSelectOnce } from "../../__support__/mock.js";
+import { mock, mockConfirmOnce, mockOnce, mockSelectOnce } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
@@ -1941,7 +1941,7 @@ describe("FileSync.push", () => {
     nockTestApps();
   });
 
-  it("automatically sends local changes to gadget when gadget hasn't made any changes", async () => {
+  it("sends local changes to gadget when gadget hasn't made any changes", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       localFiles: {
         "local-file.js": "// local",
@@ -1976,7 +1976,7 @@ describe("FileSync.push", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
-  it("discards gadget changes and sends local changes to gadget after confirmation", async () => {
+  it("discards gadget changes and sends local changes to gadget", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {},
       localFiles: {
@@ -1986,8 +1986,6 @@ describe("FileSync.push", () => {
         "gadget-file.js": "// gadget",
       },
     });
-
-    mockConfirmOnce();
 
     await filesync.push(testCtx, { command: "push" });
 
@@ -2019,54 +2017,9 @@ describe("FileSync.push", () => {
       `);
 
     await expectLocalAndGadgetHashesMatch();
-
-    expect(confirm).toHaveBeenCalledTimes(1);
   });
 
-  it("discards gadget changes and sends local changes to gadget if --force is passed", async () => {
-    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      filesVersion1Files: {},
-      localFiles: {
-        "local-file.js": "// local",
-      },
-      gadgetFiles: {
-        "gadget-file.js": "// gadget",
-      },
-    });
-
-    await filesync.push(testCtx, { command: "push", force: true });
-
-    await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "gadget-file.js": "// gadget",
-            },
-            "3": {
-              ".gadget/": "",
-              "local-file.js": "// local",
-            },
-          },
-          "gadgetDir": {
-            ".gadget/": "",
-            "local-file.js": "// local",
-          },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}}}",
-            "local-file.js": "// local",
-          },
-        }
-      `);
-
-    await expectLocalAndGadgetHashesMatch();
-  });
-
-  it("discards gadget changes and sends local changes to gadget if --force is passed, except for .gadget/ files", async () => {
+  it("discards gadget changes and sends local changes to gadget, except for .gadget/ files", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {
         ".gadget/client.js": "// client",
@@ -2081,7 +2034,7 @@ describe("FileSync.push", () => {
       },
     });
 
-    await filesync.push(testCtx, { command: "push", force: true });
+    await filesync.push(testCtx, { command: "push" });
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -2116,6 +2069,284 @@ describe("FileSync.push", () => {
       `);
 
     await expect(expectLocalAndGadgetHashesMatch()).rejects.toThrowError();
+  });
+
+  it('retries sending local changes to gadget when it receives "Files version mismatch" and only .gadget/ files changed', async () => {
+    const { filesync, changeGadgetFiles, expectDirs } = await makeSyncScenario({
+      localFiles: {
+        "local-file.js": "// local",
+      },
+    });
+
+    // @ts-expect-error _sendChangesToEnvironment is private
+    mockOnce(filesync, "_sendChangesToEnvironment", async (_ctx, _options) => {
+      // simulate gadget updating .gadget/ files while we're trying to send local changes to gadget
+      await changeGadgetFiles({
+        change: [
+          {
+            path: ".gadget/client.js",
+            content: Buffer.from("// client").toString("base64"),
+            mode: defaultFileMode,
+            encoding: FileSyncEncoding.Base64,
+          },
+        ],
+        delete: [],
+      });
+
+      throw new Error("Files version mismatch");
+    });
+
+    await filesync.push(testCtx, { command: "push" });
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+          },
+          "3": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            "local-file.js": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"3"}}}",
+          "local-file.js": "// local",
+        },
+      }
+    `);
+  });
+
+  it(`throws ${TooManyPushAttemptsError.name} if it exceeds the maximum number of attempts`, async () => {
+    const { filesync, changeGadgetFiles } = await makeSyncScenario({
+      localFiles: {
+        "local-file.js": "// local",
+      },
+    });
+
+    // @ts-expect-error _sendChangesToEnvironment is private
+    mock(filesync, "_sendChangesToEnvironment", async (_ctx, _options) => {
+      // simulate gadget constantly changing .gadget/ files while we're trying to send local changes to gadget
+      await changeGadgetFiles({
+        change: [
+          {
+            path: ".gadget/client.js",
+            content: Buffer.from("// client").toString("base64"),
+            mode: defaultFileMode,
+            encoding: FileSyncEncoding.Base64,
+          },
+        ],
+        delete: [],
+      });
+
+      throw new Error("Files version mismatch");
+    });
+
+    await expect(filesync.push(testCtx, { command: "push" })).rejects.toThrowError(TooManyPushAttemptsError);
+  });
+
+  it(`does not throw ${TooManyPushAttemptsError.name} if it succeeds on the last attempt`, async () => {
+    const { filesync, changeGadgetFiles, expectDirs } = await makeSyncScenario({
+      localFiles: {
+        "local-file.js": "// local",
+      },
+    });
+
+    const maxAttempts = 3;
+    let attempt = 0;
+
+    // @ts-expect-error _sendChangesToEnvironment is private
+    const spy = mock(filesync, "_sendChangesToEnvironment", async (ctx, options) => {
+      attempt++;
+      if (attempt === maxAttempts) {
+        spy.mockRestore();
+        // @ts-expect-error _sendChangesToEnvironment is private
+        return filesync._sendChangesToEnvironment.call(filesync, ctx, options);
+      }
+
+      // simulate gadget constantly changing .gadget/ files while we're trying to send local changes to gadget
+      await changeGadgetFiles({
+        change: [
+          {
+            path: `.gadget/client/file-${attempt}.js`,
+            content: Buffer.from(`// file-${attempt}`).toString("base64"),
+            mode: defaultFileMode,
+            encoding: FileSyncEncoding.Base64,
+          },
+        ],
+        delete: [],
+      });
+
+      throw new Error("Files version mismatch");
+    });
+
+    await filesync.push(testCtx, { command: "push", maxAttempts });
+    expect(attempt).toBe(maxAttempts);
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            ".gadget/client/": "",
+            ".gadget/client/file-1.js": "// file-1",
+          },
+          "3": {
+            ".gadget/": "",
+            ".gadget/client/": "",
+            ".gadget/client/file-1.js": "// file-1",
+            ".gadget/client/file-2.js": "// file-2",
+          },
+          "4": {
+            ".gadget/": "",
+            ".gadget/client/": "",
+            ".gadget/client/file-1.js": "// file-1",
+            ".gadget/client/file-2.js": "// file-2",
+            "local-file.js": "// local",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client/": "",
+          ".gadget/client/file-1.js": "// file-1",
+          ".gadget/client/file-2.js": "// file-2",
+          "local-file.js": "// local",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"4"}}}",
+          "local-file.js": "// local",
+        },
+      }
+    `);
+  });
+
+  it(`throws ${EdgeCaseError.name} when it receives "Files version mismatch" and non-.gadget/ files changed`, async () => {
+    const { filesync, changeGadgetFiles, expectDirs } = await makeSyncScenario({
+      localFiles: {
+        "local-file.js": "// local",
+      },
+    });
+
+    // @ts-expect-error _sendChangesToEnvironment is private
+    mockOnce(filesync, "_sendChangesToEnvironment", async (_ctx, _options) => {
+      // simulate gadget changing non-.gadget/ files while we're trying to send local changes to gadget
+      await changeGadgetFiles({
+        change: [
+          {
+            path: ".gadget/client.js",
+            content: Buffer.from("// client").toString("base64"),
+            mode: defaultFileMode,
+            encoding: FileSyncEncoding.Base64,
+          },
+          {
+            path: "some-file.js", // non-.gadget/ file
+            content: Buffer.from("// some file").toString("base64"),
+            mode: defaultFileMode,
+            encoding: FileSyncEncoding.Base64,
+          },
+        ],
+        delete: [],
+      });
+
+      throw new Error("Files version mismatch");
+    });
+
+    await expect(filesync.push(testCtx, { command: "push" })).rejects.toThrowError(EdgeCaseError);
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            ".gadget/client.js": "// client",
+            "some-file.js": "// some file",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".gadget/client.js": "// client",
+          "some-file.js": "// some file",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}}}",
+          "local-file.js": "// local",
+        },
+      }
+    `);
+  });
+
+  it(`does not throw ${EdgeCaseError.name} when it receives "Files version mismatch" and the environment files version is greater than the expected files version + 1`, async () => {
+    const { filesync, changeGadgetFiles, expectDirs } = await makeSyncScenario({
+      localFiles: {
+        "local-file.js": "// local",
+      },
+      beforePublishFileSyncEvents: async () => {
+        // simulate gadget changing files right before receiving changes
+        // from ggt causing the resulting files version to end up being
+        // > expectedRemoteFilesVersion + 1
+        await changeGadgetFiles({
+          change: [
+            {
+              path: "some-file.js",
+              content: Buffer.from("// some file").toString("base64"),
+              mode: defaultFileMode,
+              encoding: FileSyncEncoding.Base64,
+            },
+          ],
+          delete: [],
+        });
+      },
+    });
+
+    await filesync.push(testCtx, { command: "push" });
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "some-file.js": "// some file",
+          },
+          "3": {
+            ".gadget/": "",
+            "local-file.js": "// local",
+            "some-file.js": "// some file",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "local-file.js": "// local",
+          "some-file.js": "// some file",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}}}",
+          "local-file.js": "// local",
+        },
+      }
+    `);
   });
 });
 

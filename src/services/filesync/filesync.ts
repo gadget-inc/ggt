@@ -40,7 +40,7 @@ import { serializeError } from "../util/object.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
-import { isFilesVersionMismatchError, swallowFilesVersionMismatch, TooManyMergeAttemptsError } from "./error.js";
+import { isFilesVersionMismatchError, swallowFilesVersionMismatch, TooManyMergeAttemptsError, TooManyPushAttemptsError } from "./error.js";
 import type { File } from "./file.js";
 import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 import { MergeConflictPreference } from "./strategy.js";
@@ -52,6 +52,13 @@ import { type SyncJson } from "./sync-json.js";
  * throwing a {@linkcode TooManyMergeAttemptsError}.
  */
 export const MAX_MERGE_ATTEMPTS = 10;
+
+/**
+ * The maximum attempts to push local changes to the environment when a
+ * FilesVersionMismatchError is encountered before throwing a
+ * {@linkcode TooManyPushAttemptsError}.
+ */
+export const MAX_PUSH_ATTEMPTS = 10;
 
 /**
  * The maximum length of file content that can be pushed to Gadget in a
@@ -138,8 +145,8 @@ export class FileSync {
 
   constructor(readonly syncJson: SyncJson) {}
 
-  async hashes(ctx: Context, quietly?: boolean): Promise<FileSyncHashes> {
-    const spinner = !quietly ? spin({ ensureEmptyLineAbove: true, content: "Calculating file changes." }) : undefined;
+  async hashes(ctx: Context, { silent = false }: { silent?: boolean } = {}): Promise<FileSyncHashes> {
+    const spinner = !silent ? spin({ ensureEmptyLineAbove: true, content: "Calculating file changes." }) : undefined;
 
     try {
       const [localHashes, { localFilesVersionHashes, environmentHashes, environmentFilesVersion }] = await Promise.all([
@@ -210,8 +217,7 @@ export class FileSync {
       const environmentChangesToPull = getNecessaryChanges(ctx, { from: localHashes, to: environmentHashes });
 
       const onlyDotGadgetFilesChanged =
-        environmentChangesToPull.size > 0 &&
-        Array.from(environmentChangesToPull.keys()).every((filepath) => filepath.startsWith(".gadget/"));
+        environmentChanges.size > 0 && Array.from(environmentChanges.keys()).every((filepath) => filepath.startsWith(".gadget/"));
 
       const bothChanged = localChanges.size > 0 && environmentChanges.size > 0 && !onlyDotGadgetFilesChanged;
 
@@ -463,26 +469,26 @@ export class FileSync {
     {
       hashes,
       prefer,
-      maxAttempts = 10,
+      maxAttempts = MAX_MERGE_ATTEMPTS,
       printLocalChangesOptions,
       printEnvironmentChangesOptions,
-      quietly,
+      silent,
     }: {
       hashes?: FileSyncHashes;
       prefer?: MergeConflictPreference;
       maxAttempts?: number;
       printLocalChangesOptions?: Partial<PrintChangesOptions>;
       printEnvironmentChangesOptions?: Partial<PrintChangesOptions>;
-      quietly?: boolean | undefined;
+      silent?: boolean;
     } = {},
   ): Promise<void> {
     let attempt = 0;
 
     do {
       if (attempt === 0) {
-        hashes ??= await this.hashes(ctx, quietly);
+        hashes ??= await this.hashes(ctx, { silent });
       } else {
-        hashes = await this.hashes(ctx, quietly);
+        hashes = await this.hashes(ctx, { silent });
       }
 
       if (hashes.inSync) {
@@ -511,63 +517,67 @@ export class FileSync {
   /**
    * Pushes any changes made to the local filesystem since the last sync
    * to Gadget.
-   *
-   * If Gadget has also made changes since the last sync, and --force
-   * was not passed, the user will be prompted to discard them.
    */
   async push(
     ctx: Context,
     {
       command,
       hashes,
-      force,
+      maxAttempts = MAX_PUSH_ATTEMPTS,
       printLocalChangesOptions,
     }: {
       command: Command;
       hashes?: FileSyncHashes;
-      force?: boolean;
+      maxAttempts?: number;
       printLocalChangesOptions?: PrintChangesOptions;
     },
   ): Promise<void> {
-    const { localChangesToPush, environmentChanges, environmentFilesVersion, onlyDotGadgetFilesChanged } =
-      hashes ?? (await this.hashes(ctx));
-    assert(localChangesToPush.size > 0, "cannot push if there are no changes");
+    let attempt = 0;
 
-    // TODO: lift this check up to the push command
-    if (
-      // they didn't pass --force
-      !force &&
-      // their environment's files have changed
-      environmentChanges.size > 0 &&
-      // some of the changes aren't .gadget/ files
-      !onlyDotGadgetFilesChanged
-    ) {
-      await confirm({
-        ensureEmptyLineAbove: true,
-        content: sprint`Are you sure you want to {underline discard} your environment's changes?`,
-      });
-    }
+    do {
+      const { localChangesToPush, environmentFilesVersion } = hashes ?? (await this.hashes(ctx));
+      if (localChangesToPush.size === 0) {
+        return;
+      }
 
-    try {
-      await this._sendChangesToEnvironment(ctx, {
-        // what changes need to be made to your local files to make
-        // them match the environment's files
-        changes: localChangesToPush,
-        expectedFilesVersion: environmentFilesVersion,
-        printLocalChangesOptions,
-      });
-    } catch (error) {
-      swallowFilesVersionMismatch(ctx, error);
-      // we were told to push their local changes, but their
-      // environment's files have changed since we last checked, so
-      // throw a nicer error message
-      // TODO: we don't have to do this if only .gadget/ files changed
-      throw new EdgeCaseError(sprint`
-        Your environment's files have changed since we last checked.
+      attempt += 1;
 
-        Please re-run "ggt ${command}" to see the changes and try again.
-      `);
-    }
+      try {
+        await this._sendChangesToEnvironment(ctx, {
+          changes: localChangesToPush,
+          expectedFilesVersion: environmentFilesVersion,
+          printLocalChangesOptions,
+        });
+        return;
+      } catch (error) {
+        swallowFilesVersionMismatch(ctx, error);
+        // we either sent the wrong expectedFilesVersion or received a
+        // filesVersion that is greater than expectedFilesVersion + 1
+        hashes = await this.hashes(ctx, { silent: true });
+        if (hashes.environmentFilesVersion > environmentFilesVersion + 1n) {
+          // the returned filesVersion is greater than the
+          // expectedFilesVersion + 1, so the files were pushed
+          // successfully.
+          return;
+        }
+
+        // we sent the wrong expectedFilesVersion and files have changed
+        // on the environment's filesystem since we last checked
+        if (hashes.onlyDotGadgetFilesChanged) {
+          // only .gadget/ files changed, so we can try again
+          continue;
+        }
+
+        // non-.gadget/ files changed, so we can't try again
+        throw new EdgeCaseError(sprint`
+          Your environment's files have changed since we last checked.
+
+          Please re-run "ggt ${command}" to see the changes and try again.
+        `);
+      }
+    } while (attempt < maxAttempts);
+
+    throw new TooManyPushAttemptsError(maxAttempts, command);
   }
 
   async pull(

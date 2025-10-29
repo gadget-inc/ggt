@@ -172,7 +172,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
           await filesync.merge(ctx, { hashes });
           break;
         case FileSyncStrategy.PUSH:
-          await filesync.push(ctx, { command: "dev", hashes, force: true });
+          await filesync.push(ctx, { command: "dev", hashes });
           break;
         case FileSyncStrategy.PULL:
           await filesync.pull(ctx, { hashes, force: true });

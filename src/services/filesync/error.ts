@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import pluralize from "pluralize";
 import { ClientError } from "../app/error.js";
 import { type Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
@@ -93,6 +94,26 @@ export class TooManyMergeAttemptsError extends GGTError {
       but your local and environment's files still don't match.
 
       Make sure no one else is editing files on your environment, and try again.
+    `;
+  }
+}
+
+export class TooManyPushAttemptsError extends GGTError {
+  isBug = IsBug.MAYBE;
+
+  constructor(
+    readonly attempts: number,
+    readonly command: Command,
+  ) {
+    super(`Failed to push local changes to environment after ${pluralize("attempt", attempts, true)}.`);
+  }
+
+  protected render(): string {
+    return sprint`
+      We tried to push your local changes to your environment ${pluralize("time", this.attempts, true)},
+      but your environment's files kept changing since we last checked.
+
+      Please re-run "ggt ${this.command}" to see the changes and try again.
     `;
   }
 }

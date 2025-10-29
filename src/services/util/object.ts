@@ -1,6 +1,7 @@
 import cleanStack from "clean-stack";
 import { RequestError } from "got";
 import { inspect } from "node:util";
+import normalizePath from "normalize-path";
 import { serializeError as baseSerializeError, type ErrorObject } from "serialize-error";
 import type { Simplify } from "type-fest";
 import { workspaceRoot } from "./paths.js";
@@ -98,7 +99,7 @@ export const serializeError = (error: unknown): ErrorObject => {
   }
 
   if (serialized.stack) {
-    serialized.stack = cleanStack(serialized.stack, { pretty: true, basePath: workspaceRoot }).replaceAll(/file:\/\/\//g, "");
+    serialized.stack = cleanStack(serialized.stack, { pretty: true, basePath: normalizePath(workspaceRoot) });
   }
 
   if (error instanceof RequestError) {

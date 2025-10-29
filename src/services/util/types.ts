@@ -30,7 +30,7 @@ export type FunctionPropertyNames<T> = {
  */
 export type ArgsType<T> = T extends (...args: infer A) => any ? A : never;
 
-type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
+type Without<T, U> = Partial<Record<Exclude<keyof T, keyof U>, never>>;
 /**
  * Represents a type that is either T or U, but not both.
  */

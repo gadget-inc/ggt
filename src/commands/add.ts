@@ -146,7 +146,7 @@ const parseFieldValues = (fields: string[]): [{ name: string; fieldType: string 
 
   fields.forEach((field) => {
     const matches = /^(.*):+(.*)$/.exec(field);
-    if (!matches || matches.length !== 3 || !matches[1] || !matches[2]) {
+    if (matches?.length !== 3 || !matches[1] || !matches[2]) {
       problems.push(sprint`${field} is not a valid field definition`);
     } else {
       modelFields.push({ name: matches[1].replace(/:+/g, ""), fieldType: matches[2] });

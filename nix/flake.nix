@@ -19,7 +19,7 @@
           mkcert = pkgs.mkcert;
           nix-direnv = pkgs.nix-direnv;
           nixpkgs-fmt = pkgs.nixpkgs-fmt;
-          nodejs = pkgs.nodejs-18_x;
+          nodejs = pkgs.nodejs_20;
           yarn = pkgs.yarn.override { nodejs = flake.packages.nodejs; };
 
           ggt = pkgs.writeShellScriptBin "ggt" ''

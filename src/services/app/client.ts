@@ -1,7 +1,7 @@
 import type { ExecutionResult } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import ms from "ms";
-import type { ClientRequestArgs } from "node:http";
+import type { ClientRequestArgs, OutgoingHttpHeaders } from "node:http";
 import PQueue from "p-queue";
 import type { Promisable } from "type-fest";
 import WebSocket from "ws";
@@ -51,11 +51,15 @@ export class Client {
       },
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
+          const headers = Array.isArray(wsOptions?.headers)
+            ? Object.fromEntries(wsOptions.headers)
+            : (wsOptions?.headers as OutgoingHttpHeaders);
+
           super(address, protocols, {
             signal: ctx.signal,
             ...wsOptions,
             headers: {
-              ...wsOptions?.headers,
+              ...headers,
               "user-agent": config.versionFull,
               ...loadAuthHeaders(ctx),
             },

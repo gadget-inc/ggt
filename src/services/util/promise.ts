@@ -74,6 +74,7 @@ export class PromiseSignal<T = void> implements Promise<T> {
       }),
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     this[Symbol.toStringTag] = String(this._promise.pendingPromise);
   }
 

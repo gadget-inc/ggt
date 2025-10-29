@@ -181,7 +181,6 @@ Run "ggt [COMMAND] -h" for more information about a specific command.
   ```
 
   If you want even more verbose output, you can pass the `-v, --verbose` flag multiple times. Each time you pass the flag, the log level is increased:
-
   - `-v` = `"info"`
   - `-vv` = `"debug"`
   - `-vvv` = `"trace"`

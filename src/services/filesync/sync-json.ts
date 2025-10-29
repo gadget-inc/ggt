@@ -228,10 +228,7 @@ export class SyncJson {
       // update the state to the new environment
       previousEnvironment = state.environment;
       state.environment = environment.name;
-      if (!state.environments[environment.name]) {
-        // the user has never synced to this environment before
-        state.environments[environment.name] = { filesVersion: "0" };
-      }
+      state.environments[environment.name] ??= { filesVersion: "0" }; // use filesVersion: "0" if the user has never synced to this environment before
     }
 
     const syncJson =

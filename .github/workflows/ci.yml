@@ -87,47 +87,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          fetch-depth: 0
-
-      - name: Get dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@v2
-
-      - if: steps.metadata.outputs.dependency-type == 'direct:production'
-        name: Add changeset if missing
-        id: changeset
-        run: |
-          added_files=$(git diff --diff-filter=A --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
-          for filename in $added_files; do
-              if [[ $filename =~ ^\.changeset\/.+\.md$ ]]; then
-                  echo "Changeset found: $filename"
-                  exit 0
-              fi
-          done
-
-          echo "Creating changeset"
-          cat > .changeset/${{ github.event.pull_request.head.sha }}.md <<-EOF
-          ---
-          "ggt": patch
-          ---
-
-          ${{ github.event.pull_request.title }}
-          EOF
-
-          echo "changeset_added=true" >> $GITHUB_OUTPUT
-
-      - if: steps.changeset.outputs.changeset_added == 'true'
-        name: Push changeset
-        uses: stefanzweifel/git-auto-commit-action@v6
-        with:
-          commit_message: Added changeset
-
-      - if: steps.changeset.outputs.changeset_added != 'true'
-        name: Merge PR
+      - name: Merge dependabot PR
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}

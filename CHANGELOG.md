@@ -1,5 +1,11 @@
 # @gadgetinc/ggt
 
+## 1.7.4
+
+### Patch Changes
+
+- 4089900: Make `ggt push` retry "Files version mismatch" errors when possible.
+
 ## 1.7.3
 
 ### Patch Changes

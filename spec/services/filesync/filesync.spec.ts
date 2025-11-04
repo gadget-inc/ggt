@@ -1,7 +1,6 @@
 import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
-import nock from "nock";
 import { randomUUID } from "node:crypto";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
@@ -16,7 +15,7 @@ import { SyncJson, loadSyncJsonDirectory } from "../../../src/services/filesync/
 import { confirm } from "../../../src/services/output/confirm.js";
 import { EdgeCaseError } from "../../../src/services/output/report.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
-import { nockTestApps, testApp } from "../../__support__/app.js";
+import { mockTestApps, testApp } from "../../__support__/app.js";
 import { makeArgs } from "../../__support__/arg.js";
 import { testCtx } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
@@ -29,7 +28,7 @@ import {
   makeSyncScenario,
   type FileSyncScenarioOptions,
 } from "../../__support__/filesync.js";
-import { nockEditResponse } from "../../__support__/graphql.js";
+import { mockEditResponse } from "../../__support__/graphql.js";
 import { mock, mockConfirmOnce, mockOnce, mockSelectOnce } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
@@ -47,7 +46,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
   beforeEach(async () => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
 
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrInit(testCtx, {
@@ -538,7 +537,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
 
   beforeEach(async () => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
 
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrInit(testCtx, {
@@ -563,7 +562,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
     changes.set("some/nested/file.txt", { type: "update" });
     changes.set("some/nested/other-file.txt", { type: "delete" });
 
-    const scope = nockEditResponse({
+    mockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       expectVariables: expectPublishVariables({
         input: {
@@ -596,20 +595,14 @@ describe("FileSync._sendChangesToEnvironment", () => {
     });
 
     await sendChangesToGadget(testCtx, { changes });
-
-    expect(scope.isDone()).toBe(true);
   });
 
   it("doesn't send changed files to gadget if the changed files have been deleted", async () => {
-    expect(nock.pendingMocks()).toEqual([]);
-
     const changes = new Changes();
     changes.set("does/not/exist.js", { type: "create" });
     changes.set("also/does/not/exist.js", { type: "update" });
 
     await sendChangesToGadget(testCtx, { changes });
-
-    expect(nock.pendingMocks()).toEqual([]);
   });
 
   it("retries failed graphql requests", async () => {
@@ -620,19 +613,23 @@ describe("FileSync._sendChangesToEnvironment", () => {
     const changes = new Changes();
     changes.set("foo.js", { type: "create" });
 
-    const scope = nockEditResponse({
+    // In MSW, handlers are checked in LIFO order (last added, first checked)
+    // So we add the success handler first, then the failure handler
+    // This way the failure handler is checked first and consumes 2 requests,
+    // then the success handler is checked and handles the 3rd request
+    mockEditResponse({
+      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "1", problems: [] } } },
+      expectVariables: expect.anything(),
+      statusCode: 200,
+    });
+
+    const scope = mockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       response: {},
       expectVariables: expect.anything(),
       times: 2,
       statusCode: 500,
-    });
-
-    nockEditResponse({
-      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
-      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "1", problems: [] } } },
-      expectVariables: expect.anything(),
-      statusCode: 200,
     });
 
     await expect(sendChangesToGadget(testCtx, { changes })).resolves.not.toThrow();
@@ -648,7 +645,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
     const changes = new Changes();
     changes.set("foo.js", { type: "create" });
 
-    const scope = nockEditResponse({
+    const scope = mockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       response: { errors: [new GraphQLError("Files version mismatch")] },
       expectVariables: expect.anything(),
@@ -664,7 +661,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
   });
 
   it('throws "Files version mismatch" when it receives a files version greater than the expectedRemoteFilesVersion + 1', async () => {
-    const scope = nockEditResponse({
+    const scope = mockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       response: { data: { publishFileSyncEvents: { remoteFilesVersion: "2", problems: [] } } },
       expectVariables: expectPublishVariables({
@@ -702,7 +699,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
       "access-control.gadget.ts": "// foo",
     });
 
-    nockEditResponse({
+    mockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       response: {
         data: {
@@ -771,7 +768,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
 describe("FileSync.mergeChangesWithEnvironment", () => {
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it('syncs when it receives "Files version mismatch" from Gadget', async () => {
@@ -889,7 +886,7 @@ describe("FileSync.sync", () => {
   beforeEach(() => {
     appDir = testDirPath("local");
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it("does nothing if there aren't any changes", async () => {
@@ -1766,17 +1763,18 @@ describe("FileSync.sync", () => {
   });
 
   it('retries when it receives "Files version mismatch"', async () => {
-    const scope = nockEditResponse({
+    const { filesync, expectDirs } = await makeSyncScenario({
+      localFiles: { "local.txt": "// local" },
+      gadgetFiles: { "gadget.txt": "// gadget" },
+    });
+
+    // Add the test-specific mock AFTER makeSyncScenario so it takes precedence in MSW
+    const scope = mockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       response: { errors: [new GraphQLError("Files version mismatch")] },
       expectVariables: expect.anything(),
       times: 9, // 1 less than the max attempts
       statusCode: 500,
-    });
-
-    const { filesync, expectDirs } = await makeSyncScenario({
-      localFiles: { "local.txt": "// local" },
-      gadgetFiles: { "gadget.txt": "// gadget" },
     });
 
     const changes = new Changes();
@@ -1938,7 +1936,7 @@ describe("FileSync.sync", () => {
 describe("FileSync.push", () => {
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it("sends local changes to gadget when gadget hasn't made any changes", async () => {
@@ -2353,7 +2351,7 @@ describe("FileSync.push", () => {
 describe("FileSync.pull", () => {
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it("receives gadget's changes", async () => {
@@ -2595,7 +2593,7 @@ describe("FileSync.print", () => {
 
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

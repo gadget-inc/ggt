@@ -10,24 +10,24 @@ import {
   CREATE_ROUTE_MUTATION,
 } from "../../src/services/app/edit/operation.js";
 import { ArgError } from "../../src/services/command/arg.js";
-import { nockTestApps } from "../__support__/app.js";
+import { mockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
-import { nockApiResponse, nockEditResponse } from "../__support__/graphql.js";
+import { mockApiResponse, mockEditResponse } from "../__support__/graphql.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("add", () => {
   beforeEach(async () => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
     await makeSyncScenario();
   });
 
   describe("models", () => {
     it("can add a model", async () => {
-      nockEditResponse({
+      mockEditResponse({
         operation: CREATE_MODEL_MUTATION,
         response: { data: { createModel: { remoteFilesVersion: "10", changed: [] } } },
         expectVariables: { path: "modelA", fields: [] },
@@ -37,7 +37,7 @@ describe("add", () => {
     });
 
     it("can add a model with fields", async () => {
-      nockEditResponse({
+      mockEditResponse({
         operation: CREATE_MODEL_MUTATION,
         response: { data: { createModel: { remoteFilesVersion: "10", changed: [] } } },
         expectVariables: {
@@ -72,7 +72,7 @@ describe("add", () => {
 
   describe("field", () => {
     it("can add a model field", async () => {
-      nockEditResponse({
+      mockEditResponse({
         operation: CREATE_MODEL_FIELDS_MUTATION,
         response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
         expectVariables: {
@@ -110,7 +110,7 @@ describe("add", () => {
 
   describe("actions", () => {
     beforeEach(() => {
-      nockApiResponse({
+      mockApiResponse({
         operation: GADGET_META_MODELS_QUERY,
         response: {
           data: {
@@ -134,7 +134,7 @@ describe("add", () => {
         optional: true,
       });
 
-      nockApiResponse({
+      mockApiResponse({
         operation: GADGET_GLOBAL_ACTIONS_QUERY,
         response: {
           data: {
@@ -150,7 +150,7 @@ describe("add", () => {
     });
 
     it("can add an action", async () => {
-      nockEditResponse({
+      mockEditResponse({
         operation: CREATE_ACTION_MUTATION,
         response: { data: { createAction: { remoteFilesVersion: "10", changed: [] } } },
         expectVariables: { path: "actionA" },
@@ -174,7 +174,7 @@ describe("add", () => {
 
   describe("routes", () => {
     it("can add a route", async () => {
-      nockEditResponse({
+      mockEditResponse({
         operation: CREATE_ROUTE_MUTATION,
         response: { data: { createRoute: { remoteFilesVersion: "10", changed: [] } } },
         expectVariables: { method: "GET", path: "routeA" },
@@ -208,7 +208,7 @@ describe("add", () => {
 
   describe("environments", () => {
     it("can add an environment with `add env`", async () => {
-      nockEditResponse({
+      mockEditResponse({
         operation: CREATE_ENVIRONMENT_MUTATION,
         response: { data: { createEnvironment: { slug: "development2", status: EnvironmentStatus.Active } } },
         expectVariables: { environment: { slug: "development2", sourceSlug: "development" } },
@@ -216,7 +216,7 @@ describe("add", () => {
       await add.run(testCtx, makeArgs(add.args, "add", "env", "development2"));
     });
     it("can add an environment with `add environment`", async () => {
-      nockEditResponse({
+      mockEditResponse({
         operation: CREATE_ENVIRONMENT_MUTATION,
         response: { data: { createEnvironment: { slug: "development2", status: EnvironmentStatus.Active } } },
         expectVariables: { environment: { slug: "development2", sourceSlug: "development" } },

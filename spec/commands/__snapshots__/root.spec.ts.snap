@@ -112,6 +112,72 @@ Usage
 "
 `;
 
+exports[`root > when debugger is given > prints the usage when --help is passed 1`] = `
+"Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.
+This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other
+CDP-compatible debugger client.
+
+Usage
+      $ ggt debugger [DIRECTORY] [options]
+
+      DIRECTORY: The directory containing your Gadget app (default: current directory)
+
+Options
+      -a, --app <app_name>        Selects the app to connect to. Default set on ".gadget/sync.json"
+      -e, --env <env_name>        Selects the environment to debug. Default set on ".gadget/sync.json"
+      -p, --port <port>           Local port for the inspector proxy (default: 9229)
+      --configure <editor>        Configure debugger for vscode, cursor
+      --allow-unknown-directory   Allow debugging in any directory
+      --allow-different-app       Allow debugging with a different app
+
+Examples
+      start debugger proxy for current environment
+      $ ggt debugger
+
+      use a custom port
+      $ ggt debugger --port 9230
+
+      debug a specific app and environment
+      $ ggt debugger --app myApp --env development
+
+      configure VS Code debugger
+      $ ggt debugger --configure vscode
+"
+`;
+
+exports[`root > when debugger is given > prints the usage when -h is passed 1`] = `
+"Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.
+This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other
+CDP-compatible debugger client.
+
+Usage
+      $ ggt debugger [DIRECTORY] [options]
+
+      DIRECTORY: The directory containing your Gadget app (default: current directory)
+
+Options
+      -a, --app <app_name>        Selects the app to connect to. Default set on ".gadget/sync.json"
+      -e, --env <env_name>        Selects the environment to debug. Default set on ".gadget/sync.json"
+      -p, --port <port>           Local port for the inspector proxy (default: 9229)
+      --configure <editor>        Configure debugger for vscode, cursor
+      --allow-unknown-directory   Allow debugging in any directory
+      --allow-different-app       Allow debugging with a different app
+
+Examples
+      start debugger proxy for current environment
+      $ ggt debugger
+
+      use a custom port
+      $ ggt debugger --port 9230
+
+      debug a specific app and environment
+      $ ggt debugger --app myApp --env development
+
+      configure VS Code debugger
+      $ ggt debugger --configure vscode
+"
+`;
+
 exports[`root > when deploy is given > prints the usage when --help is passed 1`] = `
 "Deploys your app to production.
 

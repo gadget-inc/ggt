@@ -14,7 +14,7 @@ import {
   isFilesVersionMismatchError,
 } from "../../../src/services/filesync/error.js";
 import { SyncJson, SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
-import { nockTestApps, testEnvironment } from "../../__support__/app.js";
+import { mockTestApps, testEnvironment } from "../../__support__/app.js";
 import { makeArgs } from "../../__support__/arg.js";
 import { testCtx } from "../../__support__/context.js";
 import { mockOnce } from "../../__support__/mock.js";
@@ -54,7 +54,7 @@ describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
 
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it.each(["dev", "deploy", "push", "pull", "status", "open"] as const)("renders correctly when %s is passed", async (command) => {

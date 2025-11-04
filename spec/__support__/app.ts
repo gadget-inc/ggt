@@ -1,7 +1,7 @@
-import nock from "nock";
+import { http } from "msw";
 import { EnvironmentType, type Application, type Environment } from "../../src/services/app/app.js";
 import { config } from "../../src/services/config/config.js";
-import { matchAuthHeader } from "./user.js";
+import { mockServer } from "./msw.js";
 
 /**
  * A Gadget app to use in tests.
@@ -17,21 +17,25 @@ export const testApp: Application = Object.freeze({
       id: 1n,
       name: "development",
       type: EnvironmentType.Development,
+      nodeVersion: "22.15.0",
     },
     {
       id: 2n,
       name: "production",
       type: EnvironmentType.Production,
+      nodeVersion: "22.15.0",
     },
     {
       id: 3n,
       name: "cool-environment-development",
       type: EnvironmentType.Development,
+      nodeVersion: "22.15.0",
     },
     {
       id: 4n,
       name: "other-environment-development",
       type: EnvironmentType.Development,
+      nodeVersion: "22.15.0",
     },
   ],
   team: {
@@ -72,11 +76,13 @@ export const testAppWith2Environments: Application = Object.freeze({
       id: 1n,
       name: "development",
       type: EnvironmentType.Development,
+      nodeVersion: "22.15.0",
     },
     {
       id: 2n,
       name: "production",
       type: EnvironmentType.Production,
+      nodeVersion: "22.15.0",
     },
   ],
   team: {
@@ -104,12 +110,18 @@ export const testAppWith0Environments: Application = Object.freeze({
 /**
  * Sets up a response for the apps endpoint that `getApps` uses.
  */
-export const nockTestApps = ({ optional = true, persist = true } = {}): void => {
-  matchAuthHeader(
-    nock(`https://${config.domains.services}`)
-      .get("/auth/api/apps")
-      .optionally(optional)
-      .reply(200, [testApp, testApp2, testAppWith2Environments, testAppWith0Environments])
-      .persist(persist),
+export const mockTestApps = (): void => {
+  mockServer.use(
+    http.get(`https://${config.domains.services}/auth/api/apps`, ({ request }) => {
+      // Verify that auth headers are present (either token or cookie)
+      const hasToken = request.headers.has("x-platform-access-token");
+      const hasCookie = request.headers.has("cookie");
+
+      if (!hasToken && !hasCookie) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+
+      return Response.json([testApp, testApp2, testAppWith2Environments, testAppWith0Environments]);
+    }),
   );
 };

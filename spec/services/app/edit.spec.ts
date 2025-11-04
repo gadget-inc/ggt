@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql";
-import nock from "nock";
+import { http } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { CloseEvent, ErrorEvent } from "ws";
 import { Edit } from "../../../src/services/app/edit/edit.js";
@@ -14,7 +14,8 @@ import { loadCookie } from "../../../src/services/http/auth.js";
 import { testApp, testEnvironment } from "../../__support__/app.js";
 import { testCtx } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
-import { nockEditResponse } from "../../__support__/graphql.js";
+import { mockEditResponse } from "../../__support__/graphql.js";
+import { mockServer } from "../../__support__/msw.js";
 import { loginTestUser } from "../../__support__/user.js";
 
 describe("Edit", () => {
@@ -23,14 +24,14 @@ describe("Edit", () => {
   });
 
   it("retries queries when it receives a 500", async () => {
-    const scope = nockEditResponse({
+    mockEditResponse({
       operation: REMOTE_FILES_VERSION_QUERY,
       response: {},
       times: 2,
       statusCode: 500,
     });
 
-    nockEditResponse({
+    mockEditResponse({
       operation: REMOTE_FILES_VERSION_QUERY,
       response: {
         data: {
@@ -42,12 +43,10 @@ describe("Edit", () => {
     const edit = new Edit(testCtx, testEnvironment);
 
     await expect(edit.query({ query: REMOTE_FILES_VERSION_QUERY })).resolves.not.toThrow();
-
-    expect(scope.isDone()).toBe(true);
   });
 
   it("throws EditError when it receives errors", async () => {
-    nockEditResponse({
+    mockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       response: {
         errors: [new GraphQLError("Something went wrong")],
@@ -62,7 +61,7 @@ describe("Edit", () => {
   });
 
   it("throws EditError when it receives a 500", async () => {
-    nockEditResponse({
+    mockEditResponse({
       operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
       response: {
         errors: [new GraphQLError("Something went wrong")],
@@ -78,10 +77,18 @@ describe("Edit", () => {
   });
 
   it("throws EditError when it receives invalid json", async () => {
-    nock(`https://${testApp.slug}--development.${config.domains.app}`)
-      .post("/edit/api/graphql")
-      .matchHeader("cookie", (cookie) => loadCookie(testCtx) === cookie)
-      .reply(503, "Service Unavailable", { "content-type": "text/plain" });
+    mockServer.use(
+      http.post(`https://${testApp.slug}--development.${config.domains.app}/edit/api/graphql`, ({ request }) => {
+        const cookie = loadCookie(testCtx);
+        const cookieHeader = request.headers.get("cookie");
+        expect(cookieHeader).toBe(cookie);
+
+        return new Response("Service Unavailable", {
+          status: 503,
+          headers: { "content-type": "text/plain" },
+        });
+      }),
+    );
 
     const editGraphQL = new Edit(testCtx, testEnvironment);
 

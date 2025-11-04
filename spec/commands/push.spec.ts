@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 import * as push from "../../src/commands/push.js";
 import { confirm } from "../../src/services/output/confirm.js";
-import { nockTestApps } from "../__support__/app.js";
+import { mockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
@@ -12,7 +12,7 @@ import { loginTestUser } from "../__support__/user.js";
 describe("push", () => {
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it("automatically sends local changes to gadget when gadget hasn't made any changes", async () => {

@@ -10,7 +10,7 @@ import { ClientError } from "../../src/services/app/error.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
 import { assetsPath } from "../../src/services/util/paths.js";
-import { nockTestApps, testApp } from "../__support__/app.js";
+import { mockTestApps, testApp } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { waitForReportErrorAndExit } from "../__support__/error.js";
@@ -25,7 +25,7 @@ describe("dev", () => {
 
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
 
     args = makeArgs(
       dev.args,

@@ -1,4 +1,4 @@
-import nock from "nock";
+import { http } from "msw";
 import process from "node:process";
 import { describe, expect, it, vi } from "vitest";
 import * as login from "../../../src/commands/login.js";
@@ -9,16 +9,16 @@ import { readSession, writeSession } from "../../../src/services/user/session.js
 import { getUser, getUserOrLogin } from "../../../src/services/user/user.js";
 import { testCtx } from "../../__support__/context.js";
 import { mock, mockConfirmOnce } from "../../__support__/mock.js";
+import { mockServer } from "../../__support__/msw.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { loginTestUser, loginTestUserWithCookie, testUser } from "../../__support__/user.js";
 
 describe("loadUser", () => {
   it("returns the user if the session is set", async () => {
-    loginTestUser({ optional: false });
+    loginTestUser();
 
     const user = await getUser(testCtx);
 
-    expect(nock.pendingMocks()).toEqual([]);
     expect(user).toEqual(testUser);
   });
 
@@ -31,18 +31,20 @@ describe("loadUser", () => {
   it("returns undefined if the session is invalid or expired", async () => {
     writeSession(testCtx, "test");
 
-    nock(`https://${config.domains.services}`)
-      .get("/auth/api/current-user")
-      .matchHeader("cookie", (value) => {
+    mockServer.use(
+      http.get(`https://${config.domains.services}/auth/api/current-user`, ({ request }) => {
         const cookie = loadCookie(testCtx);
+        const cookieHeader = request.headers.get("cookie");
+
         expect(cookie).toBeTruthy();
-        return value === cookie;
-      })
-      .reply(401);
+        expect(cookieHeader).toBe(cookie);
+
+        return new Response("Unauthorized", { status: 401 });
+      }),
+    );
 
     const user = await getUser(testCtx);
 
-    expect(nock.pendingMocks()).toEqual([]);
     expect(user).toBeUndefined();
     expect(readSession(testCtx)).toBeUndefined();
   });
@@ -50,10 +52,9 @@ describe("loadUser", () => {
 
 describe("getUserOrLogin", () => {
   it("returns the user if the session is set", async () => {
-    loginTestUser({ optional: false });
+    loginTestUser();
     const user = await getUserOrLogin(testCtx, "dev");
 
-    expect(nock.pendingMocks()).toEqual([]);
     expect(user).toEqual(testUser);
   });
 
@@ -62,7 +63,7 @@ describe("getUserOrLogin", () => {
     vi.spyOn(process, "exit");
 
     mock(login, "login", () => {
-      loginTestUserWithCookie({ optional: false });
+      loginTestUserWithCookie();
     });
 
     writeSession(testCtx, undefined);
@@ -79,16 +80,19 @@ describe("getUserOrLogin", () => {
     mockConfirmOnce();
     vi.spyOn(process, "exit");
     mock(login, "login", () => {
-      loginTestUser({ optional: false });
+      loginTestUser();
       return Promise.resolve();
     });
 
-    nock(`https://${config.domains.services}`).get("/auth/api/current-user").reply(401);
+    mockServer.use(
+      http.get(`https://${config.domains.services}/auth/api/current-user`, () => {
+        return new Response("Unauthorized", { status: 401 });
+      }),
+    );
 
     writeSession(testCtx, "test");
     await expect(getUserOrLogin(testCtx, "dev")).resolves.toEqual(testUser);
 
-    expect(nock.pendingMocks()).toEqual([]);
     expect(confirm).toHaveBeenCalled();
     expect(process.exit).not.toHaveBeenCalled();
     expect(login.login).toHaveBeenCalled();
@@ -98,7 +102,7 @@ describe("getUserOrLogin", () => {
     writeSession(testCtx, undefined);
     mock(confirm, () => process.exit(0));
     mock(login, "login", () => {
-      loginTestUser({ optional: false });
+      loginTestUser();
       return Promise.resolve();
     });
 

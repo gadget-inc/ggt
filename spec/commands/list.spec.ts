@@ -2,7 +2,7 @@ import { beforeEach, describe, it } from "vitest";
 import * as list from "../../src/commands/list.js";
 import * as app from "../../src/services/app/app.js";
 import { output } from "../../src/services/output/output.js";
-import { nockTestApps } from "../__support__/app.js";
+import { mockTestApps } from "../__support__/app.js";
 import { makeRootArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { mock, mockOnce } from "../__support__/mock.js";
@@ -12,7 +12,7 @@ import { loginTestUser } from "../__support__/user.js";
 describe("list", () => {
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it("lists apps with tabs when output.isInteractive = true", async () => {

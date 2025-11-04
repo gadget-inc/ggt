@@ -1,6 +1,6 @@
 import { beforeEach, describe, it } from "vitest";
 import * as status from "../../src/commands/status.js";
-import { nockTestApps } from "../__support__/app.js";
+import { mockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
@@ -13,7 +13,7 @@ describe("status", () => {
 
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it("prints the expected message when nothing has changed", async () => {

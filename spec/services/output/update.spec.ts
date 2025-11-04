@@ -1,12 +1,13 @@
 import fs from "fs-extra";
 import ms from "ms";
-import nock from "nock";
+import { http } from "msw";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { config } from "../../../src/services/config/config.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
 import { packageJson } from "../../../src/services/util/package-json.js";
 import { testCtx } from "../../__support__/context.js";
+import { mockServer } from "../../__support__/msw.js";
 import { expectStdout } from "../../__support__/output.js";
 
 describe("getDistTags", () => {
@@ -16,24 +17,30 @@ describe("getDistTags", () => {
       experimental: "0.0.0-experimental.41b05e2",
     };
 
-    nock("https://registry.npmjs.org").get("/ggt").reply(200, {
-      name: "ggt",
-      "dist-tags": distTags,
-    });
+    mockServer.use(
+      http.get("https://registry.npmjs.org/ggt", () => {
+        return Response.json({
+          name: "ggt",
+          "dist-tags": distTags,
+        });
+      }),
+    );
 
     await expect(getDistTags(testCtx)).resolves.toEqual(distTags);
   });
 
   it("throws if the response is invalid", async () => {
-    nock("https://registry.npmjs.org")
-      .get("/ggt")
-      .reply(200, {
-        name: "not-ggt",
-        "dist-tags": {
-          latest: "1.0.0",
-          experimental: "0.0.0-experimental.41b05e2",
-        },
-      });
+    mockServer.use(
+      http.get("https://registry.npmjs.org/ggt", () => {
+        return Response.json({
+          name: "not-ggt",
+          "dist-tags": {
+            latest: "1.0.0",
+            experimental: "0.0.0-experimental.41b05e2",
+          },
+        });
+      }),
+    );
 
     await expect(getDistTags(testCtx)).rejects.toThrow();
   });
@@ -61,15 +68,17 @@ describe("warnIfUpdateAvailable", () => {
   it("logs a warning if an update is available (latest)", async () => {
     packageJson.version = "1.0.0";
 
-    nock("https://registry.npmjs.org")
-      .get("/ggt")
-      .reply(200, {
-        name: "ggt",
-        "dist-tags": {
-          latest: "1.0.1",
-          experimental: "0.0.0-experimental.41b05e2",
-        },
-      });
+    mockServer.use(
+      http.get("https://registry.npmjs.org/ggt", () => {
+        return Response.json({
+          name: "ggt",
+          "dist-tags": {
+            latest: "1.0.1",
+            experimental: "0.0.0-experimental.41b05e2",
+          },
+        });
+      }),
+    );
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
 
@@ -92,15 +101,17 @@ describe("warnIfUpdateAvailable", () => {
   it("logs a warning if an update is available (experimental)", async () => {
     packageJson.version = "0.0.0-experimental.bf3e4a3";
 
-    nock("https://registry.npmjs.org")
-      .get("/ggt")
-      .reply(200, {
-        name: "ggt",
-        "dist-tags": {
-          latest: "1.0.1",
-          experimental: "0.0.0-experimental.41b05e2",
-        },
-      });
+    mockServer.use(
+      http.get("https://registry.npmjs.org/ggt", () => {
+        return Response.json({
+          name: "ggt",
+          "dist-tags": {
+            latest: "1.0.1",
+            experimental: "0.0.0-experimental.41b05e2",
+          },
+        });
+      }),
+    );
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
 
@@ -123,15 +134,17 @@ describe("warnIfUpdateAvailable", () => {
   it("does nothing if already at latest version", async () => {
     packageJson.version = "1.0.0";
 
-    nock("https://registry.npmjs.org")
-      .get("/ggt")
-      .reply(200, {
-        name: "ggt",
-        "dist-tags": {
-          latest: "1.0.0",
-          experimental: "0.0.0-experimental.41b05e2",
-        },
-      });
+    mockServer.use(
+      http.get("https://registry.npmjs.org/ggt", () => {
+        return Response.json({
+          name: "ggt",
+          "dist-tags": {
+            latest: "1.0.0",
+            experimental: "0.0.0-experimental.41b05e2",
+          },
+        });
+      }),
+    );
 
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeTruthy();
 

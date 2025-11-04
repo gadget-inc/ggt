@@ -1,6 +1,6 @@
 import { default as openApp } from "open";
 import { beforeEach, describe, expect, it } from "vitest";
-import { nockTestApps, testApp, testEnvironment } from "../../spec/__support__/app.js";
+import { mockTestApps, testApp, testEnvironment } from "../../spec/__support__/app.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { mockSelectOnce } from "../../spec/__support__/mock.js";
 import * as open from "../../src/commands/open.js";
@@ -9,14 +9,14 @@ import { ArgError } from "../../src/services/command/arg.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
-import { nockApiResponse } from "../__support__/graphql.js";
+import { mockApiResponse } from "../__support__/graphql.js";
 import { expectStdout } from "../__support__/output.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("open", () => {
   beforeEach(async () => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
     await makeSyncScenario();
   });
 
@@ -54,7 +54,7 @@ describe("open", () => {
   });
 
   it("opens a browser to the app's data page for a specified model", async () => {
-    nockGetModels();
+    mockGetModels();
 
     await open.run(testCtx, makeArgs(open.args, "open", "data", "modelA"));
 
@@ -67,7 +67,7 @@ describe("open", () => {
   });
 
   it("opens a browser to the app's schema page for a specified model", async () => {
-    nockGetModels();
+    mockGetModels();
 
     await open.run(testCtx, makeArgs(open.args, "open", "schema", "modelA"));
 
@@ -80,7 +80,7 @@ describe("open", () => {
   });
 
   it("to the model's data page based on user selection from a list of available models if --show-all flag is passed", async () => {
-    nockGetModels();
+    mockGetModels();
     mockSelectOnce("user");
 
     await open.run(testCtx, makeArgs(open.args, "open", "data", "--show-all"));
@@ -92,7 +92,7 @@ describe("open", () => {
   });
 
   it("to the model's schema page based on user selection from a list of available models if --show-all flag is passed", async () => {
-    nockGetModels();
+    mockGetModels();
     mockSelectOnce("user");
 
     await open.run(testCtx, makeArgs(open.args, "open", "schema", "--show-all"));
@@ -104,7 +104,7 @@ describe("open", () => {
   });
 
   it("displays the closest match for a model that does not exist", async () => {
-    nockGetModels();
+    mockGetModels();
 
     const error: ArgError = await expectError(() => open.run(testCtx, makeArgs(open.args, "open", "data", "use")));
     expect(error).toBeInstanceOf(ArgError);
@@ -121,8 +121,8 @@ describe("open", () => {
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const nockGetModels = () => {
-  return nockApiResponse({
+export const mockGetModels = () => {
+  return mockApiResponse({
     operation: GADGET_META_MODELS_QUERY,
     response: {
       data: {

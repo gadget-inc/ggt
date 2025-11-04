@@ -7,7 +7,7 @@ import * as deploy from "../../src/commands/deploy.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
 import { confirm } from "../../src/services/output/confirm.js";
-import { nockTestApps } from "../__support__/app.js";
+import { mockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { makeMockEditSubscriptions } from "../__support__/graphql.js";
@@ -21,7 +21,7 @@ describe("deploy", () => {
 
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it("does not try to deploy if any problems were detected and displays the problems", async () => {

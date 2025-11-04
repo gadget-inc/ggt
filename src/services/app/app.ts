@@ -18,6 +18,7 @@ export const Environment = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
   name: z.string().transform((name) => name.toLowerCase()),
   type: z.nativeEnum(EnvironmentType),
+  nodeVersion: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof Environment> & {

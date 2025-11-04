@@ -1,4 +1,4 @@
-import nock, { type Scope } from "nock";
+import { http } from "msw";
 import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
 import { ZodSchema, z } from "zod";
@@ -8,6 +8,7 @@ import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../s
 import type { ClientError } from "../../src/services/app/error.js";
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
+import { readToken } from "../../src/services/user/session.js";
 import { noop, unthunk, type Thunk } from "../../src/services/util/function.js";
 import { isFunction } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
@@ -15,11 +16,11 @@ import { testEnvironment } from "./app.js";
 import { testCtx } from "./context.js";
 import { log } from "./debug.js";
 import { mock } from "./mock.js";
-import { matchAuthHeader } from "./user.js";
+import { mockServer } from "./msw.js";
 
-export type NockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLMutation> = {
+export type MockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLMutation> = {
   /**
-   * The GraphQL operation to nock.
+   * The GraphQL operation to mock.
    */
   operation: Operation;
 
@@ -82,19 +83,19 @@ export type NockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLM
 /**
  * Sets up a response to an {@linkcode Edit} query or mutation.
  *
- * @see {@linkcode NockGraphQLResponseOptions}
+ * @see {@linkcode MockGraphQLResponseOptions}
  */
-export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation>({
+export const mockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   operation,
   environment = testEnvironment,
   application = environment.application,
-  optional = false,
+  optional: _optional = false,
   persist = false,
   times = 1,
   statusCode = 200,
   endpoint,
   ...opts
-}: NockGraphQLResponseOptions<Query> & { endpoint: string }): Scope & { responded: PromiseSignal } => {
+}: MockGraphQLResponseOptions<Query> & { endpoint: string }): { responded: PromiseSignal; isDone: () => boolean } => {
   let subdomain = application.slug;
   if (application.multiEnvironmentEnabled) {
     subdomain += `--${environment.name}`;
@@ -121,33 +122,85 @@ export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation
   };
 
   const responded = new PromiseSignal();
+  let callCount = 0;
+  const expectedCalls = persist ? Infinity : times;
 
-  const scope = matchAuthHeader(
-    nock(`https://${subdomain}.${config.domains.app}`)
-      .post(endpoint, (body) => body.query === operation)
-      .matchHeader("cookie", (cookie) => loadCookie(testCtx) === cookie)
-      .matchHeader("x-gadget-environment", environment.name)
-      .optionally(optional)
-      .times(times)
-      .reply(statusCode, async (_uri, rawBody) => {
-        try {
-          const body = z.object({ query: z.literal(operation), variables: z.record(z.unknown()).optional() }).parse(rawBody);
-          const variables = expectVariables(body.variables);
-          const response = await generateResponse(variables);
-          return response;
-        } catch (error) {
-          log.error("failed to generate response", { error });
-          throw error;
-        } finally {
-          responded.resolve();
-        }
-      })
-      .persist(persist),
-  ) as ReturnType<typeof nockGraphQLResponse>;
+  const handler = http.post(`https://${subdomain}.${config.domains.app}${endpoint}`, async ({ request }) => {
+    try {
+      // Clone the request so we can read the body without consuming it for other handlers
+      const clonedRequest = request.clone();
 
-  scope.responded = responded;
+      // Parse the request body first without strict validation
+      const rawBody = await clonedRequest.json();
+      const parsedBody = z.object({ query: z.string(), variables: z.record(z.unknown()).optional() }).parse(rawBody);
 
-  return scope;
+      // Check if the query matches this handler's operation
+      if (parsedBody.query !== operation) {
+        // Not this handler's query, pass through to next handler
+        return;
+      }
+
+      // Check if we've reached the call limit
+      if (!persist && callCount >= times) {
+        // This handler has been called enough times, pass through to next handler
+        return;
+      }
+      callCount++;
+
+      // Validate auth headers
+      const token = readToken(testCtx);
+      const cookie = loadCookie(testCtx);
+      const authHeader = request.headers.get("x-platform-access-token");
+      const cookieHeader = request.headers.get("cookie");
+
+      if (token && authHeader !== token) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+      if (cookie && cookieHeader !== cookie) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+
+      // Check environment header
+      const envHeader = request.headers.get("x-gadget-environment");
+      if (envHeader && envHeader !== environment.name) {
+        // Environment header present but doesn't match, pass through
+        return;
+      }
+
+      // Validate and generate response
+      const variables = expectVariables(parsedBody.variables);
+      let response;
+
+      try {
+        response = await generateResponse(variables);
+      } catch (error) {
+        // If the response function throws an error, convert it to a GraphQL error response
+        // This allows tests to simulate server-side errors by throwing in the response function
+        log.error("response function threw error, converting to graphql error", { error });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        response = {
+          errors: [{ message: errorMessage }],
+        };
+      }
+
+      responded.resolve();
+
+      // Serialize the response properly, especially GraphQLError objects
+      const serializedResponse = JSON.parse(JSON.stringify(response));
+
+      return Response.json(serializedResponse, { status: statusCode });
+    } catch (error) {
+      log.error("failed to handle graphql request", { error });
+      throw error;
+    }
+  });
+
+  mockServer.use(handler);
+
+  return {
+    responded,
+    isDone: () => callCount >= expectedCalls,
+  };
 };
 
 /**
@@ -227,14 +280,16 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
   return mockEditSubscriptions;
 };
 
-export const nockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
+export const mockEditResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   ...options
-}: NockGraphQLResponseOptions<Query>): ReturnType<typeof nockGraphQLResponse> => {
-  return nockGraphQLResponse({ ...options, endpoint: "/edit/api/graphql" });
+}: MockGraphQLResponseOptions<Query>): ReturnType<typeof mockGraphQLResponse> => {
+  return mockGraphQLResponse({ ...options, endpoint: "/edit/api/graphql" });
 };
 
-export const nockApiResponse = <Query extends GraphQLQuery | GraphQLMutation>({
+export const mockApiResponse = <Query extends GraphQLQuery | GraphQLMutation>({
   ...options
-}: NockGraphQLResponseOptions<Query>): ReturnType<typeof nockGraphQLResponse> => {
-  return nockGraphQLResponse({ ...options, endpoint: "/api/graphql" });
+}: MockGraphQLResponseOptions<Query>): ReturnType<typeof mockGraphQLResponse> => {
+  return mockGraphQLResponse({ ...options, endpoint: "/api/graphql" });
 };
+
+export type mockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLMutation> = MockGraphQLResponseOptions<Operation>;

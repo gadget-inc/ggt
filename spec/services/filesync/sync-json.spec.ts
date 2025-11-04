@@ -14,7 +14,7 @@ import {
   type AnySyncJsonState,
   type SyncJsonArgsResult,
 } from "../../../src/services/filesync/sync-json.js";
-import { nockTestApps, testApp, testApp2, testAppWith2Environments } from "../../__support__/app.js";
+import { mockTestApps, testApp, testApp2, testAppWith2Environments } from "../../__support__/app.js";
 import { makeArgs } from "../../__support__/arg.js";
 import { testCtx } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
@@ -33,7 +33,7 @@ describe("SyncJson.loadOrInit", () => {
 
   beforeEach(async () => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
 
     command = "dev";
     args = makeArgs(SyncJsonArgs, command, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`);
@@ -327,7 +327,7 @@ describe("sprintSyncJson", () => {
 
   beforeEach(async () => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
 
     ({ syncJson } = await makeSyncScenario());
   });

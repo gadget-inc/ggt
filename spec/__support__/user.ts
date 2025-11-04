@@ -1,4 +1,4 @@
-import nock from "nock";
+import { http } from "msw";
 import { randomUUID } from "node:crypto";
 import { expect, vi } from "vitest";
 import { config } from "../../src/services/config/config.js";
@@ -6,6 +6,7 @@ import { loadCookie } from "../../src/services/http/auth.js";
 import { readToken, writeSession } from "../../src/services/user/session.js";
 import type { User } from "../../src/services/user/user.js";
 import { testCtx } from "./context.js";
+import { mockServer } from "./msw.js";
 
 /**
  * A test user to use in tests.
@@ -16,47 +17,45 @@ export const testUser: User = Object.freeze({
   name: "Jane Doe",
 });
 
-export let matchAuthHeader: (scope: nock.Scope) => nock.Scope;
-
-export const loginTestUserWithToken = ({ optional = false }): void => {
-  matchAuthHeader = (scope: nock.Scope) => {
-    return scope.matchHeader("x-platform-access-token", (value) => {
-      const token = readToken(testCtx);
-      expect(token).toBeTruthy();
-      return value === token;
-    });
-  };
-
+export const loginTestUserWithToken = (): void => {
   vi.stubEnv("GGT_TOKEN", "gpat-test-token");
 
-  matchAuthHeader(
-    nock(`https://${config.domains.services}`).get("/auth/api/current-user").optionally(optional).reply(200, testUser).persist(),
+  mockServer.use(
+    http.get(`https://${config.domains.services}/auth/api/current-user`, ({ request }) => {
+      const token = readToken(testCtx);
+      const authHeader = request.headers.get("x-platform-access-token");
+
+      expect(token).toBeTruthy();
+      expect(authHeader).toBe(token);
+
+      return Response.json(testUser);
+    }),
   );
 };
 
-export const loginTestUserWithCookie = ({ optional = false } = {}): void => {
-  matchAuthHeader = (scope: nock.Scope) => {
-    return scope.matchHeader("cookie", (value) => {
-      const cookie = loadCookie(testCtx);
-      expect(cookie).toBeTruthy();
-      return value === cookie;
-    });
-  };
-
+export const loginTestUserWithCookie = (): void => {
   writeSession(testCtx, randomUUID());
 
-  matchAuthHeader(
-    nock(`https://${config.domains.services}`).get("/auth/api/current-user").optionally(optional).reply(200, testUser).persist(),
+  mockServer.use(
+    http.get(`https://${config.domains.services}/auth/api/current-user`, ({ request }) => {
+      const cookie = loadCookie(testCtx);
+      const cookieHeader = request.headers.get("cookie");
+
+      expect(cookie).toBeTruthy();
+      expect(cookieHeader).toBe(cookie);
+
+      return Response.json(testUser);
+    }),
   );
 };
 
 /**
  * Sets up a response for the current-user endpoint that `getUser` uses.
  */
-export const loginTestUser = ({ optional = true } = {}): void => {
+export const loginTestUser = (): void => {
   if (Math.random() > 0.5) {
-    loginTestUserWithCookie({ optional });
+    loginTestUserWithCookie();
   } else {
-    loginTestUserWithToken({ optional });
+    loginTestUserWithToken();
   }
 };

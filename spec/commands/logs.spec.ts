@@ -1,7 +1,7 @@
 import { beforeEach, describe, it } from "vitest";
 import * as logs from "../../src/commands/logs.js";
 import { ENVIRONMENT_LOGS_SUBSCRIPTION, type GraphQLSubscription } from "../../src/services/app/edit/operation.js";
-import { nockTestApps } from "../__support__/app.js";
+import { mockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { mockContext, testCtx } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
@@ -31,7 +31,7 @@ describe("logs", () => {
 
   beforeEach(() => {
     loginTestUser();
-    nockTestApps();
+    mockTestApps();
   });
 
   it("prints server logs to the console via subscription", async () => {

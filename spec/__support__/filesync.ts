@@ -34,7 +34,7 @@ import { makeArgs } from "./arg.js";
 import { testCtx } from "./context.js";
 import { assertOrFail, log } from "./debug.js";
 import { readDir, writeDir, type Files } from "./files.js";
-import { makeMockEditSubscriptions, nockEditResponse, type MockEditSubscription } from "./graphql.js";
+import { makeMockEditSubscriptions, mockEditResponse, type MockEditSubscription } from "./graphql.js";
 import { prettyJSON } from "./json.js";
 import { mock, mockRestore } from "./mock.js";
 import { testDirPath } from "./paths.js";
@@ -274,7 +274,7 @@ export const makeSyncScenario = async ({
     log.trace("new files version", { environmentFilesVersion });
   };
 
-  nockEditResponse({
+  mockEditResponse({
     environment: syncJson.environment,
     optional: true,
     persist: true,
@@ -307,7 +307,7 @@ export const makeSyncScenario = async ({
     },
   });
 
-  nockEditResponse({
+  mockEditResponse({
     environment: syncJson.environment,
     optional: true,
     persist: true,
@@ -338,7 +338,7 @@ export const makeSyncScenario = async ({
     },
   });
 
-  nockEditResponse({
+  mockEditResponse({
     environment: syncJson.environment,
     optional: true,
     persist: true,
@@ -379,7 +379,7 @@ export const makeSyncScenario = async ({
     },
   });
 
-  nockEditResponse({
+  mockEditResponse({
     environment: syncJson.environment,
     optional: true,
     persist: true,

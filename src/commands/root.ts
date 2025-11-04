@@ -39,6 +39,7 @@ export const usage: Usage = () => {
       login            Log in to your account
       logout           Log out of your account
       logs             Stream your environment's logs
+      debugger         Connect to the debugger for your environment
       whoami           Print the currently logged in account
       configure        Configure default execution options
       version          Print this version of ggt

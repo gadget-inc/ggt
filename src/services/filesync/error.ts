@@ -41,6 +41,7 @@ export class UnknownDirectoryError extends GGTError {
     switch (this.details.command) {
       case "add":
       case "open":
+      case "debugger":
       case "status":
         return sprint`
           A ".gadget/sync.json" file is missing in this directory:

@@ -71,7 +71,7 @@
     "boxen": "^8.0.1",
     "chalk": "^5.4.1",
     "chalk-template": "^1.1.2",
-    "clean-stack": "^5.2.0",
+    "clean-stack": "^6.0.0",
     "cli-cursor": "^5.0.0",
     "cli-spinners": "^2.9.2",
     "cli-table3": "^0.6.5",

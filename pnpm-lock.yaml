@@ -84,8 +84,8 @@ devDependencies:
     specifier: ^1.1.2
     version: 1.1.2
   clean-stack:
-    specifier: ^5.2.0
-    version: 5.2.0
+    specifier: ^6.0.0
+    version: 6.0.0
   cli-cursor:
     specifier: ^5.0.0
     version: 5.0.0
@@ -4291,11 +4291,12 @@ packages:
       escape-string-regexp: 1.0.5
     dev: true
 
-  /clean-stack@5.2.0:
-    resolution: {integrity: sha512-TyUIUJgdFnCISzG5zu3291TAsE77ddchd0bepon1VVQrKLGKFED4iXFEDQ24mIPdPBbyE16PK3F8MYE1CmcBEQ==}
-    engines: {node: '>=14.16'}
+  /clean-stack@6.0.0:
+    resolution: {integrity: sha512-IXdAdynbe+4e5n31+SkraWUXwKm3NBamsFFpDswUsAMJbMu+uZgLBxays+jDQ8ix6c0phpt5FtY+N1NGLvEIaA==}
+    engines: {node: '>=20'}
     dependencies:
       escape-string-regexp: 5.0.0
+      url-extras: 0.1.0
     dev: true
 
   /clear-module@4.1.2:
@@ -8918,6 +8919,11 @@ packages:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
     dependencies:
       punycode: 2.3.1
+    dev: true
+
+  /url-extras@0.1.0:
+    resolution: {integrity: sha512-8tzwTeXFPuX/5PHuCDQE5Dd9Ts4rwoq2t9aIT+HS4iAVpmj5l4Ao7Q+BuuFjvWRqrLswBhQDk8O96ZicgCqQqw==}
+    engines: {node: '>=20'}
     dev: true
 
   /urlpattern-polyfill@10.1.0:

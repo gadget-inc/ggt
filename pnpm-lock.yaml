@@ -78,8 +78,8 @@ devDependencies:
     specifier: ^8.0.1
     version: 8.0.1
   chalk:
-    specifier: ^5.4.1
-    version: 5.4.1
+    specifier: ^5.6.2
+    version: 5.6.2
   chalk-template:
     specifier: ^1.1.2
     version: 1.1.2
@@ -4039,7 +4039,7 @@ packages:
     dependencies:
       ansi-align: 3.0.1
       camelcase: 8.0.0
-      chalk: 5.4.1
+      chalk: 5.6.2
       cli-boxes: 3.0.0
       string-width: 7.2.0
       type-fest: 4.41.0
@@ -4195,7 +4195,7 @@ packages:
     resolution: {integrity: sha512-2bxTP2yUH7AJj/VAXfcA+4IcWGdQ87HwBANLt5XxGTeomo8yG0y95N1um9i5StvhT/Bl0/2cARA5v1PpPXUxUA==}
     engines: {node: '>=14.16'}
     dependencies:
-      chalk: 5.4.1
+      chalk: 5.6.2
     dev: true
 
   /chalk@2.4.2:
@@ -4213,11 +4213,6 @@ packages:
     dependencies:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
-    dev: true
-
-  /chalk@5.4.1:
-    resolution: {integrity: sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==}
-    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
     dev: true
 
   /chalk@5.6.2:

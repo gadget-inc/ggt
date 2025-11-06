@@ -17,21 +17,25 @@ export const testApp: Application = Object.freeze({
       id: 1n,
       name: "development",
       type: EnvironmentType.Development,
+      nodeVersion: "22.15.0",
     },
     {
       id: 2n,
       name: "production",
       type: EnvironmentType.Production,
+      nodeVersion: "22.15.0",
     },
     {
       id: 3n,
       name: "cool-environment-development",
       type: EnvironmentType.Development,
+      nodeVersion: "22.15.0",
     },
     {
       id: 4n,
       name: "other-environment-development",
       type: EnvironmentType.Development,
+      nodeVersion: "22.15.0",
     },
   ],
   team: {

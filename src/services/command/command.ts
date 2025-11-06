@@ -21,6 +21,7 @@ export const Commands = [
   "login",
   "logout",
   "logs",
+  "debugger",
   "whoami",
   "configure",
   "version",
@@ -115,6 +116,9 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
       break;
     case "logs":
       module = await import("../../commands/logs.js");
+      break;
+    case "debugger":
+      module = await import("../../commands/debugger.js");
       break;
     case "whoami":
       module = await import("../../commands/whoami.js");

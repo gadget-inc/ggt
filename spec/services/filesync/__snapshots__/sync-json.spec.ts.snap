@@ -4,6 +4,8 @@ exports[`SyncJson.loadOrInit > does not allow --env=production when the command 
 
 exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "configure" 1`] = `[Error: You cannot "ggt configure" your production environment.]`;
 
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "debugger" 1`] = `[Error: You cannot "ggt debugger" your production environment.]`;
+
 exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "deploy" 1`] = `[Error: You cannot "ggt deploy" your production environment.]`;
 
 exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "dev" 1`] = `[Error: You cannot "ggt dev" your production environment.]`;

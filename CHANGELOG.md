@@ -476,7 +476,6 @@
 - c783efa: Fix `TooManySyncAttemptsError` when local directory's permissions don't match Gadget's
 - 340a5de: Fix errors serializing `bigint`s when `--json` is passed
 - 3de43d1: Logging improvements:
-
   - No longer truncating arrays in logs when `--json` is passed
   - Now truncating objects in logs unless log level is trace
   - Showing number of truncated elements/properties when arrays/objects are truncated
@@ -738,7 +737,6 @@
 - b110061: Bump @oclif/plugin-warn-if-update-available from 2.0.42 to 2.0.44
 - c482369: Bump @oclif/plugin-not-found from 2.3.27 to 2.3.28
 - ee23711: Improve sentry integration
-
   - Added sentry breadcrumbs to help debug on-going bugs.
   - Added ability to disable sentry via `GGT_SENTRY_ENABLED=false`
 

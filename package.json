@@ -42,7 +42,7 @@
     "release": "pnpm run build && changeset publish",
     "test": "vitest --cache",
     "test:watch": "pnpm run test --watch",
-    "version": "changeset version && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
+    "version": "changeset version && prettier --write CHANGELOG.md && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.4",
@@ -55,7 +55,7 @@
     "@types/fast-levenshtein": "^0.0.4",
     "@types/fs-extra": "^11.0.4",
     "@types/ms": "^2.1.0",
-    "@types/node": "^18.19.101",
+    "@types/node": "^20.19.24",
     "@types/node-notifier": "^8.0.5",
     "@types/normalize-package-data": "^2.4.4",
     "@types/normalize-path": "^3.0.2",
@@ -140,6 +140,6 @@
   },
   "packageManager": "pnpm@8.12.0",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }

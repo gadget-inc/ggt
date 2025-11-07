@@ -1,7 +1,7 @@
 import cleanStack from "clean-stack";
 import { RequestError } from "got";
 import { inspect } from "node:util";
-import { serializeError as baseSerializeError, type ErrorObject } from "serialize-error";
+import { serializeError as baseSerializeError, isErrorLike, type ErrorObject } from "serialize-error";
 import type { Simplify } from "type-fest";
 import { workspaceRoot } from "./paths.js";
 
@@ -88,13 +88,9 @@ export const mapValues = <Key extends string | number | symbol, Value, MappedVal
  * for Got HTTP errors
  */
 export const serializeError = (error: unknown): ErrorObject => {
-  if (Array.isArray(error)) {
-    error = error[0];
-  }
-
-  let serialized = baseSerializeError(error);
-  if (typeof serialized == "string") {
-    serialized = { message: serialized };
+  let serialized = baseSerializeError(error) as ErrorObject;
+  if (!isErrorLike(error)) {
+    serialized = { message: String(error) };
   }
 
   if (serialized.stack) {
@@ -102,11 +98,11 @@ export const serializeError = (error: unknown): ErrorObject => {
   }
 
   if (error instanceof RequestError) {
-    serialized["timings"] = undefined;
-    serialized["options"] = {
-      method: error.options.method,
-      url: error.options.url instanceof URL ? error.options.url.toJSON() : error.options.url,
-    };
+    delete serialized["timings"];
+    serialized["options"] = { method: error.options.method };
+    if (error.options.url) {
+      serialized["options"]["url"] = error.options.url instanceof URL ? error.options.url.toJSON() : error.options.url;
+    }
     serialized["responseBody"] = inspect(error.response?.body);
   }
 

@@ -237,8 +237,8 @@ devDependencies:
     specifier: ^7.7.3
     version: 7.7.3
   serialize-error:
-    specifier: ^11.0.3
-    version: 11.0.3
+    specifier: ^12.0.0
+    version: 12.0.0
   set-cookie-parser:
     specifier: ^2.7.1
     version: 2.7.1
@@ -8183,11 +8183,11 @@ packages:
       upper-case-first: 2.0.2
     dev: true
 
-  /serialize-error@11.0.3:
-    resolution: {integrity: sha512-2G2y++21dhj2R7iHAdd0FIzjGwuKZld+7Pl/bTU6YIkrC2ZMbVUjm+luj6A6V34Rv9XfKJDKpTWu9W4Gse1D9g==}
-    engines: {node: '>=14.16'}
+  /serialize-error@12.0.0:
+    resolution: {integrity: sha512-ZYkZLAvKTKQXWuh5XpBw7CdbSzagarX39WyZ2H07CDLC5/KfsRGlIXV8d4+tfqX1M7916mRqR1QfNHSij+c9Pw==}
+    engines: {node: '>=18'}
     dependencies:
-      type-fest: 2.19.0
+      type-fest: 4.41.0
     dev: true
 
   /set-cookie-parser@2.7.1:
@@ -8775,11 +8775,6 @@ packages:
   /type-fest@0.8.1:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
-    dev: true
-
-  /type-fest@2.19.0:
-    resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
-    engines: {node: '>=12.20'}
     dev: true
 
   /type-fest@4.41.0:

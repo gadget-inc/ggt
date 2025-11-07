@@ -1,4 +1,4 @@
-import type { ExecutionResult } from "graphql-ws";
+import type { ExecutionResult, FormattedExecutionResult } from "graphql-ws";
 import { createClient } from "graphql-ws";
 import ms from "ms";
 import type { ClientRequestArgs } from "node:http";
@@ -129,7 +129,7 @@ export class Client {
     }: {
       subscription: Subscription;
       variables?: Thunk<Subscription["Variables"]> | null;
-      onResponse: (response: ExecutionResult<Subscription["Data"], Subscription["Extensions"]>) => Promisable<void>;
+      onResponse: (response: FormattedExecutionResult<Subscription["Data"], Subscription["Extensions"]>) => Promisable<void>;
       onError: (error: ClientError) => Promisable<void>;
       onComplete?: () => Promisable<void>;
     },

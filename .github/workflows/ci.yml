@@ -81,12 +81,15 @@ jobs:
 
   dependabot:
     needs: [lint, build, test]
-    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'dependabot/npm_and_yarn/')
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'gadget-inc/ggt'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
+      - name: Dependabot metadata
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@v2
       - name: Merge dependabot PR
         run: gh pr merge --auto --squash "$PR_URL"
         env:

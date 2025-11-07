@@ -64,7 +64,7 @@
     "@types/set-cookie-parser": "^2.4.10",
     "@types/tcp-port-used": "^1.0.0",
     "@types/which": "^3.0.4",
-    "@types/ws": "^8.5.14",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.11.0",
     "@typescript-eslint/parser": "^8.11.0",
     "ansi-escapes": "^7.0.0",
@@ -137,7 +137,7 @@
     "vitest": "^3.1.4",
     "watcher": "^2.3.1",
     "which": "^5.0.0",
-    "ws": "^8.18.0",
+    "ws": "^8.18.3",
     "zod": "^3.24.4"
   },
   "packageManager": "pnpm@8.12.0",

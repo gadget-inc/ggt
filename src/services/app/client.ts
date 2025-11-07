@@ -11,7 +11,7 @@ import { loadAuthHeaders } from "../http/auth.js";
 import { http, type HttpOptions } from "../http/http.js";
 import { getUser } from "../user/user.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
-import { isObject } from "../util/is.js";
+import { isArray, isObject } from "../util/is.js";
 import type { Environment } from "./app.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
 import { AuthenticationError, ClientError } from "./error.js";
@@ -51,11 +51,15 @@ export class Client {
       },
       webSocketImpl: class extends WebSocket {
         constructor(address: string | URL, protocols?: string | string[], wsOptions?: WebSocket.ClientOptions | ClientRequestArgs) {
+          const headers = isArray(wsOptions?.headers)
+            ? (Object.fromEntries(wsOptions.headers.map((header: string) => header.split(": ", 2))) as Record<string, string>)
+            : (wsOptions?.headers as Record<string, string> | undefined);
+
           super(address, protocols, {
             signal: ctx.signal,
             ...wsOptions,
             headers: {
-              ...wsOptions?.headers,
+              ...headers,
               "user-agent": config.versionFull,
               ...loadAuthHeaders(ctx),
             },

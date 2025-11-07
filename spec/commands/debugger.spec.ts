@@ -468,6 +468,92 @@ describe("debugger", () => {
       testCtx.abort();
       await debuggerPromise;
     });
+
+    it("preserves text/binary framing end-to-end", async () => {
+      const syncScenario = await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+      // Remote mock WS server that records whether received frames are binary
+      const wss = new WebSocketServer({ port: 0 });
+      await new Promise<void>((resolve) => wss.once("listening", resolve));
+      const remotePort = (wss.address() as any).port as number;
+
+      const remoteReceivedIsBinary: boolean[] = [];
+      let remoteSocket!: WebSocket;
+
+      const remoteConnected = new Promise<void>((resolve) => {
+        wss.on("connection", (ws) => {
+          remoteSocket = ws;
+          ws.on("message", (_data, isBinary) => {
+            remoteReceivedIsBinary.push(isBinary);
+          });
+          resolve();
+        });
+      });
+
+      setupMockRemote(getSubdomain(syncScenario), `ws://localhost:${remotePort}`);
+
+      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+
+      await waitUntilUsed(9229);
+
+      const response = await fetch("http://127.0.0.1:9229/json/list");
+      const result = (await response.json()) as any;
+      const wsUrl = result[0].webSocketDebuggerUrl;
+
+      const clientWs = new WebSocket(wsUrl);
+
+      await remoteConnected; // ensure remote side is connected
+
+      // Track framing for messages coming back from remote to client
+      const clientReceivedIsBinary: boolean[] = [];
+      const clientGotTwo = new Promise<void>((resolve) => {
+        clientWs.on("message", (_data, isBinary) => {
+          clientReceivedIsBinary.push(isBinary);
+          if (clientReceivedIsBinary.length === 2) {
+            resolve();
+          }
+        });
+      });
+
+      // Client -> Remote: send a text frame (string) and a binary frame (Buffer)
+      clientWs.send(JSON.stringify({ hello: "world" }));
+      clientWs.send(Buffer.from([1, 2, 3]), { binary: true });
+
+      // Wait until remote has received both messages
+      await new Promise<void>((resolve, reject) => {
+        const start = Date.now();
+        const check = (): void => {
+          if (remoteReceivedIsBinary.length >= 2) {
+            resolve();
+            return;
+          }
+          if (Date.now() - start > 5000) {
+            reject(new Error("timeout waiting for remote messages"));
+            return;
+          }
+          setTimeout(check, 25);
+        };
+        check();
+      });
+
+      expect(remoteReceivedIsBinary).toEqual([false, true]);
+
+      // Remote -> Client: send a text frame and a binary frame and ensure client sees same framing
+      remoteSocket.send(JSON.stringify({ ok: true }), { binary: false });
+      remoteSocket.send(Buffer.from([9, 8, 7]), { binary: true });
+
+      await clientGotTwo;
+      expect(clientReceivedIsBinary).toEqual([false, true]);
+
+      // Cleanup
+      await new Promise<void>((resolve) => {
+        clientWs.once("close", () => resolve());
+        clientWs.close();
+      });
+      wss.close();
+      testCtx.abort();
+      await debuggerPromise;
+    });
   });
 
   describe("configuration", () => {

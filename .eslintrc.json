@@ -40,6 +40,8 @@
     "jsdoc/require-jsdoc": ["warn", { "publicOnly": true }],
     "jsdoc/require-param": ["off"],
     "jsdoc/require-returns": ["off"],
+    "jsdoc/require-throws-type": ["off"],
+    "jsdoc/require-yields-type": ["off"],
     "jsdoc/tag-lines": ["warn", "never", { "startLines": 1 }],
 
     "unicorn/consistent-destructuring": ["warn"],

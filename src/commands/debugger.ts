@@ -489,7 +489,7 @@ class ClientConnection {
     this._ctx.log.trace("received message from client", { message: messageString });
 
     if (this._remoteReady && this._remoteWs) {
-      this._remoteWs.send(data);
+      this._remoteWs.send(data, { binary: isBinary });
     } else {
       this._messageQueue.push({ data, isBinary });
     }
@@ -503,7 +503,7 @@ class ClientConnection {
     this._remoteWs.on("message", (data: RawData, isBinary: boolean) => {
       const messageString = isBinary ? "<binary data>" : String(data);
       this._ctx.log.trace("received message from remote debugger", { message: messageString });
-      this._clientWs.send(data);
+      this._clientWs.send(data, { binary: isBinary });
     });
 
     this._remoteWs.on("error", (error: Error) => {
@@ -528,8 +528,8 @@ class ClientConnection {
       queueLength: this._messageQueue.length,
     });
 
-    for (const { data } of this._messageQueue) {
-      this._remoteWs.send(data);
+    for (const { data, isBinary } of this._messageQueue) {
+      this._remoteWs.send(data, { binary: isBinary });
     }
     this._messageQueue.length = 0;
   }

@@ -258,8 +258,8 @@ devDependencies:
     specifier: ^1.0.2
     version: 1.0.2
   terminal-link:
-    specifier: ^4.0.0
-    version: 4.0.0
+    specifier: ^5.0.0
+    version: 5.0.0
   ts-dedent:
     specifier: ^2.2.0
     version: 2.2.0
@@ -5929,6 +5929,11 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
+  /has-flag@5.0.1:
+    resolution: {integrity: sha512-CsNUt5x9LUdx6hnk/E2SZLsDyvfqANZSUq4+D3D8RzDJ2M+HDTIkF60ibS1vHaK55vzgiZw1bEPFG9yH7l33wA==}
+    engines: {node: '>=12'}
+    dev: true
+
   /has-property-descriptors@1.0.2:
     resolution: {integrity: sha512-55JNKuIW+vq4Ke1BjOTjM2YctQIvCT7GFzHwmfZPGo5wnrgkid0YQtnAleFSqumZm4az3n2BS+erby5ipJdgrg==}
     dependencies:
@@ -8506,6 +8511,11 @@ packages:
     resolution: {integrity: sha512-H2N9c26eXjzL/S/K+i/RHHcFanE74dptvvjM8iwzwbVcWY/zjBbgRqF3K0DY4+OD+uTTASTBvDoxPDaPN02D7g==}
     dev: true
 
+  /supports-color@10.2.2:
+    resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
+    engines: {node: '>=18'}
+    dev: true
+
   /supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
     engines: {node: '>=4'}
@@ -8520,12 +8530,12 @@ packages:
       has-flag: 4.0.0
     dev: true
 
-  /supports-hyperlinks@3.2.0:
-    resolution: {integrity: sha512-zFObLMyZeEwzAoKCyu1B91U79K2t7ApXuQfo8OuxwXLDgcKxuwM+YvcbIhm6QWqz7mHUH1TVytR1PwVVjEuMig==}
-    engines: {node: '>=14.18'}
+  /supports-hyperlinks@4.3.0:
+    resolution: {integrity: sha512-i6sWEzuwadSlcr2mOnb0ktlIl+K5FVxsPXmoPfknDd2gyw4ZBIAZ5coc0NQzYqDdEYXMHy8NaY9rWwa1Q1myiQ==}
+    engines: {node: '>=20'}
     dependencies:
-      has-flag: 4.0.0
-      supports-color: 7.2.0
+      has-flag: 5.0.1
+      supports-color: 10.2.2
     dev: true
 
   /supports-preserve-symlinks-flag@1.0.0:
@@ -8574,12 +8584,12 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /terminal-link@4.0.0:
-    resolution: {integrity: sha512-lk+vH+MccxNqgVqSnkMVKx4VLJfnLjDBGzH16JVZjKE2DoxP57s6/vt6JmXV5I3jBcfGrxNrYtC+mPtU7WJztA==}
-    engines: {node: '>=18'}
+  /terminal-link@5.0.0:
+    resolution: {integrity: sha512-qFAy10MTMwjzjU8U16YS4YoZD+NQLHzLssFMNqgravjbvIPNiqkGFR4yjhJfmY9R5OFU7+yHxc6y+uGHkKwLRA==}
+    engines: {node: '>=20'}
     dependencies:
       ansi-escapes: 7.0.0
-      supports-hyperlinks: 3.2.0
+      supports-hyperlinks: 4.3.0
     dev: true
 
   /text-table@0.2.0:

@@ -1,13 +1,11 @@
 import chalk from "chalk";
 import { execa } from "execa";
 import fs from "fs-extra";
-import ms from "ms";
 import assert from "node:assert";
 import path from "node:path";
 import process from "node:process";
 import pMap from "p-map";
 import PQueue from "p-queue";
-import pRetry from "p-retry";
 import pluralize from "pluralize";
 import type { Promisable } from "type-fest";
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
@@ -35,7 +33,7 @@ import { sprint, sprintln } from "../output/sprint.js";
 import { symbol } from "../output/symbols.js";
 import { ts } from "../output/timestamp.js";
 import { noop } from "../util/function.js";
-import { isEEXISTError, isENOENTError, isENOTDIRError, isENOTEMPTYError } from "../util/is.js";
+import { isENOENTError, isENOTEMPTYError } from "../util/is.js";
 import { serializeError } from "../util/object.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
@@ -640,56 +638,8 @@ export class FileSync {
         dir = path.dirname(dir);
       }
 
-      const currentPath = this.syncJson.directory.absolute(pathToDelete);
-      const backupPath = this.syncJson.directory.absolute(".gadget/backup", this.syncJson.directory.relative(pathToDelete));
-
-      // rather than `rm -rf`ing files, we move them to
-      // `.gadget/backup/` so that users can recover them if something
-      // goes wrong. We've seen a lot of EBUSY/EINVAL errors when moving
-      // files so we retry a few times.
-      await pRetry(
-        async () => {
-          try {
-            // remove the current backup file in case it exists and is a
-            // different type (file vs directory)
-            await fs.remove(backupPath);
-            await fs.move(currentPath, backupPath);
-            changes.set(pathToDelete, { type: "delete" });
-          } catch (error) {
-            if (isENOENTError(error)) {
-              // replicate the behavior of `rm -rf` and ignore ENOENT
-              return;
-            }
-
-            if (isENOTDIRError(error) || isEEXISTError(error)) {
-              // the backup path already exists and ends in a file
-              // rather than a directory, so we have to remove the file
-              // before we can move the current path to the backup path
-              let dir = path.dirname(backupPath);
-              while (dir !== this.syncJson.directory.absolute(".gadget/backup")) {
-                const stats = await fs.stat(dir);
-                // eslint-disable-next-line max-depth
-                if (!stats.isDirectory()) {
-                  // this file is in the way, so remove it
-                  ctx.log.debug("removing file in the way of backup path", { currentPath, backupPath, file: dir });
-                  await fs.remove(dir);
-                }
-                dir = path.dirname(dir);
-              }
-              // still throw the error so we retry
-            }
-
-            throw error;
-          }
-        },
-        {
-          retries: 5,
-          minTimeout: ms("100ms"),
-          onFailedAttempt: (error) => {
-            ctx.log.warn("failed to move file to backup", { error, currentPath, backupPath });
-          },
-        },
-      );
+      await fs.remove(this.syncJson.directory.absolute(pathToDelete));
+      changes.set(pathToDelete, { type: "delete" });
     }
 
     for (const directoryWithDeletedFile of Array.from(directoriesWithDeletedFiles.values()).sort().reverse()) {

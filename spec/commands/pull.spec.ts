@@ -151,8 +151,6 @@ describe("pull", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/backup/": "",
-          ".gadget/backup/local-file.js": "// local",
           ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
           "gadget-file.js": "// gadget",
         },
@@ -194,8 +192,6 @@ describe("pull", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/backup/": "",
-          ".gadget/backup/local-file.js": "// local",
           ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
           "gadget-file.js": "// gadget",
         },
@@ -316,9 +312,6 @@ describe("pull", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/backup/": "",
-          ".gadget/backup/.gadget/": "",
-          ".gadget/backup/.gadget/local.js": "// .gadget/local",
           ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
           "gadget-file.js": "// gadget",
         },

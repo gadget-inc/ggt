@@ -137,12 +137,6 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     await expectDir(localDir, {
       ".gadget/": "",
-      ".gadget/backup/": "",
-      ".gadget/backup/some/": "",
-      ".gadget/backup/some/deeply/": "",
-      ".gadget/backup/some/deeply/nested/": "",
-      ".gadget/backup/some/deeply/nested/directory/": "",
-      ".gadget/backup/some/deeply/nested/directory/file.txt": "",
       ".gadget/sync.json": expectSyncJson(filesync),
       "some/": "",
       "some/deeply/": "",
@@ -197,15 +191,6 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     await expectDir(localDir, {
       ".gadget/": "",
-      ".gadget/backup/": "",
-      ".gadget/backup/api/": "",
-      ".gadget/backup/api/models/": "",
-      ".gadget/backup/api/models/foo/": "",
-      ".gadget/backup/api/models/foo/actions/": "",
-      ".gadget/backup/api/models/foo/actions/create.js": "",
-      ".gadget/backup/api/models/foo/actions/delete.js": "",
-      ".gadget/backup/api/models/foo/actions/update.js": "",
-      ".gadget/backup/api/models/foo/schema.gadget.ts": "",
       ".gadget/sync.json": expectSyncJson(filesync),
       "api/": "",
       "api/models/": "",
@@ -246,10 +231,6 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     await expectDir(localDir, {
       ".gadget/": "",
-      ".gadget/backup/": "",
-      ".gadget/backup/some/": "",
-      ".gadget/backup/some/nested/": "",
-      ".gadget/backup/some/nested/file.txt": "",
       ".gadget/sync.json": expectSyncJson(filesync),
     });
 
@@ -281,12 +262,6 @@ describe("FileSync._writeToLocalFilesystem", () => {
     await expectDir(localDir, {
       ".gadget/": "",
       ".gadget/sync.json": expectSyncJson(filesync),
-      ".gadget/backup/": "",
-      ".gadget/backup/file.js": "foo",
-      ".gadget/backup/some/": "",
-      ".gadget/backup/some/deeply/": "",
-      ".gadget/backup/some/deeply/nested/": "",
-      ".gadget/backup/some/deeply/nested/file.js": "bar",
       "some/": "",
       "some/deeply/": "",
       "some/deeply/nested/": "",
@@ -333,11 +308,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
     await expectDir(localDir, {
       ".gadget/": "",
       ".gadget/sync.json": expectSyncJson(filesync),
-      ".gadget/backup/": "",
-      // the directory should have been deleted
-      ".gadget/backup/foo/": "",
-      // but the directory should still exist because a file was added to it
-      "foo/": "",
+      "foo/": "", // the directory should still exist because a file was added to it
       "foo/baz.js": "// baz.js",
     });
 
@@ -362,88 +333,6 @@ describe("FileSync._writeToLocalFilesystem", () => {
     });
 
     expect(filesync.syncJson.directory.ignores("file2.js")).toBe(false);
-  });
-
-  it("removes old backup files before moving new files into place", async () => {
-    // create a file named `foo.js`
-    await fs.outputFile(filesync.syncJson.directory.absolute("foo.js"), "// foo");
-
-    // create a directory named `.gadget/backup/foo.js`
-    await fs.mkdirp(filesync.syncJson.directory.absolute(".gadget/backup/foo.js"));
-
-    // tell filesync to delete foo.js, which should move it to
-    // .gadget/backup/foo.js if the backup file is not removed first,
-    // this will fail with "Error: Cannot overwrite directory"
-    await writeToLocalFilesystem(testCtx, { filesVersion: 1n, files: [], delete: ["foo.js"] });
-
-    await expectDir(localDir, {
-      ".gadget/": "",
-      ".gadget/sync.json": expectSyncJson(filesync),
-      ".gadget/backup/": "",
-      ".gadget/backup/foo.js": "// foo",
-    });
-
-    expect(filesync.syncJson.filesVersion).toBe(1n);
-  });
-
-  it("removes old backup files that aren't directories before moving new files into place", async () => {
-    // create a route file without an extension (this is a common mistake in the editor)
-    await fs.outputFile(filesync.syncJson.directory.absolute("api/routes/webhooks"), "");
-
-    // mimic the user deleting the file in the editor
-    await writeToLocalFilesystem(testCtx, { filesVersion: 1n, files: [], delete: ["api/routes/webhooks"] });
-
-    await expectDir(localDir, {
-      ".gadget/": "",
-      ".gadget/sync.json": expectSyncJson(filesync),
-      ".gadget/backup/": "",
-      ".gadget/backup/api/": "",
-      ".gadget/backup/api/routes/": "",
-      ".gadget/backup/api/routes/webhooks": "", // this is a file, not a directory
-    });
-
-    expect(filesync.syncJson.filesVersion).toBe(1n);
-
-    // mimic the user re-creating the route with a nested path
-    await writeToLocalFilesystem(testCtx, {
-      filesVersion: 2n,
-      files: [makeFile({ path: "api/routes/webhooks/POST-github.js" })],
-      delete: [],
-    });
-
-    await expectDir(localDir, {
-      ".gadget/": "",
-      ".gadget/sync.json": expectSyncJson(filesync),
-      ".gadget/backup/": "",
-      ".gadget/backup/api/": "",
-      ".gadget/backup/api/routes/": "",
-      ".gadget/backup/api/routes/webhooks": "",
-      "api/": "",
-      "api/routes/": "",
-      "api/routes/webhooks/": "",
-      "api/routes/webhooks/POST-github.js": "",
-    });
-
-    expect(filesync.syncJson.filesVersion).toBe(2n);
-
-    // now mimic the user deleting the file in the editor
-    await writeToLocalFilesystem(testCtx, {
-      filesVersion: 3n,
-      files: [],
-      delete: ["api/routes/webhooks/POST-github.js"],
-    });
-
-    await expectDir(localDir, {
-      ".gadget/": "",
-      ".gadget/sync.json": expectSyncJson(filesync),
-      ".gadget/backup/": "",
-      ".gadget/backup/api/": "",
-      ".gadget/backup/api/routes/": "",
-      ".gadget/backup/api/routes/webhooks/": "", // now it's a directory
-      ".gadget/backup/api/routes/webhooks/POST-github.js": "",
-    });
-
-    expect(filesync.syncJson.filesVersion).toBe(3n);
   });
 
   it("ensures the filesVersion is greater than or equal to the current filesVersion", async () => {
@@ -2493,8 +2382,6 @@ describe("FileSync.pull", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/backup/": "",
-          ".gadget/backup/local-file.js": "// local",
           ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
           "gadget-file.js": "// gadget",
         },
@@ -2536,8 +2423,6 @@ describe("FileSync.pull", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/backup/": "",
-          ".gadget/backup/local-file.js": "// local",
           ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
           "gadget-file.js": "// gadget",
         },
@@ -2577,9 +2462,6 @@ describe("FileSync.pull", () => {
         },
         "localDir": {
           ".gadget/": "",
-          ".gadget/backup/": "",
-          ".gadget/backup/.gadget/": "",
-          ".gadget/backup/.gadget/local.js": "// .gadget/local",
           ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
           "gadget-file.js": "// gadget",
         },

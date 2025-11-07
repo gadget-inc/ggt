@@ -150,8 +150,8 @@ devDependencies:
     specifier: ^7.1.0
     version: 7.1.0
   got:
-    specifier: ^14.6.2
-    version: 14.6.2
+    specifier: ^14.6.3
+    version: 14.6.3
   graphql:
     specifier: ^16.12.0
     version: 16.12.0
@@ -3233,13 +3233,6 @@ packages:
     engines: {node: '>=18'}
     dev: true
 
-  /@szmarczak/http-timer@5.0.1:
-    resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
-    engines: {node: '>=14.16'}
-    dependencies:
-      defer-to-connect: 2.0.1
-    dev: true
-
   /@theguild/federation-composition@0.20.2(graphql@16.12.0):
     resolution: {integrity: sha512-QI4iSdrc4JvCWnMb1QbiHnEpdD33KGdiU66qfWOcM8ENebRGHkGjXDnUrVJ8F9g1dmCRMTNfn2NFGqTcDpeYXw==}
     engines: {node: '>=18'}
@@ -4133,8 +4126,8 @@ packages:
     engines: {node: '>=14.16'}
     dev: true
 
-  /cacheable-request@13.0.13:
-    resolution: {integrity: sha512-/5/6xDTN/AZHOn93MNaU7HUSzOL/YJWOwa5hV84ib1mPUtQB/ZTg5bn57UGfdNwXGhgQfcPpJDy+eGiNgGJI1w==}
+  /cacheable-request@13.0.14:
+    resolution: {integrity: sha512-2hjaCKFHLKCpzhNLjmOr5ODlbAypwpZqh3c2UusxzxKfQ899y0SvFHQJRYMYbefOYak3njSNBS5PmqCJjrmaBg==}
     engines: {node: '>=18'}
     dependencies:
       '@types/http-cache-semantics': 4.0.4
@@ -4143,7 +4136,7 @@ packages:
       keyv: 5.5.3
       mimic-response: 4.0.0
       normalize-url: 8.1.0
-      responselike: 3.0.0
+      responselike: 4.0.2
     dev: true
 
   /call-bind@1.0.7:
@@ -4769,11 +4762,6 @@ packages:
     dependencies:
       bundle-name: 4.1.0
       default-browser-id: 5.0.0
-    dev: true
-
-  /defer-to-connect@2.0.1:
-    resolution: {integrity: sha512-4tvttepXG1VaYGrRibk5EwJd1t4udunSOVMdLSAL6mId1ix438oPwPZMALY41FCijukO1L0twNcGsdzS7dHgDg==}
-    engines: {node: '>=10'}
     dev: true
 
   /define-data-property@1.1.4:
@@ -5808,15 +5796,14 @@ packages:
       get-intrinsic: 1.2.4
     dev: true
 
-  /got@14.6.2:
-    resolution: {integrity: sha512-bnhvxegqufyxHAmzwCZSscjGLVpw6/NzTXOk2tQVu/b9Q9FeMAgLabYulXEQRwP04UYltnkcZwvBq14fsdqvyw==}
+  /got@14.6.3:
+    resolution: {integrity: sha512-u1nNamHo7oAkyTkMD7g0F0pIvW6vNAF9CCmtkh8ZQrlToKJZ5wEPQHFqt6RzaZC0rJMzH+rnjIElyTsIkT0wQw==}
     engines: {node: '>=20'}
     dependencies:
       '@sindresorhus/is': 7.1.1
-      '@szmarczak/http-timer': 5.0.1
       byte-counter: 0.1.0
       cacheable-lookup: 7.0.0
-      cacheable-request: 13.0.13
+      cacheable-request: 13.0.14
       decompress-response: 10.0.0
       form-data-encoder: 4.1.0
       http2-wrapper: 2.2.1
@@ -8041,13 +8028,6 @@ packages:
       is-core-module: 2.16.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
-    dev: true
-
-  /responselike@3.0.0:
-    resolution: {integrity: sha512-40yHxbNcl2+rzXvZuVkrYohathsSJlMTXKryG5y8uciHv1+xDLHQpgjG64JUO9nrEq2jGLH6IZ8BcZyw3wrweg==}
-    engines: {node: '>=14.16'}
-    dependencies:
-      lowercase-keys: 3.0.0
     dev: true
 
   /responselike@4.0.2:

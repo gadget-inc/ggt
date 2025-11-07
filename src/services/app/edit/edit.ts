@@ -1,6 +1,6 @@
 // noinspection JSCommentMatchesSignature
 
-import type { ExecutionResult } from "graphql-ws";
+import type { FormattedExecutionResult } from "graphql-ws";
 import assert from "node:assert";
 import type { Promisable } from "type-fest";
 import type { Context } from "../../command/context.js";
@@ -156,7 +156,7 @@ export class Edit {
       devFields: { edit: { subscription: name, variables: unthunk(options.variables) } },
     });
 
-    const onResponse = async (response: ExecutionResult<Subscription["Data"], Subscription["Extensions"]>): Promise<void> => {
+    const onResponse = async (response: FormattedExecutionResult<Subscription["Data"], Subscription["Extensions"]>): Promise<void> => {
       if (response.errors) {
         unsubscribe();
         await options.onError(new ClientError(options.subscription, response.errors));

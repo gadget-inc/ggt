@@ -131,34 +131,32 @@ describe("dev", () => {
     await waitUntilLocalFilesVersion(4n);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "file.txt": "file v2",
-            },
-            "3": {
-              ".gadget/": "",
-              "file.txt": "file v3",
-            },
-            "4": {
-              ".gadget/": "",
-            },
-          },
-          "gadgetDir": {
+      {
+        "filesVersionDirs": {
+          "1": {
             ".gadget/": "",
           },
-          "localDir": {
+          "2": {
             ".gadget/": "",
-            ".gadget/backup/": "",
-            ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"4"}}}",
+            "file.txt": "file v2",
           },
-        }
-      `);
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"4"}}}",
+        },
+      }
+    `);
 
     // receive a new directory
     await emitGadgetChanges({
@@ -170,40 +168,38 @@ describe("dev", () => {
     await waitUntilLocalFilesVersion(5n);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "file.txt": "file v2",
-            },
-            "3": {
-              ".gadget/": "",
-              "file.txt": "file v3",
-            },
-            "4": {
-              ".gadget/": "",
-            },
-            "5": {
-              ".gadget/": "",
-              "directory/": "",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+          "5": {
             ".gadget/": "",
             "directory/": "",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/backup/": "",
-            ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"5"}}}",
-            "directory/": "",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "directory/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"5"}}}",
+          "directory/": "",
+        },
+      }
+    `);
 
     // receive a delete to a directory
     await emitGadgetChanges({
@@ -215,42 +211,39 @@ describe("dev", () => {
     await waitUntilLocalFilesVersion(6n);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "file.txt": "file v2",
-            },
-            "3": {
-              ".gadget/": "",
-              "file.txt": "file v3",
-            },
-            "4": {
-              ".gadget/": "",
-            },
-            "5": {
-              ".gadget/": "",
-              "directory/": "",
-            },
-            "6": {
-              ".gadget/": "",
-            },
-          },
-          "gadgetDir": {
+      {
+        "filesVersionDirs": {
+          "1": {
             ".gadget/": "",
           },
-          "localDir": {
+          "2": {
             ".gadget/": "",
-            ".gadget/backup/": "",
-            ".gadget/backup/directory/": "",
-            ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"6"}}}",
+            "file.txt": "file v2",
           },
-        }
-      `);
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+          "5": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+          "6": {
+            ".gadget/": "",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"6"}}}",
+        },
+      }
+    `);
 
     // receive a bunch of files
     const files = Array.from({ length: 10 }, (_, i) => `file${i + 1}.txt`);
@@ -263,44 +256,30 @@ describe("dev", () => {
     await waitUntilLocalFilesVersion(7n);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "file.txt": "file v2",
-            },
-            "3": {
-              ".gadget/": "",
-              "file.txt": "file v3",
-            },
-            "4": {
-              ".gadget/": "",
-            },
-            "5": {
-              ".gadget/": "",
-              "directory/": "",
-            },
-            "6": {
-              ".gadget/": "",
-            },
-            "7": {
-              ".gadget/": "",
-              "file1.txt": "file1.txt",
-              "file10.txt": "file10.txt",
-              "file2.txt": "file2.txt",
-              "file3.txt": "file3.txt",
-              "file4.txt": "file4.txt",
-              "file5.txt": "file5.txt",
-              "file6.txt": "file6.txt",
-              "file7.txt": "file7.txt",
-              "file8.txt": "file8.txt",
-              "file9.txt": "file9.txt",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+          "5": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+          "6": {
+            ".gadget/": "",
+          },
+          "7": {
             ".gadget/": "",
             "file1.txt": "file1.txt",
             "file10.txt": "file10.txt",
@@ -313,25 +292,36 @@ describe("dev", () => {
             "file8.txt": "file8.txt",
             "file9.txt": "file9.txt",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/backup/": "",
-            ".gadget/backup/directory/": "",
-            ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
-            "file1.txt": "file1.txt",
-            "file10.txt": "file10.txt",
-            "file2.txt": "file2.txt",
-            "file3.txt": "file3.txt",
-            "file4.txt": "file4.txt",
-            "file5.txt": "file5.txt",
-            "file6.txt": "file6.txt",
-            "file7.txt": "file7.txt",
-            "file8.txt": "file8.txt",
-            "file9.txt": "file9.txt",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+      }
+    `);
   });
 
   it("writes changes from gadget in the order they were received", async () => {
@@ -387,44 +377,30 @@ describe("dev", () => {
     await waitUntilLocalFilesVersion(7n);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "file.txt": "file v2",
-            },
-            "3": {
-              ".gadget/": "",
-              "file.txt": "file v3",
-            },
-            "4": {
-              ".gadget/": "",
-            },
-            "5": {
-              ".gadget/": "",
-              "directory/": "",
-            },
-            "6": {
-              ".gadget/": "",
-            },
-            "7": {
-              ".gadget/": "",
-              "file1.txt": "file1.txt",
-              "file10.txt": "file10.txt",
-              "file2.txt": "file2.txt",
-              "file3.txt": "file3.txt",
-              "file4.txt": "file4.txt",
-              "file5.txt": "file5.txt",
-              "file6.txt": "file6.txt",
-              "file7.txt": "file7.txt",
-              "file8.txt": "file8.txt",
-              "file9.txt": "file9.txt",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "file.txt": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+          },
+          "5": {
+            ".gadget/": "",
+            "directory/": "",
+          },
+          "6": {
+            ".gadget/": "",
+          },
+          "7": {
             ".gadget/": "",
             "file1.txt": "file1.txt",
             "file10.txt": "file10.txt",
@@ -437,25 +413,36 @@ describe("dev", () => {
             "file8.txt": "file8.txt",
             "file9.txt": "file9.txt",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/backup/": "",
-            ".gadget/backup/directory/": "",
-            ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
-            "file1.txt": "file1.txt",
-            "file10.txt": "file10.txt",
-            "file2.txt": "file2.txt",
-            "file3.txt": "file3.txt",
-            "file4.txt": "file4.txt",
-            "file5.txt": "file5.txt",
-            "file6.txt": "file6.txt",
-            "file7.txt": "file7.txt",
-            "file8.txt": "file8.txt",
-            "file9.txt": "file9.txt",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+      }
+    `);
   });
 
   it("writes all received files before stopping", async () => {
@@ -512,49 +499,34 @@ describe("dev", () => {
     await testCtx.done;
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
-        {
-          "filesVersionDirs": {
-            "1": {
-              ".gadget/": "",
-            },
-            "2": {
-              ".gadget/": "",
-              "file.js": "file v2",
-            },
-            "3": {
-              ".gadget/": "",
-              "file.js": "file v2",
-              "file.txt": "file v3",
-            },
-            "4": {
-              ".gadget/": "",
-              "file.js": "file v2",
-            },
-            "5": {
-              ".gadget/": "",
-              "directory/": "",
-              "file.js": "file v2",
-            },
-            "6": {
-              ".gadget/": "",
-              "file.js": "file v2",
-            },
-            "7": {
-              ".gadget/": "",
-              "file.js": "file v2",
-              "file1.txt": "file1.txt",
-              "file10.txt": "file10.txt",
-              "file2.txt": "file2.txt",
-              "file3.txt": "file3.txt",
-              "file4.txt": "file4.txt",
-              "file5.txt": "file5.txt",
-              "file6.txt": "file6.txt",
-              "file7.txt": "file7.txt",
-              "file8.txt": "file8.txt",
-              "file9.txt": "file9.txt",
-            },
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
           },
-          "gadgetDir": {
+          "2": {
+            ".gadget/": "",
+            "file.js": "file v2",
+          },
+          "3": {
+            ".gadget/": "",
+            "file.js": "file v2",
+            "file.txt": "file v3",
+          },
+          "4": {
+            ".gadget/": "",
+            "file.js": "file v2",
+          },
+          "5": {
+            ".gadget/": "",
+            "directory/": "",
+            "file.js": "file v2",
+          },
+          "6": {
+            ".gadget/": "",
+            "file.js": "file v2",
+          },
+          "7": {
             ".gadget/": "",
             "file.js": "file v2",
             "file1.txt": "file1.txt",
@@ -568,26 +540,38 @@ describe("dev", () => {
             "file8.txt": "file8.txt",
             "file9.txt": "file9.txt",
           },
-          "localDir": {
-            ".gadget/": "",
-            ".gadget/backup/": "",
-            ".gadget/backup/directory/": "",
-            ".gadget/backup/file.txt": "file v3",
-            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
-            "file.js": "file v2",
-            "file1.txt": "file1.txt",
-            "file10.txt": "file10.txt",
-            "file2.txt": "file2.txt",
-            "file3.txt": "file3.txt",
-            "file4.txt": "file4.txt",
-            "file5.txt": "file5.txt",
-            "file6.txt": "file6.txt",
-            "file7.txt": "file7.txt",
-            "file8.txt": "file8.txt",
-            "file9.txt": "file9.txt",
-          },
-        }
-      `);
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "file.js": "file v2",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"7"}}}",
+          "file.js": "file v2",
+          "file1.txt": "file1.txt",
+          "file10.txt": "file10.txt",
+          "file2.txt": "file2.txt",
+          "file3.txt": "file3.txt",
+          "file4.txt": "file4.txt",
+          "file5.txt": "file5.txt",
+          "file6.txt": "file6.txt",
+          "file7.txt": "file7.txt",
+          "file8.txt": "file8.txt",
+          "file9.txt": "file9.txt",
+        },
+      }
+    `);
   });
 
   it("doesn't write changes from gadget to the local filesystem if the file is ignored", async () => {

@@ -133,31 +133,31 @@ describe("deploy", () => {
     );
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        ! Issues found in your development app
+      ! Issues found in your development app
 
-        • routes/GET-hello.js 1 problem
-          ✖ JavaScript Unexpected keyword or identifier. line 13
+      • routes/GET-hello.js 1 problem
+        ✖ JavaScript Unexpected keyword or identifier. line 13
 
-        • routes/GET-test.ts 2 problems
-          ✖ TypeScript Identifier expected. line 10
-          ✖ TypeScript Expression expected. line 15
+      • routes/GET-test.ts 2 problems
+        ✖ TypeScript Identifier expected. line 10
+        ✖ TypeScript Expression expected. line 15
 
-        • models/example/comp.gelly 1 problem
-          ✖ Gelly Unknown identifier "tru"
+      • models/example/comp.gelly 1 problem
+        ✖ Gelly Unknown identifier "tru"
 
-        • Other 1 problem
-          ✖ Add google keys for production
+      • Other 1 problem
+        ✖ Add google keys for production
 
-        Do you want to continue?
+      Do you want to continue?
 
-        Aborting because ggt is not running in an interactive terminal.
-        "
-      `);
+      Aborting because ggt is not running in an interactive terminal.
+      "
+    `);
   });
 
   it("deploys even if there are problems when --allow-problems is passed", async () => {
@@ -300,32 +300,32 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        ! Issues found in your development app
+      ! Issues found in your development app
 
-        • Other 1 problem
-          ✖ Add google keys for production
-        Deploying regardless of problems because "--allow-problems" was passed.
+      • Other 1 problem
+        ✖ Add google keys for production
+      Deploying regardless of problems because "--allow-problems" was passed.
 
-        ⠙ Building frontend assets.
-        ✔ Built frontend assets. 12:00:00 AM
+      ⠙ Building frontend assets.
+      ✔ Built frontend assets. 12:00:00 AM
 
-        ⠙ Setting up database.
-        ✔ Setup database. 12:00:00 AM
+      ⠙ Setting up database.
+      ✔ Setup database. 12:00:00 AM
 
-        ⠙ Copying development.
-        ✔ Copied development. 12:00:00 AM
+      ⠙ Copying development.
+      ✔ Copied development. 12:00:00 AM
 
-        ⠙ Restarting app.
-        ✔ Restarted app. 12:00:00 AM
+      ⠙ Restarting app.
+      ✔ Restarted app. 12:00:00 AM
 
-        Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
-        "
-      `);
+      Deploy successful! Check logs https://test.gadget.app/url/to/logs/with/traceId.
+      "
+    `);
   });
 
   it("does not try to deploy if any deleted data will occur and displays the soon to be deleted data", async () => {
@@ -358,21 +358,21 @@ describe("deploy", () => {
     );
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        ! Data deleted on deploy
+      ! Data deleted on deploy
 
-        These changes will be applied to production based on the app you're deploying.
-              - modelA  deleted
+      These changes will be applied to production based on the app you're deploying.
+            - modelA  deleted
 
-        Do you want to continue?
+      Do you want to continue?
 
-        Aborting because ggt is not running in an interactive terminal.
-        "
-      `);
+      Aborting because ggt is not running in an interactive terminal.
+      "
+    `);
   });
 
   it("deploys even if there are problems when --allow-data-delete is passed", async () => {
@@ -513,32 +513,32 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        ! Data deleted on deploy
+      ! Data deleted on deploy
 
-        These changes will be applied to production based on the app you're deploying.
-              - modelA  deleted
-        Deploying regardless of deleted data because "--allow-data-delete" was passed.
+      These changes will be applied to production based on the app you're deploying.
+            - modelA  deleted
+      Deploying regardless of deleted data because "--allow-data-delete" was passed.
 
-        ⠙ Building frontend assets.
-        ✔ Built frontend assets. 12:00:00 AM
+      ⠙ Building frontend assets.
+      ✔ Built frontend assets. 12:00:00 AM
 
-        ⠙ Setting up database.
-        ✔ Setup database. 12:00:00 AM
+      ⠙ Setting up database.
+      ✔ Setup database. 12:00:00 AM
 
-        ⠙ Copying development.
-        ✔ Copied development. 12:00:00 AM
+      ⠙ Copying development.
+      ✔ Copied development. 12:00:00 AM
 
-        ⠙ Restarting app.
-        ✔ Restarted app. 12:00:00 AM
+      ⠙ Restarting app.
+      ✔ Restarted app. 12:00:00 AM
 
-        Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
-        "
-      `);
+      Deploy successful! Check logs https://test.gadget.app/url/to/logs/with/traceId.
+      "
+    `);
   });
 
   it("deploys if there are no problems with the app", async () => {
@@ -675,26 +675,26 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        ⠙ Building frontend assets.
-        ✔ Built frontend assets. 12:00:00 AM
+      ⠙ Building frontend assets.
+      ✔ Built frontend assets. 12:00:00 AM
 
-        ⠙ Setting up database.
-        ✔ Setup database. 12:00:00 AM
+      ⠙ Setting up database.
+      ✔ Setup database. 12:00:00 AM
 
-        ⠙ Copying development.
-        ✔ Copied development. 12:00:00 AM
+      ⠙ Copying development.
+      ✔ Copied development. 12:00:00 AM
 
-        ⠙ Restarting app.
-        ✔ Restarted app. 12:00:00 AM
+      ⠙ Restarting app.
+      ✔ Restarted app. 12:00:00 AM
 
-        Deploy successful! Check logs (​https://test.gadget.app/url/to/logs/with/traceId​).
-        "
-      `);
+      Deploy successful! Check logs https://test.gadget.app/url/to/logs/with/traceId.
+      "
+    `);
   });
 
   it("can not deploy if the maximum number of applications has been reached", async () => {
@@ -717,14 +717,14 @@ describe("deploy", () => {
     await expectProcessExit(() => publishStatus.emitError(error), 1);
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        Production environment limit reached. Upgrade your plan to deploy.
-        "
-      `);
+      Production environment limit reached. Upgrade your plan to deploy.
+      "
+    `);
   });
 
   it("prompts the user to confirm if there is going to be a deploy charge", async () => {
@@ -747,18 +747,18 @@ describe("deploy", () => {
     await expectProcessExit(() => publishStatus.emitError(error), 1);
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        Deploying this app to production will add $25.00 to your existing monthly plan.
+      Deploying this app to production will add $25.00 to your existing monthly plan.
 
-        Do you want to continue?
+      Do you want to continue?
 
-        Aborting because ggt is not running in an interactive terminal.
-        "
-      `);
+      Aborting because ggt is not running in an interactive terminal.
+      "
+    `);
   });
 
   it("exits if the subscription unexpectedly closes due to an Internal Error", async () => {
@@ -826,23 +826,23 @@ describe("deploy", () => {
     await expectProcessExit(() => publishStatus.emitError(error), 1);
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        ⠙ Building frontend assets.
-        ✘ Building frontend assets. 12:00:00 AM
+      ⠙ Building frontend assets.
+      ✘ Building frontend assets. 12:00:00 AM
 
-        An error occurred while communicating with Gadget
+      An error occurred while communicating with Gadget
 
-        The connection to Gadget closed unexpectedly.
+      The connection to Gadget closed unexpectedly.
 
-        If you think this is a bug, use the link below to create an issue on GitHub.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-        https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
-        "
-      `);
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
+    `);
   });
 
   it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
@@ -915,19 +915,19 @@ describe("deploy", () => {
     });
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        ⠙ Building frontend assets.
-        ✘ Building frontend assets. 12:00:00 AM
+      ⠙ Building frontend assets.
+      ✘ Building frontend assets. 12:00:00 AM
 
-        GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
+      GGT_ASSET_BUILD_FAILED: An error occurred while building production assets
 
-        Check logs (​https://test.gadget.app/url/to/logs/with/traceId​)
-        "
-      `);
+      Check logs https://test.gadget.app/url/to/logs/with/traceId
+      "
+    `);
   });
 
   it("prints out fatal errors in the terminal and exit with code 1 if there are fatal errors", async () => {
@@ -984,27 +984,27 @@ describe("deploy", () => {
     );
 
     expectStdout().toMatchInlineSnapshot(`
-        "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
-        ⠙ Calculating file changes.
-        ✔ Your files are up to date. 12:00:00 AM
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
 
-        Gadget has detected the following fatal errors with your files:
+      Gadget has detected the following fatal errors with your files:
 
-        • access-control.gadget.ts 2 problems
-          ✖ Something went wrong
-          ✖ Another message
+      • access-control.gadget.ts 2 problems
+        ✖ Something went wrong
+        ✖ Another message
 
-        • settings.gadget.ts 1 problem
-          ✖ Message from another file
+      • settings.gadget.ts 1 problem
+        ✖ Message from another file
 
-        Please fix these errors and try again.
+      Please fix these errors and try again.
 
-        If you think this is a bug, use the link below to create an issue on GitHub.
+      If you think this is a bug, use the link below to create an issue on GitHub.
 
-        https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
-        "
-      `);
+      https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
+      "
+    `);
   });
 
   it("discards gadget changes and sends local changes to gadget after confirmation", async () => {
@@ -1054,7 +1054,7 @@ describe("deploy", () => {
     expect(confirm).toHaveBeenCalledTimes(1);
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
       ⠙ Calculating file changes.
       ✔ Calculated file changes. 12:00:00 AM
@@ -1122,7 +1122,7 @@ describe("deploy", () => {
     await expectLocalAndGadgetHashesMatch();
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
       ⠙ Calculating file changes.
       ✔ Calculated file changes. 12:00:00 AM
@@ -1195,7 +1195,7 @@ describe("deploy", () => {
     await expect(expectLocalAndGadgetHashesMatch()).rejects.toThrowError();
 
     expectStdout().toMatchInlineSnapshot(`
-      "Deploying development to test.gadget.app (​https://test.gadget.app/​)
+      "Deploying development to test.gadget.app https://test.gadget.app/
 
       ⠙ Calculating file changes.
       ✔ Calculated file changes. 12:00:00 AM

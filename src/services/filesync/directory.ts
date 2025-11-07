@@ -129,7 +129,7 @@ export class Directory {
    * exist, it is silently ignored.
    */
   async loadIgnoreFile(): Promise<void> {
-    this._ignorer = ignore.default();
+    this._ignorer = ignore();
     this._ignorer.add(ALWAYS_IGNORE_PATHS);
 
     try {

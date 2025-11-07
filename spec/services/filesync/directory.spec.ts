@@ -125,32 +125,12 @@ describe("Directory.loadIgnoreFile", () => {
     const directory = await Directory.init(dir);
 
     // @ts-expect-error _ignorer and _rules are private
-    expect(directory._ignorer._rules).toMatchInlineSnapshot(`
+    expect(directory._ignorer._rules._rules.map((rule) => rule.pattern as string)).toMatchInlineSnapshot(`
       [
-        IgnoreRule {
-          "negative": false,
-          "origin": ".DS_Store",
-          "pattern": ".DS_Store",
-          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.DS_Store\\(\\?=\\$\\|\\\\/\\$\\)/i,
-        },
-        IgnoreRule {
-          "negative": false,
-          "origin": "node_modules",
-          "pattern": "node_modules",
-          "regex": /\\(\\?:\\^\\|\\\\/\\)node_modules\\(\\?=\\$\\|\\\\/\\$\\)/i,
-        },
-        IgnoreRule {
-          "negative": false,
-          "origin": ".git",
-          "pattern": ".git",
-          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.git\\(\\?=\\$\\|\\\\/\\$\\)/i,
-        },
-        IgnoreRule {
-          "negative": false,
-          "origin": ".shopify",
-          "pattern": ".shopify",
-          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.shopify\\(\\?=\\$\\|\\\\/\\$\\)/i,
-        },
+        ".DS_Store",
+        "node_modules",
+        ".git",
+        ".shopify",
       ]
     `);
 
@@ -158,38 +138,13 @@ describe("Directory.loadIgnoreFile", () => {
     await directory.loadIgnoreFile();
 
     // @ts-expect-error _ignorer and _rules are private
-    expect(directory._ignorer._rules).toMatchInlineSnapshot(`
+    expect(directory._ignorer._rules._rules.map((rule) => rule.pattern as string)).toMatchInlineSnapshot(`
       [
-        IgnoreRule {
-          "negative": false,
-          "origin": ".DS_Store",
-          "pattern": ".DS_Store",
-          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.DS_Store\\(\\?=\\$\\|\\\\/\\$\\)/i,
-        },
-        IgnoreRule {
-          "negative": false,
-          "origin": "node_modules",
-          "pattern": "node_modules",
-          "regex": /\\(\\?:\\^\\|\\\\/\\)node_modules\\(\\?=\\$\\|\\\\/\\$\\)/i,
-        },
-        IgnoreRule {
-          "negative": false,
-          "origin": ".git",
-          "pattern": ".git",
-          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.git\\(\\?=\\$\\|\\\\/\\$\\)/i,
-        },
-        IgnoreRule {
-          "negative": false,
-          "origin": ".shopify",
-          "pattern": ".shopify",
-          "regex": /\\(\\?:\\^\\|\\\\/\\)\\\\\\.shopify\\(\\?=\\$\\|\\\\/\\$\\)/i,
-        },
-        IgnoreRule {
-          "negative": false,
-          "origin": "foo",
-          "pattern": "foo",
-          "regex": /\\(\\?:\\^\\|\\\\/\\)foo\\(\\?=\\$\\|\\\\/\\$\\)/i,
-        },
+        ".DS_Store",
+        "node_modules",
+        ".git",
+        ".shopify",
+        "foo",
       ]
     `);
   });

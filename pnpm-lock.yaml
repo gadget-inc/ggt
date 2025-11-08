@@ -63,8 +63,8 @@ devDependencies:
     specifier: ^8.18.1
     version: 8.18.1
   ansi-escapes:
-    specifier: ^7.0.0
-    version: 7.0.0
+    specifier: ^7.2.0
+    version: 7.2.0
   arg:
     specifier: ^5.0.2
     version: 5.0.2
@@ -3518,8 +3518,8 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /ansi-escapes@7.0.0:
-    resolution: {integrity: sha512-GdYO7a61mR0fOlAsvC9/rIHf7L96sBc6dEWzeOu+KAea5bZyQRPIpojrVoI4AXGJS/ycu/fBTdLrUkA4ODrvjw==}
+  /ansi-escapes@7.2.0:
+    resolution: {integrity: sha512-g6LhBsl+GBPRWGWsBtutpzBYuIIdBkLEvad5C/va/74Db018+5TZiyA26cZJAr3Rft5lprVqOIPxf5Vid6tqAw==}
     engines: {node: '>=18'}
     dependencies:
       environment: 1.1.0
@@ -5672,7 +5672,7 @@ packages:
     resolution: {integrity: sha512-9ie8ItPR6tjY5uYJh8K/Zrv/RMZ5VOlOWvtZdEHYSTFKZfIBPQa9tOAEeAWhd+AnIneLJ22w5fjOYtoutpWq5w==}
     engines: {node: '>=18'}
     dependencies:
-      ansi-escapes: 7.0.0
+      ansi-escapes: 7.2.0
       cli-cursor: 5.0.0
       slice-ansi: 7.1.2
       strip-ansi: 7.1.2
@@ -7507,7 +7507,7 @@ packages:
     resolution: {integrity: sha512-qFAy10MTMwjzjU8U16YS4YoZD+NQLHzLssFMNqgravjbvIPNiqkGFR4yjhJfmY9R5OFU7+yHxc6y+uGHkKwLRA==}
     engines: {node: '>=20'}
     dependencies:
-      ansi-escapes: 7.0.0
+      ansi-escapes: 7.2.0
       supports-hyperlinks: 4.3.0
     dev: true
 

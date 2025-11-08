@@ -104,7 +104,7 @@
     "p-map": "^7.0.3",
     "p-queue": "^9.0.0",
     "p-retry": "^6.2.1",
-    "p-timeout": "^6.1.4",
+    "p-timeout": "^7.0.1",
     "pluralize": "^8.0.0",
     "prettier": "^3.5.1",
     "prettier-plugin-organize-imports": "^4.3.0",

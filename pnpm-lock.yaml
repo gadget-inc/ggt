@@ -183,8 +183,8 @@ devDependencies:
     specifier: ^6.2.1
     version: 6.2.1
   p-timeout:
-    specifier: ^6.1.4
-    version: 6.1.4
+    specifier: ^7.0.1
+    version: 7.0.1
   pluralize:
     specifier: ^8.0.0
     version: 8.0.0
@@ -6398,11 +6398,6 @@ packages:
       '@types/retry': 0.12.2
       is-network-error: 1.1.0
       retry: 0.13.1
-    dev: true
-
-  /p-timeout@6.1.4:
-    resolution: {integrity: sha512-MyIV3ZA/PmyBN/ud8vV9XzwTrNtR4jFrObymZYnZqMmW0zA8Z17vnT0rBgFE/TlohB+YCHqXMgZzb3Csp49vqg==}
-    engines: {node: '>=14.16'}
     dev: true
 
   /p-timeout@7.0.1:

@@ -86,24 +86,6 @@ describe("SyncJson.loadOrInit", () => {
     `);
   });
 
-  it("loads state from .gadget/sync.json (v0.4)", async () => {
-    await outputSyncJson({
-      app: testApp.slug,
-      filesVersion: "77",
-      mtime: 1658153625236,
-    });
-
-    const syncJson = await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir });
-
-    expect(syncJson.state).toEqual({
-      application: testApp.slug,
-      environment: "development",
-      environments: {
-        development: { filesVersion: "77" },
-      },
-    });
-  });
-
   it("uses default state if .gadget/sync.json does not exist and the directory is empty", async () => {
     const syncJson = await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir });
 

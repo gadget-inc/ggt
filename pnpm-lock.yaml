@@ -222,8 +222,8 @@ devDependencies:
     specifier: ^3.30.0
     version: 3.30.0
   stdin-discarder:
-    specifier: ^0.2.2
-    version: 0.2.2
+    specifier: ^0.3.0
+    version: 0.3.0
   string-width:
     specifier: ^8.1.0
     version: 8.1.0
@@ -7333,8 +7333,8 @@ packages:
     resolution: {integrity: sha512-UGvjygr6F6tpH7o2qyqR6QYpwraIjKSdtzyBdyytFOHmPZY917kwdwLG0RbOjWOnKmnm3PeHjaoLLMie7kPLQw==}
     dev: true
 
-  /stdin-discarder@0.2.2:
-    resolution: {integrity: sha512-UhDfHmA92YAlNnCfhmq0VeNL5bDbiZGg7sZ2IvPsXubGkiNa9EC+tUTsjBRsYUAz87btI6/1wf4XoVvQ3uRnmQ==}
+  /stdin-discarder@0.3.0:
+    resolution: {integrity: sha512-zR54e4v3B5LgJDngfCQZZ3YQ0SzkypA7NXOGpc2qQqai8UE0j2XgvLQJhT9dg7SbDH/Yv6DYmu6uQqHAvwADaA==}
     engines: {node: '>=18'}
     dev: true
 

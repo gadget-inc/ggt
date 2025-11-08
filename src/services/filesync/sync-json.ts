@@ -539,7 +539,7 @@ const loadBranch = async (ctx: Context, { directory }: { directory: Directory })
 export const SyncJsonStateV1 = z.object({
   application: z.string(),
   environment: z.string(),
-  environments: z.record(z.object({ filesVersion: z.string() })),
+  environments: z.record(z.string(), z.object({ filesVersion: z.string() })),
 });
 
 export const AnySyncJsonState = SyncJsonStateV1;

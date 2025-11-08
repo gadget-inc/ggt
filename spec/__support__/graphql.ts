@@ -1,7 +1,7 @@
 import nock, { type Scope } from "nock";
 import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
-import { ZodSchema, z } from "zod";
+import { z } from "zod";
 import type { Application, Environment } from "../../src/services/app/app.js";
 import { Client } from "../../src/services/app/client.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.js";
@@ -34,7 +34,7 @@ export type NockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLM
   /**
    * The variables to expect in the request.
    */
-  expectVariables?: Thunk<Operation["Variables"] | ZodSchema> | null;
+  expectVariables?: Thunk<Operation["Variables"] | z.ZodType> | null;
 
   /**
    * The app to respond to.
@@ -104,7 +104,7 @@ export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation
 
   const expectVariables = (actual: unknown): Query["Variables"] => {
     const expected = unthunk(opts.expectVariables);
-    if (expected instanceof ZodSchema) {
+    if (expected instanceof z.ZodType) {
       return expected.parse(actual) as Query["Variables"];
     } else {
       expect(actual).toEqual(expected);
@@ -131,7 +131,7 @@ export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation
       .times(times)
       .reply(statusCode, async (_uri, rawBody) => {
         try {
-          const body = z.object({ query: z.literal(operation), variables: z.record(z.unknown()).optional() }).parse(rawBody);
+          const body = z.object({ query: z.literal(operation), variables: z.record(z.string(), z.unknown()).optional() }).parse(rawBody);
           const variables = expectVariables(body.variables);
           const response = await generateResponse(variables);
           return response;

@@ -41,10 +41,10 @@ export const isErrorEvent = (e: unknown): e is SetOptional<ErrorEvent, "target">
 export const isGraphQLResult = (val: unknown): val is ExecutionResult => {
   return z
     .union([
-      z.object({ data: z.record(z.unknown()) }),
+      z.object({ data: z.record(z.string(), z.unknown()) }),
       z.object({ errors: z.array(z.object({ message: z.string() })) }),
       z.object({
-        data: z.record(z.unknown()),
+        data: z.record(z.string(), z.unknown()),
         errors: z.array(z.object({ message: z.string() })),
       }),
     ])
@@ -57,7 +57,7 @@ export const isGraphQLErrors = (e: unknown): e is readonly GraphQLError[] => {
       z.object({
         message: z.string(),
         extensions: z
-          .record(z.unknown())
+          .record(z.string(), z.unknown())
           .nullish()
           .transform((ext) => ext ?? {}),
       }),

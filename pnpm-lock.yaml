@@ -189,14 +189,14 @@ devDependencies:
     specifier: ^8.0.0
     version: 8.0.0
   prettier:
-    specifier: ^3.5.1
-    version: 3.5.1
+    specifier: ^3.6.2
+    version: 3.6.2
   prettier-plugin-organize-imports:
     specifier: ^4.3.0
-    version: 4.3.0(prettier@3.5.1)(typescript@5.9.3)
+    version: 4.3.0(prettier@3.6.2)(typescript@5.9.3)
   prettier-plugin-packagejson:
     specifier: ^2.5.19
-    version: 2.5.19(prettier@3.5.1)
+    version: 2.5.19(prettier@3.6.2)
   remark:
     specifier: ^15.0.1
     version: 15.0.1
@@ -6643,7 +6643,7 @@ packages:
       xtend: 4.0.2
     dev: true
 
-  /prettier-plugin-organize-imports@4.3.0(prettier@3.5.1)(typescript@5.9.3):
+  /prettier-plugin-organize-imports@4.3.0(prettier@3.6.2)(typescript@5.9.3):
     resolution: {integrity: sha512-FxFz0qFhyBsGdIsb697f/EkvHzi5SZOhWAjxcx2dLt+Q532bAlhswcXGYB1yzjZ69kW8UoadFBw7TyNwlq96Iw==}
     peerDependencies:
       prettier: '>=2.0'
@@ -6653,11 +6653,11 @@ packages:
       vue-tsc:
         optional: true
     dependencies:
-      prettier: 3.5.1
+      prettier: 3.6.2
       typescript: 5.9.3
     dev: true
 
-  /prettier-plugin-packagejson@2.5.19(prettier@3.5.1):
+  /prettier-plugin-packagejson@2.5.19(prettier@3.6.2):
     resolution: {integrity: sha512-Qsqp4+jsZbKMpEGZB1UP1pxeAT8sCzne2IwnKkr+QhUe665EXUo3BAvTf1kAPCqyMv9kg3ZmO0+7eOni/C6Uag==}
     peerDependencies:
       prettier: '>= 1.16.0'
@@ -6665,7 +6665,7 @@ packages:
       prettier:
         optional: true
     dependencies:
-      prettier: 3.5.1
+      prettier: 3.6.2
       sort-package-json: 3.4.0
       synckit: 0.11.11
     dev: true
@@ -6676,8 +6676,8 @@ packages:
     hasBin: true
     dev: true
 
-  /prettier@3.5.1:
-    resolution: {integrity: sha512-hPpFQvHwL3Qv5AdRvBFMhnKo4tYxp0ReXiPn2bxkiohEX6mBeBwEpBSQTkD458RaaDKQMYSp4hX4UtfUTA5wDw==}
+  /prettier@3.6.2:
+    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
     engines: {node: '>=14'}
     hasBin: true
     dev: true

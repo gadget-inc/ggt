@@ -5,15 +5,9 @@
 <br>
 <br>
 
-<a href="https://github.com/gadget-inc/ggt/actions/workflows/ci.yml?query=branch%3Amain">
-  <img alt="ci workflow status" src="https://img.shields.io/github/actions/workflow/status/gadget-inc/ggt/ci.yml?branch=main&label=ci">
-</a>
-<a href="https://www.npmjs.com/package/ggt">
-  <img alt="npm version" src="https://img.shields.io/npm/v/ggt">
-</a>
-<a href="https://discord.gg/nAfNKMdwKh">
-  <img alt="discord chat" src="https://img.shields.io/discord/836317518595096598">
-</a>
+[![ci/cd workflow status](https://github.com/gadget-inc/ggt/actions/workflows/cd.yml/badge.svg)](https://github.com/gadget-inc/ggt/actions/workflows/cd.yml)
+[![npm version](https://img.shields.io/npm/v/ggt)](https://www.npmjs.com/package/ggt)
+[![discord server](https://img.shields.io/discord/836317518595096598)](https://discord.gg/9d7wjGBZ6M)
 
 <br>
 <br>

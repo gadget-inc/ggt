@@ -1,3 +1,4 @@
+/* eslint-disable func-style */
 /**
  * DO NOT MODIFY
  *
@@ -136,7 +137,11 @@ export class Directory {
       const content = await fs.readFile(this.absolute(".ignore"), "utf8");
       this._ignorer.add(content);
     } catch (error) {
-      swallowEnoent(error);
+      if (isEnoentError(error) || isEisdirError(error)) {
+        // ignore missing or is-directory errors
+        return;
+      }
+      throw error;
     }
   }
 
@@ -328,6 +333,14 @@ const hash = async (absolutePath: string): Promise<Hash> => {
   return { sha1: sha1.digest("hex"), permissions };
 };
 
+function isEnoentError(error: unknown): error is { code: "ENOENT" } {
+  return !!error && typeof error === "object" && "code" in error && error.code === "ENOENT";
+}
+
+function isEisdirError(error: unknown): error is { code: "EISDIR" } {
+  return !!error && typeof error === "object" && "code" in error && error.code === "EISDIR";
+}
+
 /**
  * Swallows ENOENT errors and throws any other errors.
  *
@@ -335,7 +348,7 @@ const hash = async (absolutePath: string): Promise<Hash> => {
  * @throws The original error if it is not an ENOENT error.
  */
 export const swallowEnoent = (error: unknown): void => {
-  if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+  if (isEnoentError(error)) {
     return;
   }
   throw error;

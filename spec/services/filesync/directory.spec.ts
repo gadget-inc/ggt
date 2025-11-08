@@ -159,6 +159,15 @@ describe("Directory.loadIgnoreFile", () => {
     await fs.remove(dir);
     await expect(directory.loadIgnoreFile()).resolves.toBeUndefined();
   });
+
+  it("doesn't throw if the ignore file is a directory", async () => {
+    const dir = testDirPath();
+    const directory = await Directory.init(dir);
+
+    await fs.remove(path.join(dir, ".ignore"));
+    await fs.mkdirp(path.join(dir, ".ignore"));
+    await expect(directory.loadIgnoreFile()).resolves.toBeUndefined();
+  });
 });
 
 describe("Directory.ignores", () => {

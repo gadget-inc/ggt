@@ -485,6 +485,7 @@ class ClientConnection {
   }
 
   private _handleClientMessage(data: RawData, isBinary: boolean): void {
+    // oxlint-disable-next-line no-base-to-string
     const messageString = isBinary ? "<binary data>" : String(data);
     this._ctx.log.trace("received message from client", { message: messageString });
 
@@ -501,6 +502,7 @@ class ClientConnection {
     }
 
     this._remoteWs.on("message", (data: RawData, isBinary: boolean) => {
+      // oxlint-disable-next-line no-base-to-string
       const messageString = isBinary ? "<binary data>" : String(data);
       this._ctx.log.trace("received message from remote debugger", { message: messageString });
       this._clientWs.send(data, { binary: isBinary });

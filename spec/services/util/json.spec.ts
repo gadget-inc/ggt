@@ -17,7 +17,6 @@ describe("installJsonExtensions", () => {
     const map = new Map([["a", 1]]);
     expect(() => JSON.stringify(map)).toMatchInlineSnapshot("[Function]");
     installJsonExtensions();
-    // eslint-disable-next-line quotes
     expect(JSON.stringify(map)).toMatchInlineSnapshot(`"{"a":1}"`);
   });
 

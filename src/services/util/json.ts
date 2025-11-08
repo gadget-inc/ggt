@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-
+// oxlint-disable consistent-type-definitions
 declare global {
   interface BigInt {
     toJSON?(): string;
@@ -19,6 +16,7 @@ const bigintToJSON = function (this: bigint): string {
 };
 
 const mapToJSON = function <K, V>(this: Map<K, V>): Record<string, V> {
+  // oxlint-disable-next-line no-unsafe-return
   return Object.fromEntries(this);
 };
 

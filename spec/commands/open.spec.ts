@@ -120,7 +120,6 @@ describe("open", () => {
   });
 });
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const nockGetModels = () => {
   return nockApiResponse({
     operation: GADGET_META_MODELS_QUERY,

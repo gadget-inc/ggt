@@ -80,7 +80,6 @@ export type print = {
    * ```
    * @see PrintOptions
    */
-  // eslint-disable-next-line @typescript-eslint/unified-signatures
   (options: PrintOptions): void;
 };
 

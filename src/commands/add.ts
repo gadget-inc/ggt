@@ -1,4 +1,3 @@
-/* eslint-disable no-case-declarations */
 import chalk from "chalk";
 import terminalLink from "terminal-link";
 import { getGlobalActions, getModels } from "../services/app/app.js";
@@ -375,7 +374,7 @@ const fieldSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
       await syncJson.edit.mutate({
         mutation: CREATE_MODEL_FIELDS_MUTATION,
         variables: {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          // oxlint-disable-next-line no-non-null-assertion
           path: splitPathAndField[0]!,
           fields: modelFieldsList.map((field) => ({ name: field.name, fieldType: field.fieldType })),
         },

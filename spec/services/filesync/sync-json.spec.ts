@@ -1,4 +1,3 @@
-/* eslint-disable no-irregular-whitespace */
 import fs from "fs-extra";
 import terminalLink from "terminal-link";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -168,7 +167,6 @@ describe("SyncJson.loadOrInit", () => {
     const error = await expectError(() => SyncJson.loadOrInit(testCtx, { command, args, directory: localDir }));
 
     expect(error).toBeInstanceOf(ArgError);
-    // eslint-disable-next-line quotes
     expect(error.message).toMatchInlineSnapshot(`"You cannot "ggt dev" your production environment."`);
   });
 

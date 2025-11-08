@@ -32,7 +32,7 @@ import { output } from "./output.js";
  * SOFTWARE.
  */
 export class Prompt extends EventEmitter {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line no-explicit-any
   [action: string]: any; // (key: StdinKey) => void;
 
   static active = false;
@@ -66,7 +66,7 @@ export class Prompt extends EventEmitter {
       if (action === false) {
         this._(str, key);
       } else if (action && typeof this[action] === "function") {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        // oxlint-disable-next-line no-unsafe-call
         this[action](key);
       } else {
         this.bell();

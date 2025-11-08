@@ -33,6 +33,8 @@ notificationcenter
 notifysend
 oclif
 outdir
+oxlint
+oxlintrc
 packagejson
 pagedown
 pageup
@@ -46,6 +48,7 @@ sourcemaps
 sprintln
 sprintlns
 stefanzweifel
+tsgolint
 typecheck
 unmock
 unref

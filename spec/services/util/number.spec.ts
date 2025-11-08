@@ -23,7 +23,6 @@ describe("parseNumber", () => {
     expect(parseNumber(input)).toBe(output);
   });
 
-  // eslint-disable-next-line unicorn/no-null
   it.each(["what", "nope", "", null, undefined])("parses %s as defaultValue", (value) => {
     const defaultValue = randomInt(100);
     expect(parseNumber(value, defaultValue)).toBe(defaultValue);

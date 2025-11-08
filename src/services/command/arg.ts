@@ -70,7 +70,7 @@ export const parseArgs = <Args extends ArgsDefinition>(args: Args, options?: arg
   } catch (error: unknown) {
     if (error instanceof arg.ArgError) {
       // convert arg.ArgError to GGTError
-      // eslint-disable-next-line no-ex-assign
+      // oxlint-disable-next-line no-ex-assign
       error = new ArgError(error.message);
     }
     if (error instanceof GGTError) {

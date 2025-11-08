@@ -38,7 +38,7 @@ const installSignalHandler = (ctx: Context): void => {
   let stopping = false;
 
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    // oxlint-disable-next-line no-misused-promises
     process.on(signal, async () => {
       if (stopping) {
         return;

@@ -17,7 +17,7 @@ export const isObject = (val: unknown): val is object => {
 
 export const isArray = Array.isArray;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+// oxlint-disable-next-line no-unsafe-function-type
 export const isFunction = (val: unknown): val is Function => {
   return typeof val === "function";
 };
@@ -67,7 +67,7 @@ export const isGraphQLErrors = (e: unknown): e is readonly GraphQLError[] => {
 };
 
 export const isNever = (value: never): never => {
-  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+  // oxlint-disable-next-line restrict-template-expressions
   throw new Error(`Unexpected value: ${value}`);
 };
 

@@ -14,6 +14,7 @@ import { modelListIndex, modelsMap } from "./metadata";
 import { AppTenancyKey } from "./tenancy";
 import type { AnyParams, ModelMetadata, NotYetTyped } from "./types";
 import { assert } from "./utils";
+import { invalidPlanNames } from "framework/src/shopify/constants";
 
 function getBelongsToRelationParams(model: ModelMetadata, params: Record<string, any>) {
   const belongsToParams: any = {};
@@ -402,7 +403,7 @@ export async function globalShopifySync(params: {
               inState: "created.installed",
             },
             planName: {
-              notIn: ["frozen", "fraudulent", "cancelled"],
+              notIn: invalidPlanNames
             },
           },
           first: pageInfo.first,

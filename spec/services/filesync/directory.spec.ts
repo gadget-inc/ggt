@@ -15,8 +15,9 @@ import {
   NEVER_IGNORE_PATHS,
   supportsPermissions,
 } from "../../../src/services/filesync/directory.js";
-import { mapValues } from "../../../src/services/util/object.js";
-import { writeDir, type Files } from "../../__support__/files.js";
+import appHashesNoPermissions from "../../__fixtures__/app-hashes-no-permissions.json";
+import appHashes from "../../__fixtures__/app-hashes.json";
+import { type Files, writeDir } from "../../__support__/files.js";
 import { appFixturePath, testDirPath } from "../../__support__/paths.js";
 
 describe("Directory.relative", () => {
@@ -305,12 +306,17 @@ describe("Directory.hashes", () => {
   it("produces the expected result", async () => {
     const directory = await Directory.init(appFixturePath());
     const hashes = await directory.hashes();
-    expect(mapValues(hashes, (hash) => hash.sha1)).toMatchSnapshot();
-
     if (supportsPermissions) {
-      expect(mapValues(hashes, (hash) => hash.permissions!.toString(8))).toMatchSnapshot();
+      expect(hashes).toStrictEqual(appHashes);
     } else {
-      expect(mapValues(hashes, (hash) => hash.permissions)).toEqual(mapValues(hashes, () => undefined));
+      // JSON can't represent undefined values, so we need to remove them before comparing
+      for (const path in hashes) {
+        if (hashes[path]!.permissions === undefined) {
+          delete hashes[path]!.permissions;
+        }
+      }
+
+      expect(hashes).toStrictEqual(appHashesNoPermissions);
     }
   });
 });

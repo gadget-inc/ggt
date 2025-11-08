@@ -5,32 +5,24 @@ import { AppConnections } from "./AppConnections";
 import { Session } from "./Session";
 import { GadgetMailer, RequestData } from "./types";
 
-/** Represents the data that's in always context */
+/** Represents context present in both actions and routes. */
 export interface AmbientContext {
-  /** The current request's session, if it has one. Requests made by browsers are given sessions, but requests made using Gadget API Keys are not. */
+  /** The current request's session, if it has one. Requests made by browsers are given sessions, requests made by Gadget API Keys are not. */  
   session?: Session;
-  /** The current request's session ID, if it has one. Requests made by browsers are given sessions, but requests made using Gadget API Keys are not. */
+  /** The current request's session ID, if it has one. Requests made by browsers are given sessions, requests made by Gadget API Keys are not. */
   sessionID?: string;
-  /** All Test configuration values */
+  /** An object of all the environment variables created on Gadget. */
   config: AppConfiguration;
-  /** A map of connection name to instantiated connection objects for Test */
+  /** An object containing client objects for all connections. */
   connections: AppConnections;
-  /** A high performance structured logger which writes logs to the Logs Viewer in the Gadget Editor. */
+  /** Structured logger for the Gadget logs Viewer, supporting log levels via .info, .debug, and .error. */  
   logger: FastifyLoggerInstance;
-  /**
-   * An instance of the API client for Test.
-   *
-   * __Note__: This client is authorized using a superuser internal api token and has permission to invoke any action in the system using normal API mutations or the Internal API.
-   **/
+  /** A connected, authorized instance of the generated API client for the current Gadget app. */
   api: Client;
-  /**
-   * The details of the request that is invoking this unit of work, if it was invoked by a request.
-   *
-   * __Note__: Request details are not always present, like during a background connection sync, a background job, or an action retry.
-   **/
+  /** An object describing the incoming HTTP request. */
   request?: RequestData;
-  /** App URL for the current environment e.g. https://example.gadget.app */
+  /** The current URL for your app. */
   currentAppUrl: string;
-  /** An instance of the GadgetMailer, responsible for handling email sending */
+  /** An instance of the GadgetMailer, responsible for handling email sending. */
   emails: GadgetMailer;
 }

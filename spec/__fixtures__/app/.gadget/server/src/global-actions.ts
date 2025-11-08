@@ -1,3 +1,3 @@
 import type { AmbientContext } from "./AmbientContext";
-import type { ActionTrigger, ActionExecutionScope } from "./types";
+import type { ActionTrigger, TriggerWithType, ActionExecutionScope } from "./types";
 

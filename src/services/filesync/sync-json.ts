@@ -542,29 +542,10 @@ export const SyncJsonStateV1 = z.object({
   environments: z.record(z.object({ filesVersion: z.string() })),
 });
 
-export const SyncJsonStateV04 = z.object({
-  app: z.string(),
-  filesVersion: z.string(),
-  mtime: z.number(),
-});
+export const AnySyncJsonState = SyncJsonStateV1;
 
-export const AnySyncJsonState = z.union([SyncJsonStateV1, SyncJsonStateV04]);
-
-export const SyncJsonState = AnySyncJsonState.transform((state): SyncJsonStateV1 => {
-  if ("environment" in state) {
-    // it's a v1 state
-    return state;
-  }
-
-  // it's a v0.4 state, transform it to a v1 state
-  return {
-    application: state.app,
-    environment: "development",
-    environments: { development: { filesVersion: state.filesVersion } },
-  };
-});
+export const SyncJsonState = SyncJsonStateV1;
 
 export type SyncJsonStateV1 = z.infer<typeof SyncJsonStateV1>;
-export type SyncJsonStateV04 = z.infer<typeof SyncJsonStateV04>;
 export type AnySyncJsonState = z.infer<typeof AnySyncJsonState>;
 export type SyncJsonState = z.infer<typeof SyncJsonState>;

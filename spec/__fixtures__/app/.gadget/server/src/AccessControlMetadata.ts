@@ -1,4 +1,4 @@
-export type GadgetAccessControl = Record<string, RoleMetadataObject>;
+export type GadgetPermissions = Record<string, RoleMetadataObject>;
 
 export interface RoleMetadataObject {
   key: string;

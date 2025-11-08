@@ -464,6 +464,8 @@ export interface Scalars {
   URL: string;
   /** The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1. */
   Int: number;
+  /** A time duration expressed in ISO format, e.g. P20Y3M15DT0H0M0S */
+  Duration: string;
   /** Represents the state of one record in a Gadget database. Represented as either a string or set of strings nested in objects. */
   RecordState: (string | { [key: string]: Scalars['RecordState'] });
   /** Instructions for a client to turn raw transport types (like strings) into useful client side types (like Dates). Unstable and not intended for developer use. */

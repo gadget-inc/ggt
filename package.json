@@ -40,8 +40,8 @@
     "lint:prettier": "prettier . --check --cache",
     "lint:typescript": "tsc --project tsconfig.json",
     "release": "pnpm run build && changeset publish",
-    "test": "vitest --cache",
-    "test:watch": "pnpm run test --watch",
+    "test": "vitest",
+    "test:watch": "pnpm run test --standalone --watch",
     "version": "changeset version && prettier --write CHANGELOG.md && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
   },
   "devDependencies": {
@@ -126,7 +126,7 @@
     "ts-node": "^10.9.2",
     "type-fest": "^5.2.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.1.4",
+    "vitest": "^4.0.8",
     "watcher": "^2.3.1",
     "which": "^5.0.0",
     "ws": "^8.18.3",

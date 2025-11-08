@@ -195,8 +195,8 @@ devDependencies:
     specifier: ^4.3.0
     version: 4.3.0(prettier@3.5.1)(typescript@5.9.3)
   prettier-plugin-packagejson:
-    specifier: ^2.5.14
-    version: 2.5.14(prettier@3.5.1)
+    specifier: ^2.5.19
+    version: 2.5.19(prettier@3.5.1)
   remark:
     specifier: ^15.0.1
     version: 15.0.1
@@ -2950,8 +2950,8 @@ packages:
     dev: true
     optional: true
 
-  /@pkgr/core@0.2.4:
-    resolution: {integrity: sha512-ROFF39F6ZrnzSUEmQQZUar0Jt4xVoP9WnDRdWwF4NNcXs3xBTLgBUDoOwW141y1jP+S8nahIbdxbFC7IShw9Iw==}
+  /@pkgr/core@0.2.9:
+    resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
     dev: true
 
@@ -6785,8 +6785,8 @@ packages:
       typescript: 5.9.3
     dev: true
 
-  /prettier-plugin-packagejson@2.5.14(prettier@3.5.1):
-    resolution: {integrity: sha512-h+3tSpr2nVpp+YOK1MDIYtYhHVXr8/0V59UUbJpIJFaqi3w4fvUokJo6eV8W+vELrUXIZzJ+DKm5G7lYzrMcKQ==}
+  /prettier-plugin-packagejson@2.5.19(prettier@3.5.1):
+    resolution: {integrity: sha512-Qsqp4+jsZbKMpEGZB1UP1pxeAT8sCzne2IwnKkr+QhUe665EXUo3BAvTf1kAPCqyMv9kg3ZmO0+7eOni/C6Uag==}
     peerDependencies:
       prettier: '>= 1.16.0'
     peerDependenciesMeta:
@@ -6794,8 +6794,8 @@ packages:
         optional: true
     dependencies:
       prettier: 3.5.1
-      sort-package-json: 3.2.1
-      synckit: 0.11.6
+      sort-package-json: 3.4.0
+      synckit: 0.11.11
     dev: true
 
   /prettier@2.8.8:
@@ -7252,8 +7252,9 @@ packages:
     resolution: {integrity: sha512-855pvK+VkU7PaKYPc+Jjnmt4EzejQHyhhF33q31qG8x7maDzkeFhAAThdCYay11CISO+qAMwjOBP+fPZe0IPyg==}
     dev: true
 
-  /sort-package-json@3.2.1:
-    resolution: {integrity: sha512-rTfRdb20vuoAn7LDlEtCqOkYfl2X+Qze6cLbNOzcDpbmKEhJI30tTN44d5shbKJnXsvz24QQhlCm81Bag7EOKg==}
+  /sort-package-json@3.4.0:
+    resolution: {integrity: sha512-97oFRRMM2/Js4oEA9LJhjyMlde+2ewpZQf53pgue27UkbEXfHJnDzHlUxQ/DWUkzqmp7DFwJp8D+wi/TYeQhpA==}
+    engines: {node: '>=20'}
     hasBin: true
     dependencies:
       detect-indent: 7.0.2
@@ -7477,11 +7478,11 @@ packages:
       whatwg-mimetype: 4.0.0
     dev: true
 
-  /synckit@0.11.6:
-    resolution: {integrity: sha512-2pR2ubZSV64f/vqm9eLPz/KOvR9Dm+Co/5ChLgeHl0yEDRc6h5hXHoxEQH8Y5Ljycozd3p1k5TTSVdzYGkPvLw==}
+  /synckit@0.11.11:
+    resolution: {integrity: sha512-MeQTA1r0litLUf0Rp/iisCaL8761lKAZHaimlbGK4j0HysC4PLfqygQj9srcs0m2RdtDYnF8UuYyKpbjHYp7Jw==}
     engines: {node: ^14.18.0 || >=16.0.0}
     dependencies:
-      '@pkgr/core': 0.2.4
+      '@pkgr/core': 0.2.9
     dev: true
 
   /tagged-tag@1.0.0:

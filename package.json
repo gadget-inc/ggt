@@ -71,7 +71,7 @@
     "chalk-template": "^1.1.2",
     "clean-stack": "^6.0.0",
     "cli-cursor": "^5.0.0",
-    "cli-spinners": "^2.9.2",
+    "cli-spinners": "^3.3.0",
     "cli-table3": "^0.6.5",
     "cspell": "^9.3.0",
     "dayjs": "^1.11.19",

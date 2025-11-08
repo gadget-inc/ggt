@@ -118,7 +118,7 @@
     "set-cookie-parser": "^2.7.1",
     "simple-git": "^3.30.0",
     "stdin-discarder": "^0.2.2",
-    "string-width": "^7.2.0",
+    "string-width": "^8.1.0",
     "strip-ansi": "^7.1.2",
     "tcp-port-used": "^1.0.2",
     "terminal-link": "^5.0.0",

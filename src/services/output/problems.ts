@@ -104,9 +104,8 @@ export const publishIssuesToProblems = (issues: PublishIssue[]): Problems => {
 export const filesyncProblemsToProblems = (filesyncProblems: FileSyncProblem[]): Problems => {
   const problems: Problems = {};
   for (const filesyncProblem of filesyncProblems) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     problems[filesyncProblem.path] ??= [];
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // oxlint-disable-next-line no-non-null-assertion
     problems[filesyncProblem.path]!.push({
       type: filesyncProblem.type,
       severity: filesyncProblem.level as ProblemSeverity,

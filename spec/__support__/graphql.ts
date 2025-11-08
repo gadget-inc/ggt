@@ -199,7 +199,7 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
     expectSubscription: (query) => {
       expect(Array.from(subscriptions.keys())).toContain(query);
       const sub = subscriptions.get(query);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      // oxlint-disable-next-line no-unsafe-return
       return sub as any;
     },
   };

@@ -1,0 +1,4 @@
+{
+  "oxc.enable": true,
+  "oxc.typeAware": true
+}

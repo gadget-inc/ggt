@@ -21,7 +21,6 @@ describe("parseLevel", () => {
     [4, Level.WARN],
     [5, Level.ERROR],
 
-    // eslint-disable-next-line unicorn/no-null
     [null, Level.PRINT],
     [undefined, Level.PRINT],
     ["", Level.PRINT],

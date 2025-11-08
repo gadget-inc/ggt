@@ -35,7 +35,7 @@ export class Context extends AbortController {
     // when the context is aborted, call all the registered callbacks
     this.signal.addEventListener(
       "abort",
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      // oxlint-disable-next-line no-misused-promises
       async () => {
         let error: unknown;
 
@@ -81,7 +81,9 @@ export class Context extends AbortController {
   child(options: StructuredLoggerOptions): Context {
     const ctx = new Context({ log: this.log.child(options) });
 
-    this.onAbort(() => ctx.abort());
+    this.onAbort(() => {
+      ctx.abort();
+    });
 
     return ctx;
   }

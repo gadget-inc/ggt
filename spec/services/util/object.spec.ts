@@ -12,7 +12,6 @@ describe("defaults", () => {
   });
 
   it("uses the default values if the input is null", () => {
-    // eslint-disable-next-line unicorn/no-null
     const input = null;
     const defaultValues = { a: 1, b: 2 };
 
@@ -31,7 +30,6 @@ describe("defaults", () => {
   });
 
   it("uses the default values if the input has null or undefined properties", () => {
-    // eslint-disable-next-line unicorn/no-null
     const input = { a: undefined, b: null } as { a: number | undefined; b: number | null };
     const defaultValues = { a: 1, b: 2 };
 

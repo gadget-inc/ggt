@@ -34,7 +34,7 @@ export const getCurrentTest = (): { name: string; describes: string[]; filepath:
  *
  * @param message - The error message.
  */
-// eslint-disable-next-line func-style
+// oxlint-disable-next-line func-style
 export function printStackTraceAndFail(message: string): never {
   const carrier = { stack: "" };
   Error.captureStackTrace(carrier, printStackTraceAndFail);
@@ -51,7 +51,7 @@ export function printStackTraceAndFail(message: string): never {
  * Asserts that the given expression is truthy, otherwise prints the
  * stack trace and fails the test.
  */
-// eslint-disable-next-line func-style
+// oxlint-disable-next-line func-style
 export function assertOrFail(expression: unknown, message: string): asserts expression {
   if (!expression) {
     printStackTraceAndFail(message);

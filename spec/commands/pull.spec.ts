@@ -21,9 +21,7 @@ describe("pull", () => {
       localFiles: {
         ".gadget/": "",
       },
-      gadgetFiles: {
-        ...files.reduce((acc, filename) => ({ ...acc, [filename]: filename }), {}),
-      },
+      gadgetFiles: files.reduce((acc, filename) => ({ ...acc, [filename]: filename }), {}),
     });
 
     await expectDirs().resolves.toMatchInlineSnapshot(`

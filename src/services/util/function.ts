@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable func-style */
+// oxlint-disable no-explicit-any
 import mimicFunction from "mimic-function";
 import assert from "node:assert";
 import type { SetReturnType } from "type-fest";
@@ -61,7 +60,6 @@ export function memo<Fn extends AnyFunction>(fn: Fn): MemoizedFn<Fn>;
  */
 export function memo<Fn extends AnyFunction>(keyFn: (...args: Parameters<Fn>) => string, fn: Fn): MemoizedFn<Fn>;
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export function memo<Fn extends AnyFunction, KeyFn extends (...args: Parameters<Fn>) => string>(
   fnOrKeyFn: Fn | KeyFn,
   fn?: Fn,
@@ -196,7 +194,7 @@ export const debounceAsync = <F extends (...args: unknown[]) => Promise<void>>(d
     };
 
     clearTimeout(timerId);
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    // oxlint-disable-next-line no-misused-promises
     timerId = setTimeout(nextCall, delayMS);
   }) as DebouncedAsyncFunc<F>;
 
@@ -247,7 +245,7 @@ export const unthunk = <T, Args extends any[]>(value: Thunk<T, Args>, ...args: A
 /**
  * A function that does nothing and returns nothing.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-function
+// oxlint-disable-next-line no-empty-function
 export const noop = (..._args: unknown[]): void => {};
 
 /**

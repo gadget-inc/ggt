@@ -55,7 +55,7 @@ export const pick = <T extends Record<string, unknown>, K extends keyof T>(objec
 export const omit = <T extends Record<string, unknown>, K extends keyof T>(record: T, keys: readonly K[]): Omit<T, K> => {
   const result = { ...record };
   for (const key of keys) {
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    // oxlint-disable-next-line no-dynamic-delete
     delete result[key];
   }
   return result;

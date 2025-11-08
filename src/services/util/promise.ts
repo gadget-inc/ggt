@@ -36,7 +36,7 @@ export class PromiseWrapper<T> {
     if (this.pendingPromise) {
       return await this.pendingPromise;
     } else if (this.rejection) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
+      // oxlint-disable-next-line only-throw-error
       throw this.rejection;
     } else {
       return this.resolution as T;
@@ -74,9 +74,11 @@ export class PromiseSignal<T = void> implements Promise<T> {
       }),
     );
 
+    // oxlint-disable-next-line no-base-to-string
     this[Symbol.toStringTag] = String(this._promise.pendingPromise);
   }
 
+  // oxlint-disable-next-line no-thenable
   then<R = T, E = never>(
     onfulfilled?: (value: T) => R | PromiseLike<R>,
     onrejected?: (reason: unknown) => E | PromiseLike<E>,

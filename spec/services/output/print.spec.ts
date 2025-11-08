@@ -7,7 +7,7 @@ import { expectStdout } from "../../__support__/output.js";
 
 describe("print", () => {
   it("prints to stdout", () => {
-    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression, @typescript-eslint/no-invalid-void-type
+    // oxlint-disable-next-line no-confusing-void-expression
     const result: void = print("Hello, world!");
     expectStdout().toMatchInlineSnapshot('"Hello, world!"');
     expect(result).toBeUndefined();

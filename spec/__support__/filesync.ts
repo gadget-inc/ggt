@@ -438,7 +438,7 @@ export const makeSyncScenario = async ({
       const signal = new PromiseSignal();
       const localSyncJsonPath = localDir.absolute(".gadget/sync.json");
 
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      // oxlint-disable-next-line no-misused-promises
       const interval = setInterval(async () => {
         try {
           log.trace("checking local files version", { filesVersion });

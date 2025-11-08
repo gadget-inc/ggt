@@ -77,7 +77,7 @@ export const expectDir = async (dir: string | Directory, expected: Record<string
   expect(actual).toEqual(expected);
 };
 
-// eslint-disable-next-line func-style
+// oxlint-disable-next-line func-style
 async function* walkDir(dir: string, root = dir): AsyncGenerator<{ absolutePath: string; stats: Stats }> {
   const stats = await fs.stat(dir);
   assert(stats.isDirectory(), `expected ${dir} to be a directory`);

@@ -3,7 +3,9 @@
 .log
 *.local.*
 .nyc_output
-.vscode
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
 dist
 lib
 node_modules

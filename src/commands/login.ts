@@ -22,7 +22,7 @@ export const run: Run = async (ctx): Promise<void> => {
   try {
     const port = await getPort();
     const receiveSession = new Promise<void>((resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      // oxlint-disable-next-line no-misused-promises
       server = http.createServer(async (req, res) => {
         const landingPage = new URL(`https://${config.domains.services}/auth/cli`);
 

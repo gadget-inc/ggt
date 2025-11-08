@@ -86,7 +86,6 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
       if (output.isInteractive || env.testLike) {
         // we're interactive, so ask them what they want to do
         let content: string;
-        // eslint-disable-next-line max-depth
         switch (true) {
           case hashes.bothChanged:
             content = sprint`Would you like to push your local changes and {underline discard your environment's} changes now?`;
@@ -137,7 +136,6 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
         const graphqlError = error.cause[0];
         assert(graphqlError, "expected graphqlError to be defined");
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- TODO: extensions is typed as never undefined, but it can be.
         if (graphqlError.extensions) {
           switch (true) {
             case graphqlError.extensions["requiresUpgrade"]:

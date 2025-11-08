@@ -2252,9 +2252,7 @@ describe("FileSync.pull", () => {
       localFiles: {
         ".gadget/": "",
       },
-      gadgetFiles: {
-        ...files.reduce((acc, filename) => ({ ...acc, [filename]: filename }), {}),
-      },
+      gadgetFiles: files.reduce((acc, filename) => ({ ...acc, [filename]: filename }), {}),
     });
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
@@ -2480,7 +2478,6 @@ describe("FileSync.print", () => {
     nockTestApps();
   });
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const makePrintScenario = (options?: Partial<FileSyncScenarioOptions>) => {
     return makeSyncScenario({
       ...options,

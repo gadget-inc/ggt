@@ -12,6 +12,7 @@ enoent
 enotdir
 enotempty
 envrc
+esbuild
 execa
 filesync
 filesystems

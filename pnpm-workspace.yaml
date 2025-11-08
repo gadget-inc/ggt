@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - esbuild
+packages: []
+updateNotifier: false
+verifyDepsBeforeRun: prompt

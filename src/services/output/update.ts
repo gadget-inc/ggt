@@ -60,11 +60,6 @@ export const shouldCheckForUpdate = async (ctx: Context): Promise<boolean> => {
  */
 export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
   try {
-    const shouldCheck = await shouldCheckForUpdate(ctx);
-    if (!shouldCheck) {
-      return;
-    }
-
     await fs.outputFile(path.join(config.cacheDir, "last-update-check"), String(Date.now()));
 
     const tags = await getDistTags(ctx);

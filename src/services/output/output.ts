@@ -2,7 +2,6 @@ import cliCursor from "cli-cursor";
 import isInteractive from "is-interactive";
 import assert from "node:assert";
 import process from "node:process";
-import stdinDiscarder from "stdin-discarder";
 import stringWidth from "string-width";
 import stripAnsi from "strip-ansi";
 import { env } from "../config/env.js";
@@ -175,11 +174,9 @@ export class Output {
 
     if (cursorIsHidden && !formattedStickyText) {
       cliCursor.show(process.stderr);
-      stdinDiscarder.stop();
       cursorIsHidden = false;
     } else if (!cursorIsHidden && formattedStickyText) {
       cliCursor.hide(process.stderr);
-      stdinDiscarder.start();
       cursorIsHidden = true;
     }
   }

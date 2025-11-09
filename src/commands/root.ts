@@ -75,11 +75,6 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
     process.exit(0);
   }
 
-  if (commandName === "sync") {
-    ctx.log.debug('renaming "sync" to "dev" for backwards compatibility');
-    commandName = "dev";
-  }
-
   if (!isCommand(commandName)) {
     const [closest] = sortBySimilar(commandName, Commands);
     println`

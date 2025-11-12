@@ -54,7 +54,7 @@
     "@types/fast-levenshtein": "^0.0.4",
     "@types/fs-extra": "^11.0.4",
     "@types/ms": "^2.1.0",
-    "@types/node": "^20.19.24",
+    "@types/node": "^20.19.25",
     "@types/node-notifier": "^8.0.5",
     "@types/normalize-package-data": "^2.4.4",
     "@types/normalize-path": "^3.0.2",

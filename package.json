@@ -47,7 +47,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
     "@graphql-codegen/add": "^6.0.0",
-    "@graphql-codegen/cli": "^6.0.1",
+    "@graphql-codegen/cli": "^6.1.0",
     "@graphql-codegen/typescript": "^5.0.2",
     "@graphql-codegen/typescript-operations": "^5.0.4",
     "@sentry/node": "^10.26.0",

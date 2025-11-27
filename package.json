@@ -45,7 +45,7 @@
     "version": "changeset version && prettier --write CHANGELOG.md && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.7",
+    "@changesets/cli": "^2.29.8",
     "@graphql-codegen/add": "^6.0.0",
     "@graphql-codegen/cli": "^6.0.1",
     "@graphql-codegen/typescript": "^5.0.2",

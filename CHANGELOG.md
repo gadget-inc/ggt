@@ -1,5 +1,37 @@
 # @gadgetinc/ggt
 
+## 2.0.0
+
+### Major Changes
+
+- e917012: Require Node.js 20 or later.
+
+  Node.js 18 reached End-of-Life (EOL) on 2025-04-30:
+  - https://github.com/nodejs/release#end-of-life-releases
+  - https://nodejs.org/en/blog/announcements/node-18-eol-support
+
+  This means Node.js 18 no longer receives security updates and bug fixes.
+
+  ggt runs on your computer, so it's important to use a supported version of Node to ensure you have the latest security updates. **Your Gadget environment will continue to use the Node version specified in your [Framework version](https://docs.gadget.dev/guides/gadget-framework).**
+
+- d784d2b: Remove the `.gadget/backup/` directory.
+
+  `ggt` will now permanently delete files from the local filesystem when receiving a “delete file” event, rather than moving them to `.gadget/backup/`.
+
+  The `.gadget/backup/` directory was introduced in v0.2.0, before Gadget supported git and source control, as a recovery mechanism for accidental deletions. However, it did not capture changes from “update file” events and became a frequent source of bugs.
+
+  Since local editors and source control now handle file recovery more reliably, this change removes the `.gadget/backup/` directory to simplify the codebase and reduce maintenance issues.
+
+- d77e6e9: Remove `ggt sync` alias for `ggt dev`.
+- 96a5d51: Remove support for `.gadget/sync.json` files produced by ggt v0.4.x.
+
+### Minor Changes
+
+- d3de39f: Add `ggt debugger` command.
+  - Debug Gadget via CDP on `localhost:9229` through `ggt`.
+  - `--configure vscode` prepares a VS Code launch configuration and task.
+  - Use inside an app directory initialized with `ggt dev`; run `ggt debugger` as a background task and attach your IDE to `localhost:9229`.
+
 ## 1.7.4
 
 ### Patch Changes

@@ -31,6 +31,7 @@
   - [`ggt login`](#ggt-login)
   - [`ggt logout`](#ggt-logout)
   - [`ggt logs`](#ggt-logs)
+  - [`ggt debugger`](#ggt-debugger)
   - [`ggt whoami`](#ggt-whoami)
   - [`ggt configure`](#ggt-configure)
   - [`ggt version`](#ggt-version)
@@ -71,6 +72,7 @@ Commands
   login            Log in to your account
   logout           Log out of your account
   logs             Stream your environment's logs
+  debugger         Connect to the debugger for your environment
   whoami           Print the currently logged in account
   configure        Configure default execution options
   version          Print this version of ggt
@@ -369,6 +371,38 @@ Examples
 
       Stream all logs from your production environment in JSON format
       $ ggt logs --env production --json
+```
+
+### `ggt debugger`
+
+```sh-session
+$ ggt debugger -h
+Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.
+This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other
+CDP-compatible debugger client.
+
+Usage
+      $ ggt debugger [DIRECTORY] [options]
+
+      DIRECTORY: The directory containing your Gadget app (default: current directory)
+
+Options
+      -e, --env <env_name>        Selects the environment to debug. Default set on ".gadget/sync.json"
+      -p, --port <port>           Local port for the inspector proxy (default: 9229)
+      --configure <editor>        Configure debugger for vscode, cursor
+
+Examples
+      start debugger proxy for current environment
+      $ ggt debugger
+
+      use a custom port
+      $ ggt debugger --port 9230
+
+      debug a specific app and environment
+      $ ggt debugger --app myApp --env development
+
+      configure VS Code debugger
+      $ ggt debugger --configure vscode
 ```
 
 ### `ggt whoami`

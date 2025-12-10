@@ -891,15 +891,11 @@ describe("FileSync.sync", () => {
           "2": {
             ".gadget/": "",
             ".ignore": ".jj/",
-            ".jj/": "",
-            ".jj/subdir/": "",
           },
         },
         "gadgetDir": {
           ".gadget/": "",
           ".ignore": ".jj/",
-          ".jj/": "",
-          ".jj/subdir/": "",
         },
         "localDir": {
           ".gadget/": "",

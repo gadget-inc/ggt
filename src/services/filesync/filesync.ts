@@ -212,6 +212,28 @@ export class FileSync {
       assert(inSync || localChanges.size > 0 || environmentChanges.size > 0, "there must be changes if hashes don't match");
 
       const localChangesToPush = getNecessaryChanges(ctx, { from: environmentHashes, to: localHashes, ignore: [".gadget/"] });
+      
+      // Check for files and directories in environmentHashes that are now ignored and should be deleted from remote
+      // This handles the case where files were synced before being added to .ignore
+      // getNecessaryChanges may not catch all ignored files/directories, so we explicitly check here
+      for (const [environmentPath, environmentHash] of Object.entries(environmentHashes)) {
+        // Skip .gadget/ files as they're managed by Gadget
+        if (environmentPath.startsWith(".gadget/")) {
+          continue;
+        }
+        
+        // Check if this path is now ignored
+        const isIgnored = this.syncJson.directory.ignores(environmentPath);
+        const notInLocal = !localHashes[environmentPath];
+        
+        // If the file or directory exists on remote but is now ignored locally, mark it for deletion
+        // This ensures that files/directories that were synced before being added to .ignore are removed
+        if (notInLocal && isIgnored) {
+          localChangesToPush.set(environmentPath, { type: "delete", sourceHash: environmentHash });
+          ctx.log.debug("marking ignored file or directory for deletion from remote", { path: environmentPath });
+        }
+      }
+      
       const environmentChangesToPull = getNecessaryChanges(ctx, { from: localHashes, to: environmentHashes });
 
       const onlyDotGadgetFilesChanged =

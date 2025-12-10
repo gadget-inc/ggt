@@ -103,7 +103,7 @@
     "oxlint-tsgolint": "^0.8.2",
     "p-map": "^7.0.3",
     "p-queue": "^9.0.0",
-    "p-retry": "^7.1.0",
+    "p-retry": "^7.1.1",
     "p-timeout": "^7.0.1",
     "pluralize": "^8.0.0",
     "prettier": "^3.7.4",

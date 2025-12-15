@@ -129,7 +129,7 @@
     "watcher": "^2.3.1",
     "which": "^6.0.0",
     "ws": "^8.18.3",
-    "zod": "^4.1.12"
+    "zod": "^4.2.0"
   },
   "packageManager": "pnpm@10.11.0",
   "engines": {

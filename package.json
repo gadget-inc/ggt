@@ -81,7 +81,7 @@
     "fast-querystring": "^1.1.2",
     "figures": "^6.1.0",
     "find-up": "^8.0.0",
-    "fs-extra": "^11.3.2",
+    "fs-extra": "^11.3.3",
     "get-port": "^7.1.0",
     "got": "^14.6.3",
     "graphql": "^16.12.0",

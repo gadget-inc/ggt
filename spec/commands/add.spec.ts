@@ -231,5 +231,23 @@ describe("add", () => {
       });
       await add.run(testCtx, makeArgs(add.args, "add", "environment", "staging", "--from", "production"));
     });
+
+    it("requires --app when --from is provided without sync.json", async () => {
+      const { SyncJson } = await import("../../src/services/filesync/sync-json.js");
+      const { mock, mockRestore } = await import("../__support__/mock.js");
+      
+      // Mock SyncJson.load to return undefined (no sync.json)
+      mock(SyncJson, "load", async () => undefined);
+      
+      const error = await expectError(() =>
+        add.run(testCtx, makeArgs(add.args, "add", "environment", "staging", "--from", "production"))
+      );
+      
+      expect(error).toBeInstanceOf(ArgError);
+      expect(error.sprint()).toContain("When using --from without a \".gadget/sync.json\" file");
+      expect(error.sprint()).toContain("--app");
+      
+      mockRestore(SyncJson.load);
+    });
   });
 });

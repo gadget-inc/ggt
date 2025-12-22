@@ -73,7 +73,7 @@ export const usage: Usage = () => {
 
   {gray Options}
     -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
-    --from <env_name>    Specifies the source environment to clone from. Defaults to the current environment from ".gadget/sync.json"
+    --from <env_name>    Specifies the source environment to clone from. Defaults to the current environment from ".gadget/sync.json". When used without ".gadget/sync.json", --app is required.
 
   {gray Examples}
     Add a new model 'post' with out fields:
@@ -98,14 +98,34 @@ export const usage: Usage = () => {
     {cyanBright ggt add environment staging --environment development}
 
     Clone an environment without requiring ".gadget/sync.json" (useful in CI/CD)
-    {cyanBright ggt add environment staging --from development}
+    {cyanBright ggt add environment staging --from development --app myApp}
   `;
 };
 
 export const run: Run<AddArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { command: "add", args, directory });
-  if (!syncJson) {
+  const isEnvCommand = args._[0] === "environment" || args._[0] === "env";
+  const hasFromFlag = !!args["--from"];
+
+  let syncJson = await SyncJson.load(ctx, { command: "add", args, directory });
+  
+  // If --from is provided and sync.json doesn't exist, require --app
+  if (!syncJson && hasFromFlag && isEnvCommand) {
+    if (!args["--app"]) {
+      throw new ArgError(sprint`
+        When using {bold --from} without a ".gadget/sync.json" file, you must specify the application using {bold --app}.
+
+        {gray Usage}
+          {cyanBright ggt add environment <name> --from <source_env> --app <app_name>}
+      `);
+    }
+    // Use loadOrInit with allow-unknown-directory when --from is provided
+    syncJson = await SyncJson.loadOrInit(ctx, {
+      command: "add",
+      args: { ...args, "--allow-unknown-directory": true as const },
+      directory,
+    });
+  } else if (!syncJson) {
     throw new UnknownDirectoryError({ command: "add", args, directory });
   }
 

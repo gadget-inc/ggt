@@ -223,5 +223,13 @@ describe("add", () => {
       });
       await add.run(testCtx, makeArgs(add.args, "add", "environment", "development2"));
     });
+    it("can add an environment with `--from` flag", async () => {
+      nockEditResponse({
+        operation: CREATE_ENVIRONMENT_MUTATION,
+        response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
+        expectVariables: { environment: { slug: "staging", sourceSlug: "production" } },
+      });
+      await add.run(testCtx, makeArgs(add.args, "add", "environment", "staging", "--from", "production"));
+    });
   });
 });

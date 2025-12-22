@@ -9,7 +9,7 @@ import {
   CREATE_ROUTE_MUTATION,
 } from "../services/app/edit/operation.js";
 import { ClientError } from "../services/app/error.js";
-import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
+import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
@@ -49,7 +49,10 @@ export class AddClientError extends GGTError {
 export type AddArgs = typeof args;
 export type AddArgsResult = ArgsDefinitionResult<AddArgs>;
 
-export const args = { ...SyncJsonArgs };
+export const args = {
+  ...SyncJsonArgs,
+  "--from": { type: String },
+} satisfies ArgsDefinition;
 
 export const usage: Usage = () => {
   return sprint`
@@ -70,6 +73,7 @@ export const usage: Usage = () => {
 
   {gray Options}
     -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
+    --from <env_name>    Specifies the source environment to clone from. Defaults to the current environment from ".gadget/sync.json"
 
   {gray Examples}
     Add a new model 'post' with out fields:
@@ -92,6 +96,9 @@ export const usage: Usage = () => {
 
     Clone the \`development\` environment into a new \`staging\` environment
     {cyanBright ggt add environment staging --environment development}
+
+    Clone an environment without requiring ".gadget/sync.json" (useful in CI/CD)
+    {cyanBright ggt add environment staging --from development}
   `;
 };
 
@@ -396,11 +403,12 @@ const fieldSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
 const envSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
   const syncJson = filesync.syncJson;
   const newEnvName = args._[1] ?? makeDefaultEnvName();
+  const sourceSlug = args["--from"] ?? syncJson.environment.name;
 
   try {
     await syncJson.edit.mutate({
       mutation: CREATE_ENVIRONMENT_MUTATION,
-      variables: { environment: { slug: newEnvName, sourceSlug: syncJson.environment.name } },
+      variables: { environment: { slug: newEnvName, sourceSlug } },
     });
   } catch (error) {
     if (error instanceof ClientError) {

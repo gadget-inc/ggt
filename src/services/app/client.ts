@@ -212,6 +212,7 @@ export class Client {
 
       if (!isObject(json) || (!("data" in json) && !("errors" in json))) {
         ctx.log.error("received invalid graphql response", { error: json });
+        // oxlint-disable-next-line only-throw-error
         throw json;
       }
 

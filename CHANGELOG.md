@@ -1,5 +1,13 @@
 # @gadgetinc/ggt
 
+## 2.0.1
+
+### Patch Changes
+
+- 67ed2e2: Retry HTTP requests on SSL/TLS errors.
+
+  All HTTP requests will now automatically retry when encountering transient SSL/TLS errors like `ERR_SSL_SSL/TLS_ALERT_BAD_RECORD_MAC` or `EPROTO`. This improves resilience against transient network issues that can occur during SSL/TLS handshakes.
+
 ## 2.0.0
 
 ### Major Changes

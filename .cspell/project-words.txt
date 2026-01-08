@@ -12,6 +12,7 @@ enoent
 enotdir
 enotempty
 envrc
+eproto
 esbuild
 execa
 filesync
@@ -28,7 +29,7 @@ jsonifiable
 jsonify
 linkcode
 localappdata
-Logql
+logql
 nothrow
 notificationcenter
 notifysend
@@ -42,6 +43,7 @@ pageup
 postbuild
 printlns
 promisable
+retryable
 revparse
 sindre
 sorhus

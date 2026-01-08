@@ -1,4 +1,4 @@
-import { got, type OptionsInit } from "got";
+import { got, type Method, type OptionsInit } from "got";
 import ms from "ms";
 import assert from "node:assert";
 import { Agent as HttpAgent } from "node:http";
@@ -28,6 +28,29 @@ const getContext = (options: HttpOptions): Context => {
   return options.context["ctx"];
 };
 
+export const DEFAULT_RETRYABLE_HTTP_METHODS = ["GET", "PUT", "HEAD", "DELETE", "OPTIONS", "TRACE"] satisfies Method[];
+
+export const DEFAULT_RETRYABLE_HTTP_STATUS_CODES = [408, 413, 429, 500, 502, 503, 504, 521, 522, 524];
+
+export const DEFAULT_RETRYABLE_HTTP_ERROR_CODES = [
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "EADDRINUSE",
+  "ECONNREFUSED",
+  "EPIPE",
+  "ENOTFOUND",
+  "ENETUNREACH",
+  "EAI_AGAIN",
+  "EADDRNOTAVAIL",
+  "EHOSTUNREACH",
+  "ERR_SSL_SSL/TLS_ALERT_BAD_RECORD_MAC",
+  "EPROTO", // General SSL/TLS protocol errors
+];
+
+export const DEFAULT_HTTP_BACKOFF_LIMIT = ms("5s");
+
+export const DEFAULT_HTTP_NOISE = 100;
+
 /**
  * An instance of the `got` library with hooks for logging and handling
  * 401 errors. This should be used for all HTTP requests.
@@ -42,24 +65,13 @@ export const http = got.extend({
   },
   retry: {
     limit: 10,
-    methods: ["GET", "PUT", "HEAD", "DELETE", "OPTIONS", "TRACE"],
-    statusCodes: [408, 413, 429, 500, 502, 503, 504, 521, 522, 524],
-    errorCodes: [
-      "ETIMEDOUT",
-      "ECONNRESET",
-      "EADDRINUSE",
-      "ECONNREFUSED",
-      "EPIPE",
-      "ENOTFOUND",
-      "ENETUNREACH",
-      "EAI_AGAIN",
-      "EADDRNOTAVAIL",
-      "EHOSTUNREACH",
-    ],
+    methods: DEFAULT_RETRYABLE_HTTP_METHODS,
+    statusCodes: DEFAULT_RETRYABLE_HTTP_STATUS_CODES,
+    errorCodes: DEFAULT_RETRYABLE_HTTP_ERROR_CODES,
     maxRetryAfter: undefined,
     calculateDelay: ({ computedValue }) => computedValue,
-    backoffLimit: ms("5s"),
-    noise: 100,
+    backoffLimit: DEFAULT_HTTP_BACKOFF_LIMIT,
+    noise: DEFAULT_HTTP_NOISE,
   },
   hooks: {
     beforeRequest: [

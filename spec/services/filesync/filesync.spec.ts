@@ -7,12 +7,14 @@ import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args as DevArgs } from "../../../src/commands/dev.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit/operation.js";
+import { config } from "../../../src/services/config/config.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
 import { supportsPermissions, type Directory } from "../../../src/services/filesync/directory.js";
 import { TooManyMergeAttemptsError, TooManyPushAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
 import { FileSync, MAX_PUSH_CONTENT_LENGTH } from "../../../src/services/filesync/filesync.js";
 import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.js";
 import { SyncJson, loadSyncJsonDirectory } from "../../../src/services/filesync/sync-json.js";
+import { loadCookie } from "../../../src/services/http/auth.js";
 import { confirm } from "../../../src/services/output/confirm.js";
 import { EdgeCaseError } from "../../../src/services/output/report.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
@@ -35,7 +37,7 @@ import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
 import { expectProcessExit } from "../../__support__/process.js";
 import { mockSystemTime } from "../../__support__/time.js";
-import { loginTestUser } from "../../__support__/user.js";
+import { loginTestUser, matchAuthHeader } from "../../__support__/user.js";
 
 describe("FileSync._writeToLocalFilesystem", () => {
   // let testCtx: Context<SyncJsonArgs>;
@@ -527,6 +529,43 @@ describe("FileSync._sendChangesToEnvironment", () => {
     await expect(sendChangesToGadget(testCtx, { changes })).resolves.not.toThrow();
 
     expect(scope.isDone()).toBe(true);
+  });
+
+  it("retries on SSL/TLS errors", async () => {
+    await writeDir(localDir, {
+      "foo.js": "// foo",
+    });
+
+    const changes = new Changes();
+    changes.set("foo.js", { type: "create" });
+
+    const subdomain = `${testApp.slug}--${testApp.environments[0]!.name}`;
+
+    // Mock first request to fail with SSL error
+    const sslError = new Error("SSL/TLS alert bad record mac") as Error & { code: string };
+    sslError.code = "ERR_SSL_SSL/TLS_ALERT_BAD_RECORD_MAC";
+
+    const sslErrorScope = matchAuthHeader(
+      nock(`https://${subdomain}.${config.domains.app}`)
+        .post("/edit/api/graphql", (body) => body.query === PUBLISH_FILE_SYNC_EVENTS_MUTATION)
+        .matchHeader("cookie", (cookie) => loadCookie(testCtx) === cookie)
+        .matchHeader("x-gadget-environment", testApp.environments[0]!.name)
+        .times(1)
+        .replyWithError(sslError),
+    );
+
+    // Mock successful retry
+    const successScope = nockEditResponse({
+      operation: PUBLISH_FILE_SYNC_EVENTS_MUTATION,
+      response: { data: { publishFileSyncEvents: { remoteFilesVersion: "1", problems: [] } } },
+      expectVariables: expect.anything(),
+      statusCode: 200,
+    });
+
+    await expect(sendChangesToGadget(testCtx, { changes })).resolves.not.toThrow();
+
+    expect(sslErrorScope.isDone()).toBe(true);
+    expect(successScope.isDone()).toBe(true);
   });
 
   it('does not retry "Files version mismatch" errors', async () => {

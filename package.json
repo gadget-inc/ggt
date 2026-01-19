@@ -108,7 +108,7 @@
     "pluralize": "^8.0.0",
     "prettier": "^3.7.4",
     "prettier-plugin-organize-imports": "^4.3.0",
-    "prettier-plugin-packagejson": "^2.5.20",
+    "prettier-plugin-packagejson": "^2.5.22",
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.1",
     "remark-toc": "^9.0.0",

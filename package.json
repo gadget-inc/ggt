@@ -85,7 +85,7 @@
     "get-port": "^7.1.0",
     "got": "^14.6.6",
     "graphql": "^16.12.0",
-    "graphql-ws": "^6.0.6",
+    "graphql-ws": "^6.0.7",
     "ignore": "^7.0.5",
     "indent-string": "^5.0.0",
     "is-interactive": "^2.0.0",

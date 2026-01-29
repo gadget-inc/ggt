@@ -117,7 +117,7 @@
     "serialize-error": "^13.0.1",
     "set-cookie-parser": "^3.0.1",
     "simple-git": "^3.30.0",
-    "string-width": "^8.1.0",
+    "string-width": "^8.1.1",
     "strip-ansi": "^7.1.2",
     "tcp-port-used": "^1.0.2",
     "terminal-link": "^5.0.0",

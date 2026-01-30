@@ -6,6 +6,7 @@ import assert from "node:assert";
 import path from "node:path";
 import semver from "semver";
 import { z } from "zod";
+import { fetchLatestAgentPluginTag, maybeLoadAgentPluginProject } from "../../commands/agent-plugin.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { http } from "../http/http.js";
@@ -14,6 +15,8 @@ import { println } from "./print.js";
 import { sprint } from "./sprint.js";
 
 const UPDATE_CHECK_FREQUENCY = ms("12 hours");
+const CLI_UPDATE_CHECK_FILE = "last-update-check";
+const AGENT_PLUGIN_UPDATE_CHECK_FILE = "last-agent-plugin-update-check";
 
 const Registry = z.object({
   name: z.literal("ggt"),
@@ -42,7 +45,7 @@ export const getDistTags = async (ctx: Context): Promise<Registry["dist-tags"]> 
 
 export const shouldCheckForUpdate = async (ctx: Context): Promise<boolean> => {
   try {
-    const lastCheck = Number(await fs.readFile(path.join(config.cacheDir, "last-update-check"), "utf8"));
+    const lastCheck = Number(await fs.readFile(path.join(config.cacheDir, CLI_UPDATE_CHECK_FILE), "utf8"));
     assert(!Number.isNaN(lastCheck));
     return dayjs().isAfter(lastCheck + UPDATE_CHECK_FREQUENCY);
   } catch (error) {
@@ -51,16 +54,37 @@ export const shouldCheckForUpdate = async (ctx: Context): Promise<boolean> => {
   }
 };
 
-/**
- * Checks for updates to the `ggt` npm package and logs a warning
- * message if an update is available.
- *
- * @returns A Promise that resolves with void when the check is
- * complete.
- */
-export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
+export const shouldCheckForAgentPluginUpdate = async (ctx: Context): Promise<boolean> => {
   try {
-    await fs.outputFile(path.join(config.cacheDir, "last-update-check"), String(Date.now()));
+    const lastCheck = Number(await fs.readFile(path.join(config.cacheDir, AGENT_PLUGIN_UPDATE_CHECK_FILE), "utf8"));
+    assert(!Number.isNaN(lastCheck));
+    return dayjs().isAfter(lastCheck + UPDATE_CHECK_FREQUENCY);
+  } catch (error) {
+    ctx.log.trace("failed to check for agent plugin updates", { error });
+    return true;
+  }
+};
+
+export const printUpdateWarnings = (messages: string[]): void => {
+  if (messages.length === 0) {
+    return;
+  }
+
+  println(
+    boxen(messages.join("\n\n"), {
+      padding: 1,
+      borderStyle: "round",
+      textAlignment: "center",
+    }),
+  );
+};
+
+/**
+ * Checks for updates to the `ggt` npm package.
+ */
+export const warnIfUpdateAvailable = async (ctx: Context): Promise<string | undefined> => {
+  try {
+    await fs.outputFile(path.join(config.cacheDir, CLI_UPDATE_CHECK_FILE), String(Date.now()));
 
     const tags = await getDistTags(ctx);
 
@@ -89,15 +113,35 @@ export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
 
     if (updateAvailable) {
       ctx.log.info("update available", { current: packageJson.version, latest });
-      println(
-        boxen(updateMessage, {
-          padding: 1,
-          borderStyle: "round",
-          textAlignment: "center",
-        }),
-      );
+      return updateMessage;
     }
   } catch (error) {
     ctx.log.error("failed to check for updates", { error });
   }
+
+  return undefined;
+};
+
+export const warnIfAgentPluginUpdateAvailable = async (ctx: Context): Promise<string | undefined> => {
+  try {
+    const project = await maybeLoadAgentPluginProject(ctx);
+    const installedVersion = project?.state.agentPlugin?.version;
+    if (!installedVersion) {
+      return undefined;
+    }
+
+    await fs.outputFile(path.join(config.cacheDir, AGENT_PLUGIN_UPDATE_CHECK_FILE), String(Date.now()));
+
+    const latest = await fetchLatestAgentPluginTag(ctx);
+    if (latest !== installedVersion) {
+      return sprint`
+        Agent plugins update available! {red ${installedVersion}} → {green ${latest}}
+        Run "ggt agent-plugin update" to update.
+      `;
+    }
+  } catch (error) {
+    ctx.log.error("failed to check for agent plugin updates", { error });
+  }
+
+  return undefined;
 };

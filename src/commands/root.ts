@@ -5,7 +5,7 @@ import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
-import { shouldCheckForUpdate } from "../services/output/update.js";
+import { shouldCheckForAgentPluginUpdate, shouldCheckForUpdate } from "../services/output/update.js";
 import { sortBySimilar } from "../services/util/collection.js";
 import { isNil } from "../services/util/is.js";
 
@@ -34,6 +34,7 @@ export const usage: Usage = () => {
       push             Push your local files to your environment
       pull             Pull your environment's files to your local computer
       add              Add models, fields, actions and routes to your app
+      agent-plugin     Install and update Gadget agent plugins
       open             Open a Gadget location in your browser
       list             List your available applications
       login            Log in to your account
@@ -64,9 +65,30 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
     process.env["GGT_LOG_LEVEL"] = verbosityToLevel(args["--verbose"]).toString();
   }
 
-  if (await shouldCheckForUpdate(ctx)) {
-    const { warnIfUpdateAvailable } = await import("../services/output/update.js");
-    await warnIfUpdateAvailable(ctx);
+  const shouldCheckCliUpdate = await shouldCheckForUpdate(ctx);
+  const shouldCheckAgentPluginUpdate = await shouldCheckForAgentPluginUpdate(ctx);
+
+  if (shouldCheckCliUpdate || shouldCheckAgentPluginUpdate) {
+    const { printUpdateWarnings, warnIfAgentPluginUpdateAvailable, warnIfUpdateAvailable } = await import(
+      "../services/output/update.js",
+    );
+    const warnings: string[] = [];
+
+    if (shouldCheckCliUpdate) {
+      const warning = await warnIfUpdateAvailable(ctx);
+      if (warning) {
+        warnings.push(warning);
+      }
+    }
+
+    if (shouldCheckAgentPluginUpdate) {
+      const warning = await warnIfAgentPluginUpdateAvailable(ctx);
+      if (warning) {
+        warnings.push(warning);
+      }
+    }
+
+    printUpdateWarnings(warnings);
   }
 
   let commandName = args._.shift();

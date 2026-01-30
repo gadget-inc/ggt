@@ -540,6 +540,12 @@ export const SyncJsonStateV1 = z.object({
   application: z.string(),
   environment: z.string(),
   environments: z.record(z.string(), z.object({ filesVersion: z.string() })),
+  agentPlugin: z
+    .object({
+      version: z.string().optional(),
+      declined: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export const AnySyncJsonState = SyncJsonStateV1;

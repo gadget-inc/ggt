@@ -4,6 +4,7 @@ import ms from "ms";
 import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
+import { promptToInstallAgentPlugins } from "./agent-plugin.js";
 import type { EditSubscription } from "../services/app/edit/edit.js";
 import type { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
@@ -100,6 +101,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
 
   const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { command: "dev", args, directory });
+  await promptToInstallAgentPlugins(ctx, syncJson);
   footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });
 
   const filesync = new FileSync(syncJson);

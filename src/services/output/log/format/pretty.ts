@@ -216,6 +216,7 @@ const formatMessage = (msg: unknown): string => {
     return EMPTY;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string
   const msgStr = typeof msg === "string" ? msg : String(msg);
   if (msgStr === "") {
     return EMPTY;

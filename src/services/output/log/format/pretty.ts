@@ -212,11 +212,14 @@ const formatName = (name: string): string => {
 };
 
 const formatMessage = (msg: unknown): string => {
-  if (!msg) {
+  if (msg === null || msg === undefined) {
     return EMPTY;
   }
 
   const msgStr = typeof msg === "string" ? msg : String(msg);
+  if (msgStr === "") {
+    return EMPTY;
+  }
   const lines = msgStr.split(NEW_LINE);
   if (lines.length === 1) {
     return SPACE + colors.body(msgStr);

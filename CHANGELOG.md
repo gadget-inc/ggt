@@ -1,5 +1,13 @@
 # @gadgetinc/ggt
 
+## 2.0.2
+
+### Patch Changes
+
+- f5efdb1: Fix "e.split is not a function" error in environment logs.
+
+  Handle non-string msg values in formatMessage() by converting to string before calling .split(). Environment logs from the server can have missing or non-string msg fields.
+
 ## 2.0.1
 
 ### Patch Changes

@@ -7,6 +7,25 @@ import { mockSystemTime } from "../../../../__support__/time.js";
 describe("formatPretty", () => {
   mockSystemTime();
 
+  it("handles non-string msg values without throwing", () => {
+    // This test reproduces GitHub issue #2174 where environment logs
+    // can have a non-string msg field, causing "e.split is not a function"
+    expect(() => formatPretty(Level.INFO, "test", undefined as any, {})).not.toThrow();
+    expect(() => formatPretty(Level.INFO, "test", null as any, {})).not.toThrow();
+    expect(() => formatPretty(Level.INFO, "test", { foo: "bar" } as any, {})).not.toThrow();
+    expect(() => formatPretty(Level.INFO, "test", 123 as any, {})).not.toThrow();
+
+    // Should produce sensible output
+    expect(formatPretty(Level.INFO, "test", undefined as any, {})).toMatchInlineSnapshot(`
+      "12:00:00  INFO  test:
+      "
+    `);
+    expect(formatPretty(Level.INFO, "test", { foo: "bar" } as any, {})).toMatchInlineSnapshot(`
+      "12:00:00  INFO  test: [object Object]
+      "
+    `);
+  });
+
   it("always print trace_id key first when printing fields", () => {
     const fields = {} as Record<string, any>;
 

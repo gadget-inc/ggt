@@ -211,14 +211,15 @@ const formatName = (name: string): string => {
   return colors.body(name);
 };
 
-const formatMessage = (msg: string): string => {
+const formatMessage = (msg: unknown): string => {
   if (!msg) {
     return EMPTY;
   }
 
-  const lines = msg.split(NEW_LINE);
+  const msgStr = typeof msg === "string" ? msg : String(msg);
+  const lines = msgStr.split(NEW_LINE);
   if (lines.length === 1) {
-    return SPACE + colors.body(msg);
+    return SPACE + colors.body(msgStr);
   }
   return NEW_LINE + lines.map((line) => SPACE + SPACE + line).join(NEW_LINE);
 };

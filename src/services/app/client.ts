@@ -189,12 +189,8 @@ export class Client {
     },
   ): Promise<ExecutionResult<Operation["Data"], Operation["Extensions"]>> {
     let subdomain = this.environment.application.slug;
-    if (this.environment.application.multiEnvironmentEnabled) {
-      if (this.environment.type !== "production") {
-        subdomain += `--${this.environment.name}`;
-      }
-    } else if (this.environment.application.hasSplitEnvironments) {
-      subdomain += "--development";
+    if (this.environment.type !== "production") {
+      subdomain += `--${this.environment.name}`;
     }
 
     try {

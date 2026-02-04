@@ -13,7 +13,7 @@ import {
   type AnySyncJsonState,
   type SyncJsonArgsResult,
 } from "../../../src/services/filesync/sync-json.js";
-import { nockTestApps, testApp, testApp2, testAppWith2Environments } from "../../__support__/app.js";
+import { nockTestApps, testApp, testApp2 } from "../../__support__/app.js";
 import { makeArgs } from "../../__support__/arg.js";
 import { testCtx } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
@@ -69,14 +69,7 @@ describe("SyncJson.loadOrInit", () => {
           "first-test-team",
           [
             "test",
-            "test2",
-            "test-with-0-environments"
-          ]
-        ],
-        [
-          "second-test-team",
-          [
-            "test-with-2-environments"
+            "test2"
           ]
         ]
       ]
@@ -138,9 +131,7 @@ describe("SyncJson.loadOrInit", () => {
       Did you mean one of these?
 
         • test
-        • test2
-        • test-with-2-environments
-        • test-with-0-environments"
+        • test2"
     `);
   });
 
@@ -185,8 +176,8 @@ describe("SyncJson.loadOrInit", () => {
 
   it(`throws ${ArgError.name} when --app is passed a different slug than the one in .gadget/sync.json`, async () => {
     await outputSyncJson({
-      application: testAppWith2Environments.slug,
-      environment: testAppWith2Environments.environments[0]!.name,
+      application: testApp2.slug,
+      environment: testApp2.environments[0]!.name,
       environments: {
         development: { filesVersion: "1" },
       },

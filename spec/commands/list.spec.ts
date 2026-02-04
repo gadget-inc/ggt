@@ -22,14 +22,9 @@ describe("list", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "first-test-team
-      Name                      Domain
-      test                      test.gadget.app
-      test2                     test2.gadget.app
-      test-with-0-environments  test-with-0-environments.gadget.app
-
-      second-test-team
-      Name                      Domain
-      test-with-2-environments  test-with-2-environments.gadget.app
+      Name   Domain
+      test   test.gadget.app
+      test2  test2.gadget.app
 
       "
     `);
@@ -43,8 +38,6 @@ describe("list", () => {
     expectStdout().toMatchInlineSnapshot(`
       "test	test.gadget.app
       test2	test2.gadget.app
-      test-with-2-environments	test-with-2-environments.gadget.app
-      test-with-0-environments	test-with-0-environments.gadget.app
       "
     `);
   });

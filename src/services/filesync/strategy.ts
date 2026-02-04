@@ -23,11 +23,6 @@ export const MergeConflictPreferenceArg = (value: string, name: string): MergeCo
     return MergeConflictPreference[value.toUpperCase() as keyof typeof MergeConflictPreference];
   }
 
-  if (value === "gadget") {
-    // v0.4 (deprecated)
-    return MergeConflictPreference.ENVIRONMENT;
-  }
-
   throw new ArgError(sprint`
       ${name} must be {bold local} or {bold environment}
 

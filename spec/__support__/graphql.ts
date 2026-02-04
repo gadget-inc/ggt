@@ -96,10 +96,8 @@ export const nockGraphQLResponse = <Query extends GraphQLQuery | GraphQLMutation
   ...opts
 }: NockGraphQLResponseOptions<Query> & { endpoint: string }): Scope & { responded: PromiseSignal } => {
   let subdomain = application.slug;
-  if (application.multiEnvironmentEnabled) {
+  if (environment.type !== "production") {
     subdomain += `--${environment.name}`;
-  } else if (application.hasSplitEnvironments) {
-    subdomain += "--development";
   }
 
   const expectVariables = (actual: unknown): Query["Variables"] => {

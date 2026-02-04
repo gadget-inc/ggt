@@ -74,7 +74,7 @@ export const getNecessaryChanges = (
       if (!sourcePath.endsWith("/") || !targetPaths.some((targetPath) => targetPath.startsWith(sourcePath))) {
         // sourcePath is a file and it doesn't exist in target OR
         // sourcePath is a directory and target doesn't have any
-        // existing files inside it, therefor the sourcePath has been
+        // existing files inside it, therefore the sourcePath has been
         // deleted
         changes.set(sourcePath, { type: "delete", sourceHash });
         ctx.log.trace("file deleted", { path: sourcePath, sourceHash });

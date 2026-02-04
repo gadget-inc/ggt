@@ -29,8 +29,6 @@ export const Application = z.object({
   id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
   slug: z.string(),
   primaryDomain: z.string(),
-  hasSplitEnvironments: z.boolean(),
-  multiEnvironmentEnabled: z.boolean(),
   environments: z.array(Environment),
   team: z.object({
     id: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),

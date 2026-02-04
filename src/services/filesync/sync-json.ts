@@ -456,19 +456,6 @@ const loadEnvironment = async ({
   application: Application;
   state?: SyncJsonState;
 }): Promise<Environment> => {
-  if (args["--env"] && !application.multiEnvironmentEnabled) {
-    // this is a legacy app that only has 1 development environment, so
-    // let them know now rather than running into a weird error later
-    // TODO: come back to this
-    throw new ArgError(
-      sprint`
-        You specified an environment but your app doesn't have multiple environments.
-
-        Remove the "--env" flag to sync to the {bold ${application.primaryDomain}} environment.
-      `,
-    );
-  }
-
   const selectableEnvironments = application.environments.filter((env) => env.type === EnvironmentType.Development);
   if (AllowedProdCommands.includes(command)) {
     // allow pulling from production environments

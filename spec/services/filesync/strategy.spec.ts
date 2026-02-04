@@ -40,12 +40,6 @@ describe("MergeConflictPreferenceArg", () => {
     expect(result).toBe(MergeConflictPreference.ENVIRONMENT);
   });
 
-  it("returns ENVIRONMENT for 'gadget' value (v0.4 backwards compatibility)", () => {
-    const result = MergeConflictPreferenceArg("gadget", "--prefer");
-
-    expect(result).toBe(MergeConflictPreference.ENVIRONMENT);
-  });
-
   it("throws ArgError for invalid values", () => {
     expect(() => MergeConflictPreferenceArg("invalid", "--prefer")).toThrow(ArgError);
   });

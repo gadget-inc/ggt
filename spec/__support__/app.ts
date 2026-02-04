@@ -10,8 +10,6 @@ export const testApp: Application = Object.freeze({
   id: 1n,
   slug: "test",
   primaryDomain: "test.gadget.app",
-  hasSplitEnvironments: true,
-  multiEnvironmentEnabled: true,
   environments: [
     {
       id: 1n,
@@ -63,57 +61,10 @@ export const testApp2: Application = Object.freeze({
 });
 
 /**
- * A Gadget app to use when testing apps with only 2 environments.
- */
-export const testAppWith2Environments: Application = Object.freeze({
-  id: 2n,
-  slug: "test-with-2-environments",
-  primaryDomain: "test-with-2-environments.gadget.app",
-  hasSplitEnvironments: true,
-  multiEnvironmentEnabled: false,
-  environments: [
-    {
-      id: 1n,
-      name: "development",
-      type: EnvironmentType.Development,
-    },
-    {
-      id: 2n,
-      name: "production",
-      type: EnvironmentType.Production,
-    },
-  ],
-  team: {
-    id: 2n,
-    name: "second-test-team",
-  },
-});
-
-/**
- * A Gadget app to use when testing apps without environments.
- */
-export const testAppWith0Environments: Application = Object.freeze({
-  id: 3n,
-  slug: "test-with-0-environments",
-  primaryDomain: "test-with-0-environments.gadget.app",
-  hasSplitEnvironments: false,
-  multiEnvironmentEnabled: false,
-  environments: [],
-  team: {
-    id: 1n,
-    name: "first-test-team",
-  },
-});
-
-/**
  * Sets up a response for the apps endpoint that `getApps` uses.
  */
 export const nockTestApps = ({ optional = true, persist = true } = {}): void => {
   matchAuthHeader(
-    nock(`https://${config.domains.services}`)
-      .get("/auth/api/apps")
-      .optionally(optional)
-      .reply(200, [testApp, testApp2, testAppWith2Environments, testAppWith0Environments])
-      .persist(persist),
+    nock(`https://${config.domains.services}`).get("/auth/api/apps").optionally(optional).reply(200, [testApp, testApp2]).persist(persist),
   );
 };

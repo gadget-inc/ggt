@@ -73,7 +73,7 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
     // the following is true:
     //   1. our local files don't match our environment's files
     //   2. we have local changes to push or non .gadget/ files have changed on our environment
-    //  therefor, we need to push before we can deploy
+    //  therefore, we need to push before we can deploy
     await filesync.print(ctx, { hashes });
 
     if (!args["--force"]) {

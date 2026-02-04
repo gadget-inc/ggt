@@ -108,7 +108,7 @@ export const spin = (options: string | SpinnerOptions): spinner => {
 
     if (finalRender) {
       if (!output.isInteractive && ensureEmptyLineAbove) {
-        // we're in a non-interactive terminal, therefor
+        // we're in a non-interactive terminal, therefore
         // ensureEmptyLineAbove only applies to the first render.
         // strip it so that the final render of the spinner is right
         // below the first render of the spinner

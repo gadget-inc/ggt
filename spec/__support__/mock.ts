@@ -185,21 +185,23 @@ export const mockSideEffects = (): void => {
   });
 };
 
-export const mockConfirm = (impl = noop): MockInstance<confirm.confirm> => {
+export const mockConfirm = (answer = true, impl = noop): MockInstance<confirm.confirm> => {
   return mock(confirm, "confirm", (maybeOptions) => {
     const options = typeof maybeOptions === "string" ? { content: maybeOptions } : maybeOptions;
     // TODO: this is actually printed to stderr
     output.writeStdout(sprintln({ ensureEmptyLineAbove: true, ...options }));
     impl();
+    return Promise.resolve(answer);
   });
 };
 
-export const mockConfirmOnce = (impl = noop): MockInstance<confirm.confirm> => {
+export const mockConfirmOnce = (answer = true, impl = noop): MockInstance<confirm.confirm> => {
   return mockOnce(confirm, "confirm", (maybeOptions) => {
     const options = typeof maybeOptions === "string" ? { content: maybeOptions } : maybeOptions;
     // TODO: this is actually printed to stderr
     output.writeStdout(sprintln({ ensureEmptyLineAbove: true, ...options }));
     impl();
+    return Promise.resolve(answer);
   });
 };
 

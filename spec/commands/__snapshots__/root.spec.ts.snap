@@ -18,6 +18,7 @@ Usage
 
 Options
   -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
+  --from <env_name>    Specifies the source environment to clone from. Defaults to the current environment from ".gadget/sync.json"
 
 Examples
   Add a new model 'post' with out fields:
@@ -40,6 +41,9 @@ Examples
 
   Clone the \`development\` environment into a new \`staging\` environment
   ggt add environment staging --environment development
+
+  Clone an environment without requiring ".gadget/sync.json" (useful in CI/CD)
+  ggt add environment staging --from development
 "
 `;
 
@@ -61,6 +65,7 @@ Usage
 
 Options
   -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
+  --from <env_name>    Specifies the source environment to clone from. Defaults to the current environment from ".gadget/sync.json"
 
 Examples
   Add a new model 'post' with out fields:
@@ -83,6 +88,9 @@ Examples
 
   Clone the \`development\` environment into a new \`staging\` environment
   ggt add environment staging --environment development
+
+  Clone an environment without requiring ".gadget/sync.json" (useful in CI/CD)
+  ggt add environment staging --from development
 "
 `;
 

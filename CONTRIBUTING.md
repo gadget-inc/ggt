@@ -36,8 +36,9 @@ src/              → Source code
 ### Building
 
 ```bash
-pnpm run build          # Build once
-pnpm run dev            # Build + test in watch mode
+pnpm run build            # Build once
+pnpm run dev              # Build + test in watch mode
+pnpm run generate:graphql # Regenerate GraphQL types
 ```
 
 ### Running ggt

@@ -19,9 +19,9 @@ export const defaults = <Input extends Record<string, unknown>, Defaults extends
   input: Input | null | undefined,
   defaults: Defaults,
 ): Simplify<Defaults & Input> => {
-  const result = { ...input };
+  const result: Record<string, unknown> = { ...input };
   for (const [key, defaultValue] of Object.entries(defaults)) {
-    if (!result[key]) {
+    if (result[key] === undefined) {
       result[key] = defaultValue;
     }
   }

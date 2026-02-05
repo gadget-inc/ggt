@@ -113,7 +113,7 @@
     "remark-gfm": "^4.0.1",
     "remark-toc": "^9.0.0",
     "rimraf": "^6.1.0",
-    "semver": "^7.7.3",
+    "semver": "^7.7.4",
     "serialize-error": "^13.0.1",
     "set-cookie-parser": "^3.0.1",
     "simple-git": "^3.30.0",

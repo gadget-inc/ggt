@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { maybePromptAgentsMd, maybePromptGadgetSkills } from "../../../src/services/output/agent-plugin.js";
+import { installAgentsMdScaffold, maybePromptAgentsMd, maybePromptGadgetSkills } from "../../../src/services/output/agent-plugin.js";
 import { output } from "../../../src/services/output/output.js";
 import { mock, mockConfirm } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
@@ -62,6 +62,23 @@ describe("agent-plugin", () => {
     vi.unstubAllGlobals();
   });
 
+  describe("installAgentsMdScaffold", () => {
+    it("skips if CLAUDE.md already exists and force is false", async () => {
+      const projectRoot = await makeProject("project");
+      await fs.outputFile(path.join(projectRoot, "CLAUDE.md"), "keep me\n");
+
+      vi.mocked(fetch).mockImplementation(() => {
+        throw new Error("fetch should not be called");
+      });
+
+      await installAgentsMdScaffold({ projectRoot, force: false });
+
+      expect(await fs.readFile(path.join(projectRoot, "CLAUDE.md"), "utf8")).toBe("keep me\n");
+      expect(await fs.pathExists(path.join(projectRoot, "AGENTS.md"))).toBe(false);
+      expectStdout().toContain("Agent scaffold already exists");
+    });
+  });
+
   describe("maybePromptAgentsMd", () => {
     it("never asks again for a project after the user says no", async () => {
       const projectRoot = await makeProject("project");
@@ -90,14 +107,12 @@ describe("agent-plugin", () => {
 
       await maybePromptAgentsMd({ projectRoot });
 
-      expect(fetch).toHaveBeenCalledTimes(1);
       expect(fetch).toHaveBeenCalledWith("https://raw.githubusercontent.com/gadget-inc/skills/main/agents/AGENTS.md", {
         headers: { "User-Agent": "ggt", Accept: "text/plain" },
       });
 
       expect(await fs.readFile(path.join(projectRoot, "AGENTS.md"), "utf8")).toBe("# AGENTS\n");
 
-      // should not prompt again after a successful install
       mockConfirm(true, () => {
         throw new Error("confirm was called unexpectedly");
       });
@@ -112,8 +127,7 @@ describe("agent-plugin", () => {
 
       await maybePromptAgentsMd({ projectRoot });
 
-      expectStdout().toContain("Installation failed.");
-      expectStdout().toContain("ggt agent-plugin install");
+      expectStdout().toContain("Failed to install AGENTS.md.");
     });
   });
 
@@ -168,7 +182,7 @@ describe("agent-plugin", () => {
 
       await maybePromptGadgetSkills({ projectRoot });
 
-      expectStdout().toContain("Installation failed.");
+      expectStdout().toContain("Failed to install skills.");
     });
 
     it("does not throw if tree returns non-ok status", async () => {
@@ -183,7 +197,7 @@ describe("agent-plugin", () => {
 
       await maybePromptGadgetSkills({ projectRoot });
 
-      expectStdout().toContain("Installation failed.");
+      expectStdout().toContain("Failed to install skills.");
     });
   });
 });

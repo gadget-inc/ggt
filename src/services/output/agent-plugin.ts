@@ -63,18 +63,18 @@ export const installAgentsMdScaffold = async ({ projectRoot, force }: { projectR
 
   println({ content: sprint`{greenBright ✓} AGENTS.md installed` });
 
-  if (config.windows) {
-    println({
-      content: sprint`To link {cyanBright ${CLAUDE_FILE}} → {cyanBright ${AGENTS_FILE}} on Windows, you may need Developer Mode.
+  try {
+    if (force) await fs.remove(claudePath);
+    await fs.symlink(AGENTS_FILE, claudePath);
+  } catch {
+    if (config.windows) {
+      println({
+        content: sprint`To link {cyanBright ${CLAUDE_FILE}} → {cyanBright ${AGENTS_FILE}} on Windows, you may need Developer Mode.
 
 Try in PowerShell:
   {cyanBright New-Item -ItemType SymbolicLink -Path ${CLAUDE_FILE} -Target ${AGENTS_FILE}}`,
-    });
-  } else {
-    try {
-      if (force) await fs.remove(claudePath);
-      await fs.symlink(AGENTS_FILE, claudePath);
-    } catch {
+      });
+    } else {
       println({
         content: sprint`Couldn't create {cyanBright ${CLAUDE_FILE}} symlink.
 

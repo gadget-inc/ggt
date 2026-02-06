@@ -35,20 +35,28 @@ export const run: Run<typeof args> = async (_ctx, args): Promise<void> => {
   const force = args["--force"] ?? false;
 
   // 1. Install AGENTS.md scaffolding
-  println({ content: sprint`Installing {cyanBright AGENTS.md} scaffolding...` });
-  const agentsOk = await installAgentsMdScaffold({ projectRoot, force });
-  if (agentsOk) {
-    println({ content: sprint`{greenBright ✓} AGENTS.md installed` });
+  const agentsResult = await installAgentsMdScaffold({ projectRoot, force });
+  switch (agentsResult) {
+    case "installed":
+      println({ content: sprint`{greenBright ✓} AGENTS.md installed` });
+      break;
+    case "skipped":
+      println({ content: sprint`{gray ✓} AGENTS.md already exists (use --force to overwrite)` });
+      break;
+    case "failed":
+      // installAgentsMdScaffold already printed the error
+      break;
   }
 
   // 2. Install Gadget skills
-  println({ content: sprint`Installing Gadget agent skills...` });
-  const result = await installGadgetSkillsIntoProject({ projectRoot });
-  if (result.ok) {
-    println({ content: sprint`{greenBright ✓} Installed skills: ${result.skillNames.join(", ")}` });
-    await ensureProjectClaudeSkillSymlinks({ projectRoot, skillNames: result.skillNames });
+  const skillsResult = await installGadgetSkillsIntoProject({ projectRoot, force });
+  if (skillsResult.ok === true) {
+    println({ content: sprint`{greenBright ✓} Installed skills: ${skillsResult.skillNames.join(", ")}` });
+    await ensureProjectClaudeSkillSymlinks({ projectRoot, skillNames: skillsResult.skillNames });
     println({ content: sprint`{greenBright ✓} Symlinks created in .claude/skills/` });
+  } else if (skillsResult.ok === "skipped") {
+    println({ content: sprint`{gray ✓} Gadget skills already installed (use --force to overwrite)` });
   } else {
-    println({ content: sprint`{red ✗} Failed to install skills: ${result.reason}` });
+    println({ content: sprint`{red ✗} Failed to install skills: ${skillsResult.reason}` });
   }
 };

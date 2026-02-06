@@ -86,6 +86,28 @@ Examples
 "
 `;
 
+exports[`root > when agent-plugin is given > prints the usage when --help is passed 1`] = `
+"Install Gadget agent plugins (AGENTS.md + skills) into the current project.
+
+Usage
+  ggt agent-plugin install [--force]
+
+Flags
+  --force    Overwrite/reinstall even if already present
+"
+`;
+
+exports[`root > when agent-plugin is given > prints the usage when -h is passed 1`] = `
+"Install Gadget agent plugins (AGENTS.md + skills) into the current project.
+
+Usage
+  ggt agent-plugin install [--force]
+
+Flags
+  --force    Overwrite/reinstall even if already present
+"
+`;
+
 exports[`root > when configure is given > prints the usage when --help is passed 1`] = `
 "Make changes to the configured defaults. This allows you to set an option on every ggt command by default without
 needing to set a flag on every command.

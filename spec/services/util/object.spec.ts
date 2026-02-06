@@ -29,13 +29,22 @@ describe("defaults", () => {
     expect(result).toEqual({ a: 1, b: 2 });
   });
 
-  it("uses the default values if the input has null or undefined properties", () => {
-    const input = { a: undefined, b: null } as { a: number | undefined; b: number | null };
-    const defaultValues = { a: 1, b: 2 };
+  it("uses the default values if the input has undefined properties", () => {
+    const input = { a: undefined } as { a: number | undefined };
+    const defaultValues = { a: 1 };
 
     const result = defaults(input, defaultValues);
 
-    expect(result).toEqual({ a: 1, b: 2 });
+    expect(result).toEqual({ a: 1 });
+  });
+
+  it("does not overwrite falsy values like false/0/empty string", () => {
+    const input = { a: false, b: 0, c: "" } as { a: boolean; b: number; c: string };
+    const defaultValues = { a: true, b: 1, c: "x" };
+
+    const result = defaults(input, defaultValues);
+
+    expect(result).toEqual({ a: false, b: 0, c: "" });
   });
 
   it("doesn't modify the input object", () => {

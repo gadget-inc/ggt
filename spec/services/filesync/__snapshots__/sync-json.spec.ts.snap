@@ -2,6 +2,8 @@
 
 exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "add" 1`] = `[Error: You cannot "ggt add" your production environment.]`;
 
+exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "agent-plugin" 1`] = `[Error: You cannot "ggt agent-plugin" your production environment.]`;
+
 exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "configure" 1`] = `[Error: You cannot "ggt configure" your production environment.]`;
 
 exports[`SyncJson.loadOrInit > does not allow --env=production when the command is "debugger" 1`] = `[Error: You cannot "ggt debugger" your production environment.]`;

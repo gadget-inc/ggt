@@ -8,8 +8,6 @@ import { output } from "./output.js";
 import { println } from "./print.js";
 import { sprint } from "./sprint.js";
 
-// ── Constants ──────────────────────────────────────────────────────────
-
 const AGENTS_FILE = "AGENTS.md";
 const CLAUDE_FILE = "CLAUDE.md";
 const AGENTS_MD_URL = "https://raw.githubusercontent.com/gadget-inc/skills/main/agents/AGENTS.md";
@@ -17,8 +15,6 @@ const AGENTS_MD_URL = "https://raw.githubusercontent.com/gadget-inc/skills/main/
 const SENTINEL_SKILL = "gadget-best-practices";
 const SKILLS_REPO = "gadget-inc/skills";
 const SKILLS_PREFIX = "skills/gadget/";
-
-// ── Shared helpers ─────────────────────────────────────────────────────
 
 const projectHash = (projectRoot: string): string => {
   const root = path.resolve(projectRoot);
@@ -33,44 +29,42 @@ const optOutPath = (projectRoot: string, prefix: string): string => {
   return path.join(config.cacheDir, `${prefix}${projectHash(projectRoot)}`);
 };
 
-// ── AGENTS.md install ──────────────────────────────────────────────────
-
-const downloadAgentsMd = async (agentsPath: string): Promise<void> => {
-  const res = await fetch(AGENTS_MD_URL, {
-    headers: { "User-Agent": "ggt", Accept: "text/plain" },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to download ${AGENTS_MD_URL}: ${res.status}`);
-  }
-
-  const text = await res.text();
-  await fs.outputFile(agentsPath, text.endsWith("\n") ? text : `${text}\n`);
-};
-
-export type ScaffoldResult = "installed" | "skipped" | "failed";
-
-export const installAgentsMdScaffold = async ({ projectRoot, force }: { projectRoot: string; force?: boolean }): Promise<ScaffoldResult> => {
+export const installAgentsMdScaffold = async ({ projectRoot, force }: { projectRoot: string; force?: boolean }): Promise<void> => {
   const agentsPath = path.join(projectRoot, AGENTS_FILE);
   const claudePath = path.join(projectRoot, CLAUDE_FILE);
 
-  if (!force && (await fs.pathExists(agentsPath))) {
-    return "skipped";
+  const agentsExists = await fs.pathExists(agentsPath);
+  const claudeExists = await fs.lstat(claudePath).then(
+    () => true,
+    () => false,
+  );
+
+  if (!force && (agentsExists || claudeExists)) {
+    println({ content: sprint`{gray ✓} Agent scaffold already exists (reinstall with {cyanBright ggt agent-plugin install --force})` });
+    return;
   }
 
   try {
-    await downloadAgentsMd(agentsPath);
+    const res = await fetch(AGENTS_MD_URL, {
+      headers: { "User-Agent": "ggt", Accept: "text/plain" },
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const text = await res.text();
+    await fs.outputFile(agentsPath, text.endsWith("\n") ? text : `${text}\n`);
   } catch {
     println({
       ensureEmptyLineAbove: true,
-      content: sprint`{red Installation failed.} Try again by running: {cyanBright ggt agent-plugin install}`,
+      content: sprint`{red Failed to install AGENTS.md.} Try again: {cyanBright ggt agent-plugin install}`,
     });
-    return "failed";
+    return;
   }
+
+  println({ content: sprint`{greenBright ✓} AGENTS.md installed` });
 
   if (config.windows) {
     println({
-      ensureEmptyLineAbove: true,
       content: sprint`To link {cyanBright ${CLAUDE_FILE}} → {cyanBright ${AGENTS_FILE}} on Windows, you may need Developer Mode.
 
 Try in PowerShell:
@@ -78,11 +72,10 @@ Try in PowerShell:
     });
   } else {
     try {
-      await fs.remove(claudePath);
+      if (force) await fs.remove(claudePath);
       await fs.symlink(AGENTS_FILE, claudePath);
     } catch {
       println({
-        ensureEmptyLineAbove: true,
         content: sprint`Couldn't create {cyanBright ${CLAUDE_FILE}} symlink.
 
 Try:
@@ -90,13 +83,18 @@ Try:
       });
     }
   }
-
-  return "installed";
 };
 
 export const maybePromptAgentsMd = async ({ projectRoot }: { projectRoot: string }): Promise<void> => {
   if (!output.isInteractive || config.logFormat === "json") return;
   if (await fs.pathExists(path.join(projectRoot, AGENTS_FILE))) return;
+  if (
+    await fs.lstat(path.join(projectRoot, CLAUDE_FILE)).then(
+      () => true,
+      () => false,
+    )
+  )
+    return;
 
   const optOut = optOutPath(projectRoot, "opt_out-agents-md-hint-");
   if (await fs.pathExists(optOut)) return;
@@ -113,12 +111,8 @@ export const maybePromptAgentsMd = async ({ projectRoot }: { projectRoot: string
     return;
   }
 
-  await installAgentsMdScaffold({ projectRoot, force: true });
+  await installAgentsMdScaffold({ projectRoot });
 };
-
-// ── Gadget skills install ──────────────────────────────────────────────
-
-type InstallResult = { ok: true; skillNames: string[] } | { ok: false; reason: string } | { ok: "skipped" };
 
 type GitHubTreeEntry = {
   path: string;
@@ -126,12 +120,23 @@ type GitHubTreeEntry = {
   sha: string;
 };
 
-export async function installGadgetSkillsIntoProject(opts: { projectRoot: string; ref?: string; force?: boolean }): Promise<InstallResult> {
-  const { projectRoot, ref = "main", force } = opts;
+export const installGadgetSkillsIntoProject = async ({
+  projectRoot,
+  ref = "main",
+  force,
+}: {
+  projectRoot: string;
+  ref?: string;
+  force?: boolean;
+}): Promise<void> => {
+  const sentinelPath = path.join(projectRoot, ".agents/skills", SENTINEL_SKILL, "SKILL.md");
 
-  if (!force && (await fs.pathExists(path.join(projectRoot, ".agents/skills", SENTINEL_SKILL, "SKILL.md")))) {
-    return { ok: "skipped" };
+  if (!force && (await fs.pathExists(sentinelPath))) {
+    println({ content: sprint`{gray ✓} Gadget skills already installed (reinstall with {cyanBright ggt agent-plugin install --force})` });
+    return;
   }
+
+  let skillNames: string[];
 
   try {
     const treeUrl = `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${ref}?recursive=1`;
@@ -139,23 +144,22 @@ export async function installGadgetSkillsIntoProject(opts: { projectRoot: string
       headers: { "User-Agent": "ggt", Accept: "application/vnd.github+json" },
     });
     if (!treeRes.ok) {
-      return { ok: false, reason: `Failed to fetch skill tree: HTTP ${treeRes.status}` };
+      throw new Error(`Failed to fetch skill tree: HTTP ${treeRes.status}`);
     }
 
     const treeData = (await treeRes.json()) as { tree: GitHubTreeEntry[] };
     const blobs = treeData.tree.filter((e) => e.type === "blob" && e.path.startsWith(SKILLS_PREFIX));
     if (blobs.length === 0) {
-      return { ok: false, reason: "No skills found in repository." };
+      throw new Error("No skills found in repository.");
     }
 
-    const skillNames = new Set<string>();
+    const names = new Set<string>();
     for (const blob of blobs) {
       const relative = blob.path.slice(SKILLS_PREFIX.length);
       if (relative.includes("..") || relative.startsWith("/")) continue;
-      skillNames.add(relative.split("/")[0]!);
+      names.add(relative.split("/")[0]!);
     }
 
-    // Download to temp dir first to avoid half-installs
     const tmpDir = path.join(projectRoot, ".agents", `.tmp-gadget-skills-${Date.now()}`);
     await fs.ensureDir(tmpDir);
 
@@ -178,7 +182,7 @@ export async function installGadgetSkillsIntoProject(opts: { projectRoot: string
       }
 
       const skillsDir = path.join(projectRoot, ".agents/skills");
-      for (const name of skillNames) {
+      for (const name of names) {
         const src = path.join(tmpDir, name);
         const dest = path.join(skillsDir, name);
         await fs.remove(dest);
@@ -188,17 +192,19 @@ export async function installGadgetSkillsIntoProject(opts: { projectRoot: string
       await fs.remove(tmpDir).catch(() => undefined);
     }
 
-    return { ok: true, skillNames: [...skillNames] };
+    skillNames = [...names];
   } catch (error) {
-    return { ok: false, reason: error instanceof Error ? error.message : String(error) };
+    println({
+      ensureEmptyLineAbove: true,
+      content: sprint`{red Failed to install skills.} ${error instanceof Error ? error.message : String(error)}`,
+    });
+    return;
   }
-}
 
-export async function ensureProjectClaudeSkillSymlinks(opts: { projectRoot: string; skillNames: string[] }): Promise<void> {
-  const { projectRoot, skillNames } = opts;
-  const claudeSkillsDir = path.join(projectRoot, ".claude/skills");
+  println({ content: sprint`{greenBright ✓} Installed skills: ${skillNames.join(", ")}` });
 
   try {
+    const claudeSkillsDir = path.join(projectRoot, ".claude/skills");
     await fs.ensureDir(claudeSkillsDir);
 
     for (const skillName of skillNames) {
@@ -208,9 +214,7 @@ export async function ensureProjectClaudeSkillSymlinks(opts: { projectRoot: stri
       try {
         const existing = await fs.readlink(linkPath);
         if (path.resolve(path.dirname(linkPath), existing) === path.resolve(target)) continue;
-      } catch {
-        // not a symlink or doesn't exist
-      }
+      } catch {}
 
       await fs.remove(linkPath);
 
@@ -220,10 +224,10 @@ export async function ensureProjectClaudeSkillSymlinks(opts: { projectRoot: stri
         await fs.symlink(path.relative(path.dirname(linkPath), target), linkPath);
       }
     }
-  } catch {
-    // Never crash — symlinks are best-effort
-  }
-}
+
+    println({ content: sprint`{greenBright ✓} Symlinks created in .claude/skills/` });
+  } catch {}
+};
 
 export const maybePromptGadgetSkills = async ({ projectRoot }: { projectRoot: string }): Promise<void> => {
   if (!output.isInteractive || config.logFormat === "json") return;
@@ -244,14 +248,5 @@ export const maybePromptGadgetSkills = async ({ projectRoot }: { projectRoot: st
     return;
   }
 
-  const result = await installGadgetSkillsIntoProject({ projectRoot, force: true });
-  if (!result.ok) {
-    println({
-      ensureEmptyLineAbove: true,
-      content: sprint`{red Installation failed.} ${result.reason}`,
-    });
-    return;
-  }
-
-  await ensureProjectClaudeSkillSymlinks({ projectRoot, skillNames: result.skillNames });
+  await installGadgetSkillsIntoProject({ projectRoot, force: true });
 };

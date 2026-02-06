@@ -48,12 +48,14 @@ const downloadAgentsMd = async (agentsPath: string): Promise<void> => {
   await fs.outputFile(agentsPath, text.endsWith("\n") ? text : `${text}\n`);
 };
 
-export const installAgentsMdScaffold = async ({ projectRoot, force }: { projectRoot: string; force?: boolean }): Promise<boolean> => {
+export type ScaffoldResult = "installed" | "skipped" | "failed";
+
+export const installAgentsMdScaffold = async ({ projectRoot, force }: { projectRoot: string; force?: boolean }): Promise<ScaffoldResult> => {
   const agentsPath = path.join(projectRoot, AGENTS_FILE);
   const claudePath = path.join(projectRoot, CLAUDE_FILE);
 
   if (!force && (await fs.pathExists(agentsPath))) {
-    return true;
+    return "skipped";
   }
 
   try {
@@ -63,7 +65,7 @@ export const installAgentsMdScaffold = async ({ projectRoot, force }: { projectR
       ensureEmptyLineAbove: true,
       content: sprint`{red Installation failed.} Try again by running: {cyanBright ggt agent-plugin install}`,
     });
-    return false;
+    return "failed";
   }
 
   if (config.windows) {
@@ -89,7 +91,7 @@ Try:
     }
   }
 
-  return true;
+  return "installed";
 };
 
 export const maybePromptAgentsMd = async ({ projectRoot }: { projectRoot: string }): Promise<void> => {
@@ -116,7 +118,7 @@ export const maybePromptAgentsMd = async ({ projectRoot }: { projectRoot: string
 
 // ── Gadget skills install ──────────────────────────────────────────────
 
-type InstallResult = { ok: true; skillNames: string[] } | { ok: false; reason: string };
+type InstallResult = { ok: true; skillNames: string[] } | { ok: false; reason: string } | { ok: "skipped" };
 
 type GitHubTreeEntry = {
   path: string;
@@ -124,8 +126,12 @@ type GitHubTreeEntry = {
   sha: string;
 };
 
-export async function installGadgetSkillsIntoProject(opts: { projectRoot: string; ref?: string }): Promise<InstallResult> {
-  const { projectRoot, ref = "main" } = opts;
+export async function installGadgetSkillsIntoProject(opts: { projectRoot: string; ref?: string; force?: boolean }): Promise<InstallResult> {
+  const { projectRoot, ref = "main", force } = opts;
+
+  if (!force && (await fs.pathExists(path.join(projectRoot, ".agents/skills", SENTINEL_SKILL, "SKILL.md")))) {
+    return { ok: "skipped" };
+  }
 
   try {
     const treeUrl = `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${ref}?recursive=1`;
@@ -238,7 +244,7 @@ export const maybePromptGadgetSkills = async ({ projectRoot }: { projectRoot: st
     return;
   }
 
-  const result = await installGadgetSkillsIntoProject({ projectRoot });
+  const result = await installGadgetSkillsIntoProject({ projectRoot, force: true });
   if (!result.ok) {
     println({
       ensureEmptyLineAbove: true,

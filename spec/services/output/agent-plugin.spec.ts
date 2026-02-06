@@ -1,7 +1,12 @@
 import fs from "fs-extra";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { installAgentsMdScaffold, maybePromptAgentsMd, maybePromptGadgetSkills } from "../../../src/services/output/agent-plugin.js";
+import {
+  installAgentsMdScaffold,
+  installGadgetSkillsIntoProject,
+  maybePromptAgentsMd,
+  maybePromptGadgetSkills,
+} from "../../../src/services/output/agent-plugin.js";
 import { output } from "../../../src/services/output/output.js";
 import { mock, mockConfirm } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
@@ -63,19 +68,124 @@ describe("agent-plugin", () => {
   });
 
   describe("installAgentsMdScaffold", () => {
-    it("skips if CLAUDE.md already exists and force is false", async () => {
-      const projectRoot = await makeProject("project");
+    const mockAgentsDownload = (): void => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => "# AGENTS\n",
+      } satisfies FetchResponse as any);
+    };
+
+    it("skips if AGENTS.md exists and force is false", async () => {
+      const projectRoot = await makeProject("agents-exists");
+      await fs.outputFile(path.join(projectRoot, "AGENTS.md"), "keep me\n");
+
+      await installAgentsMdScaffold({ projectRoot });
+
+      expect(fetch).not.toHaveBeenCalled();
+      expect(await fs.readFile(path.join(projectRoot, "AGENTS.md"), "utf8")).toBe("keep me\n");
+      expectStdout().toContain("Agent scaffold already exists");
+    });
+
+    it("skips if CLAUDE.md exists as a regular file and force is false", async () => {
+      const projectRoot = await makeProject("claude-file");
       await fs.outputFile(path.join(projectRoot, "CLAUDE.md"), "keep me\n");
 
-      vi.mocked(fetch).mockImplementation(() => {
-        throw new Error("fetch should not be called");
-      });
+      await installAgentsMdScaffold({ projectRoot });
 
-      await installAgentsMdScaffold({ projectRoot, force: false });
-
+      expect(fetch).not.toHaveBeenCalled();
       expect(await fs.readFile(path.join(projectRoot, "CLAUDE.md"), "utf8")).toBe("keep me\n");
       expect(await fs.pathExists(path.join(projectRoot, "AGENTS.md"))).toBe(false);
       expectStdout().toContain("Agent scaffold already exists");
+    });
+
+    it("skips if CLAUDE.md is a dangling symlink and force is false", async () => {
+      const projectRoot = await makeProject("claude-dangling");
+      await fs.symlink("AGENTS.md", path.join(projectRoot, "CLAUDE.md"));
+
+      await installAgentsMdScaffold({ projectRoot });
+
+      expect(fetch).not.toHaveBeenCalled();
+      expectStdout().toContain("Agent scaffold already exists");
+    });
+
+    it("overwrites AGENTS.md and CLAUDE.md when force is true", async () => {
+      const projectRoot = await makeProject("force-overwrite");
+      await fs.outputFile(path.join(projectRoot, "AGENTS.md"), "old agents\n");
+      await fs.outputFile(path.join(projectRoot, "CLAUDE.md"), "old claude\n");
+
+      mockAgentsDownload();
+
+      await installAgentsMdScaffold({ projectRoot, force: true });
+
+      expect(await fs.readFile(path.join(projectRoot, "AGENTS.md"), "utf8")).toBe("# AGENTS\n");
+      const linkTarget = await fs.readlink(path.join(projectRoot, "CLAUDE.md"));
+      expect(linkTarget).toBe("AGENTS.md");
+      expectStdout().toContain("AGENTS.md installed");
+    });
+
+    it("overwrites dangling CLAUDE.md symlink when force is true", async () => {
+      const projectRoot = await makeProject("force-dangling");
+      await fs.symlink("nonexistent", path.join(projectRoot, "CLAUDE.md"));
+
+      mockAgentsDownload();
+
+      await installAgentsMdScaffold({ projectRoot, force: true });
+
+      expect(await fs.readFile(path.join(projectRoot, "AGENTS.md"), "utf8")).toBe("# AGENTS\n");
+      const linkTarget = await fs.readlink(path.join(projectRoot, "CLAUDE.md"));
+      expect(linkTarget).toBe("AGENTS.md");
+    });
+
+    it("installs fresh when neither file exists", async () => {
+      const projectRoot = await makeProject("fresh");
+
+      mockAgentsDownload();
+
+      await installAgentsMdScaffold({ projectRoot });
+
+      expect(await fs.readFile(path.join(projectRoot, "AGENTS.md"), "utf8")).toBe("# AGENTS\n");
+      const linkTarget = await fs.readlink(path.join(projectRoot, "CLAUDE.md"));
+      expect(linkTarget).toBe("AGENTS.md");
+      expectStdout().toContain("AGENTS.md installed");
+    });
+  });
+
+  describe("installGadgetSkillsIntoProject", () => {
+    it("skips if sentinel skill exists and force is false", async () => {
+      const projectRoot = await makeProject("skills-exist");
+      await fs.outputFile(path.join(projectRoot, ".agents/skills/gadget-best-practices/SKILL.md"), "existing\n");
+
+      await installGadgetSkillsIntoProject({ projectRoot });
+
+      expect(fetch).not.toHaveBeenCalled();
+      expect(await fs.readFile(path.join(projectRoot, ".agents/skills/gadget-best-practices/SKILL.md"), "utf8")).toBe("existing\n");
+      expectStdout().toContain("Gadget skills already installed");
+    });
+
+    it("overwrites skills when force is true", async () => {
+      const projectRoot = await makeProject("skills-force");
+      await fs.outputFile(path.join(projectRoot, ".agents/skills/gadget-best-practices/SKILL.md"), "old\n");
+
+      mockTreeAndDownloads();
+
+      await installGadgetSkillsIntoProject({ projectRoot, force: true });
+
+      const content = await fs.readFile(path.join(projectRoot, ".agents/skills/gadget-best-practices/SKILL.md"), "utf8");
+      expect(content).not.toBe("old\n");
+      expectStdout().toContain("Installed skills:");
+    });
+
+    it("installs fresh when no skills exist", async () => {
+      const projectRoot = await makeProject("skills-fresh");
+
+      mockTreeAndDownloads();
+
+      await installGadgetSkillsIntoProject({ projectRoot });
+
+      expect(await fs.pathExists(path.join(projectRoot, ".agents/skills/gadget-best-practices/SKILL.md"))).toBe(true);
+      expect(await fs.pathExists(path.join(projectRoot, ".agents/skills/gadget-actions/SKILL.md"))).toBe(true);
+      expectStdout().toContain("Installed skills:");
     });
   });
 

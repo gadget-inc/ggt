@@ -395,45 +395,73 @@ Usage
 `;
 
 exports[`root > when logs is given > prints the usage when --help is passed 1`] = `
-"Streams the logs for an application to.
+"Prints recent logs for an application. Use --tail to stream logs continuously.
 
 Usage
       ggt logs [options]
 
 Options
-      -ll, --log-level <level>       Sets the log level for incoming application logs (default: info)
+      -t, --tail                     Stream logs continuously instead of printing recent logs and exiting
+      --start <datetime>             Start time for log query (default: 5 minutes ago). ISO 8601 format
+      --end <datetime>               End time for log query. ISO 8601 format
+      --direction <direction>        Log ordering: "forward" or "backward"
+      --level <level>                Minimum log level: debug, info, warn, error
+      -ll, --log-level <level>       Sets the log level for incoming application logs in --tail mode (default: info)
       --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
       --json                         Output logs in JSON format
       -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
       -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
 
 Examples
-      Stream all user logs from your development environment
-      $ ggt logs --env development --my-logs
+      Print recent logs from your development environment
+      $ ggt logs --env development
 
-      Stream all logs from your production environment in JSON format
+      Print logs from the last hour
+      $ ggt logs --start "$(date -u -v-1H +%Y-%m-%dT%H:%M:%SZ)"
+
+      Print only error logs
+      $ ggt logs --level error
+
+      Stream all user logs from your development environment
+      $ ggt logs --tail --env development --my-logs
+
+      Print recent logs from your production environment in JSON format
       $ ggt logs --env production --json
 "
 `;
 
 exports[`root > when logs is given > prints the usage when -h is passed 1`] = `
-"Streams the logs for an application to.
+"Prints recent logs for an application. Use --tail to stream logs continuously.
 
 Usage
       ggt logs [options]
 
 Options
-      -ll, --log-level <level>       Sets the log level for incoming application logs (default: info)
+      -t, --tail                     Stream logs continuously instead of printing recent logs and exiting
+      --start <datetime>             Start time for log query (default: 5 minutes ago). ISO 8601 format
+      --end <datetime>               End time for log query. ISO 8601 format
+      --direction <direction>        Log ordering: "forward" or "backward"
+      --level <level>                Minimum log level: debug, info, warn, error
+      -ll, --log-level <level>       Sets the log level for incoming application logs in --tail mode (default: info)
       --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
       --json                         Output logs in JSON format
       -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
       -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
 
 Examples
-      Stream all user logs from your development environment
-      $ ggt logs --env development --my-logs
+      Print recent logs from your development environment
+      $ ggt logs --env development
 
-      Stream all logs from your production environment in JSON format
+      Print logs from the last hour
+      $ ggt logs --start "$(date -u -v-1H +%Y-%m-%dT%H:%M:%SZ)"
+
+      Print only error logs
+      $ ggt logs --level error
+
+      Stream all user logs from your development environment
+      $ ggt logs --tail --env development --my-logs
+
+      Print recent logs from your production environment in JSON format
       $ ggt logs --env production --json
 "
 `;

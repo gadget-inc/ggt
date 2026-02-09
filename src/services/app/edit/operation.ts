@@ -1,5 +1,5 @@
 import type { ExecutionResult } from "graphql-ws";
-import type { JsonObject } from "type-fest";
+import type { JsonObject, JsonValue } from "type-fest";
 import type {
   CreateActionMutation,
   CreateActionMutationVariables,
@@ -66,6 +66,50 @@ export type GraphQLSubscription<
   Extensions extends JsonObject = JsonObject,
   Response extends ExecutionResult<Data, Extensions> = ExecutionResult<Data, Extensions>,
 > = string & { type: "subscription"; Data: Data; Variables: Variables; Extensions: Extensions; Response: Response };
+
+// Types for logsSearchV3 query (not yet in codegen schema)
+export type LogRow = {
+  name: string;
+  timestampNanos: string;
+  level: string;
+  message: string | null;
+  labels: JsonObject | null;
+};
+
+export type LogsSearchV3QueryVariables = {
+  query: string;
+  limit?: number;
+  start?: string;
+  end?: string;
+  direction?: string;
+  level?: number;
+};
+
+export type LogsSearchV3QueryData = {
+  logsSearchV3: { __typename: string; data?: LogRow[]; error?: JsonValue };
+};
+
+export const LOGS_SEARCH_V3_QUERY = sprint(/* GraphQL */ `
+  query LogsSearchV3($query: String!, $limit: Int, $start: DateTime, $end: DateTime, $direction: String, $level: Int) {
+    logsSearchV3(query: $query, limit: $limit, start: $start, end: $end, direction: $direction, level: $level) {
+      __typename
+      ... on LogSearchSuccessResult {
+        data {
+          name
+          timestampNanos
+          level
+          message
+          labels
+        }
+      }
+      ... on LogSearchErrorResult {
+        error
+      }
+    }
+  }
+`) as GraphQLQuery<LogsSearchV3QueryData, LogsSearchV3QueryVariables>;
+
+export type LOGS_SEARCH_V3_QUERY = typeof LOGS_SEARCH_V3_QUERY;
 
 export const ENVIRONMENT_LOGS_SUBSCRIPTION = sprint(/* GraphQL */ `
   subscription EnvironmentLogs($query: String!, $start: DateTime, $limit: Int) {

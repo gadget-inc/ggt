@@ -6,11 +6,13 @@ import type { Application, Environment } from "../../src/services/app/app.js";
 import { Client } from "../../src/services/app/client.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.js";
 import type { ClientError } from "../../src/services/app/error.js";
+import { ClientError as ClientErrorClass } from "../../src/services/app/error.js";
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
 import { noop, unthunk, type Thunk } from "../../src/services/util/function.js";
 import { isFunction } from "../../src/services/util/is.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
+import { calculateBackoffDelay, DEFAULT_RETRY_LIMIT, isRetryableErrorCause } from "../../src/services/util/retry.js";
 import { testEnvironment } from "./app.js";
 import { testCtx } from "./context.js";
 import { log } from "./debug.js";
@@ -157,11 +159,19 @@ export type MockEditSubscriptions = {
   /**
    * Asserts that a subscription has been made for the given query and
    * returns an object that can be used to emit responses and errors to
-   * the subscription.
+   * the subscription (returns the most recent subscription).
    *
    * @param subscription - The query to expect.
    */
   expectSubscription<Subscription extends GraphQLSubscription>(subscription: Subscription): MockEditSubscription<Subscription>;
+
+  /**
+   * Returns all subscriptions that have been made for the given query,
+   * in order of creation. Useful for testing resubscription behavior.
+   *
+   * @param subscription - The query to get subscriptions for.
+   */
+  getAllSubscriptions<Subscription extends GraphQLSubscription>(subscription: Subscription): MockEditSubscription<Subscription>[];
 };
 
 /**
@@ -191,14 +201,20 @@ export type MockEditSubscription<Query extends GraphQLSubscription = GraphQLSubs
 };
 
 export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
-  const subscriptions = new Map<GraphQLSubscription, MockEditSubscription>();
+  const subscriptions = new Map<GraphQLSubscription, MockEditSubscription[]>();
 
   const mockEditSubscriptions: MockEditSubscriptions = {
     expectSubscription: (query) => {
-      expect(Array.from(subscriptions.keys())).toContain(query);
-      const sub = subscriptions.get(query);
+      const subs = subscriptions.get(query);
+      expect(subs).toBeDefined();
+      expect(subs!.length).toBeGreaterThan(0);
+      // Return the most recent subscription
       // oxlint-disable-next-line no-unsafe-return
-      return sub as any;
+      return subs![subs!.length - 1] as any;
+    },
+    getAllSubscriptions: (query) => {
+      // oxlint-disable-next-line no-unsafe-return
+      return (subscriptions.get(query) ?? []) as any;
     },
   };
 
@@ -206,20 +222,123 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
   mock(Client.prototype, "subscribe", (_ctx, options) => {
     options.onComplete ??= noop;
 
-    vi.spyOn(options, "onResponse");
+    vi.spyOn(options, "onData");
     vi.spyOn(options, "onError");
     vi.spyOn(options, "onComplete");
 
-    const variables = unthunk(options.variables);
+    // Retry state - mirrors the retry logic in Client.subscribe.
+    // This duplication is intentional: the mock needs to simulate retry
+    // behavior without the full graphql-ws Client infrastructure.
+    const maxRetries = options.retry?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
+    let retryCount = 0;
+    let retryTimeoutId: NodeJS.Timeout | undefined;
 
-    subscriptions.set(options.subscription, {
+    /**
+     * Schedule a retry attempt with exponential backoff.
+     * Returns true if retry was scheduled, false if retry budget exhausted.
+     */
+    const scheduleRetry = (error: ClientError): boolean => {
+      if (!options.retry || !isRetryableErrorCause(error.cause) || retryCount >= maxRetries) {
+        return false;
+      }
+
+      // Only increment retryCount if no retry is already pending.
+      if (!retryTimeoutId) {
+        retryCount++;
+      }
+      const delay = calculateBackoffDelay(retryCount);
+
+      options.retry.onRetry?.(retryCount, error);
+
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+      }
+      retryTimeoutId = setTimeout(() => {
+        retryTimeoutId = undefined;
+        clientSubscription.resubscribe();
+      }, delay);
+
+      return true;
+    };
+
+    const createMockSubscription = (variables: MockEditSubscription["variables"]): MockEditSubscription => ({
       variables,
-      emitResponse: options.onResponse,
-      emitError: options.onError,
-      emitComplete: options.onComplete,
+      emitResponse: async (response) => {
+        if (response.errors) {
+          const error = new ClientErrorClass(options.subscription, response.errors);
+          if (scheduleRetry(error)) {
+            return;
+          }
+          await options.onError(error);
+          return;
+        }
+
+        if (!response.data) {
+          const error = new ClientErrorClass(options.subscription, "Subscription response did not contain data");
+          await options.onError(error);
+          return;
+        }
+
+        // Reset retry count on successful data
+        if (retryCount > 0) {
+          if (retryTimeoutId) {
+            clearTimeout(retryTimeoutId);
+            retryTimeoutId = undefined;
+          }
+          retryCount = 0;
+        }
+
+        await options.onData(response.data);
+      },
+      emitError: async (error) => {
+        if (scheduleRetry(error)) {
+          return;
+        }
+        await options.onError(error);
+      },
+      emitComplete: async () => {
+        if (retryTimeoutId) {
+          clearTimeout(retryTimeoutId);
+          retryTimeoutId = undefined;
+        }
+        await options.onComplete!();
+      },
     });
 
-    return vi.fn();
+    const initialVariables = unthunk(options.variables);
+    let currentMockSub = createMockSubscription(initialVariables);
+    const existing = subscriptions.get(options.subscription) ?? [];
+    existing.push(currentMockSub);
+    subscriptions.set(options.subscription, existing);
+
+    // Return a ClientSubscription object with working resubscribe
+    const clientSubscription = {
+      unsubscribe: vi.fn().mockImplementation(() => {
+        if (retryTimeoutId) {
+          clearTimeout(retryTimeoutId);
+          retryTimeoutId = undefined;
+        }
+      }),
+      // oxlint-disable-next-line no-redundant-type-constituents -- matches Client.subscribe API signature
+      resubscribe: vi.fn().mockImplementation((newVariables?: Thunk<unknown> | null) => {
+        if (retryTimeoutId) {
+          clearTimeout(retryTimeoutId);
+          retryTimeoutId = undefined;
+        }
+
+        if (newVariables !== undefined) {
+          options.variables = newVariables as typeof options.variables;
+        }
+
+        const variables = unthunk(options.variables);
+        currentMockSub = createMockSubscription(variables);
+        const subs = subscriptions.get(options.subscription) ?? [];
+        subs.push(currentMockSub);
+        subscriptions.set(options.subscription, subs);
+      }),
+    };
+
+    return clientSubscription;
   });
 
   return mockEditSubscriptions;

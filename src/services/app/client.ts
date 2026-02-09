@@ -12,9 +12,26 @@ import { http, type HttpOptions } from "../http/http.js";
 import { getUser } from "../user/user.js";
 import { noop, unthunk, type Thunk } from "../util/function.js";
 import { isArray, isObject } from "../util/is.js";
+import { calculateBackoffDelay, DEFAULT_RETRY_LIMIT, isRetryableErrorCause, type RetryOptions } from "../util/retry.js";
 import type { Environment } from "./app.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
 import { AuthenticationError, ClientError } from "./error.js";
+
+/**
+ * An object that can be used to unsubscribe and resubscribe to an
+ * ongoing GraphQL subscription.
+ */
+export type ClientSubscription<Subscription extends GraphQLSubscription> = {
+  /**
+   * Unsubscribe from the subscription.
+   */
+  unsubscribe(): void;
+
+  /**
+   * Resubscribe to the subscription with optional new variables.
+   */
+  resubscribe(variables?: Thunk<Subscription["Variables"]> | null): void;
+};
 
 enum ConnectionStatus {
   CONNECTED,
@@ -117,64 +134,217 @@ export class Client {
 
   /**
    * Subscribe to a GraphQL subscription.
+   *
+   * @param ctx - The context for the subscription.
+   * @param options - The subscription options.
+   * @param options.subscription - The GraphQL subscription to subscribe to.
+   * @param options.variables - The variables to send to the server.
+   * @param options.onData - A callback that will be called when data is received from the server.
+   * @param options.onError - A callback that will be called when an error is received from the server.
+   * @param options.onComplete - A callback that will be called when the subscription ends.
+   * @param options.retry - Optional retry configuration for automatic resubscription on transient errors.
+   * @returns A ClientSubscription object to control the subscription.
    */
   subscribe<Subscription extends GraphQLSubscription>(
     ctx: Context,
     {
       subscription,
-      variables,
-      onResponse,
+      variables: initialVariables,
+      onData,
       onError: optionsOnError,
-      onComplete = noop,
+      onComplete: optionsOnComplete = noop,
+      retry: retryOptions,
     }: {
       subscription: Subscription;
       variables?: Thunk<Subscription["Variables"]> | null;
-      onResponse: (response: FormattedExecutionResult<Subscription["Data"], Subscription["Extensions"]>) => Promisable<void>;
+      onData: (data: Subscription["Data"]) => Promisable<void>;
       onError: (error: ClientError) => Promisable<void>;
       onComplete?: () => Promisable<void>;
+      retry?: RetryOptions;
     },
-  ): () => void {
-    const payload = { query: subscription, variables: unthunk(variables) };
+  ): ClientSubscription<Subscription> {
+    const maxAttempts = retryOptions?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
+    let retryCount = 0;
+    let retryTimeoutId: NodeJS.Timeout | undefined;
+    let currentVariables = initialVariables;
+    const currentCtx = ctx;
 
-    const removeConnectedListener = this._graphqlWsClient.on("connected", () => {
-      if (this.status === ConnectionStatus.RECONNECTING) {
-        payload.variables = unthunk(variables);
-        ctx.log.info("re-subscribing to graphql subscription");
-      }
+    const payload = { query: subscription, variables: unthunk(currentVariables) };
 
-      /* A long-running websocket will not update the session without other API calls will not update the session */
-      this._sessionUpdateInterval = setInterval(() => {
-        void getUser(this.ctx)
-          .catch((error: unknown) => this.ctx.abort(error))
-          .then((res) => {
-            if (!res) {
-              /* If this 401s, then give up as we cannot just refresh */
-              this.ctx.abort(new AuthenticationError(undefined));
-            }
-          }); /* The Set-Cookie header handler from http.ts will ensure this updates the session. */
-      }, ms("30m")).unref();
-      this.ctx.done.finally(() => {
+    const addConnectedListener = (): (() => void) => {
+      return this._graphqlWsClient.on("connected", () => {
+        if (this.status === ConnectionStatus.RECONNECTING) {
+          payload.variables = unthunk(currentVariables);
+          currentCtx.log.info("re-subscribing to graphql subscription");
+        }
+
+        /* A long-running websocket connection won't refresh the session cookie without periodic API calls */
         if (this._sessionUpdateInterval) {
           clearInterval(this._sessionUpdateInterval);
         }
+        this._sessionUpdateInterval = setInterval(() => {
+          void getUser(this.ctx)
+            .catch((error: unknown) => this.ctx.abort(error))
+            .then((res) => {
+              if (!res) {
+                /* If this 401s, then give up as we cannot just refresh */
+                this.ctx.abort(new AuthenticationError(undefined));
+              }
+            }); /* The Set-Cookie header handler from http.ts will ensure this updates the session. */
+        }, ms("30m")).unref();
+        this.ctx.done.finally(() => {
+          if (this._sessionUpdateInterval) {
+            clearInterval(this._sessionUpdateInterval);
+          }
+        });
       });
-    });
+    };
+
+    let removeConnectedListener = addConnectedListener();
 
     const queue = new PQueue({ concurrency: 1 });
-    const onError = (error: unknown): Promisable<void> => optionsOnError(new ClientError(subscription, error));
 
-    const unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(payload, {
-      next: (response) => void queue.add(() => onResponse(response)).catch(onError),
-      error: (error) => void queue.add(() => onError(error)),
-      complete: () => void queue.add(() => onComplete()).catch(onError),
+    /**
+     * Schedule a retry attempt with exponential backoff.
+     * Returns true if retry was scheduled, false if retry budget exhausted.
+     *
+     * Note: When multiple errors arrive before the retry timeout fires,
+     * `onRetry` is called for each error (for observability/logging), but
+     * only a single retry attempt is scheduled and the retry budget is only
+     * decremented once. This prevents rapid successive errors from exhausting
+     * the retry budget prematurely.
+     */
+    const scheduleRetry = (error: ClientError, logError: unknown): boolean => {
+      if (!retryOptions || !isRetryableErrorCause(error.cause) || retryCount >= maxAttempts) {
+        return false;
+      }
+
+      // Only increment retryCount if no retry is already pending.
+      // This prevents exhausting the retry budget when multiple errors
+      // arrive before the retry timeout fires.
+      if (!retryTimeoutId) {
+        retryCount++;
+      }
+      const delay = calculateBackoffDelay(retryCount);
+
+      currentCtx.log.warn("subscription error, retrying...", {
+        retryCount,
+        maxAttempts,
+        delayMs: Math.round(delay),
+        error: logError,
+      });
+      retryOptions.onRetry?.(retryCount, error);
+
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+      }
+      retryTimeoutId = setTimeout(() => {
+        retryTimeoutId = undefined;
+        clientSubscription.resubscribe();
+      }, delay);
+
+      return true;
+    };
+
+    const onResponse = async (response: FormattedExecutionResult<Subscription["Data"], Subscription["Extensions"]>): Promise<void> => {
+      if (response.errors) {
+        const error = new ClientError(subscription, response.errors);
+        if (scheduleRetry(error, response.errors)) {
+          return;
+        }
+
+        doUnsubscribe();
+        await optionsOnError(error);
+        return;
+      }
+
+      if (!response.data) {
+        doUnsubscribe();
+        await optionsOnError(new ClientError(subscription, "Subscription response did not contain data"));
+        return;
+      }
+
+      // Reset retry count on successful data
+      if (retryCount > 0) {
+        if (retryTimeoutId) {
+          clearTimeout(retryTimeoutId);
+          retryTimeoutId = undefined;
+        }
+        currentCtx.log.info("subscription recovered", { retriesNeeded: retryCount });
+        retryCount = 0;
+      }
+
+      await onData(response.data);
+    };
+
+    const onError = async (error: ClientError): Promise<void> => {
+      if (scheduleRetry(error, error.cause)) {
+        return;
+      }
+
+      doUnsubscribe();
+      await optionsOnError(error);
+    };
+
+    const onComplete = async (): Promise<void> => {
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+        retryTimeoutId = undefined;
+      }
+      await optionsOnComplete();
+    };
+
+    let unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(payload, {
+      next: (response) => void queue.add(() => onResponse(response)).catch((err) => onError(new ClientError(subscription, err))),
+      error: (error) => void queue.add(() => onError(new ClientError(subscription, error))),
+      complete: () => void queue.add(() => onComplete()).catch((err) => onError(new ClientError(subscription, err))),
     });
 
-    return () => {
-      ctx.log.trace("unsubscribing from graphql subscription");
+    const doUnsubscribe = (): void => {
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+        retryTimeoutId = undefined;
+      }
+      currentCtx.log.trace("unsubscribing from graphql subscription");
       removeConnectedListener();
       queue.clear();
       unsubscribe();
     };
+
+    const clientSubscription: ClientSubscription<Subscription> = {
+      unsubscribe: () => {
+        if (retryTimeoutId) {
+          clearTimeout(retryTimeoutId);
+          retryTimeoutId = undefined;
+        }
+        doUnsubscribe();
+      },
+      resubscribe: (newVariables) => {
+        if (retryTimeoutId) {
+          clearTimeout(retryTimeoutId);
+          retryTimeoutId = undefined;
+        }
+        removeConnectedListener();
+        queue.clear();
+        unsubscribe();
+
+        if (newVariables !== undefined) {
+          currentVariables = newVariables;
+        }
+
+        payload.variables = unthunk(currentVariables);
+        currentCtx.log.info("re-subscribing to graphql subscription");
+
+        removeConnectedListener = addConnectedListener();
+        unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(payload, {
+          next: (response) => void queue.add(() => onResponse(response)).catch((err) => onError(new ClientError(subscription, err))),
+          error: (error) => void queue.add(() => onError(new ClientError(subscription, error))),
+          complete: () => void queue.add(() => onComplete()).catch((err) => onError(new ClientError(subscription, err))),
+        });
+      },
+    };
+
+    return clientSubscription;
   }
 
   /**

@@ -1,14 +1,14 @@
 // noinspection JSCommentMatchesSignature
 
-import type { FormattedExecutionResult } from "graphql-ws";
 import assert from "node:assert";
 import type { Promisable } from "type-fest";
 import type { Context } from "../../command/context.js";
 import { type HttpOptions } from "../../http/http.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { isStringArray } from "../../util/is.js";
+import type { RetryOptions } from "../../util/retry.js";
 import type { Environment } from "../app.js";
-import { Client } from "../client.js";
+import { Client, type ClientSubscription } from "../client.js";
 import { AuthenticationError, ClientError } from "../error.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
 
@@ -135,67 +135,45 @@ export class Edit {
    * @param options.onData - A callback that will be called when data is received from the server.
    * @param options.onError - A callback that will be called when an error is received from the server.
    * @param options.onComplete - A callback that will be called when the subscription ends.
-   * @returns A function to unsubscribe from the subscription.
+   * @param options.retry - Optional retry configuration for automatic resubscription on transient errors.
+   * @returns An EditSubscription object to control the subscription.
    */
   subscribe<Subscription extends GraphQLSubscription>({
+    subscription,
+    variables,
     onData,
-    ...options
+    onError,
+    onComplete,
+    retry,
   }: {
     subscription: Subscription;
     variables?: Thunk<Subscription["Variables"]> | null;
     onData: (data: Subscription["Data"]) => Promisable<void>;
     onError: (error: ClientError) => Promisable<void>;
     onComplete?: () => Promisable<void>;
+    retry?: RetryOptions;
   }): EditSubscription<Subscription> {
-    const name = /subscription (\w+)/.exec(options.subscription)?.[1];
+    const name = /subscription (\w+)/.exec(subscription)?.[1];
     assert(name, "subscription name not found");
 
-    let ctx = this.ctx.child({
+    const ctx = this.ctx.child({
       name: "edit",
       fields: { edit: { subscription: name } },
-      devFields: { edit: { subscription: name, variables: unthunk(options.variables) } },
+      devFields: { edit: { subscription: name, variables: unthunk(variables) } },
     });
 
-    const onResponse = async (response: FormattedExecutionResult<Subscription["Data"], Subscription["Extensions"]>): Promise<void> => {
-      if (response.errors) {
-        unsubscribe();
-        await options.onError(new ClientError(options.subscription, response.errors));
-        return;
-      }
-
-      if (!response.data) {
-        unsubscribe();
-        await options.onError(new ClientError(options.subscription, "Subscription response did not contain data"));
-        return;
-      }
-
-      await onData(response.data);
-    };
-
     ctx.log.info("subscribing to graphql subscription");
-    let unsubscribe = this.#client.subscribe(ctx, { ...options, onResponse });
 
-    return {
-      unsubscribe: () => {
-        unsubscribe();
-      },
-      resubscribe: (variables) => {
-        unsubscribe();
+    const clientSubscription = this.#client.subscribe(ctx, {
+      subscription,
+      variables,
+      onData,
+      onError,
+      onComplete,
+      retry,
+    });
 
-        if (variables !== undefined) {
-          options.variables = variables;
-        }
-
-        ctx = this.ctx.child({
-          name: "edit",
-          fields: { edit: { subscription: name } },
-          devFields: { edit: { subscription: name, variables: unthunk(options.variables) } },
-        });
-
-        ctx.log.info("re-subscribing to graphql subscription");
-        unsubscribe = this.#client.subscribe(ctx, { ...options, onResponse });
-      },
-    };
+    return clientSubscription;
   }
 
   /**
@@ -210,14 +188,4 @@ export class Edit {
  * An object that can be used to unsubscribe and resubscribe to an
  * ongoing Edit GraphQL subscription.
  */
-export type EditSubscription<Subscription extends GraphQLSubscription> = {
-  /**
-   * Unsubscribe from the subscription.
-   */
-  unsubscribe(): void;
-
-  /**
-   * Resubscribe to the subscription.
-   */
-  resubscribe(variables?: Thunk<Subscription["Variables"]> | null): void;
-};
+export type EditSubscription<Subscription extends GraphQLSubscription> = ClientSubscription<Subscription>;

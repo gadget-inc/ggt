@@ -20,6 +20,8 @@ import type {
   FileSyncHashesQueryVariables,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
+  PublishIssuesQuery,
+  PublishIssuesQueryVariables,
   PublishStatusSubscription,
   PublishStatusSubscriptionVariables,
   RemoteFilesVersionQuery,
@@ -278,3 +280,27 @@ export const CREATE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
 `) as GraphQLMutation<CreateEnvironmentMutation, CreateEnvironmentMutationVariables>;
 
 export type CREATE_ENVIRONMENT_MUTATION = typeof CREATE_ENVIRONMENT_MUTATION;
+
+export const PUBLISH_ISSUES_QUERY = sprint(/* GraphQL */ `
+  query PublishIssues {
+    publishIssues {
+      severity
+      message
+      node {
+        type
+        key
+        apiIdentifier
+        name
+        fieldType
+        parentKey
+        parentApiIdentifier
+      }
+      nodeLabels {
+        type
+        identifier
+      }
+    }
+  }
+`) as GraphQLQuery<PublishIssuesQuery, PublishIssuesQueryVariables>;
+
+export type PUBLISH_ISSUES_QUERY = typeof PUBLISH_ISSUES_QUERY;

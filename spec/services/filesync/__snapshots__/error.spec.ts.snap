@@ -36,6 +36,15 @@ In order to use "ggt open", you must run it within a directory
 that has already been initialized with "ggt dev"."
 `;
 
+exports[`UnknownDirectoryError > renders correctly when problems is passed 1`] = `
+"A ".gadget/sync.json" file is missing in this directory:
+
+  /Users/jane/doe
+
+In order to use "ggt problems", you must run it within a directory
+that has already been initialized with "ggt dev"."
+`;
+
 exports[`UnknownDirectoryError > renders correctly when pull is passed 1`] = `
 "A ".gadget/sync.json" file is missing in this directory:
 

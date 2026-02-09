@@ -1650,3 +1650,8 @@ export type CreateEnvironmentMutationVariables = Exact<{
 
 
 export type CreateEnvironmentMutation = { __typename?: 'Mutation', createEnvironment: { __typename?: 'Environment', slug: string, status: EnvironmentStatus } };
+
+export type PublishIssuesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PublishIssuesQuery = { __typename?: 'Query', publishIssues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null, nodeLabels?: Array<{ __typename?: 'PublishIssueNodeLabel', type?: string | null, identifier?: string | null } | null> | null }> };

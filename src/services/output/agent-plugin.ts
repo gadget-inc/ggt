@@ -177,7 +177,7 @@ export const installGadgetSkillsIntoProject = async ({
     for (const blob of blobs) {
       const relative = blob.path.slice(SKILLS_PREFIX.length);
       if (relative.includes("..") || relative.startsWith("/")) continue;
-      names.add(relative.split("/")[0]!);
+      names.add(relative.split("/")[0] as string);
     }
 
     const tmpDir = directory.absolute(".agents", `.tmp-gadget-skills-${Date.now()}`);

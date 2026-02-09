@@ -13,6 +13,7 @@ import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { maybePromptAgentsMd, maybePromptGadgetSkills } from "../services/output/agent-plugin.js";
 import { footer } from "../services/output/footer.js";
 import { LoggingArgs } from "../services/output/log/structured.js";
 import { notify } from "../services/output/notify.js";
@@ -100,6 +101,8 @@ export const run: Run<DevArgs> = async (ctx, args) => {
 
   const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { command: "dev", args, directory });
+  await maybePromptAgentsMd({ ctx, directory: syncJson.directory });
+  await maybePromptGadgetSkills({ ctx, directory: syncJson.directory });
   footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });
 
   const filesync = new FileSync(syncJson);

@@ -32,7 +32,7 @@ export type ConfirmOptions = PrintOptions & {
 
 export type confirm = typeof confirm;
 
-export const confirm = (contentOrOptions: string | ConfirmOptions): Promise<void> => {
+export const confirm = async (contentOrOptions: string | ConfirmOptions): Promise<boolean> => {
   let options: ConfirmOptions;
   if (typeof contentOrOptions === "string") {
     options = { content: contentOrOptions };
@@ -55,12 +55,12 @@ export const confirm = (contentOrOptions: string | ConfirmOptions): Promise<void
         process.exit(1);
       });
 
-    return Promise.resolve(whenNotInteractive());
+    return Promise.resolve(whenNotInteractive()).then(() => false);
   }
 
   return new Promise((resolve) => {
     const conf = new Confirm(options);
-    conf.on("submit", resolve);
+    conf.on("submit", (value) => resolve(Boolean(value)));
     conf.on("exit", () => process.exit(0));
     conf.on("abort", () => process.exit(1));
   });

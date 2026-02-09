@@ -42,12 +42,17 @@ export const usage: Usage = () => {
       debugger         Connect to the debugger for your environment
       whoami           Print the currently logged in account
       configure        Configure default execution options
+      agent-plugin     Install Gadget agent plugins (AGENTS.md + skills)
       version          Print this version of ggt
 
     {gray Flags}
       -h, --help       Print how to use a command
       -v, --verbose    Print more verbose output
           --telemetry  Enable telemetry
+
+    {gray Agent plugins}
+      Install AGENTS.md and Gadget agent skills for your coding agent:
+      {cyanBright ggt agent-plugin install}
 
     Run "ggt [COMMAND] -h" for more information about a specific command.
   `;

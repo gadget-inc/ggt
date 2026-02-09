@@ -57,11 +57,14 @@ describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
     nockTestApps();
   });
 
-  it.each(["dev", "deploy", "push", "pull", "status", "open"] as const)("renders correctly when %s is passed", async (command) => {
-    const syncJson = await makeSyncJson(command);
-    const error = new UnknownDirectoryError({ command, args: syncJson.args, directory: syncJson.directory });
-    expect(error.sprint()).toMatchSnapshot();
-  });
+  it.each(["dev", "deploy", "push", "pull", "status", "problems", "open"] as const)(
+    "renders correctly when %s is passed",
+    async (command) => {
+      const syncJson = await makeSyncJson(command);
+      const error = new UnknownDirectoryError({ command, args: syncJson.args, directory: syncJson.directory });
+      expect(error.sprint()).toMatchSnapshot();
+    },
+  );
 
   it("renders correctly when the file exists but is invalid", async () => {
     mockOnce(fs, "existsSync", () => true);

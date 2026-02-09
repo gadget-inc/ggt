@@ -532,6 +532,22 @@ Examples
 "
 `;
 
+exports[`root > when problems is given > prints the usage when --help is passed 1`] = `
+"Shows any problems (errors, warnings) found in your Gadget application.
+
+Usage
+      ggt problems
+"
+`;
+
+exports[`root > when problems is given > prints the usage when -h is passed 1`] = `
+"Shows any problems (errors, warnings) found in your Gadget application.
+
+Usage
+      ggt problems
+"
+`;
+
 exports[`root > when pull is given > prints the usage when --help is passed 1`] = `
 "Pulls your environment files to your local directory.
 

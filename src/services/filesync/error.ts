@@ -42,6 +42,7 @@ export class UnknownDirectoryError extends GGTError {
       case "add":
       case "open":
       case "debugger":
+      case "problems":
       case "status":
         return sprint`
           A ".gadget/sync.json" file is missing in this directory:

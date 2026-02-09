@@ -1,4 +1,5 @@
 import fs from "fs-extra";
+import pMap from "p-map";
 import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
@@ -166,8 +167,9 @@ export const installGadgetSkillsIntoProject = async ({
     await fs.ensureDir(tmpDir);
 
     try {
-      await Promise.all(
-        blobs.map(async (blob) => {
+      await pMap(
+        blobs,
+        async (blob) => {
           const relative = blob.path.slice(SKILLS_PREFIX.length);
           if (relative.includes("..") || relative.startsWith("/")) return;
 
@@ -182,7 +184,8 @@ export const installGadgetSkillsIntoProject = async ({
 
           await fs.ensureDir(path.dirname(destPath));
           await fs.writeFile(destPath, await res.text());
-        }),
+        },
+        { concurrency: 5 },
       );
 
       const skillsDir = path.join(projectRoot, ".agents/skills");

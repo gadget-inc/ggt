@@ -1,9 +1,13 @@
 import fs from "fs-extra";
-import pMap from "p-map";
+import ms from "ms";
 import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
+import pMap from "p-map";
+import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
+import { Directory } from "../filesync/directory.js";
+import { http } from "../http/http.js";
 import { confirm } from "./confirm.js";
 import { output } from "./output.js";
 import { println } from "./print.js";
@@ -17,8 +21,10 @@ const SENTINEL_SKILL = "gadget-best-practices";
 const SKILLS_REPO = "gadget-inc/skills";
 const SKILLS_PREFIX = "skills/gadget/";
 
-const projectHash = (projectRoot: string): string => {
-  const root = path.resolve(projectRoot);
+const HTTP_TIMEOUT = ms("10s");
+
+const projectHash = (directory: Directory): string => {
+  const root = path.resolve(directory.path);
   return crypto
     .createHash("md5")
     .update(config.windows ? root.toLowerCase() : root)
@@ -26,13 +32,21 @@ const projectHash = (projectRoot: string): string => {
     .slice(0, 16);
 };
 
-const optOutPath = (projectRoot: string, prefix: string): string => {
-  return path.join(config.cacheDir, `${prefix}${projectHash(projectRoot)}`);
+const optOutPath = (directory: Directory, prefix: string): string => {
+  return path.join(config.cacheDir, `${prefix}${projectHash(directory)}`);
 };
 
-export const installAgentsMdScaffold = async ({ projectRoot, force }: { projectRoot: string; force?: boolean }): Promise<void> => {
-  const agentsPath = path.join(projectRoot, AGENTS_FILE);
-  const claudePath = path.join(projectRoot, CLAUDE_FILE);
+export const installAgentsMdScaffold = async ({
+  ctx,
+  directory,
+  force,
+}: {
+  ctx: Context;
+  directory: Directory;
+  force?: boolean;
+}): Promise<void> => {
+  const agentsPath = directory.absolute(AGENTS_FILE);
+  const claudePath = directory.absolute(CLAUDE_FILE);
 
   const agentsExists = await fs.pathExists(agentsPath);
   const claudeExists = await fs.lstat(claudePath).then(
@@ -46,14 +60,13 @@ export const installAgentsMdScaffold = async ({ projectRoot, force }: { projectR
   }
 
   try {
-    const res = await fetch(AGENTS_MD_URL, {
-      signal: AbortSignal.timeout(10_000),
-      headers: { "User-Agent": "ggt", Accept: "text/plain" },
-    });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const text = await res.text();
+    const text = await http({
+      context: { ctx },
+      method: "GET",
+      url: AGENTS_MD_URL,
+      headers: { Accept: "text/plain" },
+      timeout: { request: HTTP_TIMEOUT },
+    }).text();
     await fs.outputFile(agentsPath, text.endsWith("\n") ? text : `${text}\n`);
   } catch {
     println({
@@ -87,18 +100,18 @@ Try:
   }
 };
 
-export const maybePromptAgentsMd = async ({ projectRoot }: { projectRoot: string }): Promise<void> => {
+export const maybePromptAgentsMd = async ({ ctx, directory }: { ctx: Context; directory: Directory }): Promise<void> => {
   if (!output.isInteractive || config.logFormat === "json") return;
-  if (await fs.pathExists(path.join(projectRoot, AGENTS_FILE))) return;
+  if (await fs.pathExists(directory.absolute(AGENTS_FILE))) return;
   if (
-    await fs.lstat(path.join(projectRoot, CLAUDE_FILE)).then(
+    await fs.lstat(directory.absolute(CLAUDE_FILE)).then(
       () => true,
       () => false,
     )
   )
     return;
 
-  const optOut = optOutPath(projectRoot, "opt_out-agents-md-hint-");
+  const optOut = optOutPath(directory, "opt_out-agents-md-hint-");
   if (await fs.pathExists(optOut)) return;
 
   const yes = await confirm({
@@ -113,7 +126,7 @@ export const maybePromptAgentsMd = async ({ projectRoot }: { projectRoot: string
     return;
   }
 
-  await installAgentsMdScaffold({ projectRoot });
+  await installAgentsMdScaffold({ ctx, directory });
 };
 
 type GitHubTreeEntry = {
@@ -123,15 +136,17 @@ type GitHubTreeEntry = {
 };
 
 export const installGadgetSkillsIntoProject = async ({
-  projectRoot,
+  ctx,
+  directory,
   ref = "main",
   force,
 }: {
-  projectRoot: string;
+  ctx: Context;
+  directory: Directory;
   ref?: string;
   force?: boolean;
 }): Promise<void> => {
-  const sentinelPath = path.join(projectRoot, ".agents/skills", SENTINEL_SKILL, "SKILL.md");
+  const sentinelPath = directory.absolute(".agents/skills", SENTINEL_SKILL, "SKILL.md");
 
   if (!force && (await fs.pathExists(sentinelPath))) {
     println({ content: sprint`{gray ✓} Gadget skills already installed (reinstall with {cyanBright ggt agent-plugin install --force})` });
@@ -142,16 +157,18 @@ export const installGadgetSkillsIntoProject = async ({
 
   try {
     const treeUrl = `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${ref}?recursive=1`;
-    const treeRes = await fetch(treeUrl, {
-      signal: AbortSignal.timeout(10_000),
-      headers: { "User-Agent": "ggt", Accept: "application/vnd.github+json" },
+    const treeData = await http({
+      context: { ctx },
+      method: "GET",
+      url: treeUrl,
+      headers: { Accept: "application/vnd.github+json" },
+      responseType: "json",
+      resolveBodyOnly: true,
+      timeout: { request: HTTP_TIMEOUT },
     });
-    if (!treeRes.ok) {
-      throw new Error(`Failed to fetch skill tree: HTTP ${treeRes.status}`);
-    }
 
-    const treeData = (await treeRes.json()) as { tree: GitHubTreeEntry[] };
-    const blobs = treeData.tree.filter((e) => e.type === "blob" && e.path.startsWith(SKILLS_PREFIX));
+    const { tree } = treeData as { tree: GitHubTreeEntry[] };
+    const blobs = tree.filter((e) => e.type === "blob" && e.path.startsWith(SKILLS_PREFIX));
     if (blobs.length === 0) {
       throw new Error("No skills found in repository.");
     }
@@ -163,7 +180,7 @@ export const installGadgetSkillsIntoProject = async ({
       names.add(relative.split("/")[0]!);
     }
 
-    const tmpDir = path.join(projectRoot, ".agents", `.tmp-gadget-skills-${Date.now()}`);
+    const tmpDir = directory.absolute(".agents", `.tmp-gadget-skills-${Date.now()}`);
     await fs.ensureDir(tmpDir);
 
     try {
@@ -177,18 +194,20 @@ export const installGadgetSkillsIntoProject = async ({
           if (!path.resolve(destPath).startsWith(path.resolve(tmpDir))) return;
 
           const rawUrl = `https://raw.githubusercontent.com/${SKILLS_REPO}/${ref}/${blob.path}`;
-          const res = await fetch(rawUrl, { signal: AbortSignal.timeout(10_000), headers: { "User-Agent": "ggt" } });
-          if (!res.ok) {
-            throw new Error(`Failed to download ${blob.path}: HTTP ${res.status}`);
-          }
+          const text = await http({
+            context: { ctx },
+            method: "GET",
+            url: rawUrl,
+            timeout: { request: HTTP_TIMEOUT },
+          }).text();
 
           await fs.ensureDir(path.dirname(destPath));
-          await fs.writeFile(destPath, await res.text());
+          await fs.writeFile(destPath, text);
         },
         { concurrency: 5 },
       );
 
-      const skillsDir = path.join(projectRoot, ".agents/skills");
+      const skillsDir = directory.absolute(".agents/skills");
       for (const name of names) {
         const src = path.join(tmpDir, name);
         const dest = path.join(skillsDir, name);
@@ -211,11 +230,11 @@ export const installGadgetSkillsIntoProject = async ({
   println({ content: sprint`{greenBright ✓} Installed skills: ${skillNames.join(", ")}` });
 
   try {
-    const claudeSkillsDir = path.join(projectRoot, ".claude/skills");
+    const claudeSkillsDir = directory.absolute(".claude/skills");
     await fs.ensureDir(claudeSkillsDir);
 
     for (const skillName of skillNames) {
-      const target = path.join(projectRoot, ".agents/skills", skillName);
+      const target = directory.absolute(".agents/skills", skillName);
       const linkPath = path.join(claudeSkillsDir, skillName);
 
       try {
@@ -240,11 +259,11 @@ export const installGadgetSkillsIntoProject = async ({
   }
 };
 
-export const maybePromptGadgetSkills = async ({ projectRoot }: { projectRoot: string }): Promise<void> => {
+export const maybePromptGadgetSkills = async ({ ctx, directory }: { ctx: Context; directory: Directory }): Promise<void> => {
   if (!output.isInteractive || config.logFormat === "json") return;
-  if (await fs.pathExists(path.join(projectRoot, ".agents/skills", SENTINEL_SKILL, "SKILL.md"))) return;
+  if (await fs.pathExists(directory.absolute(".agents/skills", SENTINEL_SKILL, "SKILL.md"))) return;
 
-  const optOut = optOutPath(projectRoot, "opt_out-gadget-skills-hint-");
+  const optOut = optOutPath(directory, "opt_out-gadget-skills-hint-");
   if (await fs.pathExists(optOut)) return;
 
   const yes = await confirm({
@@ -259,5 +278,5 @@ export const maybePromptGadgetSkills = async ({ projectRoot }: { projectRoot: st
     return;
   }
 
-  await installGadgetSkillsIntoProject({ projectRoot, force: true });
+  await installGadgetSkillsIntoProject({ ctx, directory, force: true });
 };

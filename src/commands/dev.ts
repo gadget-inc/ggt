@@ -101,8 +101,8 @@ export const run: Run<DevArgs> = async (ctx, args) => {
 
   const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
   const syncJson = await SyncJson.loadOrInit(ctx, { command: "dev", args, directory });
-  await maybePromptAgentsMd({ projectRoot: syncJson.directory.path });
-  await maybePromptGadgetSkills({ projectRoot: syncJson.directory.path });
+  await maybePromptAgentsMd({ ctx, directory: syncJson.directory });
+  await maybePromptGadgetSkills({ ctx, directory: syncJson.directory });
   footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });
 
   const filesync = new FileSync(syncJson);

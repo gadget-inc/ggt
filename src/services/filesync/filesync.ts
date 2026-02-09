@@ -15,8 +15,10 @@ import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
   FILE_SYNC_HASHES_QUERY,
+  LOGS_SEARCH_V3_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+  type LogsSearchV3QueryVariables,
 } from "../app/edit/operation.js";
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
@@ -365,6 +367,39 @@ export class FileSync {
         }
       },
     });
+  }
+
+  async queryEnvironmentLogs(args: LoggingArgsResult, variables: Omit<LogsSearchV3QueryVariables, "query">): Promise<void> {
+    const logger = createEnvironmentStructuredLogger(this.syncJson.environment);
+
+    const query = args["--my-logs"] ? 'source:"user"' : "";
+
+    const result = await this.syncJson.edit.query({
+      query: LOGS_SEARCH_V3_QUERY,
+      variables: {
+        query,
+        ...variables,
+      },
+    });
+
+    if (result.logsSearchV3.__typename === "LogSearchErrorResult") {
+      throw new Error(`Logs search failed: ${JSON.stringify(result.logsSearchV3.error)}`);
+    }
+
+    for (const row of result.logsSearchV3.data ?? []) {
+      const fields: Record<string, unknown> = {};
+      if (row.labels) {
+        Object.assign(fields, row.labels);
+      }
+
+      logger(
+        row.level,
+        row.name,
+        (row.message ?? "") as Lowercase<string>,
+        fields as Fields,
+        new Date(Number(row.timestampNanos) / 1_000_000),
+      );
+    }
   }
 
   /**

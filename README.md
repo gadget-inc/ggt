@@ -34,6 +34,7 @@
   - [`ggt debugger`](#ggt-debugger)
   - [`ggt whoami`](#ggt-whoami)
   - [`ggt configure`](#ggt-configure)
+  - [`ggt agent-plugin`](#ggt-agent-plugin)
   - [`ggt version`](#ggt-version)
 
 ## Intro
@@ -75,12 +76,17 @@ Commands
   debugger         Connect to the debugger for your environment
   whoami           Print the currently logged in account
   configure        Configure default execution options
+  agent-plugin     Install Gadget agent plugins (AGENTS.md + skills)
   version          Print this version of ggt
 
 Flags
   -h, --help       Print how to use a command
   -v, --verbose    Print more verbose output
       --telemetry  Enable telemetry
+
+Agent plugins
+  Install AGENTS.md and Gadget agent skills for your coding agent:
+  ggt agent-plugin install
 
 Run "ggt [COMMAND] -h" for more information about a specific command.
 ```
@@ -428,6 +434,19 @@ Usage
   ggt configure change
 
   ggt configure clear
+```
+
+### `ggt agent-plugin`
+
+```sh-session
+$ ggt agent-plugin -h
+Install Gadget agent plugins (AGENTS.md + skills) into the current project.
+
+Usage
+  ggt agent-plugin install [--force]
+
+Flags
+  --force    Overwrite/reinstall even if already present
 ```
 
 ### `ggt version`

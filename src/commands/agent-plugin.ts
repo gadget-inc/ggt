@@ -1,3 +1,5 @@
+import { findUp } from "find-up";
+import path from "node:path";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
 import { installAgentsMdScaffold, installGadgetSkillsIntoProject } from "../services/output/agent-plugin.js";
@@ -26,7 +28,9 @@ export const run: Run<typeof args> = async (_ctx, args): Promise<void> => {
     return;
   }
 
-  const projectRoot = process.cwd();
+  const cwd = process.cwd();
+  const syncJsonPath = await findUp(".gadget/sync.json", { cwd });
+  const projectRoot = syncJsonPath ? path.join(syncJsonPath, "../..") : cwd;
   const force = args["--force"] ?? false;
 
   await installAgentsMdScaffold({ projectRoot, force });

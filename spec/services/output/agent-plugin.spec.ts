@@ -218,6 +218,7 @@ describe("agent-plugin", () => {
       await maybePromptAgentsMd({ projectRoot });
 
       expect(fetch).toHaveBeenCalledWith("https://raw.githubusercontent.com/gadget-inc/skills/main/agents/AGENTS.md", {
+        signal: expect.any(AbortSignal),
         headers: { "User-Agent": "ggt", Accept: "text/plain" },
       });
 

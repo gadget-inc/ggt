@@ -46,6 +46,7 @@ export const installAgentsMdScaffold = async ({ projectRoot, force }: { projectR
 
   try {
     const res = await fetch(AGENTS_MD_URL, {
+      signal: AbortSignal.timeout(10_000),
       headers: { "User-Agent": "ggt", Accept: "text/plain" },
     });
     if (!res.ok) {
@@ -141,6 +142,7 @@ export const installGadgetSkillsIntoProject = async ({
   try {
     const treeUrl = `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${ref}?recursive=1`;
     const treeRes = await fetch(treeUrl, {
+      signal: AbortSignal.timeout(10_000),
       headers: { "User-Agent": "ggt", Accept: "application/vnd.github+json" },
     });
     if (!treeRes.ok) {
@@ -164,22 +166,24 @@ export const installGadgetSkillsIntoProject = async ({
     await fs.ensureDir(tmpDir);
 
     try {
-      for (const blob of blobs) {
-        const relative = blob.path.slice(SKILLS_PREFIX.length);
-        if (relative.includes("..") || relative.startsWith("/")) continue;
+      await Promise.all(
+        blobs.map(async (blob) => {
+          const relative = blob.path.slice(SKILLS_PREFIX.length);
+          if (relative.includes("..") || relative.startsWith("/")) return;
 
-        const destPath = path.join(tmpDir, relative);
-        if (!path.resolve(destPath).startsWith(path.resolve(tmpDir))) continue;
+          const destPath = path.join(tmpDir, relative);
+          if (!path.resolve(destPath).startsWith(path.resolve(tmpDir))) return;
 
-        const rawUrl = `https://raw.githubusercontent.com/${SKILLS_REPO}/${ref}/${blob.path}`;
-        const res = await fetch(rawUrl, { headers: { "User-Agent": "ggt" } });
-        if (!res.ok) {
-          throw new Error(`Failed to download ${blob.path}: HTTP ${res.status}`);
-        }
+          const rawUrl = `https://raw.githubusercontent.com/${SKILLS_REPO}/${ref}/${blob.path}`;
+          const res = await fetch(rawUrl, { signal: AbortSignal.timeout(10_000), headers: { "User-Agent": "ggt" } });
+          if (!res.ok) {
+            throw new Error(`Failed to download ${blob.path}: HTTP ${res.status}`);
+          }
 
-        await fs.ensureDir(path.dirname(destPath));
-        await fs.writeFile(destPath, await res.text());
-      }
+          await fs.ensureDir(path.dirname(destPath));
+          await fs.writeFile(destPath, await res.text());
+        }),
+      );
 
       const skillsDir = path.join(projectRoot, ".agents/skills");
       for (const name of names) {
@@ -226,7 +230,11 @@ export const installGadgetSkillsIntoProject = async ({
     }
 
     println({ content: sprint`{greenBright ✓} Symlinks created in .claude/skills/` });
-  } catch {}
+  } catch (error) {
+    println({
+      content: sprint`{yellow ⚠} Failed to create .claude/skills/ symlinks: ${error instanceof Error ? error.message : String(error)}`,
+    });
+  }
 };
 
 export const maybePromptGadgetSkills = async ({ projectRoot }: { projectRoot: string }): Promise<void> => {

@@ -66,7 +66,7 @@ Commands
   status           Show your local and environment's file changes
   push             Push your local files to your environment
   pull             Pull your environment's files to your local computer
-  add              Add models, fields, actions and routes to your app
+  add              Add models, fields, actions, routes and environments to your app
   open             Open a Gadget location in your browser
   list             List your available applications
   login            Log in to your account

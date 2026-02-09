@@ -20,7 +20,6 @@ import {
 } from "../app/edit/operation.js";
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
-import { DEFAULT_RETRYABLE_HTTP_ERROR_CODES } from "../http/http.js";
 import { confirm } from "../output/confirm.js";
 import type { Fields } from "../output/log/field.js";
 import { Level } from "../output/log/level.js";
@@ -36,6 +35,7 @@ import { ts } from "../output/timestamp.js";
 import { noop } from "../util/function.js";
 import { isENOENTError, isENOTEMPTYError } from "../util/is.js";
 import { serializeError } from "../util/object.js";
+import { RETRYABLE_NETWORK_ERROR_CODES } from "../util/retry.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
@@ -932,11 +932,7 @@ export class FileSync {
             // we can retry this request because
             // expectedRemoteFilesVersion makes it idempotent
             methods: ["POST"],
-            errorCodes: [
-              ...DEFAULT_RETRYABLE_HTTP_ERROR_CODES,
-              "ERR_SSL_SSL/TLS_ALERT_BAD_RECORD_MAC",
-              "EPROTO", // General SSL/TLS protocol errors
-            ],
+            errorCodes: [...RETRYABLE_NETWORK_ERROR_CODES],
             calculateDelay: ({ error, computedValue }) => {
               if (isFilesVersionMismatchError(error.response?.body)) {
                 // don't retry if we get a files version mismatch error

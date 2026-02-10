@@ -60,24 +60,15 @@ export type print = {
   (template: TemplateStringsArray, ...values: unknown[]): void;
 
   /**
-   * Configures print with options before printing the given template
-   * string with dedent and chalk-template.
+   * Prints the given content with options.
    *
    * @example
    * ```
-   * let name = "Jane";
-   * print({ ensureEmptyLineAbove: true })`Hello, ${name}!`;
-   * // => "\nHello, Jane!"
+   * print({ ensureEmptyLineAbove: true, content: "Hello, world!" });
+   * // => "\nHello, world!"
    *
-   * print({ ensureEmptyLineAbove: true })`Hello, {red ${name}}!`;
-   * // => "\nHello, \u001b[31mJane\u001b[39m!"
-   *
-   * print({ ensureEmptyLineAbove: true })`
-   *   Hello, {red ${name}}!
-   *
-   *   How are you?
-   * `;
-   * // => "\nHello, \u001b[31mJane\u001b[39m!\n\nHow are you?"
+   * print({ ensureNewLine: true, content: "Hello, world!" });
+   * // => "Hello, world!\n"
    * ```
    * @see PrintOptions
    */

@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { describe, expect, it } from "vitest";
+
 import { print } from "../../../src/services/output/print.js";
 import { printTable } from "../../../src/services/output/table.js";
 import { withEnv } from "../../__support__/env.js";

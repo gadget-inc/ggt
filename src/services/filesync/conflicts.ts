@@ -1,4 +1,5 @@
 import chalk from "chalk";
+
 import { printTable } from "../output/table.js";
 import { ChangesWithHash, isEqualHash, type ChangeWithHash } from "./hashes.js";
 

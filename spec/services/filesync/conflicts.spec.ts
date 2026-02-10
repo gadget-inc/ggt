@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { getConflicts } from "../../../src/services/filesync/conflicts.js";
 import { getNecessaryChanges } from "../../../src/services/filesync/hashes.js";
 import { testCtx } from "../../__support__/context.js";

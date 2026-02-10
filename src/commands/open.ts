@@ -1,7 +1,9 @@
 import open from "open";
+
+import type { Run, Usage } from "../services/command/command.js";
+
 import { getModels } from "../services/app/app.js";
 import { ArgError } from "../services/command/arg.js";
-import type { Run, Usage } from "../services/command/command.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { println } from "../services/output/print.js";

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
+
 import { Commands, importCommand, type CommandModule } from "../../../src/services/command/command.js";
 import { testCtx } from "../../__support__/context.js";
 

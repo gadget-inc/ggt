@@ -1,4 +1,5 @@
 import { beforeEach, describe, it } from "vitest";
+
 import * as logs from "../../src/commands/logs.js";
 import { ENVIRONMENT_LOGS_SUBSCRIPTION, type GraphQLSubscription } from "../../src/services/app/edit/operation.js";
 import { nockTestApps } from "../__support__/app.js";

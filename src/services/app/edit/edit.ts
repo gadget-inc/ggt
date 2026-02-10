@@ -1,16 +1,17 @@
-// noinspection JSCommentMatchesSignature
+import type { Promisable } from "type-fest";
 
 import assert from "node:assert";
-import type { Promisable } from "type-fest";
+
 import type { Context } from "../../command/context.js";
+import type { RetryOptions } from "../../util/retry.js";
+import type { Environment } from "../app.js";
+import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
+
 import { type HttpOptions } from "../../http/http.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { isStringArray } from "../../util/is.js";
-import type { RetryOptions } from "../../util/retry.js";
-import type { Environment } from "../app.js";
 import { Client, type ClientSubscription } from "../client.js";
 import { AuthenticationError, ClientError } from "../error.js";
-import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
 
 export class Edit {
   /**

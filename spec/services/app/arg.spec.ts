@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { AppArg } from "../../../src/services/app/arg.js";
 import { ArgError } from "../../../src/services/command/arg.js";
 import { expectError } from "../../__support__/error.js";

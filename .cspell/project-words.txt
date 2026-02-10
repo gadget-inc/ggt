@@ -35,6 +35,8 @@ notificationcenter
 notifysend
 oclif
 outdir
+oxfmt
+oxfmtrc
 oxlint
 oxlintrc
 packagejson

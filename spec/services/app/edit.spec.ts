@@ -1,7 +1,9 @@
+import type { CloseEvent, ErrorEvent } from "ws";
+
 import { GraphQLError } from "graphql";
 import nock from "nock";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CloseEvent, ErrorEvent } from "ws";
+
 import { Client } from "../../../src/services/app/client.js";
 import { Edit } from "../../../src/services/app/edit/edit.js";
 import {

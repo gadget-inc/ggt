@@ -1,15 +1,16 @@
 import dayjs from "dayjs";
 import assert from "node:assert";
 import terminalLink from "terminal-link";
-import { type Environment } from "../../../app/app.js";
 
+import type { Formatter } from "./format.js";
+
+import { type Environment } from "../../../app/app.js";
 import { config } from "../../../config/config.js";
 import { isNil, isObject } from "../../../util/is.js";
 import { serializeObjectToHTTPQuery } from "../../../util/querystring.js";
 import colors from "../../colors.js";
 import { symbol } from "../../symbols.js";
 import { Level } from "../level.js";
-import type { Formatter } from "./format.js";
 
 export const formatPretty: Formatter = (level, name, msg, fields, timestamp, environment) => {
   return `${formatTimestamp(timestamp)} ${formatLevel(level)} ${formatName(name)}:${formatMessage(msg)}${formatFields(fields, { indent: 2, timestamp, environment })}${NEW_LINE}`;

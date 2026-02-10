@@ -1,6 +1,7 @@
 import CliTable3 from "cli-table3";
 import indentString from "indent-string";
 import { dedent } from "ts-dedent";
+
 import { println, type PrintOptions } from "./print.js";
 import { sprintln, type SprintOptions } from "./sprint.js";
 
@@ -117,24 +118,57 @@ export const printTable = (options: PrintTableOptions): void => {
   println(sprintTable(options));
 };
 
-// prettier-ignore
+// oxfmt-ignore
 const borders = {
-    none: {
-      "top-left": "", top: "", "top-mid": "", "top-right": "",
-      "left-mid": "", mid: "", "mid-mid": "", "right-mid": "",
-      left: "", middle: "", right: "",
-      "bottom-left": "", bottom: "", "bottom-mid": "", "bottom-right": "",
-    },
-    thin: {
-      "top-left": "┌", top: "─", "top-mid": "┬", "top-right": "┐",
-      "left-mid": "├", mid: "─", "mid-mid": "┼", "right-mid": "┤",
-      left: "│", middle: "│", right: "│",
-      "bottom-left": "└", bottom: "─", "bottom-mid": "┴", "bottom-right": "┘",
-    },
-    thick: {
-      "top-left": "╔", top: "═", "top-mid": "╤", "top-right": "╗",
-      left: "║", middle: "│", right: "║",
-      "left-mid": "╟", mid: "─", "mid-mid": "┼", "right-mid": "╢",
-      "bottom-left": "╚", bottom: "═", "bottom-mid": "╧", "bottom-right": "╝",
-    },
-  };
+  none: {
+    "top-left": "",
+    top: "",
+    "top-mid": "",
+    "top-right": "",
+    "left-mid": "",
+    mid: "",
+    "mid-mid": "",
+    "right-mid": "",
+    left: "",
+    middle: "",
+    right: "",
+    "bottom-left": "",
+    bottom: "",
+    "bottom-mid": "",
+    "bottom-right": "",
+  },
+  thin: {
+    "top-left": "┌",
+    top: "─",
+    "top-mid": "┬",
+    "top-right": "┐",
+    "left-mid": "├",
+    mid: "─",
+    "mid-mid": "┼",
+    "right-mid": "┤",
+    left: "│",
+    middle: "│",
+    right: "│",
+    "bottom-left": "└",
+    bottom: "─",
+    "bottom-mid": "┴",
+    "bottom-right": "┘",
+  },
+  thick: {
+    "top-left": "╔",
+    top: "═",
+    "top-mid": "╤",
+    "top-right": "╗",
+    left: "║",
+    middle: "│",
+    right: "║",
+    "left-mid": "╟",
+    mid: "─",
+    "mid-mid": "┼",
+    "right-mid": "╢",
+    "bottom-left": "╚",
+    bottom: "═",
+    "bottom-mid": "╧",
+    "bottom-right": "╝",
+  },
+};

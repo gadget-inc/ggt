@@ -1,5 +1,6 @@
 import type { ExecutionResult } from "graphql-ws";
 import type { JsonObject } from "type-fest";
+
 import type {
   CreateActionMutation,
   CreateActionMutationVariables,
@@ -29,6 +30,7 @@ import type {
   RemoteFileSyncEventsSubscription,
   RemoteFileSyncEventsSubscriptionVariables,
 } from "../../../__generated__/graphql.js";
+
 import { sprint } from "../../output/sprint.js";
 
 /**

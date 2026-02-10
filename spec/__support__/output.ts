@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, type Assertion } from "vitest";
+
 import { mock, mockRestore } from "./mock.js";
 
 const testStdout: string[] = [];

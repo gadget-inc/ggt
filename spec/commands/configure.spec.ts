@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+
 import * as configure from "../../src/commands/configure.js";
 import * as defaults from "../../src/services/config/defaults.js";
 import { noop } from "../../src/services/util/function.js";

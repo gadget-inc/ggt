@@ -1,11 +1,14 @@
-import nock, { type Scope } from "nock";
 import type { Promisable } from "type-fest";
+
+import nock, { type Scope } from "nock";
 import { expect, vi } from "vitest";
 import { z } from "zod";
+
 import type { Application, Environment } from "../../src/services/app/app.js";
-import { Client } from "../../src/services/app/client.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.js";
 import type { ClientError } from "../../src/services/app/error.js";
+
+import { Client } from "../../src/services/app/client.js";
 import { ClientError as ClientErrorClass } from "../../src/services/app/error.js";
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";

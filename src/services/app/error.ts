@@ -1,13 +1,16 @@
 import type { GraphQLError } from "graphql";
+import type { CloseEvent, ErrorEvent } from "ws";
+
 import assert from "node:assert";
 import pluralize from "pluralize";
-import type { CloseEvent, ErrorEvent } from "ws";
+
+import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
+
 import { GGTError, IsBug } from "../output/report.js";
 import { sprint } from "../output/sprint.js";
 import { uniq } from "../util/collection.js";
 import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString, isStringArray } from "../util/is.js";
 import { serializeError } from "../util/object.js";
-import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
 
 export class ClientError extends GGTError {
   public isBug: IsBug;

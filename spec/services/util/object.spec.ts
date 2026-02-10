@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { defaults, mapValues, omit, pick } from "../../../src/services/util/object.js";
 
 describe("defaults", () => {

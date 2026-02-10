@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
+
 import * as push from "../../src/commands/push.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";

@@ -1,6 +1,7 @@
 import type { Environment } from "../../../app/app.js";
 import type { Fields } from "../field.js";
 import type { Level } from "../level.js";
+
 import { formatJson } from "./json.js";
 import { formatPretty } from "./pretty.js";
 

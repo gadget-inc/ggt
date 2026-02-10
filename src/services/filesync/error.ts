@@ -1,14 +1,16 @@
 import chalk from "chalk";
 import pluralize from "pluralize";
+
+import type { Context } from "../command/context.js";
+import type { Directory } from "./directory.js";
+import type { SyncJsonArgsResult } from "./sync-json.js";
+
 import { ClientError } from "../app/error.js";
 import { type Command } from "../command/command.js";
-import type { Context } from "../command/context.js";
 import { sprintProblems, type Problems } from "../output/problems.js";
 import { GGTError, IsBug } from "../output/report.js";
 import { sprint, sprintln } from "../output/sprint.js";
 import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
-import type { Directory } from "./directory.js";
-import type { SyncJsonArgsResult } from "./sync-json.js";
 
 export class YarnNotFoundError extends GGTError {
   isBug = IsBug.NO;

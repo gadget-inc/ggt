@@ -1,4 +1,5 @@
 import { expect } from "vitest";
+
 import * as root from "../../src/commands/root.js";
 import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult } from "../../src/services/command/arg.js";
 import { Commands, type Command } from "../../src/services/command/command.js";

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { compact, sortBySimilar, uniq } from "../../../src/services/util/collection.js";
 
 describe("compact", () => {

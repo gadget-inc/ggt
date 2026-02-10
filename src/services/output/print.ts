@@ -1,6 +1,7 @@
+import type { Field } from "./log/field.js";
+
 import { config } from "../config/config.js";
 import { isString } from "../util/is.js";
-import type { Field } from "./log/field.js";
 import { output } from "./output.js";
 import { isSprintOptions, sprint, type SprintOptionsWithContent } from "./sprint.js";
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import * as logout from "../../src/commands/logout.js";
 import { readSession, writeSession } from "../../src/services/user/session.js";
 import { makeRootArgs } from "../__support__/arg.js";

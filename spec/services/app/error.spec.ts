@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { AuthenticationError, ClientError } from "../../../src/services/app/error.js";
 import { IsBug } from "../../../src/services/output/report.js";
 

@@ -1,8 +1,10 @@
 import type { Options as BoxenOptions } from "boxen";
+
 import boxen from "boxen";
 import chalkTemplate from "chalk-template";
 import indentString from "indent-string";
 import { dedent } from "ts-dedent";
+
 import { isArray, isString } from "../util/is.js";
 import { omit } from "../util/object.js";
 

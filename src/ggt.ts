@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import ms from "ms";
+
 import * as root from "./commands/root.js";
 import { parseArgs } from "./services/command/arg.js";
 import { Context } from "./services/command/context.js";

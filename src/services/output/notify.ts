@@ -1,12 +1,15 @@
-import notifier, { type Notification } from "node-notifier";
 import type WindowsBalloon from "node-notifier/notifiers/balloon.js";
 import type Growl from "node-notifier/notifiers/growl.js";
 import type NotificationCenter from "node-notifier/notifiers/notificationcenter.js";
 import type NotifySend from "node-notifier/notifiers/notifysend.js";
 import type WindowsToaster from "node-notifier/notifiers/toaster.js";
+
+import notifier, { type Notification } from "node-notifier";
+
 import type { Context } from "../command/context.js";
-import { assetsPath } from "../util/paths.js";
 import type { Field } from "./log/field.js";
+
+import { assetsPath } from "../util/paths.js";
 
 /**
  * Sends a native OS notification to the user.

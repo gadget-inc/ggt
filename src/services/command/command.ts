@@ -1,5 +1,7 @@
-import assert from "node:assert";
 import type { EmptyObject, Promisable } from "type-fest";
+
+import assert from "node:assert";
+
 import type { ArgsDefinition, ArgsDefinitionResult } from "./arg.js";
 import type { Context } from "./context.js";
 

@@ -2,6 +2,7 @@ import getPort from "get-port";
 import http from "node:http";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import * as login from "../../src/commands/login.js";
 import { config } from "../../src/services/config/config.js";
 import { readSession, writeSession } from "../../src/services/user/session.js";

@@ -1,5 +1,6 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { Api } from "../../../../src/services/app/api/api.js";
 import { GADGET_META_MODELS_QUERY } from "../../../../src/services/app/api/operation.js";
 import { ClientError } from "../../../../src/services/app/error.js";

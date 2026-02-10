@@ -1,8 +1,9 @@
+import type { Package } from "normalize-package-data";
+
 import { findUp } from "find-up";
 import fs from "fs-extra";
 import assert from "node:assert";
 import { fileURLToPath } from "node:url";
-import type { Package } from "normalize-package-data";
 import normalizePackageData from "normalize-package-data";
 
 const maybePackageJsonPath = await findUp("package.json", { cwd: fileURLToPath(import.meta.url) });

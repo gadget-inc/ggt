@@ -1,14 +1,17 @@
 import type * as SentryModule from "@sentry/node";
+
 import ms from "ms";
 import os from "node:os";
+
 import type { RootArgsResult } from "../../commands/root.js";
 import type { Context } from "../command/context.js";
+import type { FieldPrimitive } from "./log/field.js";
+import type { GGTError } from "./report.js";
+
 import { config } from "../config/config.js";
 import { env } from "../config/env.js";
 import { serializeError } from "../util/object.js";
 import { packageJson } from "../util/package-json.js";
-import type { FieldPrimitive } from "./log/field.js";
-import type { GGTError } from "./report.js";
 
 let Sentry: typeof SentryModule | undefined;
 

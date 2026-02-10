@@ -3,6 +3,7 @@ import ms from "ms";
 import nock from "nock";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+
 import { config } from "../../../src/services/config/config.js";
 import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
 import { packageJson } from "../../../src/services/util/package-json.js";

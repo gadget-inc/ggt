@@ -1,6 +1,8 @@
+import type { CloseEvent, ErrorEvent } from "ws";
+
 import { GraphQLError } from "graphql";
 import { describe, expect, it, vi } from "vitest";
-import type { CloseEvent, ErrorEvent } from "ws";
+
 import {
   calculateBackoffDelay,
   DEFAULT_BACKOFF_LIMIT_MS,

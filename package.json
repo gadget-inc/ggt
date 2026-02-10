@@ -6,15 +6,14 @@
   "bugs": {
     "url": "https://github.com/gadget-inc/ggt/issues"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gadget-inc/ggt.git"
-  },
   "license": "MIT",
   "author": {
     "name": "Gadget Authors"
   },
-  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gadget-inc/ggt.git"
+  },
   "bin": {
     "ggt": "dist/main.js"
   },
@@ -26,6 +25,7 @@
     "/package.json",
     "/README.md"
   ],
+  "type": "module",
   "scripts": {
     "build": "pnpm run clean && esbuild src/main.ts --outdir=dist --format=esm --platform=node --target=node20 --inject:./shims/cjs.js --bundle --splitting --minify --keep-names --sourcemap",
     "build:watch": "pnpm run build --minify=false --sources-content=false --watch",
@@ -35,14 +35,14 @@
     "generate:graphql": "graphql-codegen --config=graphql-codegen.yml",
     "lint": "pnpm run --aggregate-output '/^lint:(?!fix).*/'",
     "lint:cspell": "cspell . --no-progress --show-suggestions --show-context",
-    "lint:fix": "prettier . --write --cache && oxlint --type-aware --fix",
+    "lint:fix": "oxfmt && oxlint --type-aware --fix",
+    "lint:oxfmt": "oxfmt --check",
     "lint:oxlint": "oxlint --type-aware",
-    "lint:prettier": "prettier . --check --cache",
     "lint:typescript": "tsc --project tsconfig.json",
     "release": "pnpm run build && changeset publish",
     "test": "vitest",
     "test:watch": "pnpm run test --standalone --watch",
-    "version": "changeset version && prettier --write CHANGELOG.md && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
+    "version": "changeset version && oxfmt CHANGELOG.md && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
@@ -99,6 +99,7 @@
     "normalize-path": "^3.0.0",
     "npm-run-all": "^4.1.5",
     "open": "^11.0.0",
+    "oxfmt": "^0.31.0",
     "oxlint": "^1.43.0",
     "oxlint-tsgolint": "^0.11.4",
     "p-map": "^7.0.3",
@@ -106,9 +107,6 @@
     "p-retry": "^7.1.0",
     "p-timeout": "^7.0.1",
     "pluralize": "^8.0.0",
-    "prettier": "^3.7.4",
-    "prettier-plugin-organize-imports": "^4.3.0",
-    "prettier-plugin-packagejson": "^3.0.0",
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.1",
     "remark-toc": "^9.0.0",
@@ -131,8 +129,8 @@
     "ws": "^8.19.0",
     "zod": "^4.3.6"
   },
-  "packageManager": "pnpm@10.11.0",
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.11.0"
 }

@@ -1,6 +1,8 @@
 import type { GraphQLError } from "graphql";
-import ms from "ms";
 import type { CloseEvent, ErrorEvent } from "ws";
+
+import ms from "ms";
+
 import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isObject, isStringArray } from "./is.js";
 
 /**

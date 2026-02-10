@@ -1,10 +1,12 @@
 import nock from "nock";
 import { randomUUID } from "node:crypto";
 import { expect, vi } from "vitest";
+
+import type { User } from "../../src/services/user/user.js";
+
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
 import { readToken, writeSession } from "../../src/services/user/session.js";
-import type { User } from "../../src/services/user/user.js";
 import { testCtx } from "./context.js";
 
 /**

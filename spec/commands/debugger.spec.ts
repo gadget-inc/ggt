@@ -4,6 +4,7 @@ import path from "node:path";
 import { waitUntilUsed } from "tcp-port-used";
 import { beforeEach, describe, expect, it } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
+
 import * as debuggerCommand from "../../src/commands/debugger.js";
 import { config } from "../../src/services/config/config.js";
 import { nockTestApps } from "../__support__/app.js";

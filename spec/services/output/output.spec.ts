@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { output } from "../../../src/services/output/output.js";
 import { expectStdout } from "../../__support__/output.js";
 

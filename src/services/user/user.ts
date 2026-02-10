@@ -1,8 +1,10 @@
 import assert from "node:assert";
 import { z } from "zod";
-import { login } from "../../commands/login.js";
+
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
+
+import { login } from "../../commands/login.js";
 import { config } from "../config/config.js";
 import { maybeLoadAuthHeaders, swallowUnauthorized } from "../http/auth.js";
 import { http } from "../http/http.js";

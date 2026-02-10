@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { GGTError, IsBug, UnexpectedError, reportErrorAndExit } from "../../../src/services/output/report.js";
 import { testCtx } from "../../__support__/context.js";
 import { expectStdout } from "../../__support__/output.js";
@@ -54,7 +55,7 @@ describe("UnexpectedError", () => {
       "An unexpected error occurred.
 
       Error: Whoops!
-          at spec/services/output/report.spec.ts:43:19
+          at spec/services/output/report.spec.ts:44:19
           at ...
 
       This is a bug, use the link below to create an issue on GitHub.

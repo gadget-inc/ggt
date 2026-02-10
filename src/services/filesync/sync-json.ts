@@ -5,12 +5,14 @@ import path from "node:path";
 import { simpleGit } from "simple-git";
 import terminalLink from "terminal-link";
 import { z } from "zod";
+
+import type { Command } from "../command/command.js";
+import type { Context } from "../command/context.js";
+
 import { EnvironmentType, getApplications, groupByTeam, type Application, type Environment } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
 import { Edit } from "../app/edit/edit.js";
 import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../command/arg.js";
-import type { Command } from "../command/command.js";
-import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
 import colors from "../output/colors.js";
 import { println } from "../output/print.js";

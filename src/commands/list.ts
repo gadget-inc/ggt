@@ -1,5 +1,6 @@
-import { getApplications, groupByTeam } from "../services/app/app.js";
 import type { Run, Usage } from "../services/command/command.js";
+
+import { getApplications, groupByTeam } from "../services/app/app.js";
 import { output } from "../services/output/output.js";
 import { println } from "../services/output/print.js";
 import { sprint, sprintln } from "../services/output/sprint.js";

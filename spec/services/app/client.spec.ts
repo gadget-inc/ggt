@@ -1,10 +1,13 @@
-import { GraphQLError } from "graphql";
 import type { Sink } from "graphql-ws";
 import type { JsonObject } from "type-fest";
+
+import { GraphQLError } from "graphql";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import type { Environment } from "../../../src/services/app/app.js";
-import { Client } from "../../../src/services/app/client.js";
 import type { GraphQLSubscription } from "../../../src/services/app/edit/operation.js";
+
+import { Client } from "../../../src/services/app/client.js";
 import { ClientError } from "../../../src/services/app/error.js";
 import { testCtx } from "../../__support__/context.js";
 import { loginTestUser } from "../../__support__/user.js";

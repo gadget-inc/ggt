@@ -1,6 +1,7 @@
 // oxlint-disable-next-line no-restricted-imports -- this is the only place we're allowed to import figures
 import figures, { mainSymbols } from "figures";
 import isUnicodeSupported from "is-unicode-supported";
+
 import { config } from "../config/config.js";
 import { env } from "../config/env.js";
 

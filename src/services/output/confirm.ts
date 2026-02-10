@@ -1,8 +1,11 @@
+import type { Promisable } from "type-fest";
+
 import chalk from "chalk";
 import process from "node:process";
-import type { Promisable } from "type-fest";
-import { defaults } from "../util/object.js";
+
 import type { PartialExcept } from "../util/types.js";
+
+import { defaults } from "../util/object.js";
 import { output } from "./output.js";
 import { println, type PrintOptions } from "./print.js";
 import { Prompt, type StdinKey } from "./prompt.js";

@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import terminalLink from "terminal-link";
 import { beforeEach, describe, expect, it } from "vitest";
+
 import * as app from "../../../src/services/app/app.js";
 import { ArgError } from "../../../src/services/command/arg.js";
 import { Commands, type Command } from "../../../src/services/command/command.js";

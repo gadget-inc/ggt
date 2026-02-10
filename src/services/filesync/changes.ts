@@ -1,6 +1,9 @@
 import chalk from "chalk";
 import pluralize from "pluralize";
+
 import type { Context } from "../command/context.js";
+import type { ChangesWithHash } from "./hashes.js";
+
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";
 import { println } from "../output/print.js";
@@ -9,7 +12,6 @@ import { symbol } from "../output/symbols.js";
 import { sprintTable, type SprintTableOptions } from "../output/table.js";
 import { memo } from "../util/function.js";
 import { isNever, isString } from "../util/is.js";
-import type { ChangesWithHash } from "./hashes.js";
 
 export type Create = { type: "create"; oldPath?: string };
 export type Update = { type: "update" };

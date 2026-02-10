@@ -1,4 +1,5 @@
 import chalk, { Chalk } from "chalk";
+
 import { config } from "../config/config.js";
 import { env } from "../config/env.js";
 import { Level } from "./log/level.js";

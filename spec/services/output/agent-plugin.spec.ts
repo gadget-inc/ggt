@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
 import { Directory } from "../../../src/services/filesync/directory.js";
 import {
   installAgentsMdScaffold,

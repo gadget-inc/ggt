@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import * as whoami from "../../src/commands/whoami.js";
 import * as user from "../../src/services/user/user.js";
 import { testCtx } from "../__support__/context.js";

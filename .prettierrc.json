@@ -1,5 +1,0 @@
-{
-  "$schema": "http://json.schemastore.org/prettierrc",
-  "printWidth": 140,
-  "plugins": ["prettier-plugin-packagejson", "prettier-plugin-organize-imports"]
-}

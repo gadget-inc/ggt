@@ -1,3 +1,5 @@
+import type { Ignore } from "ignore";
+
 /* eslint-disable func-style */
 /**
  * DO NOT MODIFY
@@ -6,7 +8,6 @@
  * is the same between the two projects.
  */
 import fs from "fs-extra";
-import type { Ignore } from "ignore";
 import ignore from "ignore";
 import assert from "node:assert";
 import { createHash } from "node:crypto";

@@ -1,5 +1,6 @@
 import { default as openApp } from "open";
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { nockTestApps, testApp, testEnvironment } from "../../spec/__support__/app.js";
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { mockSelectOnce } from "../../spec/__support__/mock.js";

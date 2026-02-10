@@ -3,6 +3,7 @@ import assert from "node:assert";
 import path from "node:path";
 import normalizePath from "normalize-path";
 import { expect } from "vitest";
+
 import { Directory } from "../../src/services/filesync/directory.js";
 
 /**

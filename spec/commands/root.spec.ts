@@ -1,5 +1,6 @@
 import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
 import * as root from "../../src/commands/root.js";
 import * as command from "../../src/services/command/command.js";
 import { importCommand, type CommandModule } from "../../src/services/command/command.js";

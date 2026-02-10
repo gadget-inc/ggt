@@ -1,5 +1,9 @@
 import chalk from "chalk";
 import terminalLink from "terminal-link";
+
+import type { Run, Usage } from "../services/command/command.js";
+import type { Context } from "../services/command/context.js";
+
 import { getGlobalActions, getModels } from "../services/app/app.js";
 import {
   CREATE_ACTION_MUTATION,
@@ -10,8 +14,6 @@ import {
 } from "../services/app/edit/operation.js";
 import { ClientError } from "../services/app/error.js";
 import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
-import type { Run, Usage } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";

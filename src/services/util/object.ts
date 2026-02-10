@@ -1,8 +1,10 @@
+import type { Simplify } from "type-fest";
+
 import cleanStack from "clean-stack";
 import { RequestError } from "got";
 import { inspect } from "node:util";
 import { serializeError as baseSerializeError, isErrorLike, type ErrorObject } from "serialize-error";
-import type { Simplify } from "type-fest";
+
 import { workspaceRoot } from "./paths.js";
 
 /**

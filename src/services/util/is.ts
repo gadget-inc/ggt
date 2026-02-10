@@ -1,6 +1,7 @@
 import type { ExecutionResult, GraphQLError } from "graphql";
 import type { SetOptional } from "type-fest";
 import type { CloseEvent, ErrorEvent } from "ws";
+
 import { z } from "zod";
 
 export const isNil = (val: unknown): val is null | undefined => {

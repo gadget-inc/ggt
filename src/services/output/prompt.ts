@@ -3,6 +3,7 @@ import assert from "node:assert";
 import EventEmitter from "node:events";
 import process from "node:process";
 import readline from "node:readline";
+
 import { output } from "./output.js";
 
 /**

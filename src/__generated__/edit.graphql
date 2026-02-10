@@ -361,6 +361,7 @@ type Mutation {
   syncToWebflow: Boolean!
   triggerRunShopifySync(shopIds: [String!]!): TriggerRunShopifySyncResult
   uninstallShop(shopId: String!): UninstallShopResult
+  unpauseEnvironment: UnpauseEnvironmentResult!
   unregisterWebhooks(apiKeys: [String!], connectionKey: String!, modelKeys: [String!]): UnregisterWebhooksResult
   updatePlatformAccessTokens(tokens: [PlatformAccessTokenInput!]!): [AccessToken!]!
   uploadFiles(files: [UploadFile!]!): UploadFilesResult!
@@ -551,6 +552,11 @@ type TypesManifest {
 
 type UninstallShopResult {
   reason: String
+  success: Boolean!
+}
+
+type UnpauseEnvironmentResult {
+  alreadyActive: Boolean!
   success: Boolean!
 }
 

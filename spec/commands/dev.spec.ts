@@ -1104,7 +1104,7 @@ describe("dev", () => {
     );
 
     // give the watcher a chance to see the changes
-    await sleep(timeoutMs("2.5s"));
+    await sleep(timeoutMs("1s"));
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -1171,7 +1171,9 @@ describe("dev", () => {
         }
       `);
 
-    expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(1);
+    });
 
     await emitGadgetChanges({
       remoteFilesVersion: "3",

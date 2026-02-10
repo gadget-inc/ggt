@@ -303,14 +303,14 @@ export const run: Run<DevArgs> = async (ctx, args) => {
 
       ctx.log.trace("file event", { event, isDirectory, path: normalizedPath });
 
-      if (filepath === syncJson.directory.absolute(".ignore")) {
-        syncJson.directory.loadIgnoreFile().catch((error: unknown) => ctx.abort(error));
-      } else if (syncJson.directory.ignores(filepath)) {
+      if (recentWritesToLocalFilesystem.delete(normalizedPath)) {
+        ctx.log.trace("ignoring event because we caused it", { event, path: normalizedPath });
         return;
       }
 
-      if (recentWritesToLocalFilesystem.delete(normalizedPath)) {
-        ctx.log.trace("ignoring event because we caused it", { event, path: normalizedPath });
+      if (filepath === syncJson.directory.absolute(".ignore")) {
+        syncJson.directory.loadIgnoreFile().catch((error: unknown) => ctx.abort(error));
+      } else if (syncJson.directory.ignores(filepath)) {
         return;
       }
 

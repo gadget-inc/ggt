@@ -1,8 +1,9 @@
 import type { Run, Usage } from "../services/command/command.js";
 
+import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
-import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
 import { LoggingArgs } from "../services/output/log/structured.js";
 import { sprint } from "../services/output/sprint.js";
 
@@ -10,7 +11,7 @@ export type LogsArgs = typeof args;
 export type LogsArgsResult = ArgsDefinitionResult<LogsArgs>;
 
 export const args = {
-  ...SyncJsonArgs,
+  ...AppIdentityArgs,
   ...LoggingArgs,
 } satisfies ArgsDefinition;
 
@@ -25,8 +26,8 @@ export const usage: Usage = (_ctx) => {
         -ll, --log-level <level>       Sets the log level for incoming application logs (default: info)
         --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
         --json                         Output logs in JSON format
-        -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
-        -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+        -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
+        -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
 
   {gray Examples}
         Stream all user logs from your development environment
@@ -50,10 +51,9 @@ export const run: Run<LogsArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { command: "pull", args, directory });
-  const filesync = new FileSync(syncJson);
+  const appIdentity = await AppIdentity.load(ctx, { command: "pull", args, directory });
 
-  const logsSubscription = filesync.subscribeToEnvironmentLogs(args, {
+  const logsSubscription = subscribeToEnvironmentLogs(appIdentity.edit, args, {
     onError: (error) => {
       ctx.abort(error);
     },

@@ -44,11 +44,11 @@ export const usage: Usage = (_ctx) => {
         $ ggt deploy [options]
 
   {gray Options}
-        -a, --app <app_name>           Selects a specific app to deploy. Default set on ".gadget/sync.json"
-        --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Default set on ".gadget/sync.json"
+        -a, --app <app_name>           Selects a specific app to deploy. Defaults to the app synced to the current directory, if there is one.
+        --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Defaults to the environment synced to the current directory, if there is one.
         --force                        Deploys by discarding any changes made to the environment directory since last sync
-        --allow-different-directory    Deploys from any local directory with existing files, even if the ".gadget/sync.json" file is missing
-        --allow-different-app          Deploys a different app using the --app command, instead of the one specified in the “.gadget/sync.json” file
+        --allow-different-directory    Deploys from any local directory with existing files, even if the directory hasn't been synced before
+        --allow-different-app          Deploys a different app using the --app command, instead of the most recently synced one in the current directory
         --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
         --allow-data-delete            Deploys even if it results in the deletion of data in production
         --allow-charges                Deploys even if it results in additional charges to your plan
@@ -61,7 +61,7 @@ export const usage: Usage = (_ctx) => {
 
 export const run: Run<DeployArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { command: "deploy", args, directory });
+  const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "deploy", args, directory });
 
   println({
     ensureEmptyLineAbove: true,

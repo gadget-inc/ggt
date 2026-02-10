@@ -25,11 +25,11 @@ export const usage: Usage = (_ctx) => {
         ggt pull [options]
 
   {gray Options}
-        -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
-        -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+        -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
+        -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
         --force                        Forces a pull by discarding any changes made on your local directory since last sync
-        --allow-different-directory    Pulls changes from any environment directory, even if the ".gadget/sync.json" file is missing
-        --allow-different-app          Pulls changes to a different app using --app command, instead of the one in the “.gadget/sync.json” file
+        --allow-different-directory    Pulls changes from any environment directory, even if the directory hasn't been synced before
+        --allow-different-app          Pulls changes to a different app using --app command, instead of the most recently synced one in the current directory
 
   {gray Examples}
         Pull all development environment changes by discarding any changes made locally
@@ -50,7 +50,7 @@ export const run: Run<PullArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { command: "pull", args, directory });
+  const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "pull", args, directory });
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
 

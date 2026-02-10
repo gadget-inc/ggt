@@ -53,7 +53,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
     nockTestApps();
 
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
-    syncJson = await SyncJson.loadOrInit(testCtx, {
+    syncJson = await SyncJson.loadOrAskAndInit(testCtx, {
       command: "dev",
       args: makeArgs(DevArgs, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,
@@ -453,7 +453,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
     nockTestApps();
 
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
-    syncJson = await SyncJson.loadOrInit(testCtx, {
+    syncJson = await SyncJson.loadOrAskAndInit(testCtx, {
       command: "dev",
       args: makeArgs(DevArgs, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,

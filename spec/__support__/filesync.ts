@@ -24,6 +24,7 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit/operation.js";
+import { AppIdentity } from "../../src/services/command/app-identity.js";
 import { Directory, type Hashes } from "../../src/services/filesync/directory.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
 import { isEqualHashes } from "../../src/services/filesync/hashes.js";
@@ -243,8 +244,10 @@ export const makeSyncScenario = async ({
   }
 
   mockRestore(SyncJson.load);
-  const syncJson = await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir });
+  mockRestore(AppIdentity.load);
+  const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
   mock(SyncJson, "load", () => syncJson);
+  mock(AppIdentity, "load", () => syncJson.appIdentity);
 
   const filesync = new FileSync(syncJson);
 

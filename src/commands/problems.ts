@@ -1,9 +1,9 @@
 import type { Run, Usage } from "../services/command/command.js";
 
 import { PUBLISH_ISSUES_QUERY } from "../services/app/edit/operation.js";
+import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
-import { UnknownDirectoryError } from "../services/filesync/error.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { println } from "../services/output/print.js";
 import { printProblems, publishIssuesToProblems } from "../services/output/problems.js";
 import { sprint } from "../services/output/sprint.js";
@@ -11,7 +11,7 @@ import { sprint } from "../services/output/sprint.js";
 export type ProblemsArgs = typeof args;
 export type ProblemsArgsResult = ArgsDefinitionResult<ProblemsArgs>;
 
-export const args = SyncJsonArgs;
+export const args = AppIdentityArgs;
 
 export const usage: Usage = () => {
   return sprint`
@@ -35,12 +35,9 @@ export const run: Run<ProblemsArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { command: "problems", args, directory });
-  if (!syncJson) {
-    throw new UnknownDirectoryError({ command: "problems", args, directory });
-  }
+  const appIdentity = await AppIdentity.load(ctx, { command: "problems", args, directory });
 
-  const { publishIssues } = await syncJson.edit.query({ query: PUBLISH_ISSUES_QUERY });
+  const { publishIssues } = await appIdentity.edit.query({ query: PUBLISH_ISSUES_QUERY });
 
   if (publishIssues.length === 0) {
     println({ ensureEmptyLineAbove: true, content: sprint`{green No problems found.}` });
@@ -49,5 +46,5 @@ export const run: Run<ProblemsArgs> = async (ctx, args) => {
     printProblems({ problems: publishIssuesToProblems(publishIssues) });
   }
 
-  await syncJson.edit.dispose();
+  await appIdentity.edit.dispose();
 };

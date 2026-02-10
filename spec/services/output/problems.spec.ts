@@ -24,9 +24,12 @@ describe("sprintProblems", () => {
     };
 
     const result = sprintProblems({ problems });
-    expect(result).toContain("user.js");
-    expect(result).toContain("1 problem");
-    expect(result).toContain("Unexpected token");
+    expect(result).toMatchInlineSnapshot(`
+      "
+      • user.js 1 problem
+        ✖ JavaScript Unexpected token
+      "
+    `);
   });
 
   it("formats a single file with multiple problems", () => {
@@ -38,9 +41,13 @@ describe("sprintProblems", () => {
     };
 
     const result = sprintProblems({ problems });
-    expect(result).toContain("2 problems");
-    expect(result).toContain("Error 1");
-    expect(result).toContain("Error 2");
+    expect(result).toMatchInlineSnapshot(`
+      "
+      • user.js 2 problems
+        ✖ JavaScript Error 1
+        ✖ JavaScript Error 2
+      "
+    `);
   });
 
   it("formats multiple files with problems", () => {
@@ -50,10 +57,15 @@ describe("sprintProblems", () => {
     };
 
     const result = sprintProblems({ problems });
-    expect(result).toContain("user.js");
-    expect(result).toContain("post.ts");
-    expect(result).toContain("Error in user");
-    expect(result).toContain("Error in post");
+    expect(result).toMatchInlineSnapshot(`
+      "
+      • user.js 1 problem
+        ✖ JavaScript Error in user
+
+      • post.ts 1 problem
+        ✖ TypeScript Error in post
+      "
+    `);
   });
 
   it("handles multi-line problem messages", () => {
@@ -69,9 +81,14 @@ describe("sprintProblems", () => {
     };
 
     const result = sprintProblems({ problems });
-    expect(result).toContain("Line 1");
-    expect(result).toContain("Line 2");
-    expect(result).toContain("Line 3");
+    expect(result).toMatchInlineSnapshot(`
+      "
+      • user.js 1 problem
+        ✖ JavaScript Line 1
+          Line 2
+          Line 3
+      "
+    `);
   });
 
   it("displays labels", () => {
@@ -87,8 +104,12 @@ describe("sprintProblems", () => {
     };
 
     const result = sprintProblems({ problems });
-    expect(result).toContain("field:name");
-    expect(result).toContain("action:create");
+    expect(result).toMatchInlineSnapshot(`
+      "
+      • user.js 1 problem
+        ✖ JavaScript Type error field:name action:create
+      "
+    `);
   });
 
   it("shows file types by default for SourceFile problems", () => {
@@ -97,7 +118,12 @@ describe("sprintProblems", () => {
     };
 
     const result = sprintProblems({ problems });
-    expect(result).toContain("JavaScript");
+    expect(result).toMatchInlineSnapshot(`
+      "
+      • user.js 1 problem
+        ✖ JavaScript Error
+      "
+    `);
   });
 
   it("hides file types when showFileTypes is false", () => {
@@ -106,7 +132,12 @@ describe("sprintProblems", () => {
     };
 
     const result = sprintProblems({ problems, showFileTypes: false });
-    expect(result).not.toContain("JavaScript");
+    expect(result).toMatchInlineSnapshot(`
+      "
+      • user.js 1 problem
+        ✖ Error
+      "
+    `);
   });
 
   it("shows file types when showFileTypes is true even for non-SourceFile types", () => {
@@ -115,33 +146,38 @@ describe("sprintProblems", () => {
     };
 
     const result = sprintProblems({ problems, showFileTypes: true });
-    expect(result).toContain("JavaScript");
+    expect(result).toMatchInlineSnapshot(`
+      "
+      • user.js 1 problem
+        ✖ JavaScript Error
+      "
+    `);
   });
 });
 
 describe("filetype", () => {
   it("returns JavaScript for .js files", () => {
-    expect(filetype("user.js")).toContain("JavaScript");
+    expect(filetype("user.js")).toMatchInlineSnapshot(`"JavaScript"`);
   });
 
   it("returns JavaScript for .jsx files", () => {
-    expect(filetype("component.jsx")).toContain("JavaScript");
+    expect(filetype("component.jsx")).toMatchInlineSnapshot(`"JavaScript"`);
   });
 
   it("returns TypeScript for .ts files", () => {
-    expect(filetype("user.ts")).toContain("TypeScript");
+    expect(filetype("user.ts")).toMatchInlineSnapshot(`"TypeScript"`);
   });
 
   it("returns TypeScript for .tsx files", () => {
-    expect(filetype("component.tsx")).toContain("TypeScript");
+    expect(filetype("component.tsx")).toMatchInlineSnapshot(`"TypeScript"`);
   });
 
   it("returns Gelly for .gelly files", () => {
-    expect(filetype("query.gelly")).toContain("Gelly");
+    expect(filetype("query.gelly")).toMatchInlineSnapshot(`"Gelly"`);
   });
 
   it("returns File for unknown extensions", () => {
-    expect(filetype("data.json")).toContain("File");
+    expect(filetype("data.json")).toMatchInlineSnapshot(`"File"`);
   });
 });
 

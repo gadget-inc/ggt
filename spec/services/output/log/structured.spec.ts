@@ -10,10 +10,10 @@ describe("structured", () => {
   mockStderr();
   mockSystemTime();
 
-  it.each(["trace", "debug", "info", "warn", "error"])("logs the expected output when GGT_LOG_LEVEL=%s", (level) => {
+  it("logs the expected output when GGT_LOG_LEVEL=trace", () => {
     const structuredLogger = createStructuredLogger({ name: "structured" });
 
-    withEnv({ GGT_LOG_LEVEL: level }, () => {
+    withEnv({ GGT_LOG_LEVEL: "trace" }, () => {
       structuredLogger.trace("trace");
       structuredLogger.debug("debug");
       structuredLogger.info("info");
@@ -21,7 +21,88 @@ describe("structured", () => {
       structuredLogger.error("error");
     });
 
-    expectStderr().toMatchSnapshot();
+    expectStderr().toMatchInlineSnapshot(`
+      "12:00:00  TRACE  structured: trace
+      12:00:00  DEBUG  structured: debug
+      12:00:00  INFO  structured: info
+      12:00:00  WARN  structured: warn
+      12:00:00  ERROR  structured: error
+      "
+    `);
+  });
+
+  it("logs the expected output when GGT_LOG_LEVEL=debug", () => {
+    const structuredLogger = createStructuredLogger({ name: "structured" });
+
+    withEnv({ GGT_LOG_LEVEL: "debug" }, () => {
+      structuredLogger.trace("trace");
+      structuredLogger.debug("debug");
+      structuredLogger.info("info");
+      structuredLogger.warn("warn");
+      structuredLogger.error("error");
+    });
+
+    expectStderr().toMatchInlineSnapshot(`
+      "12:00:00  DEBUG  structured: debug
+      12:00:00  INFO  structured: info
+      12:00:00  WARN  structured: warn
+      12:00:00  ERROR  structured: error
+      "
+    `);
+  });
+
+  it("logs the expected output when GGT_LOG_LEVEL=info", () => {
+    const structuredLogger = createStructuredLogger({ name: "structured" });
+
+    withEnv({ GGT_LOG_LEVEL: "info" }, () => {
+      structuredLogger.trace("trace");
+      structuredLogger.debug("debug");
+      structuredLogger.info("info");
+      structuredLogger.warn("warn");
+      structuredLogger.error("error");
+    });
+
+    expectStderr().toMatchInlineSnapshot(`
+      "12:00:00  INFO  structured: info
+      12:00:00  WARN  structured: warn
+      12:00:00  ERROR  structured: error
+      "
+    `);
+  });
+
+  it("logs the expected output when GGT_LOG_LEVEL=warn", () => {
+    const structuredLogger = createStructuredLogger({ name: "structured" });
+
+    withEnv({ GGT_LOG_LEVEL: "warn" }, () => {
+      structuredLogger.trace("trace");
+      structuredLogger.debug("debug");
+      structuredLogger.info("info");
+      structuredLogger.warn("warn");
+      structuredLogger.error("error");
+    });
+
+    expectStderr().toMatchInlineSnapshot(`
+      "12:00:00  WARN  structured: warn
+      12:00:00  ERROR  structured: error
+      "
+    `);
+  });
+
+  it("logs the expected output when GGT_LOG_LEVEL=error", () => {
+    const structuredLogger = createStructuredLogger({ name: "structured" });
+
+    withEnv({ GGT_LOG_LEVEL: "error" }, () => {
+      structuredLogger.trace("trace");
+      structuredLogger.debug("debug");
+      structuredLogger.info("info");
+      structuredLogger.warn("warn");
+      structuredLogger.error("error");
+    });
+
+    expectStderr().toMatchInlineSnapshot(`
+      "12:00:00  ERROR  structured: error
+      "
+    `);
   });
 
   // Cannot redefine property: addBreadcrumb
@@ -69,10 +150,10 @@ describe("structured", () => {
     });
   });
 
-  it.each(["development", "test"])("prints dev fields in %s", (name) => {
+  it("prints dev fields in development", () => {
     const structuredLogger = createStructuredLogger({ name: "structured" });
 
-    withEnv({ GGT_LOG_LEVEL: "trace", GGT_ENV: name }, () => {
+    withEnv({ GGT_LOG_LEVEL: "trace", GGT_ENV: "development" }, () => {
       structuredLogger.trace("trace", {}, { dev: true });
       structuredLogger.debug("debug", {}, { dev: true });
       structuredLogger.info("info", {}, { dev: true });
@@ -80,7 +161,45 @@ describe("structured", () => {
       structuredLogger.error("error", {}, { dev: true });
     });
 
-    expectStderr().toMatchSnapshot();
+    expectStderr().toMatchInlineSnapshot(`
+      "12:00:00  TRACE  structured: trace
+        dev: true
+      12:00:00  DEBUG  structured: debug
+        dev: true
+      12:00:00  INFO  structured: info
+        dev: true
+      12:00:00  WARN  structured: warn
+        dev: true
+      12:00:00  ERROR  structured: error
+        dev: true
+      "
+    `);
+  });
+
+  it("prints dev fields in test", () => {
+    const structuredLogger = createStructuredLogger({ name: "structured" });
+
+    withEnv({ GGT_LOG_LEVEL: "trace", GGT_ENV: "test" }, () => {
+      structuredLogger.trace("trace", {}, { dev: true });
+      structuredLogger.debug("debug", {}, { dev: true });
+      structuredLogger.info("info", {}, { dev: true });
+      structuredLogger.warn("warn", {}, { dev: true });
+      structuredLogger.error("error", {}, { dev: true });
+    });
+
+    expectStderr().toMatchInlineSnapshot(`
+      "12:00:00  TRACE  structured: trace
+        dev: true
+      12:00:00  DEBUG  structured: debug
+        dev: true
+      12:00:00  INFO  structured: info
+        dev: true
+      12:00:00  WARN  structured: warn
+        dev: true
+      12:00:00  ERROR  structured: error
+        dev: true
+      "
+    `);
   });
 
   it("does not print dev fields in production", () => {
@@ -94,7 +213,14 @@ describe("structured", () => {
       structuredLogger.error("error", {}, { dev: true });
     });
 
-    expectStderr().toMatchSnapshot();
+    expectStderr().toMatchInlineSnapshot(`
+      "12:00:00  TRACE  structured: trace
+      12:00:00  DEBUG  structured: debug
+      12:00:00  INFO  structured: info
+      12:00:00  WARN  structured: warn
+      12:00:00  ERROR  structured: error
+      "
+    `);
   });
 
   it("prints json when GGT_LOG_FORMAT=json", () => {
@@ -108,6 +234,13 @@ describe("structured", () => {
       structuredLogger.error("error");
     });
 
-    expectStderr().toMatchSnapshot();
+    expectStderr().toMatchInlineSnapshot(`
+      "{"level":1,"name":"structured","msg":"trace","fields":{}}
+      {"level":2,"name":"structured","msg":"debug","fields":{}}
+      {"level":3,"name":"structured","msg":"info","fields":{}}
+      {"level":4,"name":"structured","msg":"warn","fields":{}}
+      {"level":5,"name":"structured","msg":"error","fields":{}}
+      "
+    `);
   });
 });

@@ -138,19 +138,151 @@ describe("printTable", () => {
     `);
   });
 
-  for (const borders of ["none", "thin", "thick"] as const) {
-    it(`writes a table with ${borders} borders to stdout`, () => {
-      printTable({
-        borders,
-        title: "Table Title",
-        headers: ["Column 1", "Column 2"],
-        rows: [
-          ["Row 1, Column 1", "Row 1, Column 2"],
-          ["Row 2, Column 1", "Row 2, Column 2"],
-        ],
-        footer: "Table Footer",
-      });
-      expectStdout().toMatchSnapshot();
+  it("writes a table with none borders to stdout", () => {
+    printTable({
+      borders: "none",
+      title: "Table Title",
+      headers: ["Column 1", "Column 2"],
+      rows: [
+        ["Row 1, Column 1", "Row 1, Column 2"],
+        ["Row 2, Column 1", "Row 2, Column 2"],
+      ],
+      footer: "Table Footer",
     });
-  }
+    expectStdout().toMatchInlineSnapshot(`
+      "Table Title
+      Column 1         Column 2
+      Row 1, Column 1  Row 1, Column 2
+      Row 2, Column 1  Row 2, Column 2
+      Table Footer
+      "
+    `);
+  });
+
+  it("writes a table with thin borders to stdout", () => {
+    printTable({
+      borders: "thin",
+      title: "Table Title",
+      headers: ["Column 1", "Column 2"],
+      rows: [
+        ["Row 1, Column 1", "Row 1, Column 2"],
+        ["Row 2, Column 1", "Row 2, Column 2"],
+      ],
+      footer: "Table Footer",
+    });
+    expectStdout().toMatchInlineSnapshot(`
+      "Table Title
+      ┌─────────────────┬─────────────────┐
+      │ Column 1        │ Column 2        │
+      ├─────────────────┼─────────────────┤
+      │ Row 1, Column 1 │ Row 1, Column 2 │
+      ├─────────────────┼─────────────────┤
+      │ Row 2, Column 1 │ Row 2, Column 2 │
+      └─────────────────┴─────────────────┘
+      Table Footer
+      "
+    `);
+  });
+
+  it("writes a table with thick borders to stdout", () => {
+    printTable({
+      borders: "thick",
+      title: "Table Title",
+      headers: ["Column 1", "Column 2"],
+      rows: [
+        ["Row 1, Column 1", "Row 1, Column 2"],
+        ["Row 2, Column 1", "Row 2, Column 2"],
+      ],
+      footer: "Table Footer",
+    });
+    expectStdout().toMatchInlineSnapshot(`
+      "Table Title
+      ╔═════════════════╤═════════════════╗
+      ║ Column 1        │ Column 2        ║
+      ╟─────────────────┼─────────────────╢
+      ║ Row 1, Column 1 │ Row 1, Column 2 ║
+      ╟─────────────────┼─────────────────╢
+      ║ Row 2, Column 1 │ Row 2, Column 2 ║
+      ╚═════════════════╧═════════════════╝
+      Table Footer
+      "
+    `);
+  });
+
+  it("writes a table with indent", () => {
+    printTable({
+      title: "Table Title",
+      headers: ["Column 1", "Column 2"],
+      rows: [["Row 1, Column 1", "Row 1, Column 2"]],
+      indent: 2,
+    });
+    expectStdout().toMatchInlineSnapshot(`
+      "Table Title
+        Column 1         Column 2
+        Row 1, Column 1  Row 1, Column 2
+      "
+    `);
+  });
+
+  it("writes a table with ensureEmptyLineAboveBody", () => {
+    printTable({
+      title: "Table Title",
+      headers: ["Column 1", "Column 2"],
+      rows: [["Row 1, Column 1", "Row 1, Column 2"]],
+      ensureEmptyLineAboveBody: true,
+    });
+    expectStdout().toMatchInlineSnapshot(`
+      "Table Title
+
+      Column 1         Column 2
+      Row 1, Column 1  Row 1, Column 2
+      "
+    `);
+  });
+
+  it("writes a table with ensureEmptyLineAboveFooter", () => {
+    printTable({
+      title: "Table Title",
+      headers: ["Column 1", "Column 2"],
+      rows: [["Row 1, Column 1", "Row 1, Column 2"]],
+      footer: "Table Footer",
+      ensureEmptyLineAboveFooter: true,
+    });
+    expectStdout().toMatchInlineSnapshot(`
+      "Table Title
+      Column 1         Column 2
+      Row 1, Column 1  Row 1, Column 2
+
+      Table Footer
+      "
+    `);
+  });
+
+  it("writes a table with colAligns and colWidths", () => {
+    printTable({
+      headers: ["Left", "Right"],
+      rows: [["A", "B"]],
+      colAligns: ["left", "right"],
+      colWidths: [10, 10],
+    });
+    expectStdout().toMatchInlineSnapshot(`
+      "Left         Right
+      A                B
+      "
+    `);
+  });
+
+  it("writes a table without headers", () => {
+    printTable({
+      rows: [
+        ["Row 1, Column 1", "Row 1, Column 2"],
+        ["Row 2, Column 1", "Row 2, Column 2"],
+      ],
+    });
+    expectStdout().toMatchInlineSnapshot(`
+      "Row 1, Column 1  Row 1, Column 2
+      Row 2, Column 1  Row 2, Column 2
+      "
+    `);
+  });
 });

@@ -7,8 +7,7 @@ describe("ts", () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(new Date(2024, 0, 15, 14, 30, 45));
-      const result = ts();
-      expect(result).toContain("02:30:45 PM");
+      expect(ts()).toMatchInlineSnapshot(`"02:30:45 PM"`);
     } finally {
       vi.useRealTimers();
     }

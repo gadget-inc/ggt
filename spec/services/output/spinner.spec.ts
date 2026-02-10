@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { output } from "../../../src/services/output/output.js";
 import { activeSpinner, spin } from "../../../src/services/output/spinner.js";
-import { symbol } from "../../../src/services/output/symbols.js";
 import { expectStdout } from "../../__support__/output.js";
 
 describe("spin", () => {
@@ -15,7 +14,10 @@ describe("spin", () => {
 
   it("writes the first frame to stdout", () => {
     spin("Loading...");
-    expectStdout().toContain("Loading...");
+    expectStdout().toMatchInlineSnapshot(`
+      "⠙ Loading...
+      "
+    `);
   });
 
   it("returns a spinner object", () => {
@@ -36,15 +38,21 @@ describe("spin", () => {
     it("writes the success symbol with the original text", () => {
       const s = spin("Loading...");
       s.succeed();
-      expectStdout().toContain(symbol.tick);
-      expectStdout().toContain("Loading...");
+      expectStdout().toMatchInlineSnapshot(`
+        "⠙ Loading...
+        ✔ Loading...
+        "
+      `);
     });
 
     it("writes the success symbol with custom text", () => {
       const s = spin("Loading...");
       s.succeed("Done!");
-      expectStdout().toContain(symbol.tick);
-      expectStdout().toContain("Done!");
+      expectStdout().toMatchInlineSnapshot(`
+        "⠙ Loading...
+        ✔ Done!
+        "
+      `);
     });
 
     it("clears activeSpinner", () => {
@@ -64,15 +72,21 @@ describe("spin", () => {
     it("writes the fail symbol with the original text", () => {
       const s = spin("Loading...");
       s.fail();
-      expectStdout().toContain(symbol.cross);
-      expectStdout().toContain("Loading...");
+      expectStdout().toMatchInlineSnapshot(`
+        "⠙ Loading...
+        ✘ Loading...
+        "
+      `);
     });
 
     it("writes the fail symbol with custom text", () => {
       const s = spin("Loading...");
       s.fail("Error!");
-      expectStdout().toContain(symbol.cross);
-      expectStdout().toContain("Error!");
+      expectStdout().toMatchInlineSnapshot(`
+        "⠙ Loading...
+        ✘ Error!
+        "
+      `);
     });
 
     it("clears activeSpinner", () => {
@@ -143,7 +157,11 @@ describe("spin", () => {
       // otherwise the output layer strips the leading newline
       output.lastPrintedLineWasEmpty = false;
       const s = spin({ content: "Working...", ensureEmptyLineAbove: true });
-      expectStdout().toMatch(/^\n/);
+      expectStdout().toMatchInlineSnapshot(`
+        "
+        ⠙ Working...
+        "
+      `);
       s.clear();
     });
   });

@@ -31,7 +31,7 @@ export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git", ".shopi
  *
  * NOTE: This is the _only_ thing that is allowed to be different between gadget and ggt.
  */
-export const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/backup", "yarn-error.log"] as const;
+export const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/dev-lock.json", ".gadget/backup", "yarn-error.log"] as const;
 
 /**
  * Represents a directory that is being synced.

@@ -12,6 +12,7 @@ import type { Run, Usage } from "../services/command/command.js";
 
 import { type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
 import { Changes } from "../services/filesync/changes.js";
+import { acquireDevLock, releaseDevLock } from "../services/filesync/dev-lock.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
@@ -103,6 +104,10 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
+  await acquireDevLock(directory);
+  ctx.onAbort(async () => {
+    await releaseDevLock(directory);
+  });
   const syncJson = await SyncJson.loadOrInit(ctx, { command: "dev", args, directory });
   await maybePromptAgentsMd({ ctx, directory: syncJson.directory });
   await maybePromptGadgetSkills({ ctx, directory: syncJson.directory });

@@ -1,6 +1,7 @@
 import { beforeEach, describe, it } from "vitest";
 
 import * as status from "../../src/commands/status.js";
+import { acquireDevLock } from "../../src/services/filesync/dev-lock.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
@@ -36,6 +37,8 @@ describe("status", () => {
        Playground  https://test.gadget.app/api/playground/javascript?environment=development
        Docs        https://docs.gadget.dev/api/test
 
+      ggt dev is not running.
+
       ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
       "
@@ -61,6 +64,8 @@ describe("status", () => {
        Editor      https://test.gadget.app/edit/development
        Playground  https://test.gadget.app/api/playground/javascript?environment=development
        Docs        https://docs.gadget.dev/api/test
+
+      ggt dev is not running.
 
       ⠙ Calculating file changes.
       ✔ Calculated file changes. 12:00:00 AM
@@ -94,6 +99,8 @@ describe("status", () => {
        Editor      https://test.gadget.app/edit/development
        Playground  https://test.gadget.app/api/playground/javascript?environment=development
        Docs        https://docs.gadget.dev/api/test
+
+      ggt dev is not running.
 
       ⠙ Calculating file changes.
       ✔ Calculated file changes. 12:00:00 AM
@@ -129,6 +136,8 @@ describe("status", () => {
        Playground  https://test.gadget.app/api/playground/javascript?environment=development
        Docs        https://docs.gadget.dev/api/test
 
+      ggt dev is not running.
+
       ⠙ Calculating file changes.
       ✔ Calculated file changes. 12:00:00 AM
 
@@ -137,6 +146,35 @@ describe("status", () => {
 
       Your environment's files have also changed.
       +  gadget-file.txt  created
+      "
+    `);
+  });
+
+  it("shows ggt dev is running with PID when dev lock is held", async () => {
+    const { syncJson } = await makeSyncScenario({
+      localFiles: {
+        ".gadget/": "",
+      },
+    });
+
+    await acquireDevLock(syncJson.directory);
+
+    await status.run(testCtx, makeArgs(status.args));
+
+    expectStdout().toMatchInlineSnapshot(`
+      "Application  test
+      Environment  development
+           Branch  test-branch
+      ------------------------
+       Preview     https://test--development.ggt.pub
+       Editor      https://test.gadget.app/edit/development
+       Playground  https://test.gadget.app/api/playground/javascript?environment=development
+       Docs        https://docs.gadget.dev/api/test
+
+      ggt dev is running (PID ${process.pid}, started 1970-01-01T00:00:00.000Z)
+
+      ⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
       "
     `);
   });

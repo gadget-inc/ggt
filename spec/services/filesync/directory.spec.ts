@@ -394,6 +394,7 @@ describe("HASHING_IGNORE_PATHS", () => {
     expect(HASHING_IGNORE_PATHS).toMatchInlineSnapshot(`
       [
         ".gadget/sync.json",
+        ".gadget/dev-lock.json",
         ".gadget/backup",
         "yarn-error.log",
       ]

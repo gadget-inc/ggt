@@ -509,6 +509,9 @@ export const makeSyncScenario = async ({
           // format .gadget/sync.json on a single line so inline snapshots are easier to read
           local[".gadget/sync.json"] = JSON.stringify(JSON.parse(local[".gadget/sync.json"]!));
 
+          // exclude dev-lock.json since it's ephemeral runtime state with unstable content (PID, timestamp)
+          delete local[".gadget/dev-lock.json"];
+
           return {
             localDir: local,
             gadgetDir: gadget,

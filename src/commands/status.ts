@@ -2,9 +2,11 @@ import type { Run, Usage } from "../services/command/command.js";
 
 import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
+import { getDevStatus } from "../services/filesync/dev-lock.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
 export type StatusArgs = typeof args;
@@ -40,6 +42,16 @@ export const run: Run<StatusArgs> = async (ctx, args) => {
   }
 
   syncJson.print();
+
+  const devStatus = await getDevStatus(syncJson.directory);
+  if (devStatus.running) {
+    println({
+      ensureEmptyLineAbove: true,
+      content: sprint`{green ggt dev} is running (PID ${String(devStatus.pid)}, started ${devStatus.startedAt})`,
+    });
+  } else {
+    println({ ensureEmptyLineAbove: true, content: sprint`{gray ggt dev} is not running.` });
+  }
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);

@@ -6,4 +6,4 @@ patchedDependencies:
   tiny-readdir@2.7.4: patches/tiny-readdir@2.7.4.patch
   watcher@2.3.1: patches/watcher@2.3.1.patch
 updateNotifier: false
-verifyDepsBeforeRun: prompt
+verifyDepsBeforeRun: install

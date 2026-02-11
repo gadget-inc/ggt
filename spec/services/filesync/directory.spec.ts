@@ -176,30 +176,30 @@ describe("Directory.ignores", () => {
     const dir = testDirPath();
     const directory = await Directory.init(dir);
 
-    expect(directory.ignores("foo")).toBe(false);
-    expect(directory.ignores("bar")).toBe(false);
-    expect(directory.ignores("baz")).toBe(false);
+    expect(directory.ignores("foo", false)).toBe(false);
+    expect(directory.ignores("bar", false)).toBe(false);
+    expect(directory.ignores("baz", false)).toBe(false);
 
     await fs.outputFile(testDirPath(".ignore"), "foo\nbar\nbaz");
     await directory.loadIgnoreFile();
 
-    expect(directory.ignores("foo")).toBe(true);
-    expect(directory.ignores("bar")).toBe(true);
-    expect(directory.ignores("baz")).toBe(true);
+    expect(directory.ignores("foo", false)).toBe(true);
+    expect(directory.ignores("bar", false)).toBe(true);
+    expect(directory.ignores("baz", false)).toBe(true);
   });
 
   it("returns false if given the root directory", async () => {
     const dir = testDirPath();
     const directory = await Directory.init(dir);
     const filepath = dir;
-    expect(directory.ignores(filepath)).toBe(false);
+    expect(directory.ignores(filepath, false)).toBe(false);
   });
 
   it("return true if the path is above the root directory", async () => {
     const dir = testDirPath();
     const directory = await Directory.init(dir);
     const filepath = path.join(dir, "..");
-    expect(directory.ignores(filepath)).toBe(true);
+    expect(directory.ignores(filepath, false)).toBe(true);
   });
 
   it("returns false for all paths in NEVER_IGNORE_PATHS", async () => {
@@ -211,7 +211,7 @@ describe("Directory.ignores", () => {
     const directory = await Directory.init(dir);
 
     for (const filepath of NEVER_IGNORE_PATHS) {
-      expect(directory.ignores(filepath)).toBe(false);
+      expect(directory.ignores(filepath, false)).toBe(false);
     }
   });
 
@@ -220,7 +220,7 @@ describe("Directory.ignores", () => {
     const directory = await Directory.init(dir);
 
     for (const filepath of ALWAYS_IGNORE_PATHS) {
-      expect(directory.ignores(filepath)).toBe(true);
+      expect(directory.ignores(filepath, false)).toBe(true);
     }
   });
 
@@ -232,7 +232,7 @@ describe("Directory.ignores", () => {
     directory._isHashing = true;
 
     for (const filepath of HASHING_IGNORE_PATHS) {
-      expect(directory.ignores(filepath)).toBe(true);
+      expect(directory.ignores(filepath, false)).toBe(true);
     }
   });
 
@@ -241,8 +241,26 @@ describe("Directory.ignores", () => {
     const directory = await Directory.init(dir);
 
     for (const filepath of HASHING_IGNORE_PATHS) {
-      expect(directory.ignores(filepath)).toBe(false);
+      expect(directory.ignores(filepath, false)).toBe(false);
     }
+  });
+
+  it("matches directory-only patterns (trailing slash) only when isDirectory is true", async () => {
+    const dir = testDirPath();
+    await fs.outputFile(path.join(dir, ".ignore"), ".husky/");
+    const directory = await Directory.init(dir);
+
+    expect(directory.ignores(".husky", true)).toBe(true);
+    expect(directory.ignores(".husky", false)).toBe(false);
+  });
+
+  it("matches non-directory patterns regardless of isDirectory", async () => {
+    const dir = testDirPath();
+    await fs.outputFile(path.join(dir, ".ignore"), ".husky");
+    const directory = await Directory.init(dir);
+
+    expect(directory.ignores(".husky", true)).toBe(true);
+    expect(directory.ignores(".husky", false)).toBe(true);
   });
 });
 
@@ -298,6 +316,33 @@ describe("Directory.walk", () => {
       ".ignore": "baz",
       "foo.txt": "foo",
       "bar.txt": "bar",
+    });
+  });
+
+  it("doesn't yield directories matching directory-only ignore patterns", async () => {
+    const dir = testDirPath();
+    await writeDir(dir, {
+      ".ignore": ".husky/",
+      "foo.txt": "foo",
+      ".husky/": "",
+      ".husky/pre-commit": "#!/bin/sh",
+    });
+
+    const directory = await Directory.init(dir);
+
+    const yielded = {} as Files;
+    for await (const normalizedPath of directory.walk()) {
+      yielded[normalizedPath] = "";
+
+      const stats = await fs.stat(path.join(dir, normalizedPath));
+      if (stats.isFile()) {
+        yielded[normalizedPath] = await fs.readFile(path.join(dir, normalizedPath), "utf8");
+      }
+    }
+
+    expect(yielded).toEqual({
+      ".ignore": ".husky/",
+      "foo.txt": "foo",
     });
   });
 });

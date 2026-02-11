@@ -420,7 +420,7 @@ export class FileSync {
             });
 
             const filterIgnoredFiles = (file: { path: string }): boolean => {
-              const ignored = this.syncJson.directory.ignores(file.path);
+              const ignored = this.syncJson.directory.ignores(file.path, file.path.endsWith("/"));
               if (ignored) {
                 ctx.log.warn("skipping received change because file is ignored", { path: file.path });
               }

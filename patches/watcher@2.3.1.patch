@@ -1,0 +1,99 @@
+diff --git a/dist/types.d.ts b/dist/types.d.ts
+index 819f534ca9cd6121e61dd078a3e618b49a1d77cc..1459821f7fcd3361d0701f1b784c246632958035 100644
+--- a/dist/types.d.ts
++++ b/dist/types.d.ts
+@@ -9,7 +9,7 @@ type Event = [TargetEvent, Path, Path?];
+ type FSHandler = (event?: FSTargetEvent, targetName?: string) => void;
+ type Handler = (event: TargetEvent, targetPath: Path, targetPathNext?: Path) => void;
+ type HandlerBatched = (event?: FSTargetEvent, targetPath?: Path, isInitial?: boolean) => Promise<void>;
+-type Ignore = ((targetPath: Path) => boolean) | RegExp;
++type Ignore = ((targetPath: Path, isDirectory?: boolean) => boolean) | RegExp;
+ type INO = bigint | number;
+ type Path = string;
+ type ReaddirMap = ResultDirectories;
+diff --git a/dist/watcher.d.ts b/dist/watcher.d.ts
+index 352c3c2d7aea8ff4a52fd788d260553fbebda532..9c31599a5144489776fd4914012227802abdd427 100644
+--- a/dist/watcher.d.ts
++++ b/dist/watcher.d.ts
+@@ -26,7 +26,7 @@ declare class Watcher extends EventEmitter {
+     _watchersRestoreTimeout?: NodeJS.Timeout;
+     constructor(target?: Path[] | Path | Handler, options?: WatcherOptions | Handler, handler?: Handler);
+     isClosed(): boolean;
+-    isIgnored(targetPath: Path, ignore?: Ignore): boolean;
++    isIgnored(targetPath: Path, ignore?: Ignore, isDirectory?: boolean): boolean;
+     isReady(): boolean;
+     close(): boolean;
+     error(exception: unknown): boolean;
+diff --git a/dist/watcher.js b/dist/watcher.js
+index 9aaf77f1685c3bd5a6229955f4265bd6e4891aa8..5f6eaddf1b2a81b388270840e7a4893bcb8d60b7 100644
+--- a/dist/watcher.js
++++ b/dist/watcher.js
+@@ -34,8 +34,8 @@ class Watcher extends EventEmitter {
+     isClosed() {
+         return this._closed;
+     }
+-    isIgnored(targetPath, ignore) {
+-        return !!ignore && (Utils.lang.isFunction(ignore) ? !!ignore(targetPath) : ignore.test(targetPath));
++    isIgnored(targetPath, ignore, isDirectory) {
++        return !!ignore && (Utils.lang.isFunction(ignore) ? !!ignore(targetPath, isDirectory) : ignore.test(targetPath));
+     }
+     isReady() {
+         return this._ready;
+@@ -179,7 +179,7 @@ class Watcher extends EventEmitter {
+         foldersPaths = Utils.lang.uniq(foldersPaths).sort();
+         let watcherHandlerLast;
+         for (const folderPath of foldersPaths) {
+-            if (this.isIgnored(folderPath, options.ignore))
++            if (this.isIgnored(folderPath, options.ignore, true))
+                 continue;
+             if (this.watcherExists(folderPath, options, handler, filePath))
+                 continue;
+@@ -213,7 +213,7 @@ class Watcher extends EventEmitter {
+     async watchDirectory(folderPath, options, handler, filePath, baseWatcherHandler) {
+         if (this.isClosed())
+             return;
+-        if (this.isIgnored(folderPath, options.ignore))
++        if (this.isIgnored(folderPath, options.ignore, true))
+             return;
+         if (!options.recursive || (HAS_NATIVE_RECURSION && options.native !== false)) {
+             return this.watchersLock(() => {
+@@ -268,7 +268,7 @@ class Watcher extends EventEmitter {
+     async watchFile(filePath, options, handler) {
+         if (this.isClosed())
+             return;
+-        if (this.isIgnored(filePath, options.ignore))
++        if (this.isIgnored(filePath, options.ignore, false))
+             return;
+         options = { ...options, recursive: false }; // Ensuring recursion is explicitly disabled
+         const folderPath = path.dirname(filePath);
+diff --git a/dist/watcher_handler.js b/dist/watcher_handler.js
+index e2d73044a12664f93218af70e4498f11ac2c5382..700dbd86ab773f0a794a6f90b525d6146c014560 100644
+--- a/dist/watcher_handler.js
++++ b/dist/watcher_handler.js
+@@ -93,9 +93,10 @@ class WatcherHandler {
+         const depth = this.options.recursive ? this.options.depth ?? DEPTH : Math.min(1, this.options.depth ?? DEPTH);
+         const limit = this.options.limit ?? LIMIT;
+         const [directories, files] = await Utils.fs.readdir(targetPath, this.options.ignore, depth, limit, this.watcher._closeSignal);
++        const dirSet = new Set(directories);
+         const targetSubPaths = [...directories, ...files];
+         await Promise.all(targetSubPaths.map(targetSubPath => {
+-            if (this.watcher.isIgnored(targetSubPath, this.options.ignore))
++            if (this.watcher.isIgnored(targetSubPath, this.options.ignore, dirSet.has(targetSubPath)))
+                 return;
+             if (targetPaths.includes(targetSubPath))
+                 return;
+@@ -233,11 +234,13 @@ class WatcherHandler {
+             const depth = this.options.recursive && (HAS_NATIVE_RECURSION && this.options.native !== false) ? this.options.depth ?? DEPTH : Math.min(1, this.options.depth ?? DEPTH);
+             const limit = this.options.limit ?? LIMIT;
+             const [directories, files] = await Utils.fs.readdir(this.folderPath, this.options.ignore, depth, limit, this.watcher._closeSignal, this.options.readdirMap);
++            const dirSet = new Set(directories);
++            dirSet.add(this.folderPath);
+             const targetPaths = [this.folderPath, ...directories, ...files];
+             await Promise.all(targetPaths.map(targetPath => {
+                 if (this.watcher._poller.stats.has(targetPath))
+                     return; // Already polled
+-                if (this.watcher.isIgnored(targetPath, this.options.ignore))
++                if (this.watcher.isIgnored(targetPath, this.options.ignore, dirSet.has(targetPath)))
+                     return;
+                 return this.onWatcherEvent(FSTargetEvent.CHANGE, targetPath, isInitial);
+             }));

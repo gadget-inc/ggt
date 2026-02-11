@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import dayjs from "dayjs";
 import ms from "ms";
+import fs from "node:fs";
 import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
@@ -287,7 +288,18 @@ export const run: Run<DevArgs> = async (ctx, args) => {
       // watch everything
       recursive: true,
       // don't emit changes to .gadget/ files because they're readonly (Gadget manages them)
-      ignore: (path: string) => syncJson.directory.relative(path).startsWith(".gadget") || syncJson.directory.ignores(path),
+      ignore: (filePath: string, isDirectory?: boolean) => {
+        const relative = syncJson.directory.relative(filePath);
+        if (relative.startsWith(".gadget")) return true;
+        if (isDirectory === undefined) {
+          try {
+            isDirectory = fs.statSync(filePath).isDirectory();
+          } catch {
+            isDirectory = false;
+          }
+        }
+        return syncJson.directory.ignores(filePath, isDirectory);
+      },
       // emit rename/renameDir events
       renameDetection: true,
       // how long to wait for an add event to be followed by an unlink
@@ -310,7 +322,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
 
       if (filepath === syncJson.directory.absolute(".ignore")) {
         syncJson.directory.loadIgnoreFile().catch((error: unknown) => ctx.abort(error));
-      } else if (syncJson.directory.ignores(filepath)) {
+      } else if (syncJson.directory.ignores(filepath, isDirectory)) {
         return;
       }
 

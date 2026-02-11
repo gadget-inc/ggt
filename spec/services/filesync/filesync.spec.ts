@@ -327,7 +327,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     await filesync.syncJson.directory.loadIgnoreFile();
 
-    expect(filesync.syncJson.directory.ignores("file2.js")).toBe(true);
+    expect(filesync.syncJson.directory.ignores("file2.js", false)).toBe(true);
 
     await writeToLocalFilesystem(testCtx, {
       filesVersion: 1n,
@@ -335,7 +335,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       delete: [],
     });
 
-    expect(filesync.syncJson.directory.ignores("file2.js")).toBe(false);
+    expect(filesync.syncJson.directory.ignores("file2.js", false)).toBe(false);
   });
 
   it("clears ignore patterns when .ignore is deleted", async () => {
@@ -347,7 +347,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     await filesync.syncJson.directory.loadIgnoreFile();
 
-    expect(filesync.syncJson.directory.ignores("file2.js")).toBe(true);
+    expect(filesync.syncJson.directory.ignores("file2.js", false)).toBe(true);
 
     await writeToLocalFilesystem(testCtx, {
       filesVersion: 1n,
@@ -355,7 +355,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
       delete: [".ignore"],
     });
 
-    expect(filesync.syncJson.directory.ignores("file2.js")).toBe(false);
+    expect(filesync.syncJson.directory.ignores("file2.js", false)).toBe(false);
   });
 
   it("ensures the filesVersion is greater than or equal to the current filesVersion", async () => {

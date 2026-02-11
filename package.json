@@ -101,7 +101,7 @@
     "open": "^11.0.0",
     "oxfmt": "^0.31.0",
     "oxlint": "^1.43.0",
-    "oxlint-tsgolint": "^0.11.4",
+    "oxlint-tsgolint": "^0.12.0",
     "p-map": "^7.0.3",
     "p-queue": "^9.0.0",
     "p-retry": "^7.1.0",

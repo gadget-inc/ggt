@@ -407,6 +407,9 @@ describe("Client.subscribe", () => {
         expect(onRetry).toHaveBeenCalledTimes(1);
       });
 
+      // Flush PQueue's faked queueMicrotask to complete task cleanup
+      await vi.advanceTimersByTimeAsync(0);
+
       // Now emit a non-retryable (fatal) error on the same sink — triggers doUnsubscribe()
       sink.error(new Error("Unauthenticated"));
 
@@ -441,6 +444,9 @@ describe("Client.subscribe", () => {
       await vi.waitFor(() => {
         expect(onRetry).toHaveBeenCalledTimes(1);
       });
+
+      // Flush PQueue's faked queueMicrotask to complete task cleanup
+      await vi.advanceTimersByTimeAsync(0);
 
       // Emit a response missing data — triggers doUnsubscribe() through onResponse path
       sink.next({ data: undefined });
@@ -477,6 +483,9 @@ describe("Client.subscribe", () => {
       await vi.waitFor(() => {
         expect(onRetry).toHaveBeenCalledTimes(1);
       });
+
+      // Flush PQueue's faked queueMicrotask to complete task cleanup
+      await vi.advanceTimersByTimeAsync(0);
 
       // Complete the subscription while retry is pending
       sink.complete();

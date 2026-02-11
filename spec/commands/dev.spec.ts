@@ -1138,6 +1138,57 @@ describe("dev", () => {
       `);
   });
 
+  it("doesn't send changes from the local filesystem to gadget if the directory matches a directory-only ignore pattern", async () => {
+    const { localDir, expectDirs } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".ignore": "build/",
+      },
+      gadgetFiles: {
+        ".ignore": "build/",
+      },
+      localFiles: {
+        ".ignore": "build/",
+      },
+    });
+
+    await dev.run(testCtx, args);
+
+    // add files inside the ignored directory
+    await fs.outputFile(localDir.absolute("build/output.js"), "compiled");
+    await fs.outputFile(localDir.absolute("build/index.css"), "styles");
+
+    // add a nested directory inside the ignored directory
+    await fs.outputFile(localDir.absolute("build/chunks/vendor.js"), "vendor");
+
+    // give the watcher a chance to see the changes
+    await sleep(timeoutMs("1s"));
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+        {
+          "filesVersionDirs": {
+            "1": {
+              ".gadget/": "",
+              ".ignore": "build/",
+            },
+          },
+          "gadgetDir": {
+            ".gadget/": "",
+            ".ignore": "build/",
+          },
+          "localDir": {
+            ".gadget/": "",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}}}",
+            ".ignore": "build/",
+            "build/": "",
+            "build/chunks/": "",
+            "build/chunks/vendor.js": "vendor",
+            "build/index.css": "styles",
+            "build/output.js": "compiled",
+          },
+        }
+      `);
+  });
+
   it("reloads the ignore file when .ignore changes", async () => {
     const { filesync, waitUntilLocalFilesVersion, localDir, waitUntilGadgetFilesVersion, emitGadgetChanges, expectDirs } =
       await makeSyncScenario();
@@ -1202,7 +1253,7 @@ describe("dev", () => {
 
     await dev.run(testCtx, args);
 
-    expect(filesync.syncJson.directory.ignores("tmp/foo.js")).toBe(true);
+    expect(filesync.syncJson.directory.ignores("tmp/foo.js", false)).toBe(true);
 
     vi.spyOn(filesync.syncJson.directory, "loadIgnoreFile");
 
@@ -1215,7 +1266,7 @@ describe("dev", () => {
     await waitUntilLocalFilesVersion(2n);
 
     expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(1);
-    expect(filesync.syncJson.directory.ignores("tmp/foo.js")).toBe(false);
+    expect(filesync.syncJson.directory.ignores("tmp/foo.js", false)).toBe(false);
   });
 
   it("notifies the user when an error occurs", async () => {

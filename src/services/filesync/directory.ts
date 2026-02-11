@@ -152,7 +152,7 @@ export class Directory {
    * @param filepath - The filepath of the file to check.
    * @returns True if the file should be ignored, false otherwise.
    */
-  ignores(filepath: string): boolean {
+  ignores(filepath: string, isDirectory: boolean): boolean {
     filepath = this.relative(filepath);
     if (filepath === "") {
       // don't ignore the root dir
@@ -166,6 +166,11 @@ export class Directory {
 
     // false = don't trim trailing slashes
     filepath = normalizePath(filepath, false);
+
+    if (isDirectory && !filepath.endsWith("/")) {
+      filepath += "/";
+    }
+
     if (this._isHashing && HASHING_IGNORE_PATHS.some((ignored) => filepath.startsWith(ignored))) {
       // special case for hashing
       return true;
@@ -193,7 +198,7 @@ export class Directory {
 
     for await (const entry of await fs.opendir(dir)) {
       const filepath = path.join(dir, entry.name);
-      if (this.ignores(filepath)) {
+      if (this.ignores(filepath, entry.isDirectory())) {
         continue;
       }
 

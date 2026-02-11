@@ -4,6 +4,14 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  tiny-readdir@2.7.4:
+    hash: 3dce4e110ba2c24db565b9002cc31dd2dc4034f4db553ad7855e07872f737b39
+    path: patches/tiny-readdir@2.7.4.patch
+  watcher@2.3.1:
+    hash: 13bfcfa6ba91e30ec5d967b9dd42986b47c554ad2ab4fce1c31087e3da3c3b63
+    path: patches/watcher@2.3.1.patch
+
 importers:
 
   .:
@@ -247,7 +255,7 @@ importers:
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@20.19.33)(jiti@2.6.1)(yaml@2.8.2)
       watcher:
         specifier: ^2.3.1
-        version: 2.3.1
+        version: 2.3.1(patch_hash=13bfcfa6ba91e30ec5d967b9dd42986b47c554ad2ab4fce1c31087e3da3c3b63)
       which:
         specifier: ^6.0.1
         version: 6.0.1
@@ -9602,7 +9610,7 @@ snapshots:
 
   timeout-signal@2.0.0: {}
 
-  tiny-readdir@2.7.4:
+  tiny-readdir@2.7.4(patch_hash=3dce4e110ba2c24db565b9002cc31dd2dc4034f4db553ad7855e07872f737b39):
     dependencies:
       promise-make-counter: 1.0.2
 
@@ -9843,11 +9851,11 @@ snapshots:
 
   vscode-uri@3.1.0: {}
 
-  watcher@2.3.1:
+  watcher@2.3.1(patch_hash=13bfcfa6ba91e30ec5d967b9dd42986b47c554ad2ab4fce1c31087e3da3c3b63):
     dependencies:
       dettle: 1.0.5
       stubborn-fs: 1.2.5
-      tiny-readdir: 2.7.4
+      tiny-readdir: 2.7.4(patch_hash=3dce4e110ba2c24db565b9002cc31dd2dc4034f4db553ad7855e07872f737b39)
 
   web-streams-polyfill@3.3.3: {}
 

@@ -16,6 +16,7 @@
     "flake.lock",
     "flake.nix",
     "node_modules",
+    "patches",
     "pnpm-lock.yaml",
     "tmp",
     ".oxfmtrc.json",

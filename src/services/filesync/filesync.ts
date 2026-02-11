@@ -646,6 +646,10 @@ export class FileSync {
       changes.set(pathToDelete, { type: "delete" });
     }
 
+    if (options.delete.includes(".ignore")) {
+      await this.syncJson.directory.loadIgnoreFile();
+    }
+
     for (const directoryWithDeletedFile of Array.from(directoriesWithDeletedFiles.values()).sort().reverse()) {
       if (options.files.some((file) => file.path === directoryWithDeletedFile)) {
         // we're about to create this directory, so we don't need to

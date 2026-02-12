@@ -10,4 +10,5 @@ dist
 lib
 node_modules
 tmp
+.envrc.local
 *.orig

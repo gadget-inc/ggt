@@ -57,7 +57,9 @@ export const installAgentsMdScaffold = async ({
   );
 
   if (!force && (agentsExists || claudeExists)) {
-    println({ content: sprint`{gray ✓} Agent scaffold already exists (reinstall with {cyanBright ggt agent-plugin install --force})` });
+    println({
+      content: sprint`{gray ✓} Agent scaffold already exists (reinstall with {cyanBright ggt agent-plugin install --force})`,
+    });
     return;
   }
 
@@ -104,6 +106,10 @@ Try:
 
 export const maybePromptAgentsMd = async ({ ctx, directory }: { ctx: Context; directory: Directory }): Promise<void> => {
   if (!output.isInteractive || config.logFormat === "json") return;
+  // don't prompt to add AGENTS.md if the directory doesn't contain any user files
+  // this means the first sync has not happened so we don't know yet if the user has
+  // their own AGENTS.md already
+  if (!(await hasNonGadgetFiles(directory))) return;
   if (await fs.pathExists(directory.absolute(AGENTS_FILE))) return;
   if (
     await fs.lstat(directory.absolute(CLAUDE_FILE)).then(
@@ -151,7 +157,9 @@ export const installGadgetSkillsIntoProject = async ({
   const sentinelPath = directory.absolute(".agents/skills", SENTINEL_SKILL, "SKILL.md");
 
   if (!force && (await fs.pathExists(sentinelPath))) {
-    println({ content: sprint`{gray ✓} Gadget skills already installed (reinstall with {cyanBright ggt agent-plugin install --force})` });
+    println({
+      content: sprint`{gray ✓} Gadget skills already installed (reinstall with {cyanBright ggt agent-plugin install --force})`,
+    });
     return;
   }
 
@@ -229,7 +237,9 @@ export const installGadgetSkillsIntoProject = async ({
     return;
   }
 
-  println({ content: sprint`{greenBright ✓} Installed skills: ${skillNames.join(", ")}` });
+  println({
+    content: sprint`{greenBright ✓} Installed skills: ${skillNames.join(", ")}`,
+  });
 
   try {
     const claudeSkillsDir = directory.absolute(".claude/skills");
@@ -253,7 +263,9 @@ export const installGadgetSkillsIntoProject = async ({
       }
     }
 
-    println({ content: sprint`{greenBright ✓} Symlinks created in .claude/skills/` });
+    println({
+      content: sprint`{greenBright ✓} Symlinks created in .claude/skills/`,
+    });
   } catch (error) {
     println({
       content: sprint`{yellow ⚠} Failed to create .claude/skills/ symlinks: ${error instanceof Error ? error.message : String(error)}`,
@@ -261,8 +273,27 @@ export const installGadgetSkillsIntoProject = async ({
   }
 };
 
+const hasNonGadgetFiles = async (directory: Directory): Promise<boolean> => {
+  try {
+    for await (const normalizedPath of directory.walk()) {
+      if (!normalizedPath.startsWith(".gadget")) {
+        return true;
+      }
+    }
+  } catch {
+    // on error, skip the prompt
+    return false;
+  }
+
+  return false;
+};
+
 export const maybePromptGadgetSkills = async ({ ctx, directory }: { ctx: Context; directory: Directory }): Promise<void> => {
   if (!output.isInteractive || config.logFormat === "json") return;
+  // don't prompt to add skills if the directory doesn't contain any user files
+  // this means the first sync has not happened so we don't know yet if the user has
+  // their own skills already
+  if (!(await hasNonGadgetFiles(directory))) return;
   if (await fs.pathExists(directory.absolute(".agents/skills", SENTINEL_SKILL, "SKILL.md"))) return;
 
   const optOut = optOutPath(directory, "opt_out-gadget-skills-hint-");

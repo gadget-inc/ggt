@@ -1199,6 +1199,7 @@ describe("dev", () => {
 
     await fs.outputFile(localDir.absolute(".ignore"), "# watch it all");
     await waitUntilGadgetFilesVersion(2n);
+    await waitUntilLocalFilesVersion(2n);
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {

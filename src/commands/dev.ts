@@ -105,11 +105,11 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
+  const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "dev", args, directory });
   await acquireDevLock(directory);
   ctx.onAbort(async () => {
     await releaseDevLock(directory);
   });
-  const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "dev", args, directory });
   await maybePromptAgentsMd({ ctx, directory: syncJson.directory });
   await maybePromptGadgetSkills({ ctx, directory: syncJson.directory });
   footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });

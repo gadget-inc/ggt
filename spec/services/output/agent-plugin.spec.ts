@@ -15,9 +15,13 @@ import { mock, mockConfirm } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
 
-const makeProject = async (name: string): Promise<Directory> => {
+const makeProject = async (name: string, { empty = false }: { empty?: boolean } = {}): Promise<Directory> => {
   const dir = testDirPath(name);
   await fs.ensureDir(dir);
+  if (!empty) {
+    // create a placeholder user file so hasNonGadgetFiles() is true
+    await fs.outputFile(`${dir}/index.js`, "");
+  }
   return Directory.init(dir);
 };
 
@@ -171,6 +175,41 @@ describe("agent-plugin", () => {
   });
 
   describe("maybePromptAgentsMd", () => {
+    it("skips prompt if directory does not exist", async () => {
+      const directory = await makeProject("prompt-agents-nonexistent");
+      await fs.remove(directory.path);
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptAgentsMd({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
+    it("skips prompt if directory is empty", async () => {
+      const directory = await makeProject("prompt-agents-empty", { empty: true });
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptAgentsMd({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
+    it("skips prompt if directory has only .gadget files", async () => {
+      const directory = await makeProject("prompt-agents-dot-gadget-only", { empty: true });
+      await fs.outputFile(directory.absolute(".gadget/sync.json"), "{}");
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptAgentsMd({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
     it("never asks again for a project after the user says no", async () => {
       const directory = await makeProject("prompt-agents-no");
 
@@ -215,6 +254,41 @@ describe("agent-plugin", () => {
   });
 
   describe("maybePromptGadgetSkills", () => {
+    it("skips prompt if directory does not exist", async () => {
+      const directory = await makeProject("prompt-skills-nonexistent");
+      await fs.remove(directory.path);
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptGadgetSkills({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
+    it("skips prompt if directory is empty", async () => {
+      const directory = await makeProject("prompt-skills-empty", { empty: true });
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptGadgetSkills({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
+    it("skips prompt if directory has only .gadget files", async () => {
+      const directory = await makeProject("prompt-skills-dot-gadget-only", { empty: true });
+      await fs.outputFile(directory.absolute(".gadget/sync.json"), "{}");
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptGadgetSkills({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
     it("never asks again for a project after the user says no", async () => {
       const directory = await makeProject("prompt-skills-no");
 

@@ -35,6 +35,7 @@ export const usage: Usage = () => {
       push             Push your local files to your environment
       pull             Pull your environment's files to your local computer
       var              Manage environment variables
+      env              Manage environments
       add              Add models, fields, actions, routes and environments to your app
       open             Open a Gadget location in your browser
       list             List your available applications
@@ -83,7 +84,7 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
   }
 
   // resolve command aliases
-  const commandAliases: Record<string, string> = { envs: "var" };
+  const commandAliases: Record<string, string> = { envs: "env" };
   commandName = commandAliases[commandName] ?? commandName;
 
   if (!isCommand(commandName)) {

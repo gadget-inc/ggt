@@ -122,15 +122,19 @@ export class AppIdentity {
 
 const AllowedProdCommands = ["pull", "logs", "eval", "var"] as Command[];
 
-// ensure the selected app is valid
-const loadApplication = async ({
+/**
+ * Resolves the application from args, sync.json state, or interactive prompt.
+ */
+export const loadApplication = async ({
   args,
   availableApps,
   state,
+  selectPrompt = "Which application do you want to develop?",
 }: {
-  args: AppIdentityArgsResult;
+  args: { "--app"?: string };
   availableApps: Application[];
   state?: SyncJsonState;
+  selectPrompt?: string;
 }): Promise<Application> => {
   let appSlug = args["--app"] || state?.application;
   if (!appSlug) {
@@ -143,7 +147,7 @@ const loadApplication = async ({
     appSlug = await select({
       groupedChoices,
       searchable: true,
-      content: "Which application do you want to develop?",
+      content: selectPrompt,
     });
   }
 

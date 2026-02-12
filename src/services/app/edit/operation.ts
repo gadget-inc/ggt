@@ -11,6 +11,8 @@ import type {
   CreateModelMutationVariables,
   CreateRouteMutation,
   CreateRouteMutationVariables,
+  DeleteEnvironmentMutation,
+  DeleteEnvironmentMutationVariables,
   DeleteEnvironmentVariableMutation,
   DeleteEnvironmentVariableMutationVariables,
   EnvironmentLogsSubscription,
@@ -301,6 +303,14 @@ export const UNPAUSE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
 `) as GraphQLMutation<UnpauseEnvironmentMutation, UnpauseEnvironmentMutationVariables>;
 
 export type UNPAUSE_ENVIRONMENT_MUTATION = typeof UNPAUSE_ENVIRONMENT_MUTATION;
+
+export const DELETE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
+  mutation DeleteEnvironment($slug: String!) {
+    deleteEnvironment(slug: $slug)
+  }
+`) as GraphQLMutation<DeleteEnvironmentMutation, DeleteEnvironmentMutationVariables>;
+
+export type DELETE_ENVIRONMENT_MUTATION = typeof DELETE_ENVIRONMENT_MUTATION;
 
 export const PUBLISH_ISSUES_QUERY = sprint(/* GraphQL */ `
   query PublishIssues {

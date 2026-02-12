@@ -350,6 +350,46 @@ Examples
 "
 `;
 
+exports[`root > when env is given > prints the usage when --help is passed 1`] = `
+"Manage environments for your Gadget application.
+
+Usage
+  ggt env <command> [options]
+
+Commands
+  list             List all environments
+  create <name>    Create a new environment
+  delete <name>    Delete an environment
+  unpause <name>   Unpause a paused environment
+  use <name>       Switch the active environment
+
+Options
+  -a, --app <app_name>   Selects the application
+
+Run "ggt env <command> -h" for more information about a specific command.
+"
+`;
+
+exports[`root > when env is given > prints the usage when -h is passed 1`] = `
+"Manage environments for your Gadget application.
+
+Usage
+  ggt env <command> [options]
+
+Commands
+  list             List all environments
+  create <name>    Create a new environment
+  delete <name>    Delete an environment
+  unpause <name>   Unpause a paused environment
+  use <name>       Switch the active environment
+
+Options
+  -a, --app <app_name>   Selects the application
+
+Run "ggt env <command> -h" for more information about a specific command.
+"
+`;
+
 exports[`root > when eval is given > prints the usage when --help is passed 1`] = `
 "Evaluates a JavaScript snippet against a Gadget app's API client.
 

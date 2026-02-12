@@ -41,6 +41,7 @@
     "lint:typescript": "tsc --project tsconfig.json",
     "release": "pnpm run build && changeset publish",
     "test": "vitest",
+    "test:integration": "vitest --config spec/integration/vitest.integration.config.ts",
     "test:watch": "pnpm run test --standalone --watch",
     "version": "changeset version && oxfmt CHANGELOG.md && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
   },

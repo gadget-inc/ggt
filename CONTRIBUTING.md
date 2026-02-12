@@ -147,6 +147,31 @@ describe("push", () => {
 });
 ```
 
+### Integration Tests
+
+Integration tests run the built CLI as a subprocess against the production Gadget API with no mocking. They live in `spec/integration/` and use a separate vitest config.
+
+**Prerequisites:**
+
+- An `INTEGRATION_TEST_TOKEN` environment variable with a valid Gadget CLI token
+- The tests use the `ggt-integration-tests` Gadget app on the `development` environment
+
+**Local setup:**
+
+Add the token to your `.envrc.local` (git-ignored):
+
+```bash
+export INTEGRATION_TEST_TOKEN=<your-token>
+```
+
+**Running:**
+
+```bash
+pnpm run build && pnpm test:integration
+```
+
+When `INTEGRATION_TEST_TOKEN` is not set, all integration tests are skipped gracefully (not failed).
+
 ## Linting
 
 ```bash

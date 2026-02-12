@@ -11,8 +11,12 @@ import type {
   CreateModelMutationVariables,
   CreateRouteMutation,
   CreateRouteMutationVariables,
+  DeleteEnvironmentVariableMutation,
+  DeleteEnvironmentVariableMutationVariables,
   EnvironmentLogsSubscription,
   EnvironmentLogsSubscriptionVariables,
+  EnvironmentVariablesQuery,
+  EnvironmentVariablesQueryVariables,
   FileSyncComparisonHashesQuery,
   FileSyncComparisonHashesQueryVariables,
   FileSyncFilesQuery,
@@ -29,6 +33,8 @@ import type {
   RemoteFilesVersionQueryVariables,
   RemoteFileSyncEventsSubscription,
   RemoteFileSyncEventsSubscriptionVariables,
+  SetEnvironmentVariableMutation,
+  SetEnvironmentVariableMutationVariables,
   UnpauseEnvironmentMutation,
   UnpauseEnvironmentMutationVariables,
 } from "../../../__generated__/graphql.js";
@@ -319,3 +325,35 @@ export const PUBLISH_ISSUES_QUERY = sprint(/* GraphQL */ `
 `) as GraphQLQuery<PublishIssuesQuery, PublishIssuesQueryVariables>;
 
 export type PUBLISH_ISSUES_QUERY = typeof PUBLISH_ISSUES_QUERY;
+
+export const ENVIRONMENT_VARIABLES_QUERY = sprint(/* GraphQL */ `
+  query EnvironmentVariables {
+    environmentVariables {
+      key
+      value
+      isSecret
+    }
+  }
+`) as GraphQLQuery<EnvironmentVariablesQuery, EnvironmentVariablesQueryVariables>;
+
+export type ENVIRONMENT_VARIABLES_QUERY = typeof ENVIRONMENT_VARIABLES_QUERY;
+
+export const SET_ENVIRONMENT_VARIABLE_MUTATION = sprint(/* GraphQL */ `
+  mutation SetEnvironmentVariable($input: SetEnvironmentVariableInput!) {
+    setEnvironmentVariable(input: $input) {
+      remoteFilesVersion
+    }
+  }
+`) as GraphQLMutation<SetEnvironmentVariableMutation, SetEnvironmentVariableMutationVariables>;
+
+export type SET_ENVIRONMENT_VARIABLE_MUTATION = typeof SET_ENVIRONMENT_VARIABLE_MUTATION;
+
+export const DELETE_ENVIRONMENT_VARIABLE_MUTATION = sprint(/* GraphQL */ `
+  mutation DeleteEnvironmentVariable($key: String!) {
+    deleteEnvironmentVariable(key: $key) {
+      remoteFilesVersion
+    }
+  }
+`) as GraphQLMutation<DeleteEnvironmentVariableMutation, DeleteEnvironmentVariableMutationVariables>;
+
+export type DELETE_ENVIRONMENT_VARIABLE_MUTATION = typeof DELETE_ENVIRONMENT_VARIABLE_MUTATION;

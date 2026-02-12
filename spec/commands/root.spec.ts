@@ -69,6 +69,7 @@ describe("root", () => {
         status           Show your local and environment's file changes
         push             Push your local files to your environment
         pull             Pull your environment's files to your local computer
+        var              Manage environment variables
         add              Add models, fields, actions, routes and environments to your app
         open             Open a Gadget location in your browser
         list             List your available applications
@@ -101,11 +102,20 @@ describe("root", () => {
     expectStdout().toMatchInlineSnapshot(`
       "Unknown command foobar
 
-      Did you mean open?
+      Did you mean var?
 
       Run ggt --help for usage
       "
     `);
+  });
+
+  it("resolves 'envs' alias to the var command", async () => {
+    const cmd = await importCommand("var");
+    mock(cmd, "run", noop);
+
+    await root.run(testCtx, makeRootArgs("envs"));
+
+    expect(cmd.run).toHaveBeenCalled();
   });
 
   describe.each(command.Commands)("when %s is given", (name) => {

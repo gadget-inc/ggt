@@ -120,7 +120,7 @@ export class AppIdentity {
   }
 }
 
-const AllowedProdCommands = ["pull", "logs", "eval"] as Command[];
+const AllowedProdCommands = ["pull", "logs", "eval", "var"] as Command[];
 
 // ensure the selected app is valid
 const loadApplication = async ({

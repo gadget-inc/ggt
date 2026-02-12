@@ -702,6 +702,48 @@ Usage
 "
 `;
 
+exports[`root > when var is given > prints the usage when --help is passed 1`] = `
+"Manage environment variables for your Gadget application.
+
+Usage
+  ggt var <command> [options]
+
+Commands
+  list             List all environment variables
+  get <key>        Get the value of an environment variable
+  set <key=value>  Set one or more environment variables
+  delete <key>     Delete one or more environment variables
+  import           Import environment variables from another environment or file
+
+Options
+  -a, --app <app_name>   Selects the application
+  -e, --env <env_name>   Selects the environment
+
+Run "ggt var <command> -h" for more information about a specific command.
+"
+`;
+
+exports[`root > when var is given > prints the usage when -h is passed 1`] = `
+"Manage environment variables for your Gadget application.
+
+Usage
+  ggt var <command> [options]
+
+Commands
+  list             List all environment variables
+  get <key>        Get the value of an environment variable
+  set <key=value>  Set one or more environment variables
+  delete <key>     Delete one or more environment variables
+  import           Import environment variables from another environment or file
+
+Options
+  -a, --app <app_name>   Selects the application
+  -e, --env <env_name>   Selects the environment
+
+Run "ggt var <command> -h" for more information about a specific command.
+"
+`;
+
 exports[`root > when version is given > prints the usage when --help is passed 1`] = `
 "Print this version of ggt.
 

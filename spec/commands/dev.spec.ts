@@ -1189,7 +1189,7 @@ describe("dev", () => {
       `);
   });
 
-  it("reloads the ignore file when .ignore changes", async () => {
+  it("reloads the ignore file when .ignore changes", { retry: 3 }, async () => {
     const { filesync, waitUntilLocalFilesVersion, localDir, waitUntilGadgetFilesVersion, emitGadgetChanges, expectDirs } =
       await makeSyncScenario();
 

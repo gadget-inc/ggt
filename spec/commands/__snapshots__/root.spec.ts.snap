@@ -350,6 +350,52 @@ Examples
 "
 `;
 
+exports[`root > when eval is given > prints the usage when --help is passed 1`] = `
+"Evaluates a JavaScript snippet against a Gadget app's API client.
+
+The snippet receives an api variable (a pre-constructed Gadget API client
+authenticated as the developer). Results are formatted like Node.js REPL output.
+Writes are disallowed by default; use --allow-writes to enable them.
+
+Usage
+      $ ggt eval [options] <snippet>
+
+Options
+      -a, --app <app_name>         Selects a specific app. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>         Selects a specific environment. Defaults to the environment synced to the current directory, if there is one.
+      -w, --allow-writes           Allow write operations (default is read-only)
+          --json                   Output result as JSON instead of Node.js inspect format (root flag)
+
+Examples
+      $ ggt eval 'api.user.findMany()'
+      $ ggt eval --app my-app --env staging 'api.user.findFirst()'
+      $ ggt eval -a my-app -w 'api.user.delete("123")'
+"
+`;
+
+exports[`root > when eval is given > prints the usage when -h is passed 1`] = `
+"Evaluates a JavaScript snippet against a Gadget app's API client.
+
+The snippet receives an api variable (a pre-constructed Gadget API client
+authenticated as the developer). Results are formatted like Node.js REPL output.
+Writes are disallowed by default; use --allow-writes to enable them.
+
+Usage
+      $ ggt eval [options] <snippet>
+
+Options
+      -a, --app <app_name>         Selects a specific app. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>         Selects a specific environment. Defaults to the environment synced to the current directory, if there is one.
+      -w, --allow-writes           Allow write operations (default is read-only)
+          --json                   Output result as JSON instead of Node.js inspect format (root flag)
+
+Examples
+      $ ggt eval 'api.user.findMany()'
+      $ ggt eval --app my-app --env staging 'api.user.findFirst()'
+      $ ggt eval -a my-app -w 'api.user.delete("123")'
+"
+`;
+
 exports[`root > when list is given > prints the usage when --help is passed 1`] = `
 "List the apps available to the currently logged-in user.
 

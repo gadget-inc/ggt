@@ -29,6 +29,8 @@ import type {
   RemoteFilesVersionQueryVariables,
   RemoteFileSyncEventsSubscription,
   RemoteFileSyncEventsSubscriptionVariables,
+  UnpauseEnvironmentMutation,
+  UnpauseEnvironmentMutationVariables,
 } from "../../../__generated__/graphql.js";
 
 import { sprint } from "../../output/sprint.js";
@@ -282,6 +284,17 @@ export const CREATE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
 `) as GraphQLMutation<CreateEnvironmentMutation, CreateEnvironmentMutationVariables>;
 
 export type CREATE_ENVIRONMENT_MUTATION = typeof CREATE_ENVIRONMENT_MUTATION;
+
+export const UNPAUSE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
+  mutation UnpauseEnvironment {
+    unpauseEnvironment {
+      success
+      alreadyActive
+    }
+  }
+`) as GraphQLMutation<UnpauseEnvironmentMutation, UnpauseEnvironmentMutationVariables>;
+
+export type UNPAUSE_ENVIRONMENT_MUTATION = typeof UNPAUSE_ENVIRONMENT_MUTATION;
 
 export const PUBLISH_ISSUES_QUERY = sprint(/* GraphQL */ `
   query PublishIssues {

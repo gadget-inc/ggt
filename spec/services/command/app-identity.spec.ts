@@ -382,7 +382,7 @@ describe("AppIdentity.load", () => {
   });
 
   describe("production environment access", () => {
-    const AllowedProdCommands = ["pull", "logs"] as const;
+    const AllowedProdCommands = ["pull", "logs", "eval"] as const;
 
     it.each(Commands.filter((x) => !AllowedProdCommands.includes(x as any)))(
       'does not allow --env=production when the command is "%s"',

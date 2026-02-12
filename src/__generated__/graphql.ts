@@ -1651,6 +1651,11 @@ export type CreateEnvironmentMutationVariables = Exact<{
 
 export type CreateEnvironmentMutation = { __typename?: 'Mutation', createEnvironment: { __typename?: 'Environment', slug: string, status: EnvironmentStatus } };
 
+export type UnpauseEnvironmentMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UnpauseEnvironmentMutation = { __typename?: 'Mutation', unpauseEnvironment: { __typename?: 'UnpauseEnvironmentResult', success: boolean, alreadyActive: boolean } };
+
 export type PublishIssuesQueryVariables = Exact<{ [key: string]: never; }>;
 
 

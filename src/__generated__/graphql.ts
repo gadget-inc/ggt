@@ -1178,6 +1178,7 @@ export type PublishFileSyncEventsInput = {
   changed: Array<FileSyncChangedEventInput>;
   deleted: Array<FileSyncDeletedEventInput>;
   expectedRemoteFilesVersion: Scalars['String']['input'];
+  triggerUserEdit?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type PublishFileSyncEventsResult = {

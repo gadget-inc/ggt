@@ -502,6 +502,7 @@ export class FileSync {
           changes: localChangesToPush,
           expectedFilesVersion: environmentFilesVersion,
           printLocalChangesOptions,
+          triggerUserEdit: true,
         });
         return;
       } catch (error) {
@@ -804,10 +805,12 @@ export class FileSync {
       changes,
       expectedFilesVersion = this.syncJson.filesVersion,
       printLocalChangesOptions,
+      triggerUserEdit,
     }: {
       changes: Changes | ChangesWithHash;
       expectedFilesVersion?: bigint;
       printLocalChangesOptions?: Partial<PrintChangesOptions>;
+      triggerUserEdit?: boolean;
     },
   ): Promise<void> {
     ctx.log.debug("sending changes to gadget", { expectedFilesVersion, changes });
@@ -885,6 +888,7 @@ export class FileSync {
             expectedRemoteFilesVersion: String(expectedFilesVersion),
             changed,
             deleted,
+            triggerUserEdit,
           },
         },
         http: {

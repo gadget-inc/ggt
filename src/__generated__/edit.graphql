@@ -402,6 +402,7 @@ input PublishFileSyncEventsInput {
   changed: [FileSyncChangedEventInput!]!
   deleted: [FileSyncDeletedEventInput!]!
   expectedRemoteFilesVersion: String!
+  triggerUserEdit: Boolean
 }
 
 type PublishFileSyncEventsResult {

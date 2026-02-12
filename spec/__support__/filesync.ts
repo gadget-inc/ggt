@@ -16,6 +16,7 @@ import {
   type FileSyncChangedEventInput,
   type FileSyncDeletedEventInput,
   type MutationPublishFileSyncEventsArgs,
+  type PublishFileSyncEventsInput,
 } from "../../src/__generated__/graphql.js";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
@@ -84,13 +85,13 @@ export type FileSyncScenarioOptions = {
    * A function to run before we update Gadget files from a
    * {@linkcode PUBLISH_FILE_SYNC_EVENTS_MUTATION}.
    */
-  beforePublishFileSyncEvents?: () => Promisable<void>;
+  beforePublishFileSyncEvents?: (input: PublishFileSyncEventsInput) => Promisable<void>;
 
   /**
    * A function to run after we update Gadget files from a
    * {@linkcode PUBLISH_FILE_SYNC_EVENTS_MUTATION}.
    */
-  afterPublishFileSyncEvents?: () => Promisable<void>;
+  afterPublishFileSyncEvents?: (input: PublishFileSyncEventsInput) => Promisable<void>;
 };
 
 export type SyncScenario = {
@@ -403,9 +404,11 @@ export const makeSyncScenario = async ({
           }),
         ),
         deleted: z.array(z.object({ path: z.string() })),
+        triggerUserEdit: z.boolean().optional(),
       }),
     }),
-    response: async ({ input: { expectedRemoteFilesVersion, changed, deleted } }) => {
+    response: async ({ input }) => {
+      const { expectedRemoteFilesVersion, changed, deleted } = input;
       log.trace("mocking publish filesync events result", { expectedRemoteFilesVersion, changed, deleted });
 
       assert(expectedRemoteFilesVersion === String(environmentFilesVersion), "Files version mismatch");
@@ -414,9 +417,9 @@ export const makeSyncScenario = async ({
         "changed and deleted files must not overlap",
       );
 
-      await beforePublishFileSyncEvents?.();
+      await beforePublishFileSyncEvents?.(input);
       await changeGadgetFiles({ change: changed, delete: deleted });
-      await afterPublishFileSyncEvents?.();
+      await afterPublishFileSyncEvents?.(input);
 
       return {
         data: {
@@ -598,6 +601,7 @@ export const expectPublishVariables = (expected: MutationPublishFileSyncEventsAr
           }),
         ),
         deleted: z.array(z.strictObject({ path: z.string() })),
+        triggerUserEdit: z.boolean().optional(),
       }),
     })
     .refine((actual) => {

@@ -1,6 +1,8 @@
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import type { PublishFileSyncEventsInput } from "../../src/__generated__/graphql.js";
+
 import * as push from "../../src/commands/push.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
@@ -312,5 +314,27 @@ describe("push", () => {
       `);
 
     await expect(expectLocalAndGadgetHashesMatch()).rejects.toThrowError();
+  });
+
+  it("sends triggerUserEdit: true to update the app's last edit timestamp", async () => {
+    let capturedInput: PublishFileSyncEventsInput | undefined;
+
+    const { localDir } = await makeSyncScenario({
+      localFiles: {
+        ".gadget/": "",
+      },
+      beforePublishFileSyncEvents: (input) => {
+        capturedInput = input;
+      },
+    });
+
+    // add a file to push
+    await fs.outputFile(localDir.absolute("test-file.js"), "// test");
+
+    await push.run(testCtx, makeArgs(push.args));
+
+    // verify that triggerUserEdit was set to true
+    expect(capturedInput).toBeDefined();
+    expect(capturedInput!.triggerUserEdit).toBe(true);
   });
 });

@@ -71,7 +71,8 @@ export const usage: Usage = () => {
     ggt add field <model_path>/<field_name>:<field_type>
 
   {gray Options}
-    -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
+    -a, --app <app_name> Selects the app to add to. Defaults to the app synced to the current directory, if there is one.
+    -e, --env <env_name> Selects the environment to add to. Defaults to the environment synced to the current directory, if there is one.
 
   {gray Examples}
     Add a new model 'post' with out fields:

@@ -17,6 +17,7 @@ import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
 import { maybePromptAgentsMd, maybePromptGadgetSkills } from "../services/output/agent-plugin.js";
 import { footer } from "../services/output/footer.js";
 import { LoggingArgs } from "../services/output/log/structured.js";
@@ -62,11 +63,11 @@ export const usage: Usage = (_ctx) => {
         DIRECTORY: The directory to sync files to (default: the current directory)
 
   {gray Options}
-        -a, --app <app_name>        Selects the app to sync files with. Default set on ".gadget/sync.json"
-        -e, --env <env_name>        Selects the environment to sync files with. Default set on ".gadget/sync.json"
+        -a, --app <app_name>        Selects the app to sync files with. Defaults to the app synced to the current directory, if there is one.
+        -e, --env <env_name>        Selects the environment to sync files with. Defaults to the environment synced to the current directory, if there is one.
         --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
-        --allow-unknown-directory   Syncs to any local directory with existing files, even if the ".gadget/sync.json" file is missing
-        --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
+        --allow-unknown-directory   Syncs to any local directory with existing files, even if the directory hasn't been synced before
+        --allow-different-app       Syncs with a different app using the --app command, instead of the most recently synced one in the current directory
         --log-level <level>         Sets the log level for incoming application logs (default: info)
         --no-logs                   Disables outputting application logs to the console
         --my-logs                   Only outputs user sourced logs
@@ -108,7 +109,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   ctx.onAbort(async () => {
     await releaseDevLock(directory);
   });
-  const syncJson = await SyncJson.loadOrInit(ctx, { command: "dev", args, directory });
+  const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "dev", args, directory });
   await maybePromptAgentsMd({ ctx, directory: syncJson.directory });
   await maybePromptGadgetSkills({ ctx, directory: syncJson.directory });
   footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });
@@ -233,7 +234,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   let logsSubscription: EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> | undefined;
 
   if (!args["--no-logs"]) {
-    logsSubscription = filesync.subscribeToEnvironmentLogs(args, {
+    logsSubscription = subscribeToEnvironmentLogs(syncJson.edit, args, {
       onError: (error) => {
         ctx.abort(error);
       },

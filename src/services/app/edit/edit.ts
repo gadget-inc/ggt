@@ -20,6 +20,11 @@ export class Edit {
   readonly ctx: Context;
 
   /**
+   * The environment this edit is associated with.
+   */
+  readonly environment: Environment;
+
+  /**
    * The client used to make requests to Gadget's /edit/api/graphql
    * endpoint.
    */
@@ -27,6 +32,7 @@ export class Edit {
 
   constructor(ctx: Context, environment: Environment) {
     this.ctx = ctx.child({ name: "edit" });
+    this.environment = environment;
     this.#client = new Client(this.ctx, environment, "/edit/api/graphql");
   }
 

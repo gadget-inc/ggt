@@ -3,9 +3,9 @@ import open from "open";
 import type { Run, Usage } from "../services/command/command.js";
 
 import { getModels } from "../services/app/app.js";
+import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError } from "../services/command/arg.js";
-import { UnknownDirectoryError } from "../services/filesync/error.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { println } from "../services/output/print.js";
 import { select } from "../services/output/select.js";
 import { sprint } from "../services/output/sprint.js";
@@ -15,7 +15,7 @@ import { isNever } from "../services/util/is.js";
 export type OpenArgs = typeof args;
 
 export const args = {
-  ...SyncJsonArgs,
+  ...AppIdentityArgs,
   "--show-all": { type: Boolean },
 };
 
@@ -36,8 +36,8 @@ export const usage: Usage = (_ctx) => {
         + schema              Opens schema editor for a specific model
 
   {gray Options}
-        -a, --app <app_name>   Selects the application to open in your browser. Default set on ".gadget/sync.json"
-        -e, --env <env_name>   Selects the environment to open in your browser. Default set on ".gadget/sync.json"
+        -a, --app <app_name>   Selects the application to open in your browser. Defaults to the app synced to the current directory, if there is one.
+        -e, --env <env_name>   Selects the environment to open in your browser. Defaults to the environment synced to the current directory, if there is one.
         --show-all             Shows all schema, or data options by listing your available models
 
   {gray Examples}
@@ -69,16 +69,13 @@ export const usage: Usage = (_ctx) => {
 
 export const run: Run<OpenArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { command: "open", args, directory });
-  if (!syncJson) {
-    throw new UnknownDirectoryError({ command: "open", args, directory });
-  }
+  const appIdentity = await AppIdentity.load(ctx, { command: "open", args, directory });
 
   const location = args._[0] as Location | undefined;
   if (!location) {
-    await open(`https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}`);
+    await open(`https://${appIdentity.environment.application.primaryDomain}/edit/${appIdentity.environment.name}`);
     println`
-      Opened editor for environment {cyanBright ${syncJson.environment.name}}.
+      Opened editor for environment {cyanBright ${appIdentity.environment.name}}.
     `;
     return;
   }
@@ -96,23 +93,23 @@ export const run: Run<OpenArgs> = async (ctx, args) => {
 
   switch (location) {
     case "logs": {
-      await open(`https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}/logs`);
+      await open(`https://${appIdentity.environment.application.primaryDomain}/edit/${appIdentity.environment.name}/logs`);
       println`
-        Opened log viewer for environment {cyanBright ${syncJson.environment.name}}.
+        Opened log viewer for environment {cyanBright ${appIdentity.environment.name}}.
       `;
       break;
     }
     case "permissions": {
-      await open(`https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}/settings/permissions`);
+      await open(`https://${appIdentity.environment.application.primaryDomain}/edit/${appIdentity.environment.name}/settings/permissions`);
       println`
-        Opened permissions settings for environment {cyanBright ${syncJson.environment.name}}.
+        Opened permissions settings for environment {cyanBright ${appIdentity.environment.name}}.
       `;
       break;
     }
     case "data":
     case "schema": {
       const view = args._[0];
-      const remoteModelApiIdentifiers = (await getModels(ctx, syncJson.environment)).map((e) => e.apiIdentifier);
+      const remoteModelApiIdentifiers = (await getModels(ctx, appIdentity.environment)).map((e) => e.apiIdentifier);
 
       let modelApiIdentifier = args._[1];
       if (!modelApiIdentifier) {
@@ -143,10 +140,10 @@ export const run: Run<OpenArgs> = async (ctx, args) => {
       }
 
       await open(
-        `https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}/model/${modelApiIdentifier}/${view}`,
+        `https://${appIdentity.environment.application.primaryDomain}/edit/${appIdentity.environment.name}/model/${modelApiIdentifier}/${view}`,
       );
       println`
-        Opened ${view} viewer for environment {cyanBright ${syncJson.environment.name}} for model {cyanBright ${modelApiIdentifier}}.
+        Opened ${view} viewer for environment {cyanBright ${appIdentity.environment.name}} for model {cyanBright ${modelApiIdentifier}}.
       `;
       break;
     }

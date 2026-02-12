@@ -15,6 +15,7 @@ import { symbol } from "./symbols.js";
 type BaseSelectOptions<Choice extends string> = SprintOptionsWithContent & {
   formatChoice?: (choice: Choice) => string;
   formatSelection?: (choice: Choice) => string;
+  searchable?: boolean;
 };
 
 type FlatChoices<Choice extends string> = {
@@ -79,13 +80,18 @@ export const select = <Choice extends string>(options: SelectOptions<Choice>): P
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// TODO: implement autocomplete https://github.com/terkelg/prompts/blob/e0519913ec4fcc6746bb3d97d8cd0960c3f3ffde/lib/elements/autocomplete.js
 class Select<Choice extends string> extends Prompt {
   cursor = 0;
   optionsPerPage = 10;
   options;
   currentChoices: Choice[];
   groupedChoicesTitleIndexMap = new Map<number, string>();
+
+  // search state
+  searchable: boolean;
+  input = "";
+  allChoices: Choice[];
+  allGroupedChoices?: [string, Choice[]][];
 
   constructor(options: SelectOptions<Choice>) {
     super();
@@ -96,28 +102,65 @@ class Select<Choice extends string> extends Prompt {
       ...options,
     });
 
+    this.searchable = this.options.searchable ?? false;
+
     if (this.options.choices) {
       this.currentChoices = this.options.choices;
+      this.allChoices = [...this.options.choices];
     } else {
       this.currentChoices = this.options.groupedChoices.flatMap(([_, choices]) => choices);
-
-      let currentIndex = 0;
-      this.options.groupedChoices.forEach((group) => {
-        const [title, choices] = group;
-
-        choices.forEach((_, index) => {
-          if (index === 0) {
-            this.groupedChoicesTitleIndexMap.set(currentIndex, title);
-          }
-          currentIndex++;
-        });
-      });
+      this.allChoices = [...this.currentChoices];
+      this.allGroupedChoices = this.options.groupedChoices;
+      this.rebuildGroupTitleIndexMap();
     }
 
-    // if (this.options.ensureEmptyLineAbove) {
-    //   this.text = "\n" + this.text;
-    // }
+    this.render();
+  }
 
+  private rebuildGroupTitleIndexMap(): void {
+    this.groupedChoicesTitleIndexMap.clear();
+
+    if (!this.allGroupedChoices) {
+      return;
+    }
+
+    // build the map from the current filtered choices
+    const query = this.input.toLowerCase();
+    let currentIndex = 0;
+
+    for (const [title, choices] of this.allGroupedChoices) {
+      const filtered = query ? choices.filter((c) => c.toLowerCase().includes(query)) : choices;
+
+      for (let i = 0; i < filtered.length; i++) {
+        if (i === 0) {
+          this.groupedChoicesTitleIndexMap.set(currentIndex, title);
+        }
+        currentIndex++;
+      }
+    }
+  }
+
+  private refilter(): void {
+    const query = this.input.toLowerCase();
+
+    if (this.allGroupedChoices) {
+      if (query) {
+        this.currentChoices = this.allGroupedChoices.flatMap(([_, choices]) =>
+          choices.filter((c) => c.toLowerCase().includes(query)),
+        ) as Choice[];
+      } else {
+        this.currentChoices = this.allGroupedChoices.flatMap(([_, choices]) => choices) as Choice[];
+      }
+      this.rebuildGroupTitleIndexMap();
+    } else {
+      if (query) {
+        this.currentChoices = this.allChoices.filter((c) => c.toLowerCase().includes(query));
+      } else {
+        this.currentChoices = [...this.allChoices];
+      }
+    }
+
+    this.cursor = 0;
     this.render();
   }
 
@@ -139,7 +182,12 @@ class Select<Choice extends string> extends Prompt {
   }
 
   exit(): void {
-    this.abort();
+    if (this.searchable && this.input.length > 0) {
+      this.input = "";
+      this.refilter();
+      return;
+    }
+    this.bell();
   }
 
   abort(): void {
@@ -150,6 +198,10 @@ class Select<Choice extends string> extends Prompt {
   }
 
   submit(): void {
+    if (this.currentChoices.length === 0) {
+      this.bell();
+      return;
+    }
     this.done = true;
     this.aborted = false;
     this.value = this.selection;
@@ -158,17 +210,35 @@ class Select<Choice extends string> extends Prompt {
     this.close();
   }
 
+  delete(): void {
+    if (!this.searchable || this.input.length === 0) {
+      this.bell();
+      return;
+    }
+    this.input = this.input.slice(0, -1);
+    this.refilter();
+  }
+
   first(): void {
+    if (this.currentChoices.length === 0) {
+      return;
+    }
     this.moveCursor(0);
     this.render();
   }
 
   last(): void {
+    if (this.currentChoices.length === 0) {
+      return;
+    }
     this.moveCursor(this.currentChoices.length - 1);
     this.render();
   }
 
   up(): void {
+    if (this.currentChoices.length === 0) {
+      return;
+    }
     if (this.cursor === 0) {
       this.moveCursor(this.currentChoices.length - 1);
     } else {
@@ -178,6 +248,9 @@ class Select<Choice extends string> extends Prompt {
   }
 
   down(): void {
+    if (this.currentChoices.length === 0) {
+      return;
+    }
     if (this.cursor === this.currentChoices.length - 1) {
       this.moveCursor(0);
     } else {
@@ -187,11 +260,24 @@ class Select<Choice extends string> extends Prompt {
   }
 
   next(): void {
+    if (this.currentChoices.length === 0) {
+      return;
+    }
     this.moveCursor((this.cursor + 1) % this.currentChoices.length);
     this.render();
   }
 
   override _(char: string, _key: StdinKey): void {
+    if (this.searchable && char) {
+      if (char === " " && this.input.length === 0) {
+        this.submit();
+        return;
+      }
+      this.input += char;
+      this.refilter();
+      return;
+    }
+
     if (char === " ") {
       this.submit();
       return;
@@ -216,7 +302,21 @@ class Select<Choice extends string> extends Prompt {
       return;
     }
 
-    question += ` ${chalk.gray("Use arrow keys to move")}\n\n`;
+    if (this.searchable) {
+      question += ` ${chalk.gray("Type to filter, arrow keys to move")}\n`;
+      question += `${chalk.gray(">")} ${this.input}\n\n`;
+    } else {
+      question += ` ${chalk.gray("Use arrow keys to move")}\n\n`;
+    }
+
+    if (this.currentChoices.length === 0) {
+      let noMatches = chalk.gray("No matches found") + "\n";
+      if (this.options.indent) {
+        noMatches = indentString(noMatches, this.options.indent);
+      }
+      output.updatePrompt(question + noMatches);
+      return;
+    }
 
     let choices = "";
     const { startIndex, endIndex } = entriesToDisplay(this.cursor, this.currentChoices.length, this.optionsPerPage);

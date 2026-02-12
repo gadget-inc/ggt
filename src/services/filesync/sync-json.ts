@@ -411,6 +411,7 @@ const loadApplication = async ({
 
     appSlug = await select({
       groupedChoices,
+      searchable: true,
       content: "Which application do you want to develop?",
     });
   }

@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import nock from "nock";
 import path from "node:path";
 import { waitUntilUsed } from "tcp-port-used";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
 
 import * as debuggerCommand from "../../src/commands/debugger.js";
@@ -521,21 +521,12 @@ describe("debugger", () => {
       clientWs.send(Buffer.from([1, 2, 3]), { binary: true });
 
       // Wait until remote has received both messages
-      await new Promise<void>((resolve, reject) => {
-        const start = Date.now();
-        const check = (): void => {
-          if (remoteReceivedIsBinary.length >= 2) {
-            resolve();
-            return;
-          }
-          if (Date.now() - start > 5000) {
-            reject(new Error("timeout waiting for remote messages"));
-            return;
-          }
-          setTimeout(check, 25);
-        };
-        check();
-      });
+      await vi.waitFor(
+        () => {
+          expect(remoteReceivedIsBinary.length).toBeGreaterThanOrEqual(2);
+        },
+        { timeout: 5000, interval: 25 },
+      );
 
       expect(remoteReceivedIsBinary).toEqual([false, true]);
 

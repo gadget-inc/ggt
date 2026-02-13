@@ -3,7 +3,6 @@ import type { Promisable } from "type-fest";
 import fs from "fs-extra";
 import os from "node:os";
 import pMap from "p-map";
-import pTimeout from "p-timeout";
 import { assert, expect, vi, type Assertion } from "vitest";
 import { z, type ZodSchema } from "zod";
 
@@ -32,7 +31,6 @@ import { SyncJson, SyncJsonArgs, type SyncJsonArgsResult, type SyncJsonState } f
 import { noop } from "../../src/services/util/function.js";
 import { isNil } from "../../src/services/util/is.js";
 import { defaults } from "../../src/services/util/object.js";
-import { PromiseSignal } from "../../src/services/util/promise.js";
 import { testApp, testEnvironment } from "./app.js";
 import { makeArgs } from "./arg.js";
 import { testCtx } from "./context.js";
@@ -457,21 +455,14 @@ export const makeSyncScenario = async ({
 
     waitUntilGadgetFilesVersion: async (filesVersion) => {
       log.trace("waiting for gadget files version", { filesVersion });
-      const signal = new PromiseSignal();
 
-      const interval = setInterval(() => {
-        log.trace("checking gadget files version", { filesVersion });
-        if (filesVersionDirs.has(filesVersion)) {
-          log.trace("signaling gadget files version", { filesVersion });
-          signal.resolve();
-          clearInterval(interval);
-        }
-      }, 100);
-
-      await pTimeout(signal, {
-        message: `Timed out waiting for gadget files version to become ${filesVersion}`,
-        milliseconds: timeoutMs("5s"),
-      });
+      await vi.waitFor(
+        () => {
+          log.trace("checking gadget files version", { filesVersion });
+          expect(filesVersionDirs.has(filesVersion)).toBe(true);
+        },
+        { timeout: timeoutMs("5s"), interval: 100 },
+      );
     },
 
     emitGadgetChanges: async (changes) => {

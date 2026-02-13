@@ -49,9 +49,11 @@ export const createTestDirs = (name: string): TestDirs => {
 
 /**
  * Removes the test directory tree.
+ * Uses maxRetries to handle transient EBUSY/EPERM errors on Windows
+ * when file handles haven't fully released after a subprocess exits.
  */
 export const cleanupTestDirs = (dirs: TestDirs): void => {
-  fs.rmSync(dirs.root, { recursive: true, force: true });
+  fs.rmSync(dirs.root, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 });
 };
 
 /** Environment variables set for all ggt subprocess spawns. */

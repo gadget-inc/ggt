@@ -108,7 +108,13 @@ describe.skipIf(!hasIntegrationToken())("integration", () => {
           expect(fs.existsSync(pulledFile), `Expected ${pulledFile} to exist after pull`).toBe(true);
           expect(fs.readFileSync(pulledFile, "utf-8")).toBe(testFileContent);
         } finally {
-          cleanupTestDirs(pullDirs);
+          try {
+            cleanupTestDirs(pullDirs);
+          } catch {
+            // Ignore cleanup errors in the polling loop — on Windows, file handles
+            // may linger briefly after the ggt subprocess exits (EBUSY).
+            // The tmp directory will be cleaned up on the next test run.
+          }
         }
       },
       { timeout: 60_000, interval: 3_000 },

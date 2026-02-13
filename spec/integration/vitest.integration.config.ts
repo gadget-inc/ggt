@@ -8,5 +8,6 @@ export default defineConfig({
     fileParallelism: false,
     watch: false,
     hideSkippedTests: true,
+    retry: 1,
   },
 });

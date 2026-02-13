@@ -1,4 +1,4 @@
-import { beforeEach, describe, it } from "vitest";
+import { beforeEach, describe, it, vi } from "vitest";
 
 import * as logs from "../../src/commands/logs.js";
 import { ENVIRONMENT_LOGS_SUBSCRIPTION, type GraphQLSubscription } from "../../src/services/app/edit/operation.js";
@@ -9,6 +9,7 @@ import { withEnv } from "../__support__/env.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { makeMockEditSubscriptions, type MockEditSubscriptions } from "../__support__/graphql.js";
 import { expectStdout, mockStdout } from "../__support__/output.js";
+import { timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("logs", () => {
@@ -20,14 +21,10 @@ describe("logs", () => {
     mockEditGraphQL: MockEditSubscriptions,
     subscription: GraphQLSubscription,
   ): Promise<ReturnType<MockEditSubscriptions["expectSubscription"]>> => {
-    for (let i = 0; i < 50; i++) {
-      try {
-        return mockEditGraphQL.expectSubscription(subscription);
-      } catch {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-      }
-    }
-    throw new Error("Subscription was not registered in time");
+    return vi.waitFor(() => mockEditGraphQL.expectSubscription(subscription), {
+      timeout: timeoutMs("5s"),
+      interval: 10,
+    });
   };
 
   beforeEach(() => {

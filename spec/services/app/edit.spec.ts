@@ -2,7 +2,7 @@ import type { CloseEvent, ErrorEvent } from "ws";
 
 import { GraphQLError } from "graphql";
 import nock from "nock";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Client } from "../../../src/services/app/client.js";
 import { Edit } from "../../../src/services/app/edit/edit.js";
@@ -134,6 +134,10 @@ describe("Edit.subscribe retry", () => {
   beforeEach(() => {
     loginTestUser();
     vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("retries on transient GraphQL errors", async () => {

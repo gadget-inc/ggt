@@ -1,11 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { debounce, memo } from "../../../src/services/util/function.js";
 
 describe("debounce", () => {
-  it("calls the function after the specified delay", () => {
+  beforeEach(() => {
     vi.useFakeTimers();
+  });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("calls the function after the specified delay", () => {
     const delayMS = 1000;
     const fn = vi.fn();
     const debouncedFunction = debounce(delayMS, fn);
@@ -22,8 +28,6 @@ describe("debounce", () => {
   });
 
   it("immediately calls the function if flush is called", () => {
-    vi.useFakeTimers();
-
     const delayMS = 1000;
     const fn = vi.fn();
     const debouncedFunction = debounce(delayMS, fn);
@@ -37,8 +41,6 @@ describe("debounce", () => {
   });
 
   it("doesn't call the function when flush is called if the function hasn't been called yet", () => {
-    vi.useFakeTimers();
-
     const delayMS = 1000;
     const mockFunction = vi.fn();
     const debouncedFunction = debounce(delayMS, mockFunction);

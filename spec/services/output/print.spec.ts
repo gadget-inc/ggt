@@ -8,8 +8,7 @@ import { expectStdout } from "../../__support__/output.js";
 
 describe("print", () => {
   it("prints to stdout", () => {
-    // oxlint-disable-next-line no-confusing-void-expression
-    const result: void = print("Hello, world!");
+    const result: unknown = print("Hello, world!");
     expectStdout().toMatchInlineSnapshot('"Hello, world!"');
     expect(result).toBeUndefined();
   });

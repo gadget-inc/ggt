@@ -1,7 +1,10 @@
 import { execa, type ResultPromise } from "execa";
+import fs from "fs-extra";
 import { randomUUID } from "node:crypto";
-import fs from "node:fs";
 import path from "node:path";
+import { vi } from "vitest";
+
+import { workspacePath } from "../../src/services/util/paths.js";
 
 /**
  * Check if the integration test token is available.
@@ -11,11 +14,17 @@ export const hasIntegrationToken = (): boolean => {
   return !!process.env["INTEGRATION_TEST_TOKEN"];
 };
 
-/** Absolute path to the workspace root (repo root). */
-export const WORKSPACE_ROOT = path.resolve(import.meta.dirname, "../..");
-
 /** Absolute path to the built CLI entry point. */
-export const GGT_MAIN_JS = path.join(WORKSPACE_ROOT, "dist/main.js");
+export const GGT_MAIN_JS = workspacePath("dist/main.js");
+
+/** The Gadget app used by integration tests. */
+export const TEST_APP = "ggt-integration-tests";
+
+/** The Gadget environment used by integration tests. */
+export const TEST_ENV = "development";
+
+/** A file known to exist in the remote test app. */
+export const KNOWN_REMOTE_FILE = "A_REMOTE_FILE_THAT_EXISTS.txt";
 
 export type TestDirs = {
   root: string;
@@ -29,8 +38,8 @@ export type TestDirs = {
  * Creates an isolated set of directories for an integration test run.
  * Returns paths for config, cache, data, and app directories.
  */
-export const createTestDirs = (name: string): TestDirs => {
-  const root = path.join(WORKSPACE_ROOT, "tmp/integration", `${name}-${randomUUID().slice(0, 8)}`);
+export const createTestDirs = async (name: string): Promise<TestDirs> => {
+  const root = workspacePath("tmp/integration", `${name}-${randomUUID().slice(0, 8)}`);
   const dirs: TestDirs = {
     root,
     config: path.join(root, "config"),
@@ -39,10 +48,7 @@ export const createTestDirs = (name: string): TestDirs => {
     app: path.join(root, "app"),
   };
 
-  fs.mkdirSync(dirs.config, { recursive: true });
-  fs.mkdirSync(dirs.cache, { recursive: true });
-  fs.mkdirSync(dirs.data, { recursive: true });
-  fs.mkdirSync(dirs.app, { recursive: true });
+  await Promise.all([fs.mkdirs(dirs.config), fs.mkdirs(dirs.cache), fs.mkdirs(dirs.data), fs.mkdirs(dirs.app)]);
 
   return dirs;
 };
@@ -50,8 +56,8 @@ export const createTestDirs = (name: string): TestDirs => {
 /**
  * Removes the test directory tree.
  */
-export const cleanupTestDirs = (dirs: TestDirs): void => {
-  fs.rmSync(dirs.root, { recursive: true, force: true });
+export const cleanupTestDirs = async (dirs: TestDirs): Promise<void> => {
+  await fs.remove(dirs.root);
 };
 
 /** Environment variables set for all ggt subprocess spawns. */
@@ -153,11 +159,10 @@ export const waitForFile = async (
   filePath: string,
   { timeout = 30_000, interval = 500 }: { timeout?: number; interval?: number } = {},
 ): Promise<void> => {
-  const { vi } = await import("vitest");
   await vi.waitFor(
-    () => {
-      if (!fs.existsSync(filePath)) {
-        throw new Error(`Timed out waiting for file: ${filePath} (after ${timeout}ms)`);
+    async () => {
+      if (!(await fs.pathExists(filePath))) {
+        throw new Error(`File not found: ${filePath}`);
       }
     },
     { timeout, interval },

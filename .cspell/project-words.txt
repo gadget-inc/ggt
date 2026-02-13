@@ -30,6 +30,7 @@ jsonify
 linkcode
 localappdata
 logql
+mkdirs
 nothrow
 notificationcenter
 notifysend

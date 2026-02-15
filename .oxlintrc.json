@@ -28,6 +28,7 @@
     "no-empty-pattern": "warn",
     "no-empty-static-block": "warn",
     "no-eval": "warn",
+    "no-fallthrough": "warn",
     "no-ex-assign": "warn",
     "no-extra-boolean-cast": "warn",
     "no-func-assign": "warn",

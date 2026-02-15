@@ -172,7 +172,7 @@
     "builtin": true
   },
   "globals": {},
-  "ignorePatterns": ["node_modules", "dist", "tmp", "__fixtures__", "__generated__", ".direnv"],
+  "ignorePatterns": ["node_modules", "dist", "tmp", "__fixtures__", "__generated__", ".direnv", ".worktrees"],
   "overrides": [
     {
       "files": ["src/**"],

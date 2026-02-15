@@ -44,6 +44,7 @@ packagejson
 pagedown
 pageup
 postbuild
+println
 printlns
 promisable
 retryable
@@ -62,3 +63,4 @@ unstub
 unthunk
 usagestop
 vitest
+worktrees

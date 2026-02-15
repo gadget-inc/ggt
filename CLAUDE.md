@@ -8,6 +8,8 @@ ggt is the command-line interface for the [Gadget](https://gadget.dev) platform.
 
 Entry point: `src/main.ts` → `src/ggt.ts` → `src/commands/root.ts` → individual commands
 
-<!-- The following is the contents of CONTRIBUTING.md -->
-
 @CONTRIBUTING.md
+
+## Before committing
+
+MUST run `pnpm run lint:fix` to auto-fix formatting and lint issues, then `pnpm run lint` to verify all checks pass (formatting, linting, spelling, types). Fix any remaining issues before committing.

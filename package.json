@@ -38,7 +38,6 @@
     "lint:fix": "oxfmt && oxlint --type-aware --fix",
     "lint:oxfmt": "oxfmt --check",
     "lint:oxlint": "oxlint --type-aware",
-    "lint:typescript": "tsc --project tsconfig.json",
     "release": "pnpm run build && changeset publish",
     "test": "vitest",
     "test:integration": "vitest --config spec/integration/vitest.integration.config.ts",

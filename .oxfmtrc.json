@@ -9,6 +9,7 @@
     "tmp/*",
     "!tmp/apps",
     ".direnv",
+    ".worktrees",
     "spec/services/filesync/directory.spec.ts"
   ]
 }

@@ -14,7 +14,7 @@ paths:
 - `Changes` (`changes.ts`) — `Map<string, Change>`, tracks create/update/delete
 - `ChangesWithHash` (`hashes.ts`) — `Map<string, ChangeWithHash>`, changes with source/target hashes
 - `Conflicts` (`conflicts.ts`) — `Map<string, { localChange, gadgetChange }>`, conflicting file changes
-- `File` (`file.ts`) — `{ path, mode, content, encoding }`, a single synced file
+- `File` (`file.ts`) — `{ path, mode, content, encoding, oldPath? }`, a single synced file
 
 ## Constants
 

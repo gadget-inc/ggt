@@ -12,4 +12,4 @@ Entry point: `src/main.ts` → `src/ggt.ts` → `src/commands/root.ts` → indiv
 
 ## Before committing
 
-MUST run `pnpm run lint:fix` to auto-fix formatting and lint issues, then `pnpm run lint` to verify all checks pass (formatting, linting, spelling, types). Fix any remaining issues before committing.
+MUST run `pnpm run lint:fix` to auto-fix formatting and lint issues, then `pnpm run lint` to verify all checks pass (formatting, linting, spelling, types). Run `pnpm test` on affected test files. Fix any remaining issues before committing.

@@ -2,6 +2,8 @@
 paths:
   - "src/commands/**"
   - "spec/commands/**"
+  - "src/services/command/command.ts"
+  - "src/services/command/arg.ts"
 ---
 
 # Commands

@@ -327,7 +327,9 @@ export const run: Run<DevArgs> = async (ctx, args) => {
       }
 
       if (filepath === syncJson.directory.absolute(".ignore")) {
-        syncJson.directory.loadIgnoreFile().catch((error: unknown) => ctx.abort(error));
+        if (!syncJson.directory.ignoreFileLoadedWithin(ms("2s"))) {
+          syncJson.directory.loadIgnoreFile().catch((error: unknown) => ctx.abort(error));
+        }
       } else if (syncJson.directory.ignores(filepath, isDirectory)) {
         return;
       }

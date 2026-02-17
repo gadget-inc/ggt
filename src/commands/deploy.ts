@@ -137,18 +137,16 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
         const graphqlError = error.cause[0];
         assert(graphqlError, "expected graphqlError to be defined");
 
-        if (graphqlError.extensions) {
-          switch (true) {
-            case graphqlError.extensions["requiresUpgrade"]:
-              println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
-              process.exit(1);
-              break;
-            case graphqlError.extensions["requiresAdditionalCharge"]:
-              println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
-              await confirm({ ensureEmptyLineAbove: true, content: "Do you want to continue?" });
-              subscription.resubscribe({ ...variables, allowCharges: true });
-              return;
-          }
+        switch (true) {
+          case graphqlError.extensions["requiresUpgrade"]:
+            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
+            process.exit(1);
+          // falls through
+          case graphqlError.extensions["requiresAdditionalCharge"]:
+            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
+            await confirm({ ensureEmptyLineAbove: true, content: "Do you want to continue?" });
+            subscription.resubscribe({ ...variables, allowCharges: true });
+            return;
         }
       }
 

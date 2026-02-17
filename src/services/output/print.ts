@@ -16,21 +16,20 @@ export type PrintOptions = SprintOptionsWithContent & {
 
 export type print = {
   /**
-   * Prints the given string as is.
+   * Prints the given string as is, or prints the given content with
+   * options.
    *
-   * @param str - The string to print.
+   * @param strOrOptions - The string to print, or options with content.
    * @example
    * print("Hello, world!");
    * // => "Hello, world!"
    *
-   * print(`
-   *   Hello, world!
+   * print({ ensureEmptyLineAbove: true, content: "Hello, world!" });
+   * // => "\nHello, world!"
    *
-   *   How are you?
-   * `);
-   * // => "\n  Hello, world!\n\n  How are you?\n"
+   * @see PrintOptions
    */
-  (str: string): void;
+  (strOrOptions: string | PrintOptions): void;
 
   /**
    * Prints the given template string with dedent and chalk-template.
@@ -58,21 +57,6 @@ export type print = {
    * @see chalk-template https://github.com/chalk/chalk-template
    */
   (template: TemplateStringsArray, ...values: unknown[]): void;
-
-  /**
-   * Prints the given content with options.
-   *
-   * @example
-   * ```
-   * print({ ensureEmptyLineAbove: true, content: "Hello, world!" });
-   * // => "\nHello, world!"
-   *
-   * print({ ensureNewLine: true, content: "Hello, world!" });
-   * // => "Hello, world!\n"
-   * ```
-   * @see PrintOptions
-   */
-  (options: PrintOptions): void;
 };
 
 export const print = ((optionsOrString: PrintOptions | string | TemplateStringsArray, ...values: unknown[]): void => {

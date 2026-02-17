@@ -120,7 +120,8 @@ export class Edit {
 
     if (response.errors) {
       /* If it is the specific unauthenticated error, handle it differently as nothing is broken in that case */
-      if (isStringArray(response.errors) && response.errors[0] && response.errors[0] === "Unauthenticated. No authenticated client.") {
+      const errors: unknown = response.errors;
+      if (isStringArray(errors) && errors[0] === "Unauthenticated. No authenticated client.") {
         throw new AuthenticationError(mutation);
       }
       throw new ClientError(mutation, response.errors);

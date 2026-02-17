@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import * as pull from "../../src/commands/pull.js";
+import { ArgError } from "../../src/services/command/arg.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
+import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { mockConfirmOnce } from "../__support__/mock.js";
+import { expectStdout } from "../__support__/output.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("pull", () => {
@@ -318,6 +321,30 @@ describe("pull", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("prints nothing to pull when environment files haven't changed", async () => {
+    await makeSyncScenario({
+      filesVersion1Files: {
+        "file.js": "// file",
+      },
+      localFiles: {
+        "file.js": "// file",
+      },
+      gadgetFiles: {
+        "file.js": "// file",
+      },
+    });
+
+    await pull.run(testCtx, makeArgs(pull.args));
+
+    expectStdout().toContain("Nothing to pull.");
+  });
+
+  it("throws ArgError when positional arguments are provided", async () => {
+    const error = await expectError(() => pull.run(testCtx, makeArgs(pull.args, "pull", "some-path")));
+
+    expect(error).toBeInstanceOf(ArgError);
   });
 
   // can't write these tests until makeSyncScenario supports multiple environments

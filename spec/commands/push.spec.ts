@@ -2,12 +2,15 @@ import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import * as push from "../../src/commands/push.js";
+import { ArgError } from "../../src/services/command/arg.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
+import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { mockConfirmOnce } from "../__support__/mock.js";
+import { expectStdout } from "../__support__/output.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("push", () => {
@@ -312,5 +315,29 @@ describe("push", () => {
       `);
 
     await expect(expectLocalAndGadgetHashesMatch()).rejects.toThrowError();
+  });
+
+  it("prints nothing to push when local files haven't changed", async () => {
+    await makeSyncScenario({
+      filesVersion1Files: {
+        "file.js": "// file",
+      },
+      localFiles: {
+        "file.js": "// file",
+      },
+      gadgetFiles: {
+        "file.js": "// file",
+      },
+    });
+
+    await push.run(testCtx, makeArgs(push.args));
+
+    expectStdout().toContain("Nothing to push.");
+  });
+
+  it("throws ArgError when positional arguments are provided", async () => {
+    const error = await expectError(() => push.run(testCtx, makeArgs(push.args, "push", "extra-arg")));
+
+    expect(error).toBeInstanceOf(ArgError);
   });
 });

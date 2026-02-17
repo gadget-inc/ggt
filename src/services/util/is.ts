@@ -52,19 +52,25 @@ export const isGraphQLResult = (val: unknown): val is ExecutionResult => {
     .safeParse(val).success;
 };
 
+const graphqlErrorsSchema = z
+  .array(
+    z.object({
+      message: z.string(),
+      extensions: z
+        .record(z.string(), z.unknown())
+        .nullish()
+        .transform((ext) => ext ?? {}),
+    }),
+  )
+  .min(1);
+
 export const isGraphQLErrors = (e: unknown): e is readonly GraphQLError[] => {
-  return z
-    .array(
-      z.object({
-        message: z.string(),
-        extensions: z
-          .record(z.string(), z.unknown())
-          .nullish()
-          .transform((ext) => ext ?? {}),
-      }),
-    )
-    .min(1)
-    .safeParse(e).success;
+  return graphqlErrorsSchema.safeParse(e).success;
+};
+
+export const parseGraphQLErrors = (e: unknown): z.infer<typeof graphqlErrorsSchema> | undefined => {
+  const result = graphqlErrorsSchema.safeParse(e);
+  return result.success ? result.data : undefined;
 };
 
 export const isNever = (value: never): never => {

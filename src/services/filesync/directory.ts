@@ -50,6 +50,12 @@ export class Directory {
    */
   private _isHashing = false;
 
+  /**
+   * Timestamp of the last {@linkcode loadIgnoreFile} call, used to
+   * deduplicate redundant reloads from duplicate FSEvents.
+   */
+  private _lastIgnoreFileLoadTime = 0;
+
   private constructor(
     /**
      * An absolute path to the directory that is being synced.
@@ -68,6 +74,9 @@ export class Directory {
   static async init(dir: string): Promise<Directory> {
     const directory = new Directory(dir);
     await directory.loadIgnoreFile();
+    // don't count the init call as a recent load — the timestamp is
+    // only meaningful once the file watcher is running
+    directory._lastIgnoreFileLoadTime = 0;
     return directory;
   }
 
@@ -131,6 +140,7 @@ export class Directory {
    * exist, it is silently ignored.
    */
   async loadIgnoreFile(): Promise<void> {
+    this._lastIgnoreFileLoadTime = Date.now();
     this._ignorer = ignore();
     this._ignorer.add(ALWAYS_IGNORE_PATHS);
 
@@ -144,6 +154,15 @@ export class Directory {
       }
       throw error;
     }
+  }
+
+  /**
+   * Returns true if {@linkcode loadIgnoreFile} was called within the
+   * given duration. Used to skip redundant watcher-triggered reloads
+   * when a remote write already loaded the ignore file.
+   */
+  ignoreFileLoadedWithin(duration: number): boolean {
+    return Date.now() - this._lastIgnoreFileLoadTime < duration;
   }
 
   /**

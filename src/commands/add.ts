@@ -247,7 +247,7 @@ const actionSubCommand = async (ctx: Context, { args, filesync }: { args: AddArg
     const modelName = parsedPaths[parsedPaths.length - 1];
 
     return (
-      model.apiIdentifier.toUpperCase() === modelName?.toUpperCase() &&
+      model.apiIdentifier.toUpperCase() === modelName.toUpperCase() &&
       model.namespace?.join("/") === parsedPaths.slice(0, parsedPaths.length - 1).join("/")
     );
   });
@@ -341,7 +341,7 @@ const routeSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
 const fieldSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
   const syncJson = filesync.syncJson;
 
-  const splitPathAndField = args._[1]?.split("/");
+  const splitPathAndField = args._.at(1)?.split("/");
 
   if (!splitPathAndField) {
     throw new ArgError(sprint`Failed to add field, invalid field path definition

@@ -205,22 +205,22 @@ const loadClient = async (
   const client = new Client({
     authenticationMode: {
       custom: {
-        async processFetch(_url: string, init: Record<string, Record<string, string>>) {
-          init["headers"] = init["headers"] || {};
+        async processFetch(_url: string, init: Record<string, Record<string, string> | undefined>) {
+          const headers = (init["headers"] ??= {});
           const authHeaders = loadAuthHeaders(ctx);
           for (const [key, value] of Object.entries(authHeaders)) {
-            init["headers"][key] = value;
+            headers[key] = value;
           }
           // Tell the Gadget server to authenticate this request as the developer
-          init["headers"]["x-gadget-client"] = "graphql-playground";
-          init["headers"]["x-gadget-environment"] = environment.name;
+          headers["x-gadget-client"] = "graphql-playground";
+          headers["x-gadget-environment"] = environment.name;
           if (!args["--allow-writes"]) {
-            init["headers"]["x-gadget-developer-readonly"] = "true";
+            headers["x-gadget-developer-readonly"] = "true";
           }
         },
-        async processTransactionConnectionParams(params: Record<string, Record<string, boolean>>) {
-          params["auth"] = params["auth"] || {};
-          params["auth"]["useAppDeveloperSession"] = true;
+        async processTransactionConnectionParams(params: Record<string, Record<string, boolean> | undefined>) {
+          const auth = (params["auth"] ??= {});
+          auth["useAppDeveloperSession"] = true;
         },
       },
     },

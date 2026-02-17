@@ -19,7 +19,7 @@ import { spin, type spinner } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { ts } from "../services/output/timestamp.js";
 import { unreachable } from "../services/util/assert.js";
-import { isGraphQLErrors } from "../services/util/is.js";
+import { parseGraphQLErrors } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
 
 export type DeployArgs = typeof args;
@@ -133,22 +133,21 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
       ctx.log.error("failed to deploy", { error });
       spinner?.fail(stepToSpinnerStart(syncJson, currentStep) + " " + ts());
 
-      if (isGraphQLErrors(error.cause)) {
-        const graphqlError = error.cause[0];
+      const graphqlErrors = parseGraphQLErrors(error.cause);
+      if (graphqlErrors) {
+        const graphqlError = graphqlErrors[0];
         assert(graphqlError, "expected graphqlError to be defined");
 
-        if (graphqlError.extensions) {
-          switch (true) {
-            case graphqlError.extensions["requiresUpgrade"]:
-              println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
-              process.exit(1);
-              break;
-            case graphqlError.extensions["requiresAdditionalCharge"]:
-              println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
-              await confirm({ ensureEmptyLineAbove: true, content: "Do you want to continue?" });
-              subscription.resubscribe({ ...variables, allowCharges: true });
-              return;
-          }
+        switch (true) {
+          case graphqlError.extensions["requiresUpgrade"]:
+            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
+            process.exit(1);
+          // falls through
+          case graphqlError.extensions["requiresAdditionalCharge"]:
+            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
+            await confirm({ ensureEmptyLineAbove: true, content: "Do you want to continue?" });
+            subscription.resubscribe({ ...variables, allowCharges: true });
+            return;
         }
       }
 

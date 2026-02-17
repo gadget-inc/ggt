@@ -92,7 +92,9 @@ describe("Context.onAbort ordering and error handling", () => {
     ctx.onAbort(() => void called.push("C"));
 
     ctx.abort();
-    await ctx.done.catch(() => {});
+    await ctx.done.catch(() => {
+      /* expected */
+    });
 
     expect(called).toEqual(["C", "B", "A"]);
   });

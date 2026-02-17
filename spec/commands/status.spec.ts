@@ -1,11 +1,16 @@
-import { beforeEach, describe, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import * as status from "../../src/commands/status.js";
+import { ArgError } from "../../src/services/command/arg.js";
 import { acquireDevLock } from "../../src/services/filesync/dev-lock.js";
+import { UnknownDirectoryError } from "../../src/services/filesync/error.js";
+import { SyncJson } from "../../src/services/filesync/sync-json.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
+import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
+import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { mockSystemTime } from "../__support__/time.js";
 import { loginTestUser } from "../__support__/user.js";
@@ -177,5 +182,37 @@ describe("status", () => {
       ✔ Your files are up to date. 12:00:00 AM
       "
     `);
+  });
+
+  it("throws ArgError when positional arguments are provided", async () => {
+    const error = await expectError(() => status.run(testCtx, makeArgs(status.args, "status", "extra")));
+
+    expect(error).toBeInstanceOf(ArgError);
+  });
+
+  it("throws UnknownDirectoryError when not in a synced directory", async () => {
+    mock(SyncJson, "load", () => undefined);
+
+    const error = await expectError(() => status.run(testCtx, makeArgs(status.args)));
+
+    expect(error).toBeInstanceOf(UnknownDirectoryError);
+  });
+
+  it("prints conflicts when both sides changed the same file differently", async () => {
+    await makeSyncScenario({
+      filesVersion1Files: {
+        "shared.js": "// original",
+      },
+      localFiles: {
+        "shared.js": "// local version",
+      },
+      gadgetFiles: {
+        "shared.js": "// gadget version",
+      },
+    });
+
+    await status.run(testCtx, makeArgs(status.args));
+
+    expectStdout().toContain("conflicting changes");
   });
 });

@@ -87,7 +87,6 @@ export const withoutConflictingChanges = ({ conflicts, changes }: { conflicts: C
  * @param options - The options to use.
  * @param options.conflicts - The conflicts to print.
  */
-// TODO: write a snapshot test for this!
 export const printConflicts = ({ conflicts }: { conflicts: Conflicts }): void => {
   const created = chalk.greenBright("+ created");
   const updated = chalk.blueBright("± updated");

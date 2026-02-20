@@ -1660,3 +1660,17 @@ export type PublishIssuesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type PublishIssuesQuery = { __typename?: 'Query', publishIssues: Array<{ __typename?: 'PublishIssue', severity: string, message: string, node?: { __typename?: 'PublishIssueNode', type: string, key: string, apiIdentifier?: string | null, name?: string | null, fieldType?: string | null, parentKey?: string | null, parentApiIdentifier?: string | null } | null, nodeLabels?: Array<{ __typename?: 'PublishIssueNodeLabel', type?: string | null, identifier?: string | null } | null> | null }> };
+
+export type EnvironmentVariablesQueryVariables = Exact<{ [key: string]: never }>;
+
+export type EnvironmentVariablesQuery = { environmentVariables: Array<{ key: string; value: string | null; isSecret: boolean }> };
+
+export type SetEnvironmentVariableInput = { key: string; value: string; isSecret: boolean };
+
+export type SetEnvironmentVariableMutationVariables = Exact<{ input: SetEnvironmentVariableInput }>;
+
+export type SetEnvironmentVariableMutation = { setEnvironmentVariable: { remoteFilesVersion: string } };
+
+export type DeleteEnvironmentVariableMutationVariables = Exact<{ key: string }>;
+
+export type DeleteEnvironmentVariableMutation = { deleteEnvironmentVariable: { remoteFilesVersion: string } };

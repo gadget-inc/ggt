@@ -2,7 +2,7 @@ import type { EmptyObject, Promisable } from "type-fest";
 
 import assert from "node:assert";
 
-import type { ArgsDefinition, ArgsDefinitionResult } from "./arg.js";
+import type { ArgsDefinition, ArgsDefinitionResult, ParseArgsOptions } from "./arg.js";
 import type { Context } from "./context.js";
 
 /**
@@ -18,6 +18,7 @@ export const Commands = [
   "problems",
   "push",
   "pull",
+  "var",
   "add",
   "open",
   "list",
@@ -55,6 +56,11 @@ export type CommandModule<Args extends ArgsDefinition = EmptyObject> = {
    * The command's {@link ArgsDefinition args}.
    */
   args?: Args;
+
+  /**
+   * Options to pass to {@link parseArgs} when parsing the command's args.
+   */
+  parseOptions?: ParseArgsOptions;
 
   /**
    * The command's {@link Usage usage}.
@@ -106,6 +112,9 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
       break;
     case "pull":
       module = await import("../../commands/pull.js");
+      break;
+    case "var":
+      module = await import("../../commands/var.js");
       break;
     case "add":
       module = await import("../../commands/add.js");

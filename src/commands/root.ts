@@ -34,6 +34,7 @@ export const usage: Usage = () => {
       status           Show your local and environment's file changes
       push             Push your local files to your environment
       pull             Pull your environment's files to your local computer
+      var              Manage environment variables
       add              Add models, fields, actions, routes and environments to your app
       open             Open a Gadget location in your browser
       list             List your available applications
@@ -81,6 +82,10 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
     process.exit(0);
   }
 
+  // resolve command aliases
+  const commandAliases: Record<string, string> = { envs: "var" };
+  commandName = commandAliases[commandName] ?? commandName;
+
   if (!isCommand(commandName)) {
     const [closest] = sortBySimilar(commandName, Commands);
     println`
@@ -96,12 +101,16 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
   const command = await importCommand(commandName);
 
   if (args["-h"] ?? args["--help"]) {
-    println(command.usage(ctx));
-    process.exit(0);
+    if (!command.parseOptions?.permissive || args._.length === 0) {
+      println(command.usage(ctx));
+      process.exit(0);
+    }
+    // pass -h through to the command's run function for subcommand-level help
+    args._.push("-h");
   }
 
   try {
-    await command.run(ctx.child({ name: commandName }), parseArgs(command.args ?? {}, { argv: args._ }));
+    await command.run(ctx.child({ name: commandName }), parseArgs(command.args ?? {}, { ...command.parseOptions, argv: args._ }));
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

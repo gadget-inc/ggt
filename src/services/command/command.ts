@@ -12,6 +12,7 @@ import type { Context } from "./context.js";
  * 2. The order determines the order of commands in the README
  */
 export const Commands = [
+  "init",
   "dev",
   "deploy",
   "status",
@@ -130,6 +131,9 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
 
   let module;
   switch (cmd) {
+    case "init":
+      module = await import("../../commands/init.js");
+      break;
     case "dev":
       module = await import("../../commands/dev.js");
       break;

@@ -172,6 +172,9 @@ export const mockSideEffects = (): void => {
       .mockName("simpleGit")
       .mockReturnValue({
         revparse: vi.fn().mockName("revparse").mockResolvedValue("test-branch"),
+        init: vi.fn().mockName("init").mockResolvedValue(undefined),
+        add: vi.fn().mockName("add").mockResolvedValue(undefined),
+        commit: vi.fn().mockName("commit").mockResolvedValue(undefined),
       }),
   }));
 

@@ -1674,3 +1674,7 @@ export type SetEnvironmentVariableMutation = { setEnvironmentVariable: { remoteF
 export type DeleteEnvironmentVariableMutationVariables = Exact<{ key: string }>;
 
 export type DeleteEnvironmentVariableMutation = { deleteEnvironmentVariable: { remoteFilesVersion: string } };
+
+export type DeleteEnvironmentMutationVariables = Exact<{ slug: Scalars['String']['input'] }>;
+
+export type DeleteEnvironmentMutation = { deleteEnvironment: Scalars['Boolean']['output'] };

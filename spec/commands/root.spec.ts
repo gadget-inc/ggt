@@ -70,6 +70,7 @@ describe("root", () => {
         push             Push your local files to your environment
         pull             Pull your environment's files to your local computer
         var              Manage environment variables
+        env              Manage environments
         add              Add models, fields, actions, routes and environments to your app
         open             Open a Gadget location in your browser
         list             List your available applications
@@ -109,8 +110,8 @@ describe("root", () => {
     `);
   });
 
-  it("resolves 'envs' alias to the var command", async () => {
-    const cmd = await importCommand("var");
+  it("resolves 'envs' alias to the env command", async () => {
+    const cmd = await importCommand("env");
     mock(cmd, "run", noop);
 
     await root.run(testCtx, makeRootArgs("envs"));

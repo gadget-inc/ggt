@@ -19,6 +19,7 @@ export const Commands = [
   "push",
   "pull",
   "var",
+  "env",
   "add",
   "open",
   "list",
@@ -115,6 +116,9 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
       break;
     case "var":
       module = await import("../../commands/var.js");
+      break;
+    case "env":
+      module = await import("../../commands/env.js");
       break;
     case "add":
       module = await import("../../commands/add.js");

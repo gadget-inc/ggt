@@ -79,6 +79,8 @@ jobs:
       - name: Run tests
         run: pnpm run test
 
+  # Integration tests share a single Gadget app as a backend, so they must
+  # run one at a time to avoid interfering with each other.
   integration:
     if: github.repository == 'gadget-inc/ggt'
     strategy:

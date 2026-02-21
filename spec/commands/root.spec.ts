@@ -118,6 +118,35 @@ describe("root", () => {
     expect(cmd.run).toHaveBeenCalled();
   });
 
+  it("resolves 'problem' alias to the problems command", async () => {
+    const cmd = await importCommand("problems");
+    mock(cmd, "run", noop);
+
+    await root.run(testCtx, makeRootArgs("problem"));
+
+    expect(cmd.run).toHaveBeenCalled();
+  });
+
+  it("resolves 'log' alias to the logs command", async () => {
+    const cmd = await importCommand("logs");
+    mock(cmd, "run", noop);
+
+    await root.run(testCtx, makeRootArgs("log"));
+
+    expect(cmd.run).toHaveBeenCalled();
+  });
+
+  // ensure the alias resolves to the canonical command name before the
+  // AllowedProdCommands check in AppIdentity.load, so "ggt log --env production" works
+  it("passes args through to the resolved command when using an alias", async () => {
+    const cmd = await importCommand("logs");
+    mock(cmd, "run", noop);
+
+    await root.run(testCtx, makeRootArgs("log", "--env", "production"));
+
+    expect(cmd.run).toHaveBeenCalled();
+  });
+
   describe.each(command.Commands)("when %s is given", (name) => {
     let cmd: CommandModule;
 

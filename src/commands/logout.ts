@@ -1,15 +1,11 @@
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 
 import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
 import { readSession, writeSession } from "../services/user/session.js";
 
-export const usage: Usage = () => sprint`
-    Log out of your account.
+export const description = "Log out of your account";
 
-    {bold Usage}
-          ggt logout
-`;
+export const examples = ["ggt logout"] as const;
 
 export const run: Run = (ctx) => {
   const token = readSession(ctx);

@@ -32,12 +32,22 @@ export const Commands = [
   "agent-plugin",
   "eval",
   "version",
+  "completion",
 ] as const;
 
 /**
  * One of the commands in {@link Commands}.
  */
 export type Command = (typeof Commands)[number];
+
+/**
+ * A subcommand definition for a command that has subcommands.
+ */
+export type SubcommandDef = {
+  name: string;
+  description: string;
+  args?: ArgsDefinition;
+};
 
 /**
  * Checks if a string is a valid command.
@@ -54,6 +64,11 @@ export const isCommand = (command: string): command is Command => {
  */
 export type CommandModule<Args extends ArgsDefinition = EmptyObject> = {
   /**
+   * A short description of the command for shell completions.
+   */
+  description?: string;
+
+  /**
    * The command's {@link ArgsDefinition args}.
    */
   args?: Args;
@@ -64,21 +79,40 @@ export type CommandModule<Args extends ArgsDefinition = EmptyObject> = {
   parseOptions?: ParseArgsOptions;
 
   /**
-   * The command's {@link Usage usage}.
+   * Subcommand definitions for commands that have subcommands.
    */
-  usage: Usage;
+  subcommandDefs?: readonly SubcommandDef[];
+
+  /**
+   * Example CLI invocations shown in short help output.
+   */
+  examples?: readonly string[];
+
+  /**
+   * When true, exclude from root help listing and completions.
+   */
+  hidden?: boolean;
+
+  /**
+   * Positional argument placeholder for the usage line (e.g. "[DIRECTORY]", "<shell>").
+   */
+  positional?: string;
+
+  /**
+   * An extended description rendered below the short description in `--help` output.
+   */
+  longDescription?: string;
+
+  /**
+   * Titled prose sections (e.g. "Ignoring files", "Installation") rendered after the flags in `--help` output.
+   */
+  sections?: readonly { title: string; content: string }[];
 
   /**
    * The command's {@link Run run} function.
    */
   run: Run<Args>;
 };
-
-/**
- * A {@linkcode Command command}'s usage is a function that returns a
- * string describing how to use the command.
- */
-export type Usage = (ctx: Context) => string;
 
 /**
  * The function that is run when the command is called.
@@ -155,6 +189,9 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
       break;
     case "version":
       module = await import("../../commands/version.js");
+      break;
+    case "completion":
+      module = await import("../../commands/completion.js");
       break;
   }
 

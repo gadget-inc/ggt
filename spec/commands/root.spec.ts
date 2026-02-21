@@ -80,8 +80,9 @@ describe("root", () => {
         debugger         Connect to the debugger for your environment
         whoami           Print the currently logged in account
         configure        Configure default execution options
-        agent-plugin     Install Gadget agent plugins (AGENTS.md + skills)
+        agent-plugin     Install Gadget agent plugins
         version          Print this version of ggt
+        completion       Generate shell completion scripts
 
       Flags
         -h, --help       Print how to use a command

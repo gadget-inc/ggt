@@ -23,8 +23,8 @@ import { type SyncJsonState } from "./sync-json-state.js";
 
 export const SyncJsonArgs = {
   ...AppIdentityArgs,
-  "--allow-different-app": Boolean,
-  "--allow-unknown-directory": Boolean,
+  "--allow-different-app": { type: Boolean, description: "Allow syncing a different app than the one in sync.json" },
+  "--allow-unknown-directory": { type: Boolean, description: "Allow syncing an unrecognized directory" },
 } satisfies ArgsDefinition;
 
 export type SyncJsonArgs = typeof SyncJsonArgs;

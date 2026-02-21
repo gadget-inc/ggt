@@ -1,5 +1,9 @@
 appvalue
 codegen
+compdef
+compgen
+compreply
+cword
 commandsstop
 dedenting
 dggt
@@ -12,6 +16,7 @@ enoent
 enotdir
 enotempty
 envrc
+esac
 eproto
 esbuild
 execa

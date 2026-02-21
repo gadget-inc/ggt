@@ -2,32 +2,34 @@ import { findUp } from "find-up";
 import path from "node:path";
 
 import type { ArgsDefinition } from "../services/command/arg.js";
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run, SubcommandDef } from "../services/command/command.js";
 
+import { renderShortUsage } from "../services/command/usage.js";
 import { Directory } from "../services/filesync/directory.js";
 import { installAgentsMdScaffold, installGadgetSkillsIntoProject } from "../services/output/agent-plugin.js";
 import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
 
-export const args = {
-  "--force": { type: Boolean },
+export const description = "Install Gadget agent plugins";
+
+export const examples = ["ggt agent-plugin install", "ggt agent-plugin install --force"] as const;
+
+const installArgs = {
+  "--force": { type: Boolean, description: "Overwrite/reinstall even if already present" },
 } satisfies ArgsDefinition;
 
-export const usage: Usage = () => {
-  return sprint`
-    Install Gadget agent plugins (AGENTS.md + skills) into the current project.
+export const args = {
+  ...installArgs,
+} satisfies ArgsDefinition;
 
-    {gray Usage}
-      ggt agent-plugin install [--force]
-
-    {gray Flags}
-      --force    Overwrite/reinstall even if already present
-  `;
-};
+export const subcommandDefs: readonly SubcommandDef[] = [
+  { name: "install", description: "Install Gadget agent plugins into the current project", args: installArgs },
+];
 
 export const run: Run<typeof args> = async (ctx, args): Promise<void> => {
   if (args._[0] !== "install") {
-    println(usage(ctx));
+    const { importCommand } = await import("../services/command/command.js");
+    const mod = await importCommand("agent-plugin");
+    println(renderShortUsage("agent-plugin", mod));
     return;
   }
 

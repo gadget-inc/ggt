@@ -4,6 +4,8 @@ exports[`AppIdentity.load > production environment access > does not allow --env
 
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "agent-plugin" 1`] = `[Error: You cannot "ggt agent-plugin" your production environment.]`;
 
+exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "completion" 1`] = `[Error: You cannot "ggt completion" your production environment.]`;
+
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "configure" 1`] = `[Error: You cannot "ggt configure" your production environment.]`;
 
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "debugger" 1`] = `[Error: You cannot "ggt debugger" your production environment.]`;

@@ -14,8 +14,8 @@ import { formatters } from "./format/format.js";
 import { Level, parseLevel } from "./level.js";
 
 export const LoggingArgs = {
-  "--log-level": { type: (value) => parseLevel(value, Level.INFO), alias: ["-ll"], default: Level.INFO },
-  "--my-logs": { type: Boolean },
+  "--log-level": { type: (value) => parseLevel(value, Level.INFO), alias: ["-ll"], default: Level.INFO, description: "Set the log level" },
+  "--my-logs": { type: Boolean, description: "Show only my logs" },
 } satisfies ArgsDefinition;
 
 export type LoggingArgs = typeof LoggingArgs;

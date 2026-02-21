@@ -8,6 +8,41 @@ import { dedent } from "ts-dedent";
 import { isArray, isString } from "../util/is.js";
 import { omit } from "../util/object.js";
 
+/**
+ * Aligns multi-line interpolated values to their insertion column.
+ *
+ * When a value contains newlines and sits on a whitespace-only line,
+ * continuation lines are indented to match the column position. This
+ * mirrors ts-dedent's template-tag behavior (step 5.2) so that dedent
+ * computes min-indent correctly across template + interpolated content.
+ */
+const alignMultilineValues = (strings: TemplateStringsArray, values: unknown[]): unknown[] => {
+  return values.map((value, i) => {
+    const str = String(value);
+    if (!str.includes("\n")) return value;
+
+    const preceding = strings[i];
+    const lastNewlineIdx = preceding.lastIndexOf("\n");
+    const lastLine = lastNewlineIdx >= 0 ? preceding.slice(lastNewlineIdx + 1) : preceding;
+
+    if (!/^\s+$/.test(lastLine)) return value;
+
+    const lines = str.split("\n");
+    return lines
+      .map((line, j) => {
+        if (j === 0) return line;
+        if (j === lines.length - 1 && line === "") return line;
+        return lastLine + line;
+      })
+      .join("\n");
+  });
+};
+
+const processTemplate = (strings: TemplateStringsArray, values: unknown[]): string => {
+  const aligned = alignMultilineValues(strings, values);
+  return dedent(chalkTemplate(strings, ...aligned));
+};
+
 export type SprintOptions = {
   /**
    * Whether to ensure a new line is after the content.
@@ -61,7 +96,7 @@ export const sprint = ((optionsOrString: SprintOptionsWithContent | string | Tem
   } else if (isString(optionsOrString)) {
     str = optionsOrString;
   } else {
-    str = dedent(chalkTemplate(optionsOrString, ...values));
+    str = processTemplate(optionsOrString, values);
   }
 
   if (options.ensureEmptyLineAbove && !str.startsWith("\n")) {
@@ -89,6 +124,6 @@ export const sprintln = ((optionsOrString: SprintOptionsWithContent | string | T
   } else if (isString(optionsOrString)) {
     return sprint({ ensureNewLine: true, content: optionsOrString });
   } else {
-    return sprint({ ensureNewLine: true, content: dedent(chalkTemplate(optionsOrString, ...values)) });
+    return sprint({ ensureNewLine: true, content: processTemplate(optionsOrString, values) });
   }
 }) as sprint;

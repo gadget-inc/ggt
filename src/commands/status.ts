@@ -1,4 +1,4 @@
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 
 import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
@@ -9,19 +9,14 @@ import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/files
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
+export const description = "Show your local and environment's file changes";
+
+export const examples = ["ggt status"] as const;
+
 export type StatusArgs = typeof args;
 export type StatusArgsResult = ArgsDefinitionResult<StatusArgs>;
 
 export const args = SyncJsonArgs;
-
-export const usage: Usage = () => {
-  return sprint`
-    Shows file changes since last sync (e.g. $ggt dev, push, deploy etc.)
-
-    {gray Usage}
-          ggt status
-  `;
-};
 
 export const run: Run<StatusArgs> = async (ctx, args) => {
   if (args._.length > 0) {

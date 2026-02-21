@@ -61,10 +61,11 @@ export class ClientError extends GGTError {
     switch (true) {
       case isGraphQLErrors(this.cause): {
         const errors = uniq(this.cause.map((x) => x.message));
+        const bulletList = errors.map((e) => `• ${e}`).join("\n");
         body = sprint`
           Gadget responded with the following ${pluralize("error", errors.length, false)}:
 
-            • ${errors.join("\n            • ")}
+            ${bulletList}
         `;
         break;
       }

@@ -9,9 +9,8 @@ import { dedent } from "ts-dedent";
 
 import { usage } from "../src/commands/root.js";
 import { Commands, importCommand } from "../src/services/command/command.js";
-import { Context } from "../src/services/command/context.js";
+import { renderShortUsage } from "../src/services/command/usage.js";
 
-const ctx = Context.init({ name: "readme" });
 let readme = await fs.readFile("README.md", "utf8");
 
 readme = readme.replace(
@@ -22,7 +21,7 @@ readme = readme.replace(
     \`\`\`sh-session
     $ npm install -g ggt
     $ ggt
-    ${usage(ctx)}
+    ${await usage()}
     \`\`\`
 
     $1
@@ -37,7 +36,7 @@ for (const name of Commands) {
 
     \`\`\`sh-session
     $ ggt ${name} -h
-    ${cmd.usage(ctx)}
+    ${renderShortUsage(name, cmd)}
     \`\`\`
   `);
 }

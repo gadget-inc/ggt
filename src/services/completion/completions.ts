@@ -2,9 +2,7 @@ import { args as rootArgs } from "../../commands/root.js";
 import { extractFlags, type FlagDef } from "../command/arg.js";
 import { Commands, importCommand } from "../command/command.js";
 
-export { extractFlags, type FlagDef } from "../command/arg.js";
-
-export type SubcommandDef = {
+export type CompletionSubcommandDef = {
   name: string;
   description: string;
   flags: FlagDef[];
@@ -14,7 +12,7 @@ export type CommandDef = {
   name: string;
   description: string;
   flags: FlagDef[];
-  subcommands: SubcommandDef[];
+  subcommands: CompletionSubcommandDef[];
 };
 
 export type CompletionData = {
@@ -37,7 +35,7 @@ export const getCompletionData = async (): Promise<CompletionData> => {
     }
     const flags = extractFlags(mod.args ?? {});
     const description = mod.description ?? "";
-    const subcommands: SubcommandDef[] = (mod.subcommandDefs ?? []).map((sub) => ({
+    const subcommands: CompletionSubcommandDef[] = (mod.subcommandDefs ?? []).map((sub) => ({
       name: sub.name,
       description: sub.description,
       flags: extractFlags(sub.args ?? {}),

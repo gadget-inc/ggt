@@ -1,4 +1,5 @@
-import type { CompletionData, FlagDef } from "./completions.js";
+import type { FlagDef } from "../command/arg.js";
+import type { CompletionData } from "./completions.js";
 
 /**
  * Generates a complete Fish completion script for ggt.
@@ -36,6 +37,7 @@ export const generateFishCompletions = (data: CompletionData): string => {
     lines.push("");
 
     lines.push("# Helper: check if we are positioned for a subcommand (parent seen, no subcommand yet)");
+    lines.push("# Known limitation: flag values (e.g. `--app myapp`) are mistaken for subcommands");
     lines.push("function __ggt_needs_subcommand");
     lines.push("  set -l parent $argv[1]");
     lines.push("  set -l cmd (commandline -opc)");

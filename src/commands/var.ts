@@ -12,7 +12,7 @@ import {
 import { ClientError } from "../services/app/error.js";
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError, parseArgs, type ArgsDefinition, type ParseArgsOptions } from "../services/command/arg.js";
-import { renderShortUsage } from "../services/command/usage.js";
+import { renderDetailedUsage, renderShortUsage } from "../services/command/usage.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";
@@ -74,12 +74,14 @@ export const run: Run<typeof args> = async (ctx, args) => {
         process.exit(0);
       }
     }
-    println(renderShortUsage("var", { description, args: AppIdentityArgs, subcommandDefs, examples, positional }));
+    const mod = await import("./var.js");
+    println(renderDetailedUsage("var", mod));
     process.exit(0);
   }
 
   if (!subcommand) {
-    println(renderShortUsage("var", { description, args: AppIdentityArgs, subcommandDefs, examples, positional }));
+    const mod = await import("./var.js");
+    println(renderDetailedUsage("var", mod));
     return;
   }
 

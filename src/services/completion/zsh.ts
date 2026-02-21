@@ -1,4 +1,5 @@
-import type { CommandDef, CompletionData, FlagDef } from "./completions.js";
+import type { FlagDef } from "../command/arg.js";
+import type { CommandDef, CompletionData } from "./completions.js";
 
 /**
  * Generates a complete Zsh completion script for ggt.

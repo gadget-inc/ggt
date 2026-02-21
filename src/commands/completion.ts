@@ -65,6 +65,7 @@ export const run: Run = async (_ctx, args): Promise<void> => {
 
   const data = await getCompletionData();
 
+  // Write directly to stdout — completion scripts must not include extra formatting/newlines
   switch (shell) {
     case "bash":
       process.stdout.write(generateBashCompletions(data));

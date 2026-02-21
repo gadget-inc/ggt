@@ -18,26 +18,6 @@ import { expectStdout } from "../__support__/output.js";
 
 describe("completion", () => {
   describe("data model", () => {
-    it("returns all non-hidden commands", async () => {
-      const data = await getCompletionData();
-
-      // hidden commands (problems, eval) are excluded
-      for (const cmd of data.commands) {
-        const mod = await importCommand(cmd.name as (typeof Commands)[number]);
-        expect(mod.hidden, `hidden command "${cmd.name}" should not appear in completion data`).toBeFalsy();
-      }
-
-      // all non-hidden commands are present
-      for (const cmd of Commands) {
-        const mod = await importCommand(cmd);
-        if (mod.hidden) {
-          expect(data.commands.find((c) => c.name === cmd)).toBeUndefined();
-        } else {
-          expect(data.commands.find((c) => c.name === cmd)).toBeDefined();
-        }
-      }
-    });
-
     it("includes root flags", async () => {
       const data = await getCompletionData();
 

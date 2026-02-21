@@ -88,6 +88,7 @@ describe("root", () => {
         -h, --help       Print how to use a command
         -v, --verbose    Print more verbose output
             --telemetry  Enable telemetry
+            --json       Output as JSON
 
       Agent plugins
         Install AGENTS.md and Gadget agent skills for your coding agent:

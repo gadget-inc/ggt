@@ -1,5 +1,40 @@
 # @gadgetinc/ggt
 
+## 2.2.0
+
+### Minor Changes
+
+- 7ba7c87: Add `ggt eval` command for evaluating snippets against Gadget API client
+- ad3dcf5: Add `ggt problems` command to check for app issues without deploying
+- 49e750f: Add duplicate `ggt dev` run detection and show dev status in `ggt status`
+
+  Prevents multiple `ggt dev` processes from running simultaneously in the same directory using an atomic lock file. Stale locks from crashed processes are automatically cleaned up. `ggt status` now reports whether `ggt dev` is currently running.
+
+- ca99128: Add `ggt var` command for managing environment variables
+
+  New subcommands: `list`, `get`, `set`, `delete`, and `import` for managing
+  environment variables on Gadget applications via the CLI. Supports importing
+  from other environments or `.env` files.
+
+### Patch Changes
+
+- 09d2fac: Allow some commands to run fully outside a synced folder
+
+  Commands like `ggt open`, `ggt debugger`, and `ggt logs` can now run outside a synced folder. They will use the existing context from the currently synced folder if available, but can also be run with `--app` and `--env` flags or interactive prompts to specify the target app and environment.
+
+- 1d0a712: Fix `.ignore` directory-only patterns (trailing slash) not working
+
+  Patterns like `.husky/` in the `.ignore` file now correctly match directories,
+  matching `.gitignore` behavior. Previously, only patterns without trailing
+  slashes (e.g., `.husky`) would work.
+
+- c74258b: Fix ignore patterns not reloading when .ignore file is deleted remotely
+- d5bbc84: Add automatic retry for WebSocket subscriptions
+
+  Adds retry logic with exponential backoff for transient WebSocket connection
+  failures during file sync subscriptions. This improves reliability when network
+  connectivity is unstable or the server experiences temporary issues.
+
 ## 2.1.0
 
 ### Minor Changes

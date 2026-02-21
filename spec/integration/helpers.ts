@@ -55,9 +55,24 @@ export const createTestDirs = async (name: string): Promise<TestDirs> => {
 
 /**
  * Removes the test directory tree.
+ * Retries on EBUSY/EPERM/ENOTEMPTY errors (common on Windows when
+ * file handles are released asynchronously after a child process exits).
  */
 export const cleanupTestDirs = async (dirs: TestDirs): Promise<void> => {
-  await fs.remove(dirs.root);
+  const maxAttempts = process.platform === "win32" ? 5 : 1;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await fs.remove(dirs.root);
+      return;
+    } catch (error: unknown) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (attempt < maxAttempts && (code === "EBUSY" || code === "EPERM" || code === "ENOTEMPTY")) {
+        await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+        continue;
+      }
+      throw error;
+    }
+  }
 };
 
 /** Environment variables set for all ggt subprocess spawns. */

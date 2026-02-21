@@ -77,25 +77,32 @@ describe.skipIf(!hasIntegrationToken())("integration", () => {
     const testFilePath = path.join(dirs.app, testFileName);
     await fs.writeFile(testFilePath, testFileContent);
 
-    // Poll pull until the test file appears on Gadget (avoids fixed sleep)
+    // Poll pull until the test file appears on Gadget (avoids fixed sleep).
+    // Cleanup is deferred to onTestFinished so that EBUSY errors on Windows
+    // don't cause vi.waitFor to retry (and eventually time out).
+    const pullDirsToClean: TestDirs[] = [];
+    onTestFinished(async () => {
+      for (const d of pullDirsToClean) {
+        await cleanupTestDirs(d).catch(() => undefined);
+      }
+    });
+
     await vi.waitFor(
       async () => {
         const pullDirs = await createTestDirs("dev-pull-verify");
-        try {
-          const pullResult = await runGgt({
-            args: ["pull", "--app", TEST_APP, "--env", TEST_ENV, "--force"],
-            dirs: pullDirs,
-            timeout: 30_000,
-          });
+        pullDirsToClean.push(pullDirs);
 
-          expect(pullResult.exitCode, `ggt pull failed.\nstdout: ${pullResult.stdout}\nstderr: ${pullResult.stderr}`).toBe(0);
+        const pullResult = await runGgt({
+          args: ["pull", "--app", TEST_APP, "--env", TEST_ENV, "--force"],
+          dirs: pullDirs,
+          timeout: 30_000,
+        });
 
-          const pulledFile = path.join(pullDirs.app, testFileName);
-          expect(await fs.pathExists(pulledFile), `Expected ${pulledFile} to exist after pull`).toBe(true);
-          expect(await fs.readFile(pulledFile, "utf-8")).toBe(testFileContent);
-        } finally {
-          await cleanupTestDirs(pullDirs);
-        }
+        expect(pullResult.exitCode, `ggt pull failed.\nstdout: ${pullResult.stdout}\nstderr: ${pullResult.stderr}`).toBe(0);
+
+        const pulledFile = path.join(pullDirs.app, testFileName);
+        expect(await fs.pathExists(pulledFile), `Expected ${pulledFile} to exist after pull`).toBe(true);
+        expect(await fs.readFile(pulledFile, "utf-8")).toBe(testFileContent);
       },
       { timeout: 60_000, interval: 3_000 },
     );

@@ -917,6 +917,57 @@ describe("FileSync.sync", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
+  it("deletes files from remote when they are added to .ignore after being synced", async () => {
+    const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".jj/file1.js": "// file1",
+        ".jj/file2.js": "// file2",
+        ".jj/subdir/file3.js": "// file3",
+      },
+      localFiles: {
+        ".ignore": ".jj/",
+        // Note: .jj/ files are not in localFiles because they're ignored
+      },
+      gadgetFiles: {
+        ".jj/file1.js": "// file1",
+        ".jj/file2.js": "// file2",
+        ".jj/subdir/file3.js": "// file3",
+      },
+    });
+
+    await filesync.push(testCtx, { command: "push" });
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            ".jj/": "",
+            ".jj/file1.js": "// file1",
+            ".jj/file2.js": "// file2",
+            ".jj/subdir/": "",
+            ".jj/subdir/file3.js": "// file3",
+          },
+          "2": {
+            ".gadget/": "",
+            ".ignore": ".jj/",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          ".ignore": ".jj/",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
+          ".ignore": ".jj/",
+        },
+      }
+    `);
+
+    await expectLocalAndGadgetHashesMatch();
+  });
+
   it("automatically merges changes if none are conflicting", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {

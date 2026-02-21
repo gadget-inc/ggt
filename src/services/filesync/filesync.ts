@@ -212,6 +212,21 @@ export class FileSync {
       assert(inSync || localChanges.size > 0 || environmentChanges.size > 0, "there must be changes if hashes don't match");
 
       const localChangesToPush = getNecessaryChanges(ctx, { from: environmentHashes, to: localHashes, ignore: [".gadget/"] });
+      
+      // Delete files/directories from remote that are now ignored locally
+      // This handles files that were synced before being added to .ignore
+      for (const [path, hash] of Object.entries(environmentHashes)) {
+        if (path.startsWith(".gadget/")) {
+          continue;
+        }
+        
+        // If path is ignored and not in local hashes, mark for deletion
+        // This ensures directories are deleted even if getNecessaryChanges skipped them
+        if (!localHashes[path] && this.syncJson.directory.ignores(path)) {
+          localChangesToPush.set(path, { type: "delete", sourceHash: hash });
+        }
+      }
+      
       const environmentChangesToPull = getNecessaryChanges(ctx, { from: localHashes, to: environmentHashes });
 
       const onlyDotGadgetFilesChanged =
@@ -854,6 +869,17 @@ export class FileSync {
       ctx.log.debug("skipping send because there are no changes");
       return;
     }
+
+    // Sort deletions: files before directories, and nested paths before parent paths
+    // This ensures directories can be deleted after their contents
+    deleted.sort((a, b) => {
+      const aIsDir = a.path.endsWith("/");
+      const bIsDir = b.path.endsWith("/");
+      if (aIsDir !== bIsDir) {
+        return aIsDir ? 1 : -1; // files come before directories
+      }
+      return b.path.localeCompare(a.path); // reverse sort: deepest first
+    });
 
     const contentLength = changed.map((change) => change.content.length).reduce((a, b) => a + b, 0);
     if (contentLength > MAX_PUSH_CONTENT_LENGTH) {

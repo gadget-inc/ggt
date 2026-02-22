@@ -41,15 +41,15 @@ export const setArgs = {
 } satisfies ArgsDefinition;
 
 export const deleteArgs = {
-  "--force": { type: Boolean, alias: "-f", description: "Force the operation" },
-  "--all": { type: Boolean, description: "Apply to all" },
+  "--force": { type: Boolean, alias: "-f", description: "Skip confirmation and suppress not-found errors" },
+  "--all": { type: Boolean, description: "Delete all environment variables" },
 } satisfies ArgsDefinition;
 
 export const importArgs = {
   "--from": { type: String, description: "Import from another environment" },
   "--from-file": { type: String, description: "Import from a .env file" },
   "--include-values": { type: Boolean, description: "Copy values when importing from another environment" },
-  "--all": { type: Boolean, description: "Apply to all" },
+  "--all": { type: Boolean, description: "Import all variables instead of specifying keys" },
 } satisfies ArgsDefinition;
 
 export const subcommandDefs: readonly SubcommandDef[] = [

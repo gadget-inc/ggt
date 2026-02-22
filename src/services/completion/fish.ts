@@ -65,7 +65,7 @@ export const generateFishCompletions = (data: CompletionData): string => {
   // root flags
   lines.push("# Root flags");
   for (const flag of data.rootFlags) {
-    lines.push(fishFlagLine(flag, "__fish_use_subcommand"));
+    lines.push(...fishFlagLine(flag, "__fish_use_subcommand"));
   }
   lines.push("");
 
@@ -79,16 +79,12 @@ export const generateFishCompletions = (data: CompletionData): string => {
 
   // per-command flags and subcommands
   for (const cmd of data.commands) {
-    if (cmd.flags.length === 0 && cmd.subcommands.length === 0) {
-      continue;
-    }
-
     lines.push(`# ${cmd.name}`);
 
     if (cmd.subcommands.length > 0) {
       // command-level flags (available when the parent is seen)
       for (const flag of cmd.flags) {
-        lines.push(fishFlagLine(flag, `__fish_seen_subcommand_from ${cmd.name}`));
+        lines.push(...fishFlagLine(flag, `__fish_seen_subcommand_from ${cmd.name}`));
       }
 
       // subcommand names
@@ -100,12 +96,25 @@ export const generateFishCompletions = (data: CompletionData): string => {
       // subcommand-specific flags
       for (const sub of cmd.subcommands) {
         for (const flag of sub.flags) {
-          lines.push(fishFlagLine(flag, `__ggt_seen_subcommand ${cmd.name} ${sub.name}`));
+          lines.push(...fishFlagLine(flag, `__ggt_seen_subcommand ${cmd.name} ${sub.name}`));
+        }
+      }
+
+      // root flags in parent and subcommand contexts
+      for (const flag of data.rootFlags) {
+        lines.push(...fishFlagLine(flag, `__fish_seen_subcommand_from ${cmd.name}`));
+        for (const sub of cmd.subcommands) {
+          lines.push(...fishFlagLine(flag, `__ggt_seen_subcommand ${cmd.name} ${sub.name}`));
         }
       }
     } else {
       for (const flag of cmd.flags) {
-        lines.push(fishFlagLine(flag, `__fish_seen_subcommand_from ${cmd.name}`));
+        lines.push(...fishFlagLine(flag, `__fish_seen_subcommand_from ${cmd.name}`));
+      }
+
+      // root flags in subcommand context
+      for (const flag of data.rootFlags) {
+        lines.push(...fishFlagLine(flag, `__fish_seen_subcommand_from ${cmd.name}`));
       }
     }
 
@@ -116,31 +125,31 @@ export const generateFishCompletions = (data: CompletionData): string => {
 };
 
 /**
- * Generates a single `complete` line for a flag.
+ * Generates `complete` lines for a flag -- one per long name (canonical + long aliases).
  */
-const fishFlagLine = (flag: FlagDef, condition: string): string => {
-  const parts = [`complete -c ggt -n '${condition}'`];
+const fishFlagLine = (flag: FlagDef, condition: string): string[] => {
+  const longNames = [flag.name.replace(/^--/, "")];
+  const shortParts: string[] = [];
 
-  const longName = flag.name.replace(/^--/, "");
-  parts.push(`-l ${longName}`);
-
-  // add short aliases
   for (const alias of flag.aliases) {
-    if (alias.startsWith("-") && !alias.startsWith("--")) {
-      parts.push(`-s ${alias.replace(/^-/, "")}`);
+    if (alias.startsWith("--")) {
+      longNames.push(alias.replace(/^--/, ""));
+    } else if (alias.startsWith("-")) {
+      shortParts.push(`-s ${alias.replace(/^-/, "")}`);
     }
   }
 
-  // flags taking arguments need -r (require argument)
+  const commonParts: string[] = [];
+
   if (flag.type === "string" || flag.type === "number") {
-    parts.push("-r");
+    commonParts.push("-r");
   }
 
   if (flag.description) {
-    parts.push(`-d '${escapeFish(flag.description)}'`);
+    commonParts.push(`-d '${escapeFish(flag.description)}'`);
   }
 
-  return parts.join(" ");
+  return longNames.map((name) => [`complete -c ggt -n '${condition}'`, `-l ${name}`, ...shortParts, ...commonParts].join(" "));
 };
 
 /**

@@ -17,7 +17,7 @@ export const generateBashCompletions = (data: CompletionData): string => {
   const commandNames = data.commands.map((c) => c.name);
 
   // top-level completion: commands + root flags
-  lines.push("  if [[ COMP_CWORD -eq 1 ]]; then");
+  lines.push("  if [[ $COMP_CWORD -eq 1 ]]; then");
   lines.push(`    COMPREPLY=($(compgen -W "${[...commandNames, ...rootFlagWords].join(" ")}" -- "$cur"))`);
   lines.push("    return");
   lines.push("  fi");
@@ -29,7 +29,7 @@ export const generateBashCompletions = (data: CompletionData): string => {
   for (const cmd of data.commands) {
     if (cmd.subcommands.length > 0) {
       lines.push(`    ${cmd.name})`);
-      lines.push("      if [[ COMP_CWORD -eq 2 ]]; then");
+      lines.push("      if [[ $COMP_CWORD -eq 2 ]]; then");
 
       const subNames = cmd.subcommands.map((s) => s.name);
       const cmdFlagList = flagWords(cmd.flags);

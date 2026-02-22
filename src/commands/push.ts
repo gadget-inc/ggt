@@ -23,7 +23,7 @@ export type PushArgs = typeof args;
 export const args = {
   ...SyncJsonArgs,
   "--env": { type: String, alias: ["-e", "--environment", "--to"], description: "Select the environment" },
-  "--force": { type: Boolean, alias: "-f", description: "Force the operation" },
+  "--force": { type: Boolean, alias: "-f", description: "Discard conflicting changes" },
 } satisfies ArgsDefinition;
 
 export const run: Run<typeof args> = async (ctx, args) => {

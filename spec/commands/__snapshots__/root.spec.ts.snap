@@ -270,7 +270,7 @@ Flags
   -e, --environment, --from, --env <value>  Select the environment
       --allow-different-app                 Allow syncing a different app than the one in sync.json
       --allow-unknown-directory             Allow syncing an unrecognized directory
-  -f, --force                               Force the operation
+  -f, --force                               Discard conflicting changes
   --allow-issues, --allow-problems          Deploy even with problems
       --allow-charges                       Deploy even with new charges
       --allow-data-delete                   Deploy even with data loss
@@ -291,7 +291,7 @@ Flags
   -e, --environment, --from, --env <value>  Select the environment
       --allow-different-app                 Allow syncing a different app than the one in sync.json
       --allow-unknown-directory             Allow syncing an unrecognized directory
-  -f, --force                               Force the operation
+  -f, --force                               Discard conflicting changes
   --allow-issues, --allow-problems          Deploy even with problems
       --allow-charges                       Deploy even with new charges
       --allow-data-delete                   Deploy even with data loss
@@ -689,7 +689,7 @@ Flags
   -e, --environment, --from, --env <value>  Select the environment
       --allow-different-app                 Allow syncing a different app than the one in sync.json
       --allow-unknown-directory             Allow syncing an unrecognized directory
-  -f, --force                               Force the operation
+  -f, --force                               Discard conflicting changes
 
 Examples
   $ ggt pull --env development --force
@@ -707,7 +707,7 @@ Flags
   -e, --environment, --from, --env <value>  Select the environment
       --allow-different-app                 Allow syncing a different app than the one in sync.json
       --allow-unknown-directory             Allow syncing an unrecognized directory
-  -f, --force                               Force the operation
+  -f, --force                               Discard conflicting changes
 
 Examples
   $ ggt pull --env development --force
@@ -732,7 +732,7 @@ Flags
   -e, --environment, --to, --env <value>  Select the environment
       --allow-different-app               Allow syncing a different app than the one in sync.json
       --allow-unknown-directory           Allow syncing an unrecognized directory
-  -f, --force                             Force the operation
+  -f, --force                             Discard conflicting changes
 
 Examples
   $ ggt push --env main --force
@@ -750,7 +750,7 @@ Flags
   -e, --environment, --to, --env <value>  Select the environment
       --allow-different-app               Allow syncing a different app than the one in sync.json
       --allow-unknown-directory           Allow syncing an unrecognized directory
-  -f, --force                             Force the operation
+  -f, --force                             Discard conflicting changes
 
 Examples
   $ ggt push --env main --force
@@ -880,7 +880,7 @@ Run "ggt version --help" for detailed help.
 `;
 
 exports[`root > when whoami is given > prints the usage when --help is passed 1`] = `
-"Print the currently logged in account
+"Print the name and email of the logged-in user
 
 Usage
   ggt whoami [options]
@@ -893,7 +893,7 @@ Run "ggt whoami --help" for detailed help.
 `;
 
 exports[`root > when whoami is given > prints the usage when -h is passed 1`] = `
-"Print the currently logged in account
+"Print the name and email of the logged-in user
 
 Usage
   ggt whoami [options]

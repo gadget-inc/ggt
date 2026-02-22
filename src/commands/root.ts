@@ -92,8 +92,8 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
       println(renderDetailedUsage(commandName, command));
       process.exit(0);
     }
-    // pass -h through to the command's run function for subcommand-level help
-    args._.push("-h");
+    // pass --help through to the command's run function for subcommand-level help
+    args._.push("--help");
   } else if (args["-h"]) {
     if (!command.parseOptions?.permissive || args._.length === 0) {
       println(renderShortUsage(commandName, command));

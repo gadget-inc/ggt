@@ -78,7 +78,7 @@ describe("root", () => {
         logout           Log out of your account
         logs             Stream your environment's logs
         debugger         Connect to the debugger for your environment
-        whoami           Print the currently logged in account
+        whoami           Print the name and email of the logged-in user
         configure        Configure default execution options
         agent-plugin     Install Gadget agent plugins
         version          Print this version of ggt

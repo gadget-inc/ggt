@@ -131,7 +131,7 @@ export const renderDetailedUsage = (commandName: string, mod: CommandModule): st
 
   // long description
   if (mod.longDescription) {
-    // indent each line of the long description
+    // render each line of the long description
     for (const line of mod.longDescription.split("\n")) {
       lines.push(line || "");
     }
@@ -159,10 +159,10 @@ export const renderDetailedUsage = (commandName: string, mod: CommandModule): st
       lines.push("");
       lines.push("{gray Flags}");
 
+      const maxLeft = Math.max(24, ...flags.map((f) => flagLeft(f).length + 2));
+
       if (hasExpandedFlags) {
         // expanded format: each flag on its own line with longDescription below
-        const maxLeft = Math.max(24, ...flags.map((f) => flagLeft(f).length + 2));
-
         for (const flag of flags) {
           lines.push(formatFlag(flag, maxLeft));
           const longDesc = flagLongDescription(mod.args, flag.name);
@@ -173,7 +173,6 @@ export const renderDetailedUsage = (commandName: string, mod: CommandModule): st
           }
         }
       } else {
-        const maxLeft = Math.max(24, ...flags.map((f) => flagLeft(f).length + 2));
         for (const flag of flags) {
           lines.push(formatFlag(flag, maxLeft));
         }

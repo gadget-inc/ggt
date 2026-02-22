@@ -7,6 +7,7 @@ import { usage } from "../../src/commands/root.js";
 import { ArgError } from "../../src/services/command/arg.js";
 import { Commands, importCommand } from "../../src/services/command/command.js";
 import {
+  type CompletionData,
   generateBashCompletions,
   generateFishCompletions,
   generateZshCompletions,
@@ -22,14 +23,18 @@ describe("completion", () => {
       const data = await getCompletionData();
 
       const helpFlag = data.rootFlags.find((f) => f.name === "--help");
+      expect(helpFlag).toBeDefined();
       const verboseFlag = data.rootFlags.find((f) => f.name === "--verbose");
+      expect(verboseFlag).toBeDefined();
       const telemetryFlag = data.rootFlags.find((f) => f.name === "--telemetry");
+      expect(telemetryFlag).toBeDefined();
       const jsonFlag = data.rootFlags.find((f) => f.name === "--json");
+      expect(jsonFlag).toBeDefined();
 
-      expect(helpFlag?.type).toBe("boolean");
-      expect(verboseFlag?.type).toBe("count");
-      expect(telemetryFlag?.type).toBe("boolean");
-      expect(jsonFlag?.type).toBe("boolean");
+      expect(helpFlag!.type).toBe("boolean");
+      expect(verboseFlag!.type).toBe("count");
+      expect(telemetryFlag!.type).toBe("boolean");
+      expect(jsonFlag!.type).toBe("boolean");
     });
 
     it("extracts flag aliases", async () => {
@@ -177,6 +182,27 @@ describe("completion", () => {
       }
     });
 
+    it("fish generator includes long flag aliases", async () => {
+      const data = await getCompletionData();
+      const output = generateFishCompletions(data);
+
+      // --verbose has alias --debug, so fish output should include -l debug
+      expect(output).toContain("-l debug");
+
+      // --env on push/pull/deploy has aliases --environment, --from, --to
+      expect(output).toContain("-l environment");
+    });
+
+    it("fish generator includes root flags in subcommand contexts", async () => {
+      const data = await getCompletionData();
+      const output = generateFishCompletions(data);
+
+      // root flags like --verbose should appear in subcommand contexts (e.g. dev)
+      const lines = output.split("\n");
+      const devVerboseLine = lines.find((line) => line.includes("__fish_seen_subcommand_from dev") && line.includes("-l verbose"));
+      expect(devVerboseLine).toBeDefined();
+    });
+
     it("all generators include var subcommand flags", async () => {
       const data = await getCompletionData();
       const bash = generateBashCompletions(data);
@@ -194,6 +220,66 @@ describe("completion", () => {
       expect(fish).toContain("secret");
       expect(fish).toContain("from-file");
       expect(fish).toContain("include-values");
+    });
+
+    describe("escape edge cases", () => {
+      const makeSpecialCharData = (): CompletionData => ({
+        rootFlags: [
+          {
+            name: "--test-flag",
+            aliases: [],
+            type: "boolean",
+            description: "A flag: with [brackets] and 'quotes'",
+          },
+        ],
+        commands: [
+          {
+            name: "test-cmd",
+            description: "A colon: in description",
+            flags: [
+              {
+                name: "--test-opt",
+                aliases: [],
+                type: "string",
+                description: "Option [with]: special chars",
+              },
+            ],
+            subcommands: [],
+          },
+        ],
+      });
+
+      it("zsh generator escapes colons in descriptions", () => {
+        const output = generateZshCompletions(makeSpecialCharData());
+
+        // the escaped form should be present
+        expect(output).toContain("A colon\\: in description");
+
+        // unescaped colons in _describe entries should not appear
+        // _describe entries look like 'name:description' -- an unescaped colon
+        // after the command name would break parsing
+        const describeLines = output.split("\n").filter((l) => l.includes("'test-cmd:"));
+        for (const line of describeLines) {
+          expect(line).not.toMatch(/test-cmd:A colon: in description/);
+        }
+      });
+
+      it("zsh generator escapes brackets and colons in flag descriptions", () => {
+        const output = generateZshCompletions(makeSpecialCharData());
+
+        expect(output).toContain("A flag\\: with \\[brackets\\] and");
+      });
+
+      it("fish generator escapes single quotes in descriptions", () => {
+        const output = generateFishCompletions(makeSpecialCharData());
+
+        // fish escapes single quotes by ending the quote, inserting an escaped
+        // quote, and restarting: 'quotes' → '\\''quotes'\\''
+        // The -d flag value for --test-flag should contain this pattern
+        const lines = output.split("\n").filter((l) => l.includes("test-flag"));
+        expect(lines.length).toBeGreaterThan(0);
+        expect(lines.some((l) => l.includes("'\\''quotes'\\''"))).toBe(true);
+      });
     });
   });
 

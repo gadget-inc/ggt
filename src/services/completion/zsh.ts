@@ -160,10 +160,15 @@ const zshFlagSpec = (flag: FlagDef): string => {
 };
 
 /**
- * Escapes single quotes and brackets for zsh completion descriptions.
+ * Escapes special characters for zsh completion descriptions.
+ *
+ * - Single quotes are escaped by ending the string, inserting `\'`, and restarting
+ * - Brackets are escaped because they delimit flag descriptions in `_arguments` specs
+ * - Colons are escaped because they are significant delimiters in `_arguments`
+ *   and `_describe` entries (e.g., `'name:description'`)
  */
 const escapeZsh = (str: string): string => {
-  return str.replace(/'/g, "'\\''").replace(/\[/g, "\\[").replace(/\]/g, "\\]");
+  return str.replace(/'/g, "'\\''").replace(/\[/g, "\\[").replace(/\]/g, "\\]").replace(/:/g, "\\:");
 };
 
 /**

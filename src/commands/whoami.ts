@@ -3,7 +3,7 @@ import type { Run } from "../services/command/command.js";
 import { println } from "../services/output/print.js";
 import { getUser } from "../services/user/user.js";
 
-export const description = "Print the currently logged in account";
+export const description = "Print the name and email of the logged-in user";
 
 export const examples = ["ggt whoami"] as const;
 

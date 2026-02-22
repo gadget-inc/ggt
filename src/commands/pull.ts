@@ -22,7 +22,7 @@ export type PullArgs = typeof args;
 export const args = {
   ...SyncJsonArgs,
   "--env": { type: String, alias: ["-e", "--environment", "--from"], description: "Select the environment" },
-  "--force": { type: Boolean, alias: "-f", description: "Force the operation" },
+  "--force": { type: Boolean, alias: "-f", description: "Discard conflicting changes" },
 } satisfies ArgsDefinition;
 
 export const run: Run<PullArgs> = async (ctx, args) => {

@@ -228,6 +228,39 @@ describe("renderDetailedUsage", () => {
     expect(output).toContain("to automatically resolve them.");
     expect(output).toContain("--force");
   });
+
+  it("renders longDescription, sections, and expanded flags together", () => {
+    const mod: CommandModule = {
+      description: "Start developing your application",
+      longDescription: "Watches your local files and syncs them to your Gadget environment.\n\nChanges are tracked since last sync.",
+      args: {
+        "--prefer": {
+          type: String,
+          description: "Conflict resolution preference",
+          longDescription: "When conflicts are detected, use this preference\nto automatically resolve them.",
+        },
+        "--force": { type: Boolean, description: "Force the operation" },
+      },
+      sections: [{ title: "Ignoring files", content: "Use .ignore to exclude files from syncing." }],
+      run: noop,
+    };
+
+    const output = renderDetailedUsage("dev", mod);
+
+    // longDescription
+    expect(output).toContain("Watches your local files and syncs them to your Gadget environment.");
+    expect(output).toContain("Changes are tracked since last sync.");
+    // section
+    expect(output).toContain("Ignoring files");
+    expect(output).toContain("Use .ignore to exclude files from syncing.");
+    // expanded flag with longDescription
+    expect(output).toContain("Conflict resolution preference");
+    expect(output).toContain("When conflicts are detected, use this preference");
+    expect(output).toContain("to automatically resolve them.");
+    // flag without longDescription still renders
+    expect(output).toContain("--force");
+    expect(output).toContain("Force the operation");
+  });
 });
 
 describe("renderCommandList", () => {

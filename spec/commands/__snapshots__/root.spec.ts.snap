@@ -95,8 +95,6 @@ FLAGS
 EXAMPLES
   $ ggt agent-plugin install
   $ ggt agent-plugin install --force
-
-Run "ggt agent-plugin --help" for more information.
 "
 `;
 
@@ -415,8 +413,6 @@ EXAMPLES
   $ ggt env create staging --app=myapp
   $ ggt env delete staging --force --app=myapp
   $ ggt env use staging
-
-Run "ggt env --help" for more information.
 "
 `;
 
@@ -496,8 +492,6 @@ USAGE
 
 EXAMPLES
   $ ggt list
-
-Run "ggt list --help" for more information.
 "
 `;
 
@@ -522,8 +516,6 @@ USAGE
 
 EXAMPLES
   $ ggt login
-
-Run "ggt login --help" for more information.
 "
 `;
 
@@ -548,8 +540,6 @@ USAGE
 
 EXAMPLES
   $ ggt logout
-
-Run "ggt logout --help" for more information.
 "
 `;
 
@@ -686,8 +676,6 @@ FLAGS
 
 EXAMPLES
   $ ggt problems
-
-Run "ggt problems --help" for more information.
 "
 `;
 
@@ -874,8 +862,6 @@ EXAMPLES
   $ ggt var set API_KEY=abc123 --secret
   $ ggt var delete --all --force
   $ ggt var import --from=staging --all
-
-Run "ggt var --help" for more information.
 "
 `;
 
@@ -942,8 +928,6 @@ USAGE
 
 EXAMPLES
   $ ggt whoami
-
-Run "ggt whoami --help" for more information.
 "
 `;
 

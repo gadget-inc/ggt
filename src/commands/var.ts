@@ -259,7 +259,7 @@ const runDelete = async (appIdentity: AppIdentity, positional: string[]): Promis
       println`
         The following environment variables will be deleted:
 
-          ${keysToDelete.map((k) => `• ${k}`).join("\n          ")}
+          ${keysToDelete.map((k) => `• ${k}`).join("\n")}
       `;
       await confirm("Are you sure you want to delete all environment variables?");
     }
@@ -355,7 +355,7 @@ const importFromEnvironment = async (
       Unknown environment: ${sourceName}
 
       Available environments:
-        ${appIdentity.application.environments.map((e) => `• ${e.name}`).join("\n        ")}
+        ${appIdentity.application.environments.map((e) => `• ${e.name}`).join("\n")}
     `);
   }
 
@@ -371,7 +371,7 @@ const importFromEnvironment = async (
         throw new ArgError(sprint`
           The following keys were not found in the ${sourceName} environment:
 
-            ${missing.map((k) => `• ${k}`).join("\n            ")}
+            ${missing.map((k) => `• ${k}`).join("\n")}
         `);
       }
       vars = vars.filter((v) => specifiedKeys.includes(v.key));
@@ -436,7 +436,7 @@ const importFromFile = async (appIdentity: AppIdentity, filePath: string, specif
       throw new ArgError(sprint`
         The following keys were not found in the file:
 
-          ${missing.map((k) => `• ${k}`).join("\n          ")}
+          ${missing.map((k) => `• ${k}`).join("\n")}
       `);
     }
     filtered = entries.filter((e) => specifiedKeys.includes(e.key));

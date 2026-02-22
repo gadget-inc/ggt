@@ -46,7 +46,7 @@ export const formatFlag = (flag: FlagDef, padWidth = 24): string => {
  * Includes sections for description, usage, arguments, commands, flags,
  * examples, and a footer pointing to `--help` for more information.
  */
-export const renderShortUsage = (commandName: string, mod: CommandMetadata): string => {
+export const renderShortUsage = (commandName: string, mod: CommandMetadata, options?: { footer?: boolean }): string => {
   const lines: string[] = [];
 
   // description
@@ -104,8 +104,10 @@ export const renderShortUsage = (commandName: string, mod: CommandMetadata): str
   }
 
   // footer
-  lines.push("");
-  lines.push(`Run "ggt ${commandName} --help" for more information.`);
+  if (options?.footer !== false) {
+    lines.push("");
+    lines.push(`Run "ggt ${commandName} --help" for more information.`);
+  }
 
   return template(lines.join("\n"));
 };
@@ -145,7 +147,7 @@ export const renderDetailedUsage = (commandName: string, mod: CommandMetadata): 
   const hasExpandedPositionalArgs = mod.positionalArgs?.some((a) => a.longDescription);
 
   if (!mod.longDescription && !mod.sections && !hasExpandedFlags && !hasExpandedPositionalArgs) {
-    return renderShortUsage(commandName, mod);
+    return renderShortUsage(commandName, mod, { footer: false });
   }
 
   const lines: string[] = [];

@@ -198,13 +198,13 @@ describe("renderShortUsage", () => {
 });
 
 describe("renderDetailedUsage", () => {
-  it("produces the same output as renderShortUsage when no extra metadata exists", () => {
+  it("produces short usage without footer when no extra metadata exists", () => {
     const mod: CommandModule = {
       description: "Print this version of ggt",
       run: noop,
     };
 
-    expect(renderDetailedUsage("version", mod)).toBe(renderShortUsage("version", mod));
+    expect(renderDetailedUsage("version", mod)).toBe(renderShortUsage("version", mod, { footer: false }));
   });
 
   it("includes longDescription below the description", () => {

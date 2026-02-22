@@ -1,0 +1,1403 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`completion > shell generators > bash output matches snapshot 1`] = `
+"# bash completion for ggt -*- shell-script -*-
+
+_ggt_completions() {
+  local cur="\${COMP_WORDS[COMP_CWORD]}"
+
+  if [[ $COMP_CWORD -eq 1 ]]; then
+    COMPREPLY=($(compgen -W "dev deploy status push pull var env add open list login logout logs debugger whoami configure agent-plugin version completion --help --verbose -v --debug --telemetry --json" -- "$cur"))
+    return
+  fi
+
+  case "\${COMP_WORDS[1]}" in
+    dev)
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --log-level -ll --my-logs --prefer --file-push-delay --file-watch-debounce --file-watch-poll-interval --file-watch-poll-timeout --file-watch-rename-timeout --no-logs --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    deploy)
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --from --allow-different-app --allow-unknown-directory --force -f --allow-problems --allow-issues --allow-charges --allow-data-delete --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    status)
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    push)
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --to --allow-different-app --allow-unknown-directory --force -f --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    pull)
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --from --allow-different-app --allow-unknown-directory --force -f --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    var)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "list get set delete import --app -a --application --env -e --environment --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          list)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          get)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          set)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --secret --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          delete)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --force -f --all --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          import)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --from --from-file --include-values --all --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    env)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "list create delete unpause use --app -a --application --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          list)
+            COMPREPLY=($(compgen -W "--app -a --application --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          create)
+            COMPREPLY=($(compgen -W "--app -a --application --from --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          delete)
+            COMPREPLY=($(compgen -W "--app -a --application --force -f --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          unpause)
+            COMPREPLY=($(compgen -W "--app -a --application --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          use)
+            COMPREPLY=($(compgen -W "--app -a --application --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--app -a --application --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    add)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "model action route field environment --app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          model)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          action)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          route)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          field)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          environment)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    open)
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --show-all --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    list)
+      COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    login)
+      COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    logout)
+      COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    logs)
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --log-level -ll --my-logs --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    debugger)
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --log-level -ll --my-logs --port -p --configure --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    whoami)
+      COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    configure)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "show change clear --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          show)
+            COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          change)
+            COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          clear)
+            COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    agent-plugin)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "install --force --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          install)
+            COMPREPLY=($(compgen -W "--force --force --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--force --help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    version)
+      COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+      ;;
+    completion)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "bash zsh fish --help --verbose -v --debug --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          bash)
+            COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          zsh)
+            COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          fish)
+            COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--help --verbose -v --debug --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+  esac
+}
+
+complete -o default -F _ggt_completions ggt
+"
+`;
+
+exports[`completion > shell generators > fish output matches snapshot 1`] = `
+"# fish completion for ggt
+
+# Disable file completions by default
+complete -c ggt -f
+
+# Helper: check if a specific subcommand of a parent command has been entered
+function __ggt_seen_subcommand
+  set -l parent $argv[1]
+  set -l sub $argv[2]
+  set -l cmd (commandline -opc)
+  set -l found_parent 0
+  for word in $cmd
+    if test $found_parent -eq 1
+      if test $word = $sub
+        return 0
+      end
+    end
+    if test $word = $parent
+      set found_parent 1
+    end
+  end
+  return 1
+end
+
+# Helper: check if we are positioned for a subcommand (parent seen, no subcommand yet)
+# Known limitation: flag values (e.g. \`--app myapp\`) are mistaken for subcommands
+function __ggt_needs_subcommand
+  set -l parent $argv[1]
+  set -l cmd (commandline -opc)
+  set -l found_parent 0
+  for word in $cmd
+    if test $found_parent -eq 1
+      # if the word after the parent is not a flag, a subcommand was entered
+      if not string match -q -- '-*' $word
+        return 1
+      end
+    end
+    if test $word = $parent
+      set found_parent 1
+    end
+  end
+  # parent was found but no subcommand yet
+  if test $found_parent -eq 1
+    return 0
+  end
+  return 1
+end
+
+# Root flags
+complete -c ggt -n '__fish_use_subcommand' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_use_subcommand' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_use_subcommand' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_use_subcommand' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_use_subcommand' -l json -d 'Output as JSON'
+
+# Commands
+complete -c ggt -n '__fish_use_subcommand' -a 'dev' -d 'Start developing your application'
+complete -c ggt -n '__fish_use_subcommand' -a 'deploy' -d 'Deploy your environment to production'
+complete -c ggt -n '__fish_use_subcommand' -a 'status' -d 'Show file changes since last sync (dev, push, deploy, etc.)'
+complete -c ggt -n '__fish_use_subcommand' -a 'push' -d 'Push your local files to your environment'
+complete -c ggt -n '__fish_use_subcommand' -a 'pull' -d 'Pull your environment'\\''s files to your local computer'
+complete -c ggt -n '__fish_use_subcommand' -a 'var' -d 'Manage environment variables'
+complete -c ggt -n '__fish_use_subcommand' -a 'env' -d 'Manage environments'
+complete -c ggt -n '__fish_use_subcommand' -a 'add' -d 'Add models, fields, actions, routes and environments to your app'
+complete -c ggt -n '__fish_use_subcommand' -a 'open' -d 'Open a Gadget location in your browser'
+complete -c ggt -n '__fish_use_subcommand' -a 'list' -d 'List your available applications'
+complete -c ggt -n '__fish_use_subcommand' -a 'login' -d 'Log in to your account'
+complete -c ggt -n '__fish_use_subcommand' -a 'logout' -d 'Log out of your account'
+complete -c ggt -n '__fish_use_subcommand' -a 'logs' -d 'Stream your environment'\\''s logs'
+complete -c ggt -n '__fish_use_subcommand' -a 'debugger' -d 'Connect to the debugger for your environment'
+complete -c ggt -n '__fish_use_subcommand' -a 'whoami' -d 'Print the name and email of the logged-in user'
+complete -c ggt -n '__fish_use_subcommand' -a 'configure' -d 'Configure default execution options'
+complete -c ggt -n '__fish_use_subcommand' -a 'agent-plugin' -d 'Install Gadget agent plugins (AGENTS.md + skills)'
+complete -c ggt -n '__fish_use_subcommand' -a 'version' -d 'Print this version of ggt'
+complete -c ggt -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completion scripts'
+
+# dev
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow-different-app -d 'Allow syncing a different app than the one in sync.json'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow-unknown-directory -d 'Allow syncing an unrecognized directory'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l log-level -s ll -r -d 'Set the log level'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l my-logs -d 'Show only my logs'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l prefer -r -d 'Conflict resolution preference (local or environment)'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-push-delay -r -d 'Delay in ms before pushing file changes'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-debounce -r -d 'Debounce in ms for file watch events'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-poll-interval -r -d 'Interval in ms for polling file changes'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-poll-timeout -r -d 'Timeout in ms for file watch polling'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-rename-timeout -r -d 'Timeout in ms for detecting file renames'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l no-logs -d 'Disable log streaming during dev'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l json -d 'Output as JSON'
+
+# deploy
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l from -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-different-app -d 'Allow syncing a different app than the one in sync.json'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-unknown-directory -d 'Allow syncing an unrecognized directory'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l force -s f -d 'Discard conflicting changes'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-problems -d 'Deploy even with problems'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-issues -d 'Deploy even with problems'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-charges -d 'Deploy even with new charges'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-data-delete -d 'Deploy even with data loss'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l json -d 'Output as JSON'
+
+# status
+complete -c ggt -n '__fish_seen_subcommand_from status' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-different-app -d 'Allow syncing a different app than the one in sync.json'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-unknown-directory -d 'Allow syncing an unrecognized directory'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l json -d 'Output as JSON'
+
+# push
+complete -c ggt -n '__fish_seen_subcommand_from push' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l to -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-different-app -d 'Allow syncing a different app than the one in sync.json'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-unknown-directory -d 'Allow syncing an unrecognized directory'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l force -s f -d 'Discard conflicting changes'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l json -d 'Output as JSON'
+
+# pull
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l from -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-different-app -d 'Allow syncing a different app than the one in sync.json'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-unknown-directory -d 'Allow syncing an unrecognized directory'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l force -s f -d 'Discard conflicting changes'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l json -d 'Output as JSON'
+
+# var
+complete -c ggt -n '__fish_seen_subcommand_from var' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'list' -d 'List all environment variables'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'get' -d 'Get the value of an environment variable'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'set' -d 'Set one or more environment variables'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'delete' -d 'Delete one or more environment variables'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'import' -d 'Import environment variables from another environment or file'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l secret -d 'Mark variables as secret'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l force -s f -d 'Skip confirmation and suppress not-found errors'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l all -d 'Delete all environment variables'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l from -r -d 'Import from another environment'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l from-file -r -d 'Import from a .env file'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l include-values -d 'Copy values when importing from another environment'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l all -d 'Import all variables instead of specifying keys'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l json -d 'Output as JSON'
+
+# env
+complete -c ggt -n '__fish_seen_subcommand_from env' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l application -r -d 'Select the application'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'list' -d 'List all environments'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'create' -d 'Create a new environment'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'delete' -d 'Delete an environment'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'unpause' -d 'Unpause a paused environment'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'use' -d 'Switch the active environment'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l from -r -d 'Clone from a specific environment'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l force -s f -d 'Skip confirmation'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l json -d 'Output as JSON'
+
+# add
+complete -c ggt -n '__fish_seen_subcommand_from add' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-different-app -d 'Allow syncing a different app than the one in sync.json'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-unknown-directory -d 'Allow syncing an unrecognized directory'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'model' -d 'Add a new model'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'action' -d 'Add a new action'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'route' -d 'Add a new route'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'field' -d 'Add a field to a model'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'environment' -d 'Clone an environment'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l json -d 'Output as JSON'
+
+# open
+complete -c ggt -n '__fish_seen_subcommand_from open' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l show-all -d 'Show all available locations'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l json -d 'Output as JSON'
+
+# list
+complete -c ggt -n '__fish_seen_subcommand_from list' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from list' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from list' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from list' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from list' -l json -d 'Output as JSON'
+
+# login
+complete -c ggt -n '__fish_seen_subcommand_from login' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from login' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from login' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from login' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from login' -l json -d 'Output as JSON'
+
+# logout
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l json -d 'Output as JSON'
+
+# logs
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l log-level -s ll -r -d 'Set the log level'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l my-logs -d 'Show only my logs'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l json -d 'Output as JSON'
+
+# debugger
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l app -s a -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l application -r -d 'Select the application'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l env -s e -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l environment -r -d 'Select the environment'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l log-level -s ll -r -d 'Set the log level'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l my-logs -d 'Show only my logs'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l port -s p -r -d 'Port for the debugger'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l configure -r -d 'Configure the debugger for an editor'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l json -d 'Output as JSON'
+
+# whoami
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l json -d 'Output as JSON'
+
+# configure
+complete -c ggt -n '__ggt_needs_subcommand configure' -a 'show' -d 'Show current configuration'
+complete -c ggt -n '__ggt_needs_subcommand configure' -a 'change' -d 'Change configuration options'
+complete -c ggt -n '__ggt_needs_subcommand configure' -a 'clear' -d 'Clear all configured defaults'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l json -d 'Output as JSON'
+
+# agent-plugin
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l force -d 'Overwrite/reinstall even if already present'
+complete -c ggt -n '__ggt_needs_subcommand agent-plugin' -a 'install' -d 'Install Gadget agent plugins into the current project'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l force -d 'Overwrite/reinstall even if already present'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l json -d 'Output as JSON'
+
+# version
+complete -c ggt -n '__fish_seen_subcommand_from version' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from version' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from version' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from version' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from version' -l json -d 'Output as JSON'
+
+# completion
+complete -c ggt -n '__ggt_needs_subcommand completion' -a 'bash' -d 'Generate bash completion script'
+complete -c ggt -n '__ggt_needs_subcommand completion' -a 'zsh' -d 'Generate zsh completion script'
+complete -c ggt -n '__ggt_needs_subcommand completion' -a 'fish' -d 'Generate fish completion script'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l help -d 'Print how to use a command'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l help -d 'Print how to use a command'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l verbose -s v -d 'Print more verbose output'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l debug -d 'Print more verbose output'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l json -d 'Output as JSON'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l json -d 'Output as JSON'
+"
+`;
+
+exports[`completion > shell generators > zsh output matches snapshot 1`] = `
+"#compdef ggt
+
+_ggt_var() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '--help[Print how to use a command]' \\
+    '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON]' \\
+    '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+    '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'list:List all environment variables'
+        'get:Get the value of an environment variable'
+        'set:Set one or more environment variables'
+        'delete:Delete one or more environment variables'
+        'import:Import environment variables from another environment or file'
+      )
+      _describe -t subcommands 'var subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        list)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:'
+          ;;
+        get)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:'
+          ;;
+        set)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--secret[Mark variables as secret]'
+          ;;
+        delete)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '(--force -f)''--force[Skip confirmation and suppress not-found errors]' \\
+            '(--force -f)''-f[Skip confirmation and suppress not-found errors]' \\
+            '--all[Delete all environment variables]'
+          ;;
+        import)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--from[Import from another environment]:value:' \\
+            '--from-file[Import from a .env file]:value:' \\
+            '--include-values[Copy values when importing from another environment]' \\
+            '--all[Import all variables instead of specifying keys]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_env() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '--help[Print how to use a command]' \\
+    '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON]' \\
+    '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'list:List all environments'
+        'create:Create a new environment'
+        'delete:Delete an environment'
+        'unpause:Unpause a paused environment'
+        'use:Switch the active environment'
+      )
+      _describe -t subcommands 'env subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        list)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:'
+          ;;
+        create)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '--from[Clone from a specific environment]:value:'
+          ;;
+        delete)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--force -f)''--force[Skip confirmation]' \\
+            '(--force -f)''-f[Skip confirmation]'
+          ;;
+        unpause)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:'
+          ;;
+        use)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_add() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '--help[Print how to use a command]' \\
+    '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON]' \\
+    '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+    '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+    '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+    '--allow-unknown-directory[Allow syncing an unrecognized directory]' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'model:Add a new model'
+        'action:Add a new action'
+        'route:Add a new route'
+        'field:Add a field to a model'
+        'environment:Clone an environment'
+      )
+      _describe -t subcommands 'add subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        model)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]'
+          ;;
+        action)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]'
+          ;;
+        route)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]'
+          ;;
+        field)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]'
+          ;;
+        environment)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_configure() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '--help[Print how to use a command]' \\
+    '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON]' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'show:Show current configuration'
+        'change:Change configuration options'
+        'clear:Clear all configured defaults'
+      )
+      _describe -t subcommands 'configure subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        show)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+        change)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+        clear)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_agent_plugin() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '--help[Print how to use a command]' \\
+    '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON]' \\
+    '--force[Overwrite/reinstall even if already present]' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'install:Install Gadget agent plugins into the current project'
+      )
+      _describe -t subcommands 'agent-plugin subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        install)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '--force[Overwrite/reinstall even if already present]' \\
+            '--force[Overwrite/reinstall even if already present]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_completion() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '--help[Print how to use a command]' \\
+    '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON]' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'bash:Generate bash completion script'
+        'zsh:Generate zsh completion script'
+        'fish:Generate fish completion script'
+      )
+      _describe -t subcommands 'completion subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        bash)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+        zsh)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+        fish)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt() {
+  local -a commands
+  local state
+
+  _arguments -C \\
+    '--help[Print how to use a command]' \\
+    '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON]' \\
+    '1:command:->command' \\
+    '*::arg:->args'
+
+  case $state in
+    command)
+      commands=(
+        'dev:Start developing your application'
+        'deploy:Deploy your environment to production'
+        'status:Show file changes since last sync (dev, push, deploy, etc.)'
+        'push:Push your local files to your environment'
+        'pull:Pull your environment'\\''s files to your local computer'
+        'var:Manage environment variables'
+        'env:Manage environments'
+        'add:Add models, fields, actions, routes and environments to your app'
+        'open:Open a Gadget location in your browser'
+        'list:List your available applications'
+        'login:Log in to your account'
+        'logout:Log out of your account'
+        'logs:Stream your environment'\\''s logs'
+        'debugger:Connect to the debugger for your environment'
+        'whoami:Print the name and email of the logged-in user'
+        'configure:Configure default execution options'
+        'agent-plugin:Install Gadget agent plugins (AGENTS.md + skills)'
+        'version:Print this version of ggt'
+        'completion:Generate shell completion scripts'
+      )
+      _describe -t commands 'ggt command' commands
+      ;;
+    args)
+      case $words[1] in
+        dev)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]' \\
+            '(--log-level -ll)''--log-level[Set the log level]:value:' \\
+            '(--log-level -ll)''-ll[Set the log level]:value:' \\
+            '--my-logs[Show only my logs]' \\
+            '--prefer[Conflict resolution preference (local or environment)]:value:' \\
+            '--file-push-delay[Delay in ms before pushing file changes]:value:' \\
+            '--file-watch-debounce[Debounce in ms for file watch events]:value:' \\
+            '--file-watch-poll-interval[Interval in ms for polling file changes]:value:' \\
+            '--file-watch-poll-timeout[Timeout in ms for file watch polling]:value:' \\
+            '--file-watch-rename-timeout[Timeout in ms for detecting file renames]:value:' \\
+            '--no-logs[Disable log streaming during dev]'
+          ;;
+        deploy)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment --from)''--env[Select the environment]:value:' \\
+            '(--env -e --environment --from)''-e[Select the environment]:value:' \\
+            '(--env -e --environment --from)''--environment[Select the environment]:value:' \\
+            '(--env -e --environment --from)''--from[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]' \\
+            '(--force -f)''--force[Discard conflicting changes]' \\
+            '(--force -f)''-f[Discard conflicting changes]' \\
+            '(--allow-problems --allow-issues)''--allow-problems[Deploy even with problems]' \\
+            '(--allow-problems --allow-issues)''--allow-issues[Deploy even with problems]' \\
+            '--allow-charges[Deploy even with new charges]' \\
+            '--allow-data-delete[Deploy even with data loss]'
+          ;;
+        status)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]'
+          ;;
+        push)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment --to)''--env[Select the environment]:value:' \\
+            '(--env -e --environment --to)''-e[Select the environment]:value:' \\
+            '(--env -e --environment --to)''--environment[Select the environment]:value:' \\
+            '(--env -e --environment --to)''--to[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]' \\
+            '(--force -f)''--force[Discard conflicting changes]' \\
+            '(--force -f)''-f[Discard conflicting changes]'
+          ;;
+        pull)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment --from)''--env[Select the environment]:value:' \\
+            '(--env -e --environment --from)''-e[Select the environment]:value:' \\
+            '(--env -e --environment --from)''--environment[Select the environment]:value:' \\
+            '(--env -e --environment --from)''--from[Select the environment]:value:' \\
+            '--allow-different-app[Allow syncing a different app than the one in sync.json]' \\
+            '--allow-unknown-directory[Allow syncing an unrecognized directory]' \\
+            '(--force -f)''--force[Discard conflicting changes]' \\
+            '(--force -f)''-f[Discard conflicting changes]'
+          ;;
+        var)
+          _ggt_var
+          ;;
+        env)
+          _ggt_env
+          ;;
+        add)
+          _ggt_add
+          ;;
+        open)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '--show-all[Show all available locations]'
+          ;;
+        list)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+        login)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+        logout)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+        logs)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '(--log-level -ll)''--log-level[Set the log level]:value:' \\
+            '(--log-level -ll)''-ll[Set the log level]:value:' \\
+            '--my-logs[Show only my logs]'
+          ;;
+        debugger)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]' \\
+            '(--app -a --application)''--app[Select the application]:value:' \\
+            '(--app -a --application)''-a[Select the application]:value:' \\
+            '(--app -a --application)''--application[Select the application]:value:' \\
+            '(--env -e --environment)''--env[Select the environment]:value:' \\
+            '(--env -e --environment)''-e[Select the environment]:value:' \\
+            '(--env -e --environment)''--environment[Select the environment]:value:' \\
+            '(--log-level -ll)''--log-level[Set the log level]:value:' \\
+            '(--log-level -ll)''-ll[Set the log level]:value:' \\
+            '--my-logs[Show only my logs]' \\
+            '(--port -p)''--port[Port for the debugger]:value:' \\
+            '(--port -p)''-p[Port for the debugger]:value:' \\
+            '--configure[Configure the debugger for an editor]:value:'
+          ;;
+        whoami)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+        configure)
+          _ggt_configure
+          ;;
+        agent-plugin)
+          _ggt_agent_plugin
+          ;;
+        version)
+          _arguments \\
+            '--help[Print how to use a command]' \\
+            '(--verbose -v --debug)''--verbose[Print more verbose output]' \\
+            '(--verbose -v --debug)''-v[Print more verbose output]' \\
+            '(--verbose -v --debug)''--debug[Print more verbose output]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON]'
+          ;;
+        completion)
+          _ggt_completion
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt "$@"
+"
+`;

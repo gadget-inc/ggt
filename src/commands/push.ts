@@ -1,4 +1,4 @@
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 
 import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
 import { FileSync } from "../services/filesync/filesync.js";
@@ -7,36 +7,29 @@ import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
-export type PushArgs = typeof args;
+export const description = "Push your local files to your environment";
 
-export const args = {
-  ...SyncJsonArgs,
-  "--env": { type: String, alias: ["-e", "--environment", "--to"] },
-  "--force": { type: Boolean, alias: "-f" },
-} satisfies ArgsDefinition;
+export const examples = ["ggt push --env main --force"] as const;
 
-export const usage: Usage = (_ctx) => {
-  return sprint`
+export const longDescription = sprint`
   Pushes your local files to your environment directory.
 
   This command first tracks changes in your environment directory since the last sync.
   If changes are detected, you will be prompted to discard them or abort the push.
+`;
 
-  {gray Usage}
-        ggt push [options]
+export type PushArgs = typeof args;
 
-  {gray Options}
-        -a, --app <app_name>           Selects the app to push local changes to. Defaults to the app synced to the current directory, if there is one.
-        -e, --env, --to <env_name>     Selects the environment to push local changes to. Defaults to the environment synced to the current directory, if there is one.
-        --force                        Forces a push by discarding any changes made on your environment directory since last sync
-        --allow-different-directory    Pushes changes from any local directory with existing files, even if the directory hasn't been synced before
-        --allow-different-app          Pushes changes to an app using --app command, instead of the most recently synced one in the current directory
-
-  {gray Examples}
-        Push all local changes to the main environment by discarding any changes made on main
-        {cyanBright $ ggt push --env main --force}
-  `;
-};
+export const args = {
+  ...SyncJsonArgs,
+  "--env": { type: String, alias: ["-e", "--environment", "--to"], description: "Select the environment", valueName: "environment" },
+  "--force": {
+    type: Boolean,
+    alias: "-f",
+    description: "Discard conflicting changes",
+    longDescription: "Forces a push by discarding any changes made on your environment directory since last sync.",
+  },
+} satisfies ArgsDefinition;
 
 export const run: Run<typeof args> = async (ctx, args) => {
   if (args._.length > 0) {

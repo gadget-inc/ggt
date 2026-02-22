@@ -3,7 +3,7 @@ import assert from "node:assert";
 import http, { type Server } from "node:http";
 import open from "open";
 
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 
 import { config } from "../services/config/config.js";
 import { println } from "../services/output/print.js";
@@ -11,12 +11,9 @@ import { sprint } from "../services/output/sprint.js";
 import { writeSession } from "../services/user/session.js";
 import { getUser } from "../services/user/user.js";
 
-export const usage: Usage = () => sprint`
-    Log in to your account.
+export const description = "Log in to your account";
 
-    {bold Usage}
-          ggt login
-`;
+export const examples = ["ggt login"] as const;
 
 export const run: Run = async (ctx): Promise<void> => {
   let server: Server | undefined;

@@ -28,6 +28,53 @@ describe("sprint", () => {
       const result = sprint`Hello, ${name}!`;
       expect(result).toBe("Hello, Jane!");
     });
+
+    it("aligns multi-line value continuation lines to insertion column", () => {
+      const list = "one\ntwo\nthree";
+      const result = sprint`
+        Header
+          ${list}
+        Footer
+      `;
+      expect(result).toBe("Header\n  one\n  two\n  three\nFooter");
+    });
+
+    it("does not align multi-line value when inline with text", () => {
+      const list = "one\ntwo\nthree";
+      const result = sprint`
+        Items: ${list}
+      `;
+      // Unaligned continuation lines have 0 indent, so dedent can't strip anything
+      expect(result).toBe("        Items: one\ntwo\nthree");
+    });
+
+    it("does not modify single-line values", () => {
+      const value = "hello";
+      const result = sprint`
+        ${value}
+      `;
+      expect(result).toBe("hello");
+    });
+
+    it("does not indent trailing empty line in multi-line value", () => {
+      const list = "one\ntwo\n";
+      const result = sprint`
+        Header
+          ${list}
+        Footer
+      `;
+      expect(result).toBe("Header\n  one\n  two\n\nFooter");
+    });
+
+    it("does not indent blank intermediate lines in multi-line value", () => {
+      const list = "one\n\nthree";
+      const result = sprint`
+        Header
+          ${list}
+        Footer
+      `;
+      expect(result).toBe("Header\n  one\n\n  three\nFooter");
+    });
   });
 
   describe("options overload", () => {

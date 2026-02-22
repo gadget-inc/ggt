@@ -51,4 +51,8 @@ Commands are loaded via dynamic `import()` in `importCommand()` (a switch statem
 2. Add the command name to the `Commands` array in `src/services/command/command.ts`
 3. Add a `case` to the switch in `importCommand()` in the same file
 
+## Multiline strings
+
+MUST use `sprint` template literals for multiline `longDescription` and `sections[].content` strings. Do not use `[...].join("\n")`.
+
 **Key files:** `src/services/command/command.ts`, `src/services/command/arg.ts`

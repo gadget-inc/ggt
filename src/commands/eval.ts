@@ -5,7 +5,7 @@ import { inspect } from "node:util";
 import vm from "node:vm";
 
 import type { Application, Environment } from "../services/app/app.js";
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 
 import { Edit } from "../services/app/edit/edit.js";
@@ -20,34 +20,28 @@ import { output } from "../services/output/output.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
+export const description = "Evaluate a JavaScript snippet against your app's API";
+
+export const hidden = true;
+
+export const positional = "<snippet>";
+
+export const examples = [
+  "ggt eval 'api.user.findMany()'",
+  "ggt eval --app my-app --env staging 'api.user.findFirst()'",
+  "ggt eval -w 'api.user.delete(\"123\")'",
+] as const;
+
+export const longDescription = sprint`
+  The snippet receives an api variable (a pre-constructed Gadget API client
+  authenticated as the developer). Results are formatted like Node.js REPL output.
+  Writes are disallowed by default; use --allow-writes to enable them.
+`;
+
 export const args = {
   ...AppIdentityArgs,
-  "--allow-writes": { type: Boolean, alias: "-w" },
+  "--allow-writes": { type: Boolean, alias: "-w", description: "Allow write operations in eval" },
 } satisfies ArgsDefinition;
-
-export const usage: Usage = () => {
-  return sprint`
-    Evaluates a JavaScript snippet against a Gadget app's API client.
-
-    The snippet receives an {bold api} variable (a pre-constructed Gadget API client
-    authenticated as the developer). Results are formatted like Node.js REPL output.
-    Writes are disallowed by default; use {bold --allow-writes} to enable them.
-
-    {gray Usage}
-          $ ggt eval [options] <snippet>
-
-    {gray Options}
-          -a, --app <app_name>         Selects a specific app. Defaults to the app synced to the current directory, if there is one.
-          -e, --env <env_name>         Selects a specific environment. Defaults to the environment synced to the current directory, if there is one.
-          -w, --allow-writes           Allow write operations (default is read-only)
-              --json                   Output result as JSON instead of Node.js inspect format (root flag)
-
-    {gray Examples}
-          $ ggt eval 'api.user.findMany()'
-          $ ggt eval --app my-app --env staging 'api.user.findFirst()'
-          $ ggt eval -a my-app -w 'api.user.delete("123")'
-  `;
-};
 
 export const run: Run<typeof args> = async (ctx, args) => {
   const snippet = args._[0];

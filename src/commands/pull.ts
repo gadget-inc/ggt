@@ -1,4 +1,4 @@
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 
 import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
 import { FileSync } from "../services/filesync/filesync.js";
@@ -6,36 +6,29 @@ import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/files
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
-export type PullArgs = typeof args;
+export const description = "Pull your environment's files to your local computer";
 
-export const args = {
-  ...SyncJsonArgs,
-  "--env": { type: String, alias: ["-e", "--environment", "--from"] },
-  "--force": { type: Boolean, alias: "-f" },
-} satisfies ArgsDefinition;
+export const examples = ["ggt pull --env development --force"] as const;
 
-export const usage: Usage = (_ctx) => {
-  return sprint`
+export const longDescription = sprint`
   Pulls your environment files to your local directory.
 
   This command first tracks changes in your local directory since the last sync. If changes are
   detected, you will be prompted to discard them or abort the pull.
+`;
 
-  {gray Usage}
-        ggt pull [options]
+export type PullArgs = typeof args;
 
-  {gray Options}
-        -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
-        -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
-        --force                        Forces a pull by discarding any changes made on your local directory since last sync
-        --allow-different-directory    Pulls changes from any environment directory, even if the directory hasn't been synced before
-        --allow-different-app          Pulls changes to a different app using --app command, instead of the most recently synced one in the current directory
-
-  {gray Examples}
-        Pull all development environment changes by discarding any changes made locally
-        {cyanBright $ ggt pull --env development --force}
-  `;
-};
+export const args = {
+  ...SyncJsonArgs,
+  "--env": { type: String, alias: ["-e", "--environment", "--from"], description: "Select the environment", valueName: "environment" },
+  "--force": {
+    type: Boolean,
+    alias: "-f",
+    description: "Discard conflicting changes",
+    longDescription: "Forces a pull by discarding any changes made on your local directory since last sync.",
+  },
+} satisfies ArgsDefinition;
 
 export const run: Run<PullArgs> = async (ctx, args) => {
   if (args._.length > 0) {

@@ -1,4 +1,4 @@
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 
 import { getApplications, groupByTeam } from "../services/app/app.js";
 import { output } from "../services/output/output.js";
@@ -7,12 +7,9 @@ import { sprint, sprintln } from "../services/output/sprint.js";
 import { printTable } from "../services/output/table.js";
 import { getUserOrLogin } from "../services/user/user.js";
 
-export const usage: Usage = () => sprint`
-    List the apps available to the currently logged-in user.
+export const description = "List your available applications";
 
-    {bold Usage}
-          ggt list
-`;
+export const examples = ["ggt list"] as const;
 
 export const run: Run = async (ctx) => {
   await getUserOrLogin(ctx, "list");

@@ -16,8 +16,8 @@ import { sortBySimilar } from "../util/collection.js";
 import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "./arg.js";
 
 export const AppIdentityArgs = {
-  "--app": { type: AppArg, alias: ["-a", "--application"] },
-  "--env": { type: String, alias: ["-e", "--environment"] },
+  "--app": { type: AppArg, alias: ["-a", "--application"], description: "Select the application", valueName: "name" },
+  "--env": { type: String, alias: ["-e", "--environment"], description: "Select the environment", valueName: "environment" },
 } satisfies ArgsDefinition;
 
 export type AppIdentityArgs = typeof AppIdentityArgs;

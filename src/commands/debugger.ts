@@ -10,7 +10,7 @@ import process, { nextTick } from "node:process";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 
 import type { ArgsDefinition } from "../services/command/arg.js";
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
@@ -25,6 +25,31 @@ import { spin } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
 
+export const description = "Connect to the debugger for your environment";
+
+export const positional = "[DIRECTORY]";
+
+export const positionalArgs = [{ name: "DIRECTORY", description: 'The directory containing your Gadget app (default: ".")' }] as const;
+
+export const examples = [
+  "ggt debugger",
+  "ggt debugger --port 9230",
+  "ggt debugger --app myApp --env development",
+  "ggt debugger --configure vscode",
+] as const;
+
+const SupportedEditors = ["vscode", "cursor"] as const;
+
+export const longDescription = sprint`
+  Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.
+  This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other
+  CDP-compatible debugger client.
+
+  DIRECTORY is the directory containing your Gadget app (default: the current directory).
+
+  Use --configure with one of: ${SupportedEditors.join(", ")} to set up editor integration.
+`;
+
 export type DebuggerArgs = typeof args;
 
 const StartingMessage = "Starting ggt debugger";
@@ -36,45 +61,15 @@ export const args = {
   "--port": {
     type: Number,
     alias: ["-p"],
+    description: "Port for the debugger",
+    valueName: "port",
   },
   "--configure": {
     type: String,
+    description: "Configure the debugger for an editor",
+    valueName: "editor",
   },
 } satisfies ArgsDefinition;
-
-const SupportedEditors = ["vscode", "cursor"] as const;
-
-export const usage: Usage = (_ctx) => {
-  return sprint`
-    Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.
-    This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other
-    CDP-compatible debugger client.
-
-    {gray Usage}
-          $ ggt debugger [DIRECTORY] [options]
-
-          DIRECTORY: The directory containing your Gadget app (default: current directory)
-
-    {gray Options}
-          -a, --app <app_name>        Selects the app to debug. Defaults to the app synced to the current directory, if there is one.
-          -e, --env <env_name>        Selects the environment to debug. Defaults to the environment synced to the current directory, if there is one.
-          -p, --port <port>           Local port for the inspector proxy (default: 9229)
-          --configure <editor>        Configure debugger for ${SupportedEditors.join(", ")}
-
-    {gray Examples}
-          start debugger proxy for current environment
-          {cyanBright $ ggt debugger}
-
-          use a custom port
-          {cyanBright $ ggt debugger --port 9230}
-
-          debug a specific app and environment
-          {cyanBright $ ggt debugger --app myApp --env development}
-
-          configure VS Code debugger
-          {cyanBright $ ggt debugger --configure vscode}
-  `;
-};
 
 type DebuggerSessionResponse = {
   wsUrl: string;

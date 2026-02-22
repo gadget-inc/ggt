@@ -60,37 +60,38 @@ describe("root", () => {
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget.
 
-      Usage
+      USAGE
         ggt [COMMAND]
 
-      Commands
-        dev              Start developing your application
-        deploy           Deploy your environment to production
-        status           Show your local and environment's file changes
-        push             Push your local files to your environment
-        pull             Pull your environment's files to your local computer
-        var              Manage environment variables
-        env              Manage environments
-        add              Add models, fields, actions, routes and environments to your app
-        open             Open a Gadget location in your browser
-        list             List your available applications
-        login            Log in to your account
-        logout           Log out of your account
-        logs             Stream your environment's logs
-        debugger         Connect to the debugger for your environment
-        whoami           Print the currently logged in account
-        configure        Configure default execution options
-        agent-plugin     Install Gadget agent plugins (AGENTS.md + skills)
-        version          Print this version of ggt
+      COMMANDS
+        dev             Start developing your application
+        deploy          Deploy your environment to production
+        status          Show file changes since last sync (dev, push, deploy, etc.)
+        push            Push your local files to your environment
+        pull            Pull your environment's files to your local computer
+        var             Manage environment variables
+        env             Manage environments
+        add             Add models, fields, actions, routes and environments to your app
+        open            Open a Gadget location in your browser
+        list            List your available applications
+        login           Log in to your account
+        logout          Log out of your account
+        logs            Stream your environment's logs
+        debugger        Connect to the debugger for your environment
+        whoami          Print the name and email of the logged-in user
+        configure       Configure default execution options
+        agent-plugin    Install Gadget agent plugins (AGENTS.md + skills)
+        version         Print this version of ggt
 
-      Flags
+      FLAGS
         -h, --help       Print how to use a command
         -v, --verbose    Print more verbose output
             --telemetry  Enable telemetry
+            --json       Output as JSON
 
-      Agent plugins
+      AGENT PLUGINS
         Install AGENTS.md and Gadget agent skills for your coding agent:
-        ggt agent-plugin install
+        $ ggt agent-plugin install
 
       Run "ggt [COMMAND] -h" for more information about a specific command.
       "

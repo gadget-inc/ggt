@@ -1,6 +1,6 @@
 import open from "open";
 
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 
 import { getModels } from "../services/app/app.js";
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
@@ -12,60 +12,52 @@ import { sprint } from "../services/output/sprint.js";
 import { sortBySimilar } from "../services/util/collection.js";
 import { isNever } from "../services/util/is.js";
 
+export const description = "Open a Gadget location in your browser";
+
+export const positional = "[LOCATION] [model_name]";
+
+export const positionalArgs = [
+  { name: "LOCATION", description: "The part of Gadget to open (logs, permissions, data, schema)" },
+  { name: "model_name", description: "The model name (for data and schema locations)" },
+] as const;
+
+export const examples = [
+  "ggt open",
+  "ggt open logs",
+  "ggt open permissions",
+  "ggt open data post",
+  "ggt open schema post",
+  "ggt open data --show-all",
+  "ggt open schema --show-all",
+  "ggt open data post --app myBlog --env staging",
+] as const;
+
 export type OpenArgs = typeof args;
 
 export const args = {
   ...AppIdentityArgs,
-  "--show-all": { type: Boolean },
+  "--show-all": { type: Boolean, description: "Show all available locations" },
 };
 
-export const usage: Usage = (_ctx) => {
-  return sprint`
+export const longDescription = sprint`
   This command opens a specific Gadget page in your browser, allowing you to directly access
   various parts of your application's interface such as logs, permissions, data views, or
   schemas.
+`;
 
-  {gray Usage}
-        ggt open [LOCATION] [model_name] [--show-all] [options]
+export const sections = [
+  {
+    title: "Locations",
+    content: sprint`
+      LOCATION specifies the part of Gadget to open. By default it opens the app's home page:
 
-        LOCATION: specifies the part of Gadget to open, by default it'll open the apps home page:
-
-        + logs                Opens logs
-        + permissions         Opens permissions
-        + data                Opens data editor for a specific model
-        + schema              Opens schema editor for a specific model
-
-  {gray Options}
-        -a, --app <app_name>   Selects the application to open in your browser. Defaults to the app synced to the current directory, if there is one.
-        -e, --env <env_name>   Selects the environment to open in your browser. Defaults to the environment synced to the current directory, if there is one.
-        --show-all             Shows all schema, or data options by listing your available models
-
-  {gray Examples}
-        Opens editor home
-        {cyanBright $ ggt open}
-
-        Opens logs
-        {cyanBright $ ggt open logs}
-
-        Opens permissions
-        {cyanBright $ ggt open permissions}
-
-        Opens data editor for the 'post' model
-        {cyanBright $ ggt open data post}
-
-        Opens schema for 'post' model
-        {cyanBright $ ggt open schema post}
-
-        Shows all models available in the data editor
-        {cyanBright $ ggt open data -show-all}
-
-        Shows all models available in the schema viewer
-        {cyanBright $ ggt open schema --show-all}
-
-        Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment
-        {cyanBright $ ggt open data post --app myBlog --env staging}
-  `;
-};
+        logs          Opens logs
+        permissions   Opens permissions
+        data          Opens data editor for a specific model
+        schema        Opens schema editor for a specific model
+    `,
+  },
+] as const;
 
 export const run: Run<OpenArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());

@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import terminalLink from "terminal-link";
 
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run, SubcommandDef } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 
 import { getGlobalActions, getModels } from "../services/app/app.js";
@@ -14,6 +14,7 @@ import {
 } from "../services/app/edit/operation.js";
 import { ClientError } from "../services/app/error.js";
 import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
+import { renderDetailedUsage } from "../services/command/usage.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
@@ -48,55 +49,53 @@ export class AddClientError extends GGTError {
   }
 }
 
+export const description = "Add models, fields, actions, routes and environments to your app";
+
+export const positional = "<resource> [args...]";
+
+export const longDescription = sprint`
+  This command first performs a sync to ensure that your local and environment directories
+  match, changes are tracked since last sync. If any conflicts are detected, they must be
+  resolved before adding.
+`;
+
+export const examples = [
+  "ggt add model post title:string body:string",
+  "ggt add field post/published:boolean",
+  "ggt add action model/post/publish",
+  "ggt add action action/audit",
+  "ggt add route GET howdy",
+  "ggt add environment staging --environment development",
+] as const;
+
+export const subcommandDefs: readonly SubcommandDef[] = [
+  { name: "model", description: "Add a new model" },
+  { name: "action", description: "Add a new action" },
+  { name: "route", description: "Add a new route" },
+  { name: "field", description: "Add a field to a model" },
+  { name: "environment", description: "Clone an environment" },
+];
+
 export type AddArgs = typeof args;
 export type AddArgsResult = ArgsDefinitionResult<AddArgs>;
 
 export const args = { ...SyncJsonArgs };
 
-export const usage: Usage = () => {
-  return sprint`
-  Adds models, fields, actions and routes to your app.
+export const sections = [
+  {
+    title: "Resource syntax",
+    content: sprint`
+      ggt add model <model_name> [field_name:field_type ...]
 
-  This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync.
-  If any conflicts are detected, they must be resolved before adding models, fields, actions or routes.
+      ggt add action [CONTEXT]/<action_name>
+      CONTEXT: Specifies the kind of action. Use "model" for model actions otherwise use "action".
 
-  {gray Usage}
-    ggt add model <model_name> [field_name:field_type ...]
+      ggt add route <HTTP_METHOD> <route_path>
 
-    ggt add action [CONTEXT]/<action_name>
-    CONTEXT:Specifies the kind of action. Use "model" for model actions otherwise use "action".
-
-    ggt add route <HTTP_METHOD> <route_path>
-
-    ggt add field <model_path>/<field_name>:<field_type>
-
-  {gray Options}
-    -a, --app <app_name> Selects the app to add to. Defaults to the app synced to the current directory, if there is one.
-    -e, --env <env_name> Selects the environment to add to. Defaults to the environment synced to the current directory, if there is one.
-
-  {gray Examples}
-    Add a new model 'post' with out fields:
-    {cyanBright $ ggt add model modelA}
-
-    Add a new model 'post' with 2 new 'string' type fields 'title' and 'body':
-    {cyanBright $ ggt add model post title:string body:string}
-
-    Add a new 'boolean' type field 'published' to an existing model
-    {cyanBright ggt add field post/published:boolean}
-
-    Add new action 'publish' to the 'post' model:
-    {cyanBright ggt add action model/post/publish}
-
-    Add a new action 'audit'
-    {cyanBright ggt add action action/audit}
-
-    Add a new route 'howdy'
-    {cyanBright ggt add route GET howdy}
-
-    Clone the \`development\` environment into a new \`staging\` environment
-    {cyanBright ggt add environment staging --environment development}
-  `;
-};
+      ggt add field <model_path>/<field_name>:<field_type>
+    `,
+  },
+] as const;
 
 export const run: Run<AddArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
@@ -136,9 +135,11 @@ export const run: Run<AddArgs> = async (ctx, args) => {
     case "env":
       await envSubCommand(ctx, { args, filesync });
       break;
-    default:
-      println(usage(ctx));
+    default: {
+      const mod = await import("./add.js");
+      println(renderDetailedUsage("add", mod));
       return;
+    }
   }
 };
 

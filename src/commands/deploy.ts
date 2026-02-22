@@ -3,8 +3,9 @@ import indentString from "indent-string";
 import assert from "node:assert";
 import terminalLink from "terminal-link";
 
+import type { Run } from "../services/command/command.js";
+
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
-import { type Run, type Usage } from "../services/command/command.js";
 import { env } from "../services/config/env.js";
 import { deletedSymbol, updatedSymbol } from "../services/filesync/changes.js";
 import { DeployDisallowedError } from "../services/filesync/error.js";
@@ -22,41 +23,39 @@ import { unreachable } from "../services/util/assert.js";
 import { parseGraphQLErrors } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
 
-export type DeployArgs = typeof args;
+export const description = "Deploy your environment to production";
 
-export const args = {
-  ...PushArgs,
-  "--env": { type: String, alias: ["-e", "--environment", "--from"] },
-  "--allow-problems": { type: Boolean, alias: "--allow-issues" },
-  "--allow-charges": { type: Boolean },
-  "--allow-data-delete": { type: Boolean },
-};
+export const examples = ["ggt deploy -a myBlog --from staging"] as const;
 
-export const usage: Usage = (_ctx) => {
-  return sprint`
+export const longDescription = sprint`
   Deploys your app to production.
 
   This command first performs a sync to ensure that your local and environment directories
   match, changes are tracked since last sync. If any conflicts are detected, they must be
   resolved before deployment.
-
-  {gray Usage}
-        $ ggt deploy [options]
-
-  {gray Options}
-        -a, --app <app_name>           Selects a specific app to deploy. Defaults to the app synced to the current directory, if there is one.
-        --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Defaults to the environment synced to the current directory, if there is one.
-        --force                        Deploys by discarding any changes made to the environment directory since last sync
-        --allow-different-directory    Deploys from any local directory with existing files, even if the directory hasn't been synced before
-        --allow-different-app          Deploys a different app using the --app command, instead of the most recently synced one in the current directory
-        --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
-        --allow-data-delete            Deploys even if it results in the deletion of data in production
-        --allow-charges                Deploys even if it results in additional charges to your plan
-
-  {gray Examples}
-        Deploys code from the staging environment of a myBlog
-        {cyanBright $ ggt deploy -a myBlog -from staging}
 `;
+
+export type DeployArgs = typeof args;
+
+export const args = {
+  ...PushArgs,
+  "--env": { type: String, alias: ["-e", "--environment", "--from"], description: "Select the environment", valueName: "environment" },
+  "--allow-problems": {
+    type: Boolean,
+    alias: "--allow-issues",
+    description: "Deploy even with problems",
+    longDescription: "Deploys despite any existing issues found in the app (Gelly errors, TypeScript errors, etc.).",
+  },
+  "--allow-charges": {
+    type: Boolean,
+    description: "Deploy even with new charges",
+    longDescription: "Deploys even if it results in additional charges to your plan.",
+  },
+  "--allow-data-delete": {
+    type: Boolean,
+    description: "Deploy even with data loss",
+    longDescription: "Deploys even if it results in the deletion of data in production.",
+  },
 };
 
 export const run: Run<DeployArgs> = async (ctx, args) => {

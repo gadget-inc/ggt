@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run, SubcommandDef } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 
 import { Edit } from "../services/app/edit/edit.js";
@@ -12,11 +12,23 @@ import {
 import { ClientError } from "../services/app/error.js";
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError, parseArgs, type ArgsDefinition, type ParseArgsOptions } from "../services/command/arg.js";
+import { renderDetailedUsage, renderShortUsage } from "../services/command/usage.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
+
+export const description = "Manage environment variables";
+
+export const examples = [
+  "ggt var list --app=my-app --env=development",
+  "ggt var set API_KEY=abc123 --secret",
+  "ggt var delete --all --force",
+  "ggt var import --from=staging --all",
+] as const;
+
+export const positional = "<command>";
 
 export const args = {
   ...AppIdentityArgs,
@@ -24,175 +36,87 @@ export const args = {
 
 export const parseOptions: ParseArgsOptions = { permissive: true };
 
-export const usage: Usage = () => {
-  return sprint`
-    Manage environment variables for your Gadget application.
-
-    {gray Usage}
-      ggt var <command> [options]
-
-    {gray Commands}
-      list             List all environment variables
-      get <key>        Get the value of an environment variable
-      set <key=value>  Set one or more environment variables
-      delete <key>     Delete one or more environment variables
-      import           Import environment variables from another environment or file
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    Run "ggt var <command> -h" for more information about a specific command.
-  `;
-};
-
-const listUsage = (): string => {
-  return sprint`
-    List all environment variables.
-
-    {gray Usage}
-      ggt var list [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    {gray Examples}
-      {cyanBright $ ggt var list --app=myapp --env=development}
-  `;
-};
-
-const getUsage = (): string => {
-  return sprint`
-    Get the value of an environment variable.
-
-    {gray Usage}
-      ggt var get <key> [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    {gray Examples}
-      {cyanBright $ ggt var get DATABASE_URL --app=myapp --env=development}
-  `;
-};
-
-const setUsage = (): string => {
-  return sprint`
-    Set one or more environment variables.
-
-    {gray Usage}
-      ggt var set <key=value> [key=value ...] [options]
-
-    {gray Options}
-      --secret               Mark the variable(s) as secret
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    {gray Examples}
-      {cyanBright $ ggt var set API_KEY=abc123 --app=myapp --env=development}
-      {cyanBright $ ggt var set SECRET_KEY=xyz --secret --app=myapp --env=development}
-      {cyanBright $ ggt var set KEY1=val1 KEY2=val2}
-  `;
-};
-
-const deleteUsage = (): string => {
-  return sprint`
-    Delete one or more environment variables.
-
-    {gray Usage}
-      ggt var delete <key> [key ...] [options]
-
-    {gray Options}
-      -f, --force            Skip confirmation and suppress not-found errors
-      --all                  Delete all environment variables
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    {gray Examples}
-      {cyanBright $ ggt var delete API_KEY --app=myapp --env=development}
-      {cyanBright $ ggt var delete --all --force --app=myapp --env=development}
-  `;
-};
-
-const importUsage = (): string => {
-  return sprint`
-    Import environment variables from another environment or a file.
-
-    {gray Usage}
-      ggt var import [options] [key ...]
-
-    {gray Options}
-      --from <env>              Import from another environment
-      --from-file <path>        Import from a .env file
-      --include-values          Copy values when importing from another environment
-      --all                     Import all variables (instead of specifying keys)
-      -a, --app <app_name>      Selects the target application
-      -e, --env <env_name>      Selects the target environment
-
-    {gray Examples}
-      Import all vars from staging as placeholders
-      {cyanBright $ ggt var import --from=staging --all --app=myapp --env=development}
-
-      Import specific vars with values from staging
-      {cyanBright $ ggt var import --from=staging --include-values API_KEY DATABASE_URL}
-
-      Import from a .env file
-      {cyanBright $ ggt var import --from-file=.env.example --all}
-  `;
-};
-
-const subcommandUsage = (subcommand: string | undefined): string => {
-  switch (subcommand) {
-    case "list":
-      return listUsage();
-    case "get":
-      return getUsage();
-    case "set":
-      return setUsage();
-    case "delete":
-      return deleteUsage();
-    case "import":
-      return importUsage();
-    default:
-      // usage() doesn't use ctx, but satisfies the Usage type signature
-      return usage(undefined!); // oxlint-disable-line
-  }
-};
-
 const setArgs = {
-  "--secret": { type: Boolean },
+  "--secret": { type: Boolean, description: "Mark variables as secret" },
 } satisfies ArgsDefinition;
 
 const deleteArgs = {
-  "--force": { type: Boolean, alias: "-f" },
-  "--all": { type: Boolean },
+  "--force": { type: Boolean, alias: "-f", description: "Skip confirmation and suppress not-found errors" },
+  "--all": { type: Boolean, description: "Delete all environment variables" },
 } satisfies ArgsDefinition;
 
 const importArgs = {
-  "--from": { type: String },
-  "--from-file": { type: String },
-  "--include-values": { type: Boolean },
-  "--all": { type: Boolean },
+  "--from": { type: String, description: "Import from another environment", valueName: "environment" },
+  "--from-file": { type: String, description: "Import from a .env file", valueName: "path" },
+  "--include-values": { type: Boolean, description: "Copy values when importing from another environment" },
+  "--all": { type: Boolean, description: "Import all variables instead of specifying keys" },
 } satisfies ArgsDefinition;
+
+export const subcommandDefs: readonly SubcommandDef[] = [
+  {
+    name: "list",
+    description: "List all environment variables",
+    examples: ["ggt var list --app=myapp --env=development"],
+  },
+  {
+    name: "get",
+    description: "Get the value of an environment variable",
+    examples: ["ggt var get DATABASE_URL --app=myapp --env=development"],
+  },
+  {
+    name: "set",
+    description: "Set one or more environment variables",
+    args: setArgs,
+    examples: ["ggt var set API_KEY=abc123", "ggt var set SECRET_KEY=xyz --secret", "ggt var set KEY1=val1 KEY2=val2"],
+  },
+  {
+    name: "delete",
+    description: "Delete one or more environment variables",
+    args: deleteArgs,
+    examples: ["ggt var delete API_KEY", "ggt var delete --all --force"],
+  },
+  {
+    name: "import",
+    description: "Import environment variables from another environment or file",
+    args: importArgs,
+    examples: [
+      "ggt var import --from=staging --all",
+      "ggt var import --from=staging --include-values API_KEY DATABASE_URL",
+      "ggt var import --from-file=.env.example --all",
+    ],
+  },
+];
 
 export const run: Run<typeof args> = async (ctx, args) => {
   const subcommand = args._.shift();
 
   // handle -h/--help for subcommand-specific help
   if (args._.includes("-h") || args._.includes("--help")) {
-    println(subcommandUsage(subcommand));
+    if (subcommand) {
+      const def = subcommandDefs.find((d) => d.name === subcommand);
+      if (def) {
+        println(
+          renderShortUsage("var " + subcommand, {
+            description: def.description,
+            args: { ...AppIdentityArgs, ...def.args },
+            examples: def.examples ?? [],
+          }),
+        );
+        process.exit(0);
+      }
+    }
+    const mod = await import("./var.js");
+    println(renderDetailedUsage("var", mod));
     process.exit(0);
   }
 
   if (!subcommand) {
-    println(usage(ctx));
+    const mod = await import("./var.js");
+    println(renderDetailedUsage("var", mod));
     return;
   }
 
-  const validSubcommands = ["list", "get", "set", "delete", "import"];
-  if (!validSubcommands.includes(subcommand)) {
+  if (!subcommandDefs.some((d) => d.name === subcommand)) {
     throw new ArgError(sprint`
       Unknown subcommand {yellow ${subcommand}}
 

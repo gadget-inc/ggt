@@ -82,6 +82,7 @@ describe("root", () => {
         configure       Configure default execution options
         agent-plugin    Install Gadget agent plugins (AGENTS.md + skills)
         version         Print this version of ggt
+        completion      Generate shell completion scripts
 
       FLAGS
         -h, --help       Print how to use a command

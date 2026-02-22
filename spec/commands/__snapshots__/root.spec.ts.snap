@@ -120,6 +120,62 @@ Run "ggt agent-plugin --help" for more information.
 "
 `;
 
+exports[`root > when completion is given > prints the usage when --help is passed 1`] = `
+"Generate shell completion scripts
+
+USAGE
+  ggt completion <shell>
+
+ARGUMENTS
+  shell       The shell to generate completions for (bash, zsh, fish)
+
+COMMANDS
+  bash    Generate bash completion script
+  zsh     Generate zsh completion script
+  fish    Generate fish completion script
+
+EXAMPLES
+  $ ggt completion bash
+  $ ggt completion zsh
+  $ ggt completion fish
+
+INSTALLATION
+  Bash (add to ~/.bashrc):
+    source <(ggt completion bash)
+
+  Zsh (add to ~/.zshrc):
+    source <(ggt completion zsh)
+
+  Fish:
+    ggt completion fish | source
+    # Or to persist:
+    ggt completion fish > ~/.config/fish/completions/ggt.fish
+"
+`;
+
+exports[`root > when completion is given > prints the usage when -h is passed 1`] = `
+"Generate shell completion scripts
+
+USAGE
+  ggt completion <shell>
+
+ARGUMENTS
+  shell       The shell to generate completions for (bash, zsh, fish)
+
+COMMANDS
+  bash    Generate bash completion script
+  zsh     Generate zsh completion script
+  fish    Generate fish completion script
+
+EXAMPLES
+  $ ggt completion bash
+  $ ggt completion zsh
+  $ ggt completion fish
+
+Run "ggt completion --help" for more information.
+"
+`;
+
 exports[`root > when configure is given > prints the usage when --help is passed 1`] = `
 "Configure default execution options
 

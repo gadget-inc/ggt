@@ -32,6 +32,7 @@ export const Commands = [
   "agent-plugin",
   "eval",
   "version",
+  "completion",
 ] as const;
 
 /**
@@ -204,6 +205,9 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
       break;
     case "version":
       module = await import("../../commands/version.js");
+      break;
+    case "completion":
+      module = await import("../../commands/completion.js");
       break;
   }
 

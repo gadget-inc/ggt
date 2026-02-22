@@ -7,6 +7,14 @@ import { GGTError, IsBug, UnexpectedError } from "../output/report.js";
 import { symbol } from "../output/symbols.js";
 import { isNil } from "../util/is.js";
 
+export type FlagDef = {
+  name: string;
+  aliases: string[];
+  type: "boolean" | "string" | "number" | "count";
+  description: string;
+  valueName?: string;
+};
+
 export type ArgsDefinition = Record<string, ArgDefinition>;
 
 type ArgDefinition<Handler extends arg.Handler = arg.Handler> =
@@ -15,6 +23,9 @@ type ArgDefinition<Handler extends arg.Handler = arg.Handler> =
       type: Handler;
       alias?: string | string[];
       default?: ReturnType<Handler>;
+      description?: string;
+      longDescription?: string;
+      valueName?: string;
     };
 
 export type ParseArgsOptions = {
@@ -114,3 +125,52 @@ export type ArgsDefinitionResult<Args extends ArgsDefinition, Keys extends keyof
       : ReturnType<Handler> | undefined
     : never;
 }> & { _: string[] };
+
+const resolveType = (handler: unknown): FlagDef["type"] => {
+  if (handler === Boolean) {
+    return "boolean";
+  }
+  if (handler === String) {
+    return "string";
+  }
+  if (handler === Number) {
+    return "number";
+  }
+  if (handler === arg.COUNT) {
+    return "count";
+  }
+  // custom handler functions default to string type
+  return "string";
+};
+
+/**
+ * Extracts flag definitions from an ArgsDefinition object.
+ */
+export const extractFlags = (args: ArgsDefinition): FlagDef[] => {
+  const flags: FlagDef[] = [];
+
+  for (const [key, value] of Object.entries(args)) {
+    // skip short help flag -- help is universal, not per-command
+    if (key === "-h") {
+      continue;
+    }
+
+    const handler = typeof value === "function" ? value : value.type;
+    const aliases: string[] = [];
+
+    if (typeof value === "object" && "alias" in value && value.alias) {
+      const raw = value.alias;
+      for (const a of Array.isArray(raw) ? raw : [raw]) {
+        aliases.push(a);
+      }
+    }
+
+    const type = resolveType(handler);
+    const description = typeof value === "object" && "description" in value ? (value.description ?? "") : "";
+    const valueName = typeof value === "object" && "valueName" in value ? value.valueName : undefined;
+
+    flags.push({ name: key, aliases, type, description, valueName });
+  }
+
+  return flags;
+};

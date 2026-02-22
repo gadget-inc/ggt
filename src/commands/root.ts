@@ -1,7 +1,8 @@
 import arg from "arg";
 
 import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
-import { Commands, importCommand, isCommand, type Run, type Usage } from "../services/command/command.js";
+import { Commands, importCommand, isCommand, type Run } from "../services/command/command.js";
+import { renderCommandList, renderDetailedUsage, renderShortUsage } from "../services/command/usage.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
@@ -15,47 +16,32 @@ export type RootArgsResult = ArgsDefinitionResult<RootArgs>;
 
 export const args = {
   "-h": { type: Boolean },
-  "--help": { type: Boolean },
-  "--verbose": { type: arg.COUNT, alias: ["-v", "--debug"] },
-  "--telemetry": { type: Boolean },
-  "--json": { type: Boolean },
+  "--help": { type: Boolean, description: "Print how to use a command" },
+  "--verbose": { type: arg.COUNT, alias: ["-v", "--debug"], description: "Print more verbose output" },
+  "--telemetry": { type: Boolean, description: "Enable telemetry" },
+  "--json": { type: Boolean, description: "Output as JSON" },
 } satisfies ArgsDefinition;
 
-export const usage: Usage = () => {
+export const usage = async (): Promise<string> => {
+  const commandList = await renderCommandList();
   return sprint`
     The command-line interface for Gadget.
 
-    {gray Usage}
+    {bold USAGE}
       ggt [COMMAND]
 
-    {gray Commands}
-      dev              Start developing your application
-      deploy           Deploy your environment to production
-      status           Show your local and environment's file changes
-      push             Push your local files to your environment
-      pull             Pull your environment's files to your local computer
-      var              Manage environment variables
-      env              Manage environments
-      add              Add models, fields, actions, routes and environments to your app
-      open             Open a Gadget location in your browser
-      list             List your available applications
-      login            Log in to your account
-      logout           Log out of your account
-      logs             Stream your environment's logs
-      debugger         Connect to the debugger for your environment
-      whoami           Print the currently logged in account
-      configure        Configure default execution options
-      agent-plugin     Install Gadget agent plugins (AGENTS.md + skills)
-      version          Print this version of ggt
+    {bold COMMANDS}
+      ${commandList}
 
-    {gray Flags}
+    {bold FLAGS}
       -h, --help       Print how to use a command
       -v, --verbose    Print more verbose output
           --telemetry  Enable telemetry
+          --json       Output as JSON
 
-    {gray Agent plugins}
+    {bold AGENT PLUGINS}
       Install AGENTS.md and Gadget agent skills for your coding agent:
-      {cyanBright ggt agent-plugin install}
+      $ ggt agent-plugin install
 
     Run "ggt [COMMAND] -h" for more information about a specific command.
   `;
@@ -79,7 +65,7 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
 
   let commandName = args._.shift();
   if (isNil(commandName)) {
-    println(usage(ctx));
+    println(await usage());
     process.exit(0);
   }
 
@@ -101,9 +87,16 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
 
   const command = await importCommand(commandName);
 
-  if (args["-h"] ?? args["--help"]) {
+  if (args["--help"]) {
     if (!command.parseOptions?.permissive || args._.length === 0) {
-      println(command.usage(ctx));
+      println(renderDetailedUsage(commandName, command));
+      process.exit(0);
+    }
+    // pass --help through to the command's run function for subcommand-level help
+    args._.push("--help");
+  } else if (args["-h"]) {
+    if (!command.parseOptions?.permissive || args._.length === 0) {
+      println(renderShortUsage(commandName, command));
       process.exit(0);
     }
     // pass -h through to the command's run function for subcommand-level help

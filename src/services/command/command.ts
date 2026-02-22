@@ -1,4 +1,4 @@
-import type { EmptyObject, Promisable } from "type-fest";
+import type { Promisable } from "type-fest";
 
 import assert from "node:assert";
 
@@ -40,6 +40,26 @@ export const Commands = [
 export type Command = (typeof Commands)[number];
 
 /**
+ * Metadata for a positional argument shown in help output.
+ */
+export type PositionalArgDef = {
+  name: string;
+  description?: string;
+  longDescription?: string;
+};
+
+/**
+ * A subcommand definition for a command that has subcommands.
+ */
+export type SubcommandDef = {
+  name: string;
+  description: string;
+  args?: ArgsDefinition;
+  examples?: readonly string[];
+  positionalArgs?: readonly PositionalArgDef[];
+};
+
+/**
  * Checks if a string is a valid command.
  *
  * @param command - The string to check
@@ -52,7 +72,12 @@ export const isCommand = (command: string): command is Command => {
 /**
  * A command module is a file in the src/commands/ directory.
  */
-export type CommandModule<Args extends ArgsDefinition = EmptyObject> = {
+export type CommandModule<Args extends ArgsDefinition = ArgsDefinition> = {
+  /**
+   * A short description of the command for shell completions.
+   */
+  description?: string;
+
   /**
    * The command's {@link ArgsDefinition args}.
    */
@@ -64,9 +89,39 @@ export type CommandModule<Args extends ArgsDefinition = EmptyObject> = {
   parseOptions?: ParseArgsOptions;
 
   /**
-   * The command's {@link Usage usage}.
+   * Subcommand definitions for commands that have subcommands.
    */
-  usage: Usage;
+  subcommandDefs?: readonly SubcommandDef[];
+
+  /**
+   * Example CLI invocations shown in short help output.
+   */
+  examples?: readonly string[];
+
+  /**
+   * When true, exclude from root help listing and completions.
+   */
+  hidden?: boolean;
+
+  /**
+   * Positional argument placeholder for the usage line (e.g. "[DIRECTORY]", "<shell>").
+   */
+  positional?: string;
+
+  /**
+   * An extended description rendered below the short description in `--help` output.
+   */
+  longDescription?: string;
+
+  /**
+   * Titled prose sections (e.g. "Ignoring files", "Installation") rendered after the flags in `--help` output.
+   */
+  sections?: readonly { title: string; content: string }[];
+
+  /**
+   * Positional argument definitions rendered in the ARGUMENTS section of help output.
+   */
+  positionalArgs?: readonly PositionalArgDef[];
 
   /**
    * The command's {@link Run run} function.
@@ -75,15 +130,9 @@ export type CommandModule<Args extends ArgsDefinition = EmptyObject> = {
 };
 
 /**
- * A {@linkcode Command command}'s usage is a function that returns a
- * string describing how to use the command.
- */
-export type Usage = (ctx: Context) => string;
-
-/**
  * The function that is run when the command is called.
  */
-export type Run<Args extends ArgsDefinition = EmptyObject> = (ctx: Context, args: ArgsDefinitionResult<Args>) => Promisable<void>;
+export type Run<Args extends ArgsDefinition = ArgsDefinition> = (ctx: Context, args: ArgsDefinitionResult<Args>) => Promisable<void>;
 
 /**
  * Imports a command module.

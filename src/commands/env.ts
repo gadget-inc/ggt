@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run, SubcommandDef } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import type { Directory } from "../services/filesync/directory.js";
 
@@ -10,6 +10,7 @@ import { Edit } from "../services/app/edit/edit.js";
 import { CREATE_ENVIRONMENT_MUTATION, DELETE_ENVIRONMENT_MUTATION, UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
 import { loadApplication } from "../services/command/app-identity.js";
 import { ArgError, parseArgs, type ArgsDefinition, type ParseArgsOptions } from "../services/command/arg.js";
+import { renderDetailedUsage, renderShortUsage } from "../services/command/usage.js";
 import { SyncJsonState } from "../services/filesync/sync-json-state.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { confirm } from "../services/output/confirm.js";
@@ -20,137 +21,45 @@ import { printTable } from "../services/output/table.js";
 import { getUserOrLogin } from "../services/user/user.js";
 import { sortBySimilar } from "../services/util/collection.js";
 
-export const args = {
-  "--app": { type: AppArg, alias: ["-a", "--application"] },
+export const description = "Manage environments";
+
+export const positional = "<command>";
+
+export const examples = [
+  "ggt env list --app=myapp",
+  "ggt env create staging --app=myapp",
+  "ggt env delete staging --force --app=myapp",
+  "ggt env use staging",
+] as const;
+
+const EnvArgs = {
+  "--app": { type: AppArg, alias: ["-a", "--application"], description: "Select the application", valueName: "name" },
 } satisfies ArgsDefinition;
+
+export const args = EnvArgs;
 
 export const parseOptions: ParseArgsOptions = { permissive: true };
 
-export const usage: Usage = () => {
-  return sprint`
-    Manage environments for your Gadget application.
-
-    {gray Usage}
-      ggt env <command> [options]
-
-    {gray Commands}
-      list             List all environments
-      create <name>    Create a new environment
-      delete <name>    Delete an environment
-      unpause <name>   Unpause a paused environment
-      use <name>       Switch the active environment
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-
-    Run "ggt env <command> -h" for more information about a specific command.
-  `;
-};
-
-const listUsage = (): string => {
-  return sprint`
-    List all environments.
-
-    {gray Usage}
-      ggt env list [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env list --app=myapp}
-  `;
-};
-
-const createUsage = (): string => {
-  return sprint`
-    Create a new environment.
-
-    {gray Usage}
-      ggt env create <name> [options]
-
-    {gray Options}
-      --from <env>           Clone from a specific environment
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env create staging --app=myapp}
-      {cyanBright $ ggt env create staging --from=harry-dev --app=myapp}
-  `;
-};
-
-const deleteUsage = (): string => {
-  return sprint`
-    Delete an environment.
-
-    {gray Usage}
-      ggt env delete <name> [options]
-
-    {gray Options}
-      -f, --force            Skip confirmation
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env delete staging --app=myapp}
-      {cyanBright $ ggt env delete staging --force --app=myapp}
-  `;
-};
-
-const unpauseUsage = (): string => {
-  return sprint`
-    Unpause a paused environment.
-
-    {gray Usage}
-      ggt env unpause <name> [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env unpause staging --app=myapp}
-  `;
-};
-
-const useUsage = (): string => {
-  return sprint`
-    Switch the active environment for the current sync directory.
-
-    {gray Usage}
-      ggt env use <name> [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env use staging}
-      {cyanBright $ ggt env use staging --app=myapp}
-  `;
-};
-
-const subcommandUsage = (subcommand: string | undefined): string => {
-  switch (subcommand) {
-    case "list":
-      return listUsage();
-    case "create":
-      return createUsage();
-    case "delete":
-      return deleteUsage();
-    case "unpause":
-      return unpauseUsage();
-    case "use":
-      return useUsage();
-    default:
-      return usage(undefined!); // oxlint-disable-line
-  }
-};
-
 const createArgs = {
-  "--from": { type: String },
+  "--from": { type: String, description: "Clone from a specific environment", valueName: "environment" },
 } satisfies ArgsDefinition;
 
 const deleteArgs = {
-  "--force": { type: Boolean, alias: "-f" },
+  "--force": { type: Boolean, alias: "-f", description: "Skip confirmation" },
 } satisfies ArgsDefinition;
+
+export const subcommandDefs: readonly SubcommandDef[] = [
+  { name: "list", description: "List all environments", examples: ["ggt env list --app=myapp"] },
+  {
+    name: "create",
+    description: "Create a new environment",
+    args: createArgs,
+    examples: ["ggt env create staging --app=myapp", "ggt env create staging --from=development"],
+  },
+  { name: "delete", description: "Delete an environment", args: deleteArgs, examples: ["ggt env delete staging --force"] },
+  { name: "unpause", description: "Unpause a paused environment", examples: ["ggt env unpause staging"] },
+  { name: "use", description: "Switch the active environment", examples: ["ggt env use staging"] },
+];
 
 export const run: Run<typeof args> = async (ctx, args) => {
   const subcommandAliases: Record<string, string> = { ls: "list" };
@@ -159,18 +68,33 @@ export const run: Run<typeof args> = async (ctx, args) => {
     subcommand = subcommandAliases[subcommand] ?? subcommand;
   }
 
+  // handle -h/--help for subcommand-specific help
   if (args._.includes("-h") || args._.includes("--help")) {
-    println(subcommandUsage(subcommand));
+    if (subcommand) {
+      const def = subcommandDefs.find((d) => d.name === subcommand);
+      if (def) {
+        println(
+          renderShortUsage("env " + subcommand, {
+            description: def.description,
+            args: { ...EnvArgs, ...def.args },
+            examples: def.examples ?? [],
+          }),
+        );
+        process.exit(0);
+      }
+    }
+    const mod = await import("./env.js");
+    println(renderDetailedUsage("env", mod));
     process.exit(0);
   }
 
   if (!subcommand) {
-    println(usage(ctx));
+    const mod = await import("./env.js");
+    println(renderDetailedUsage("env", mod));
     return;
   }
 
-  const validSubcommands = ["list", "create", "delete", "unpause", "use"];
-  if (!validSubcommands.includes(subcommand)) {
+  if (!subcommandDefs.some((d) => d.name === subcommand)) {
     throw new ArgError(sprint`
       Unknown subcommand {yellow ${subcommand}}
 
@@ -206,7 +130,7 @@ const resolveApplication = async (ctx: Context, args: { "--app"?: string; _: str
   if (availableApps.length === 0) {
     throw new ArgError(
       sprint`
-        You (${user.email}) don't have have any Gadget applications.
+        You (${user.email}) don't have any Gadget applications.
 
         Visit https://gadget.new to create one!
       `,
@@ -407,9 +331,11 @@ const runUse = async (_ctx: Context, application: Application, positional: strin
   }
 
   const syncJsonPath = directory.absolute(".gadget/sync.json");
-  let syncJsonFile: string;
+
+  let state: SyncJsonState;
   try {
-    syncJsonFile = await fs.readFile(syncJsonPath, "utf8");
+    const syncJsonFile = await fs.readFile(syncJsonPath, "utf8");
+    state = SyncJsonState.parse(JSON.parse(syncJsonFile));
   } catch {
     throw new ArgError(sprint`
       No .gadget/sync.json found in this directory or any parent directory.
@@ -417,8 +343,6 @@ const runUse = async (_ctx: Context, application: Application, positional: strin
       Run {gray ggt dev} first to initialize a sync directory.
     `);
   }
-
-  const state = SyncJsonState.parse(JSON.parse(syncJsonFile));
 
   if (state.application !== application.slug) {
     throw new ArgError(sprint`

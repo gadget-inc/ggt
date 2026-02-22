@@ -1,4 +1,4 @@
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 
 import { PUBLISH_ISSUES_QUERY } from "../services/app/edit/operation.js";
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
@@ -8,19 +8,16 @@ import { println } from "../services/output/print.js";
 import { printProblems, publishIssuesToProblems } from "../services/output/problems.js";
 import { sprint } from "../services/output/sprint.js";
 
+export const description = "Show problems (errors, warnings) in your application";
+
+export const hidden = true;
+
+export const examples = ["ggt problems"] as const;
+
 export type ProblemsArgs = typeof args;
 export type ProblemsArgsResult = ArgsDefinitionResult<ProblemsArgs>;
 
 export const args = AppIdentityArgs;
-
-export const usage: Usage = () => {
-  return sprint`
-    Shows any problems (errors, warnings) found in your Gadget application.
-
-    {gray Usage}
-          ggt problems
-  `;
-};
 
 export const run: Run<ProblemsArgs> = async (ctx, args) => {
   if (args._.length > 0) {

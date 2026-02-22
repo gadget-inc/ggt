@@ -8,7 +8,7 @@ import which from "which";
 
 import type { EditSubscription } from "../services/app/edit/edit.js";
 import type { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../services/app/edit/operation.js";
-import type { Run, Usage } from "../services/command/command.js";
+import type { Run } from "../services/command/command.js";
 
 import { type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
 import { Changes } from "../services/filesync/changes.js";
@@ -33,71 +33,90 @@ import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 import { delay } from "../services/util/promise.js";
 
+export const description = "Start developing your application";
+
+export const positional = "[DIRECTORY]";
+
+export const positionalArgs = [
+  {
+    name: "DIRECTORY",
+    description: 'The local directory to sync files to (default: ".")',
+    longDescription:
+      "The local directory to sync files to. The directory will\nbe created if it does not exist.\n\nDefaults to the current working directory.",
+  },
+] as const;
+
+export const examples = [
+  "ggt dev ~/myGadgetApps/myBlog --app myBlogApp",
+  "ggt dev --env main --prefer local",
+  "ggt dev ~/gadget/example --app=example --env=development --prefer=local",
+] as const;
+
+export const longDescription = sprint`
+  Clones your Gadget environment's files to your local machine and keeps it in sync, in order to
+  enable local development with your text editor and source code with Git.
+
+  DIRECTORY is the local directory to sync files to (default: the current directory).
+
+  If your app's local directory already exists, this command first performs a sync to ensure
+  that your local and environment directories match, changes are tracked since last sync. If any
+  conflicts are detected, they must be resolved before development starts.
+`;
+
+export const sections = [
+  {
+    title: "Ignoring files",
+    content: sprint`
+      ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and
+      folders from syncing. These files are always ignored:
+
+        \u2022 .DS_Store
+        \u2022 .gadget
+        \u2022 .git
+        \u2022 node_modules
+        \u2022 .shopify
+    `,
+  },
+  {
+    title: "Notes",
+    content: sprint`
+        \u2022 "ggt dev" only works with development environments
+        \u2022 "ggt dev" only supports "yarn" v1 for installing dependencies
+        \u2022 Avoid deleting or moving all of your files while "ggt dev" is running
+    `,
+  },
+] as const;
+
 export type DevArgs = typeof args;
 export type DevArgsResult = ArgsDefinitionResult<DevArgs>;
 
 export const args = {
   ...SyncJsonArgs,
   ...LoggingArgs,
-  "--prefer": MergeConflictPreferenceArg,
-  "--file-push-delay": { type: Number, default: ms("100ms") },
-  "--file-watch-debounce": { type: Number, default: ms("300ms") },
-  "--file-watch-poll-interval": { type: Number, default: ms("3s") },
-  "--file-watch-poll-timeout": { type: Number, default: ms("20s") },
-  "--file-watch-rename-timeout": { type: Number, default: ms("1.25s") },
-  "--no-logs": Boolean,
+  "--prefer": {
+    type: MergeConflictPreferenceArg,
+    description: "Conflict resolution preference (local or environment)",
+    longDescription:
+      "Auto-select changes from the given source on conflict. Use 'local' to keep your local changes or 'environment' to keep remote changes.",
+    valueName: "source",
+  },
+  "--file-push-delay": { type: Number, default: ms("100ms"), description: "Delay in ms before pushing file changes", valueName: "ms" },
+  "--file-watch-debounce": { type: Number, default: ms("300ms"), description: "Debounce in ms for file watch events", valueName: "ms" },
+  "--file-watch-poll-interval": {
+    type: Number,
+    default: ms("3s"),
+    description: "Interval in ms for polling file changes",
+    valueName: "ms",
+  },
+  "--file-watch-poll-timeout": { type: Number, default: ms("20s"), description: "Timeout in ms for file watch polling", valueName: "ms" },
+  "--file-watch-rename-timeout": {
+    type: Number,
+    default: ms("1.25s"),
+    description: "Timeout in ms for detecting file renames",
+    valueName: "ms",
+  },
+  "--no-logs": { type: Boolean, description: "Disable log streaming during dev" },
 } satisfies ArgsDefinition;
-
-export const usage: Usage = (_ctx) => {
-  return sprint`
-  Clones your Gadget environment's files to your local machine and keeps it in sync, in order to
-  enable local development with your text editor and source code with Git.
-
-  If your app's local directory already exists, this command first performs a sync to ensure
-  that your local and environment directories match, changes are tracked since last sync. If any
-  conflicts are detected, they must be resolved before development starts.
-
-  {gray Usage}
-        $ ggt dev [DIRECTORY] [options]
-
-        DIRECTORY: The directory to sync files to (default: the current directory)
-
-  {gray Options}
-        -a, --app <app_name>        Selects the app to sync files with. Defaults to the app synced to the current directory, if there is one.
-        -e, --env <env_name>        Selects the environment to sync files with. Defaults to the environment synced to the current directory, if there is one.
-        --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
-        --allow-unknown-directory   Syncs to any local directory with existing files, even if the directory hasn't been synced before
-        --allow-different-app       Syncs with a different app using the --app command, instead of the most recently synced one in the current directory
-        --log-level <level>         Sets the log level for incoming application logs (default: info)
-        --no-logs                   Disables outputting application logs to the console
-        --my-logs                   Only outputs user sourced logs
-
-  {gray Ignoring files}
-        ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and
-        folders from syncing. These files are always ignored:
-
-        • .DS_Store
-        • .gadget
-        • .git
-        • node_modules
-        • .shopify
-
-  {gray Notes}
-        • "ggt dev" only works with development environments
-        • "ggt dev" only supports "yarn" v1 for installing dependencies
-        • Avoid deleting or moving all of your files while "ggt dev" is running
-
-  {gray Examples}
-        sync an app in a custom path
-        {cyanBright $ ggt dev ~/myGadgetApps/myBlog --app myBlogApp}
-
-        sync with a specific environment and preselect all local changes on conflicts
-        {cyanBright $ ggt dev --env main --prefer local}
-
-        sync a custom path with a specific app, environment and preselect all changes from local on conflicts
-        {cyanBright $ ggt dev ~/gadget/example --app=example --env=development --prefer=local}
-  `;
-};
 
 export const run: Run<DevArgs> = async (ctx, args) => {
   if (!(await which("yarn", { nothrow: true }))) {
@@ -386,7 +405,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   footer({
     ensureEmptyLineAbove: true,
     content: sprint`
-${syncJson.sprint({ indent: 4 })}
+    ${syncJson.sprint()}
 
     Waiting for file changes${symbol.ellipsis} {gray Press Ctrl+C to stop}
   `,

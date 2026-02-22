@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { Commands, importCommand, type CommandModule } from "../../../src/services/command/command.js";
-import { testCtx } from "../../__support__/context.js";
 
 describe.each(Commands)("%s", (command) => {
   let cmd: CommandModule;
@@ -10,10 +9,10 @@ describe.each(Commands)("%s", (command) => {
     cmd = await importCommand(command);
   });
 
-  it("has a usage function", () => {
-    expect(cmd.usage).toBeDefined();
-    expect(cmd.usage).toBeInstanceOf(Function);
-    expect(cmd.usage(testCtx)).toBeTypeOf("string");
+  it("has a description", () => {
+    expect(cmd.description).toBeDefined();
+    expect(cmd.description).toBeTypeOf("string");
+    expect(cmd.description).not.toBe("");
   });
 
   it("has a run function", () => {

@@ -930,7 +930,6 @@ export class FileSync {
             ${sprintProblems({
               problems: filesyncProblemsToProblems(filesyncProblems),
               showFileTypes: false,
-              indent: 12,
             })}
 
             {red Your app will not be operational until all fatal errors are fixed.}

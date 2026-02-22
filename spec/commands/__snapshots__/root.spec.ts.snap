@@ -347,9 +347,9 @@ Ignoring files
     • .shopify
 
 Notes
-    • "ggt dev" only works with development environments
-    • "ggt dev" only supports "yarn" v1 for installing dependencies
-    • Avoid deleting or moving all of your files while "ggt dev" is running
+  • "ggt dev" only works with development environments
+  • "ggt dev" only supports "yarn" v1 for installing dependencies
+  • Avoid deleting or moving all of your files while "ggt dev" is running
 "
 `;
 

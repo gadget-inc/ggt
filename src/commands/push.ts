@@ -11,12 +11,12 @@ export const description = "Push your local files to your environment";
 
 export const examples = ["ggt push --env main --force"] as const;
 
-export const longDescription = [
-  "Pushes your local files to your environment directory.",
-  "",
-  "This command first tracks changes in your environment directory since the last sync.",
-  "If changes are detected, you will be prompted to discard them or abort the push.",
-].join("\n");
+export const longDescription = sprint`
+  Pushes your local files to your environment directory.
+
+  This command first tracks changes in your environment directory since the last sync.
+  If changes are detected, you will be prompted to discard them or abort the push.
+`;
 
 export type PushArgs = typeof args;
 

@@ -27,13 +27,13 @@ export const description = "Deploy your environment to production";
 
 export const examples = ["ggt deploy -a myBlog --from staging"] as const;
 
-export const longDescription = [
-  "Deploys your app to production.",
-  "",
-  "This command first performs a sync to ensure that your local and environment directories",
-  "match, changes are tracked since last sync. If any conflicts are detected, they must be",
-  "resolved before deployment.",
-].join("\n");
+export const longDescription = sprint`
+  Deploys your app to production.
+
+  This command first performs a sync to ensure that your local and environment directories
+  match, changes are tracked since last sync. If any conflicts are detected, they must be
+  resolved before deployment.
+`;
 
 export type DeployArgs = typeof args;
 

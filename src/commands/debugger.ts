@@ -38,13 +38,13 @@ export const examples = [
 
 const SupportedEditors = ["vscode", "cursor"] as const;
 
-export const longDescription = [
-  "Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.",
-  "This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other",
-  "CDP-compatible debugger client.",
-  "",
-  `Use --configure with one of: ${SupportedEditors.join(", ")} to set up editor integration.`,
-].join("\n");
+export const longDescription = sprint`
+  Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.
+  This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other
+  CDP-compatible debugger client.
+
+  Use --configure with one of: ${SupportedEditors.join(", ")} to set up editor integration.
+`;
 
 export type DebuggerArgs = typeof args;
 

@@ -32,11 +32,11 @@ export const examples = [
   "ggt eval -w 'api.user.delete(\"123\")'",
 ] as const;
 
-export const longDescription = [
-  "The snippet receives an api variable (a pre-constructed Gadget API client",
-  "authenticated as the developer). Results are formatted like Node.js REPL output.",
-  "Writes are disallowed by default; use --allow-writes to enable them.",
-].join("\n");
+export const longDescription = sprint`
+  The snippet receives an api variable (a pre-constructed Gadget API client
+  authenticated as the developer). Results are formatted like Node.js REPL output.
+  Writes are disallowed by default; use --allow-writes to enable them.
+`;
 
 export const args = {
   ...AppIdentityArgs,

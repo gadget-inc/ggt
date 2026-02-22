@@ -3,6 +3,7 @@ import type { Run, SubcommandDef } from "../services/command/command.js";
 import { renderDetailedUsage } from "../services/command/usage.js";
 import { clearDefaultsConfig, type DefaultsConfigData, loadDefaultsConfig, promptDefaultsConfig } from "../services/config/defaults.js";
 import { println } from "../services/output/print.js";
+import { sprint } from "../services/output/sprint.js";
 import { printTable } from "../services/output/table.js";
 
 const printDefaultsConfig = (defaults: DefaultsConfigData): void => {
@@ -27,10 +28,10 @@ export const subcommandDefs: readonly SubcommandDef[] = [
   { name: "clear", description: "Clear all configured defaults" },
 ];
 
-export const longDescription = [
-  "Make changes to the configured defaults. This allows you to set an option on every ggt command by default without",
-  "needing to set a flag on every command.",
-].join("\n");
+export const longDescription = sprint`
+  Make changes to the configured defaults. This allows you to set an option on every ggt command by default without
+  needing to set a flag on every command.
+`;
 
 export const run: Run = async (ctx, args): Promise<void> => {
   switch (args._[0]) {

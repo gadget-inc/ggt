@@ -78,16 +78,16 @@ export const args = { ...SyncJsonArgs };
 export const sections = [
   {
     title: "Resource syntax",
-    content: [
-      "ggt add model <model_name> [field_name:field_type ...]",
-      "",
-      "ggt add action [CONTEXT]/<action_name>",
-      'CONTEXT: Specifies the kind of action. Use "model" for model actions otherwise use "action".',
-      "",
-      "ggt add route <HTTP_METHOD> <route_path>",
-      "",
-      "ggt add field <model_path>/<field_name>:<field_type>",
-    ].join("\n"),
+    content: sprint`
+      ggt add model <model_name> [field_name:field_type ...]
+
+      ggt add action [CONTEXT]/<action_name>
+      CONTEXT: Specifies the kind of action. Use "model" for model actions otherwise use "action".
+
+      ggt add route <HTTP_METHOD> <route_path>
+
+      ggt add field <model_path>/<field_name>:<field_type>
+    `,
   },
 ] as const;
 

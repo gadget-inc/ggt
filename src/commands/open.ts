@@ -32,23 +32,23 @@ export const args = {
   "--show-all": { type: Boolean, description: "Show all available locations" },
 };
 
-export const longDescription = [
-  "This command opens a specific Gadget page in your browser, allowing you to directly access",
-  "various parts of your application's interface such as logs, permissions, data views, or",
-  "schemas.",
-].join("\n");
+export const longDescription = sprint`
+  This command opens a specific Gadget page in your browser, allowing you to directly access
+  various parts of your application's interface such as logs, permissions, data views, or
+  schemas.
+`;
 
 export const sections = [
   {
     title: "Locations",
-    content: [
-      "LOCATION specifies the part of Gadget to open. By default it opens the app's home page:",
-      "",
-      "  logs          Opens logs",
-      "  permissions   Opens permissions",
-      "  data          Opens data editor for a specific model",
-      "  schema        Opens schema editor for a specific model",
-    ].join("\n"),
+    content: sprint`
+      LOCATION specifies the part of Gadget to open. By default it opens the app's home page:
+
+        logs          Opens logs
+        permissions   Opens permissions
+        data          Opens data editor for a specific model
+        schema        Opens schema editor for a specific model
+    `,
   },
 ] as const;
 

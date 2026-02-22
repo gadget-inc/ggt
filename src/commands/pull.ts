@@ -10,12 +10,12 @@ export const description = "Pull your environment's files to your local computer
 
 export const examples = ["ggt pull --env development --force"] as const;
 
-export const longDescription = [
-  "Pulls your environment files to your local directory.",
-  "",
-  "This command first tracks changes in your local directory since the last sync. If changes are",
-  "detected, you will be prompted to discard them or abort the pull.",
-].join("\n");
+export const longDescription = sprint`
+  Pulls your environment files to your local directory.
+
+  This command first tracks changes in your local directory since the last sync. If changes are
+  detected, you will be prompted to discard them or abort the pull.
+`;
 
 export type PullArgs = typeof args;
 

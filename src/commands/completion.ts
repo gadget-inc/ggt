@@ -28,18 +28,18 @@ export const subcommandDefs: readonly SubcommandDef[] = [
 export const sections = [
   {
     title: "Installation",
-    content: [
-      "Bash (add to ~/.bashrc):",
-      "  source <(ggt completion bash)",
-      "",
-      "Zsh (add to ~/.zshrc):",
-      "  source <(ggt completion zsh)",
-      "",
-      "Fish:",
-      "  ggt completion fish | source",
-      "  # Or to persist:",
-      "  ggt completion fish > ~/.config/fish/completions/ggt.fish",
-    ].join("\n"),
+    content: sprint`
+      Bash (add to ~/.bashrc):
+        source <(ggt completion bash)
+
+      Zsh (add to ~/.zshrc):
+        source <(ggt completion zsh)
+
+      Fish:
+        ggt completion fish | source
+        # Or to persist:
+        ggt completion fish > ~/.config/fish/completions/ggt.fish
+    `,
   },
 ] as const;
 

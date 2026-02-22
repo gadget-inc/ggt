@@ -43,36 +43,36 @@ export const examples = [
   "ggt dev ~/gadget/example --app=example --env=development --prefer=local",
 ] as const;
 
-export const longDescription = [
-  "Clones your Gadget environment's files to your local machine and keeps it in sync, in order to",
-  "enable local development with your text editor and source code with Git.",
-  "",
-  "If your app's local directory already exists, this command first performs a sync to ensure",
-  "that your local and environment directories match, changes are tracked since last sync. If any",
-  "conflicts are detected, they must be resolved before development starts.",
-].join("\n");
+export const longDescription = sprint`
+  Clones your Gadget environment's files to your local machine and keeps it in sync, in order to
+  enable local development with your text editor and source code with Git.
+
+  If your app's local directory already exists, this command first performs a sync to ensure
+  that your local and environment directories match, changes are tracked since last sync. If any
+  conflicts are detected, they must be resolved before development starts.
+`;
 
 export const sections = [
   {
     title: "Ignoring files",
-    content: [
-      "ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and",
-      "folders from syncing. These files are always ignored:",
-      "",
-      "  \u2022 .DS_Store",
-      "  \u2022 .gadget",
-      "  \u2022 .git",
-      "  \u2022 node_modules",
-      "  \u2022 .shopify",
-    ].join("\n"),
+    content: sprint`
+      ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and
+      folders from syncing. These files are always ignored:
+
+        \u2022 .DS_Store
+        \u2022 .gadget
+        \u2022 .git
+        \u2022 node_modules
+        \u2022 .shopify
+    `,
   },
   {
     title: "Notes",
-    content: [
-      '  \u2022 "ggt dev" only works with development environments',
-      '  \u2022 "ggt dev" only supports "yarn" v1 for installing dependencies',
-      '  \u2022 Avoid deleting or moving all of your files while "ggt dev" is running',
-    ].join("\n"),
+    content: sprint`
+        \u2022 "ggt dev" only works with development environments
+        \u2022 "ggt dev" only supports "yarn" v1 for installing dependencies
+        \u2022 Avoid deleting or moving all of your files while "ggt dev" is running
+    `,
   },
 ] as const;
 

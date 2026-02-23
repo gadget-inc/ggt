@@ -1,4 +1,5 @@
 import fs from "fs-extra";
+import path from "node:path";
 
 import type { Run, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
@@ -71,11 +72,13 @@ const createUsage = (): string => {
 
     {gray Options}
       --from <env>           Clone from a specific environment
+      --use                  Switch to the new environment after creation
       -a, --app <app_name>   Selects the application
 
     {gray Examples}
       {cyanBright $ ggt env create staging --app=myapp}
       {cyanBright $ ggt env create staging --from=harry-dev --app=myapp}
+      {cyanBright $ ggt env create staging --use --app=myapp}
   `;
 };
 
@@ -146,6 +149,7 @@ const subcommandUsage = (subcommand: string | undefined): string => {
 
 const createArgs = {
   "--from": { type: String },
+  "--use": { type: Boolean },
 } satisfies ArgsDefinition;
 
 const deleteArgs = {
@@ -239,6 +243,12 @@ const findEnvironmentOrThrow = (application: Application, name: string): Environ
     return { ...environment, application };
   }
 
+  if (application.environments.length === 0) {
+    throw new ArgError(sprint`
+      No environments found for ${application.slug}.
+    `);
+  }
+
   const similarEnvs = sortBySimilar(
     name,
     application.environments.map((env) => env.name),
@@ -281,18 +291,77 @@ const runList = (application: Application): void => {
   });
 };
 
+const activateEnvironment = async (application: Application, envName: string): Promise<void> => {
+  let directory: Directory | undefined;
+  try {
+    directory = await loadSyncJsonDirectory(process.cwd());
+  } catch {
+    // no sync.json directory found, we'll create one
+  }
+
+  if (directory) {
+    const syncJsonPath = directory.absolute(".gadget/sync.json");
+    let syncJsonFile: string | undefined;
+    try {
+      syncJsonFile = await fs.readFile(syncJsonPath, "utf8");
+    } catch {
+      // sync.json file doesn't exist, we'll create one
+    }
+
+    if (syncJsonFile) {
+      const state = SyncJsonState.parse(JSON.parse(syncJsonFile));
+
+      if (state.application !== application.slug) {
+        throw new ArgError(sprint`
+          This directory is synced to {yellow ${state.application}}, but you specified {yellow ${application.slug}}.
+
+          Either run this command from a directory synced to ${application.slug}, or omit the {gray --app} flag.
+        `);
+      }
+
+      if (state.environment === envName) {
+        println(`Already on environment ${envName}.`);
+        return;
+      }
+
+      const previousEnv = state.environment;
+      state.environment = envName;
+      if (!state.environments[envName]) {
+        state.environments[envName] = { filesVersion: "0" };
+      }
+
+      await fs.outputJSON(syncJsonPath, state, { spaces: 2 });
+      println(`${symbol.tick} Switched environment: ${previousEnv} → ${envName}`);
+      return;
+    }
+  }
+
+  // No sync.json found — create a new one in cwd
+  const newSyncJsonPath = path.join(process.cwd(), ".gadget", "sync.json");
+  const newState: SyncJsonState = {
+    application: application.slug,
+    environment: envName,
+    environments: { [envName]: { filesVersion: "0" } },
+  };
+  await fs.outputJSON(newSyncJsonPath, newState, { spaces: 2 });
+  println(`${symbol.tick} Activated environment ${envName}`);
+};
+
 const runCreate = async (ctx: Context, application: Application, positional: string[]): Promise<void> => {
   const subArgs = parseArgs(createArgs, { argv: positional });
-  const name = subArgs._.shift();
+  const rawName = subArgs._.shift();
   const from = subArgs["--from"];
+  const use = subArgs["--use"] ?? false;
 
-  if (!name) {
+  if (!rawName) {
     throw new ArgError(sprint`
       Missing required argument: name
 
       Run {gray ggt env create -h} for usage
     `);
   }
+
+  const name = rawName.toLowerCase();
 
   const edit = getEditForApp(ctx, application);
   try {
@@ -304,6 +373,10 @@ const runCreate = async (ctx: Context, application: Application, positional: str
     println(`${symbol.tick} Created environment ${name}`);
   } finally {
     await edit.dispose();
+  }
+
+  if (use) {
+    await activateEnvironment(application, name);
   }
 };
 
@@ -395,51 +468,5 @@ const runUse = async (_ctx: Context, application: Application, positional: strin
     `);
   }
 
-  let directory: Directory;
-  try {
-    directory = await loadSyncJsonDirectory(process.cwd());
-  } catch {
-    throw new ArgError(sprint`
-      No .gadget/sync.json found in this directory or any parent directory.
-
-      Run {gray ggt dev} first to initialize a sync directory.
-    `);
-  }
-
-  const syncJsonPath = directory.absolute(".gadget/sync.json");
-  let syncJsonFile: string;
-  try {
-    syncJsonFile = await fs.readFile(syncJsonPath, "utf8");
-  } catch {
-    throw new ArgError(sprint`
-      No .gadget/sync.json found in this directory or any parent directory.
-
-      Run {gray ggt dev} first to initialize a sync directory.
-    `);
-  }
-
-  const state = SyncJsonState.parse(JSON.parse(syncJsonFile));
-
-  if (state.application !== application.slug) {
-    throw new ArgError(sprint`
-      This directory is synced to {yellow ${state.application}}, but you specified {yellow ${application.slug}}.
-
-      Either run this command from a directory synced to ${application.slug}, or omit the {gray --app} flag.
-    `);
-  }
-
-  if (state.environment === environment.name) {
-    println(`Already on environment ${environment.name}.`);
-    return;
-  }
-
-  const previousEnv = state.environment;
-  state.environment = environment.name;
-  if (!state.environments[environment.name]) {
-    state.environments[environment.name] = { filesVersion: "0" };
-  }
-
-  await fs.outputJSON(syncJsonPath, state, { spaces: 2 });
-
-  println(`${symbol.tick} Switched environment: ${previousEnv} → ${environment.name}`);
+  await activateEnvironment(application, environment.name);
 };

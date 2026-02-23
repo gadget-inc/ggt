@@ -73,7 +73,7 @@
     "cli-cursor": "^5.0.0",
     "cli-spinners": "^3.4.0",
     "cli-table3": "^0.6.5",
-    "cspell": "^9.6.4",
+    "cspell": "^9.7.0",
     "dayjs": "^1.11.19",
     "esbuild": "^0.27.3",
     "execa": "^9.6.0",

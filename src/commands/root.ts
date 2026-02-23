@@ -83,7 +83,7 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
   }
 
   // resolve command aliases
-  const commandAliases: Record<string, string> = { envs: "var" };
+  const commandAliases: Record<string, string> = { envs: "var", problem: "problems", log: "logs" };
   commandName = commandAliases[commandName] ?? commandName;
 
   if (!isCommand(commandName)) {

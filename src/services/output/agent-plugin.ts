@@ -22,11 +22,12 @@ const AGENTS_MD_URL = "https://raw.githubusercontent.com/gadget-inc/skills/main/
 const SENTINEL_SKILL = "gadget-best-practices";
 const SKILLS_REPO = "gadget-inc/skills";
 const SKILLS_PREFIX = "skills/gadget/";
+const SHA_CACHE_PREFIX = "agent-plugin-sha-";
 
 const HTTP_TIMEOUT = ms("10s");
 
-const projectHash = (directory: Directory): string => {
-  const root = path.resolve(directory.path);
+const projectHash = (dir: string): string => {
+  const root = path.resolve(dir);
   return crypto
     .createHash("md5")
     .update(config.windows ? root.toLowerCase() : root)
@@ -35,7 +36,11 @@ const projectHash = (directory: Directory): string => {
 };
 
 const optOutPath = (directory: Directory, prefix: string): string => {
-  return path.join(config.cacheDir, `${prefix}${projectHash(directory)}`);
+  return path.join(config.cacheDir, `${prefix}${projectHash(directory.path)}`);
+};
+
+export const agentPluginShaPath = (dir: string): string => {
+  return path.join(config.cacheDir, `${SHA_CACHE_PREFIX}${projectHash(dir)}`);
 };
 
 export const installAgentsMdScaffold = async ({
@@ -240,6 +245,21 @@ export const installGadgetSkillsIntoProject = async ({
   println({
     content: sprint`{greenBright ✓} Installed skills: ${skillNames.join(", ")}`,
   });
+
+  try {
+    const commitData = (await http({
+      context: { ctx },
+      method: "GET",
+      url: `https://api.github.com/repos/${SKILLS_REPO}/commits/${ref}`,
+      headers: { Accept: "application/vnd.github+json" },
+      responseType: "json",
+      resolveBodyOnly: true,
+      timeout: { request: HTTP_TIMEOUT },
+    })) as { sha: string };
+    await fs.outputFile(agentPluginShaPath(directory.path), commitData.sha);
+  } catch {
+    // non-fatal — update check just won't work until next install
+  }
 
   try {
     const claudeSkillsDir = directory.absolute(".claude/skills");

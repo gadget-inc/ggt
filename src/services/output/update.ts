@@ -1,5 +1,6 @@
 import boxen from "boxen";
 import dayjs from "dayjs";
+import { findUp } from "find-up";
 import fs from "fs-extra";
 import ms from "ms";
 import assert from "node:assert";
@@ -12,6 +13,7 @@ import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { http } from "../http/http.js";
 import { packageJson } from "../util/package-json.js";
+import { agentPluginShaPath } from "./agent-plugin.js";
 import { println } from "./print.js";
 import { sprint } from "./sprint.js";
 
@@ -99,7 +101,39 @@ export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
         }),
       );
     }
+
+    await checkAgentPluginUpdate(ctx);
   } catch (error) {
     ctx.log.error("failed to check for updates", { error });
+  }
+};
+
+const checkAgentPluginUpdate = async (ctx: Context): Promise<void> => {
+  try {
+    const syncJsonPath = await findUp(".gadget/sync.json");
+    if (!syncJsonPath) return;
+
+    const projectRoot = path.join(syncJsonPath, "../..");
+    const storedSha = await fs.readFile(agentPluginShaPath(projectRoot), "utf8").catch(() => null);
+    if (!storedSha) return;
+
+    const commitData = (await http({
+      context: { ctx },
+      method: "GET",
+      url: "https://api.github.com/repos/gadget-inc/skills/commits/main",
+      headers: { Accept: "application/vnd.github+json" },
+      responseType: "json",
+      resolveBodyOnly: true,
+      timeout: { request: ms("5s") },
+    })) as { sha: string };
+
+    if (commitData.sha === storedSha) return;
+
+    println({
+      ensureEmptyLineAbove: true,
+      content: sprint`{yellow Gadget agent plugin updates available.} Run {cyanBright ggt agent-plugin update} to update.`,
+    });
+  } catch (error) {
+    ctx.log.trace("failed to check for agent plugin updates", { error });
   }
 };

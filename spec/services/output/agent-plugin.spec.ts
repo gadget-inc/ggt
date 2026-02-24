@@ -29,7 +29,6 @@ const makeProject = async (name: string, { empty = false }: { empty?: boolean } 
 const MOCK_COMMIT_SHA = "abc123def456";
 
 const mockTreeAndDownloads = (): void => {
-  // commits is fetched first to pin the SHA, then tree uses that SHA
   nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: MOCK_COMMIT_SHA });
 
   nock("https://api.github.com")
@@ -193,7 +192,6 @@ describe("agent-plugin", () => {
     it("does not save SHA if install fails", async () => {
       const directory = await makeProject("skills-sha-fail");
 
-      // commits resolves but tree fetch fails
       nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: MOCK_COMMIT_SHA });
       nock("https://api.github.com")
         .get(/\/repos\/gadget-inc\/skills\/git\/trees\//)

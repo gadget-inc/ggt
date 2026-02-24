@@ -172,8 +172,6 @@ export const installGadgetSkillsIntoProject = async ({
   let commitSha: string | undefined;
 
   try {
-    // resolve the commit SHA first so the tree fetch and file downloads
-    // are pinned to the exact same commit
     const commitData = (await http({
       context: { ctx },
       method: "GET",

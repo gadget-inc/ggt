@@ -26,13 +26,6 @@ export const usage: Usage = () => {
   `;
 };
 
-const resolveDirectory = async (): Promise<Directory> => {
-  const cwd = process.cwd();
-  const syncJsonPath = await findUp(".gadget/sync.json", { cwd });
-  const projectRoot = syncJsonPath ? path.join(syncJsonPath, "../..") : cwd;
-  return Directory.init(projectRoot);
-};
-
 export const run: Run<typeof args> = async (ctx, args): Promise<void> => {
   const subcommand = args._[0];
 
@@ -41,7 +34,10 @@ export const run: Run<typeof args> = async (ctx, args): Promise<void> => {
     return;
   }
 
-  const directory = await resolveDirectory();
+  const cwd = process.cwd();
+  const syncJsonPath = await findUp(".gadget/sync.json", { cwd });
+  const projectRoot = syncJsonPath ? path.join(syncJsonPath, "../..") : cwd;
+  const directory = await Directory.init(projectRoot);
   const force = subcommand === "update" || (args["--force"] ?? false);
   await installAgentsMdScaffold({ ctx, directory, force });
   await installGadgetSkillsIntoProject({ ctx, directory, force });

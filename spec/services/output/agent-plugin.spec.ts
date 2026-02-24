@@ -185,7 +185,7 @@ describe("agent-plugin", () => {
 
       await installGadgetSkillsIntoProject({ ctx: testCtx, directory });
 
-      const sha = await fs.readFile(agentPluginShaPath(directory.path), "utf8");
+      const sha = await fs.readFile(agentPluginShaPath(directory), "utf8");
       expect(sha).toBe(MOCK_COMMIT_SHA);
     });
 
@@ -199,7 +199,7 @@ describe("agent-plugin", () => {
 
       await installGadgetSkillsIntoProject({ ctx: testCtx, directory });
 
-      expect(await fs.pathExists(agentPluginShaPath(directory.path))).toBe(false);
+      expect(await fs.pathExists(agentPluginShaPath(directory))).toBe(false);
     });
   });
 

@@ -11,6 +11,7 @@ import { z } from "zod";
 import type { Context } from "../command/context.js";
 
 import { config } from "../config/config.js";
+import { Directory } from "../filesync/directory.js";
 import { http } from "../http/http.js";
 import { packageJson } from "../util/package-json.js";
 import { agentPluginShaPath } from "./agent-plugin.js";
@@ -114,7 +115,8 @@ const checkAgentPluginUpdate = async (ctx: Context): Promise<void> => {
     if (!syncJsonPath) return;
 
     const projectRoot = path.join(syncJsonPath, "../..");
-    const storedSha = await fs.readFile(agentPluginShaPath(projectRoot), "utf8").catch(() => null);
+    const directory = await Directory.init(projectRoot);
+    const storedSha = await fs.readFile(agentPluginShaPath(directory), "utf8").catch(() => null);
     if (!storedSha) return;
 
     const commitData = (await http({

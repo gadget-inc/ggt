@@ -201,7 +201,7 @@ describe("warnIfUpdateAvailable", () => {
     it("skips agent plugin check when SHA matches latest", async () => {
       const directory = await makeProjectDir("sha-matches");
       await fs.outputFile(directory.absolute(".gadget/sync.json"), "{}");
-      await fs.outputFile(agentPluginShaPath(directory.path), "abc123");
+      await fs.outputFile(agentPluginShaPath(directory), "abc123");
 
       mockGgtUpToDate();
       nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: "abc123" });
@@ -215,7 +215,7 @@ describe("warnIfUpdateAvailable", () => {
     it("warns when agent plugin SHA differs from latest", async () => {
       const directory = await makeProjectDir("sha-differs");
       await fs.outputFile(directory.absolute(".gadget/sync.json"), "{}");
-      await fs.outputFile(agentPluginShaPath(directory.path), "old-sha");
+      await fs.outputFile(agentPluginShaPath(directory), "old-sha");
 
       mockGgtUpToDate();
       nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: "new-sha" });
@@ -230,7 +230,7 @@ describe("warnIfUpdateAvailable", () => {
     it("does not throw when github api fails", async () => {
       const directory = await makeProjectDir("github-fail");
       await fs.outputFile(directory.absolute(".gadget/sync.json"), "{}");
-      await fs.outputFile(agentPluginShaPath(directory.path), "old-sha");
+      await fs.outputFile(agentPluginShaPath(directory), "old-sha");
 
       mockGgtUpToDate();
       nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").replyWithError("network error");

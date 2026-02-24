@@ -26,8 +26,8 @@ const SHA_CACHE_PREFIX = "agent-plugin-sha-";
 
 const HTTP_TIMEOUT = ms("10s");
 
-const projectHash = (dir: string): string => {
-  const root = path.resolve(dir);
+const projectHash = (directory: Directory): string => {
+  const root = path.resolve(directory.path);
   return crypto
     .createHash("md5")
     .update(config.windows ? root.toLowerCase() : root)
@@ -36,11 +36,11 @@ const projectHash = (dir: string): string => {
 };
 
 const optOutPath = (directory: Directory, prefix: string): string => {
-  return path.join(config.cacheDir, `${prefix}${projectHash(directory.path)}`);
+  return path.join(config.cacheDir, `${prefix}${projectHash(directory)}`);
 };
 
-export const agentPluginShaPath = (dir: string): string => {
-  return path.join(config.cacheDir, `${SHA_CACHE_PREFIX}${projectHash(dir)}`);
+export const agentPluginShaPath = (directory: Directory): string => {
+  return path.join(config.cacheDir, `${SHA_CACHE_PREFIX}${projectHash(directory)}`);
 };
 
 export const installAgentsMdScaffold = async ({
@@ -259,7 +259,7 @@ export const installGadgetSkillsIntoProject = async ({
   });
 
   if (commitSha) {
-    await fs.outputFile(agentPluginShaPath(directory.path), commitSha).catch(() => undefined);
+    await fs.outputFile(agentPluginShaPath(directory), commitSha).catch(() => undefined);
   }
 
   try {

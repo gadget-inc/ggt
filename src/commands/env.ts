@@ -71,7 +71,8 @@ const createUsage = (): string => {
       ggt env create <name> [options]
 
     {gray Options}
-      --from <env>           Clone from a specific environment
+      --from <env>           Clone from a specific environment (defaults to
+                             the current sync environment if in a sync directory)
       --use                  Switch to the new environment after creation
       -a, --app <app_name>   Selects the application
 
@@ -182,14 +183,14 @@ export const run: Run<typeof args> = async (ctx, args) => {
     `);
   }
 
-  const application = await resolveApplication(ctx, args);
+  const { application, state } = await resolveApplication(ctx, args);
 
   switch (subcommand) {
     case "list":
       runList(application);
       break;
     case "create":
-      await runCreate(ctx, application, args._);
+      await runCreate(ctx, application, args._, state);
       break;
     case "delete":
       await runDelete(ctx, application, args._);
@@ -203,7 +204,10 @@ export const run: Run<typeof args> = async (ctx, args) => {
   }
 };
 
-const resolveApplication = async (ctx: Context, args: { "--app"?: string; _: string[] }): Promise<Application> => {
+const resolveApplication = async (
+  ctx: Context,
+  args: { "--app"?: string; _: string[] },
+): Promise<{ application: Application; state?: SyncJsonState }> => {
   const user = await getUserOrLogin(ctx, "env");
   const availableApps = await getApplications(ctx);
 
@@ -217,24 +221,24 @@ const resolveApplication = async (ctx: Context, args: { "--app"?: string; _: str
     );
   }
 
-  // try reading sync.json state for the app slug fallback
+  // try reading sync.json state for the app slug fallback and environment context
   let state: SyncJsonState | undefined;
-  if (!args["--app"]) {
-    try {
-      const directory = await loadSyncJsonDirectory(process.cwd());
-      const syncJsonFile = await fs.readFile(directory.absolute(".gadget/sync.json"), "utf8");
-      state = SyncJsonState.parse(JSON.parse(syncJsonFile));
-    } catch {
-      // no sync.json found or invalid, that's ok
-    }
+  try {
+    const directory = await loadSyncJsonDirectory(process.cwd());
+    const syncJsonFile = await fs.readFile(directory.absolute(".gadget/sync.json"), "utf8");
+    state = SyncJsonState.parse(JSON.parse(syncJsonFile));
+  } catch {
+    // no sync.json found or invalid, that's ok
   }
 
-  return loadApplication({
+  const application = await loadApplication({
     args,
     availableApps,
     state,
     selectPrompt: "Which application do you want to manage environments for?",
   });
+
+  return { application, state };
 };
 
 const findEnvironmentOrThrow = (application: Application, name: string): Environment => {
@@ -347,10 +351,10 @@ const activateEnvironment = async (application: Application, envName: string): P
   println(`${symbol.tick} Activated environment ${envName}`);
 };
 
-const runCreate = async (ctx: Context, application: Application, positional: string[]): Promise<void> => {
+const runCreate = async (ctx: Context, application: Application, positional: string[], state?: SyncJsonState): Promise<void> => {
   const subArgs = parseArgs(createArgs, { argv: positional });
   const rawName = subArgs._.shift();
-  const from = subArgs["--from"];
+  const from = subArgs["--from"] ?? state?.environment;
   const use = subArgs["--use"] ?? false;
 
   if (!rawName) {
@@ -367,7 +371,7 @@ const runCreate = async (ctx: Context, application: Application, positional: str
   try {
     await edit.mutate({
       mutation: CREATE_ENVIRONMENT_MUTATION,
-      variables: { environment: { slug: name, sourceSlug: from } },
+      variables: { environment: { slug: name, ...(from && { sourceSlug: from }) } },
     });
 
     println(`${symbol.tick} Created environment ${name}`);

@@ -22,7 +22,7 @@ import { mockConfirmOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { testDirPath } from "../__support__/paths.js";
 import { expectProcessExit } from "../__support__/process.js";
-import { loginTestUser, matchAuthHeader } from "../__support__/user.js";
+import { loginTestUser, loginTestUserWithToken, matchAuthHeader } from "../__support__/user.js";
 
 const makeEnvArgs = (...argv: string[]) => {
   return makeArgsWithOptions(env.args, env.parseOptions, "env", ...argv);
@@ -93,6 +93,75 @@ describe("env", () => {
       expect(error.message).toContain("Missing required argument");
     });
 
+    describe("--from defaults to sync context environment", () => {
+      let originalCwd: typeof process.cwd;
+      let syncJsonDir: string;
+      let syncJsonPath: string;
+
+      beforeEach(() => {
+        syncJsonDir = testDirPath("create-from-cwd");
+        syncJsonPath = path.join(syncJsonDir, ".gadget", "sync.json");
+
+        originalCwd = process.cwd;
+        process.cwd = () => syncJsonDir;
+      });
+
+      afterEach(() => {
+        process.cwd = originalCwd;
+      });
+
+      it("defaults --from to the current sync environment", async () => {
+        await fs.outputJSON(syncJsonPath, {
+          application: "test",
+          environment: "development",
+          environments: { development: { filesVersion: "1" } },
+        });
+
+        nockEditResponse({
+          operation: CREATE_ENVIRONMENT_MUTATION,
+          response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
+          expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
+        });
+
+        await env.run(testCtx, makeEnvArgs("create", "staging", "--app=test"));
+
+        expectStdout().toContain("Created environment staging");
+      });
+
+      it("explicit --from overrides sync context default", async () => {
+        await fs.outputJSON(syncJsonPath, {
+          application: "test",
+          environment: "development",
+          environments: { development: { filesVersion: "1" } },
+        });
+
+        nockEditResponse({
+          operation: CREATE_ENVIRONMENT_MUTATION,
+          response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
+          expectVariables: { environment: { slug: "staging", sourceSlug: "cool-environment-development" } },
+        });
+
+        await env.run(testCtx, makeEnvArgs("create", "staging", "--from=cool-environment-development", "--app=test"));
+
+        expectStdout().toContain("Created environment staging");
+      });
+
+      it("does not set --from when no sync context exists", async () => {
+        // syncJsonDir exists but has no .gadget/sync.json
+        await fs.ensureDir(syncJsonDir);
+
+        nockEditResponse({
+          operation: CREATE_ENVIRONMENT_MUTATION,
+          response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
+          expectVariables: { environment: { slug: "staging" } },
+        });
+
+        await env.run(testCtx, makeEnvArgs("create", "staging", "--app=test"));
+
+        expectStdout().toContain("Created environment staging");
+      });
+    });
+
     describe("create --use", () => {
       let originalCwd: typeof process.cwd;
       let syncJsonDir: string;
@@ -120,7 +189,7 @@ describe("env", () => {
         nockEditResponse({
           operation: CREATE_ENVIRONMENT_MUTATION,
           response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
-          expectVariables: { environment: { slug: "staging" } },
+          expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
         });
 
         await env.run(testCtx, makeEnvArgs("create", "staging", "--use", "--app=test"));
@@ -183,7 +252,7 @@ describe("env", () => {
         nockEditResponse({
           operation: CREATE_ENVIRONMENT_MUTATION,
           response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
-          expectVariables: { environment: { slug: "staging" } },
+          expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
         });
 
         const error = await expectError(() => env.run(testCtx, makeEnvArgs("create", "staging", "--use", "--app=test")));
@@ -279,7 +348,7 @@ describe("env", () => {
 
     it("errors gracefully when app has no environments", async () => {
       nock.cleanAll();
-      loginTestUser();
+      loginTestUserWithToken({ optional: true });
       const emptyApp = { ...testApp, slug: "empty-app", environments: [] };
       matchAuthHeader(nock(`https://${config.domains.services}`).get("/auth/api/apps").reply(200, [emptyApp, testApp2]));
 

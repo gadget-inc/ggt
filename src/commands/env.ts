@@ -354,7 +354,7 @@ const activateEnvironment = async (application: Application, envName: string): P
 const runCreate = async (ctx: Context, application: Application, positional: string[], state?: SyncJsonState): Promise<void> => {
   const subArgs = parseArgs(createArgs, { argv: positional });
   const rawName = subArgs._.shift();
-  const from = subArgs["--from"] ?? state?.environment;
+  const from = subArgs["--from"] ?? (state?.application === application.slug ? state.environment : undefined);
   const use = subArgs["--use"] ?? false;
 
   if (!rawName) {

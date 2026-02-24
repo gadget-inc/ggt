@@ -160,6 +160,24 @@ describe("env", () => {
 
         expectStdout().toContain("Created environment staging");
       });
+
+      it("does not use sync context --from when --app targets a different application", async () => {
+        await fs.outputJSON(syncJsonPath, {
+          application: "other-app",
+          environment: "my-custom-env",
+          environments: { "my-custom-env": { filesVersion: "1" } },
+        });
+
+        nockEditResponse({
+          operation: CREATE_ENVIRONMENT_MUTATION,
+          response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
+          expectVariables: { environment: { slug: "staging" } },
+        });
+
+        await env.run(testCtx, makeEnvArgs("create", "staging", "--app=test"));
+
+        expectStdout().toContain("Created environment staging");
+      });
     });
 
     describe("create --use", () => {
@@ -252,7 +270,7 @@ describe("env", () => {
         nockEditResponse({
           operation: CREATE_ENVIRONMENT_MUTATION,
           response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
-          expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
+          expectVariables: { environment: { slug: "staging" } },
         });
 
         const error = await expectError(() => env.run(testCtx, makeEnvArgs("create", "staging", "--use", "--app=test")));

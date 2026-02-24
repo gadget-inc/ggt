@@ -35,8 +35,8 @@ const projectHash = (dir: string): string => {
     .slice(0, 16);
 };
 
-const optOutPath = (dir: string, prefix: string): string => {
-  return path.join(config.cacheDir, `${prefix}${projectHash(dir)}`);
+const optOutPath = (directory: Directory, prefix: string): string => {
+  return path.join(config.cacheDir, `${prefix}${projectHash(directory.path)}`);
 };
 
 export const agentPluginShaPath = (dir: string): string => {
@@ -124,7 +124,7 @@ export const maybePromptAgentsMd = async ({ ctx, directory }: { ctx: Context; di
   )
     return;
 
-  const optOut = optOutPath(directory.path, "opt_out-agents-md-hint-");
+  const optOut = optOutPath(directory, "opt_out-agents-md-hint-");
   if (await fs.pathExists(optOut)) return;
 
   const yes = await confirm({
@@ -317,7 +317,7 @@ export const maybePromptGadgetSkills = async ({ ctx, directory }: { ctx: Context
   if (!(await hasNonGadgetFiles(directory))) return;
   if (await fs.pathExists(directory.absolute(".agents/skills", SENTINEL_SKILL, "SKILL.md"))) return;
 
-  const optOut = optOutPath(directory.path, "opt_out-gadget-skills-hint-");
+  const optOut = optOutPath(directory, "opt_out-gadget-skills-hint-");
   if (await fs.pathExists(optOut)) return;
 
   const yes = await confirm({

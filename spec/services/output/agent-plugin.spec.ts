@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { Directory } from "../../../src/services/filesync/directory.js";
 import {
+  agentPluginShaPath,
   installAgentsMdScaffold,
   installGadgetSkillsIntoProject,
   maybePromptAgentsMd,
@@ -25,7 +26,11 @@ const makeProject = async (name: string, { empty = false }: { empty?: boolean } 
   return Directory.init(dir);
 };
 
+const MOCK_COMMIT_SHA = "abc123def456";
+
 const mockTreeAndDownloads = (): void => {
+  nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: MOCK_COMMIT_SHA });
+
   nock("https://api.github.com")
     .get(/\/repos\/gadget-inc\/skills\/git\/trees\//)
     .reply(200, {
@@ -171,6 +176,30 @@ describe("agent-plugin", () => {
       expect(await fs.pathExists(directory.absolute(".agents/skills/gadget-best-practices/SKILL.md"))).toBe(true);
       expect(await fs.pathExists(directory.absolute(".agents/skills/gadget-actions/SKILL.md"))).toBe(true);
       expectStdout().toContain("Installed skills:");
+    });
+
+    it("saves commit SHA to cache after successful install", async () => {
+      const directory = await makeProject("skills-sha");
+
+      mockTreeAndDownloads();
+
+      await installGadgetSkillsIntoProject({ ctx: testCtx, directory });
+
+      const sha = await fs.readFile(agentPluginShaPath(directory), "utf8");
+      expect(sha).toBe(MOCK_COMMIT_SHA);
+    });
+
+    it("does not save SHA if install fails", async () => {
+      const directory = await makeProject("skills-sha-fail");
+
+      nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: MOCK_COMMIT_SHA });
+      nock("https://api.github.com")
+        .get(/\/repos\/gadget-inc\/skills\/git\/trees\//)
+        .replyWithError("network error");
+
+      await installGadgetSkillsIntoProject({ ctx: testCtx, directory });
+
+      expect(await fs.pathExists(agentPluginShaPath(directory))).toBe(false);
     });
   });
 
@@ -335,6 +364,7 @@ describe("agent-plugin", () => {
       const directory = await makeProject("prompt-skills-tree-fail");
 
       mockConfirm(true);
+      nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: "abc" });
       nock("https://api.github.com")
         .get(/\/repos\/gadget-inc\/skills\/git\/trees\//)
         .replyWithError("network error");
@@ -348,6 +378,7 @@ describe("agent-plugin", () => {
       const directory = await makeProject("prompt-skills-tree-403");
 
       mockConfirm(true);
+      nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: "abc" });
       nock("https://api.github.com")
         .get(/\/repos\/gadget-inc\/skills\/git\/trees\//)
         .reply(403, {});

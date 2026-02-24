@@ -20,8 +20,9 @@ const CLAUDE_FILE = "CLAUDE.md";
 const AGENTS_MD_URL = "https://raw.githubusercontent.com/gadget-inc/skills/main/agents/AGENTS.md";
 
 const SENTINEL_SKILL = "gadget-best-practices";
-const SKILLS_REPO = "gadget-inc/skills";
+export const SKILLS_REPO = "gadget-inc/skills";
 const SKILLS_PREFIX = "skills/gadget/";
+const SHA_CACHE_PREFIX = "agent-plugin-sha-";
 
 const HTTP_TIMEOUT = ms("10s");
 
@@ -36,6 +37,10 @@ const projectHash = (directory: Directory): string => {
 
 const optOutPath = (directory: Directory, prefix: string): string => {
   return path.join(config.cacheDir, `${prefix}${projectHash(directory)}`);
+};
+
+export const agentPluginShaPath = (directory: Directory): string => {
+  return path.join(config.cacheDir, `${SHA_CACHE_PREFIX}${projectHash(directory)}`);
 };
 
 export const installAgentsMdScaffold = async ({
@@ -164,9 +169,21 @@ export const installGadgetSkillsIntoProject = async ({
   }
 
   let skillNames: string[];
+  let commitSha: string | undefined;
 
   try {
-    const treeUrl = `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${ref}?recursive=1`;
+    const commitData = (await http({
+      context: { ctx },
+      method: "GET",
+      url: `https://api.github.com/repos/${SKILLS_REPO}/commits/${ref}`,
+      headers: { Accept: "application/vnd.github+json" },
+      responseType: "json",
+      resolveBodyOnly: true,
+      timeout: { request: HTTP_TIMEOUT },
+    })) as { sha: string };
+    commitSha = commitData.sha;
+
+    const treeUrl = `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${commitSha}?recursive=1`;
     const treeData = await http({
       context: { ctx },
       method: "GET",
@@ -203,7 +220,7 @@ export const installGadgetSkillsIntoProject = async ({
           const destPath = path.join(tmpDir, relative);
           if (!path.resolve(destPath).startsWith(path.resolve(tmpDir))) return;
 
-          const rawUrl = `https://raw.githubusercontent.com/${SKILLS_REPO}/${ref}/${blob.path}`;
+          const rawUrl = `https://raw.githubusercontent.com/${SKILLS_REPO}/${commitSha}/${blob.path}`;
           const text = await http({
             context: { ctx },
             method: "GET",
@@ -240,6 +257,10 @@ export const installGadgetSkillsIntoProject = async ({
   println({
     content: sprint`{greenBright ✓} Installed skills: ${skillNames.join(", ")}`,
   });
+
+  if (commitSha) {
+    await fs.outputFile(agentPluginShaPath(directory), commitSha).catch(() => undefined);
+  }
 
   try {
     const claudeSkillsDir = directory.absolute(".claude/skills");

@@ -89,10 +89,11 @@ Examples
 `;
 
 exports[`root > when agent-plugin is given > prints the usage when --help is passed 1`] = `
-"Install Gadget agent plugins (AGENTS.md + skills) into the current project.
+"Install or update Gadget agent plugins (AGENTS.md + skills).
 
 Usage
   ggt agent-plugin install [--force]
+  ggt agent-plugin update
 
 Flags
   --force    Overwrite/reinstall even if already present
@@ -100,10 +101,11 @@ Flags
 `;
 
 exports[`root > when agent-plugin is given > prints the usage when -h is passed 1`] = `
-"Install Gadget agent plugins (AGENTS.md + skills) into the current project.
+"Install or update Gadget agent plugins (AGENTS.md + skills).
 
 Usage
   ggt agent-plugin install [--force]
+  ggt agent-plugin update
 
 Flags
   --force    Overwrite/reinstall even if already present

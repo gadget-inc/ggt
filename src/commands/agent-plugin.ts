@@ -1,4 +1,5 @@
 import { findUp } from "find-up";
+import fs from "fs-extra";
 import path from "node:path";
 
 import type { ArgsDefinition } from "../services/command/arg.js";
@@ -6,6 +7,7 @@ import type { Run, Usage } from "../services/command/command.js";
 
 import { Directory } from "../services/filesync/directory.js";
 import { installAgentsMdScaffold, installGadgetSkillsIntoProject } from "../services/output/agent-plugin.js";
+import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
@@ -38,7 +40,18 @@ export const run: Run<typeof args> = async (ctx, args): Promise<void> => {
   const syncJsonPath = await findUp(".gadget/sync.json", { cwd });
   const projectRoot = syncJsonPath ? path.join(syncJsonPath, "../..") : cwd;
   const directory = await Directory.init(projectRoot);
-  const force = subcommand === "update" || (args["--force"] ?? false);
-  await installAgentsMdScaffold({ ctx, directory, force });
-  await installGadgetSkillsIntoProject({ ctx, directory, force });
+
+  if (subcommand === "install") {
+    const force = args["--force"] ?? false;
+    await installAgentsMdScaffold({ ctx, directory, force });
+    await installGadgetSkillsIntoProject({ ctx, directory, force });
+    return;
+  }
+
+  // update
+  const hasAgentsMd = await fs.pathExists(directory.absolute("AGENTS.md"));
+  if (!hasAgentsMd || (await confirm({ exitWhenNo: false, content: "Overwrite AGENTS.md with latest version?" }))) {
+    await installAgentsMdScaffold({ ctx, directory, force: true });
+  }
+  await installGadgetSkillsIntoProject({ ctx, directory, force: true });
 };

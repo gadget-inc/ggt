@@ -14,7 +14,7 @@ import { config } from "../config/config.js";
 import { Directory } from "../filesync/directory.js";
 import { http } from "../http/http.js";
 import { packageJson } from "../util/package-json.js";
-import { agentPluginShaPath } from "./agent-plugin.js";
+import { agentPluginShaPath, SKILLS_REPO } from "./agent-plugin.js";
 import { println } from "./print.js";
 import { sprint } from "./sprint.js";
 
@@ -102,11 +102,11 @@ export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
         }),
       );
     }
-
-    await checkAgentPluginUpdate(ctx);
   } catch (error) {
     ctx.log.error("failed to check for updates", { error });
   }
+
+  await checkAgentPluginUpdate(ctx);
 };
 
 const checkAgentPluginUpdate = async (ctx: Context): Promise<void> => {
@@ -122,7 +122,7 @@ const checkAgentPluginUpdate = async (ctx: Context): Promise<void> => {
     const commitData = (await http({
       context: { ctx },
       method: "GET",
-      url: "https://api.github.com/repos/gadget-inc/skills/commits/main",
+      url: `https://api.github.com/repos/${SKILLS_REPO}/commits/main`,
       headers: { Accept: "application/vnd.github+json" },
       responseType: "json",
       resolveBodyOnly: true,
@@ -131,10 +131,13 @@ const checkAgentPluginUpdate = async (ctx: Context): Promise<void> => {
 
     if (commitData.sha === storedSha) return;
 
-    println({
-      ensureEmptyLineAbove: true,
-      content: sprint`{yellow Gadget agent plugin updates available.} Run {cyanBright ggt agent-plugin update} to update.`,
-    });
+    println(
+      boxen(sprint`{yellow Gadget agent plugin updates available.}\nRun {cyanBright ggt agent-plugin update} to update.`, {
+        padding: 1,
+        borderStyle: "round",
+        textAlignment: "center",
+      }),
+    );
   } catch (error) {
     ctx.log.trace("failed to check for agent plugin updates", { error });
   }

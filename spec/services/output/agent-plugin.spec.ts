@@ -4,12 +4,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { Directory } from "../../../src/services/filesync/directory.js";
 import {
+  agentPluginShaPath,
   installAgentsMdScaffold,
   installGadgetSkillsIntoProject,
   maybePromptAgentsMd,
   maybePromptGadgetSkills,
 } from "../../../src/services/output/agent-plugin.js";
-import { agentPluginShaPath } from "../../../src/services/output/agent-plugin.js";
 import { output } from "../../../src/services/output/output.js";
 import { testCtx } from "../../__support__/context.js";
 import { mock, mockConfirm } from "../../__support__/mock.js";

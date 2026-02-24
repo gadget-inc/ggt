@@ -20,7 +20,7 @@ const CLAUDE_FILE = "CLAUDE.md";
 const AGENTS_MD_URL = "https://raw.githubusercontent.com/gadget-inc/skills/main/agents/AGENTS.md";
 
 const SENTINEL_SKILL = "gadget-best-practices";
-const SKILLS_REPO = "gadget-inc/skills";
+export const SKILLS_REPO = "gadget-inc/skills";
 const SKILLS_PREFIX = "skills/gadget/";
 const SHA_CACHE_PREFIX = "agent-plugin-sha-";
 

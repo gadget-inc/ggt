@@ -28,6 +28,7 @@ import { select } from "../services/output/select.js";
 import { spin } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
+import { resetTerminalTitle, ringBell, setTerminalTitle } from "../services/output/terminal.js";
 import { unreachable } from "../services/util/assert.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
@@ -113,6 +114,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   await maybePromptAgentsMd({ ctx, directory: syncJson.directory });
   await maybePromptGadgetSkills({ ctx, directory: syncJson.directory });
   footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });
+  setTerminalTitle(`ggt dev - ${syncJson.application.slug}`);
 
   const filesync = new FileSync(syncJson);
   const hashes = await filesync.hashes(ctx);
@@ -376,9 +378,12 @@ export const run: Run<DevArgs> = async (ctx, args) => {
     }
 
     if (isAbortError(reason)) {
+      resetTerminalTitle();
       return;
     }
 
+    setTerminalTitle("ggt dev - stopped (error)");
+    ringBell();
     notify(ctx, { subtitle: "Uh oh!", message: "An error occurred while syncing files" });
     await reportErrorAndExit(ctx, reason);
   });

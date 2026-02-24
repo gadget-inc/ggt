@@ -10,6 +10,8 @@ import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edi
 import { ClientError } from "../../src/services/app/error.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
+import * as terminal from "../../src/services/output/terminal.js";
+import { noop } from "../../src/services/util/function.js";
 import { assetsPath } from "../../src/services/util/paths.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
@@ -1294,6 +1296,47 @@ describe("dev", () => {
       },
       expect.any(Function),
     );
+  });
+
+  it("sets the terminal title to the app name on startup", async () => {
+    const setTerminalTitleSpy = vi.spyOn(terminal, "setTerminalTitle").mockImplementation(noop);
+
+    await makeSyncScenario();
+    await dev.run(testCtx, args);
+
+    expect(setTerminalTitleSpy).toHaveBeenCalledWith("ggt dev - test");
+  });
+
+  it("resets the terminal title on clean exit", async () => {
+    const resetTerminalTitleSpy = vi.spyOn(terminal, "resetTerminalTitle").mockImplementation(noop);
+    const ringBellSpy = vi.spyOn(terminal, "ringBell").mockImplementation(noop);
+
+    await makeSyncScenario();
+    await dev.run(testCtx, args);
+
+    testCtx.abort();
+    await testCtx.done;
+
+    expect(resetTerminalTitleSpy).toHaveBeenCalled();
+    expect(ringBellSpy).not.toHaveBeenCalled();
+  });
+
+  it("sets error terminal title and rings bell on error exit", async () => {
+    const setTerminalTitleSpy = vi.spyOn(terminal, "setTerminalTitle").mockImplementation(noop);
+    const ringBellSpy = vi.spyOn(terminal, "ringBell").mockImplementation(noop);
+
+    const { expectGadgetChangesSubscription } = await makeSyncScenario();
+    await dev.run(testCtx, args);
+
+    const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
+
+    const gadgetChangesSubscription = expectGadgetChangesSubscription();
+    await gadgetChangesSubscription.emitError(error);
+
+    await waitForReportErrorAndExit(error);
+
+    expect(setTerminalTitleSpy).toHaveBeenCalledWith("ggt dev - stopped (error)");
+    expect(ringBellSpy).toHaveBeenCalled();
   });
 
   it("throws YarnNotFoundError if yarn is not found", async () => {

@@ -9,6 +9,7 @@ import { output } from "./services/output/output.js";
 import { println } from "./services/output/print.js";
 import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.js";
 import { activeSpinner, spin } from "./services/output/spinner.js";
+import { resetTerminalTitle } from "./services/output/terminal.js";
 import { installJsonExtensions } from "./services/util/json.js";
 
 export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> => {
@@ -74,6 +75,7 @@ const installSignalHandler = (ctx: Context): void => {
       try {
         ctx.abort();
         await ctx.done;
+        resetTerminalTitle();
         spinner.succeed("Goodbye!");
       } catch (error) {
         spinner.fail();

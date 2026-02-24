@@ -22,7 +22,7 @@ import { mockConfirmOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { testDirPath } from "../__support__/paths.js";
 import { expectProcessExit } from "../__support__/process.js";
-import { loginTestUser, loginTestUserWithToken, matchAuthHeader } from "../__support__/user.js";
+import { loginTestUser } from "../__support__/user.js";
 
 const makeEnvArgs = (...argv: string[]) => {
   return makeArgsWithOptions(env.args, env.parseOptions, "env", ...argv);
@@ -366,9 +366,15 @@ describe("env", () => {
 
     it("errors gracefully when app has no environments", async () => {
       nock.cleanAll();
-      loginTestUserWithToken({ optional: true });
+      // Set up nocks without matchAuthHeader to avoid flaky auth mismatch.
+      // loginTestUser() in beforeEach may write a session file (cookie auth),
+      // and since loadCookie() takes priority over readToken() in
+      // maybeLoadAuthHeaders(), the token-based matchAuthHeader would not match.
+      nock(`https://${config.domains.services}`)
+        .get("/auth/api/current-user")
+        .reply(200, { id: 1, email: "test@example.com", name: "Jane Doe" });
       const emptyApp = { ...testApp, slug: "empty-app", environments: [] };
-      matchAuthHeader(nock(`https://${config.domains.services}`).get("/auth/api/apps").reply(200, [emptyApp, testApp2]));
+      nock(`https://${config.domains.services}`).get("/auth/api/apps").reply(200, [emptyApp, testApp2]);
 
       const error = await expectError(() => env.run(testCtx, makeEnvArgs("delete", "staging", "--app=empty-app")));
       expect(error).toBeInstanceOf(ArgError);

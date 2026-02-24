@@ -75,6 +75,18 @@ describe("env", () => {
       expectStdout().toContain("Created environment staging");
     });
 
+    it("lowercases --from value", async () => {
+      nockEditResponse({
+        operation: CREATE_ENVIRONMENT_MUTATION,
+        response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
+        expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
+      });
+
+      await env.run(testCtx, makeEnvArgs("create", "staging", "--from=Development", "--app=test"));
+
+      expectStdout().toContain("Created environment staging");
+    });
+
     it("lowercases the environment name", async () => {
       nockEditResponse({
         operation: CREATE_ENVIRONMENT_MUTATION,
@@ -267,12 +279,7 @@ describe("env", () => {
           environments: { development: { filesVersion: "1" } },
         });
 
-        nockEditResponse({
-          operation: CREATE_ENVIRONMENT_MUTATION,
-          response: { data: { createEnvironment: { slug: "staging", status: EnvironmentStatus.Active } } },
-          expectVariables: { environment: { slug: "staging" } },
-        });
-
+        // No nockEditResponse — the error is thrown before the create mutation
         const error = await expectError(() => env.run(testCtx, makeEnvArgs("create", "staging", "--use", "--app=test")));
         expect(error).toBeInstanceOf(ArgError);
         expect(error.message).toContain("other-app");

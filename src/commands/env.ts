@@ -214,7 +214,7 @@ const resolveApplication = async (
   if (availableApps.length === 0) {
     throw new ArgError(
       sprint`
-        You (${user.email}) don't have have any Gadget applications.
+        You (${user.email}) don't have any Gadget applications.
 
         Visit https://gadget.new to create one!
       `,
@@ -340,8 +340,8 @@ const activateEnvironment = async (application: Application, envName: string): P
     }
   }
 
-  // No sync.json found — create a new one in cwd
-  const newSyncJsonPath = path.join(process.cwd(), ".gadget", "sync.json");
+  // No sync.json found — create a new one in the sync root (or cwd if no sync root)
+  const newSyncJsonPath = directory ? directory.absolute(".gadget/sync.json") : path.join(process.cwd(), ".gadget", "sync.json");
   const newState: SyncJsonState = {
     application: application.slug,
     environment: envName,
@@ -354,7 +354,7 @@ const activateEnvironment = async (application: Application, envName: string): P
 const runCreate = async (ctx: Context, application: Application, positional: string[], state?: SyncJsonState): Promise<void> => {
   const subArgs = parseArgs(createArgs, { argv: positional });
   const rawName = subArgs._.shift();
-  const from = subArgs["--from"] ?? (state?.application === application.slug ? state.environment : undefined);
+  const from = (subArgs["--from"] ?? (state?.application === application.slug ? state.environment : undefined))?.toLowerCase();
   const use = subArgs["--use"] ?? false;
 
   if (!rawName) {
@@ -366,6 +366,16 @@ const runCreate = async (ctx: Context, application: Application, positional: str
   }
 
   const name = rawName.toLowerCase();
+
+  // Validate --use before creating the environment to avoid creating an
+  // environment on the server that can't be activated locally
+  if (use && state?.application && state.application !== application.slug) {
+    throw new ArgError(sprint`
+      Cannot use {gray --use}: this directory is synced to {yellow ${state.application}}, but you specified {yellow ${application.slug}}.
+
+      Either run this command from a directory synced to ${application.slug}, or omit the {gray --app} flag.
+    `);
+  }
 
   const edit = getEditForApp(ctx, application);
   try {

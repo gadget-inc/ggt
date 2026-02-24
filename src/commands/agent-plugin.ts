@@ -36,20 +36,13 @@ const resolveDirectory = async (): Promise<Directory> => {
 export const run: Run<typeof args> = async (ctx, args): Promise<void> => {
   const subcommand = args._[0];
 
-  if (subcommand === "install") {
-    const directory = await resolveDirectory();
-    const force = args["--force"] ?? false;
-    await installAgentsMdScaffold({ ctx, directory, force });
-    await installGadgetSkillsIntoProject({ ctx, directory, force });
+  if (subcommand !== "install" && subcommand !== "update") {
+    println(usage(ctx));
     return;
   }
 
-  if (subcommand === "update") {
-    const directory = await resolveDirectory();
-    await installAgentsMdScaffold({ ctx, directory, force: true });
-    await installGadgetSkillsIntoProject({ ctx, directory, force: true });
-    return;
-  }
-
-  println(usage(ctx));
+  const directory = await resolveDirectory();
+  const force = subcommand === "update" || (args["--force"] ?? false);
+  await installAgentsMdScaffold({ ctx, directory, force });
+  await installGadgetSkillsIntoProject({ ctx, directory, force });
 };

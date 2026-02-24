@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import ms from "ms";
 import nock from "nock";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { config } from "../../../src/services/config/config.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
@@ -147,6 +147,8 @@ describe("warnIfUpdateAvailable", () => {
   });
 
   describe("agent plugin update check", () => {
+    let originalCwd: string;
+
     const makeProjectDir = async (name: string): Promise<Directory> => {
       const dir = testDirPath(name);
       await fs.ensureDir(dir);
@@ -165,7 +167,12 @@ describe("warnIfUpdateAvailable", () => {
         });
     };
 
+    beforeEach(() => {
+      originalCwd = process.cwd();
+    });
+
     afterEach(() => {
+      process.chdir(originalCwd);
       nock.cleanAll();
     });
 

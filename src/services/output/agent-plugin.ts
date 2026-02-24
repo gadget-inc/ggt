@@ -35,8 +35,8 @@ const projectHash = (dir: string): string => {
     .slice(0, 16);
 };
 
-const optOutPath = (directory: Directory, prefix: string): string => {
-  return path.join(config.cacheDir, `${prefix}${projectHash(directory.path)}`);
+const optOutPath = (dir: string, prefix: string): string => {
+  return path.join(config.cacheDir, `${prefix}${projectHash(dir)}`);
 };
 
 export const agentPluginShaPath = (dir: string): string => {
@@ -124,7 +124,7 @@ export const maybePromptAgentsMd = async ({ ctx, directory }: { ctx: Context; di
   )
     return;
 
-  const optOut = optOutPath(directory, "opt_out-agents-md-hint-");
+  const optOut = optOutPath(directory.path, "opt_out-agents-md-hint-");
   if (await fs.pathExists(optOut)) return;
 
   const yes = await confirm({
@@ -169,9 +169,23 @@ export const installGadgetSkillsIntoProject = async ({
   }
 
   let skillNames: string[];
+  let commitSha: string | undefined;
 
   try {
-    const treeUrl = `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${ref}?recursive=1`;
+    // resolve the commit SHA first so the tree fetch and file downloads
+    // are pinned to the exact same commit
+    const commitData = (await http({
+      context: { ctx },
+      method: "GET",
+      url: `https://api.github.com/repos/${SKILLS_REPO}/commits/${ref}`,
+      headers: { Accept: "application/vnd.github+json" },
+      responseType: "json",
+      resolveBodyOnly: true,
+      timeout: { request: HTTP_TIMEOUT },
+    })) as { sha: string };
+    commitSha = commitData.sha;
+
+    const treeUrl = `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${commitSha}?recursive=1`;
     const treeData = await http({
       context: { ctx },
       method: "GET",
@@ -208,7 +222,7 @@ export const installGadgetSkillsIntoProject = async ({
           const destPath = path.join(tmpDir, relative);
           if (!path.resolve(destPath).startsWith(path.resolve(tmpDir))) return;
 
-          const rawUrl = `https://raw.githubusercontent.com/${SKILLS_REPO}/${ref}/${blob.path}`;
+          const rawUrl = `https://raw.githubusercontent.com/${SKILLS_REPO}/${commitSha}/${blob.path}`;
           const text = await http({
             context: { ctx },
             method: "GET",
@@ -246,19 +260,8 @@ export const installGadgetSkillsIntoProject = async ({
     content: sprint`{greenBright ✓} Installed skills: ${skillNames.join(", ")}`,
   });
 
-  try {
-    const commitData = (await http({
-      context: { ctx },
-      method: "GET",
-      url: `https://api.github.com/repos/${SKILLS_REPO}/commits/${ref}`,
-      headers: { Accept: "application/vnd.github+json" },
-      responseType: "json",
-      resolveBodyOnly: true,
-      timeout: { request: HTTP_TIMEOUT },
-    })) as { sha: string };
-    await fs.outputFile(agentPluginShaPath(directory.path), commitData.sha);
-  } catch {
-    // non-fatal — update check just won't work until next install
+  if (commitSha) {
+    await fs.outputFile(agentPluginShaPath(directory.path), commitSha).catch(() => undefined);
   }
 
   try {
@@ -316,7 +319,7 @@ export const maybePromptGadgetSkills = async ({ ctx, directory }: { ctx: Context
   if (!(await hasNonGadgetFiles(directory))) return;
   if (await fs.pathExists(directory.absolute(".agents/skills", SENTINEL_SKILL, "SKILL.md"))) return;
 
-  const optOut = optOutPath(directory, "opt_out-gadget-skills-hint-");
+  const optOut = optOutPath(directory.path, "opt_out-gadget-skills-hint-");
   if (await fs.pathExists(optOut)) return;
 
   const yes = await confirm({

@@ -193,7 +193,7 @@ export const run: Run<typeof args> = async (ctx, args) => {
       await runCreate(ctx, application, args._, state);
       break;
     case "delete":
-      await runDelete(ctx, application, args._);
+      await runDelete(ctx, application, args._, state);
       break;
     case "unpause":
       await runUnpause(ctx, application, args._);
@@ -394,7 +394,7 @@ const runCreate = async (ctx: Context, application: Application, positional: str
   }
 };
 
-const runDelete = async (ctx: Context, application: Application, positional: string[]): Promise<void> => {
+const runDelete = async (ctx: Context, application: Application, positional: string[], state?: SyncJsonState): Promise<void> => {
   const subArgs = parseArgs(deleteArgs, { argv: positional });
   const name = subArgs._.shift();
   const force = subArgs["--force"] ?? false;
@@ -429,6 +429,14 @@ const runDelete = async (ctx: Context, application: Application, positional: str
     println(`${symbol.tick} Deleted environment ${environment.name}`);
   } finally {
     await edit.dispose();
+  }
+
+  if (state?.application === application.slug && state.environment === environment.name) {
+    println(sprint`
+      {yellow Warning:} your sync directory was using the ${environment.name} environment.
+
+      Run {gray ggt env use <environment>} to switch to another environment.
+    `);
   }
 };
 

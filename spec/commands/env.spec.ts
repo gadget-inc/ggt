@@ -387,6 +387,35 @@ describe("env", () => {
       expect(error).toBeInstanceOf(ArgError);
       expect(error.message).toContain("No environments found");
     });
+
+    it("warns when deleting the active sync environment", async () => {
+      const syncJsonDir = testDirPath("delete-active-env");
+      const syncJsonPath = path.join(syncJsonDir, ".gadget", "sync.json");
+      await fs.outputJSON(syncJsonPath, {
+        application: "test",
+        environment: "cool-environment-development",
+        environments: { "cool-environment-development": { filesVersion: "42" } },
+      });
+
+      const originalCwd = process.cwd;
+      process.cwd = () => syncJsonDir;
+
+      try {
+        nockEditResponse({
+          operation: DELETE_ENVIRONMENT_MUTATION,
+          response: { data: { deleteEnvironment: true } },
+          expectVariables: { slug: "cool-environment-development" },
+        });
+
+        await env.run(testCtx, makeEnvArgs("delete", "cool-environment-development", "--force", "--app=test"));
+
+        expectStdout().toContain("Deleted environment cool-environment-development");
+        expectStdout().toContain("Warning");
+        expectStdout().toContain("ggt env use");
+      } finally {
+        process.cwd = originalCwd;
+      }
+    });
   });
 
   describe("unpause", () => {

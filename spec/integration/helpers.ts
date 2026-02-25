@@ -1,7 +1,8 @@
-import { execa, type ResultPromise } from "execa";
-import fs from "fs-extra";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+
+import { execa, type ResultPromise } from "execa";
+import fs from "fs-extra";
 import { vi } from "vitest";
 
 import { workspacePath } from "../../src/services/util/paths.js";

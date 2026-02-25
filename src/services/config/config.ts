@@ -1,7 +1,8 @@
-import isWsl from "is-wsl";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+
+import isWsl from "is-wsl";
 
 import { Level, parseLevel } from "../output/log/level.js";
 import { packageJson } from "../util/package-json.js";

@@ -1,10 +1,9 @@
 import fs from "fs-extra";
 import { z } from "zod";
 
-import type { Directory } from "./directory.js";
-
 import { GGTError, IsBug } from "../output/report.js";
 import { sprint } from "../output/sprint.js";
+import type { Directory } from "./directory.js";
 
 /**
  * The data stored in the dev lock file.

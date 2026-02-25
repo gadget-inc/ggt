@@ -1,7 +1,6 @@
 import fs from "fs-extra";
 
 import type { Context } from "../command/context.js";
-
 import { configPath } from "../config/config.js";
 import { swallowEnoent } from "../filesync/directory.js";
 import { memo } from "../util/function.js";

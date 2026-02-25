@@ -1,8 +1,8 @@
-import type { SetReturnType } from "type-fest";
+import assert from "node:assert";
 
 // oxlint-disable no-explicit-any
 import mimicFunction from "mimic-function";
-import assert from "node:assert";
+import type { SetReturnType } from "type-fest";
 
 import { isFunction } from "./is.js";
 import { type AnyFunction } from "./types.js";

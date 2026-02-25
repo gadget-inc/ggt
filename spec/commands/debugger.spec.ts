@@ -1,6 +1,7 @@
+import path from "node:path";
+
 import fs from "fs-extra";
 import nock from "nock";
-import path from "node:path";
 import { waitUntilUsed } from "tcp-port-used";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";

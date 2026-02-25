@@ -1,5 +1,6 @@
-import getPort from "get-port";
 import http from "node:http";
+
+import getPort from "get-port";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

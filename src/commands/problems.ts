@@ -1,8 +1,7 @@
-import type { Run, Usage } from "../services/command/command.js";
-
 import { PUBLISH_ISSUES_QUERY } from "../services/app/edit/operation.js";
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
+import type { Run, Usage } from "../services/command/command.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { println } from "../services/output/print.js";
 import { printProblems, publishIssuesToProblems } from "../services/output/problems.js";

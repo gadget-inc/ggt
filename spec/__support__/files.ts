@@ -1,6 +1,7 @@
-import fs, { type Stats } from "fs-extra";
 import assert from "node:assert";
 import path from "node:path";
+
+import fs, { type Stats } from "fs-extra";
 import normalizePath from "normalize-path";
 import { expect } from "vitest";
 

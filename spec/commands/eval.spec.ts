@@ -1,6 +1,7 @@
+import path from "node:path";
+
 import fs from "fs-extra";
 import nock from "nock";
-import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import * as eval_ from "../../src/commands/eval.js";

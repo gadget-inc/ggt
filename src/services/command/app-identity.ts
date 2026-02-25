@@ -1,12 +1,9 @@
 import fs from "fs-extra";
 
-import type { Directory } from "../filesync/directory.js";
-import type { Command } from "./command.js";
-import type { Context } from "./context.js";
-
 import { Application, EnvironmentType, getApplications, groupByTeam, type Environment } from "../app/app.js";
 import { AppArg } from "../app/arg.js";
 import { Edit } from "../app/edit/edit.js";
+import type { Directory } from "../filesync/directory.js";
 import { SyncJsonState } from "../filesync/sync-json-state.js";
 import { select } from "../output/select.js";
 import { setSentryTags } from "../output/sentry.js";
@@ -14,6 +11,8 @@ import { sprint } from "../output/sprint.js";
 import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
 import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "./arg.js";
+import type { Command } from "./command.js";
+import type { Context } from "./context.js";
 
 export const AppIdentityArgs = {
   "--app": { type: AppArg, alias: ["-a", "--application"] },

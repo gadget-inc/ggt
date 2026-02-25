@@ -1,6 +1,7 @@
-import cleanStack from "clean-stack";
 import assert from "node:assert";
 import path from "node:path";
+
+import cleanStack from "clean-stack";
 import { expect } from "vitest";
 
 import { createLogger } from "../../src/services/output/log/logger.js";

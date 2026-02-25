@@ -40,7 +40,6 @@ import type {
   UnpauseEnvironmentMutation,
   UnpauseEnvironmentMutationVariables,
 } from "../../../__generated__/graphql.js";
-
 import { sprint } from "../../output/sprint.js";
 
 /**

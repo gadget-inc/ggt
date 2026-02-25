@@ -1,9 +1,6 @@
-import fs from "fs-extra";
 import path from "node:path";
 
-import type { Run, Usage } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
-import type { Directory } from "../services/filesync/directory.js";
+import fs from "fs-extra";
 
 import { type Application, EnvironmentType, getApplications, type Environment } from "../services/app/app.js";
 import { AppArg } from "../services/app/arg.js";
@@ -11,6 +8,9 @@ import { Edit } from "../services/app/edit/edit.js";
 import { CREATE_ENVIRONMENT_MUTATION, DELETE_ENVIRONMENT_MUTATION, UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
 import { loadApplication } from "../services/command/app-identity.js";
 import { ArgError, parseArgs, type ArgsDefinition, type ParseArgsOptions } from "../services/command/arg.js";
+import type { Run, Usage } from "../services/command/command.js";
+import type { Context } from "../services/command/context.js";
+import type { Directory } from "../services/filesync/directory.js";
 import { SyncJsonState } from "../services/filesync/sync-json-state.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { confirm } from "../services/output/confirm.js";

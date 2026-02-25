@@ -1,18 +1,14 @@
-import type { Promisable } from "type-fest";
+import assert from "node:assert";
+import path from "node:path";
+import process from "node:process";
 
 import chalk from "chalk";
 import { execa } from "execa";
 import fs from "fs-extra";
-import assert from "node:assert";
-import path from "node:path";
-import process from "node:process";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import pluralize from "pluralize";
-
-import type { Command } from "../command/command.js";
-import type { Context } from "../command/context.js";
-import type { File } from "./file.js";
+import type { Promisable } from "type-fest";
 
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
 import { type EditSubscription } from "../app/edit/edit.js";
@@ -23,6 +19,8 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../app/edit/operation.js";
+import type { Command } from "../command/command.js";
+import type { Context } from "../command/context.js";
 import { confirm } from "../output/confirm.js";
 import { println } from "../output/print.js";
 import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.js";
@@ -40,6 +38,7 @@ import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
 import { isFilesVersionMismatchError, swallowFilesVersionMismatch, TooManyMergeAttemptsError, TooManyPushAttemptsError } from "./error.js";
+import type { File } from "./file.js";
 import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
 import { MergeConflictPreference } from "./strategy.js";
 import { type SyncJson } from "./sync-json.js";

@@ -1,6 +1,7 @@
+import assert from "node:assert";
+
 import chalk from "chalk";
 import indentString from "indent-string";
-import assert from "node:assert";
 import terminalLink from "terminal-link";
 
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";

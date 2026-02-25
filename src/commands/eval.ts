@@ -1,17 +1,17 @@
-import fs from "fs-extra";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { inspect } from "node:util";
 import vm from "node:vm";
 
-import type { Application, Environment } from "../services/app/app.js";
-import type { Run, Usage } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
+import fs from "fs-extra";
 
+import type { Application, Environment } from "../services/app/app.js";
 import { Edit } from "../services/app/edit/edit.js";
 import { UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
+import type { Run, Usage } from "../services/command/command.js";
+import type { Context } from "../services/command/context.js";
 import { config } from "../services/config/config.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { loadAuthHeaders } from "../services/http/auth.js";

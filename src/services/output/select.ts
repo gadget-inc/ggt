@@ -1,11 +1,11 @@
-import chalk from "chalk";
-import indentString from "indent-string";
 import assert from "node:assert";
 import process from "node:process";
 
-import type { XOR } from "../util/types.js";
+import chalk from "chalk";
+import indentString from "indent-string";
 
 import { defaults } from "../util/object.js";
+import type { XOR } from "../util/types.js";
 import { output } from "./output.js";
 import { println } from "./print.js";
 import { entriesToDisplay, Prompt, type StdinKey } from "./prompt.js";

@@ -1,10 +1,10 @@
-import type { ColorName } from "chalk";
-import type { SpinnerName } from "cli-spinners";
-
-import chalk from "chalk";
-import cliSpinners from "cli-spinners";
 import assert from "node:assert";
 import os from "node:os";
+
+import type { ColorName } from "chalk";
+import chalk from "chalk";
+import type { SpinnerName } from "cli-spinners";
+import cliSpinners from "cli-spinners";
 
 import { output } from "./output.js";
 import { type SprintOptionsWithContent } from "./sprint.js";

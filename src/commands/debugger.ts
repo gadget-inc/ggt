@@ -1,19 +1,18 @@
-import type { Server as HttpServer, IncomingMessage, ServerResponse } from "node:http";
-import type { Duplex } from "node:stream";
-
-import chalk from "chalk";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import type { Server as HttpServer, IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import path from "node:path";
 import process, { nextTick } from "node:process";
+import type { Duplex } from "node:stream";
+
+import chalk from "chalk";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 
+import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
-
-import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { config } from "../services/config/config.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { loadAuthHeaders } from "../services/http/auth.js";

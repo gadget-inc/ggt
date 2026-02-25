@@ -1,8 +1,5 @@
 import fs from "fs-extra";
 
-import type { Run, Usage } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
-
 import { Edit } from "../services/app/edit/edit.js";
 import {
   DELETE_ENVIRONMENT_VARIABLE_MUTATION,
@@ -12,6 +9,8 @@ import {
 import { ClientError } from "../services/app/error.js";
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError, parseArgs, type ArgsDefinition, type ParseArgsOptions } from "../services/command/arg.js";
+import type { Run, Usage } from "../services/command/command.js";
+import type { Context } from "../services/command/context.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";

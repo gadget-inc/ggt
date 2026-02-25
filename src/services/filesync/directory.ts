@@ -1,4 +1,8 @@
-import type { Ignore } from "ignore";
+import assert from "node:assert";
+import { createHash } from "node:crypto";
+import path from "node:path";
+import { Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 /* eslint-disable func-style */
 /**
@@ -8,12 +12,8 @@ import type { Ignore } from "ignore";
  * is the same between the two projects.
  */
 import fs from "fs-extra";
+import type { Ignore } from "ignore";
 import ignore from "ignore";
-import assert from "node:assert";
-import { createHash } from "node:crypto";
-import path from "node:path";
-import { Transform } from "node:stream";
-import { pipeline } from "node:stream/promises";
 import normalizePath from "normalize-path";
 
 /**

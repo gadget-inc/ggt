@@ -1,5 +1,6 @@
-import nock from "nock";
 import process from "node:process";
+
+import nock from "nock";
 import { describe, expect, it, vi } from "vitest";
 
 import * as login from "../../../src/commands/login.js";

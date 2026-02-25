@@ -1,7 +1,6 @@
 import { inspect } from "node:util";
-import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AnyFunction } from "../src/services/util/types.js";
+import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as root from "../src/commands/root.js";
 import { ggt } from "../src/ggt.js";
@@ -11,6 +10,7 @@ import { noop } from "../src/services/util/function.js";
 import { isAbortError } from "../src/services/util/is.js";
 import * as json from "../src/services/util/json.js";
 import { PromiseSignal } from "../src/services/util/promise.js";
+import type { AnyFunction } from "../src/services/util/types.js";
 import { testCtx } from "./__support__/context.js";
 import { mock } from "./__support__/mock.js";
 import { expectStdout } from "./__support__/output.js";

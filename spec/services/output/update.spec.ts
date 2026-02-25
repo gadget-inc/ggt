@@ -1,7 +1,8 @@
+import path from "node:path";
+
 import fs from "fs-extra";
 import ms from "ms";
 import nock from "nock";
-import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { config } from "../../../src/services/config/config.js";

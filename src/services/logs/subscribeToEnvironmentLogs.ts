@@ -1,7 +1,6 @@
 import type { Edit, EditSubscription } from "../app/edit/edit.js";
-import type { Fields } from "../output/log/field.js";
-
 import { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../app/edit/operation.js";
+import type { Fields } from "../output/log/field.js";
 import { Level } from "../output/log/level.js";
 import { type LoggingArgsResult, createEnvironmentStructuredLogger } from "../output/log/structured.js";
 

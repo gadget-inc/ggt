@@ -1,7 +1,6 @@
-import type { Simplify } from "type-fest";
-
 import arg from "arg";
 import chalk from "chalk";
+import type { Simplify } from "type-fest";
 
 import { GGTError, IsBug, UnexpectedError } from "../output/report.js";
 import { symbol } from "../output/symbols.js";

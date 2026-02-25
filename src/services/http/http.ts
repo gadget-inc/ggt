@@ -1,7 +1,8 @@
-import { got, type OptionsInit } from "got";
 import assert from "node:assert";
 import { Agent as HttpAgent } from "node:http";
 import { Agent as HttpsAgent } from "node:https";
+
+import { got, type OptionsInit } from "got";
 import { parseString as parseSetCookieString } from "set-cookie-parser";
 
 import { Context } from "../command/context.js";

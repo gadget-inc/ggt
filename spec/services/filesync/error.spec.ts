@@ -1,12 +1,12 @@
-import fs from "fs-extra";
 import os from "node:os";
 import path from "node:path";
+
+import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { GraphQLQuery } from "../../../src/services/app/edit/operation.js";
-import type { Command } from "../../../src/services/command/command.js";
-
 import { ClientError } from "../../../src/services/app/error.js";
+import type { Command } from "../../../src/services/command/command.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import {
   TooManyMergeAttemptsError,

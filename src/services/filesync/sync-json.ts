@@ -1,17 +1,17 @@
-import { findUp } from "find-up";
-import fs from "fs-extra";
 import assert from "node:assert";
 import path from "node:path";
+
+import { findUp } from "find-up";
+import fs from "fs-extra";
 import { simpleGit } from "simple-git";
 import terminalLink from "terminal-link";
-
-import type { Command } from "../command/command.js";
-import type { Context } from "../command/context.js";
 
 import { EnvironmentType, type Application, type Environment } from "../app/app.js";
 import { Edit } from "../app/edit/edit.js";
 import { AppIdentity, AppIdentityArgs } from "../command/app-identity.js";
 import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../command/arg.js";
+import type { Command } from "../command/command.js";
+import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
 import colors from "../output/colors.js";
 import { println } from "../output/print.js";

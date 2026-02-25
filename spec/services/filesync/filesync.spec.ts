@@ -1,8 +1,9 @@
+import { randomUUID } from "node:crypto";
+
 import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import nock from "nock";
-import { randomUUID } from "node:crypto";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";

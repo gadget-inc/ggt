@@ -1,14 +1,10 @@
-import type { Promisable } from "type-fest";
+import os from "node:os";
 
 import fs from "fs-extra";
-import os from "node:os";
 import pMap from "p-map";
+import type { Promisable } from "type-fest";
 import { assert, expect, vi, type Assertion } from "vitest";
 import { z, type ZodSchema } from "zod";
-
-import type { Command } from "../../src/services/command/command.js";
-import type { File } from "../../src/services/filesync/file.js";
-import type { PartialExcept } from "../../src/services/util/types.js";
 
 import {
   FileSyncEncoding,
@@ -24,13 +20,16 @@ import {
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit/operation.js";
 import { AppIdentity } from "../../src/services/command/app-identity.js";
+import type { Command } from "../../src/services/command/command.js";
 import { Directory, type Hashes } from "../../src/services/filesync/directory.js";
+import type { File } from "../../src/services/filesync/file.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
 import { isEqualHashes } from "../../src/services/filesync/hashes.js";
 import { SyncJson, SyncJsonArgs, type SyncJsonArgsResult, type SyncJsonState } from "../../src/services/filesync/sync-json.js";
 import { noop } from "../../src/services/util/function.js";
 import { isNil } from "../../src/services/util/is.js";
 import { defaults } from "../../src/services/util/object.js";
+import type { PartialExcept } from "../../src/services/util/types.js";
 import { testApp, testEnvironment } from "./app.js";
 import { makeArgs } from "./arg.js";
 import { testCtx } from "./context.js";

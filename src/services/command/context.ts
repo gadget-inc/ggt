@@ -1,8 +1,7 @@
-import type { StructuredLoggerOptions } from "../output/log/structured.js";
-import type { AnyVoid } from "../util/types.js";
-
 import { createLogger, type Logger } from "../output/log/logger.js";
+import type { StructuredLoggerOptions } from "../output/log/structured.js";
 import { PromiseSignal } from "../util/promise.js";
+import type { AnyVoid } from "../util/types.js";
 
 /**
  * Represents the context of a command-line operation.

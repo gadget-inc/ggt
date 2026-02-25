@@ -1,6 +1,5 @@
-import type { Run, Usage } from "../services/command/command.js";
-
 import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
+import type { Run, Usage } from "../services/command/command.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { getDevStatus } from "../services/filesync/dev-lock.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";

@@ -2,11 +2,10 @@ import assert from "node:assert";
 
 import type { Context } from "../../command/context.js";
 import type { HttpOptions } from "../../http/http.js";
-import type { Environment } from "../app.js";
-import type { GraphQLQuery } from "../edit/operation.js";
-
 import { unthunk, type Thunk } from "../../util/function.js";
+import type { Environment } from "../app.js";
 import { Client } from "../client.js";
+import type { GraphQLQuery } from "../edit/operation.js";
 import { ClientError } from "../error.js";
 
 export class Api {

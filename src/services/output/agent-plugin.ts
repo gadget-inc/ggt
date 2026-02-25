@@ -1,12 +1,12 @@
-import fs from "fs-extra";
-import ms from "ms";
 import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
+
+import fs from "fs-extra";
+import ms from "ms";
 import pMap from "p-map";
 
 import type { Context } from "../command/context.js";
-
 import { config } from "../config/config.js";
 import { Directory } from "../filesync/directory.js";
 import { http } from "../http/http.js";

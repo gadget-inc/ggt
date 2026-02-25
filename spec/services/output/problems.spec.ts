@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import type { Problem as FileSyncProblem, PublishIssue } from "../../../src/__generated__/graphql.js";
-
 import {
   filesyncProblemsToProblems,
   filetype,

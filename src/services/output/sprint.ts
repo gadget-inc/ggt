@@ -1,5 +1,4 @@
 import type { Options as BoxenOptions } from "boxen";
-
 import boxen from "boxen";
 import chalkTemplate from "chalk-template";
 import indentString from "indent-string";

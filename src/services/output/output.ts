@@ -1,7 +1,8 @@
-import cliCursor from "cli-cursor";
-import isInteractive from "is-interactive";
 import assert from "node:assert";
 import process from "node:process";
+
+import cliCursor from "cli-cursor";
+import isInteractive from "is-interactive";
 import stringWidth from "string-width";
 import stripAnsi from "strip-ansi";
 

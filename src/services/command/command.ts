@@ -1,6 +1,6 @@
-import type { EmptyObject, Promisable } from "type-fest";
-
 import assert from "node:assert";
+
+import type { EmptyObject, Promisable } from "type-fest";
 
 import type { ArgsDefinition, ArgsDefinitionResult, ParseArgsOptions } from "./arg.js";
 import type { Context } from "./context.js";

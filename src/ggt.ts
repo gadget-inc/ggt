@@ -8,7 +8,7 @@ import { loadDefaultsConfig } from "./services/config/defaults.js";
 import { output } from "./services/output/output.js";
 import { println } from "./services/output/print.js";
 import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.js";
-import { activeSpinner, spin } from "./services/output/spinner.js";
+import { clearAllSpinners, spin } from "./services/output/spinner.js";
 import { installJsonExtensions } from "./services/util/json.js";
 
 export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> => {
@@ -63,7 +63,7 @@ const installSignalHandler = (ctx: Context): void => {
       output.writeStdout("\n");
 
       // if there was any sticky text, it needs to be persisted now
-      activeSpinner?.clear();
+      clearAllSpinners();
       output.persistFooter();
 
       const spinner = spin({

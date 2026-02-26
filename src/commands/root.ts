@@ -5,6 +5,7 @@ import { Commands, importCommand, isCommand, type Run, type Usage } from "../ser
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
+import { setSentryTags } from "../services/output/sentry.js";
 import { sprint } from "../services/output/sprint.js";
 import { shouldCheckForUpdate } from "../services/output/update.js";
 import { sortBySimilar } from "../services/util/collection.js";
@@ -100,6 +101,7 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
   }
 
   const command = await importCommand(commandName);
+  setSentryTags({ command: commandName });
 
   if (args["-h"] ?? args["--help"]) {
     if (!command.parseOptions?.permissive || args._.length === 0) {

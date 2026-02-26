@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import os from "node:os";
 
 import type { ColorName } from "chalk";
@@ -49,11 +48,28 @@ export type spinner = {
   fail(str?: string): void;
 };
 
+const _spinners: spinner[] = [];
+const _currentTexts = new WeakMap<spinner, string>();
 export let activeSpinner: spinner | undefined;
 
-export const spin = (options: string | SpinnerOptions): spinner => {
-  assert(!activeSpinner, "a spinner is already active");
+/**
+ * Composes all active spinners' current texts into a single string
+ * and passes it to the output layer's sticky area.
+ */
+const _updateDisplay = (): void => {
+  if (!output.isInteractive) return;
+  const combined = _spinners.map((s) => _currentTexts.get(s) ?? "").join("");
+  output.updateSpinner(combined);
+};
 
+export const clearAllSpinners = (): void => {
+  for (let i = _spinners.length - 1; i >= 0; i--) {
+    _spinners[i]?.clear();
+  }
+  activeSpinner = undefined;
+};
+
+export const spin = (options: string | SpinnerOptions): spinner => {
   const {
     content,
     ensureNewLine = true,
@@ -70,6 +86,9 @@ export const spin = (options: string | SpinnerOptions): spinner => {
 
   type RenderOptions = { symbol?: string; content: string; final?: boolean };
   let firstRender = true;
+  let finalized = false;
+
+  let self!: spinner;
 
   const render = ({ symbol, content: message, final: finalRender = false }: RenderOptions): void => {
     // strip leading and trailing newlines so we can add them back in
@@ -119,14 +138,14 @@ export const spin = (options: string | SpinnerOptions): spinner => {
 
       // this is the final render, so persist the spinner
       output.persistSpinner(message);
-      activeSpinner = undefined;
       return;
     }
 
     // this is not the final render, so we need to update the spinner
     if (output.isInteractive) {
-      // we're in an interactive terminal, so update the spinner
-      output.updateSpinner(message);
+      // store this spinner's current text and refresh the combined display
+      _currentTexts.set(self, message);
+      _updateDisplay();
     } else if (firstRender) {
       // we're not in an interactive terminal, and this is the first
       // render, so just write the first render to stdout
@@ -135,22 +154,26 @@ export const spin = (options: string | SpinnerOptions): spinner => {
     }
   };
 
-  // render the first frame
-  render({ content });
-
   let spinnerInterval: NodeJS.Timeout | undefined;
-  if (output.isInteractive) {
-    // we are in an interactive terminal, so keep rendering the spinner
-    spinnerInterval = setInterval(() => render({ content }), interval);
-  }
 
   // setup the last render
   const finalRender = (renderOptions: Omit<RenderOptions, "final">): void => {
+    if (finalized) return;
+    finalized = true;
     render({ ...renderOptions, final: true });
     clearInterval(spinnerInterval);
+    const idx = _spinners.indexOf(self);
+    if (idx !== -1) {
+      _spinners.splice(idx, 1);
+    }
+    _currentTexts.delete(self);
+    const promoted = _spinners[_spinners.length - 1] as spinner | undefined;
+    activeSpinner = promoted;
+    // refresh the sticky area with remaining spinners
+    _updateDisplay();
   };
 
-  activeSpinner = {
+  self = {
     text: content,
     clear(): void {
       this.text = "";
@@ -168,5 +191,20 @@ export const spin = (options: string | SpinnerOptions): spinner => {
     },
   };
 
-  return activeSpinner;
+  _spinners.push(self);
+  activeSpinner = self;
+
+  // render the first frame (must be after self is assigned so
+  // _currentTexts.set(self, ...) works in interactive mode)
+  render({ content });
+
+  if (output.isInteractive) {
+    // we are in an interactive terminal, so keep rendering the spinner
+    // every spinner animates independently and _updateDisplay() composes them
+    spinnerInterval = setInterval(() => {
+      render({ content });
+    }, interval);
+  }
+
+  return self;
 };

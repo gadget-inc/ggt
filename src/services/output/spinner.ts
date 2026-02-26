@@ -154,7 +154,6 @@ export const spin = (options: string | SpinnerOptions): spinner => {
     }
   };
 
-  let currentContent = content;
   let spinnerInterval: NodeJS.Timeout | undefined;
 
   // setup the last render
@@ -203,7 +202,7 @@ export const spin = (options: string | SpinnerOptions): spinner => {
     // we are in an interactive terminal, so keep rendering the spinner
     // every spinner animates independently and _updateDisplay() composes them
     spinnerInterval = setInterval(() => {
-      render({ content: currentContent });
+      render({ content });
     }, interval);
   }
 

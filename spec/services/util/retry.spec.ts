@@ -31,6 +31,7 @@ describe("RETRYABLE_NETWORK_ERROR_CODES", () => {
       "ENOTFOUND",
       "ENETUNREACH",
       "EAI_AGAIN",
+      "EAI_FAIL",
       "EADDRNOTAVAIL",
       "EHOSTUNREACH",
       "ERR_SSL_SSL/TLS_ALERT_BAD_RECORD_MAC",

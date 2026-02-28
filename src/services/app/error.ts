@@ -9,6 +9,7 @@ import { sprint } from "../output/sprint.js";
 import { uniq } from "../util/collection.js";
 import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString, isStringArray } from "../util/is.js";
 import { serializeError } from "../util/object.js";
+import { isRetryableNetworkErrorCode } from "../util/retry.js";
 import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
 
 export class ClientError extends GGTError {
@@ -70,6 +71,16 @@ export class ClientError extends GGTError {
       case isCloseEvent(this.cause):
         body = "The connection to Gadget closed unexpectedly.";
         break;
+      case (isError(this.cause) && isRetryableNetworkErrorCode(this.cause)) ||
+        (isErrorEvent(this.cause) && isRetryableNetworkErrorCode(this.cause.error)): {
+        const operationName = this.request?.match(/(?:query|mutation|subscription)\s+(\w+)/)?.[1];
+        if (operationName) {
+          body = `Please check your internet connection and try again. (running "${operationName}")`;
+        } else {
+          body = "Please check your internet connection and try again.";
+        }
+        break;
+      }
       case isErrorEvent(this.cause) || isError(this.cause):
         body = this.cause.message;
         break;

@@ -10,6 +10,7 @@ import { uniq } from "../util/collection.js";
 import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString, isStringArray } from "../util/is.js";
 import { serializeError } from "../util/object.js";
 import { isRetryableNetworkErrorCode } from "../util/retry.js";
+import type { GraphQLOperation } from "./edit/operation.js";
 import { getOperationName } from "./edit/operation.js";
 
 export class ClientError extends GGTError {
@@ -19,7 +20,7 @@ export class ClientError extends GGTError {
 
   override cause: string | string[] | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent;
 
-  constructor(operation: string | undefined, cause: unknown, isBug?: IsBug) {
+  constructor(operation: GraphQLOperation, cause: unknown, isBug?: IsBug) {
     super("An error occurred while communicating with Gadget");
 
     this.operationName = getOperationName(operation);
@@ -99,7 +100,7 @@ export class ClientError extends GGTError {
 }
 
 export class AuthenticationError extends ClientError {
-  constructor(operation: string | undefined) {
+  constructor(operation: GraphQLOperation) {
     super(
       operation,
       "Request authentication failed due to the session expiring while running the command. Please sign-in again.",

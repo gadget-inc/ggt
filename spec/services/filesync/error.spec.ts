@@ -124,7 +124,7 @@ describe("isFilesVersionMismatchError", () => {
   });
 
   it("returns true given an EditGraphQLError", () => {
-    expect(isFilesVersionMismatchError(new ClientError("Foo", [{ message: "Files version mismatch" }]))).toBe(true);
+    expect(isFilesVersionMismatchError(new ClientError(undefined, [{ message: "Files version mismatch" }]))).toBe(true);
   });
 
   it("returns false given an object with a message that does not start with 'Files version mismatch'", () => {

@@ -636,7 +636,7 @@ describe("Edit.subscribe retry", () => {
 
 describe("EditError", () => {
   it("renders a GraphQL error correctly", () => {
-    const error = new ClientError("Foo", [new GraphQLError("Changed and deleted files must not overlap")]);
+    const error = new ClientError(undefined, [new GraphQLError("Changed and deleted files must not overlap")]);
     expect(error.sprint()).toMatchInlineSnapshot(`
       "An error occurred while communicating with Gadget
 
@@ -652,7 +652,7 @@ describe("EditError", () => {
   });
 
   it("renders multiple GraphQL errors correctly", () => {
-    const error = new ClientError("Foo", [
+    const error = new ClientError(undefined, [
       new GraphQLError("Changed and deleted files must not overlap"),
       new GraphQLError("Files version mismatch, expected 1 but got 2"),
     ]);
@@ -672,7 +672,7 @@ describe("EditError", () => {
   });
 
   it("renders a CloseEvent correctly", () => {
-    const error = new ClientError("Foo", {
+    const error = new ClientError(undefined, {
       type: "close",
       code: 1000,
       reason: "Normal closure",
@@ -691,7 +691,7 @@ describe("EditError", () => {
   });
 
   it("renders an ErrorEvent correctly", () => {
-    const error = new ClientError("Foo", {
+    const error = new ClientError(undefined, {
       type: "error",
       message: "connect ECONNREFUSED 10.254.254.254:3000",
       error: {
@@ -715,7 +715,7 @@ describe("EditError", () => {
   });
 
   it("renders a string correctly", () => {
-    const error = new ClientError("Foo", "We received a response without data");
+    const error = new ClientError(undefined, "We received a response without data");
     expect(error.sprint()).toMatchInlineSnapshot(`
       "An error occurred while communicating with Gadget
 

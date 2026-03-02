@@ -93,6 +93,8 @@ export type GraphQLSubscription<
   Response extends ExecutionResult<Data, Extensions> = ExecutionResult<Data, Extensions>,
 > = string & { type: "subscription"; Data: Data; Variables: Variables; Extensions: Extensions; Response: Response };
 
+export type GraphQLOperation = GraphQLQuery | GraphQLMutation | GraphQLSubscription | undefined;
+
 export const ENVIRONMENT_LOGS_SUBSCRIPTION = sprint(/* GraphQL */ `
   subscription EnvironmentLogs($query: String!, $start: DateTime, $limit: Int) {
     logsSearchV2(query: $query, start: $start, limit: $limit) {

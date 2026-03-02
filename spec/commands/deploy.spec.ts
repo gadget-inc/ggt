@@ -835,7 +835,7 @@ describe("deploy", () => {
 
       An error occurred while communicating with Gadget
 
-      The connection to Gadget closed unexpectedly.
+      The connection to Gadget closed unexpectedly. (running "PublishStatus")
 
       If you think this is a bug, use the link below to create an issue on GitHub.
 

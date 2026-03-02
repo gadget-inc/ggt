@@ -1,5 +1,3 @@
-import assert from "node:assert";
-
 import type { Promisable } from "type-fest";
 
 import type { Context } from "../../command/context.js";
@@ -10,7 +8,7 @@ import type { RetryOptions } from "../../util/retry.js";
 import type { Environment } from "../app.js";
 import { Client, type ClientSubscription } from "../client.js";
 import { AuthenticationError, ClientError } from "../error.js";
-import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./operation.js";
+import { getOperationName, type GraphQLMutation, type GraphQLQuery, type GraphQLSubscription } from "./operation.js";
 
 export class Edit {
   /**
@@ -53,8 +51,7 @@ export class Edit {
     variables?: Thunk<Query["Variables"]> | null;
     http?: HttpOptions;
   }): Promise<Query["Data"]> {
-    const name = /query (\w+)/.exec(query)?.[1];
-    assert(name, "query name not found");
+    const name = getOperationName(query);
 
     const ctx = this.ctx.child({
       name: "edit",
@@ -105,8 +102,7 @@ export class Edit {
     variables?: Thunk<Mutation["Variables"]> | null;
     http?: HttpOptions;
   }): Promise<Mutation["Data"]> {
-    const name = /mutation (\w+)/.exec(mutation)?.[1];
-    assert(name, "mutation name not found");
+    const name = getOperationName(mutation);
 
     const ctx = this.ctx.child({
       name: "edit",
@@ -160,8 +156,7 @@ export class Edit {
     onComplete?: () => Promisable<void>;
     retry?: RetryOptions;
   }): EditSubscription<Subscription> {
-    const name = /subscription (\w+)/.exec(subscription)?.[1];
-    assert(name, "subscription name not found");
+    const name = getOperationName(subscription);
 
     const ctx = this.ctx.child({
       name: "edit",

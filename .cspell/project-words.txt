@@ -1,4 +1,5 @@
 appvalue
+clickhouse
 codegen
 commandsstop
 dedenting

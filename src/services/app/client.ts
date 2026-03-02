@@ -16,7 +16,7 @@ import { noop, unthunk, type Thunk } from "../util/function.js";
 import { isArray, isObject } from "../util/is.js";
 import { calculateBackoffDelay, DEFAULT_RETRY_LIMIT, isRetryableErrorCause, type RetryOptions } from "../util/retry.js";
 import type { Environment } from "./app.js";
-import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
+import { type GraphQLMutation, type GraphQLQuery, type GraphQLSubscription } from "./edit/operation.js";
 import { AuthenticationError, ClientError } from "./error.js";
 
 /**

@@ -8,6 +8,7 @@ import {
   KNOWN_REMOTE_FILE,
   TEST_APP,
   TEST_ENV,
+  type TestDirs,
   cleanupTestDirs,
   createTestDirs,
   hasIntegrationToken,

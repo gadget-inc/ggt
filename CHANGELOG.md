@@ -1,5 +1,22 @@
 # @gadgetinc/ggt
 
+## 2.3.0
+
+### Minor Changes
+
+- 6478117: Add `ggt env` command for managing environments
+
+  Introduces the `ggt env` command with subcommands to list, create, rename, activate, and delete development environments for a Gadget application.
+
+### Patch Changes
+
+- 5759f4f: Add `ggt agent-plugin update` command and automatic update check for Gadget agent plugins
+- d058ab6: Fix crash when multiple spinners are active concurrently
+
+  Calling `spin()` while another spinner was already active caused an `AssertionError: a spinner is already active` crash (GGT-S7). Spinners are now tracked in a stack with idempotent finalization, and in interactive terminals all active spinners render simultaneously as separate lines.
+
+- b1e0c38: Show user-friendly message for network errors instead of raw system error codes and retry on EAI_FAIL DNS failures
+
 ## 2.2.0
 
 ### Minor Changes

@@ -90,6 +90,7 @@ describe("root", () => {
         model           Add and manage models in your app
         action          Add and manage actions
         field           Manage fields on your models
+        shopify         Manage Shopify connection
         var             Manage your app's environment variables
         env             Manage your app's environments
         open            Open your app in a browser
@@ -149,6 +150,7 @@ describe("root", () => {
         model           Add and manage models in your app
         action          Add and manage actions
         field           Manage fields on your models
+        shopify         Manage Shopify connection
         var             Manage your app's environment variables
         env             Manage your app's environments
         open            Open your app in a browser

@@ -19,6 +19,7 @@ import type {
   EnvironmentLogsSubscriptionVariables,
   EnvironmentVariablesQuery,
   EnvironmentVariablesQueryVariables,
+  FileSyncEncoding,
   FileSyncComparisonHashesQuery,
   FileSyncComparisonHashesQueryVariables,
   FileSyncFilesQuery,
@@ -233,6 +234,82 @@ export const PUBLISH_STATUS_SUBSCRIPTION = sprint(/* GraphQL */ `
 `) as GraphQLSubscription<PublishStatusSubscription, PublishStatusSubscriptionVariables>;
 
 export type PUBLISH_STATUS_SUBSCRIPTION = typeof PUBLISH_STATUS_SUBSCRIPTION;
+
+type ImportShopifyCliSessionMutation = {
+  importShopifyCliSession: {
+    success: boolean;
+  };
+};
+
+type ImportShopifyCliSessionMutationVariables = {
+  configSessionPayload: JsonObject;
+};
+
+export const IMPORT_SHOPIFY_CLI_SESSION_MUTATION = sprint(/* GraphQL */ `
+  mutation ImportShopifyCliSession($configSessionPayload: JSON!) {
+    importShopifyCliSession(configSessionPayload: $configSessionPayload) {
+      success
+    }
+  }
+`) as GraphQLMutation<ImportShopifyCliSessionMutation, ImportShopifyCliSessionMutationVariables>;
+
+export type IMPORT_SHOPIFY_CLI_SESSION_MUTATION = typeof IMPORT_SHOPIFY_CLI_SESSION_MUTATION;
+
+export type ShopifyOrganization = {
+  id: string;
+  name: string;
+  platform: string;
+};
+
+type ShopifyOrganizationsQuery = {
+  shopifyOrganizations: ShopifyOrganization[];
+};
+
+type ShopifyOrganizationsQueryVariables = Record<string, never>;
+
+export const SHOPIFY_ORGANIZATIONS_QUERY = sprint(/* GraphQL */ `
+  query ShopifyOrganizations {
+    shopifyOrganizations {
+      id
+      name
+      platform
+    }
+  }
+`) as GraphQLQuery<ShopifyOrganizationsQuery, ShopifyOrganizationsQueryVariables>;
+
+export type SHOPIFY_ORGANIZATIONS_QUERY = typeof SHOPIFY_ORGANIZATIONS_QUERY;
+
+type ConnectShopifyMutation = {
+  connectShopify: {
+    remoteFilesVersion: string;
+    changed: { path: string; mode: number; content: string; encoding: FileSyncEncoding }[];
+    deleted: { path: string }[];
+  };
+};
+
+type ConnectShopifyMutationVariables = {
+  appName: string;
+  shopifyOrganizationId?: string;
+};
+
+export const CONNECT_SHOPIFY_MUTATION = sprint(/* GraphQL */ `
+  mutation ConnectShopify($appName: String!, $shopifyOrganizationId: String) {
+    connectShopify(appName: $appName, shopifyOrganizationId: $shopifyOrganizationId) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+      deleted {
+        path
+      }
+    }
+  }
+`) as GraphQLMutation<ConnectShopifyMutation, ConnectShopifyMutationVariables>;
+
+export type CONNECT_SHOPIFY_MUTATION = typeof CONNECT_SHOPIFY_MUTATION;
 
 export const CREATE_MODEL_MUTATION = sprint(/* GraphQL */ `
   mutation createModel($path: String!, $fields: [CreateModelFieldsInput!]) {

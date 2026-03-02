@@ -34,6 +34,8 @@ exports[`AppIdentity.load > production environment access > does not allow --env
 
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "push" 1`] = `[Error: You cannot "ggt push" your production environment.]`;
 
+exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "shopify" 1`] = `[Error: You cannot "ggt shopify" your production environment.]`;
+
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "status" 1`] = `[Error: You cannot "ggt status" your production environment.]`;
 
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "version" 1`] = `[Error: You cannot "ggt version" your production environment.]`;

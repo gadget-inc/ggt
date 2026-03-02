@@ -1,0 +1,207 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+
+import chalk from "chalk";
+import pluralize from "pluralize";
+import type { JsonObject } from "type-fest";
+
+import {
+  CONNECT_SHOPIFY_MUTATION,
+  IMPORT_SHOPIFY_CLI_SESSION_MUTATION,
+  SHOPIFY_ORGANIZATIONS_QUERY,
+  type ShopifyOrganization,
+} from "../services/app/edit/operation.ts";
+import { defineCommand } from "../services/command/command.ts";
+import type { Context } from "../services/command/context.ts";
+import { FlagError, type FlagsResult } from "../services/command/flag.ts";
+import { config } from "../services/config/config.ts";
+import { UnknownDirectoryError } from "../services/filesync/error.ts";
+import { FileSync } from "../services/filesync/filesync.ts";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import colors from "../services/output/colors.ts";
+import { println } from "../services/output/print.ts";
+import { sprint, sprintln } from "../services/output/sprint.ts";
+import { symbol } from "../services/output/symbols.ts";
+import { ts } from "../services/output/timestamp.ts";
+
+const SHOPIFY_AUTH_LOGIN_ERROR_MESSAGE = "Shopify CLI session not found. Run `shopify auth login` and try again.";
+
+const ConnectFlags = {
+  "--app-name": {
+    type: String,
+    description: "Shopify app name override",
+    details: "Defaults to your Gadget app slug.",
+  },
+  "--shopify-organization-id": {
+    type: String,
+    description: "Shopify organization ID to use when your account has multiple organizations",
+  },
+};
+
+type ConnectFlagsResult = FlagsResult<typeof SyncJsonFlags & typeof ConnectFlags>;
+
+export default defineCommand({
+  name: "shopify",
+  description: "Manage Shopify connection",
+  examples: ["ggt shopify connect", "ggt shopify connect --app-name my-shop"],
+  flags: SyncJsonFlags,
+  subcommands: (sub) => ({
+    connect: sub({
+      description: "Configure the Shopify connection for your application",
+      details: sprint`
+        Creates development and production Shopify app configs, adds the
+        default Shopify models, and adds the required default Shopify scopes.
+      `,
+      examples: [
+        "ggt shopify connect",
+        "ggt shopify connect --app-name my-shop",
+        "ggt shopify connect --shopify-organization-id 123456789",
+      ],
+      flags: ConnectFlags,
+      run: async (ctx, flags) => {
+        await runConnect(ctx, flags);
+      },
+    }),
+  }),
+});
+
+const getShopifyCliConfigPath = (): string => {
+  if (config.windows) {
+    // Shopify CLI uses the `conf` npm package which delegates to `env-paths`.
+    // On Windows, env-paths resolves `config` to: path.join(APPDATA, name, "Config")
+    // See: https://github.com/Shopify/cli/blob/3.91.0/packages/cli-kit/src/public/node/local-storage.ts
+    const appData = process.env["APPDATA"] ?? path.join(config.homeDir, "AppData", "Roaming");
+    return path.join(appData, "shopify-cli-kit-nodejs", "Config", "config.json");
+  }
+
+  const xdgConfigHome = process.env["XDG_CONFIG_HOME"];
+  if (xdgConfigHome) {
+    return path.join(xdgConfigHome, "shopify-cli-kit-nodejs", "config.json");
+  }
+
+  if (config.macos) {
+    return path.join(config.homeDir, "Library", "Preferences", "shopify-cli-kit-nodejs", "config.json");
+  }
+
+  return path.join(config.homeDir, ".config", "shopify-cli-kit-nodejs", "config.json");
+};
+
+const loadShopifyCliSessionPayload = async (): Promise<JsonObject> => {
+  const configPath = getShopifyCliConfigPath();
+  let configFileContent: string;
+
+  try {
+    configFileContent = await fs.readFile(configPath, "utf8");
+  } catch {
+    throw new FlagError(SHOPIFY_AUTH_LOGIN_ERROR_MESSAGE, { usageHint: false });
+  }
+
+  try {
+    const configJson = JSON.parse(configFileContent) as { sessionStore?: unknown };
+    if (typeof configJson.sessionStore !== "string") {
+      throw new Error("Missing sessionStore");
+    }
+
+    const sessionPayload = JSON.parse(configJson.sessionStore);
+    if (!sessionPayload || typeof sessionPayload !== "object") {
+      throw new Error("Invalid session payload");
+    }
+
+    return sessionPayload as JsonObject;
+  } catch {
+    throw new FlagError(SHOPIFY_AUTH_LOGIN_ERROR_MESSAGE, { usageHint: false });
+  }
+};
+
+const printShopifyOrganizations = (organizations: ShopifyOrganization[]): void => {
+  println({ ensureEmptyLineAbove: true, content: "Shopify organizations available:" });
+  for (const organization of organizations) {
+    println({ content: `  - ${organization.id}: ${organization.name} (${organization.platform})` });
+  }
+};
+
+const resolveShopifyOrganizationId = async (syncJson: SyncJson, providedOrganizationId?: string): Promise<string> => {
+  if (providedOrganizationId) {
+    return providedOrganizationId;
+  }
+
+  const organizations = (await syncJson.edit.query({ query: SHOPIFY_ORGANIZATIONS_QUERY })).shopifyOrganizations;
+
+  if (organizations.length === 0) {
+    throw new FlagError("No Shopify organizations were found for your account. Run `shopify auth login` and try again.", {
+      usageHint: false,
+    });
+  }
+
+  if (organizations.length === 1) {
+    const organization = organizations[0];
+    return organization.id;
+  }
+
+  printShopifyOrganizations(organizations);
+  throw new FlagError("Multiple Shopify organizations found. Re-run with --shopify-organization-id <id>.", {
+    usageHint: false,
+  });
+};
+
+const runConnect = async (ctx: Context, flags: ConnectFlagsResult): Promise<void> => {
+  const directory = await loadSyncJsonDirectory(process.cwd());
+  const syncJson = await SyncJson.load(ctx, { command: "shopify", flags, directory });
+  if (!syncJson) {
+    throw new UnknownDirectoryError({ command: "shopify", flags, directory });
+  }
+
+  const shopifyCliSessionPayload = await loadShopifyCliSessionPayload();
+  const importResult = await syncJson.edit.mutate({
+    mutation: IMPORT_SHOPIFY_CLI_SESSION_MUTATION,
+    variables: { configSessionPayload: shopifyCliSessionPayload },
+  });
+
+  if (!importResult.importShopifyCliSession.success) {
+    throw new FlagError("Failed to import Shopify CLI session. Run `shopify auth login` and try again.", {
+      usageHint: false,
+    });
+  }
+
+  const filesync = new FileSync(syncJson);
+  const hashes = await filesync.hashes(ctx, { silent: true });
+
+  if (!hashes.inSync) {
+    await filesync.merge(ctx, {
+      hashes,
+      printEnvironmentChangesOptions: { limit: 5 },
+      printLocalChangesOptions: { limit: 5 },
+      silent: true,
+    });
+    println({ ensureEmptyLineAbove: true, content: `${chalk.greenBright(symbol.tick)} Sync completed ${ts()}` });
+  }
+
+  const appName = flags["--app-name"] ?? syncJson.application.slug;
+  const shopifyOrganizationId = await resolveShopifyOrganizationId(syncJson, flags["--shopify-organization-id"]);
+
+  const result = (
+    await syncJson.edit.mutate({
+      mutation: CONNECT_SHOPIFY_MUTATION,
+      variables: { appName, shopifyOrganizationId },
+    })
+  ).connectShopify;
+
+  const totalChanges = result.changed.length + result.deleted.length;
+
+  await filesync.writeToLocalFilesystem(ctx, {
+    filesVersion: result.remoteFilesVersion,
+    files: result.changed,
+    delete: result.deleted.map((file) => file.path),
+    printEnvironmentChangesOptions: {
+      tense: "past",
+      ensureEmptyLineAbove: true,
+      title: sprintln`${colors.created(symbol.tick)} Created Shopify connection ${pluralize("file", totalChanges)}. ${ts()}`,
+      limit: 5,
+    },
+  });
+
+  println({
+    ensureEmptyLineAbove: true,
+    content: `${chalk.greenBright(symbol.tick)} Shopify connection configured successfully.`,
+  });
+};

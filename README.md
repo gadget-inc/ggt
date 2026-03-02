@@ -27,6 +27,7 @@
   - [`ggt push`](#ggt-push)
   - [`ggt pull`](#ggt-pull)
   - [`ggt var`](#ggt-var)
+  - [`ggt env`](#ggt-env)
   - [`ggt add`](#ggt-add)
   - [`ggt open`](#ggt-open)
   - [`ggt list`](#ggt-list)
@@ -71,6 +72,7 @@ Commands
   push             Push your local files to your environment
   pull             Pull your environment's files to your local computer
   var              Manage environment variables
+  env              Manage environments
   add              Add models, fields, actions, routes and environments to your app
   open             Open a Gadget location in your browser
   list             List your available applications
@@ -266,6 +268,28 @@ Options
   -e, --env <env_name>   Selects the environment
 
 Run "ggt var <command> -h" for more information about a specific command.
+```
+
+### `ggt env`
+
+```sh-session
+$ ggt env -h
+Manage environments for your Gadget application.
+
+Usage
+  ggt env <command> [options]
+
+Commands
+  list             List all environments
+  create <name>    Create a new environment
+  delete <name>    Delete an environment
+  unpause <name>   Unpause a paused environment
+  use <name>       Switch the active environment
+
+Options
+  -a, --app <app_name>   Selects the application
+
+Run "ggt env <command> -h" for more information about a specific command.
 ```
 
 ### `ggt add`
@@ -479,10 +503,11 @@ Usage
 
 ```sh-session
 $ ggt agent-plugin -h
-Install Gadget agent plugins (AGENTS.md + skills) into the current project.
+Install or update Gadget agent plugins (AGENTS.md + skills).
 
 Usage
   ggt agent-plugin install [--force]
+  ggt agent-plugin update
 
 Flags
   --force    Overwrite/reinstall even if already present

@@ -42,6 +42,21 @@ import type {
 } from "../../../__generated__/graphql.js";
 import { sprint } from "../../output/sprint.js";
 
+const operationNames = new Map<string, string>();
+
+/**
+ * Get the operation name from a GraphQL document string, caching the
+ * result for subsequent lookups.
+ */
+export const getOperationName = (operation: string | undefined): string | undefined => {
+  if (!operation) return undefined;
+  let name = operationNames.get(operation);
+  if (name !== undefined) return name;
+  name = /(?:query|mutation|subscription)\s+(\w+)/.exec(operation)?.[1];
+  if (name) operationNames.set(operation, name);
+  return name;
+};
+
 /**
  * A GraphQL query with its associated types.
  *

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { FILE_SYNC_HASHES_QUERY, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../../src/services/app/edit/operation.js";
 import { AuthenticationError, ClientError } from "../../../src/services/app/error.js";
 import { IsBug } from "../../../src/services/output/report.js";
 
@@ -89,6 +90,20 @@ describe("ClientError", () => {
         Gadget responded with the following error:
 
           • Field 'user' not found"
+      `);
+    });
+
+    it("formats GraphQL error with operation name", () => {
+      const error = new ClientError(FILE_SYNC_HASHES_QUERY, [
+        { message: "GGT_INTERNAL_ERROR: error querying clickhouse: Timeout exceeded", extensions: {} },
+      ]);
+
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
+
+        Gadget responded with the following error:
+
+          • GGT_INTERNAL_ERROR: error querying clickhouse: Timeout exceeded (running "FileSyncHashes")"
       `);
     });
 
@@ -219,8 +234,7 @@ describe("ClientError", () => {
     it("renders network error message with operation name when request is available", () => {
       const cause = new Error("getaddrinfo EAI_AGAIN");
       (cause as NodeJS.ErrnoException).code = "EAI_AGAIN";
-      const request = "query FileSyncHashes($filesVersion: String) { fileSyncHashes }";
-      const error = new ClientError(request as never, cause);
+      const error = new ClientError(FILE_SYNC_HASHES_QUERY, cause);
 
       expect(error.render()).toMatchInlineSnapshot(`
         "An error occurred while communicating with Gadget
@@ -254,8 +268,7 @@ describe("ClientError", () => {
         message: "Connection failed",
         error: innerError,
       };
-      const request = "subscription RemoteFileSyncEvents($localFilesVersion: String!) { remoteFileSyncEvents }";
-      const error = new ClientError(request as never, cause);
+      const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, cause);
 
       expect(error.render()).toMatchInlineSnapshot(`
         "An error occurred while communicating with Gadget

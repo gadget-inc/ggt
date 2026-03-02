@@ -4,7 +4,6 @@ import path from "node:path";
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import type { GraphQLQuery } from "../../../src/services/app/edit/operation.js";
 import { ClientError } from "../../../src/services/app/error.js";
 import type { Command } from "../../../src/services/command/command.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
@@ -125,8 +124,7 @@ describe("isFilesVersionMismatchError", () => {
   });
 
   it("returns true given an EditGraphQLError", () => {
-    const query = "query { foo }" as GraphQLQuery;
-    expect(isFilesVersionMismatchError(new ClientError(query, [{ message: "Files version mismatch" }]))).toBe(true);
+    expect(isFilesVersionMismatchError(new ClientError("Foo", [{ message: "Files version mismatch" }]))).toBe(true);
   });
 
   it("returns false given an object with a message that does not start with 'Files version mismatch'", () => {

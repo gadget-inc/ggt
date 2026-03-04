@@ -1,5 +1,11 @@
 ---
-"ggt": minor
+"ggt": major
 ---
 
-`ggt logs` now prints recent logs and exits by default. The previous streaming behavior is available via the new `--tail` / `-t` flag. `ggt logs` also has new options to filter the returned logs via `--start`, `--end`, `--direction`, and `--level` flags, to allow filtering logs by time range, ordering, and severity.
+`ggt logs` now prints recent logs and exits by default.
+
+The previous streaming behavior now requires `--follow` (or `-f`).
+
+This is a breaking CLI behavior change for users/scripts that relied on `ggt logs` streaming by default, and for users of the old `--tail` / `-t` flag names.
+
+This release also adds one-shot filtering support for `--start` and `--level`.

@@ -61,6 +61,10 @@ export default defineCommand({
     const directory = await loadSyncJsonDirectory(process.cwd());
     const appIdentity = await AppIdentity.load(ctx, { command: "logs", args, directory });
 
+    if (args["--follow"] && args["--start"]) {
+      throw new ArgError("--start cannot be used with --follow. --start is only for one-shot log queries.");
+    }
+
     if (args["--follow"]) {
       const logsSubscription = subscribeToEnvironmentLogs(appIdentity.edit, args, {
         onError: (error) => {

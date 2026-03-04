@@ -199,6 +199,13 @@ describe("logs", () => {
       const error = await expectError(() => runCommand(testCtx, logs, "--start", "not-a-date"));
       expect(error).toBeInstanceOf(ArgError);
     });
+
+    it("rejects --start with --follow", async () => {
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+      const error = await expectError(() => runCommand(testCtx, logs, "--follow", "--start", "2025-01-01T00:00:00Z"));
+      expect(error).toBeInstanceOf(ArgError);
+      expect(error.message).toContain("--start cannot be used with --follow");
+    });
   });
 
   describe("--follow", () => {
@@ -236,6 +243,30 @@ describe("logs", () => {
         foo: bar
       "
       `);
+    });
+
+    it("passes --my-logs as query filter in follow mode", async () => {
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      const runPromise = runCommand(testCtx, logs, "--follow", "--my-logs");
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+      expect(String(logsSub.variables!["query"])).toContain('source="user"');
+
+      await logsSub.emitResponse(v2EmptySubscriptionResponse);
+      await runPromise;
+    });
+
+    it("passes --log-level as query filter in follow mode", async () => {
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      const runPromise = runCommand(testCtx, logs, "--follow", "--log-level", "warn");
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+      expect(String(logsSub.variables!["query"])).toContain('level=~"warn|error"');
+
+      await logsSub.emitResponse(v2EmptySubscriptionResponse);
+      await runPromise;
     });
 
     it("streams server logs in JSON format when GGT_LOG_FORMAT=json", async () => {

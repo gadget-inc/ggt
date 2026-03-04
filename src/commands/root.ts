@@ -4,7 +4,7 @@ import { extractFlags, hidden, type ArgsDefinition, type ArgsDefinitionResult, t
 import { Commands, importCommand, isCommand, renderCommandList, resolveCommandAlias } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import { runCommand } from "../services/command/run.js";
-import { flagLeft, flagNamePrefix, flagValueSuffix, formatFlag } from "../services/command/usage.js";
+import { flagLeft, flagNamePrefix, flagValueSuffix, formatFlag, wrapText } from "../services/command/usage.js";
 import colors from "../services/output/colors.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
@@ -95,32 +95,10 @@ const renderExpandedFlags = (flags: FlagDef[]): string => {
       if (f.details) {
         desc = `${desc.endsWith(".") ? desc : `${desc}.`} ${f.details}`;
       }
-      const wrapped = wrapFlagDescription(desc);
+      const wrapped = wrapText(desc, " ".repeat(8), 80).join("\n");
       return `  ${styledLeft}\n${wrapped}`;
     })
     .join("\n\n");
-};
-
-const wrapFlagDescription = (text: string, indent = 8, width = 80): string => {
-  const prefix = " ".repeat(indent);
-  const maxContent = width - indent;
-  const words = text.split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let current = "";
-  for (const word of words) {
-    if (!current) {
-      current = word;
-    } else if (current.length + 1 + word.length <= maxContent) {
-      current += ` ${word}`;
-    } else {
-      lines.push(`${prefix}${current}`);
-      current = word;
-    }
-  }
-  if (current) {
-    lines.push(`${prefix}${current}`);
-  }
-  return lines.join("\n");
 };
 
 export const run = async (parent: Context, args: RootArgsResult): Promise<void> => {

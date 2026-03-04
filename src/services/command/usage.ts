@@ -56,7 +56,7 @@ const WRAP_INDENT = " ".repeat(WRAP_INDENT_WIDTH);
  * Word-wraps text to fit within a given width, preserving an indent prefix
  * on each line. Returns an array of indented lines.
  */
-const wrapText = (text: string, indent: string, width: number): string[] => {
+export const wrapText = (text: string, indent: string, width: number): string[] => {
   const maxContent = width - indent.length;
   const lines: string[] = [];
 

@@ -45,11 +45,7 @@ export const subscribeToEnvironmentLogs = (
   const variables =
     mode === "follow"
       ? () => ({ query, start: new Date(), ...(limit ? { limit } : {}) })
-      : {
-          query,
-          start: start ?? new Date(Date.now() - 5 * 60 * 1000),
-          ...(limit ? { limit } : {}),
-        };
+      : () => ({ query, start: start ?? new Date(Date.now() - 5 * 60 * 1000), ...(limit ? { limit } : {}) });
 
   return edit.subscribe({
     subscription: ENVIRONMENT_LOGS_SUBSCRIPTION,

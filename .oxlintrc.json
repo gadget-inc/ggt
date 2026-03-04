@@ -2,6 +2,10 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["unicorn", "typescript", "oxc"],
   "categories": {},
+  "options": {
+    "typeAware": true,
+    "typeCheck": true
+  },
   "rules": {
     "for-direction": "warn",
     "func-style": "warn",

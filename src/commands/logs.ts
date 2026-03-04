@@ -45,8 +45,19 @@ export default defineCommand({
   args: {
     ...AppIdentityArgs,
     ...LoggingArgs,
-    "--follow": { type: Boolean, alias: ["-f"], default: false },
-    "--start": { type: parseDate },
+    "--follow": {
+      type: Boolean,
+      alias: ["-f"],
+      default: false,
+      description: "Stream logs continuously",
+      details: "When omitted, ggt logs prints recent logs and exits.",
+    },
+    "--start": {
+      type: parseDate,
+      description: "Start time for one-shot log queries",
+      valueName: "datetime",
+      details: "ISO 8601 timestamp. Defaults to 5 minutes ago.",
+    },
   },
   run: async (ctx, args) => {
     if (args._.length > 0) {

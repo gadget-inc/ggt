@@ -2,10 +2,18 @@
 "ggt": major
 ---
 
+Change `ggt logs` default behavior to one-shot output and add `--follow` (`-f`) for streaming.
+
 `ggt logs` now prints recent logs and exits by default.
 
-The previous streaming behavior now requires `--follow` (or `-f`).
+This is a breaking change:
 
-This is a breaking CLI behavior change for users/scripts that relied on `ggt logs` streaming by default, and for users of the old `--tail` / `-t` flag names.
+- `ggt logs` no longer streams unless you pass `--follow` (`-f`)
+- `--tail` / `-t` are removed
+
+If you have scripts that rely on streaming logs, update:
+
+- `ggt logs` → `ggt logs --follow`
+- `ggt logs --tail` / `ggt logs -t` → `ggt logs --follow` / `ggt logs -f`
 
 This release also adds one-shot filtering support for `--start` and `--level`.

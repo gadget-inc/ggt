@@ -160,7 +160,11 @@ export class UnexpectedError extends GGTError {
   protected render(): string {
     const serialized = serializeError(this.cause);
     const body = serialized.stack || serialized.message || this.stack;
-    return this.message + ".\n\n" + body;
+    return sprint`
+      ${this.message}.
+
+      ${body}
+    `;
   }
 }
 

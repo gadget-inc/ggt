@@ -10,6 +10,7 @@ import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Directory } from "../filesync/directory.js";
 import { http } from "../http/http.js";
+import colors from "./colors.js";
 import { confirm } from "./confirm.js";
 import { output } from "./output.js";
 import { println } from "./print.js";
@@ -63,7 +64,7 @@ export const installAgentsMdScaffold = async ({
 
   if (!force && (agentsExists || claudeExists)) {
     println({
-      content: sprint`{gray ✓} Agent scaffold already exists (reinstall with {cyanBright ggt agent-plugin install --force})`,
+      content: sprint`${colors.hint("✓")} Agent scaffold already exists (reinstall with ${colors.code("ggt agent-plugin install --force")})`,
     });
     return;
   }
@@ -80,12 +81,12 @@ export const installAgentsMdScaffold = async ({
   } catch {
     println({
       ensureEmptyLineAbove: true,
-      content: sprint`{red Failed to install AGENTS.md.} Try again: {cyanBright ggt agent-plugin install}`,
+      content: sprint`${colors.error("Failed to install AGENTS.md.")} Try again: ${colors.code("ggt agent-plugin install")}`,
     });
     return;
   }
 
-  println({ content: sprint`{greenBright ✓} AGENTS.md installed` });
+  println({ content: sprint`${colors.success("✓")} AGENTS.md installed` });
 
   try {
     if (force) await fs.remove(claudePath);
@@ -93,17 +94,17 @@ export const installAgentsMdScaffold = async ({
   } catch {
     if (config.windows) {
       println({
-        content: sprint`To link {cyanBright ${CLAUDE_FILE}} → {cyanBright ${AGENTS_FILE}} on Windows, you may need Developer Mode.
+        content: sprint`To link ${colors.code(CLAUDE_FILE)} → ${colors.code(AGENTS_FILE)} on Windows, you may need Developer Mode.
 
 Try in PowerShell:
-  {cyanBright New-Item -ItemType SymbolicLink -Path ${CLAUDE_FILE} -Target ${AGENTS_FILE}}`,
+  ${colors.code(`New-Item -ItemType SymbolicLink -Path ${CLAUDE_FILE} -Target ${AGENTS_FILE}`)}`,
       });
     } else {
       println({
-        content: sprint`Couldn't create {cyanBright ${CLAUDE_FILE}} symlink.
+        content: sprint`Couldn't create ${colors.code(CLAUDE_FILE)} symlink.
 
 Try:
-  {cyanBright ln -sf ${AGENTS_FILE} ${CLAUDE_FILE}}`,
+  ${colors.code(`ln -sf ${AGENTS_FILE} ${CLAUDE_FILE}`)}`,
       });
     }
   }
@@ -163,7 +164,7 @@ export const installGadgetSkillsIntoProject = async ({
 
   if (!force && (await fs.pathExists(sentinelPath))) {
     println({
-      content: sprint`{gray ✓} Gadget skills already installed (reinstall with {cyanBright ggt agent-plugin install --force})`,
+      content: sprint`${colors.hint("✓")} Gadget skills already installed (reinstall with ${colors.code("ggt agent-plugin install --force")})`,
     });
     return;
   }
@@ -249,13 +250,13 @@ export const installGadgetSkillsIntoProject = async ({
   } catch (error) {
     println({
       ensureEmptyLineAbove: true,
-      content: sprint`{red Failed to install skills.} ${error instanceof Error ? error.message : String(error)}`,
+      content: sprint`${colors.error("Failed to install skills.")} ${error instanceof Error ? error.message : String(error)}`,
     });
     return;
   }
 
   println({
-    content: sprint`{greenBright ✓} Installed skills: ${skillNames.join(", ")}`,
+    content: sprint`${colors.success("✓")} Installed skills: ${skillNames.join(", ")}`,
   });
 
   if (commitSha) {
@@ -285,11 +286,11 @@ export const installGadgetSkillsIntoProject = async ({
     }
 
     println({
-      content: sprint`{greenBright ✓} Symlinks created in .claude/skills/`,
+      content: sprint`${colors.success("✓")} Symlinks created in .claude/skills/`,
     });
   } catch (error) {
     println({
-      content: sprint`{yellow ⚠} Failed to create .claude/skills/ symlinks: ${error instanceof Error ? error.message : String(error)}`,
+      content: sprint`${colors.warning("⚠")} Failed to create .claude/skills/ symlinks: ${error instanceof Error ? error.message : String(error)}`,
     });
   }
 };

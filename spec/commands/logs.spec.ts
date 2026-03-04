@@ -1,9 +1,9 @@
 import { beforeEach, describe, it, vi } from "vitest";
 
-import * as logs from "../../src/commands/logs.js";
+import logs from "../../src/commands/logs.js";
 import { ENVIRONMENT_LOGS_SUBSCRIPTION, type GraphQLSubscription } from "../../src/services/app/edit/operation.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
 import { mockContext, testCtx } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
@@ -39,7 +39,6 @@ describe("logs", () => {
       },
     });
 
-    const args = makeArgs(logs.args, "logs");
     const mockEditGraphQL = makeMockEditSubscriptions();
 
     // Simulate the server sending a log message
@@ -53,7 +52,7 @@ describe("logs", () => {
     const logTimestamp = (now * 1_000_000).toString();
 
     // Start the logs command (which will subscribe asynchronously)
-    const runPromise = logs.run(testCtx, args);
+    const runPromise = runCommand(testCtx, logs);
 
     // Wait for the subscription to be registered
     const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
@@ -79,18 +78,16 @@ describe("logs", () => {
     `);
   });
 
-  it("prints server logs to the console in JSON format with --json", async () => {
+  it("prints server logs in JSON format when GGT_LOG_FORMAT=json", async () => {
     await makeSyncScenario({
       localFiles: {
         ".gadget/": "",
       },
     });
 
-    const args = makeArgs(logs.args, "logs", "--json");
     const mockEditGraphQL = makeMockEditSubscriptions();
 
     await withEnv({ GGT_LOG_FORMAT: "json" }, async () => {
-      // Use the same fixed timestamp and log message as the pretty test
       const now = 1753120882299;
       const logMessage = {
         msg: "hello from server!",
@@ -100,13 +97,10 @@ describe("logs", () => {
       };
       const logTimestamp = (now * 1_000_000).toString();
 
-      // Start the logs command (which will subscribe asynchronously)
-      const runPromise = logs.run(testCtx, args);
+      const runPromise = runCommand(testCtx, logs);
 
-      // Wait for the subscription to be registered
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
 
-      // Emit a log message
       await logsSub.emitResponse({
         data: {
           logsSearchV2: {

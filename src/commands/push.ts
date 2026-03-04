@@ -1,76 +1,78 @@
-import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
-import type { Run, Usage } from "../services/command/command.js";
+import { ArgError } from "../services/command/arg.js";
+import { defineCommand } from "../services/command/command.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import colors from "../services/output/colors.js";
 import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
-export type PushArgs = typeof args;
+export default defineCommand({
+  name: "push",
+  description: "Upload local file changes to Gadget",
+  details: sprint`
+    Uploads all local file changes since the last sync to your Gadget environment. If the
+    environment also has changes since the last sync, you'll be prompted to discard those
+    environment changes or abort. Use --force to skip the prompt and discard automatically.
+  `,
+  sections: [
+    {
+      title: "See Also",
+      content: "ggt pull — Download environment files.\nggt dev — Bidirectional file sync with real-time watching.",
+    },
+  ],
+  examples: ["ggt push", "ggt push --env main", "ggt push --env main --force"],
+  args: {
+    ...SyncJsonArgs,
+    "--env": {
+      type: String,
+      alias: ["-e", "--environment", "--to"],
+      description: "Environment to push to",
+      valueName: "environment",
+      details: "Defaults to the development environment recorded in .gadget/sync.json. Production cannot be pushed to.",
+    },
+    "--force": {
+      type: Boolean,
+      alias: "-f",
+      description: "Push without prompting, discarding environment changes",
+      details: "Any changes on the environment since the last sync are overwritten by your local files.",
+    },
+  },
+  run: async (ctx, args) => {
+    if (args._.length > 0) {
+      throw new ArgError(
+        sprint`
+          "ggt push" does not take any positional arguments.
 
-export const args = {
-  ...SyncJsonArgs,
-  "--env": { type: String, alias: ["-e", "--environment", "--to"] },
-  "--force": { type: Boolean, alias: "-f" },
-} satisfies ArgsDefinition;
-
-export const usage: Usage = (_ctx) => {
-  return sprint`
-  Pushes your local files to your environment directory.
-
-  This command first tracks changes in your environment directory since the last sync.
-  If changes are detected, you will be prompted to discard them or abort the push.
-
-  {gray Usage}
-        ggt push [options]
-
-  {gray Options}
-        -a, --app <app_name>           Selects the app to push local changes to. Defaults to the app synced to the current directory, if there is one.
-        -e, --env, --to <env_name>     Selects the environment to push local changes to. Defaults to the environment synced to the current directory, if there is one.
-        --force                        Forces a push by discarding any changes made on your environment directory since last sync
-        --allow-different-directory    Pushes changes from any local directory with existing files, even if the directory hasn't been synced before
-        --allow-different-app          Pushes changes to an app using --app command, instead of the most recently synced one in the current directory
-
-  {gray Examples}
-        Push all local changes to the main environment by discarding any changes made on main
-        {cyanBright $ ggt push --env main --force}
-  `;
-};
-
-export const run: Run<typeof args> = async (ctx, args) => {
-  if (args._.length > 0) {
-    throw new ArgError(sprint`
-      "ggt push" does not take any positional arguments.
-
-      If you are trying to push changes from a specific directory,
-      you must "cd" to that directory and then run "ggt push".
-
-      Run "ggt push -h" for more information.
-    `);
-  }
-
-  const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "push", args, directory });
-  const filesync = new FileSync(syncJson);
-  const hashes = await filesync.hashes(ctx);
-
-  if (hashes.localChangesToPush.size === 0) {
-    println({ ensureEmptyLineAbove: true, content: "Nothing to push." });
-    return;
-  }
-
-  if (hashes.environmentChanges.size > 0 && !hashes.onlyDotGadgetFilesChanged) {
-    // show them the environment changes they will discard
-    await filesync.print(ctx, { hashes });
-
-    if (!args["--force"]) {
-      // they didn't pass --force, so we need to ask them if they want to discard the environment changes
-      await confirm({
-        ensureEmptyLineAbove: true,
-        content: sprint`Are you sure you want to {underline discard} your environment's changes?`,
-      });
+          If you are trying to push changes from a specific directory,
+          you must "cd" to that directory and then run "ggt push".
+        `,
+      );
     }
-  }
 
-  await filesync.push(ctx, { command: "push", hashes });
-};
+    const directory = await loadSyncJsonDirectory(process.cwd());
+    const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "push", args, directory });
+    const filesync = new FileSync(syncJson);
+    const hashes = await filesync.hashes(ctx);
+
+    if (hashes.localChangesToPush.size === 0) {
+      println({ ensureEmptyLineAbove: true, content: "Nothing to push." });
+      return;
+    }
+
+    if (hashes.environmentChanges.size > 0 && !hashes.onlyDotGadgetFilesChanged) {
+      // show them the environment changes they will discard
+      await filesync.print(ctx, { hashes });
+
+      if (!args["--force"]) {
+        // they didn't pass --force, so we need to ask them if they want to discard the environment changes
+        await confirm({
+          ensureEmptyLineAbove: true,
+          content: sprint`Are you sure you want to ${colors.emphasis("discard")} your environment's changes?`,
+        });
+      }
+    }
+
+    await filesync.push(ctx, { command: "push", hashes });
+  },
+});

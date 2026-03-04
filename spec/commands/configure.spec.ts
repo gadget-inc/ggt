@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import * as configure from "../../src/commands/configure.js";
+import configure from "../../src/commands/configure.js";
+import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import * as defaults from "../../src/services/config/defaults.js";
 import { noop } from "../../src/services/util/function.js";
-import { makeRootArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
+import { expectError } from "../__support__/error.js";
 import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { expectProcessExit } from "../__support__/process.js";
@@ -15,9 +17,9 @@ describe("configure", () => {
       return { telemetry: true, json: true };
     });
 
-    await configure.run(testCtx, makeRootArgs("show"));
+    await runCommand(testCtx, configure, "show");
 
-    expect(defaults.loadDefaultsConfig).toHaveBeenCalled();
+    expect(defaults.loadDefaultsConfig).toHaveBeenCalledWith(expect.objectContaining({ signal: expect.any(AbortSignal) }), false);
     expectStdout().toMatchInlineSnapshot(`
 "╔═══════════╤══════════════════╗
 ║ Option    │ Configured Value ║
@@ -34,9 +36,9 @@ describe("configure", () => {
       return {};
     });
 
-    await configure.run(testCtx, makeRootArgs("show"));
+    await runCommand(testCtx, configure, "show");
 
-    expect(defaults.loadDefaultsConfig).toHaveBeenCalledWith(testCtx, false);
+    expect(defaults.loadDefaultsConfig).toHaveBeenCalledWith(expect.objectContaining({ signal: expect.any(AbortSignal) }), false);
     expectStdout().toMatchInlineSnapshot(`
 "╔═══════════╤══════════════════╗
 ║ Option    │ Configured Value ║
@@ -51,7 +53,7 @@ describe("configure", () => {
   it("can clear configuration", async () => {
     mock(defaults, "clearDefaultsConfig", noop);
 
-    await configure.run(testCtx, makeRootArgs("clear"));
+    await runCommand(testCtx, configure, "clear");
 
     expect(defaults.clearDefaultsConfig).toHaveBeenCalled();
   });
@@ -59,9 +61,9 @@ describe("configure", () => {
   it("cannot prompt for configuration while not interactive", async () => {
     vi.spyOn(defaults, "promptDefaultsConfig");
 
-    await expectProcessExit(() => configure.run(testCtx, makeRootArgs("change")), 1);
+    await expectProcessExit(() => runCommand(testCtx, configure, "change"), 1);
 
-    expect(defaults.promptDefaultsConfig).toHaveBeenCalledWith(testCtx);
+    expect(defaults.promptDefaultsConfig).toHaveBeenCalled();
   });
 
   it("accepts prompt for configuration", async () => {
@@ -69,8 +71,23 @@ describe("configure", () => {
       return { telemetry: true, json: true };
     });
 
-    await configure.run(testCtx, makeRootArgs("change"));
+    await runCommand(testCtx, configure, "change");
 
-    expect(defaults.promptDefaultsConfig).toHaveBeenCalledWith(testCtx);
+    expect(defaults.promptDefaultsConfig).toHaveBeenCalled();
+  });
+
+  it("throws ArgError for unknown subcommand", async () => {
+    const error = await expectError(() => runCommand(testCtx, configure, "bogus"));
+    expect(error).toBeInstanceOf(ArgError);
+    expect(error.message).toMatchInlineSnapshot(`
+      "Unknown subcommand bogus
+
+      Did you mean show?
+
+      USAGE
+        ggt configure <command>
+
+      Run ggt configure -h for more information."
+    `);
   });
 });

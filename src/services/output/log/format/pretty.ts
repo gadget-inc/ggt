@@ -7,7 +7,7 @@ import { type Environment } from "../../../app/app.js";
 import { config } from "../../../config/config.js";
 import { isNil, isObject } from "../../../util/is.js";
 import { serializeObjectToHTTPQuery } from "../../../util/querystring.js";
-import colors from "../../colors.js";
+import colors, { color } from "../../colors.js";
 import { symbol } from "../../symbols.js";
 import { Level } from "../level.js";
 import type { Formatter } from "./format.js";
@@ -159,24 +159,24 @@ const formatFields = (fields: Record<string, unknown>, opts: { indent: number; t
       switch (typeof value) {
         case "string":
           buf.push(
-            formatValue(QUOTE + value.replaceAll(NEW_LINE, NEW_LINE + SPACE.repeat(indent + key.length)) + QUOTE, colors.reset, indent),
+            formatValue(QUOTE + value.replaceAll(NEW_LINE, NEW_LINE + SPACE.repeat(indent + key.length)) + QUOTE, colors.plain, indent),
           );
           break;
         case "number":
-          buf.push(formatValue(String(value), colors.yellowBright, indent));
+          buf.push(formatValue(String(value), colors.number, indent));
           break;
         case "bigint":
-          buf.push(formatValue(String(value) + "n", colors.yellowBright, indent));
+          buf.push(formatValue(String(value) + "n", colors.number, indent));
           break;
         case "boolean":
-          buf.push(formatValue(String(value), colors.green, indent));
+          buf.push(formatValue(String(value), colors.boolean, indent));
           break;
         default:
-          buf.push(formatValue(String(value), colors.reset, indent));
+          buf.push(formatValue(String(value), colors.plain, indent));
           break;
       }
     } else {
-      buf.push(formatValue(String(value), colors.reset, indent));
+      buf.push(formatValue(String(value), colors.plain, indent));
     }
   }
 
@@ -192,24 +192,24 @@ const formatTimestamp = (timestamp?: Date): string => {
 const formatLevel = (level: Level): string => {
   switch (level) {
     case Level.PRINT:
-      return colors.bgBlack(colors.body.bold(" PRINT "));
+      return colors.levelPrint(color.whiteBright.bold(" PRINT "));
     case Level.TRACE:
-      return colors.bgBlue(colors.body.bold(" TRACE "));
+      return colors.levelTrace(color.whiteBright.bold(" TRACE "));
     case Level.DEBUG:
-      return colors.bgMagenta(colors.body.bold(" DEBUG "));
+      return colors.levelDebug(color.whiteBright.bold(" DEBUG "));
     case Level.INFO:
-      return colors.bgBlue(colors.body.bold(" INFO "));
+      return colors.levelInfo(color.whiteBright.bold(" INFO "));
     case Level.WARN:
-      return colors.bgYellow(colors.body.bold(" WARN "));
+      return colors.levelWarn(color.whiteBright.bold(" WARN "));
     case Level.ERROR:
-      return colors.bgRed(colors.body.bold(" ERROR "));
+      return colors.levelError(color.whiteBright.bold(" ERROR "));
     // case "fatal":
     //   return red(colors.bold(level));
   }
 };
 
 const formatName = (name: string): string => {
-  return colors.body(name);
+  return color.whiteBright(name);
 };
 
 const formatMessage = (msg: unknown): string => {
@@ -224,7 +224,7 @@ const formatMessage = (msg: unknown): string => {
   }
   const lines = msgStr.split(NEW_LINE);
   if (lines.length === 1) {
-    return SPACE + colors.body(msgStr);
+    return SPACE + color.whiteBright(msgStr);
   }
   return NEW_LINE + lines.map((line) => SPACE + SPACE + line).join(NEW_LINE);
 };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { compact, sortBySimilar, uniq } from "../../../src/services/util/collection.js";
+import { closestMatch, compact, sortBySimilar, uniq } from "../../../src/services/util/collection.js";
 
 describe("compact", () => {
   it("removes null and undefined values", () => {
@@ -84,5 +84,27 @@ describe("sortBySimilar", () => {
   it("handles single option", () => {
     const result = sortBySimilar("anything", ["only"]);
     expect(result).toEqual(["only"]);
+  });
+});
+
+describe("closestMatch", () => {
+  it("returns the closest match from options", () => {
+    expect(closestMatch("dve", ["dev", "deploy", "push"])).toBe("dev");
+  });
+
+  it("returns the sole option when only one is available", () => {
+    expect(closestMatch("anything", ["only"])).toBe("only");
+  });
+
+  it("returns the first equidistant candidate when multiple options tie", () => {
+    expect(closestMatch("test", ["best", "rest"])).toBe("best");
+  });
+
+  it("returns an exact match over similar options", () => {
+    expect(closestMatch("dev", ["deploy", "dev", "push"])).toBe("dev");
+  });
+
+  it("throws when options is empty", () => {
+    expect(() => closestMatch("anything", [])).toThrow("options must not be empty");
   });
 });

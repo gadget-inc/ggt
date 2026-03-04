@@ -31,7 +31,7 @@ export type print = {
   (strOrOptions: string | PrintOptions): void;
 
   /**
-   * Prints the given template string with dedent and chalk-template.
+   * Prints the given template string with dedent.
    *
    * @param template - The template string to format.
    * @param values - The values to interpolate into the template.
@@ -42,18 +42,14 @@ export type print = {
    * print`Hello, ${name}!`;
    * // => "Hello, Jane!"
    *
-   * print`Hello, {red ${name}}!`;
-   * // => "Hello, \u001b[31mJane\u001b[39m!"
-   *
    * print`
-   *   Hello, {red ${name}}!
+   *   Hello, ${name}!
    *
    *   How are you?
    * `;
-   * // => "Hello, \u001b[31mJane\u001b[39m!\n\nHow are you?"
+   * // => "Hello, Jane!\n\nHow are you?"
    * ```
    * @see dedent https://github.com/tamino-martinius/node-ts-dedent
-   * @see chalk-template https://github.com/chalk/chalk-template
    */
   (template: TemplateStringsArray, ...values: unknown[]): void;
 };

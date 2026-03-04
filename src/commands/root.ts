@@ -1,69 +1,135 @@
 import arg from "arg";
 
-import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
-import { Commands, importCommand, isCommand, type Run, type Usage } from "../services/command/command.js";
+import { extractFlags, hidden, type ArgsDefinition, type ArgsDefinitionResult, type FlagDef } from "../services/command/arg.js";
+import { Commands, importCommand, isCommand, renderCommandList, resolveCommandAlias } from "../services/command/command.js";
+import type { Context } from "../services/command/context.js";
+import { runCommand } from "../services/command/run.js";
+import { flagLeft, flagNamePrefix, flagValueSuffix, formatFlag } from "../services/command/usage.js";
+import colors from "../services/output/colors.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { setSentryTags } from "../services/output/sentry.js";
 import { sprint } from "../services/output/sprint.js";
 import { shouldCheckForUpdate } from "../services/output/update.js";
-import { sortBySimilar } from "../services/util/collection.js";
+import { closestMatch } from "../services/util/collection.js";
 import { isNil } from "../services/util/is.js";
+import { packageJson } from "../services/util/package-json.js";
 
 export type RootArgs = typeof args;
 export type RootArgsResult = ArgsDefinitionResult<RootArgs>;
 
+// root.ts is intentionally not converted to defineCommand because it is the
+// dispatch entry point that resolves and delegates to sub-commands, not a
+// standard sub-command itself.
 export const args = {
-  "-h": { type: Boolean },
-  "--help": { type: Boolean },
-  "--verbose": { type: arg.COUNT, alias: ["-v", "--debug"] },
-  "--telemetry": { type: Boolean },
-  "--json": { type: Boolean },
+  "--help": {
+    type: Boolean,
+    alias: "-h",
+    description: "Show command help",
+    details: "Use -h for a compact summary. Use --help for expanded descriptions including flag details.",
+  },
+  "--version": {
+    type: Boolean,
+    description: "Print the ggt version",
+    details: "Prints the currently installed ggt version string and exits. Same output as ggt version.",
+  },
+  "--verbose": {
+    type: arg.COUNT,
+    alias: ["-v", hidden("--debug")],
+    description: "Increase output verbosity (-vv for debug, -vvv for trace)",
+    details: "Each -v increases the log level: -v shows info messages, -vv enables debug output, and -vvv enables full trace logging.",
+  },
+  "--telemetry": {
+    type: Boolean,
+    description: "Enable telemetry",
+    details: "Sends anonymous error reports to help improve ggt. Enabled by default. Use ggt configure to persist this setting.",
+  },
+  "--json": {
+    type: Boolean,
+    description: "Output as JSON where supported",
+    details:
+      "Formats all output as newline-delimited JSON instead of human-readable text. Useful for scripting and piping ggt output to other tools.",
+  },
 } satisfies ArgsDefinition;
 
-export const usage: Usage = () => {
+export const usage = async (helpLevel: "-h" | "--help" = "-h"): Promise<string> => {
+  const commandList = await renderCommandList();
+
+  const flags = extractFlags(args).filter((f) => !f.hidden);
+  let flagLines: string;
+
+  if (helpLevel === "--help") {
+    flagLines = renderExpandedFlags(flags);
+  } else {
+    const maxLeft = Math.max(0, ...flags.map((f) => flagLeft(f).length + 2));
+    flagLines = flags.map((f) => formatFlag(f, maxLeft, 0)).join("\n");
+  }
+
   return sprint`
     The command-line interface for Gadget.
 
-    {gray Usage}
-      ggt [COMMAND]
+    ${colors.header("USAGE")}
+      ggt [command]
 
-    {gray Commands}
-      dev              Start developing your application
-      deploy           Deploy your environment to production
-      status           Show your local and environment's file changes
-      push             Push your local files to your environment
-      pull             Pull your environment's files to your local computer
-      var              Manage environment variables
-      env              Manage environments
-      add              Add models, fields, actions, routes and environments to your app
-      open             Open a Gadget location in your browser
-      list             List your available applications
-      login            Log in to your account
-      logout           Log out of your account
-      logs             Stream your environment's logs
-      debugger         Connect to the debugger for your environment
-      whoami           Print the currently logged in account
-      configure        Configure default execution options
-      agent-plugin     Install Gadget agent plugins (AGENTS.md + skills)
-      version          Print this version of ggt
+    ${colors.header("COMMANDS")}
+      ${commandList}
 
-    {gray Flags}
-      -h, --help       Print how to use a command
-      -v, --verbose    Print more verbose output
-          --telemetry  Enable telemetry
+    ${colors.header("FLAGS")}
+      ${flagLines}
 
-    {gray Agent plugins}
-      Install AGENTS.md and Gadget agent skills for your coding agent:
-      {cyanBright ggt agent-plugin install}
+    Use ${colors.hint("-h")} for a summary, ${colors.hint("--help")} for full details.
 
-    Run "ggt [COMMAND] -h" for more information about a specific command.
+    Documentation: https://docs.gadget.dev/guides/cli
+    Issues:        https://github.com/gadget-inc/ggt/issues
   `;
 };
 
-export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
+const renderExpandedFlags = (flags: FlagDef[]): string => {
+  return flags
+    .map((f) => {
+      const name = flagNamePrefix(f);
+      const value = flagValueSuffix(f);
+      const styledLeft = `${colors.identifier.bold(name)}${value ? colors.placeholder(value) : ""}`;
+      let desc = f.description;
+      if (f.details) {
+        desc = `${desc.endsWith(".") ? desc : `${desc}.`} ${f.details}`;
+      }
+      const wrapped = wrapFlagDescription(desc);
+      return `  ${styledLeft}\n${wrapped}`;
+    })
+    .join("\n\n");
+};
+
+const wrapFlagDescription = (text: string, indent = 8, width = 80): string => {
+  const prefix = " ".repeat(indent);
+  const maxContent = width - indent;
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    if (!current) {
+      current = word;
+    } else if (current.length + 1 + word.length <= maxContent) {
+      current += ` ${word}`;
+    } else {
+      lines.push(`${prefix}${current}`);
+      current = word;
+    }
+  }
+  if (current) {
+    lines.push(`${prefix}${current}`);
+  }
+  return lines.join("\n");
+};
+
+export const run = async (parent: Context, args: RootArgsResult): Promise<void> => {
   const ctx = parent.child({ name: "root" });
+
+  if (args["--version"]) {
+    println(packageJson.version);
+    process.exit(0);
+  }
 
   if (args["--json"]) {
     process.env["GGT_LOG_FORMAT"] = "json";
@@ -80,22 +146,38 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
 
   let commandName = args._.shift();
   if (isNil(commandName)) {
-    println(usage(ctx));
+    const helpLevel = args["--help"] ? (process.argv.includes("-h") && !process.argv.includes("--help") ? "-h" : "--help") : "-h";
+    println(await usage(helpLevel));
     process.exit(0);
   }
 
-  // resolve command aliases
-  const commandAliases: Record<string, string> = { envs: "env", problem: "problems", log: "logs" };
-  commandName = commandAliases[commandName] ?? commandName;
+  // handle `ggt help [command]`
+  if (commandName === "help") {
+    const helpTarget = args._.shift();
+    if (isNil(helpTarget)) {
+      println(await usage("--help"));
+      process.exit(0);
+    }
+    // treat as `ggt <command> --help`
+    commandName = helpTarget;
+    args["--help"] = true;
+  }
 
   if (!isCommand(commandName)) {
-    const [closest] = sortBySimilar(commandName, Commands);
+    // Try to resolve as a command alias
+    const resolved = await resolveCommandAlias(commandName);
+    if (resolved) {
+      commandName = resolved;
+    }
+  }
+
+  if (!isCommand(commandName)) {
     println`
-      Unknown command {yellow ${commandName}}
+      Unknown command ${colors.warning(commandName)}
 
-      Did you mean {blueBright ${closest}}?
+      Did you mean ${colors.identifier(closestMatch(commandName, Commands))}?
 
-      Run {gray ggt --help} for usage
+      Run ${colors.hint("ggt --help")} for usage
     `;
     process.exit(1);
   }
@@ -103,17 +185,16 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
   const command = await importCommand(commandName);
   setSentryTags({ command: commandName });
 
-  if (args["-h"] ?? args["--help"]) {
-    if (!command.parseOptions?.permissive || args._.length === 0) {
-      println(command.usage(ctx));
-      process.exit(0);
-    }
-    // pass -h through to the command's run function for subcommand-level help
-    args._.push("-h");
+  // handle root-level help flags before the error-catching boundary so
+  // process.exit(0) is not caught and misinterpreted as a command failure
+  const helpFlag = args["--help"] ? (process.argv.includes("-h") && !process.argv.includes("--help") ? "-h" : "--help") : undefined;
+  if (helpFlag) {
+    await runCommand(ctx.child({ name: command.name }), command, helpFlag, ...args._);
+    return;
   }
 
   try {
-    await command.run(ctx.child({ name: commandName }), parseArgs(command.args ?? {}, { ...command.parseOptions, argv: args._ }));
+    await runCommand(ctx.child({ name: command.name }), command, ...args._);
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

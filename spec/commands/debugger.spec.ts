@@ -6,14 +6,25 @@ import { waitUntilUsed } from "tcp-port-used";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
 
-import * as debuggerCommand from "../../src/commands/debugger.js";
+import debuggerCommand from "../../src/commands/debugger.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { config } from "../../src/services/config/config.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario, type SyncScenario } from "../__support__/filesync.js";
 import { expectStdout } from "../__support__/output.js";
 import { loginTestUser } from "../__support__/user.js";
+
+const closeWithTimeout = (ws: WebSocket, ms = 5000): Promise<void> =>
+  new Promise((resolve) => {
+    const t = setTimeout(resolve, ms);
+    const done = (): void => {
+      clearTimeout(t);
+      resolve();
+    };
+    ws.on("close", done);
+    ws.on("error", done);
+  });
 
 // Helper to get subdomain from sync scenario
 const getSubdomain = (syncScenario: SyncScenario): string => {
@@ -61,9 +72,9 @@ describe("debugger", () => {
 
   describe("basic functionality", () => {
     it("establishes a unique session id and responds to /json/version and /json/list requests", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+      const syncScenario = await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -71,12 +82,10 @@ describe("debugger", () => {
       expect(response.status).toBe(200);
 
       let responseBody = (await response.json()) as any;
-      expect(responseBody).toMatchInlineSnapshot(`
-        {
-          "Browser": "node.js/22.15.0",
-          "Protocol-Version": "1.1",
-        }
-      `);
+      expect(responseBody["Browser"]).toMatch(/^node\.js\//);
+      expect(responseBody).toMatchObject({
+        "Protocol-Version": "1.1",
+      });
 
       response = await fetch("http://127.0.0.1:9229/json/list");
       expect(response.status).toBe(200);
@@ -87,7 +96,9 @@ describe("debugger", () => {
       expect(sessionId).toBeDefined();
       expect(responseBody[0].title).toBe("ggt debugger");
       expect(responseBody[0].type).toBe("node");
-      expect(responseBody[0].description).toBe("authenticated CDP proxy to current sandbox process for test@development");
+      expect(responseBody[0].description).toBe(
+        `authenticated CDP proxy to current sandbox process for ${syncScenario.syncJson.environment.application.slug}@${syncScenario.syncJson.environment.name}`,
+      );
       expect(responseBody[0].faviconUrl).toBe("https://assets.gadget.dev/assets/environment/dev/favicon-32.png");
       expect(responseBody[0].webSocketDebuggerUrl).toBe(`ws://127.0.0.1:9229/${sessionId}`);
 
@@ -97,21 +108,19 @@ describe("debugger", () => {
     });
 
     it("can start on a custom port", async () => {
-      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+      const syncScenario = await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args, "debugger", "--port", "9230"));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand, "--port", "9230");
 
       await waitUntilUsed(9230);
 
       let response = await fetch("http://127.0.0.1:9230/json/version");
       expect(response.status).toBe(200);
       let responseBody = (await response.json()) as any;
-      expect(responseBody).toMatchInlineSnapshot(`
-        {
-          "Browser": "node.js/22.15.0",
-          "Protocol-Version": "1.1",
-        }
-      `);
+      expect(responseBody["Browser"]).toMatch(/^node\.js\//);
+      expect(responseBody).toMatchObject({
+        "Protocol-Version": "1.1",
+      });
 
       response = await fetch("http://127.0.0.1:9230/json/list");
       expect(response.status).toBe(200);
@@ -122,7 +131,9 @@ describe("debugger", () => {
       expect(sessionId).toBeDefined();
       expect(responseBody[0].title).toBe("ggt debugger");
       expect(responseBody[0].type).toBe("node");
-      expect(responseBody[0].description).toBe("authenticated CDP proxy to current sandbox process for test@development");
+      expect(responseBody[0].description).toBe(
+        `authenticated CDP proxy to current sandbox process for ${syncScenario.syncJson.environment.application.slug}@${syncScenario.syncJson.environment.name}`,
+      );
       expect(responseBody[0].faviconUrl).toBe("https://assets.gadget.dev/assets/environment/dev/favicon-32.png");
       expect(responseBody[0].webSocketDebuggerUrl).toBe(`ws://127.0.0.1:9230/${sessionId}`);
 
@@ -134,7 +145,7 @@ describe("debugger", () => {
     it("returns 404 for unknown routes", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -170,7 +181,7 @@ describe("debugger", () => {
 
       setupMockRemote(getSubdomain(syncScenario), `ws://localhost:${port}`);
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -205,20 +216,8 @@ describe("debugger", () => {
         ]
       `);
 
-      // Wait for WebSocket to close before cleanup (with timeout)
-      const wsClosed = new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => resolve(), 5000); // 5s timeout
-        ws.on("close", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-        ws.on("error", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-      });
       ws.close();
-      await wsClosed;
+      await closeWithTimeout(ws);
 
       testCtx.abort();
       await debuggerPromise;
@@ -228,7 +227,7 @@ describe("debugger", () => {
     it("rejects websocket connections with wrong session id", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -265,7 +264,7 @@ describe("debugger", () => {
 
       setupMockRemote(getSubdomain(syncScenario), `ws://localhost:${port}`);
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -291,20 +290,8 @@ describe("debugger", () => {
       const closeCode = await ws2ErrorOrClose;
       expect(closeCode).toBe(1006); // Connection closed abnormally
 
-      // Wait for first connection to close before cleanup (with timeout)
-      const ws1Closed = new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => resolve(), 5000); // 5s timeout
-        ws1.on("close", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-        ws1.on("error", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-      });
       ws1.close();
-      await ws1Closed;
+      await closeWithTimeout(ws1);
 
       testCtx.abort();
       await debuggerPromise;
@@ -337,7 +324,7 @@ describe("debugger", () => {
 
       setupMockRemote(getSubdomain(syncScenario), `ws://localhost:${port}`, "test-session-id", 2);
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -349,39 +336,16 @@ describe("debugger", () => {
       const ws1 = new WebSocket(wsUrl);
       await firstConnected;
 
-      // Close first connection (with timeout)
-      const ws1Closed = new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => resolve(), 5000); // 5s timeout
-        ws1.on("close", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-        ws1.on("error", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-      });
+      // Close first connection
       ws1.close();
-      await ws1Closed;
+      await closeWithTimeout(ws1);
 
       // Establish second connection
       const ws2 = new WebSocket(wsUrl);
       await secondConnected;
 
-      // Wait for second connection to close before cleanup (with timeout)
-      const ws2Closed = new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => resolve(), 5000); // 5s timeout
-        ws2.on("close", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-        ws2.on("error", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-      });
       ws2.close();
-      await ws2Closed;
+      await closeWithTimeout(ws2);
 
       testCtx.abort();
       await debuggerPromise;
@@ -407,7 +371,7 @@ describe("debugger", () => {
 
       setupMockRemote(getSubdomain(syncScenario), `ws://localhost:${port}`);
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -445,7 +409,7 @@ describe("debugger", () => {
         .optionally()
         .reply(409, { error: "Another debugger session is already active" });
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -494,7 +458,7 @@ describe("debugger", () => {
 
       setupMockRemote(getSubdomain(syncScenario), `ws://localhost:${remotePort}`);
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -553,7 +517,7 @@ describe("debugger", () => {
     it("configures VS Code debugger with default port", async () => {
       const { localDir } = await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      await debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args, "debugger", localDir.path, "--configure", "vscode"));
+      await runCommand(testCtx, debuggerCommand, localDir.path, "--configure", "vscode");
 
       const launchJsonPath = path.join(localDir.path, ".vscode", "launch.json");
       const tasksJsonPath = path.join(localDir.path, ".vscode", "tasks.json");
@@ -593,7 +557,7 @@ describe("debugger", () => {
     it("configures Cursor debugger with default port", async () => {
       const { localDir } = await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      await debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args, "debugger", localDir.path, "--configure", "cursor"));
+      await runCommand(testCtx, debuggerCommand, localDir.path, "--configure", "cursor");
 
       const launchJsonPath = path.join(localDir.path, ".vscode", "launch.json");
       const tasksJsonPath = path.join(localDir.path, ".vscode", "tasks.json");
@@ -607,10 +571,7 @@ describe("debugger", () => {
     it("configures debugger with custom port", async () => {
       const { localDir } = await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      await debuggerCommand.run(
-        testCtx,
-        makeArgs(debuggerCommand.args, "debugger", localDir.path, "--configure", "vscode", "--port", "9230"),
-      );
+      await runCommand(testCtx, debuggerCommand, localDir.path, "--configure", "vscode", "--port", "9230");
 
       const launchJsonPath = path.join(localDir.path, ".vscode", "launch.json");
       const launchJson = await fs.readJson(launchJsonPath);
@@ -650,10 +611,7 @@ describe("debugger", () => {
       };
       await fs.writeJson(path.join(vscodeDir, "launch.json"), existingLaunchJson);
 
-      await debuggerCommand.run(
-        testCtx,
-        makeArgs(debuggerCommand.args, "debugger", localDir.path, "--configure", "vscode", "--port", "9230"),
-      );
+      await runCommand(testCtx, debuggerCommand, localDir.path, "--configure", "vscode", "--port", "9230");
 
       const launchJson = await fs.readJson(path.join(vscodeDir, "launch.json"));
 
@@ -666,7 +624,7 @@ describe("debugger", () => {
     it("throws error for invalid editor name", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      await expect(debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args, "debugger", "--configure", "invalid"))).rejects.toThrow(
+      await expect(runCommand(testCtx, debuggerCommand, "--configure", "invalid")).rejects.toThrow(
         'Invalid editor "invalid". Supported editors: vscode, cursor',
       );
     });
@@ -674,7 +632,7 @@ describe("debugger", () => {
     it("warns when VS Code configuration does not exist", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 
@@ -703,7 +661,7 @@ describe("debugger", () => {
         ],
       });
 
-      const debuggerPromise = debuggerCommand.run(testCtx, makeArgs(debuggerCommand.args));
+      const debuggerPromise = runCommand(testCtx, debuggerCommand);
 
       await waitUntilUsed(9229);
 

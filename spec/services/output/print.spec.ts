@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { describe, expect, it } from "vitest";
 
+import colors, { color } from "../../../src/services/output/colors.js";
 import { print } from "../../../src/services/output/print.js";
 import { printTable } from "../../../src/services/output/table.js";
 import { withEnv } from "../../__support__/env.js";
@@ -41,19 +42,19 @@ describe("print", () => {
     `);
   });
 
-  it("prints tagged template literal with chalk colors", () => {
+  it("prints tagged template literal with colors", () => {
     try {
-      chalk.level = 3;
+      color.level = 3;
       print`
-        {bold Hello, world!}
-        {underline I am a multiline string.}
+        ${colors.header("Hello, world!")}
+        ${colors.emphasis("I am a multiline string.")}
       `;
       expectStdout().toMatchInlineSnapshot(`
         "[1mHello, world![22m
         [4mI am a multiline string.[24m"
       `);
     } finally {
-      chalk.level = 0;
+      color.level = 0;
     }
   });
 

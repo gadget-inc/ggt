@@ -6,15 +6,33 @@ import { GGTError, IsBug, UnexpectedError } from "../output/report.js";
 import { symbol } from "../output/symbols.js";
 import { isNil } from "../util/is.js";
 
+export type FlagDef = {
+  name: string;
+  aliases: string[];
+  type: "boolean" | "string" | "number" | "count";
+  description: string;
+  details?: string;
+  valueName?: string;
+  hidden?: boolean;
+  brief?: boolean;
+};
+
 export type ArgsDefinition = Record<string, ArgDefinition>;
 
-type ArgDefinition<Handler extends arg.Handler = arg.Handler> =
-  | Handler
-  | {
-      type: Handler;
-      alias?: string | string[];
-      default?: ReturnType<Handler>;
-    };
+type AliasEntry = string | { name: string; hidden: true };
+
+export const hidden = (name: string): AliasEntry => ({ name, hidden: true });
+
+type ArgDefinition<Handler extends arg.Handler = arg.Handler> = {
+  type: Handler;
+  alias?: AliasEntry | AliasEntry[];
+  default?: ReturnType<Handler>;
+  description?: string;
+  details?: string;
+  valueName?: string;
+  hidden?: boolean;
+  brief?: boolean;
+};
 
 export type ParseArgsOptions = {
   /**
@@ -40,23 +58,27 @@ export type ParseArgsOptions = {
   stopAtPositional?: boolean;
 };
 
+export const toEntryArray = (alias: AliasEntry | AliasEntry[] | undefined): AliasEntry[] => {
+  if (!alias) {
+    return [];
+  }
+  return Array.isArray(alias) ? alias : [alias];
+};
+
+export const aliasName = (entry: AliasEntry): string => (typeof entry === "string" ? entry : entry.name);
+
+const isVisibleAlias = (entry: AliasEntry): boolean => typeof entry === "string";
+
 export const parseArgs = <Args extends ArgsDefinition>(args: Args, options?: arg.Options): ArgsDefinitionResult<Args> => {
   const spec: arg.Spec = {};
   const defaultValues: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(args)) {
-    if (!("type" in value)) {
-      spec[key] = value;
-      continue;
-    }
-
     spec[key] = value.type;
     defaultValues[key] = value.default;
 
-    if (value.alias) {
-      for (const alias of Array.isArray(value.alias) ? value.alias : [value.alias]) {
-        spec[alias] = key;
-      }
+    for (const entry of toEntryArray(value.alias)) {
+      spec[aliasName(entry)] = key;
     }
   }
 
@@ -83,9 +105,26 @@ export const parseArgs = <Args extends ArgsDefinition>(args: Args, options?: arg
 
 export class ArgError extends GGTError {
   isBug = IsBug.NO;
+  usageHint: boolean;
+  usageHintText?: string;
+
+  constructor(message: string, options?: { usageHint?: boolean }) {
+    super(message);
+    this.usageHint = options?.usageHint ?? true;
+  }
+
+  attachUsageHint(text: string): void {
+    if (!this.usageHintText) {
+      this.usageHintText = text;
+    }
+  }
 
   protected override render(): string {
-    return `${chalk.redBright(symbol.cross)} ` + this.message;
+    let output = `${chalk.redBright(symbol.cross)} ` + this.message;
+    if (this.usageHintText) {
+      output += "\n\n" + this.usageHintText;
+    }
+    return output;
   }
 }
 
@@ -107,9 +146,54 @@ export class ArgError extends GGTError {
  * ```
  */
 export type ArgsDefinitionResult<Args extends ArgsDefinition, Keys extends keyof Args = keyof Args> = Simplify<{
-  [Key in Keys]: Args[Key] extends ArgDefinition<infer Handler>
+  // Filter out index-signature keys (widened 'string') so only literal flag keys appear in the result type.
+  [Key in Keys as string extends Key ? never : Key]: Args[Key] extends ArgDefinition<infer Handler>
     ? Args[Key] extends { default: unknown }
       ? NonNullable<ReturnType<Handler>>
       : ReturnType<Handler> | undefined
     : never;
 }> & { _: string[] };
+
+const resolveType = (handler: unknown): FlagDef["type"] => {
+  if (handler === Boolean) {
+    return "boolean";
+  }
+  if (handler === String) {
+    return "string";
+  }
+  if (handler === Number) {
+    return "number";
+  }
+  if (handler === arg.COUNT) {
+    return "count";
+  }
+  // custom handler functions default to string type
+  return "string";
+};
+
+/**
+ * Extracts flag definitions from an ArgsDefinition object.
+ *
+ * The returned array includes flags where `hidden === true`. Callers are
+ * responsible for filtering them before display (e.g. `usage.ts` filters
+ * with `allFlags.filter((f) => !f.hidden)`).
+ */
+export const extractFlags = (args: ArgsDefinition): FlagDef[] => {
+  const flags: FlagDef[] = [];
+
+  for (const [key, value] of Object.entries(args)) {
+    const aliases = toEntryArray(value.alias).filter(isVisibleAlias).map(aliasName);
+
+    const type = resolveType(value.type);
+    const description = value.description ?? "";
+
+    const flag: FlagDef = { name: key, aliases, type, description };
+    if (value.details !== undefined) flag.details = value.details;
+    if (value.valueName !== undefined) flag.valueName = value.valueName;
+    if (value.hidden !== undefined) flag.hidden = value.hidden;
+    if (value.brief !== undefined) flag.brief = value.brief;
+    flags.push(flag);
+  }
+
+  return flags;
+};

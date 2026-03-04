@@ -1,21 +1,25 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import * as agentPlugin from "../../src/commands/agent-plugin.js";
-import { makeArgs } from "../__support__/arg.js";
+import agentPluginCommand from "../../src/commands/agent-plugin.js";
+import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { testCtx } from "../__support__/context.js";
-import { expectStdout } from "../__support__/output.js";
+import { expectError } from "../__support__/error.js";
 
 describe("agent-plugin", () => {
-  it("prints usage when no subcommand is given", async () => {
-    await agentPlugin.run(testCtx, makeArgs(agentPlugin.args, "agent-plugin"));
+  it("throws for unknown subcommand", async () => {
+    const error = await expectError(() => runCommand(testCtx, agentPluginCommand, "foo"));
 
-    expectStdout().toContain("ggt agent-plugin install");
-    expectStdout().toContain("ggt agent-plugin update");
-  });
+    expect(error).toBeInstanceOf(ArgError);
+    expect(error.message).toMatchInlineSnapshot(`
+      "Unknown subcommand foo
 
-  it("prints usage for unknown subcommand", async () => {
-    await agentPlugin.run(testCtx, makeArgs(agentPlugin.args, "agent-plugin", "foo"));
+      Did you mean update?
 
-    expectStdout().toContain("ggt agent-plugin install");
+      USAGE
+        ggt agent-plugin <command>
+
+      Run ggt agent-plugin -h for more information."
+    `);
   });
 });

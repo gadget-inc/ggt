@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import * as whoami from "../../src/commands/whoami.js";
+import whoami from "../../src/commands/whoami.js";
+import { runCommand } from "../../src/services/command/run.js";
 import * as user from "../../src/services/user/user.js";
 import { testCtx } from "../__support__/context.js";
 import { mock } from "../__support__/mock.js";
@@ -10,7 +11,7 @@ describe("whoami", () => {
   it("outputs the current user", async () => {
     mock(user, "getUser", () => ({ id: 1, email: "test@example.com", name: "Jane Doe" }));
 
-    await whoami.run(testCtx, { _: [] });
+    await runCommand(testCtx, whoami);
 
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
@@ -22,7 +23,7 @@ describe("whoami", () => {
   it("outputs only the email if the current user's name is missing", async () => {
     mock(user, "getUser", () => ({ id: 1, email: "test@example.com" }));
 
-    await whoami.run(testCtx, { _: [] });
+    await runCommand(testCtx, whoami);
 
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`
@@ -34,7 +35,7 @@ describe("whoami", () => {
   it("outputs 'not logged in' if the current user is undefined", async () => {
     mock(user, "getUser", () => undefined);
 
-    await whoami.run(testCtx, { _: [] });
+    await runCommand(testCtx, whoami);
 
     expect(user.getUser).toHaveBeenCalled();
     expectStdout().toMatchInlineSnapshot(`

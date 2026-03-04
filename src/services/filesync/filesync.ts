@@ -2,9 +2,9 @@ import assert from "node:assert";
 import path from "node:path";
 import process from "node:process";
 
-import chalk from "chalk";
 import { execa } from "execa";
 import fs from "fs-extra";
+import indentString from "indent-string";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import pluralize from "pluralize";
@@ -21,6 +21,7 @@ import {
 } from "../app/edit/operation.js";
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
+import colors from "../output/colors.js";
 import { confirm } from "../output/confirm.js";
 import { println } from "../output/print.js";
 import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.js";
@@ -261,20 +262,20 @@ export class FileSync {
       printChanges(ctx, {
         changes: localChanges,
         tense: "past",
-        title: sprint`Your local files {underline have} changed.`,
+        title: sprint`Your local files ${colors.emphasis("have")} changed.`,
       });
     } else {
-      println({ ensureEmptyLineAbove: true, content: sprint`Your local files {underline have not} changed.` });
+      println({ ensureEmptyLineAbove: true, content: sprint`Your local files ${colors.emphasis("have not")} changed.` });
     }
 
     if (environmentChanges.size > 0 && !onlyDotGadgetFilesChanged) {
       printChanges(ctx, {
         changes: environmentChanges,
         tense: "past",
-        title: sprint`Your environment's files {underline have}${bothChanged ? " also" : ""} changed.`,
+        title: sprint`Your environment's files ${colors.emphasis("have")}${bothChanged ? " also" : ""} changed.`,
       });
     } else {
-      println({ ensureEmptyLineAbove: true, content: sprint`Your environment's files {underline have not} changed.` });
+      println({ ensureEmptyLineAbove: true, content: sprint`Your environment's files ${colors.emphasis("have not")} changed.` });
     }
   }
 
@@ -399,7 +400,7 @@ export class FileSync {
               printEnvironmentChangesOptions: {
                 tense: "past",
                 ensureEmptyLineAbove: true,
-                title: sprintln`{greenBright ${symbol.tick}} Pulled ${pluralize("file", changed.length + deleted.length)}. ${ts()}`,
+                title: sprintln`${colors.created(symbol.tick)} Pulled ${pluralize("file", changed.length + deleted.length)}. ${ts()}`,
                 limit: 5,
                 ...printEnvironmentChangesOptions,
               },
@@ -552,7 +553,7 @@ export class FileSync {
     // TODO: lift this check up to the pull command
     if (localChanges.size > 0 && !force) {
       await confirm(sprint`
-        Are you sure you want to {underline discard} your local changes?
+        Are you sure you want to ${colors.emphasis("discard")} your local changes?
       `);
     }
 
@@ -660,7 +661,7 @@ export class FileSync {
     printChanges(ctx, {
       changes,
       tense: "past",
-      title: sprint`{greenBright ${symbol.arrowDown}} Pulled ${pluralize("file", changes.size)}. ${ts()}`,
+      title: sprint`${colors.created(symbol.arrowDown)} Pulled ${pluralize("file", changes.size)}. ${ts()}`,
       ...options.printEnvironmentChangesOptions,
     });
 
@@ -676,7 +677,7 @@ export class FileSync {
 
         const content = serializeError(error).message;
         if (content) {
-          println({ ensureEmptyLineAbove: true, indent: 2, content });
+          println({ ensureEmptyLineAbove: true, content: indentString(content, 2) });
         }
       }
     }
@@ -706,7 +707,7 @@ export class FileSync {
         printConflicts({ conflicts });
         preference = await select({
           choices: Object.values(MergeConflictPreference),
-          content: chalk.bold("How should we resolve these conflicts?"),
+          content: colors.header("How should we resolve these conflicts?"),
         });
       }
 
@@ -857,7 +858,7 @@ export class FileSync {
     const contentLength = changed.map((change) => change.content.length).reduce((a, b) => a + b, 0);
     if (contentLength > MAX_PUSH_CONTENT_LENGTH) {
       throw new EdgeCaseError(sprint`
-        {underline Your file changes are too large to push.}
+        ${colors.emphasis("Your file changes are too large to push.")}
 
         Run "ggt status" to see your changes and consider
         ignoring some files or pushing in smaller batches.
@@ -924,15 +925,14 @@ export class FileSync {
         println({
           ensureEmptyLineAbove: true,
           content: sprint`
-            {red Gadget has detected the following fatal errors with your files:}
+            ${colors.error("Gadget has detected the following fatal errors with your files:")}
 
             ${sprintProblems({
               problems: filesyncProblemsToProblems(filesyncProblems),
               showFileTypes: false,
-              indent: 12,
             })}
 
-            {red Your app will not be operational until all fatal errors are fixed.}
+            ${colors.error("Your app will not be operational until all fatal errors are fixed.")}
           `,
         });
       }

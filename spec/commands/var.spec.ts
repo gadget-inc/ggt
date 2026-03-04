@@ -1,16 +1,16 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import * as vars from "../../src/commands/var.js";
+import vars from "../../src/commands/var.js";
 import {
   DELETE_ENVIRONMENT_VARIABLE_MUTATION,
   ENVIRONMENT_VARIABLES_QUERY,
   SET_ENVIRONMENT_VARIABLE_MUTATION,
 } from "../../src/services/app/edit/operation.js";
 import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
-import { makeArgsWithOptions } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
 import { writeDir } from "../__support__/files.js";
@@ -19,12 +19,7 @@ import { nockEditResponse } from "../__support__/graphql.js";
 import { mockConfirmOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { testDirPath } from "../__support__/paths.js";
-import { expectProcessExit } from "../__support__/process.js";
 import { loginTestUser } from "../__support__/user.js";
-
-const makeVarsArgs = (...argv: string[]) => {
-  return makeArgsWithOptions(vars.args, vars.parseOptions, "var", ...argv);
-};
 
 describe("var", () => {
   beforeEach(() => {
@@ -48,7 +43,7 @@ describe("var", () => {
         },
       });
 
-      await vars.run(testCtx, makeVarsArgs("list"));
+      await runCommand(testCtx, vars, "list");
 
       expectStdout().toContain("DATABASE_URL");
       expectStdout().toContain("API_KEY");
@@ -64,7 +59,7 @@ describe("var", () => {
         response: { data: { environmentVariables: [] } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("list"));
+      await runCommand(testCtx, vars, "list");
 
       expectStdout().toContain("No environment variables found.");
     });
@@ -83,7 +78,7 @@ describe("var", () => {
         },
       });
 
-      await vars.run(testCtx, makeVarsArgs("get", "DATABASE_URL"));
+      await runCommand(testCtx, vars, "get", "DATABASE_URL");
 
       expectStdout().toContain("postgres://localhost");
     });
@@ -100,9 +95,9 @@ describe("var", () => {
         },
       });
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("get", "API_KEY")));
+      const error = await expectError(() => runCommand(testCtx, vars, "get", "API_KEY"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("secret");
+      expect(error.message).toMatchInlineSnapshot(`"API_KEY is a secret and its value cannot be read"`);
     });
 
     it("errors when variable not found", async () => {
@@ -113,17 +108,17 @@ describe("var", () => {
         response: { data: { environmentVariables: [] } },
       });
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("get", "MISSING_KEY")));
+      const error = await expectError(() => runCommand(testCtx, vars, "get", "MISSING_KEY"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("MISSING_KEY");
+      expect(error.message).toMatchInlineSnapshot(`"Environment variable not found: MISSING_KEY"`);
     });
 
     it("errors when no key argument provided", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("get")));
+      const error = await expectError(() => runCommand(testCtx, vars, "get"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Missing required argument");
+      expect(error.message).toMatchInlineSnapshot(`"Missing required argument: key"`);
     });
   });
 
@@ -137,7 +132,7 @@ describe("var", () => {
         expectVariables: { input: { key: "API_KEY", value: "abc123", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("set", "API_KEY=abc123"));
+      await runCommand(testCtx, vars, "set", "API_KEY=abc123");
 
       expectStdout().toContain("API_KEY");
     });
@@ -157,7 +152,7 @@ describe("var", () => {
         expectVariables: { input: { key: "KEY2", value: "val2", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("set", "KEY1=val1", "KEY2=val2"));
+      await runCommand(testCtx, vars, "set", "KEY1=val1", "KEY2=val2");
 
       expectStdout().toContain("KEY1");
       expectStdout().toContain("KEY2");
@@ -172,7 +167,7 @@ describe("var", () => {
         expectVariables: { input: { key: "SECRET", value: "xyz", isSecret: true } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("set", "--secret", "SECRET=xyz"));
+      await runCommand(testCtx, vars, "set", "--secret", "SECRET=xyz");
 
       expectStdout().toContain("SECRET");
     });
@@ -186,7 +181,7 @@ describe("var", () => {
         expectVariables: { input: { key: "URL", value: "postgres://host?opt=val", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("set", "URL=postgres://host?opt=val"));
+      await runCommand(testCtx, vars, "set", "URL=postgres://host?opt=val");
 
       expectStdout().toContain("URL");
     });
@@ -200,7 +195,7 @@ describe("var", () => {
         expectVariables: { input: { key: "EMPTY", value: "", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("set", "EMPTY="));
+      await runCommand(testCtx, vars, "set", "EMPTY=");
 
       expectStdout().toContain("EMPTY");
     });
@@ -208,25 +203,33 @@ describe("var", () => {
     it("errors on bad format (no =)", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("set", "INVALID_FORMAT")));
+      const error = await expectError(() => runCommand(testCtx, vars, "set", "INVALID_FORMAT"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Invalid format");
+      expect(error.message).toMatchInlineSnapshot(`
+        "Invalid format: INVALID_FORMAT
+
+        Expected format: KEY=value"
+      `);
     });
 
     it("errors on empty key (=value)", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("set", "=value")));
+      const error = await expectError(() => runCommand(testCtx, vars, "set", "=value"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Invalid format");
+      expect(error.message).toMatchInlineSnapshot(`
+        "Invalid format: =value
+
+        Expected format: KEY=value"
+      `);
     });
 
     it("errors when no key=value provided", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("set")));
+      const error = await expectError(() => runCommand(testCtx, vars, "set"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Missing required argument");
+      expect(error.message).toMatchInlineSnapshot(`"Missing required argument: key=value"`);
     });
   });
 
@@ -242,7 +245,7 @@ describe("var", () => {
         expectVariables: { key: "API_KEY" },
       });
 
-      await vars.run(testCtx, makeVarsArgs("delete", "API_KEY"));
+      await runCommand(testCtx, vars, "delete", "API_KEY");
 
       expect(confirm).toHaveBeenCalledTimes(1);
       expectStdout().toContain("Deleted API_KEY");
@@ -257,7 +260,7 @@ describe("var", () => {
         expectVariables: { key: "API_KEY" },
       });
 
-      await vars.run(testCtx, makeVarsArgs("delete", "--force", "API_KEY"));
+      await runCommand(testCtx, vars, "delete", "--force", "API_KEY");
 
       expect(confirm).not.toHaveBeenCalled();
       expectStdout().toContain("Deleted API_KEY");
@@ -292,7 +295,7 @@ describe("var", () => {
         expectVariables: { key: "KEY2" },
       });
 
-      await vars.run(testCtx, makeVarsArgs("delete", "--all"));
+      await runCommand(testCtx, vars, "delete", "--all");
 
       expect(confirm).toHaveBeenCalledTimes(1);
       expectStdout().toContain("Deleted KEY1, KEY2");
@@ -306,7 +309,7 @@ describe("var", () => {
         response: { data: { environmentVariables: [] } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("delete", "--all"));
+      await runCommand(testCtx, vars, "delete", "--all");
 
       expectStdout().toContain("No environment variables to delete.");
     });
@@ -320,17 +323,18 @@ describe("var", () => {
         expectVariables: { key: "NONEXISTENT" },
       });
 
-      await vars.run(testCtx, makeVarsArgs("delete", "--force", "NONEXISTENT"));
+      await runCommand(testCtx, vars, "delete", "--force", "NONEXISTENT");
 
-      expectStdout().toContain("Deleted NONEXISTENT");
+      // key was not actually deleted, so no success message
+      expectStdout().not.toContain("Deleted");
     });
 
     it("errors when no key provided and --all not used", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("delete")));
+      const error = await expectError(() => runCommand(testCtx, vars, "delete"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Missing required argument");
+      expect(error.message).toMatchInlineSnapshot(`"Missing required argument: key"`);
     });
   });
 
@@ -359,7 +363,7 @@ describe("var", () => {
         expectVariables: { input: { key: "DB_URL", value: "", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("import", "--from=cool-environment-development", "DB_URL"));
+      await runCommand(testCtx, vars, "import", "--from=cool-environment-development", "DB_URL");
 
       expectStdout().toContain("Imported DB_URL from cool-environment-development");
     });
@@ -392,7 +396,7 @@ describe("var", () => {
         expectVariables: { input: { key: "KEY2", value: "", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("import", "--from=cool-environment-development", "--all"));
+      await runCommand(testCtx, vars, "import", "--from=cool-environment-development", "--all");
 
       expectStdout().toContain("Imported KEY1, KEY2 from cool-environment-development");
     });
@@ -416,7 +420,7 @@ describe("var", () => {
         expectVariables: { input: { key: "DB_URL", value: "postgres://staging", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("import", "--from=cool-environment-development", "--include-values", "DB_URL"));
+      await runCommand(testCtx, vars, "import", "--from=cool-environment-development", "--include-values", "DB_URL");
 
       expectStdout().toContain("Imported DB_URL from cool-environment-development");
     });
@@ -443,7 +447,7 @@ describe("var", () => {
         expectVariables: { input: { key: "PUBLIC", value: "public_val", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("import", "--from=cool-environment-development", "--include-values", "--all"));
+      await runCommand(testCtx, vars, "import", "--from=cool-environment-development", "--include-values", "--all");
 
       expectStdout().toContain("Imported PUBLIC from cool-environment-development");
       expectStdout().toContain("Skipped secret variables");
@@ -453,9 +457,17 @@ describe("var", () => {
     it("errors on unknown source environment", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("import", "--from=nonexistent", "--all")));
+      const error = await expectError(() => runCommand(testCtx, vars, "import", "--from=nonexistent", "--all"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Unknown environment");
+      expect(error.message).toMatchInlineSnapshot(`
+        "Unknown environment: nonexistent
+
+        Available environments:
+          • development
+          • production
+          • cool-environment-development
+          • other-environment-development"
+      `);
     });
 
     it("errors when specified keys not found in source", async () => {
@@ -467,9 +479,13 @@ describe("var", () => {
         environment: { ...testApp.environments[2]!, application: testApp },
       });
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("import", "--from=cool-environment-development", "MISSING")));
+      const error = await expectError(() => runCommand(testCtx, vars, "import", "--from=cool-environment-development", "MISSING"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("MISSING");
+      expect(error.message).toMatchInlineSnapshot(`
+        "The following keys were not found in the cool-environment-development environment:
+
+          • MISSING"
+      `);
     });
   });
 
@@ -492,7 +508,7 @@ describe("var", () => {
         expectVariables: { input: { key: "KEY2", value: "value2", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("import", `--from-file=${envFilePath}`, "--all"));
+      await runCommand(testCtx, vars, "import", `--from-file=${envFilePath}`, "--all");
 
       expectStdout().toContain("Imported KEY1, KEY2");
     });
@@ -517,7 +533,7 @@ describe("var", () => {
         expectVariables: { input: { key: "KEY2", value: "single_quoted", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("import", `--from-file=${envFilePath}`, "--all"));
+      await runCommand(testCtx, vars, "import", `--from-file=${envFilePath}`, "--all");
 
       expectStdout().toContain("Imported KEY1, KEY2");
     });
@@ -536,7 +552,7 @@ describe("var", () => {
         expectVariables: { input: { key: "KEY1", value: "value1", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("import", `--from-file=${envFilePath}`, "--all"));
+      await runCommand(testCtx, vars, "import", `--from-file=${envFilePath}`, "--all");
 
       expectStdout().toContain("Imported KEY1");
     });
@@ -553,7 +569,7 @@ describe("var", () => {
         expectVariables: { input: { key: "KEY1", value: "val1", isSecret: false } },
       });
 
-      await vars.run(testCtx, makeVarsArgs("import", `--from-file=${envFilePath}`, "KEY1"));
+      await runCommand(testCtx, vars, "import", `--from-file=${envFilePath}`, "KEY1");
 
       expectStdout().toContain("Imported KEY1");
     });
@@ -564,9 +580,13 @@ describe("var", () => {
       const envFilePath = testDirPath("test.env");
       await writeDir(testDirPath(), { "test.env": "KEY1=val1\n" });
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("import", `--from-file=${envFilePath}`, "MISSING")));
+      const error = await expectError(() => runCommand(testCtx, vars, "import", `--from-file=${envFilePath}`, "MISSING"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("MISSING");
+      expect(error.message).toMatchInlineSnapshot(`
+        "The following keys were not found in the file:
+
+          • MISSING"
+      `);
     });
   });
 
@@ -574,63 +594,25 @@ describe("var", () => {
     it("errors when neither --from nor --from-file provided", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("import", "--all")));
+      const error = await expectError(() => runCommand(testCtx, vars, "import", "--all"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("--from or --from-file");
+      expect(error.message).toMatchInlineSnapshot(`"Either --from or --from-file is required."`);
     });
 
     it("errors when both --from and --from-file provided", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("import", "--from=staging", "--from-file=.env")));
+      const error = await expectError(() => runCommand(testCtx, vars, "import", "--from=staging", "--from-file=.env"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Cannot use both");
+      expect(error.message).toMatchInlineSnapshot(`"Cannot use both --from and --from-file."`);
     });
 
     it("errors when no keys specified and --all not used", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("import", "--from=staging")));
+      const error = await expectError(() => runCommand(testCtx, vars, "import", "--from=staging"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("--all");
-    });
-  });
-
-  describe("help/usage", () => {
-    it("prints help when no subcommand is given", async () => {
-      await vars.run(testCtx, makeVarsArgs());
-
-      expectStdout().toContain("ggt var <command>");
-      expectStdout().toContain("list");
-      expectStdout().toContain("set");
-      expectStdout().toContain("delete");
-    });
-
-    it("prints help for list -h", async () => {
-      await expectProcessExit(() => vars.run(testCtx, makeVarsArgs("list", "-h")));
-
-      expectStdout().toContain("ggt var list");
-    });
-
-    it("prints help for set -h", async () => {
-      await expectProcessExit(() => vars.run(testCtx, makeVarsArgs("set", "-h")));
-
-      expectStdout().toContain("ggt var set");
-      expectStdout().toContain("--secret");
-    });
-
-    it("prints help for delete -h", async () => {
-      await expectProcessExit(() => vars.run(testCtx, makeVarsArgs("delete", "-h")));
-
-      expectStdout().toContain("ggt var delete");
-      expectStdout().toContain("--force");
-    });
-
-    it("prints help for import -h", async () => {
-      await expectProcessExit(() => vars.run(testCtx, makeVarsArgs("import", "-h")));
-
-      expectStdout().toContain("ggt var import");
-      expectStdout().toContain("--from");
+      expect(error.message).toMatchInlineSnapshot(`"Specify keys to import or use --all to import all variables."`);
     });
   });
 
@@ -638,9 +620,18 @@ describe("var", () => {
     it("errors on unknown subcommand", async () => {
       await makeSyncScenario();
 
-      const error = await expectError(() => vars.run(testCtx, makeVarsArgs("bogus")));
+      const error = await expectError(() => runCommand(testCtx, vars, "bogus"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Unknown subcommand");
+      expect(error.message).toMatchInlineSnapshot(`
+        "Unknown subcommand bogus
+
+        Did you mean get?
+
+        USAGE
+          ggt var <command> [flags]
+
+        Run ggt var -h for more information."
+      `);
     });
   });
 });

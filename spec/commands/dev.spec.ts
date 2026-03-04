@@ -5,14 +5,14 @@ import pMap from "p-map";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
 
-import * as dev from "../../src/commands/dev.js";
+import dev from "../../src/commands/dev.js";
 import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
 import { assetsPath } from "../../src/services/util/paths.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { waitForReportErrorAndExit } from "../__support__/error.js";
 import { makeFile, makeSyncScenario } from "../__support__/filesync.js";
@@ -22,15 +22,15 @@ import { sleep, timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("dev", () => {
-  let args: dev.DevArgsResult;
+  let defaultArgv: string[];
+
+  const runDev = (...argv: string[]) => runCommand(testCtx, dev, ...defaultArgv, ...argv);
 
   beforeEach(() => {
     loginTestUser();
     nockTestApps();
 
-    args = makeArgs(
-      dev.args,
-      "dev",
+    defaultArgv = [
       testDirPath("local"),
       "--app",
       testApp.slug,
@@ -44,7 +44,7 @@ describe("dev", () => {
       String(ms("20ms" /* default 20s */)),
       "--file-watch-rename-timeout",
       String(ms("50ms" /* default 1.25s */)),
-    );
+    ];
 
     mockSelectOnce(FileSyncStrategy.MERGE);
   });
@@ -52,7 +52,7 @@ describe("dev", () => {
   it("writes changes from gadget to the local filesystem", async () => {
     const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     // receive a new file
     await emitGadgetChanges({
@@ -330,7 +330,7 @@ describe("dev", () => {
     // wait for the final filesVersion and expect the same result
     const { waitUntilLocalFilesVersion, emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     // receive a new file
     await emitGadgetChanges({
@@ -451,7 +451,7 @@ describe("dev", () => {
     // wait for stop() to finish and expect the same result
     const { emitGadgetChanges, expectDirs } = await makeSyncScenario();
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     // receive a new file
     await emitGadgetChanges({
@@ -588,7 +588,7 @@ describe("dev", () => {
       },
     });
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     await emitGadgetChanges({
       remoteFilesVersion: "2",
@@ -672,7 +672,7 @@ describe("dev", () => {
   it("sends changes from the local filesystem to gadget", { retry: 3 }, async () => {
     const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     // add a file
     await fs.outputFile(localDir.absolute("file.txt"), "file v2");
@@ -1023,7 +1023,7 @@ describe("dev", () => {
   it("doesn't send multiple changes to the same file at once", { retry: 3 }, async () => {
     const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario();
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     // update a file 10 times
     for (let i = 0; i < 10; i++) {
@@ -1069,7 +1069,7 @@ describe("dev", () => {
       },
     });
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     // add a file
     await fs.outputFile(localDir.absolute("tmp/file.js"), "foo");
@@ -1151,7 +1151,7 @@ describe("dev", () => {
       },
     });
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     // add files inside the ignored directory
     await fs.outputFile(localDir.absolute("build/output.js"), "compiled");
@@ -1193,7 +1193,7 @@ describe("dev", () => {
     const { filesync, waitUntilLocalFilesVersion, localDir, waitUntilGadgetFilesVersion, emitGadgetChanges, expectDirs } =
       await makeSyncScenario();
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     vi.spyOn(filesync.syncJson.directory, "loadIgnoreFile");
 
@@ -1252,7 +1252,7 @@ describe("dev", () => {
       },
     });
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     expect(filesync.syncJson.directory.ignores("tmp/foo.js", false)).toBe(true);
 
@@ -1273,7 +1273,7 @@ describe("dev", () => {
   it("notifies the user when an error occurs", async () => {
     const { expectGadgetChangesSubscription } = await makeSyncScenario();
 
-    await dev.run(testCtx, args);
+    await runDev();
 
     const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
 
@@ -1299,12 +1299,12 @@ describe("dev", () => {
   it("throws YarnNotFoundError if yarn is not found", async () => {
     await makeSyncScenario();
     mock(which, () => Promise.resolve(null as any));
-    await expect(dev.run(testCtx, args)).rejects.toThrow(YarnNotFoundError);
+    await expect(runDev()).rejects.toThrow(YarnNotFoundError);
   });
 
   it("does not throw YarnNotFoundError if yarn is found", async () => {
     await makeSyncScenario();
     mock(which, () => Promise.resolve("/path/to/yarn"));
-    await dev.run(testCtx, args);
+    await runDev();
   });
 });

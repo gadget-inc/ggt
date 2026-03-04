@@ -2,9 +2,10 @@ import assert from "node:assert";
 
 import { z } from "zod";
 
-import { login } from "../../commands/login.js";
+import loginCommand from "../../commands/login.js";
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
+import { runCommand } from "../command/run.js";
 import { config } from "../config/config.js";
 import { maybeLoadAuthHeaders, swallowUnauthorized } from "../http/auth.js";
 import { http } from "../http/http.js";
@@ -73,7 +74,7 @@ export const getUserOrLogin = async (ctx: Context, command: Command): Promise<Us
   });
 
   await confirm({ ensureEmptyLineAbove: true, content: "Would you like to log in?" });
-  await login(ctx, { _: [] });
+  await runCommand(ctx, loginCommand);
 
   user = await getUser(ctx);
   assert(user, "missing user after successful login");

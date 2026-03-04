@@ -6,74 +6,27 @@ import path from "node:path";
 import process, { nextTick } from "node:process";
 import type { Duplex } from "node:stream";
 
-import chalk from "chalk";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
-import type { ArgsDefinition } from "../services/command/arg.js";
-import type { Run, Usage } from "../services/command/command.js";
+import { ArgError } from "../services/command/arg.js";
+import { defineCommand } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import { config } from "../services/config/config.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { loadAuthHeaders } from "../services/http/auth.js";
 import { http } from "../services/http/http.js";
-import { LoggingArgs } from "../services/output/log/structured.js";
+import colors from "../services/output/colors.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
 import { spin } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
 
-export type DebuggerArgs = typeof args;
+const SupportedEditors = ["vscode", "cursor"] as const;
 
 const StartingMessage = "Starting ggt debugger";
 const RunningMessage = "ggt debugger running on";
-
-export const args = {
-  ...AppIdentityArgs,
-  ...LoggingArgs,
-  "--port": {
-    type: Number,
-    alias: ["-p"],
-  },
-  "--configure": {
-    type: String,
-  },
-} satisfies ArgsDefinition;
-
-const SupportedEditors = ["vscode", "cursor"] as const;
-
-export const usage: Usage = (_ctx) => {
-  return sprint`
-    Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.
-    This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other
-    CDP-compatible debugger client.
-
-    {gray Usage}
-          $ ggt debugger [DIRECTORY] [options]
-
-          DIRECTORY: The directory containing your Gadget app (default: current directory)
-
-    {gray Options}
-          -a, --app <app_name>        Selects the app to debug. Defaults to the app synced to the current directory, if there is one.
-          -e, --env <env_name>        Selects the environment to debug. Defaults to the environment synced to the current directory, if there is one.
-          -p, --port <port>           Local port for the inspector proxy (default: 9229)
-          --configure <editor>        Configure debugger for ${SupportedEditors.join(", ")}
-
-    {gray Examples}
-          start debugger proxy for current environment
-          {cyanBright $ ggt debugger}
-
-          use a custom port
-          {cyanBright $ ggt debugger --port 9230}
-
-          debug a specific app and environment
-          {cyanBright $ ggt debugger --app myApp --env development}
-
-          configure VS Code debugger
-          {cyanBright $ ggt debugger --configure vscode}
-  `;
-};
 
 type DebuggerSessionResponse = {
   wsUrl: string;
@@ -82,90 +35,6 @@ type DebuggerSessionResponse = {
     startedAt: string;
     expiresAt: string;
   };
-};
-
-export const run: Run<DebuggerArgs> = async (ctx, args) => {
-  const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
-  const appIdentity = await AppIdentity.load(ctx, { command: "debugger", args, directory });
-
-  // Handle --configure option
-  if (args["--configure"]) {
-    const editor = args["--configure"].toLowerCase();
-    if (!SupportedEditors.includes(editor as (typeof SupportedEditors)[number])) {
-      throw new Error(`Invalid editor "${args["--configure"]}". Supported editors: ${SupportedEditors.join(", ")}`);
-    }
-
-    const configurator = new DebuggerConfigurator(directory.path);
-    const port = args["--port"] ?? 9229;
-    configurator.configure(port);
-
-    println({
-      ensureEmptyLineAbove: true,
-      content: chalk.green(`${symbol.tick} Configured ${editor} debugger`),
-    });
-    println({
-      content: sprint`
-        Added configuration to:
-        • ${configurator.launchJsonPath}
-        • ${configurator.tasksJsonPath}
-
-        You can now start debugging by running the "Gadget debugger" launch configuration.
-      `,
-    });
-    return;
-  }
-
-  const spinner = spin(`${StartingMessage} for ${appIdentity.environment.name} environment`);
-  ctx.log.info("debugger command started");
-
-  ctx.log.trace("sync json loaded", {
-    app: appIdentity.environment.application.slug,
-    environment: appIdentity.environment.name,
-  });
-
-  const authHeaders = loadAuthHeaders(ctx);
-  const port = args["--port"] ?? 9229;
-  const sessionId = randomUUID();
-
-  // Check if VS Code launch configuration exists
-  const configurator = new DebuggerConfigurator(directory.path);
-  if (!configurator.hasLaunchConfiguration()) {
-    ctx.log.warn("vscode/cursor debugger configuration not found");
-    println({
-      ensureEmptyLineAbove: true,
-      content: chalk.yellow(
-        `⚠ Gadget debugger not configured. Run "${chalk.bold(`ggt debugger --configure ${SupportedEditors[0]}`)}" to set up.`,
-      ),
-    });
-  }
-
-  const proxy = new DebuggerProxy(ctx, {
-    appIdentity,
-    authHeaders,
-    sessionId,
-    port,
-  });
-
-  try {
-    await proxy.start();
-
-    spinner.succeed();
-    println({ ensureEmptyLineAbove: true, content: chalk.green(`${symbol.tick} ${RunningMessage} ws://localhost:${port}/${sessionId}`) });
-    println({ content: chalk.gray("Press Ctrl+C to stop") });
-
-    await new Promise<void>((resolve) => {
-      ctx.onAbort(() => {
-        ctx.log.info("abort signal received");
-        resolve();
-      });
-    });
-
-    proxy.stop();
-    println({ ensureEmptyLineAbove: true, content: `${symbol.tick} Proxy server stopped` });
-  } catch (error) {
-    ctx.log.error("debugger command failed", { error });
-    await reportErrorAndExit(ctx, error);
-  }
 };
 
 type DebuggerProxyOptions = {
@@ -774,3 +643,135 @@ class DebuggerConfigurator {
     writeFileSync(this.tasksJsonPath, JSON.stringify(tasksJson, undefined, 2) + "\n", "utf-8");
   }
 }
+
+export default defineCommand({
+  name: "debugger",
+  description: "Connect a debugger to your app's environment",
+  details: sprint`
+    Starts a local Chrome DevTools Protocol (CDP) proxy that forwards debugging traffic
+    between your editor and your Gadget environment. Supported clients include VS Code,
+    Cursor, and Chrome DevTools. Use ${colors.subdued("--configure vscode")} to generate
+    .vscode/launch.json and tasks.json for one-click attach debugging. Press Ctrl+C to
+    stop the proxy.
+  `,
+  examples: [
+    "ggt debugger",
+    "ggt debugger --port 9230",
+    "ggt debugger --configure vscode",
+    "ggt debugger --configure cursor",
+    "ggt debugger --app myApp --env development",
+    "ggt debugger --port 9230 --configure vscode",
+  ],
+  positionals: [
+    {
+      name: "directory",
+      description: "App directory to use",
+      details: "Defaults to the current working directory when omitted.",
+    },
+  ],
+  args: {
+    ...AppIdentityArgs,
+    "--port": {
+      type: Number,
+      alias: ["-p"],
+      description: "Local port for the CDP proxy",
+      valueName: "port",
+      details: "Defaults to 9229. Change this if the default port is already in use.",
+    },
+    "--configure": {
+      type: String,
+      alias: "-c",
+      description: "Write editor debug config files (vscode, cursor)",
+      valueName: "editor",
+      details: "Generates .vscode/launch.json and tasks.json for one-click attach debugging. Works with both VS Code and Cursor.",
+    },
+  },
+  run: async (ctx, args) => {
+    const directory = await loadSyncJsonDirectory(args._[0] ?? process.cwd());
+    const appIdentity = await AppIdentity.load(ctx, { command: "debugger", args, directory });
+
+    // Handle --configure option
+    if (args["--configure"]) {
+      const editor = args["--configure"].toLowerCase();
+      if (!SupportedEditors.includes(editor as (typeof SupportedEditors)[number])) {
+        throw new ArgError(`Invalid editor "${args["--configure"]}". Supported editors: ${SupportedEditors.join(", ")}`, {
+          usageHint: false,
+        });
+      }
+
+      const configurator = new DebuggerConfigurator(directory.path);
+      const port = args["--port"] ?? 9229;
+      configurator.configure(port);
+
+      println({
+        ensureEmptyLineAbove: true,
+        content: colors.success(`${symbol.tick} Configured ${editor} debugger`),
+      });
+      println({
+        content: sprint`
+          Added configuration to:
+          • ${configurator.launchJsonPath}
+          • ${configurator.tasksJsonPath}
+
+          You can now start debugging by running the "Gadget debugger" launch configuration.
+        `,
+      });
+      return;
+    }
+
+    const spinner = spin(`${StartingMessage} for ${appIdentity.environment.name} environment`);
+    ctx.log.info("debugger command started");
+
+    ctx.log.trace("sync json loaded", {
+      app: appIdentity.environment.application.slug,
+      environment: appIdentity.environment.name,
+    });
+
+    const authHeaders = loadAuthHeaders(ctx);
+    const port = args["--port"] ?? 9229;
+    const sessionId = randomUUID();
+
+    // Check if VS Code launch configuration exists
+    const configurator = new DebuggerConfigurator(directory.path);
+    if (!configurator.hasLaunchConfiguration()) {
+      ctx.log.warn("vscode/cursor debugger configuration not found");
+      println({
+        ensureEmptyLineAbove: true,
+        content: colors.warning(
+          `⚠ Gadget debugger not configured. Run "${colors.identifier(`ggt debugger --configure ${SupportedEditors[0]}`)}" to set up.`,
+        ),
+      });
+    }
+
+    const proxy = new DebuggerProxy(ctx, {
+      appIdentity,
+      authHeaders,
+      sessionId,
+      port,
+    });
+
+    try {
+      await proxy.start();
+
+      spinner.succeed();
+      println({
+        ensureEmptyLineAbove: true,
+        content: colors.success(`${symbol.tick} ${RunningMessage} ws://localhost:${port}/${sessionId}`),
+      });
+      println({ content: colors.subdued("Press Ctrl+C to stop") });
+
+      await new Promise<void>((resolve) => {
+        ctx.onAbort(() => {
+          ctx.log.info("abort signal received");
+          resolve();
+        });
+      });
+
+      proxy.stop();
+      println({ ensureEmptyLineAbove: true, content: `${symbol.tick} Proxy server stopped` });
+    } catch (error) {
+      ctx.log.error("debugger command failed", { error });
+      await reportErrorAndExit(ctx, error);
+    }
+  },
+});

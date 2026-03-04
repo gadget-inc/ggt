@@ -11,84 +11,57 @@ const color = new Chalk({
   level: env.testLike && config.logLevel < Level.PRINT ? 3 : chalk.level,
 });
 
+export { color };
+
 export default {
+  // Semantic names
   error: color.red,
-  success: color.green,
-  warn: color.yellow,
   link: color.cyan,
-  highlighted: color.magentaBright,
-  examplesQuestions: color.cyanBright,
   subdued: color.blackBright,
-  body: color.whiteBright,
 
-  black: color.black,
-  blackBright: color.blackBright,
-  red: color.red,
-  redBright: color.redBright,
-  green: color.green,
-  greenBright: color.greenBright,
-  yellow: color.yellow,
-  yellowBright: color.yellowBright,
-  blue: color.blue,
-  blueBright: color.blueBright,
-  magenta: color.magenta,
-  magentaBright: color.magentaBright,
-  cyan: color.cyan,
-  cyanBright: color.cyanBright,
-  white: color.white,
-  whiteBright: color.whiteBright,
-  bgBlack: color.bgBlack,
-  bgBlackBright: color.bgBlackBright,
-  bgRed: color.bgRed,
-  bgRedBright: color.bgRedBright,
-  bgGreen: color.bgGreen,
-  bgGreenBright: color.bgGreenBright,
-  bgYellow: color.bgYellow,
-  bgYellowBright: color.bgYellowBright,
-  bgBlue: color.bgBlue,
-  bgBlueBright: color.bgBlueBright,
-  bgMagenta: color.bgMagenta,
-  bgMagentaBright: color.bgMagentaBright,
-  bgCyan: color.bgCyan,
-  bgCyanBright: color.bgCyanBright,
-  bgWhite: color.bgWhite,
-  bgWhiteBright: color.bgWhiteBright,
-  reset: color.reset,
-};
+  /** Flag names, arg names, command names in help output. */
+  identifier: color.bold,
+  /** Value placeholders like `<app-slug>` in help output. */
+  placeholder: color.italic,
+  /** Section headings like USAGE, FLAGS, COMMANDS, EXAMPLES in help output. */
+  header: color.bold,
+  /** Inline command references in prose/footers like `ggt dev --help`. */
+  hint: color.italic,
+  /** The `$` shell prompt character in examples. */
+  prompt: color.dim,
 
-export const colorTest = (): string => {
-  return `
-${color.black("black")}
-${color.blackBright("blackBright")}
-${color.red("red")}
-${color.redBright("redBright")}
-${color.green("green")}
-${color.greenBright("greenBright")}
-${color.yellow("yellow")}
-${color.yellowBright("yellowBright")}
-${color.blue("blue")}
-${color.blueBright("blueBright")}
-${color.magenta("magenta")}
-${color.magentaBright("magentaBright")}
-${color.cyan("cyan")}
-${color.cyanBright("cyanBright")}
-${color.white("white")}
-${color.whiteBright("whiteBright")}
-${color.bgBlack("bgBlack")}
-${color.bgBlackBright("bgBlackBright")}
-${color.bgRed("bgRed")}
-${color.bgRedBright("bgRedBright")}
-${color.bgGreen("bgGreen")}
-${color.bgGreenBright("bgGreenBright")}
-${color.bgYellow("bgYellow")}
-${color.bgYellowBright("bgYellowBright")}
-${color.bgBlue("bgBlue")}
-${color.bgBlueBright("bgBlueBright")}
-${color.bgMagenta("bgMagenta")}
-${color.bgMagentaBright("bgMagentaBright")}
-${color.bgCyan("bgCyan")}
-${color.bgCyanBright("bgCyanBright")}
-${color.bgWhite("bgWhite")}
-${color.bgWhiteBright("bgWhiteBright")}
-  `;
+  // Value type tokens
+  plain: color.reset,
+  number: color.yellowBright,
+  boolean: color.green,
+
+  // Outcome / status
+  /** Positive outcomes: "No problems found", "✓ done". */
+  success: color.green,
+  /** Caution: warning text. */
+  warning: color.yellow,
+  /** Key words in prompts: "discard local", "have not synced". */
+  emphasis: color.underline,
+
+  // Filesync change type indicators
+  /** + symbol, create counts. */
+  created: color.greenBright,
+  /** ± symbol, update counts. */
+  updated: color.blueBright,
+  /** - symbol, delete counts. */
+  deleted: color.redBright,
+  /** → symbol, rename counts. */
+  renamed: color.yellowBright,
+
+  // Inline references
+  /** Inline code, command, and file name references in prose. */
+  code: color.cyanBright,
+
+  // Log level badge backgrounds
+  levelPrint: color.bgBlack,
+  levelTrace: color.bgBlue,
+  levelDebug: color.bgMagenta,
+  levelInfo: color.bgBlue,
+  levelWarn: color.bgYellow,
+  levelError: color.bgRed,
 };

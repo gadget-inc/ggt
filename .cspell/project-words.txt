@@ -64,4 +64,5 @@ unstub
 unthunk
 usagestop
 vitest
+worktree
 worktrees

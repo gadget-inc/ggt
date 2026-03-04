@@ -15,6 +15,7 @@ import { Directory } from "../filesync/directory.js";
 import { http } from "../http/http.js";
 import { packageJson } from "../util/package-json.js";
 import { agentPluginShaPath, SKILLS_REPO } from "./agent-plugin.js";
+import colors from "./colors.js";
 import { println } from "./print.js";
 import { sprint } from "./sprint.js";
 
@@ -78,7 +79,7 @@ export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
       latest = tags.experimental;
       updateAvailable = packageJson.version !== latest;
       updateMessage = sprint`
-        Update available! {red ${packageJson.version}} → {green ${latest}}
+        Update available! ${colors.error(packageJson.version)} → ${colors.success(latest)}
         Run "npm install -g ${packageJson.name}@experimental" to update.
       `;
     } else {
@@ -86,7 +87,7 @@ export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
       latest = tags.latest;
       updateAvailable = semver.lt(packageJson.version, latest);
       updateMessage = sprint`
-        Update available! {red ${packageJson.version}} → {green ${latest}}
+        Update available! ${colors.error(packageJson.version)} → ${colors.success(latest)}
         Changelog: https://github.com/gadget-inc/ggt/releases/tag/v${latest}
         Run "npm install -g ${packageJson.name}" to update.
       `;
@@ -132,11 +133,17 @@ const checkAgentPluginUpdate = async (ctx: Context): Promise<void> => {
     if (commitData.sha === storedSha) return;
 
     println(
-      boxen(sprint`{yellow Gadget agent plugin updates available.}\nRun {cyanBright ggt agent-plugin update} to update.`, {
-        padding: 1,
-        borderStyle: "round",
-        textAlignment: "center",
-      }),
+      boxen(
+        sprint`
+        ${colors.warning("Gadget agent plugin updates available.")}
+        Run ${colors.code("ggt agent-plugin update")} to update.
+        `,
+        {
+          padding: 1,
+          borderStyle: "round",
+          textAlignment: "center",
+        },
+      ),
     );
   } catch (error) {
     ctx.log.trace("failed to check for agent plugin updates", { error });

@@ -3,16 +3,17 @@ import path from "node:path";
 import fs from "fs-extra";
 
 import { type Application, EnvironmentType, getApplications, type Environment } from "../services/app/app.js";
-import { AppArg } from "../services/app/arg.js";
 import { Edit } from "../services/app/edit/edit.js";
 import { CREATE_ENVIRONMENT_MUTATION, DELETE_ENVIRONMENT_MUTATION, UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
-import { loadApplication } from "../services/command/app-identity.js";
-import { ArgError, parseArgs, type ArgsDefinition, type ParseArgsOptions } from "../services/command/arg.js";
-import type { Run, Usage } from "../services/command/command.js";
+import { AppIdentityArgs, loadApplication } from "../services/command/app-identity.js";
+import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
+import { defineCommand } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import type { Directory } from "../services/filesync/directory.js";
+import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { SyncJsonState } from "../services/filesync/sync-json-state.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import colors from "../services/output/colors.js";
 import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
@@ -21,192 +22,13 @@ import { printTable } from "../services/output/table.js";
 import { getUserOrLogin } from "../services/user/user.js";
 import { sortBySimilar } from "../services/util/collection.js";
 
-export const args = {
-  "--app": { type: AppArg, alias: ["-a", "--application"] },
+const parentArgs = {
+  "--app": AppIdentityArgs["--app"],
 } satisfies ArgsDefinition;
-
-export const parseOptions: ParseArgsOptions = { permissive: true };
-
-export const usage: Usage = () => {
-  return sprint`
-    Manage environments for your Gadget application.
-
-    {gray Usage}
-      ggt env <command> [options]
-
-    {gray Commands}
-      list             List all environments
-      create <name>    Create a new environment
-      delete <name>    Delete an environment
-      unpause <name>   Unpause a paused environment
-      use <name>       Switch the active environment
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-
-    Run "ggt env <command> -h" for more information about a specific command.
-  `;
-};
-
-const listUsage = (): string => {
-  return sprint`
-    List all environments.
-
-    {gray Usage}
-      ggt env list [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env list --app=myapp}
-  `;
-};
-
-const createUsage = (): string => {
-  return sprint`
-    Create a new environment.
-
-    {gray Usage}
-      ggt env create <name> [options]
-
-    {gray Options}
-      --from <env>           Clone from a specific environment (defaults to
-                             the current sync environment if in a sync directory)
-      --use                  Switch to the new environment after creation
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env create staging --app=myapp}
-      {cyanBright $ ggt env create staging --from=harry-dev --app=myapp}
-      {cyanBright $ ggt env create staging --use --app=myapp}
-  `;
-};
-
-const deleteUsage = (): string => {
-  return sprint`
-    Delete an environment.
-
-    {gray Usage}
-      ggt env delete <name> [options]
-
-    {gray Options}
-      -f, --force            Skip confirmation
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env delete staging --app=myapp}
-      {cyanBright $ ggt env delete staging --force --app=myapp}
-  `;
-};
-
-const unpauseUsage = (): string => {
-  return sprint`
-    Unpause a paused environment.
-
-    {gray Usage}
-      ggt env unpause <name> [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env unpause staging --app=myapp}
-  `;
-};
-
-const useUsage = (): string => {
-  return sprint`
-    Switch the active environment for the current sync directory.
-
-    {gray Usage}
-      ggt env use <name> [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-
-    {gray Examples}
-      {cyanBright $ ggt env use staging}
-      {cyanBright $ ggt env use staging --app=myapp}
-  `;
-};
-
-const subcommandUsage = (subcommand: string | undefined): string => {
-  switch (subcommand) {
-    case "list":
-      return listUsage();
-    case "create":
-      return createUsage();
-    case "delete":
-      return deleteUsage();
-    case "unpause":
-      return unpauseUsage();
-    case "use":
-      return useUsage();
-    default:
-      return usage(undefined!); // oxlint-disable-line
-  }
-};
-
-const createArgs = {
-  "--from": { type: String },
-  "--use": { type: Boolean },
-} satisfies ArgsDefinition;
-
-const deleteArgs = {
-  "--force": { type: Boolean, alias: "-f" },
-} satisfies ArgsDefinition;
-
-export const run: Run<typeof args> = async (ctx, args) => {
-  const subcommandAliases: Record<string, string> = { ls: "list" };
-  let subcommand = args._.shift();
-  if (subcommand) {
-    subcommand = subcommandAliases[subcommand] ?? subcommand;
-  }
-
-  if (args._.includes("-h") || args._.includes("--help")) {
-    println(subcommandUsage(subcommand));
-    process.exit(0);
-  }
-
-  if (!subcommand) {
-    println(usage(ctx));
-    return;
-  }
-
-  const validSubcommands = ["list", "create", "delete", "unpause", "use"];
-  if (!validSubcommands.includes(subcommand)) {
-    throw new ArgError(sprint`
-      Unknown subcommand {yellow ${subcommand}}
-
-      Run {gray ggt env -h} for usage
-    `);
-  }
-
-  const { application, state } = await resolveApplication(ctx, args);
-
-  switch (subcommand) {
-    case "list":
-      runList(application);
-      break;
-    case "create":
-      await runCreate(ctx, application, args._, state);
-      break;
-    case "delete":
-      await runDelete(ctx, application, args._, state);
-      break;
-    case "unpause":
-      await runUnpause(ctx, application, args._);
-      break;
-    case "use":
-      await runUse(ctx, application, args._);
-      break;
-  }
-};
 
 const resolveApplication = async (
   ctx: Context,
-  args: { "--app"?: string; _: string[] },
+  args: { "--app"?: string },
 ): Promise<{ application: Application; state?: SyncJsonState }> => {
   const user = await getUserOrLogin(ctx, "env");
   const availableApps = await getApplications(ctx);
@@ -218,6 +40,7 @@ const resolveApplication = async (
 
         Visit https://gadget.new to create one!
       `,
+      { usageHint: false },
     );
   }
 
@@ -248,9 +71,12 @@ const findEnvironmentOrThrow = (application: Application, name: string): Environ
   }
 
   if (application.environments.length === 0) {
-    throw new ArgError(sprint`
-      No environments found for ${application.slug}.
-    `);
+    throw new ArgError(
+      sprint`
+        No environments found for ${application.slug}.
+      `,
+      { usageHint: false },
+    );
   }
 
   const similarEnvs = sortBySimilar(
@@ -258,48 +84,34 @@ const findEnvironmentOrThrow = (application: Application, name: string): Environ
     application.environments.map((env) => env.name),
   ).slice(0, 5);
 
-  throw new ArgError(sprint`
-    Unknown environment: ${name}
+  throw new ArgError(
+    sprint`
+      Unknown environment: ${name}
 
-    Did you mean one of these?
+      Did you mean one of these?
 
-      • ${similarEnvs.join("\n        • ")}
-  `);
+        ${similarEnvs.map((s) => `• ${s}`).join("\n")}
+    `,
+    { usageHint: false },
+  );
 };
 
 const getEditForApp = (ctx: Context, application: Application, targetEnv?: Environment): Edit => {
   const environment = targetEnv ?? application.environments.find((env) => env.type === EnvironmentType.Development);
 
   if (!environment) {
-    throw new ArgError(
-      sprint`
-        No development environment found for ${application.slug}.
-      `,
-    );
+    throw new ArgError(`No development environment found for ${application.slug}.`, { usageHint: false });
   }
 
   return new Edit(ctx, { ...environment, application });
-};
-
-const runList = (application: Application): void => {
-  const envs = application.environments;
-
-  if (envs.length === 0) {
-    println("No environments found.");
-    return;
-  }
-
-  printTable({
-    headers: ["Name", "Type"],
-    rows: envs.map((env) => [env.name, env.type]),
-  });
 };
 
 const activateEnvironment = async (application: Application, envName: string): Promise<void> => {
   let directory: Directory | undefined;
   try {
     directory = await loadSyncJsonDirectory(process.cwd());
-  } catch {
+  } catch (e) {
+    if (!(e instanceof UnknownDirectoryError)) throw e;
     // no sync.json directory found, we'll create one
   }
 
@@ -316,11 +128,14 @@ const activateEnvironment = async (application: Application, envName: string): P
       const state = SyncJsonState.parse(JSON.parse(syncJsonFile));
 
       if (state.application !== application.slug) {
-        throw new ArgError(sprint`
-          This directory is synced to {yellow ${state.application}}, but you specified {yellow ${application.slug}}.
+        throw new ArgError(
+          sprint`
+          This directory is synced to ${colors.warning(state.application)}, but you specified ${colors.warning(application.slug)}.
 
-          Either run this command from a directory synced to ${application.slug}, or omit the {gray --app} flag.
-        `);
+          Either run this command from a directory synced to ${application.slug}, or omit the ${colors.subdued("--app")} flag.
+        `,
+          { usageHint: false },
+        );
       }
 
       if (state.environment === envName) {
@@ -351,144 +166,265 @@ const activateEnvironment = async (application: Application, envName: string): P
   println(`${symbol.tick} Activated environment ${envName}`);
 };
 
-const runCreate = async (ctx: Context, application: Application, positional: string[], state?: SyncJsonState): Promise<void> => {
-  const subArgs = parseArgs(createArgs, { argv: positional });
-  const rawName = subArgs._.shift();
-  const from = (subArgs["--from"] ?? (state?.application === application.slug ? state.environment : undefined))?.toLowerCase();
-  const use = subArgs["--use"] ?? false;
+export default defineCommand({
+  name: "env",
+  aliases: ["envs"],
+  description: "Manage your app's environments",
+  details: sprint`
+    Environments are isolated copies of your app for development, staging, and testing. Each
+    environment has its own database, file tree, and environment variables. The production
+    environment cannot be deleted or used directly with ggt dev.
+  `,
+  examples: [
+    "ggt env list",
+    "ggt env create staging",
+    "ggt env create staging --from development",
+    "ggt env delete staging --force",
+    "ggt env unpause staging",
+    "ggt env use staging",
+  ],
+  args: parentArgs,
+  subcommands: (sub) => ({
+    list: sub({
+      aliases: ["ls"],
+      description: "List all environments",
+      details: sprint`
+        Displays a table of all environments with their names and types. Returns
+        a "no environments found" message if the app has none.
+      `,
+      examples: ["ggt env list", "ggt env list --app myapp"],
+      run: async (ctx, args) => {
+        const { application } = await resolveApplication(ctx, args);
+        const envs = application.environments;
 
-  if (!rawName) {
-    throw new ArgError(sprint`
-      Missing required argument: name
+        if (envs.length === 0) {
+          println("No environments found.");
+          return;
+        }
 
-      Run {gray ggt env create -h} for usage
-    `);
-  }
+        printTable({
+          headers: ["Name", "Type"],
+          rows: envs.map((env) => [env.name, env.type]),
+        });
+      },
+    }),
+    create: sub({
+      description: "Create a new environment",
+      details: sprint`
+        The environment name is lowercased automatically. Use ${colors.subdued("--from")} to clone an
+        existing environment's data and schema; if omitted, the current environment
+        is used as the source. Use ${colors.subdued("--use")} to switch your local directory to the
+        new environment immediately after creation.
 
-  const name = rawName.toLowerCase();
+        See also: ${colors.subdued("ggt add environment")} for a simpler shorthand that clones
+        the current environment and auto-switches.
+      `,
+      examples: ["ggt env create staging", "ggt env create staging --from development", "ggt env create my-feature --use"],
+      positionals: [
+        {
+          name: "name",
+          required: true,
+          description: "New environment name",
+          details: "The name is lowercased automatically. Must be unique within the app.",
+        },
+      ],
+      args: {
+        "--from": {
+          type: String,
+          description: "Clone from an existing environment",
+          details: "Clones the source environment's data and schema. If omitted, the current environment is used as the source.",
+          valueName: "env-name",
+        },
+        "--use": {
+          type: Boolean,
+          alias: "-u",
+          description: "Switch to the new environment after creation",
+          details: "Updates .gadget/sync.json to point at the new environment so subsequent commands target it.",
+        },
+      },
+      run: async (ctx, args) => {
+        const { application, state } = await resolveApplication(ctx, args);
+        // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
+        const rawName = args._[0]!;
+        // Use the explicit --from flag if provided, otherwise fall back to the currently
+        // active environment when the app matches (so `env create` inherits context naturally).
+        const from = (args["--from"] ?? (state?.application === application.slug ? state.environment : undefined))?.toLowerCase();
+        const use = args["--use"] ?? false;
 
-  // Validate --use before creating the environment to avoid creating an
-  // environment on the server that can't be activated locally
-  if (use && state?.application && state.application !== application.slug) {
-    throw new ArgError(sprint`
-      Cannot use {gray --use}: this directory is synced to {yellow ${state.application}}, but you specified {yellow ${application.slug}}.
+        const name = rawName.toLowerCase();
 
-      Either run this command from a directory synced to ${application.slug}, or omit the {gray --app} flag.
-    `);
-  }
+        // Validate --use before creating the environment to avoid creating an
+        // environment on the server that can't be activated locally
+        if (use && state?.application && state.application !== application.slug) {
+          throw new ArgError(
+            sprint`
+              Cannot use ${colors.subdued("--use")}: this directory is synced to ${colors.warning(state.application)}, but you specified ${colors.warning(application.slug)}.
 
-  const edit = getEditForApp(ctx, application);
-  try {
-    await edit.mutate({
-      mutation: CREATE_ENVIRONMENT_MUTATION,
-      variables: { environment: { slug: name, ...(from && { sourceSlug: from }) } },
-    });
+              Either run this command from a directory synced to ${application.slug}, or omit the ${colors.subdued("--app")} flag.
+            `,
+            { usageHint: false },
+          );
+        }
 
-    println(`${symbol.tick} Created environment ${name}`);
-  } finally {
-    await edit.dispose();
-  }
+        const edit = getEditForApp(ctx, application);
+        try {
+          await edit.mutate({
+            mutation: CREATE_ENVIRONMENT_MUTATION,
+            variables: { environment: { slug: name, ...(from && { sourceSlug: from }) } },
+          });
 
-  if (use) {
-    await activateEnvironment(application, name);
-  }
-};
+          println(`${symbol.tick} Created environment ${name}`);
+        } finally {
+          await edit.dispose();
+        }
 
-const runDelete = async (ctx: Context, application: Application, positional: string[], state?: SyncJsonState): Promise<void> => {
-  const subArgs = parseArgs(deleteArgs, { argv: positional });
-  const name = subArgs._.shift();
-  const force = subArgs["--force"] ?? false;
+        if (use) {
+          await activateEnvironment(application, name);
+        }
+      },
+    }),
+    delete: sub({
+      description: "Delete an environment",
+      details: sprint`
+        Prompts for confirmation before deleting unless ${colors.subdued("--force")} is passed. The
+        production environment cannot be deleted. If your sync directory was using
+        the deleted environment, you'll need to switch to another with
+        ${colors.identifier("ggt env use")}.
+      `,
+      examples: ["ggt env delete staging", "ggt env delete staging --force"],
+      positionals: [
+        {
+          name: "name",
+          required: true,
+          description: "Environment name",
+          details: "The production environment cannot be deleted.",
+        },
+      ],
+      args: {
+        "--force": {
+          type: Boolean,
+          alias: "-f",
+          description: "Skip confirmation",
+          details: "Deletes the environment immediately without a confirmation prompt.",
+        },
+      },
+      run: async (ctx, args) => {
+        const { application, state } = await resolveApplication(ctx, args);
+        // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
+        const name = args._[0]!;
 
-  if (!name) {
-    throw new ArgError(sprint`
-      Missing required argument: name
+        const environment = findEnvironmentOrThrow(application, name);
 
-      Run {gray ggt env delete -h} for usage
-    `);
-  }
+        if (environment.type === EnvironmentType.Production) {
+          throw new ArgError(
+            sprint`
+              Cannot delete the ${colors.identifier("production")} environment.
+            `,
+            { usageHint: false },
+          );
+        }
 
-  const environment = findEnvironmentOrThrow(application, name);
+        if (!args["--force"]) {
+          await confirm(`Are you sure you want to delete the ${environment.name} environment?`);
+        }
 
-  if (environment.type === EnvironmentType.Production) {
-    throw new ArgError(sprint`
-      Cannot delete the {bold production} environment.
-    `);
-  }
+        const edit = getEditForApp(ctx, application);
+        try {
+          await edit.mutate({
+            mutation: DELETE_ENVIRONMENT_MUTATION,
+            variables: { slug: environment.name },
+          });
 
-  if (!force) {
-    await confirm(`Are you sure you want to delete the ${environment.name} environment?`);
-  }
+          println(`${symbol.tick} Deleted environment ${environment.name}`);
+        } finally {
+          await edit.dispose();
+        }
 
-  const edit = getEditForApp(ctx, application);
-  try {
-    await edit.mutate({
-      mutation: DELETE_ENVIRONMENT_MUTATION,
-      variables: { slug: environment.name },
-    });
+        if (state?.application === application.slug && state.environment === environment.name) {
+          println(sprint`
+            ${colors.warning("Warning:")} your sync directory was using the ${environment.name} environment.
 
-    println(`${symbol.tick} Deleted environment ${environment.name}`);
-  } finally {
-    await edit.dispose();
-  }
+            Run ${colors.subdued("ggt env use <environment>")} to switch to another environment.
+          `);
+        }
+      },
+    }),
+    unpause: sub({
+      description: "Unpause a paused environment",
+      details: sprint`
+        Environments are paused automatically after a period of inactivity.
+        This command resumes a paused environment so it can serve requests and
+        run actions again. Prints a message if the environment is already
+        active.
+      `,
+      examples: ["ggt env unpause staging", "ggt env unpause development --app myapp"],
+      positionals: [
+        {
+          name: "name",
+          required: true,
+          description: "Environment name",
+          details: "Must match an existing environment in the app.",
+        },
+      ],
+      run: async (ctx, args) => {
+        const { application } = await resolveApplication(ctx, args);
+        // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
+        const name = args._[0]!;
 
-  if (state?.application === application.slug && state.environment === environment.name) {
-    println(sprint`
-      {yellow Warning:} your sync directory was using the ${environment.name} environment.
+        const environment = findEnvironmentOrThrow(application, name);
 
-      Run {gray ggt env use <environment>} to switch to another environment.
-    `);
-  }
-};
+        const edit = getEditForApp(ctx, application, environment);
+        try {
+          const data = await edit.mutate({
+            mutation: UNPAUSE_ENVIRONMENT_MUTATION,
+          });
 
-const runUnpause = async (ctx: Context, application: Application, positional: string[]): Promise<void> => {
-  const name = positional.shift();
+          if (data.unpauseEnvironment.alreadyActive) {
+            println(`Environment ${name} is already active.`);
+          } else {
+            println(`${symbol.tick} Unpaused environment ${name}`);
+          }
+        } finally {
+          await edit.dispose();
+        }
+      },
+    }),
+    use: sub({
+      description: "Switch the active environment for this directory",
+      details: sprint`
+        Updates ${colors.subdued(".gadget/sync.json")} to point at the given environment. The
+        production environment cannot be set as the active sync target — use
+        ${colors.identifier("ggt pull --env production")} to pull production files instead.
+      `,
+      examples: ["ggt env use staging", "ggt env use development"],
+      positionals: [
+        {
+          name: "name",
+          required: true,
+          description: "Environment name",
+          details: "The production environment cannot be set as the active sync target.",
+        },
+      ],
+      run: async (ctx, args) => {
+        const { application } = await resolveApplication(ctx, args);
+        // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
+        const name = args._[0]!;
 
-  if (!name) {
-    throw new ArgError(sprint`
-      Missing required argument: name
+        const environment = findEnvironmentOrThrow(application, name);
 
-      Run {gray ggt env unpause -h} for usage
-    `);
-  }
+        if (environment.type === EnvironmentType.Production) {
+          throw new ArgError(
+            sprint`
+              Cannot use the ${colors.identifier("production")} environment.
 
-  const environment = findEnvironmentOrThrow(application, name);
+              Use ${colors.subdued("ggt pull --env production")} to pull from production instead.
+            `,
+            { usageHint: false },
+          );
+        }
 
-  const edit = getEditForApp(ctx, application, environment);
-  try {
-    const data = await edit.mutate({
-      mutation: UNPAUSE_ENVIRONMENT_MUTATION,
-    });
-
-    if (data.unpauseEnvironment.alreadyActive) {
-      println(`Environment ${name} is already active.`);
-    } else {
-      println(`${symbol.tick} Unpaused environment ${name}`);
-    }
-  } finally {
-    await edit.dispose();
-  }
-};
-
-const runUse = async (_ctx: Context, application: Application, positional: string[]): Promise<void> => {
-  const name = positional.shift();
-
-  if (!name) {
-    throw new ArgError(sprint`
-      Missing required argument: name
-
-      Run {gray ggt env use -h} for usage
-    `);
-  }
-
-  const environment = findEnvironmentOrThrow(application, name);
-
-  if (environment.type === EnvironmentType.Production) {
-    throw new ArgError(sprint`
-      Cannot use the {bold production} environment.
-
-      Use {gray ggt pull --env=production} to pull from production instead.
-    `);
-  }
-
-  await activateEnvironment(application, environment.name);
-};
+        await activateEnvironment(application, environment.name);
+      },
+    }),
+  }),
+});

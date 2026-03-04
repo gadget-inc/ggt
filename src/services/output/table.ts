@@ -60,6 +60,13 @@ export type SprintTableOptions = SprintOptions & {
    * @default [] (auto-sized)
    */
   colWidths?: number[];
+
+  /**
+   * The number of spaces to indent the table content.
+   *
+   * @default 0
+   */
+  indent?: number;
 };
 
 export const sprintTable = ({

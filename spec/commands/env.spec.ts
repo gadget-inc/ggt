@@ -5,29 +5,24 @@ import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { EnvironmentStatus } from "../../src/__generated__/graphql.js";
-import * as env from "../../src/commands/env.js";
+import envCommand from "../../src/commands/env.js";
 import {
   CREATE_ENVIRONMENT_MUTATION,
   DELETE_ENVIRONMENT_MUTATION,
   UNPAUSE_ENVIRONMENT_MUTATION,
 } from "../../src/services/app/edit/operation.js";
 import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { config } from "../../src/services/config/config.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps, testApp, testApp2 } from "../__support__/app.js";
-import { makeArgsWithOptions } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
 import { nockEditResponse } from "../__support__/graphql.js";
 import { mockConfirmOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { testDirPath } from "../__support__/paths.js";
-import { expectProcessExit } from "../__support__/process.js";
-import { loginTestUser } from "../__support__/user.js";
-
-const makeEnvArgs = (...argv: string[]) => {
-  return makeArgsWithOptions(env.args, env.parseOptions, "env", ...argv);
-};
+import { loginTestUser, loginTestUserWithCookie, matchAuthHeader } from "../__support__/user.js";
 
 describe("env", () => {
   beforeEach(() => {
@@ -37,14 +32,14 @@ describe("env", () => {
 
   describe("list", () => {
     it("lists environments with name and type", async () => {
-      await env.run(testCtx, makeEnvArgs("list", "--app=test"));
+      await runCommand(testCtx, envCommand, "list", "--app=test");
 
       expectStdout().toContain("development");
       expectStdout().toContain("production");
     });
 
     it("supports 'ls' alias", async () => {
-      await env.run(testCtx, makeEnvArgs("ls", "--app=test"));
+      await runCommand(testCtx, envCommand, "ls", "--app=test");
 
       expectStdout().toContain("development");
       expectStdout().toContain("production");
@@ -59,7 +54,7 @@ describe("env", () => {
         expectVariables: { environment: { slug: "staging" } },
       });
 
-      await env.run(testCtx, makeEnvArgs("create", "staging", "--app=test"));
+      await runCommand(testCtx, envCommand, "create", "staging", "--app=test");
 
       expectStdout().toContain("Created environment staging");
     });
@@ -71,7 +66,7 @@ describe("env", () => {
         expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
       });
 
-      await env.run(testCtx, makeEnvArgs("create", "staging", "--from=development", "--app=test"));
+      await runCommand(testCtx, envCommand, "create", "staging", "--from=development", "--app=test");
 
       expectStdout().toContain("Created environment staging");
     });
@@ -83,7 +78,7 @@ describe("env", () => {
         expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
       });
 
-      await env.run(testCtx, makeEnvArgs("create", "staging", "--from=Development", "--app=test"));
+      await runCommand(testCtx, envCommand, "create", "staging", "--from=Development", "--app=test");
 
       expectStdout().toContain("Created environment staging");
     });
@@ -95,15 +90,15 @@ describe("env", () => {
         expectVariables: { environment: { slug: "staging" } },
       });
 
-      await env.run(testCtx, makeEnvArgs("create", "Staging", "--app=test"));
+      await runCommand(testCtx, envCommand, "create", "Staging", "--app=test");
 
       expectStdout().toContain("Created environment staging");
     });
 
     it("errors when no name provided", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("create", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "create", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Missing required argument");
+      expect(error.message).toMatchInlineSnapshot(`"Missing required argument: name"`);
     });
 
     describe("--from defaults to sync context environment", () => {
@@ -136,7 +131,7 @@ describe("env", () => {
           expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
         });
 
-        await env.run(testCtx, makeEnvArgs("create", "staging", "--app=test"));
+        await runCommand(testCtx, envCommand, "create", "staging", "--app=test");
 
         expectStdout().toContain("Created environment staging");
       });
@@ -154,7 +149,7 @@ describe("env", () => {
           expectVariables: { environment: { slug: "staging", sourceSlug: "cool-environment-development" } },
         });
 
-        await env.run(testCtx, makeEnvArgs("create", "staging", "--from=cool-environment-development", "--app=test"));
+        await runCommand(testCtx, envCommand, "create", "staging", "--from=cool-environment-development", "--app=test");
 
         expectStdout().toContain("Created environment staging");
       });
@@ -169,7 +164,7 @@ describe("env", () => {
           expectVariables: { environment: { slug: "staging" } },
         });
 
-        await env.run(testCtx, makeEnvArgs("create", "staging", "--app=test"));
+        await runCommand(testCtx, envCommand, "create", "staging", "--app=test");
 
         expectStdout().toContain("Created environment staging");
       });
@@ -187,7 +182,7 @@ describe("env", () => {
           expectVariables: { environment: { slug: "staging" } },
         });
 
-        await env.run(testCtx, makeEnvArgs("create", "staging", "--app=test"));
+        await runCommand(testCtx, envCommand, "create", "staging", "--app=test");
 
         expectStdout().toContain("Created environment staging");
       });
@@ -223,7 +218,7 @@ describe("env", () => {
           expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
         });
 
-        await env.run(testCtx, makeEnvArgs("create", "staging", "--use", "--app=test"));
+        await runCommand(testCtx, envCommand, "create", "staging", "--use", "--app=test");
 
         expectStdout().toContain("Created environment staging");
         expectStdout().toContain("Switched environment: development → staging");
@@ -244,7 +239,7 @@ describe("env", () => {
           expectVariables: { environment: { slug: "staging" } },
         });
 
-        await env.run(testCtx, makeEnvArgs("create", "staging", "--use", "--app=test"));
+        await runCommand(testCtx, envCommand, "create", "staging", "--use", "--app=test");
 
         expectStdout().toContain("Created environment staging");
         expectStdout().toContain("Activated environment staging");
@@ -264,7 +259,7 @@ describe("env", () => {
           expectVariables: { environment: { slug: "staging", sourceSlug: "development" } },
         });
 
-        await env.run(testCtx, makeEnvArgs("create", "staging", "--from=development", "--use", "--app=test"));
+        await runCommand(testCtx, envCommand, "create", "staging", "--from=development", "--use", "--app=test");
 
         expectStdout().toContain("Created environment staging");
         expectStdout().toContain("Activated environment staging");
@@ -281,10 +276,13 @@ describe("env", () => {
         });
 
         // No nockEditResponse — the error is thrown before the create mutation
-        const error = await expectError(() => env.run(testCtx, makeEnvArgs("create", "staging", "--use", "--app=test")));
+        const error = await expectError(() => runCommand(testCtx, envCommand, "create", "staging", "--use", "--app=test"));
         expect(error).toBeInstanceOf(ArgError);
-        expect(error.message).toContain("other-app");
-        expect(error.message).toContain("test");
+        expect(error.message).toMatchInlineSnapshot(`
+          "Cannot use --use: this directory is synced to other-app, but you specified test.
+
+          Either run this command from a directory synced to test, or omit the --app flag."
+        `);
       });
 
       it("lowercases the name in --use flow and stores lowercase in sync.json", async () => {
@@ -296,7 +294,7 @@ describe("env", () => {
           expectVariables: { environment: { slug: "staging" } },
         });
 
-        await env.run(testCtx, makeEnvArgs("create", "Staging", "--use", "--app=test"));
+        await runCommand(testCtx, envCommand, "create", "Staging", "--use", "--app=test");
 
         expectStdout().toContain("Created environment staging");
         expectStdout().toContain("Activated environment staging");
@@ -316,7 +314,7 @@ describe("env", () => {
           expectVariables: { environment: { slug: "staging" } },
         });
 
-        await env.run(testCtx, makeEnvArgs("create", "staging", "--app=test"));
+        await runCommand(testCtx, envCommand, "create", "staging", "--app=test");
 
         expectStdout().toContain("Created environment staging");
         const exists = await fs.pathExists(syncJsonPath);
@@ -335,7 +333,7 @@ describe("env", () => {
         expectVariables: { slug: "cool-environment-development" },
       });
 
-      await env.run(testCtx, makeEnvArgs("delete", "cool-environment-development", "--app=test"));
+      await runCommand(testCtx, envCommand, "delete", "cool-environment-development", "--app=test");
 
       expect(confirm).toHaveBeenCalledTimes(1);
       expectStdout().toContain("Deleted environment cool-environment-development");
@@ -348,45 +346,48 @@ describe("env", () => {
         expectVariables: { slug: "cool-environment-development" },
       });
 
-      await env.run(testCtx, makeEnvArgs("delete", "cool-environment-development", "--force", "--app=test"));
+      await runCommand(testCtx, envCommand, "delete", "cool-environment-development", "--force", "--app=test");
 
       expect(confirm).not.toHaveBeenCalled();
       expectStdout().toContain("Deleted environment cool-environment-development");
     });
 
     it("errors when trying to delete production", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("delete", "production", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "delete", "production", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("production");
+      expect(error.message).toMatchInlineSnapshot(`"Cannot delete the production environment."`);
     });
 
     it("errors when no name provided", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("delete", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "delete", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Missing required argument");
+      expect(error.message).toMatchInlineSnapshot(`"Missing required argument: name"`);
     });
 
     it("errors when environment not found", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("delete", "nonexistent", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "delete", "nonexistent", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Unknown environment");
+      expect(error.message).toMatchInlineSnapshot(`
+        "Unknown environment: nonexistent
+
+        Did you mean one of these?
+
+          • development
+          • production
+          • cool-environment-development
+          • other-environment-development"
+      `);
     });
 
     it("errors gracefully when app has no environments", async () => {
       nock.cleanAll();
-      // Set up nocks without matchAuthHeader to avoid flaky auth mismatch.
-      // loginTestUser() in beforeEach may write a session file (cookie auth),
-      // and since loadCookie() takes priority over readToken() in
-      // maybeLoadAuthHeaders(), the token-based matchAuthHeader would not match.
-      nock(`https://${config.domains.services}`)
-        .get("/auth/api/current-user")
-        .reply(200, { id: 1, email: "test@example.com", name: "Jane Doe" });
+      loginTestUserWithCookie();
       const emptyApp = { ...testApp, slug: "empty-app", environments: [] };
-      nock(`https://${config.domains.services}`).get("/auth/api/apps").reply(200, [emptyApp, testApp2]);
+      matchAuthHeader(nock(`https://${config.domains.services}`).get("/auth/api/apps").reply(200, [emptyApp, testApp2]));
 
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("delete", "staging", "--app=empty-app")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "delete", "staging", "--app=empty-app"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("No environments found");
+      expect(error.message).toMatchInlineSnapshot(`"No environments found for empty-app."`);
     });
 
     it("warns when deleting the active sync environment", async () => {
@@ -408,7 +409,7 @@ describe("env", () => {
           expectVariables: { slug: "cool-environment-development" },
         });
 
-        await env.run(testCtx, makeEnvArgs("delete", "cool-environment-development", "--force", "--app=test"));
+        await runCommand(testCtx, envCommand, "delete", "cool-environment-development", "--force", "--app=test");
 
         expectStdout().toContain("Deleted environment cool-environment-development");
         expectStdout().toContain("Warning");
@@ -427,7 +428,7 @@ describe("env", () => {
         environment: { ...testApp.environments[0]!, application: testApp },
       });
 
-      await env.run(testCtx, makeEnvArgs("unpause", "development", "--app=test"));
+      await runCommand(testCtx, envCommand, "unpause", "development", "--app=test");
 
       expectStdout().toContain("Unpaused environment development");
     });
@@ -439,21 +440,30 @@ describe("env", () => {
         environment: { ...testApp.environments[0]!, application: testApp },
       });
 
-      await env.run(testCtx, makeEnvArgs("unpause", "development", "--app=test"));
+      await runCommand(testCtx, envCommand, "unpause", "development", "--app=test");
 
       expectStdout().toContain("already active");
     });
 
     it("errors when no name provided", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("unpause", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "unpause", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Missing required argument");
+      expect(error.message).toMatchInlineSnapshot(`"Missing required argument: name"`);
     });
 
     it("errors when environment not found", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("unpause", "nonexistent", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "unpause", "nonexistent", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Unknown environment");
+      expect(error.message).toMatchInlineSnapshot(`
+        "Unknown environment: nonexistent
+
+        Did you mean one of these?
+
+          • development
+          • production
+          • cool-environment-development
+          • other-environment-development"
+      `);
     });
   });
 
@@ -480,7 +490,7 @@ describe("env", () => {
     });
 
     it("uses an environment", async () => {
-      await env.run(testCtx, makeEnvArgs("use", "cool-environment-development", "--app=test"));
+      await runCommand(testCtx, envCommand, "use", "cool-environment-development", "--app=test");
 
       expectStdout().toContain("Switched environment: development → cool-environment-development");
 
@@ -500,7 +510,7 @@ describe("env", () => {
         },
       });
 
-      await env.run(testCtx, makeEnvArgs("use", "cool-environment-development", "--app=test"));
+      await runCommand(testCtx, envCommand, "use", "cool-environment-development", "--app=test");
 
       const state = await fs.readJSON(syncJsonPath);
       expect(state.environment).toBe("cool-environment-development");
@@ -508,27 +518,40 @@ describe("env", () => {
     });
 
     it("prints message when already on target environment", async () => {
-      await env.run(testCtx, makeEnvArgs("use", "development", "--app=test"));
+      await runCommand(testCtx, envCommand, "use", "development", "--app=test");
 
       expectStdout().toContain("Already on environment development.");
     });
 
     it("errors when trying to use production", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("use", "production", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "use", "production", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("production");
+      expect(error.message).toMatchInlineSnapshot(`
+        "Cannot use the production environment.
+
+        Use ggt pull --env production to pull from production instead."
+      `);
     });
 
     it("errors when no name provided", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("use", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "use", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Missing required argument");
+      expect(error.message).toMatchInlineSnapshot(`"Missing required argument: name"`);
     });
 
     it("errors when environment not found", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("use", "nonexistent", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "use", "nonexistent", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Unknown environment");
+      expect(error.message).toMatchInlineSnapshot(`
+        "Unknown environment: nonexistent
+
+        Did you mean one of these?
+
+          • development
+          • production
+          • cool-environment-development
+          • other-environment-development"
+      `);
     });
 
     it("creates sync.json when none exists", async () => {
@@ -536,7 +559,7 @@ describe("env", () => {
       await fs.ensureDir(emptyDir);
       process.cwd = () => emptyDir;
 
-      await env.run(testCtx, makeEnvArgs("use", "cool-environment-development", "--app=test"));
+      await runCommand(testCtx, envCommand, "use", "cool-environment-development", "--app=test");
 
       expectStdout().toContain("Activated environment cool-environment-development");
 
@@ -548,56 +571,20 @@ describe("env", () => {
     });
   });
 
-  describe("help/usage", () => {
-    it("prints help when no subcommand is given", async () => {
-      await env.run(testCtx, makeEnvArgs());
-
-      expectStdout().toContain("ggt env <command>");
-      expectStdout().toContain("list");
-      expectStdout().toContain("create");
-      expectStdout().toContain("delete");
-      expectStdout().toContain("unpause");
-      expectStdout().toContain("use");
-    });
-
-    it("prints help for list -h", async () => {
-      await expectProcessExit(() => env.run(testCtx, makeEnvArgs("list", "-h")));
-
-      expectStdout().toContain("ggt env list");
-    });
-
-    it("prints help for create -h", async () => {
-      await expectProcessExit(() => env.run(testCtx, makeEnvArgs("create", "-h")));
-
-      expectStdout().toContain("ggt env create");
-      expectStdout().toContain("--from");
-    });
-
-    it("prints help for delete -h", async () => {
-      await expectProcessExit(() => env.run(testCtx, makeEnvArgs("delete", "-h")));
-
-      expectStdout().toContain("ggt env delete");
-      expectStdout().toContain("--force");
-    });
-
-    it("prints help for unpause -h", async () => {
-      await expectProcessExit(() => env.run(testCtx, makeEnvArgs("unpause", "-h")));
-
-      expectStdout().toContain("ggt env unpause");
-    });
-
-    it("prints help for use -h", async () => {
-      await expectProcessExit(() => env.run(testCtx, makeEnvArgs("use", "-h")));
-
-      expectStdout().toContain("ggt env use");
-    });
-  });
-
   describe("unknown subcommand", () => {
     it("errors on unknown subcommand", async () => {
-      const error = await expectError(() => env.run(testCtx, makeEnvArgs("bogus", "--app=test")));
+      const error = await expectError(() => runCommand(testCtx, envCommand, "bogus", "--app=test"));
       expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("Unknown subcommand");
+      expect(error.message).toMatchInlineSnapshot(`
+        "Unknown subcommand bogus
+
+        Did you mean use?
+
+        USAGE
+          ggt env <command> [flags]
+
+        Run ggt env -h for more information."
+      `);
     });
   });
 });

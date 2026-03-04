@@ -4,13 +4,13 @@ import getPort from "get-port";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as login from "../../src/commands/login.js";
+import login from "../../src/commands/login.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { config } from "../../src/services/config/config.js";
 import { readSession, writeSession } from "../../src/services/user/session.js";
 import * as user from "../../src/services/user/user.js";
 import { noop } from "../../src/services/util/function.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
-import { makeRootArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
@@ -46,7 +46,7 @@ describe("login", () => {
     writeSession(testCtx, undefined);
     mock(user, "getUser", () => testUser);
 
-    void login.run(testCtx, makeRootArgs());
+    void runCommand(testCtx, login);
     await serverListening;
 
     expect(getPort).toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe("login", () => {
       throw new Error("boom");
     });
 
-    void login.run(testCtx, makeRootArgs());
+    void runCommand(testCtx, login);
     await serverListening;
 
     expect(getPort).toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe("login", () => {
       throw new Error("boom");
     });
 
-    void Promise.resolve(login.run(testCtx, makeRootArgs())).catch(noop);
+    void Promise.resolve(runCommand(testCtx, login)).catch(noop);
     await serverListening;
 
     expect(getPort).toHaveBeenCalled();

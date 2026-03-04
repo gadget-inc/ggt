@@ -1,827 +1,2363 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`root > when add is given > prints the usage when --help is passed 1`] = `
-"Adds models, fields, actions and routes to your app.
+exports[`root > when add is given > prints the usage for action when --help is passed 1`] = `
+"Add an action to a model or as a global action
 
-This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync.
-If any conflicts are detected, they must be resolved before adding models, fields, actions or routes.
+The path determines whether the action is added to a model or as a global
+action. Use model/<model>/<action> for model actions or
+action/<action> for global actions. If the path is ambiguous because
+a model and action namespace share the same name, you'll be prompted to
+choose.
 
-Usage
-  ggt add model <model_name> [field_name:field_type ...]
+USAGE
+  ggt add action <path> [flags]
 
-  ggt add action [CONTEXT]/<action_name>
-  CONTEXT:Specifies the kind of action. Use "model" for model actions otherwise use "action".
+ARGUMENTS
+  path
+        Action path (e.g. model/post/publish or action/audit). If the path is
+        ambiguous because a model and action namespace share the same name,
+        you'll be prompted to choose.
 
-  ggt add route <HTTP_METHOD> <route_path>
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
 
-  ggt add field <model_path>/<field_name>:<field_type>
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
 
-Options
-  -a, --app <app_name> Selects the app to add to. Defaults to the app synced to the current directory, if there is one.
-  -e, --env <env_name> Selects the environment to add to. Defaults to the environment synced to the current directory, if there is one.
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
 
-Examples
-  Add a new model 'post' with out fields:
-  $ ggt add model modelA
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
 
-  Add a new model 'post' with 2 new 'string' type fields 'title' and 'body':
+EXAMPLES
+  $ ggt add action model/post/publish
+  $ ggt add action action/audit
+  $ ggt add action model/user/sendEmail
+"
+`;
+
+exports[`root > when add is given > prints the usage for action when -h is passed 1`] = `
+"Add an action to a model or as a global action
+
+USAGE
+  ggt add action <path> [flags]
+
+ARGUMENTS
+  path        Action path (e.g. model/post/publish or action/audit)
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt add action model/post/publish
+  $ ggt add action action/audit
+  $ ggt add action model/user/sendEmail
+
+Run ggt add action --help for more information.
+"
+`;
+
+exports[`root > when add is given > prints the usage for environment when --help is passed 1`] = `
+"Create a new environment by cloning
+
+Clones the current environment's data and schema into a new environment.
+If no name is given, one is auto-generated. After creation, automatically
+pulls from the new environment to switch your local directory to it.
+
+For more control (e.g. choosing the source environment or skipping the
+auto-switch), use ggt env create instead.
+
+USAGE
+  ggt add environment [name] [flags]
+
+ARGUMENTS
+  name
+        Name for the new environment (auto-generated if omitted). The name is
+        lowercased automatically. If omitted, a timestamped name is generated
+        (e.g. env-20260303-142530).
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt add environment staging
+  $ ggt add environment
+"
+`;
+
+exports[`root > when add is given > prints the usage for environment when -h is passed 1`] = `
+"Create a new environment by cloning
+
+USAGE
+  ggt add environment [name] [flags]
+
+ARGUMENTS
+  name        Name for the new environment (auto-generated if omitted)
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt add environment staging
+  $ ggt add environment
+
+Run ggt add environment --help for more information.
+"
+`;
+
+exports[`root > when add is given > prints the usage for field when --help is passed 1`] = `
+"Add a field to an existing model
+
+Uses the format model/field:type to identify the target model and the
+field to add. Supported types include string, number, boolean, datetime,
+json, email, url, vector, richtext, file, enum, and color.
+
+USAGE
+  ggt add field <model/field:type> [flags]
+
+ARGUMENTS
+  model/field:type
+        Model path and field definition. Format is model/field:type (e.g.
+        post/published:boolean).
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt add field post/published:boolean
+  $ ggt add field user/age:number
+  $ ggt add field post/title:string
+  $ ggt add field user/email:email
+"
+`;
+
+exports[`root > when add is given > prints the usage for field when -h is passed 1`] = `
+"Add a field to an existing model
+
+USAGE
+  ggt add field <model/field:type> [flags]
+
+ARGUMENTS
+  model/field:type    Model path and field definition
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt add field post/published:boolean
+  $ ggt add field user/age:number
+  $ ggt add field post/title:string
+  $ ggt add field user/email:email
+
+Run ggt add field --help for more information.
+"
+`;
+
+exports[`root > when add is given > prints the usage for model when --help is passed 1`] = `
+"Add a new data model
+
+Creates the model on your environment and pulls the generated files to your
+local directory. Optionally include field definitions as name:type pairs
+after the model name. Supported types include string, number, boolean,
+datetime, json, email, url, vector, richtext, file, enum, and color.
+
+USAGE
+  ggt add model <model> [field:type ...] [flags]
+
+ARGUMENTS
+  model
+        API identifier for the new model. Becomes the API identifier in your
+        client code (e.g. api.post). Must be unique within the app.
+
+  field:type ...
+        Optional field definitions (name:type pairs). Each field is a name:type
+        pair separated by a colon (e.g. title:string).
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt add model post
   $ ggt add model post title:string body:string
+  $ ggt add model user name:string email:string
+"
+`;
 
-  Add a new 'boolean' type field 'published' to an existing model
-  ggt add field post/published:boolean
+exports[`root > when add is given > prints the usage for model when -h is passed 1`] = `
+"Add a new data model
 
-  Add new action 'publish' to the 'post' model:
-  ggt add action model/post/publish
+USAGE
+  ggt add model <model> [field:type ...] [flags]
 
-  Add a new action 'audit'
-  ggt add action action/audit
+ARGUMENTS
+  model             API identifier for the new model
+  field:type ...    Optional field definitions (name:type pairs)
 
-  Add a new route 'howdy'
-  ggt add route GET howdy
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
 
-  Clone the \`development\` environment into a new \`staging\` environment
-  ggt add environment staging --environment development
+EXAMPLES
+  $ ggt add model post
+  $ ggt add model post title:string body:string
+  $ ggt add model user name:string email:string
+
+Run ggt add model --help for more information.
+"
+`;
+
+exports[`root > when add is given > prints the usage for route when --help is passed 1`] = `
+"Add an HTTP route
+
+Creates the route handler file on the environment and pulls it to your
+local directory. Supported methods are GET, POST, PUT, PATCH, and DELETE.
+
+USAGE
+  ggt add route <method> <path> [flags]
+
+ARGUMENTS
+  method
+        HTTP method (GET, POST, PUT, PATCH, DELETE). Case-insensitive.
+
+  path
+        Route path. The URL path for the route handler (e.g. /hello,
+        /webhooks/stripe). Leading slash is required.
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt add route GET /hello
+  $ ggt add route POST /webhooks/stripe
+  $ ggt add route DELETE /posts/:id
+  $ ggt add route PUT /users/:id
+"
+`;
+
+exports[`root > when add is given > prints the usage for route when -h is passed 1`] = `
+"Add an HTTP route
+
+USAGE
+  ggt add route <method> <path> [flags]
+
+ARGUMENTS
+  method      HTTP method (GET, POST, PUT, PATCH, DELETE)
+  path        Route path
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt add route GET /hello
+  $ ggt add route POST /webhooks/stripe
+  $ ggt add route DELETE /posts/:id
+  $ ggt add route PUT /users/:id
+
+Run ggt add route --help for more information.
+"
+`;
+
+exports[`root > when add is given > prints the usage when --help is passed 1`] = `
+"Add resources to your app
+
+Syncs local files with the environment before adding the resource, ensuring the
+environment is up to date. If there are conflicts, they must be resolved before the
+resource can be added.
+
+USAGE
+  ggt add <command> [flags]
+
+COMMANDS
+  model          Add a new data model
+  action         Add an action to a model or as a global action
+  route          Add an HTTP route
+  field          Add a field to an existing model
+  environment    Create a new environment by cloning
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt add model post
+  $ ggt add model post title:string body:string
+  $ ggt add field post/published:boolean
+  $ ggt add action model/post/publish
+  $ ggt add action action/audit
+  $ ggt add route GET /hello
+  $ ggt add environment staging
+
+RESOURCE SYNTAX
+  ggt add model <model_name> [field_name:field_type ...]
+  Fields are optional. Each field is a name:type pair (e.g. title:string).
+
+  ggt add action <context>/<action_name>
+  context is either "model/<model_name>" for model actions or "action" for global actions.
+
+  ggt add route <method> <route_path>
+  method is an HTTP verb: GET, POST, PUT, PATCH, or DELETE.
+
+  ggt add field <model_name>/<field_name>:<field_type>
+  Adds a field to an existing model.
 "
 `;
 
 exports[`root > when add is given > prints the usage when -h is passed 1`] = `
-"Adds models, fields, actions and routes to your app.
+"Add resources to your app
 
-This command first performs a sync to ensure that your local and environment directories match, changes are tracked since last sync.
-If any conflicts are detected, they must be resolved before adding models, fields, actions or routes.
+USAGE
+  ggt add <command> [flags]
 
-Usage
-  ggt add model <model_name> [field_name:field_type ...]
+COMMANDS
+  model          Add a new data model
+  action         Add an action to a model or as a global action
+  route          Add an HTTP route
+  field          Add a field to an existing model
+  environment    Create a new environment by cloning
 
-  ggt add action [CONTEXT]/<action_name>
-  CONTEXT:Specifies the kind of action. Use "model" for model actions otherwise use "action".
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
 
-  ggt add route <HTTP_METHOD> <route_path>
-
-  ggt add field <model_path>/<field_name>:<field_type>
-
-Options
-  -a, --app <app_name> Selects the app to add to. Defaults to the app synced to the current directory, if there is one.
-  -e, --env <env_name> Selects the environment to add to. Defaults to the environment synced to the current directory, if there is one.
-
-Examples
-  Add a new model 'post' with out fields:
-  $ ggt add model modelA
-
-  Add a new model 'post' with 2 new 'string' type fields 'title' and 'body':
+EXAMPLES
+  $ ggt add model post
   $ ggt add model post title:string body:string
+  $ ggt add field post/published:boolean
+  $ ggt add action model/post/publish
+  $ ggt add action action/audit
+  $ ggt add route GET /hello
+  $ ggt add environment staging
 
-  Add a new 'boolean' type field 'published' to an existing model
-  ggt add field post/published:boolean
+Run ggt add --help for more information.
+"
+`;
 
-  Add new action 'publish' to the 'post' model:
-  ggt add action model/post/publish
+exports[`root > when add is given > shows help when invoked without a subcommand 1`] = `
+"Add resources to your app
 
-  Add a new action 'audit'
-  ggt add action action/audit
+USAGE
+  ggt add <command> [flags]
 
-  Add a new route 'howdy'
-  ggt add route GET howdy
+COMMANDS
+  model          Add a new data model
+  action         Add an action to a model or as a global action
+  route          Add an HTTP route
+  field          Add a field to an existing model
+  environment    Create a new environment by cloning
 
-  Clone the \`development\` environment into a new \`staging\` environment
-  ggt add environment staging --environment development
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt add model post
+  $ ggt add model post title:string body:string
+  $ ggt add field post/published:boolean
+  $ ggt add action model/post/publish
+  $ ggt add action action/audit
+  $ ggt add route GET /hello
+  $ ggt add environment staging
+
+Run ggt add --help for more information.
+"
+`;
+
+exports[`root > when agent-plugin is given > prints the usage for install when --help is passed 1`] = `
+"Install agent plugins into the current project
+
+Writes AGENTS.md and Gadget skill files into your project. Existing
+files are skipped unless --force is passed to overwrite them. The
+project root is detected from .gadget/sync.json or defaults to the
+current directory.
+
+USAGE
+  ggt agent-plugin install [flags]
+
+FLAGS
+  -f, --force
+        Overwrite existing files even if already present. Overwrites existing
+        AGENTS.md and skill files. Without this flag, existing files are left
+        untouched.
+
+EXAMPLES
+  $ ggt agent-plugin install
+  $ ggt agent-plugin install --force
+"
+`;
+
+exports[`root > when agent-plugin is given > prints the usage for install when -h is passed 1`] = `
+"Install agent plugins into the current project
+
+USAGE
+  ggt agent-plugin install [flags]
+
+FLAGS
+  -f, --force             Overwrite existing files even if already present
+
+EXAMPLES
+  $ ggt agent-plugin install
+  $ ggt agent-plugin install --force
+
+Run ggt agent-plugin install --help for more information.
+"
+`;
+
+exports[`root > when agent-plugin is given > prints the usage for update when --help is passed 1`] = `
+"Update agent plugins to the latest version
+
+Overwrites all agent plugin files with their latest versions. Prompts
+before replacing AGENTS.md if it already exists. Skill files are
+always replaced without prompting.
+
+USAGE
+  ggt agent-plugin update
+
+EXAMPLES
+  $ ggt agent-plugin update
+"
+`;
+
+exports[`root > when agent-plugin is given > prints the usage for update when -h is passed 1`] = `
+"Update agent plugins to the latest version
+
+USAGE
+  ggt agent-plugin update
+
+EXAMPLES
+  $ ggt agent-plugin update
+
+Run ggt agent-plugin update --help for more information.
 "
 `;
 
 exports[`root > when agent-plugin is given > prints the usage when --help is passed 1`] = `
-"Install or update Gadget agent plugins (AGENTS.md + skills).
+"Manage plugins for AI coding assistants
 
-Usage
-  ggt agent-plugin install [--force]
-  ggt agent-plugin update
+Plugins include an AGENTS.md scaffold at the project root and Gadget-specific
+skill files. These help tools like Claude Code and Cursor understand your Gadget
+app's conventions. Must be run from inside a Gadget project directory or its parent.
 
-Flags
-  --force    Overwrite/reinstall even if already present
+USAGE
+  ggt agent-plugin <command>
+
+COMMANDS
+  install    Install agent plugins into the current project
+  update     Update agent plugins to the latest version
+
+EXAMPLES
+  $ ggt agent-plugin install
+  $ ggt agent-plugin install --force
+  $ ggt agent-plugin update
 "
 `;
 
 exports[`root > when agent-plugin is given > prints the usage when -h is passed 1`] = `
-"Install or update Gadget agent plugins (AGENTS.md + skills).
+"Manage plugins for AI coding assistants
 
-Usage
-  ggt agent-plugin install [--force]
-  ggt agent-plugin update
+USAGE
+  ggt agent-plugin <command>
 
-Flags
-  --force    Overwrite/reinstall even if already present
+COMMANDS
+  install    Install agent plugins into the current project
+  update     Update agent plugins to the latest version
+
+EXAMPLES
+  $ ggt agent-plugin install
+  $ ggt agent-plugin install --force
+  $ ggt agent-plugin update
+
+Run ggt agent-plugin --help for more information.
+"
+`;
+
+exports[`root > when agent-plugin is given > shows help when invoked without a subcommand 1`] = `
+"Manage plugins for AI coding assistants
+
+USAGE
+  ggt agent-plugin <command>
+
+COMMANDS
+  install    Install agent plugins into the current project
+  update     Update agent plugins to the latest version
+
+EXAMPLES
+  $ ggt agent-plugin install
+  $ ggt agent-plugin install --force
+  $ ggt agent-plugin update
+
+Run ggt agent-plugin --help for more information.
+"
+`;
+
+exports[`root > when configure is given > prints the usage for change when --help is passed 1`] = `
+"Interactively change configuration options
+
+Walks through each configurable option and lets you pick a new value.
+Changes take effect for all subsequent ggt commands.
+
+USAGE
+  ggt configure change
+
+EXAMPLES
+  $ ggt configure change
+"
+`;
+
+exports[`root > when configure is given > prints the usage for change when -h is passed 1`] = `
+"Interactively change configuration options
+
+USAGE
+  ggt configure change
+
+EXAMPLES
+  $ ggt configure change
+
+Run ggt configure change --help for more information.
+"
+`;
+
+exports[`root > when configure is given > prints the usage for clear when --help is passed 1`] = `
+"Remove all configured defaults
+
+Removes all persisted options, restoring ggt to its default behavior. This
+does not affect environment variables or login sessions.
+
+USAGE
+  ggt configure clear
+
+EXAMPLES
+  $ ggt configure clear
+"
+`;
+
+exports[`root > when configure is given > prints the usage for clear when -h is passed 1`] = `
+"Remove all configured defaults
+
+USAGE
+  ggt configure clear
+
+EXAMPLES
+  $ ggt configure clear
+
+Run ggt configure clear --help for more information.
+"
+`;
+
+exports[`root > when configure is given > prints the usage for show when --help is passed 1`] = `
+"Show current configured defaults
+
+Prints the current configuration as a table, showing the configured value
+for each supported option. Options without a configured value are omitted.
+
+USAGE
+  ggt configure show
+
+EXAMPLES
+  $ ggt configure show
+"
+`;
+
+exports[`root > when configure is given > prints the usage for show when -h is passed 1`] = `
+"Show current configured defaults
+
+USAGE
+  ggt configure show
+
+EXAMPLES
+  $ ggt configure show
+
+Run ggt configure show --help for more information.
 "
 `;
 
 exports[`root > when configure is given > prints the usage when --help is passed 1`] = `
-"Make changes to the configured defaults. This allows you to set an option on every ggt command by default without
-needing to set a flag on every command.
+"Manage ggt configuration
 
-Usage
-  ggt configure show
+Options like --telemetry and --json can be persisted so they apply to every
+ggt command without being passed explicitly each time. The configuration is stored
+locally and can be cleared at any time.
 
-  ggt configure change
+USAGE
+  ggt configure <command>
 
-  ggt configure clear
+COMMANDS
+  show      Show current configured defaults
+  change    Interactively change configuration options
+  clear     Remove all configured defaults
+
+EXAMPLES
+  $ ggt configure show
+  $ ggt configure change
+  $ ggt configure clear
 "
 `;
 
 exports[`root > when configure is given > prints the usage when -h is passed 1`] = `
-"Make changes to the configured defaults. This allows you to set an option on every ggt command by default without
-needing to set a flag on every command.
+"Manage ggt configuration
 
-Usage
-  ggt configure show
+USAGE
+  ggt configure <command>
 
-  ggt configure change
+COMMANDS
+  show      Show current configured defaults
+  change    Interactively change configuration options
+  clear     Remove all configured defaults
 
-  ggt configure clear
+EXAMPLES
+  $ ggt configure show
+  $ ggt configure change
+  $ ggt configure clear
+
+Run ggt configure --help for more information.
+"
+`;
+
+exports[`root > when configure is given > shows help when invoked without a subcommand 1`] = `
+"Manage ggt configuration
+
+USAGE
+  ggt configure <command>
+
+COMMANDS
+  show      Show current configured defaults
+  change    Interactively change configuration options
+  clear     Remove all configured defaults
+
+EXAMPLES
+  $ ggt configure show
+  $ ggt configure change
+  $ ggt configure clear
+
+Run ggt configure --help for more information.
 "
 `;
 
 exports[`root > when debugger is given > prints the usage when --help is passed 1`] = `
-"Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.
-This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other
-CDP-compatible debugger client.
+"Connect a debugger to your app's environment
 
-Usage
-      $ ggt debugger [DIRECTORY] [options]
+Starts a local Chrome DevTools Protocol (CDP) proxy that forwards debugging traffic
+between your editor and your Gadget environment. Supported clients include VS Code,
+Cursor, and Chrome DevTools. Use --configure vscode to generate
+.vscode/launch.json and tasks.json for one-click attach debugging. Press Ctrl+C to
+stop the proxy.
 
-      DIRECTORY: The directory containing your Gadget app (default: current directory)
+USAGE
+  ggt debugger [directory] [flags]
 
-Options
-      -a, --app <app_name>        Selects the app to debug. Defaults to the app synced to the current directory, if there is one.
-      -e, --env <env_name>        Selects the environment to debug. Defaults to the environment synced to the current directory, if there is one.
-      -p, --port <port>           Local port for the inspector proxy (default: 9229)
-      --configure <editor>        Configure debugger for vscode, cursor
+ARGUMENTS
+  directory
+        App directory to use. Defaults to the current working directory when
+        omitted.
 
-Examples
-      start debugger proxy for current environment
-      $ ggt debugger
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
 
-      use a custom port
-      $ ggt debugger --port 9230
+  -c, --configure <editor>
+        Write editor debug config files (vscode, cursor). Generates
+        .vscode/launch.json and tasks.json for one-click attach debugging. Works
+        with both VS Code and Cursor.
 
-      debug a specific app and environment
-      $ ggt debugger --app myApp --env development
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
 
-      configure VS Code debugger
-      $ ggt debugger --configure vscode
+  -p, --port <port>
+        Local port for the CDP proxy. Defaults to 9229. Change this if the
+        default port is already in use.
+
+EXAMPLES
+  $ ggt debugger
+  $ ggt debugger --port 9230
+  $ ggt debugger --configure vscode
+  $ ggt debugger --configure cursor
+  $ ggt debugger --app myApp --env development
+  $ ggt debugger --port 9230 --configure vscode
 "
 `;
 
 exports[`root > when debugger is given > prints the usage when -h is passed 1`] = `
-"Start a Chrome DevTools Protocol proxy server that connects to the Gadget debugger.
-This allows you to debug your Gadget app using VS Code, Chrome DevTools, or any other
-CDP-compatible debugger client.
+"Connect a debugger to your app's environment
 
-Usage
-      $ ggt debugger [DIRECTORY] [options]
+USAGE
+  ggt debugger [directory] [flags]
 
-      DIRECTORY: The directory containing your Gadget app (default: current directory)
+ARGUMENTS
+  directory    App directory to use
 
-Options
-      -a, --app <app_name>        Selects the app to debug. Defaults to the app synced to the current directory, if there is one.
-      -e, --env <env_name>        Selects the environment to debug. Defaults to the environment synced to the current directory, if there is one.
-      -p, --port <port>           Local port for the inspector proxy (default: 9229)
-      --configure <editor>        Configure debugger for vscode, cursor
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -c, --configure <editor>             Write editor debug config files (vscode, cursor)
+  -e, --env, --environment <name>      Environment to use
+  -p, --port <port>                    Local port for the CDP proxy
 
-Examples
-      start debugger proxy for current environment
-      $ ggt debugger
+EXAMPLES
+  $ ggt debugger
+  $ ggt debugger --port 9230
+  $ ggt debugger --configure vscode
+  $ ggt debugger --configure cursor
+  $ ggt debugger --app myApp --env development
+  $ ggt debugger --port 9230 --configure vscode
 
-      use a custom port
-      $ ggt debugger --port 9230
-
-      debug a specific app and environment
-      $ ggt debugger --app myApp --env development
-
-      configure VS Code debugger
-      $ ggt debugger --configure vscode
+Run ggt debugger --help for more information.
 "
 `;
 
 exports[`root > when deploy is given > prints the usage when --help is passed 1`] = `
-"Deploys your app to production.
+"Deploy an environment to production
 
-This command first performs a sync to ensure that your local and environment directories
-match, changes are tracked since last sync. If any conflicts are detected, they must be
-resolved before deployment.
+Performs a two-step process: first pushes your local file changes to the environment,
+then deploys that environment to production. If local and environment files have
+diverged since the last sync, you'll be prompted to push your local changes and discard
+the environment's changes before the deploy proceeds. Use --force to skip this prompt.
 
-Usage
-      $ ggt deploy [options]
+USAGE
+  ggt deploy [flags]
 
-Options
-      -a, --app <app_name>           Selects a specific app to deploy. Defaults to the app synced to the current directory, if there is one.
-      --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Defaults to the environment synced to the current directory, if there is one.
-      --force                        Deploys by discarding any changes made to the environment directory since last sync
-      --allow-different-directory    Deploys from any local directory with existing files, even if the directory hasn't been synced before
-      --allow-different-app          Deploys a different app using the --app command, instead of the most recently synced one in the current directory
-      --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
-      --allow-data-delete            Deploys even if it results in the deletion of data in production
-      --allow-charges                Deploys even if it results in additional charges to your plan
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
 
-Examples
-      Deploys code from the staging environment of a myBlog
-      $ ggt deploy -a myBlog -from staging
+  -e, --env, --from, --environment <environment>
+        Environment to deploy from. The source development environment whose
+        files and schema will be deployed to production. Defaults to the
+        environment recorded in .gadget/sync.json.
+
+  -f, --force
+        Skip the push confirmation prompt. Any conflicting changes on the
+        environment are discarded without prompting.
+
+ADDITIONAL FLAGS
+      --allow-charges
+        Allow deploying with new charges. Use this flag in CI/CD pipelines to
+        skip the interactive billing confirmation prompt that appears when a
+        deploy would add charges to your plan.
+
+      --allow-data-delete
+        Allow deploying with data loss. Removed models and fields have their
+        production data permanently deleted. Without this flag, the deploy is
+        blocked when removals are detected.
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-problems, --allow-issues
+        Allow deploying with problems. Problems include Gelly errors, TypeScript
+        errors, and missing references. Without this flag, the deploy is blocked
+        until all issues are resolved.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt deploy
+  $ ggt deploy --env staging
+  $ ggt deploy --force --allow-problems
+  $ ggt deploy --env staging --force --allow-problems --allow-charges --allow-data-delete
+
+CI/CD USAGE
+  In non-interactive environments, pass all --allow-* flags to skip
+  interactive prompts:
+
+    ggt deploy --force --allow-problems --allow-charges --allow-data-delete
+
+SEE ALSO
+  ggt problems — Check for errors before deploying.
+  ggt push — Upload files without deploying to production.
 "
 `;
 
 exports[`root > when deploy is given > prints the usage when -h is passed 1`] = `
-"Deploys your app to production.
+"Deploy an environment to production
 
-This command first performs a sync to ensure that your local and environment directories
-match, changes are tracked since last sync. If any conflicts are detected, they must be
-resolved before deployment.
+USAGE
+  ggt deploy [flags]
 
-Usage
-      $ ggt deploy [options]
+FLAGS
+  -a, --app, --application <app-slug>             Gadget app to use
+  -e, --env, --from, --environment <environment>  Environment to deploy from
+  -f, --force                                     Skip the push confirmation prompt
 
-Options
-      -a, --app <app_name>           Selects a specific app to deploy. Defaults to the app synced to the current directory, if there is one.
-      --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Defaults to the environment synced to the current directory, if there is one.
-      --force                        Deploys by discarding any changes made to the environment directory since last sync
-      --allow-different-directory    Deploys from any local directory with existing files, even if the directory hasn't been synced before
-      --allow-different-app          Deploys a different app using the --app command, instead of the most recently synced one in the current directory
-      --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
-      --allow-data-delete            Deploys even if it results in the deletion of data in production
-      --allow-charges                Deploys even if it results in additional charges to your plan
+EXAMPLES
+  $ ggt deploy
+  $ ggt deploy --env staging
+  $ ggt deploy --force --allow-problems
+  $ ggt deploy --env staging --force --allow-problems --allow-charges --allow-data-delete
 
-Examples
-      Deploys code from the staging environment of a myBlog
-      $ ggt deploy -a myBlog -from staging
+Run ggt deploy --help for more information.
 "
 `;
 
 exports[`root > when dev is given > prints the usage when --help is passed 1`] = `
-"Clones your Gadget environment's files to your local machine and keeps it in sync, in order to
-enable local development with your text editor and source code with Git.
+"Sync files and stream logs locally
 
-If your app's local directory already exists, this command first performs a sync to ensure
-that your local and environment directories match, changes are tracked since last sync. If any
-conflicts are detected, they must be resolved before development starts.
+Watches your local files and your Gadget environment for changes, syncing them
+bidirectionally in real time. This lets you develop with your preferred editor while
+keeping your environment up to date.
 
-Usage
-      $ ggt dev [DIRECTORY] [options]
+On first run, or when files have diverged since the last sync, an initial reconciliation
+is performed. You must resolve any conflicts before continuous syncing begins.
 
-      DIRECTORY: The directory to sync files to (default: the current directory)
+While running, application logs are streamed to the terminal unless --no-logs is passed.
 
-Options
-      -a, --app <app_name>        Selects the app to sync files with. Defaults to the app synced to the current directory, if there is one.
-      -e, --env <env_name>        Selects the environment to sync files with. Defaults to the environment synced to the current directory, if there is one.
-      --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
-      --allow-unknown-directory   Syncs to any local directory with existing files, even if the directory hasn't been synced before
-      --allow-different-app       Syncs with a different app using the --app command, instead of the most recently synced one in the current directory
-      --log-level <level>         Sets the log level for incoming application logs (default: info)
-      --no-logs                   Disables outputting application logs to the console
-      --my-logs                   Only outputs user sourced logs
+USAGE
+  ggt dev [directory] [flags]
 
-Ignoring files
-      ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and
-      folders from syncing. These files are always ignored:
+ARGUMENTS
+  directory
+        Directory to sync files to. If the directory does not exist, it will be
+        created. Defaults to the current working directory when omitted.
 
-      • .DS_Store
-      • .gadget
-      • .git
-      • node_modules
-      • .shopify
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
 
-Notes
-      • "ggt dev" only works with development environments
-      • "ggt dev" only supports "yarn" v1 for installing dependencies
-      • Avoid deleting or moving all of your files while "ggt dev" is running
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
 
-Examples
-      sync an app in a custom path
-      $ ggt dev ~/myGadgetApps/myBlog --app myBlogApp
+  -l, --log-level <level>
+        Minimum log level to display. One of: trace, debug, info, warn, error.
+        Defaults to info. Use trace or debug for verbose troubleshooting output.
 
-      sync with a specific environment and preselect all local changes on conflicts
-      $ ggt dev --env main --prefer local
+  -m, --my-logs
+        Show only logs emitted by your code. Filters out built-in platform logs,
+        showing only logs sourced from your own code.
 
-      sync a custom path with a specific app, environment and preselect all changes from local on conflicts
-      $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
+      --no-logs
+        Don't stream logs while syncing. Useful when you only need file sync
+        without log output, for example when running alongside a separate ggt
+        logs session or in a background terminal.
+
+      --prefer <source>
+        Auto-resolve conflicts using the given source. Use 'local' to keep your
+        local file contents or 'environment' to keep the environment's version.
+        Without this flag, you are prompted to choose for each conflict.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+      --file-push-delay <ms>
+        Delay in ms before pushing file changes. Batches rapid file changes into
+        a single push by waiting this long after the last change before sending.
+        Increase if you see excessive network requests during bulk edits.
+        Defaults to 100ms.
+
+      --file-watch-debounce <ms>
+        Debounce in ms for file watch events. How long the file watcher waits
+        after the last filesystem event before emitting a change. Helps avoid
+        duplicate events from editors that write files in multiple steps.
+        Defaults to 300ms.
+
+      --file-watch-poll-interval <ms>
+        Interval in ms for polling file changes. How often the file watcher
+        polls for changes on filesystems that don't support native events (e.g.
+        network drives). Defaults to 3s (3000ms).
+
+      --file-watch-poll-timeout <ms>
+        Timeout in ms for file watch polling. How long to wait for a poll cycle
+        to complete before timing out. Increase for very large directories where
+        polling is slow. Defaults to 20s (20000ms).
+
+      --file-watch-rename-timeout <ms>
+        Timeout in ms for detecting file renames. How long to wait for an add
+        event to be followed by an unlink event (or vice versa) before treating
+        them as separate operations instead of a rename. Defaults to 1.25s
+        (1250ms).
+
+EXAMPLES
+  $ ggt dev
+  $ ggt dev ~/gadget/my-app
+  $ ggt dev --prefer local
+  $ ggt dev ~/gadget/my-app --app my-app --env development --prefer local
+
+IGNORING FILES
+  Add a .ignore file (uses .gitignore syntax) to exclude files and folders from syncing.
+  These paths are always excluded:
+
+    • .DS_Store
+    • .gadget
+    • .git
+    • .shopify
+    • node_modules
+
+LIMITATIONS
+  • Only syncs with development environments.
+  • Only supports yarn v1 for installing dependencies.
+  • Do not delete or move all files at once while syncing.
 "
 `;
 
 exports[`root > when dev is given > prints the usage when -h is passed 1`] = `
-"Clones your Gadget environment's files to your local machine and keeps it in sync, in order to
-enable local development with your text editor and source code with Git.
+"Sync files and stream logs locally
 
-If your app's local directory already exists, this command first performs a sync to ensure
-that your local and environment directories match, changes are tracked since last sync. If any
-conflicts are detected, they must be resolved before development starts.
+USAGE
+  ggt dev [directory] [flags]
 
-Usage
-      $ ggt dev [DIRECTORY] [options]
+ARGUMENTS
+  directory    Directory to sync files to
 
-      DIRECTORY: The directory to sync files to (default: the current directory)
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+  -l, --log-level <level>              Minimum log level to display
+  -m, --my-logs                        Show only logs emitted by your code
+      --no-logs                        Don't stream logs while syncing
+      --prefer <source>                Auto-resolve conflicts using the given source
 
-Options
-      -a, --app <app_name>        Selects the app to sync files with. Defaults to the app synced to the current directory, if there is one.
-      -e, --env <env_name>        Selects the environment to sync files with. Defaults to the environment synced to the current directory, if there is one.
-      --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
-      --allow-unknown-directory   Syncs to any local directory with existing files, even if the directory hasn't been synced before
-      --allow-different-app       Syncs with a different app using the --app command, instead of the most recently synced one in the current directory
-      --log-level <level>         Sets the log level for incoming application logs (default: info)
-      --no-logs                   Disables outputting application logs to the console
-      --my-logs                   Only outputs user sourced logs
+EXAMPLES
+  $ ggt dev
+  $ ggt dev ~/gadget/my-app
+  $ ggt dev --prefer local
+  $ ggt dev ~/gadget/my-app --app my-app --env development --prefer local
 
-Ignoring files
-      ggt dev uses a .ignore file, similar to .gitignore, to exclude specific files and
-      folders from syncing. These files are always ignored:
+Run ggt dev --help for more information.
+"
+`;
 
-      • .DS_Store
-      • .gadget
-      • .git
-      • node_modules
-      • .shopify
+exports[`root > when env is given > prints the usage for create when --help is passed 1`] = `
+"Create a new environment
 
-Notes
-      • "ggt dev" only works with development environments
-      • "ggt dev" only supports "yarn" v1 for installing dependencies
-      • Avoid deleting or moving all of your files while "ggt dev" is running
+The environment name is lowercased automatically. Use --from to clone an
+existing environment's data and schema; if omitted, the current environment
+is used as the source. Use --use to switch your local directory to the
+new environment immediately after creation.
 
-Examples
-      sync an app in a custom path
-      $ ggt dev ~/myGadgetApps/myBlog --app myBlogApp
+See also: ggt add environment for a simpler shorthand that clones
+the current environment and auto-switches.
 
-      sync with a specific environment and preselect all local changes on conflicts
-      $ ggt dev --env main --prefer local
+USAGE
+  ggt env create <name> [flags]
 
-      sync a custom path with a specific app, environment and preselect all changes from local on conflicts
-      $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
+ARGUMENTS
+  name
+        New environment name. The name is lowercased automatically. Must be
+        unique within the app.
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -u, --use
+        Switch to the new environment after creation. Updates .gadget/sync.json
+        to point at the new environment so subsequent commands target it.
+
+      --from <env-name>
+        Clone from an existing environment. Clones the source environment's data
+        and schema. If omitted, the current environment is used as the source.
+
+EXAMPLES
+  $ ggt env create staging
+  $ ggt env create staging --from development
+  $ ggt env create my-feature --use
+"
+`;
+
+exports[`root > when env is given > prints the usage for create when -h is passed 1`] = `
+"Create a new environment
+
+USAGE
+  ggt env create <name> [flags]
+
+ARGUMENTS
+  name        New environment name
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -u, --use                            Switch to the new environment after creation
+      --from <env-name>                Clone from an existing environment
+
+EXAMPLES
+  $ ggt env create staging
+  $ ggt env create staging --from development
+  $ ggt env create my-feature --use
+
+Run ggt env create --help for more information.
+"
+`;
+
+exports[`root > when env is given > prints the usage for delete when --help is passed 1`] = `
+"Delete an environment
+
+Prompts for confirmation before deleting unless --force is passed. The
+production environment cannot be deleted. If your sync directory was using
+the deleted environment, you'll need to switch to another with
+ggt env use.
+
+USAGE
+  ggt env delete <name> [flags]
+
+ARGUMENTS
+  name
+        Environment name. The production environment cannot be deleted.
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -f, --force
+        Skip confirmation. Deletes the environment immediately without a
+        confirmation prompt.
+
+EXAMPLES
+  $ ggt env delete staging
+  $ ggt env delete staging --force
+"
+`;
+
+exports[`root > when env is given > prints the usage for delete when -h is passed 1`] = `
+"Delete an environment
+
+USAGE
+  ggt env delete <name> [flags]
+
+ARGUMENTS
+  name        Environment name
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -f, --force                          Skip confirmation
+
+EXAMPLES
+  $ ggt env delete staging
+  $ ggt env delete staging --force
+
+Run ggt env delete --help for more information.
+"
+`;
+
+exports[`root > when env is given > prints the usage for list when --help is passed 1`] = `
+"List all environments
+
+Displays a table of all environments with their names and types. Returns
+a "no environments found" message if the app has none.
+
+USAGE
+  ggt env list [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+EXAMPLES
+  $ ggt env list
+  $ ggt env list --app myapp
+"
+`;
+
+exports[`root > when env is given > prints the usage for list when -h is passed 1`] = `
+"List all environments
+
+USAGE
+  ggt env list [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+
+EXAMPLES
+  $ ggt env list
+  $ ggt env list --app myapp
+
+Run ggt env list --help for more information.
+"
+`;
+
+exports[`root > when env is given > prints the usage for unpause when --help is passed 1`] = `
+"Unpause a paused environment
+
+Environments are paused automatically after a period of inactivity.
+This command resumes a paused environment so it can serve requests and
+run actions again. Prints a message if the environment is already
+active.
+
+USAGE
+  ggt env unpause <name> [flags]
+
+ARGUMENTS
+  name
+        Environment name. Must match an existing environment in the app.
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+EXAMPLES
+  $ ggt env unpause staging
+  $ ggt env unpause development --app myapp
+"
+`;
+
+exports[`root > when env is given > prints the usage for unpause when -h is passed 1`] = `
+"Unpause a paused environment
+
+USAGE
+  ggt env unpause <name> [flags]
+
+ARGUMENTS
+  name        Environment name
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+
+EXAMPLES
+  $ ggt env unpause staging
+  $ ggt env unpause development --app myapp
+
+Run ggt env unpause --help for more information.
+"
+`;
+
+exports[`root > when env is given > prints the usage for use when --help is passed 1`] = `
+"Switch the active environment for this directory
+
+Updates .gadget/sync.json to point at the given environment. The
+production environment cannot be set as the active sync target — use
+ggt pull --env production to pull production files instead.
+
+USAGE
+  ggt env use <name> [flags]
+
+ARGUMENTS
+  name
+        Environment name. The production environment cannot be set as the active
+        sync target.
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+EXAMPLES
+  $ ggt env use staging
+  $ ggt env use development
+"
+`;
+
+exports[`root > when env is given > prints the usage for use when -h is passed 1`] = `
+"Switch the active environment for this directory
+
+USAGE
+  ggt env use <name> [flags]
+
+ARGUMENTS
+  name        Environment name
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+
+EXAMPLES
+  $ ggt env use staging
+  $ ggt env use development
+
+Run ggt env use --help for more information.
 "
 `;
 
 exports[`root > when env is given > prints the usage when --help is passed 1`] = `
-"Manage environments for your Gadget application.
+"Manage your app's environments
 
-Usage
-  ggt env <command> [options]
+Environments are isolated copies of your app for development, staging, and testing. Each
+environment has its own database, file tree, and environment variables. The production
+environment cannot be deleted or used directly with ggt dev.
 
-Commands
-  list             List all environments
-  create <name>    Create a new environment
-  delete <name>    Delete an environment
-  unpause <name>   Unpause a paused environment
-  use <name>       Switch the active environment
+USAGE
+  ggt env <command> [flags]
 
-Options
-  -a, --app <app_name>   Selects the application
+COMMANDS
+  list       List all environments
+  create     Create a new environment
+  delete     Delete an environment
+  unpause    Unpause a paused environment
+  use        Switch the active environment for this directory
 
-Run "ggt env <command> -h" for more information about a specific command.
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+EXAMPLES
+  $ ggt env list
+  $ ggt env create staging
+  $ ggt env create staging --from development
+  $ ggt env delete staging --force
+  $ ggt env unpause staging
+  $ ggt env use staging
 "
 `;
 
 exports[`root > when env is given > prints the usage when -h is passed 1`] = `
-"Manage environments for your Gadget application.
+"Manage your app's environments
 
-Usage
-  ggt env <command> [options]
+USAGE
+  ggt env <command> [flags]
 
-Commands
-  list             List all environments
-  create <name>    Create a new environment
-  delete <name>    Delete an environment
-  unpause <name>   Unpause a paused environment
-  use <name>       Switch the active environment
+COMMANDS
+  list       List all environments
+  create     Create a new environment
+  delete     Delete an environment
+  unpause    Unpause a paused environment
+  use        Switch the active environment for this directory
 
-Options
-  -a, --app <app_name>   Selects the application
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
 
-Run "ggt env <command> -h" for more information about a specific command.
+EXAMPLES
+  $ ggt env list
+  $ ggt env create staging
+  $ ggt env create staging --from development
+  $ ggt env delete staging --force
+  $ ggt env unpause staging
+  $ ggt env use staging
+
+Run ggt env --help for more information.
+"
+`;
+
+exports[`root > when env is given > shows help when invoked without a subcommand 1`] = `
+"Manage your app's environments
+
+USAGE
+  ggt env <command> [flags]
+
+COMMANDS
+  list       List all environments
+  create     Create a new environment
+  delete     Delete an environment
+  unpause    Unpause a paused environment
+  use        Switch the active environment for this directory
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+
+EXAMPLES
+  $ ggt env list
+  $ ggt env create staging
+  $ ggt env create staging --from development
+  $ ggt env delete staging --force
+  $ ggt env unpause staging
+  $ ggt env use staging
+
+Run ggt env --help for more information.
 "
 `;
 
 exports[`root > when eval is given > prints the usage when --help is passed 1`] = `
-"Evaluates a JavaScript snippet against a Gadget app's API client.
+"Evaluate a JavaScript snippet against your app
 
-The snippet receives an api variable (a pre-constructed Gadget API client
-authenticated as the developer). Results are formatted like Node.js REPL output.
-Writes are disallowed by default; use --allow-writes to enable them.
+The snippet receives an api variable, a pre-authenticated Gadget API client for your
+app. Both expressions (e.g. api.user.findMany()) and multi-statement blocks work.
+Results are printed with Node.js inspect formatting. Writes are blocked unless
+--allow-writes is passed.
 
-Usage
-      $ ggt eval [options] <snippet>
+USAGE
+  ggt eval <snippet> [flags]
 
-Options
-      -a, --app <app_name>         Selects a specific app. Defaults to the app synced to the current directory, if there is one.
-      -e, --env <env_name>         Selects a specific environment. Defaults to the environment synced to the current directory, if there is one.
-      -w, --allow-writes           Allow write operations (default is read-only)
-          --json                   Output result as JSON instead of Node.js inspect format (root flag)
+ARGUMENTS
+  snippet
+        JavaScript expression or statement to run. The result of the last
+        expression is printed. Use --json for machine-readable output.
 
-Examples
-      $ ggt eval 'api.user.findMany()'
-      $ ggt eval --app my-app --env staging 'api.user.findFirst()'
-      $ ggt eval -a my-app -w 'api.user.delete("123")'
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+  -w, --allow-writes
+        Allow write operations (read-only by default). Without this flag, any
+        API call that creates, updates, or deletes records is blocked. Use this
+        flag to run mutations like create, update, and delete.
+
+EXAMPLES
+  $ ggt eval 'api.user.findMany()'
+  $ ggt eval 'api.post.findMany({ select: { id: true, title: true } })'
+  $ ggt eval --app my-app --env staging 'api.user.findFirst()'
+  $ ggt eval -w 'api.user.delete("123")'
+  $ ggt eval --json 'api.user.count()'
+  $ ggt eval 'const users = await api.user.findMany(); return users.length'
 "
 `;
 
 exports[`root > when eval is given > prints the usage when -h is passed 1`] = `
-"Evaluates a JavaScript snippet against a Gadget app's API client.
+"Evaluate a JavaScript snippet against your app
 
-The snippet receives an api variable (a pre-constructed Gadget API client
-authenticated as the developer). Results are formatted like Node.js REPL output.
-Writes are disallowed by default; use --allow-writes to enable them.
+USAGE
+  ggt eval <snippet> [flags]
 
-Usage
-      $ ggt eval [options] <snippet>
+ARGUMENTS
+  snippet     JavaScript expression or statement to run
 
-Options
-      -a, --app <app_name>         Selects a specific app. Defaults to the app synced to the current directory, if there is one.
-      -e, --env <env_name>         Selects a specific environment. Defaults to the environment synced to the current directory, if there is one.
-      -w, --allow-writes           Allow write operations (default is read-only)
-          --json                   Output result as JSON instead of Node.js inspect format (root flag)
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+  -w, --allow-writes                   Allow write operations (read-only by default)
 
-Examples
-      $ ggt eval 'api.user.findMany()'
-      $ ggt eval --app my-app --env staging 'api.user.findFirst()'
-      $ ggt eval -a my-app -w 'api.user.delete("123")'
+EXAMPLES
+  $ ggt eval 'api.user.findMany()'
+  $ ggt eval 'api.post.findMany({ select: { id: true, title: true } })'
+  $ ggt eval --app my-app --env staging 'api.user.findFirst()'
+  $ ggt eval -w 'api.user.delete("123")'
+  $ ggt eval --json 'api.user.count()'
+  $ ggt eval 'const users = await api.user.findMany(); return users.length'
+
+Run ggt eval --help for more information.
 "
 `;
 
 exports[`root > when list is given > prints the usage when --help is passed 1`] = `
-"List the apps available to the currently logged-in user.
+"List your Gadget apps
 
-Usage
-      ggt list
+Fetches all apps accessible to the authenticated user. In interactive mode,
+apps are grouped by team and displayed as a table. In non-interactive mode,
+outputs tab-separated slug and domain pairs suitable for scripting.
+
+USAGE
+  ggt list
+
+EXAMPLES
+  $ ggt list
+  $ ggt list --json
 "
 `;
 
 exports[`root > when list is given > prints the usage when -h is passed 1`] = `
-"List the apps available to the currently logged-in user.
+"List your Gadget apps
 
-Usage
-      ggt list
+USAGE
+  ggt list
+
+EXAMPLES
+  $ ggt list
+  $ ggt list --json
+
+Run ggt list --help for more information.
 "
 `;
 
 exports[`root > when login is given > prints the usage when --help is passed 1`] = `
-"Log in to your account.
+"Log in to Gadget
 
-Usage
-      ggt login
+Opens the Gadget login page in your default browser. After you authenticate,
+the session token is stored locally so subsequent commands can use it. If the
+browser cannot be opened, a URL is printed for you to visit manually.
+
+USAGE
+  ggt login
+
+EXAMPLES
+  $ ggt login
 "
 `;
 
 exports[`root > when login is given > prints the usage when -h is passed 1`] = `
-"Log in to your account.
+"Log in to Gadget
 
-Usage
-      ggt login
+USAGE
+  ggt login
+
+EXAMPLES
+  $ ggt login
+
+Run ggt login --help for more information.
 "
 `;
 
 exports[`root > when logout is given > prints the usage when --help is passed 1`] = `
-"Log out of your account.
+"Log out of Gadget
 
-Usage
-      ggt logout
+Clears the locally stored session token. Has no effect if you are not
+currently logged in.
+
+USAGE
+  ggt logout
+
+EXAMPLES
+  $ ggt logout
 "
 `;
 
 exports[`root > when logout is given > prints the usage when -h is passed 1`] = `
-"Log out of your account.
+"Log out of Gadget
 
-Usage
-      ggt logout
+USAGE
+  ggt logout
+
+EXAMPLES
+  $ ggt logout
+
+Run ggt logout --help for more information.
 "
 `;
 
 exports[`root > when logs is given > prints the usage when --help is passed 1`] = `
-"Streams the logs for an application to.
+"Stream logs from your app in real time
 
-Usage
-      ggt logs [options]
+Streams HTTP requests, background action invocations, and console output from your
+environment. Use --my-logs to show only logs emitted by your code.
+Use --log-level to set the minimum severity (e.g. warn or error).
 
-Options
-      -ll, --log-level <level>       Sets the log level for incoming application logs (default: info)
-      --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
-      --json                         Output logs in JSON format
-      -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
-      -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
+USAGE
+  ggt logs [flags]
 
-Examples
-      Stream all user logs from your development environment
-      $ ggt logs --env development --my-logs
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
 
-      Stream all logs from your production environment in JSON format
-      $ ggt logs --env production --json
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+  -l, --log-level <level>
+        Minimum log level to display. One of: trace, debug, info, warn, error.
+        Defaults to info. Use trace or debug for verbose troubleshooting output.
+
+  -m, --my-logs
+        Show only logs emitted by your code. Filters out built-in platform logs,
+        showing only logs sourced from your own code.
+
+EXAMPLES
+  $ ggt logs
+  $ ggt logs --env production
+  $ ggt logs --my-logs --log-level warn
+  $ ggt logs --json
 "
 `;
 
 exports[`root > when logs is given > prints the usage when -h is passed 1`] = `
-"Streams the logs for an application to.
+"Stream logs from your app in real time
 
-Usage
-      ggt logs [options]
+USAGE
+  ggt logs [flags]
 
-Options
-      -ll, --log-level <level>       Sets the log level for incoming application logs (default: info)
-      --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
-      --json                         Output logs in JSON format
-      -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
-      -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+  -l, --log-level <level>              Minimum log level to display
+  -m, --my-logs                        Show only logs emitted by your code
 
-Examples
-      Stream all user logs from your development environment
-      $ ggt logs --env development --my-logs
+EXAMPLES
+  $ ggt logs
+  $ ggt logs --env production
+  $ ggt logs --my-logs --log-level warn
+  $ ggt logs --json
 
-      Stream all logs from your production environment in JSON format
-      $ ggt logs --env production --json
+Run ggt logs --help for more information.
 "
 `;
 
 exports[`root > when open is given > prints the usage when --help is passed 1`] = `
-"This command opens a specific Gadget page in your browser, allowing you to directly access
-various parts of your application's interface such as logs, permissions, data views, or
-schemas.
+"Open your app in a browser
 
-Usage
-      ggt open [LOCATION] [model_name] [--show-all] [options]
+Opens the Gadget web editor for your app by default. The data and schema locations require a model
+name or --show-all to pick from a list.
 
-      LOCATION: specifies the part of Gadget to open, by default it'll open the apps home page:
+USAGE
+  ggt open [location] [model] [flags]
 
-      + logs                Opens logs
-      + permissions         Opens permissions
-      + data                Opens data editor for a specific model
-      + schema              Opens schema editor for a specific model
+ARGUMENTS
+  location
+        Page to open: logs, permissions, data, or schema. One of: logs,
+        permissions, data, schema. Opens the app editor when omitted.
 
-Options
-      -a, --app <app_name>   Selects the application to open in your browser. Defaults to the app synced to the current directory, if there is one.
-      -e, --env <env_name>   Selects the environment to open in your browser. Defaults to the environment synced to the current directory, if there is one.
-      --show-all             Shows all schema, or data options by listing your available models
+  model
+        Model name for data or schema locations. Required for data and schema
+        locations. Use --show-all to pick from a list instead.
 
-Examples
-      Opens editor home
-      $ ggt open
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
 
-      Opens logs
-      $ ggt open logs
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
 
-      Opens permissions
-      $ ggt open permissions
+      --show-all
+        Prompt to pick a model from the full list. Displays an interactive
+        picker with all models in your app. Useful when you don't remember the
+        exact model name.
 
-      Opens data editor for the 'post' model
-      $ ggt open data post
+EXAMPLES
+  $ ggt open
+  $ ggt open logs
+  $ ggt open permissions
+  $ ggt open data post
+  $ ggt open schema post
+  $ ggt open data --show-all
+  $ ggt open schema --show-all
+  $ ggt open data post --app myBlog --env staging
 
-      Opens schema for 'post' model
-      $ ggt open schema post
+LOCATIONS
+  location specifies the part of Gadget to open. By default it opens the app's editor.
 
-      Shows all models available in the data editor
-      $ ggt open data -show-all
-
-      Shows all models available in the schema viewer
-      $ ggt open schema --show-all
-
-      Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment
-      $ ggt open data post --app myBlog --env staging
+    logs          Opens the log viewer for your environment.
+    permissions   Opens the permissions settings page.
+    data          Opens the data editor for a specific model.
+    schema        Opens the schema editor for a specific model.
 "
 `;
 
 exports[`root > when open is given > prints the usage when -h is passed 1`] = `
-"This command opens a specific Gadget page in your browser, allowing you to directly access
-various parts of your application's interface such as logs, permissions, data views, or
-schemas.
+"Open your app in a browser
 
-Usage
-      ggt open [LOCATION] [model_name] [--show-all] [options]
+USAGE
+  ggt open [location] [model] [flags]
 
-      LOCATION: specifies the part of Gadget to open, by default it'll open the apps home page:
+ARGUMENTS
+  location    Page to open: logs, permissions, data, or schema
+  model       Model name for data or schema locations
 
-      + logs                Opens logs
-      + permissions         Opens permissions
-      + data                Opens data editor for a specific model
-      + schema              Opens schema editor for a specific model
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+      --show-all                       Prompt to pick a model from the full list
 
-Options
-      -a, --app <app_name>   Selects the application to open in your browser. Defaults to the app synced to the current directory, if there is one.
-      -e, --env <env_name>   Selects the environment to open in your browser. Defaults to the environment synced to the current directory, if there is one.
-      --show-all             Shows all schema, or data options by listing your available models
+EXAMPLES
+  $ ggt open
+  $ ggt open logs
+  $ ggt open permissions
+  $ ggt open data post
+  $ ggt open schema post
+  $ ggt open data --show-all
+  $ ggt open schema --show-all
+  $ ggt open data post --app myBlog --env staging
 
-Examples
-      Opens editor home
-      $ ggt open
-
-      Opens logs
-      $ ggt open logs
-
-      Opens permissions
-      $ ggt open permissions
-
-      Opens data editor for the 'post' model
-      $ ggt open data post
-
-      Opens schema for 'post' model
-      $ ggt open schema post
-
-      Shows all models available in the data editor
-      $ ggt open data -show-all
-
-      Shows all models available in the schema viewer
-      $ ggt open schema --show-all
-
-      Opens data editor for 'post' model of app 'myBlog' in the 'staging' environment
-      $ ggt open data post --app myBlog --env staging
+Run ggt open --help for more information.
 "
 `;
 
 exports[`root > when problems is given > prints the usage when --help is passed 1`] = `
-"Shows any problems (errors, warnings) found in your Gadget application.
+"Show errors and warnings in your app
 
-Usage
-      ggt problems
+Fetches issues that would block a deploy from the Gadget platform for your app's environment.
+Issues include type errors, missing action files, and schema conflicts. Exits
+cleanly with a success message when no problems are found.
+
+USAGE
+  ggt problems [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+EXAMPLES
+  $ ggt problems
+  $ ggt problems --app myBlog
+  $ ggt problems --env staging
+  $ ggt problems --app myBlog --env production
 "
 `;
 
 exports[`root > when problems is given > prints the usage when -h is passed 1`] = `
-"Shows any problems (errors, warnings) found in your Gadget application.
+"Show errors and warnings in your app
 
-Usage
-      ggt problems
+USAGE
+  ggt problems [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt problems
+  $ ggt problems --app myBlog
+  $ ggt problems --env staging
+  $ ggt problems --app myBlog --env production
+
+Run ggt problems --help for more information.
 "
 `;
 
 exports[`root > when pull is given > prints the usage when --help is passed 1`] = `
-"Pulls your environment files to your local directory.
+"Download environment files to your local directory
 
-This command first tracks changes in your local directory since the last sync. If changes are
-detected, you will be prompted to discard them or abort the pull.
+Downloads all environment file changes since the last sync to your local directory. If
+you also have local changes since the last sync, you'll be prompted to discard those
+local changes or abort. Use --force to skip the prompt and discard automatically.
 
-Usage
-      ggt pull [options]
+USAGE
+  ggt pull [flags]
 
-Options
-      -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
-      -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
-      --force                        Forces a pull by discarding any changes made on your local directory since last sync
-      --allow-different-directory    Pulls changes from any environment directory, even if the directory hasn't been synced before
-      --allow-different-app          Pulls changes to a different app using --app command, instead of the most recently synced one in the current directory
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
 
-Examples
-      Pull all development environment changes by discarding any changes made locally
-      $ ggt pull --env development --force
+  -e, --env, --from, --environment <environment>
+        Environment to pull from. Defaults to the development environment
+        recorded in .gadget/sync.json.
+
+  -f, --force
+        Pull without prompting, discarding local changes. Any local changes
+        since the last sync are overwritten by the environment's files.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt pull
+  $ ggt pull --env staging
+  $ ggt pull --env production --force
+
+SEE ALSO
+  ggt push — Upload local file changes to Gadget.
+  ggt dev — Bidirectional file sync with real-time watching.
 "
 `;
 
 exports[`root > when pull is given > prints the usage when -h is passed 1`] = `
-"Pulls your environment files to your local directory.
+"Download environment files to your local directory
 
-This command first tracks changes in your local directory since the last sync. If changes are
-detected, you will be prompted to discard them or abort the pull.
+USAGE
+  ggt pull [flags]
 
-Usage
-      ggt pull [options]
+FLAGS
+  -a, --app, --application <app-slug>             Gadget app to use
+  -e, --env, --from, --environment <environment>  Environment to pull from
+  -f, --force                                     Pull without prompting, discarding local changes
 
-Options
-      -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
-      -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
-      --force                        Forces a pull by discarding any changes made on your local directory since last sync
-      --allow-different-directory    Pulls changes from any environment directory, even if the directory hasn't been synced before
-      --allow-different-app          Pulls changes to a different app using --app command, instead of the most recently synced one in the current directory
+EXAMPLES
+  $ ggt pull
+  $ ggt pull --env staging
+  $ ggt pull --env production --force
 
-Examples
-      Pull all development environment changes by discarding any changes made locally
-      $ ggt pull --env development --force
+Run ggt pull --help for more information.
 "
 `;
 
 exports[`root > when push is given > prints the usage when --help is passed 1`] = `
-"Pushes your local files to your environment directory.
+"Upload local file changes to Gadget
 
-This command first tracks changes in your environment directory since the last sync.
-If changes are detected, you will be prompted to discard them or abort the push.
+Uploads all local file changes since the last sync to your Gadget environment. If the
+environment also has changes since the last sync, you'll be prompted to discard those
+environment changes or abort. Use --force to skip the prompt and discard automatically.
 
-Usage
-      ggt push [options]
+USAGE
+  ggt push [flags]
 
-Options
-      -a, --app <app_name>           Selects the app to push local changes to. Defaults to the app synced to the current directory, if there is one.
-      -e, --env, --to <env_name>     Selects the environment to push local changes to. Defaults to the environment synced to the current directory, if there is one.
-      --force                        Forces a push by discarding any changes made on your environment directory since last sync
-      --allow-different-directory    Pushes changes from any local directory with existing files, even if the directory hasn't been synced before
-      --allow-different-app          Pushes changes to an app using --app command, instead of the most recently synced one in the current directory
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
 
-Examples
-      Push all local changes to the main environment by discarding any changes made on main
-      $ ggt push --env main --force
+  -e, --env, --to, --environment <environment>
+        Environment to push to. Defaults to the development environment recorded
+        in .gadget/sync.json. Production cannot be pushed to.
+
+  -f, --force
+        Push without prompting, discarding environment changes. Any changes on
+        the environment since the last sync are overwritten by your local files.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt push
+  $ ggt push --env main
+  $ ggt push --env main --force
+
+SEE ALSO
+  ggt pull — Download environment files.
+  ggt dev — Bidirectional file sync with real-time watching.
 "
 `;
 
 exports[`root > when push is given > prints the usage when -h is passed 1`] = `
-"Pushes your local files to your environment directory.
+"Upload local file changes to Gadget
 
-This command first tracks changes in your environment directory since the last sync.
-If changes are detected, you will be prompted to discard them or abort the push.
+USAGE
+  ggt push [flags]
 
-Usage
-      ggt push [options]
+FLAGS
+  -a, --app, --application <app-slug>           Gadget app to use
+  -e, --env, --to, --environment <environment>  Environment to push to
+  -f, --force                                   Push without prompting, discarding environment changes
 
-Options
-      -a, --app <app_name>           Selects the app to push local changes to. Defaults to the app synced to the current directory, if there is one.
-      -e, --env, --to <env_name>     Selects the environment to push local changes to. Defaults to the environment synced to the current directory, if there is one.
-      --force                        Forces a push by discarding any changes made on your environment directory since last sync
-      --allow-different-directory    Pushes changes from any local directory with existing files, even if the directory hasn't been synced before
-      --allow-different-app          Pushes changes to an app using --app command, instead of the most recently synced one in the current directory
+EXAMPLES
+  $ ggt push
+  $ ggt push --env main
+  $ ggt push --env main --force
 
-Examples
-      Push all local changes to the main environment by discarding any changes made on main
-      $ ggt push --env main --force
+Run ggt push --help for more information.
 "
 `;
 
 exports[`root > when status is given > prints the usage when --help is passed 1`] = `
-"Shows file changes since last sync (e.g. $ggt dev, push, deploy etc.)
+"Show sync state and pending file changes
 
-Usage
-      ggt status
+Displays three things about your current sync directory:
+
+  1. The app and environment you are syncing with.
+  2. Whether "ggt dev" is currently running (and its PID if so).
+  3. Any pending file changes on either side since the last sync.
+
+USAGE
+  ggt status [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt status
+  $ ggt status --app myapp --env staging
 "
 `;
 
 exports[`root > when status is given > prints the usage when -h is passed 1`] = `
-"Shows file changes since last sync (e.g. $ggt dev, push, deploy etc.)
+"Show sync state and pending file changes
 
-Usage
-      ggt status
+USAGE
+  ggt status [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt status
+  $ ggt status --app myapp --env staging
+
+Run ggt status --help for more information.
+"
+`;
+
+exports[`root > when var is given > prints the usage for delete when --help is passed 1`] = `
+"Delete one or more environment variables
+
+Prompts for confirmation before deleting unless --force is passed. Use
+--all to delete every variable in the environment. With --force,
+missing keys are silently ignored instead of causing an error.
+
+USAGE
+  ggt var delete [key] [flags]
+
+ARGUMENTS
+  key
+        Variable name(s) to delete. One or more keys separated by spaces. Use
+        --all to delete every variable.
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+  -f, --force
+        Skip confirmation and suppress not-found errors. Skips the confirmation
+        prompt and silently ignores keys that don't exist.
+
+      --all
+        Delete all environment variables. Deletes every variable in the
+        environment. Combine with --force to skip confirmation.
+
+EXAMPLES
+  $ ggt var delete API_KEY
+  $ ggt var delete KEY1 KEY2
+  $ ggt var delete --all --force
+"
+`;
+
+exports[`root > when var is given > prints the usage for delete when -h is passed 1`] = `
+"Delete one or more environment variables
+
+USAGE
+  ggt var delete [key] [flags]
+
+ARGUMENTS
+  key         Variable name(s) to delete
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+  -f, --force                          Skip confirmation and suppress not-found errors
+      --all                            Delete all environment variables
+
+EXAMPLES
+  $ ggt var delete API_KEY
+  $ ggt var delete KEY1 KEY2
+  $ ggt var delete --all --force
+
+Run ggt var delete --help for more information.
+"
+`;
+
+exports[`root > when var is given > prints the usage for get when --help is passed 1`] = `
+"Print the value of an environment variable
+
+Prints the value of a single variable. Secret variables are write-only
+and cannot be read back — an error is returned if you try.
+
+USAGE
+  ggt var get <key> [flags]
+
+ARGUMENTS
+  key
+        Variable name. Case-sensitive. Secret variables cannot be read back.
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+EXAMPLES
+  $ ggt var get DATABASE_URL
+  $ ggt var get API_KEY --app myapp --env staging
+"
+`;
+
+exports[`root > when var is given > prints the usage for get when -h is passed 1`] = `
+"Print the value of an environment variable
+
+USAGE
+  ggt var get <key> [flags]
+
+ARGUMENTS
+  key         Variable name
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt var get DATABASE_URL
+  $ ggt var get API_KEY --app myapp --env staging
+
+Run ggt var get --help for more information.
+"
+`;
+
+exports[`root > when var is given > prints the usage for import when --help is passed 1`] = `
+"Import variables from another environment or file
+
+Requires either --from (another environment) or --from-file (a
+.env file) as the source. By default, variables are imported as
+placeholders with empty values — pass --include-values to copy the
+actual values. Secret values cannot be copied between environments.
+
+USAGE
+  ggt var import [key] [flags]
+
+ARGUMENTS
+  key
+        Variable name(s) to import (or use --all). One or more keys to import.
+        Use --all to import every variable from the source.
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+      --all
+        Import all variables instead of specifying keys. Imports every variable
+        from the source instead of requiring individual key names.
+
+      --from <env-name>
+        Import from another environment. The name of the source environment to
+        import from. Cannot be combined with --from-file.
+
+      --from-file <path>
+        Import from a .env file. Path to a .env file. Supports KEY=value format,
+        comments (#), and quoted values. Cannot be combined with --from.
+
+      --include-values
+        Copy values when importing from another env. Without this flag, only the
+        keys are imported as empty placeholders. Secret variable values cannot
+        be copied between environments and are skipped.
+
+EXAMPLES
+  $ ggt var import --from staging --all
+  $ ggt var import --from staging API_KEY DATABASE_URL
+  $ ggt var import --from staging --include-values API_KEY
+  $ ggt var import --from-file .env --all
+"
+`;
+
+exports[`root > when var is given > prints the usage for import when -h is passed 1`] = `
+"Import variables from another environment or file
+
+USAGE
+  ggt var import [key] [flags]
+
+ARGUMENTS
+  key         Variable name(s) to import (or use --all)
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+      --all                            Import all variables instead of specifying keys
+      --from <env-name>                Import from another environment
+      --from-file <path>               Import from a .env file
+      --include-values                 Copy values when importing from another env
+
+EXAMPLES
+  $ ggt var import --from staging --all
+  $ ggt var import --from staging API_KEY DATABASE_URL
+  $ ggt var import --from staging --include-values API_KEY
+  $ ggt var import --from-file .env --all
+
+Run ggt var import --help for more information.
+"
+`;
+
+exports[`root > when var is given > prints the usage for list when --help is passed 1`] = `
+"List all environment variable keys
+
+Prints each variable key on its own line. Values are not shown — use
+ggt var get to read a specific value.
+
+USAGE
+  ggt var list [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+EXAMPLES
+  $ ggt var list
+  $ ggt var list --app myapp --env staging
+"
+`;
+
+exports[`root > when var is given > prints the usage for list when -h is passed 1`] = `
+"List all environment variable keys
+
+USAGE
+  ggt var list [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt var list
+  $ ggt var list --app myapp --env staging
+
+Run ggt var list --help for more information.
+"
+`;
+
+exports[`root > when var is given > prints the usage for set when --help is passed 1`] = `
+"Set one or more environment variables
+
+Accepts one or more KEY=value pairs. The value is everything after the
+first =, so values can contain additional = characters. Use
+--secret to mark the variables as write-only.
+
+USAGE
+  ggt var set <key=value> [flags]
+
+ARGUMENTS
+  key=value
+        One or more key=value pairs. The value is everything after the first =,
+        so values can contain = characters. Multiple pairs can be passed in a
+        single invocation.
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+  -s, --secret
+        Mark the variable as secret (write-only). Secret variables are
+        write-only — their values cannot be read back after being set. Use this
+        for API keys, tokens, and other sensitive values.
+
+EXAMPLES
+  $ ggt var set API_KEY=abc123
+  $ ggt var set SECRET=xyz --secret
+  $ ggt var set KEY1=a KEY2=b
+  $ ggt var set CONNECTION_STRING=postgres://user:pass@host/db
+"
+`;
+
+exports[`root > when var is given > prints the usage for set when -h is passed 1`] = `
+"Set one or more environment variables
+
+USAGE
+  ggt var set <key=value> [flags]
+
+ARGUMENTS
+  key=value    One or more key=value pairs
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+  -s, --secret                         Mark the variable as secret (write-only)
+
+EXAMPLES
+  $ ggt var set API_KEY=abc123
+  $ ggt var set SECRET=xyz --secret
+  $ ggt var set KEY1=a KEY2=b
+  $ ggt var set CONNECTION_STRING=postgres://user:pass@host/db
+
+Run ggt var set --help for more information.
 "
 `;
 
 exports[`root > when var is given > prints the usage when --help is passed 1`] = `
-"Manage environment variables for your Gadget application.
+"Manage your app's environment variables
 
-Usage
-  ggt var <command> [options]
+Environment variables are available as process.env.YOUR_VAR in your app code. Use them
+for configuration like API keys and settings that differ between environments. Secret
+variables are write-only — their values cannot be read back after being set.
 
-Commands
-  list             List all environment variables
-  get <key>        Get the value of an environment variable
-  set <key=value>  Set one or more environment variables
-  delete <key>     Delete one or more environment variables
-  import           Import environment variables from another environment or file
+USAGE
+  ggt var <command> [flags]
 
-Options
-  -a, --app <app_name>   Selects the application
-  -e, --env <env_name>   Selects the environment
+COMMANDS
+  list      List all environment variable keys
+  get       Print the value of an environment variable
+  set       Set one or more environment variables
+  delete    Delete one or more environment variables
+  import    Import variables from another environment or file
 
-Run "ggt var <command> -h" for more information about a specific command.
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+EXAMPLES
+  $ ggt var list
+  $ ggt var get DATABASE_URL
+  $ ggt var set API_KEY=abc123
+  $ ggt var set SECRET=xyz --secret
+  $ ggt var set CONNECTION_STRING=postgres://user:pass@host/db
+  $ ggt var delete API_KEY
+  $ ggt var delete --all --force
+  $ ggt var import --from staging --all
+  $ ggt var import --from-file .env --all
 "
 `;
 
 exports[`root > when var is given > prints the usage when -h is passed 1`] = `
-"Manage environment variables for your Gadget application.
+"Manage your app's environment variables
 
-Usage
-  ggt var <command> [options]
+USAGE
+  ggt var <command> [flags]
 
-Commands
-  list             List all environment variables
-  get <key>        Get the value of an environment variable
-  set <key=value>  Set one or more environment variables
-  delete <key>     Delete one or more environment variables
-  import           Import environment variables from another environment or file
+COMMANDS
+  list      List all environment variable keys
+  get       Print the value of an environment variable
+  set       Set one or more environment variables
+  delete    Delete one or more environment variables
+  import    Import variables from another environment or file
 
-Options
-  -a, --app <app_name>   Selects the application
-  -e, --env <env_name>   Selects the environment
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
 
-Run "ggt var <command> -h" for more information about a specific command.
+EXAMPLES
+  $ ggt var list
+  $ ggt var get DATABASE_URL
+  $ ggt var set API_KEY=abc123
+  $ ggt var set SECRET=xyz --secret
+  $ ggt var set CONNECTION_STRING=postgres://user:pass@host/db
+  $ ggt var delete API_KEY
+  $ ggt var delete --all --force
+  $ ggt var import --from staging --all
+  $ ggt var import --from-file .env --all
+
+Run ggt var --help for more information.
+"
+`;
+
+exports[`root > when var is given > shows help when invoked without a subcommand 1`] = `
+"Manage your app's environment variables
+
+USAGE
+  ggt var <command> [flags]
+
+COMMANDS
+  list      List all environment variable keys
+  get       Print the value of an environment variable
+  set       Set one or more environment variables
+  delete    Delete one or more environment variables
+  import    Import variables from another environment or file
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt var list
+  $ ggt var get DATABASE_URL
+  $ ggt var set API_KEY=abc123
+  $ ggt var set SECRET=xyz --secret
+  $ ggt var set CONNECTION_STRING=postgres://user:pass@host/db
+  $ ggt var delete API_KEY
+  $ ggt var delete --all --force
+  $ ggt var import --from staging --all
+  $ ggt var import --from-file .env --all
+
+Run ggt var --help for more information.
 "
 `;
 
 exports[`root > when version is given > prints the usage when --help is passed 1`] = `
-"Print this version of ggt.
+"Print the currently installed version
 
-Usage
-      ggt version
+Prints the currently installed version number. ggt checks for updates
+automatically and prints a notice when a newer version is available.
 
-Updating ggt
-      When there is a new release of ggt, running ggt will show you a message letting you
-      know that an update is available.
+USAGE
+  ggt version
+
+EXAMPLES
+  $ ggt version
+
+UPDATING GGT
+  ggt notifies you when an update is available. To update, run
+  npm install -g ggt@latest. To install an experimental build, run
+  npm install -g ggt@experimental.
 "
 `;
 
 exports[`root > when version is given > prints the usage when -h is passed 1`] = `
-"Print this version of ggt.
+"Print the currently installed version
 
-Usage
-      ggt version
+USAGE
+  ggt version
 
-Updating ggt
-      When there is a new release of ggt, running ggt will show you a message letting you
-      know that an update is available.
+EXAMPLES
+  $ ggt version
+
+Run ggt version --help for more information.
 "
 `;
 
 exports[`root > when whoami is given > prints the usage when --help is passed 1`] = `
-"Show the name and email address of the currently logged in user.
+"Show the current logged-in user
 
-Usage
-      ggt whoami
+Prints the name and email of the currently authenticated user. If no session
+is active, prints a not-logged-in message. Run ggt login to authenticate.
+
+USAGE
+  ggt whoami
+
+EXAMPLES
+  $ ggt whoami
 "
 `;
 
 exports[`root > when whoami is given > prints the usage when -h is passed 1`] = `
-"Show the name and email address of the currently logged in user.
+"Show the current logged-in user
 
-Usage
-      ggt whoami
+USAGE
+  ggt whoami
+
+EXAMPLES
+  $ ggt whoami
+
+Run ggt whoami --help for more information.
 "
 `;

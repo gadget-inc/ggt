@@ -65,7 +65,7 @@ export class ClientError extends GGTError {
         body = sprint`
           Gadget responded with the following ${pluralize("error", errors.length, false)}:
 
-            • ${errors.join("\n            • ")}
+            ${errors.map((e) => `• ${e}`).join("\n")}
         `;
         break;
       }
@@ -91,11 +91,11 @@ export class ClientError extends GGTError {
         break;
     }
 
-    if (this.operationName) {
-      body += ` (running "${this.operationName}")`;
-    }
+    return sprint`
+      ${this.message}${this.operationName ? ` (running "${this.operationName}")` : ""}
 
-    return this.message + "\n\n" + body;
+      ${body}
+    `;
   }
 }
 

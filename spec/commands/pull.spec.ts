@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import * as pull from "../../src/commands/pull.js";
+import pull from "../../src/commands/pull.js";
 import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
@@ -68,7 +68,7 @@ describe("pull", () => {
         }
       `);
 
-    await pull.run(testCtx, makeArgs(pull.args));
+    await runCommand(testCtx, pull);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -134,7 +134,7 @@ describe("pull", () => {
 
     mockConfirmOnce();
 
-    await pull.run(testCtx, makeArgs(pull.args));
+    await runCommand(testCtx, pull);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -175,7 +175,7 @@ describe("pull", () => {
       },
     });
 
-    await pull.run(testCtx, makeArgs(pull.args, "pull", "--force"));
+    await runCommand(testCtx, pull, "--force");
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -250,7 +250,7 @@ describe("pull", () => {
         }
       `);
 
-    await pull.run(testCtx, makeArgs(pull.args));
+    await runCommand(testCtx, pull);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -295,7 +295,7 @@ describe("pull", () => {
       },
     });
 
-    await pull.run(testCtx, makeArgs(pull.args));
+    await runCommand(testCtx, pull);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
       {
@@ -336,13 +336,13 @@ describe("pull", () => {
       },
     });
 
-    await pull.run(testCtx, makeArgs(pull.args));
+    await runCommand(testCtx, pull);
 
     expectStdout().toContain("Nothing to pull.");
   });
 
   it("throws ArgError when positional arguments are provided", async () => {
-    const error = await expectError(() => pull.run(testCtx, makeArgs(pull.args, "pull", "some-path")));
+    const error = await expectError(() => runCommand(testCtx, pull, "some-path"));
 
     expect(error).toBeInstanceOf(ArgError);
   });

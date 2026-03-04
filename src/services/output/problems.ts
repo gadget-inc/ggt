@@ -4,6 +4,7 @@ import pluralize from "pluralize";
 import type { Problem as FileSyncProblem, PublishIssue } from "../../__generated__/graphql.js";
 import { compact } from "../util/collection.js";
 import { isGellyFile, isJavaScriptFile, isTypeScriptFile } from "../util/is.js";
+import colors from "./colors.js";
 import { println } from "./print.js";
 import { sprint, sprintln, type SprintOptions } from "./sprint.js";
 
@@ -44,13 +45,13 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes, ...sp
 
   for (const [name, problems] of Object.entries(groupedProblems)) {
     content += sprintln("");
-    content += sprintln`• {cyan ${name}} {redBright ${pluralize("problem", problems.length, true)}}`;
+    content += sprintln`• ${colors.link(name)} ${colors.error(pluralize("problem", problems.length, true))}`;
     for (const problem of problems) {
       const [message, ...lines] = problem.message.split("\n") as [string, ...string[]];
 
-      content += sprint`  {red ✖} `;
+      content += `  ${colors.error("✖")} `;
       if (showFileTypes ?? problem.type === "SourceFile") {
-        content += sprint`${filetype(name)} `;
+        content += `${filetype(name)} `;
       }
       content += sprint(message);
 
@@ -60,7 +61,7 @@ export const sprintProblems = ({ problems: groupedProblems, showFileTypes, ...sp
       }
 
       for (const label of problem.labels) {
-        content += sprint` {dim ${label}}`;
+        content += ` ${colors.subdued(label)}`;
       }
 
       content += sprintln("");

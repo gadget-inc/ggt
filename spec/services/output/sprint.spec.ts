@@ -28,6 +28,74 @@ describe("sprint", () => {
       const result = sprint`Hello, ${name}!`;
       expect(result).toBe("Hello, Jane!");
     });
+
+    it("aligns multi-line value continuation lines to insertion column", () => {
+      const list = "one\ntwo\nthree";
+      const result = sprint`
+        Header
+          ${list}
+        Footer
+      `;
+      expect(result).toBe("Header\n  one\n  two\n  three\nFooter");
+    });
+
+    // cspell:disable-next-line -- "dedented" is clearer than alternatives
+    it("known limitation: multi-line value on non-whitespace line is not dedented", () => {
+      const list = "one\ntwo\nthree";
+      const result = sprint`
+        Items: ${list}
+      `;
+      // Unaligned continuation lines have 0 indent, so dedent can't strip anything
+      expect(result).toBe("        Items: one\ntwo\nthree");
+    });
+
+    it("does not modify single-line values", () => {
+      const value = "hello";
+      const result = sprint`
+        ${value}
+      `;
+      expect(result).toBe("hello");
+    });
+
+    it("does not indent trailing empty line in multi-line value", () => {
+      const list = "one\ntwo\n";
+      const result = sprint`
+        Header
+          ${list}
+        Footer
+      `;
+      expect(result).toBe("Header\n  one\n  two\n\nFooter");
+    });
+
+    it("does not indent blank intermediate lines in multi-line value", () => {
+      const list = "one\n\nthree";
+      const result = sprint`
+        Header
+          ${list}
+        Footer
+      `;
+      expect(result).toBe("Header\n  one\n\n  three\nFooter");
+    });
+
+    it("handles empty string interpolated value", () => {
+      const result = sprint`Header ${""} Footer`;
+      expect(result).toBe("Header  Footer");
+    });
+
+    // The two spaces are the template literal's own whitespace, not injected by alignMultilineValues.
+    it("handles value that is only newlines", () => {
+      const result = sprint`
+        Header
+          ${"\n\n"}
+        Footer
+      `;
+      expect(result).toBe("Header\n  \n\n\nFooter");
+    });
+
+    it("does not align multi-line value when no preceding newline", () => {
+      const result = sprint`${`one\ntwo\nthree`} end`;
+      expect(result).toBe("one\ntwo\nthree end");
+    });
   });
 
   describe("options overload", () => {
@@ -59,16 +127,6 @@ describe("sprint", () => {
       });
 
       it("defaults to false (no newline prepended)", () => {
-        expect(sprint({ content: "Hello" })).toBe("Hello");
-      });
-    });
-
-    describe("indent", () => {
-      it("indents each line by the given number of spaces", () => {
-        expect(sprint({ content: "line1\nline2", indent: 2 })).toBe("  line1\n  line2");
-      });
-
-      it("defaults to 0 (no indentation)", () => {
         expect(sprint({ content: "Hello" })).toBe("Hello");
       });
     });

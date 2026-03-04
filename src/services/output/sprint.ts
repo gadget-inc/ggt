@@ -1,11 +1,52 @@
 import type { Options as BoxenOptions } from "boxen";
 import boxen from "boxen";
-import chalkTemplate from "chalk-template";
-import indentString from "indent-string";
 import { dedent } from "ts-dedent";
 
 import { isArray, isString } from "../util/is.js";
 import { omit } from "../util/object.js";
+
+/**
+ * Aligns multi-line interpolated values to their insertion column.
+ *
+ * When a value contains newlines and sits on a whitespace-only line,
+ * continuation lines are indented to match the column position. This
+ * mirrors ts-dedent's template-tag behavior so that dedent
+ * computes min-indent correctly across template + interpolated content.
+ *
+ * @remarks Callers must place multi-line interpolated values on a
+ * whitespace-only line (e.g. `sprint\`  Label: ${value}\``). If the
+ * preceding text contains non-whitespace characters the alignment is
+ * silently skipped and the value is returned unchanged.
+ */
+const alignMultilineValues = (strings: TemplateStringsArray, values: unknown[]): unknown[] => {
+  return values.map((value, i) => {
+    if (typeof value !== "string") return value;
+
+    if (!value.includes("\n")) return value;
+
+    const preceding = strings[i];
+    const lastNewlineIdx = preceding.lastIndexOf("\n");
+    const lastLine = lastNewlineIdx >= 0 ? preceding.slice(lastNewlineIdx + 1) : preceding;
+
+    if (/\S/.test(lastLine)) return value;
+
+    const lines = value.split("\n");
+    return lines
+      .map((line, j) => {
+        if (j === 0) return line;
+        if (line === "") return line;
+        return lastLine + line;
+      })
+      .join("\n");
+  });
+};
+
+const processTemplate = (strings: TemplateStringsArray, values: unknown[]): string => {
+  const aligned = alignMultilineValues(strings, values);
+  // oxlint-disable-next-line no-base-to-string -- intentional: arbitrary template values are coerced to string, same as chalk-template did internally
+  const joined = strings.reduce((acc, str, i) => acc + (i > 0 ? String(aligned[i - 1] ?? "") : "") + str, "");
+  return dedent(joined);
+};
 
 export type SprintOptions = {
   /**
@@ -21,13 +62,6 @@ export type SprintOptions = {
    * @default false
    */
   ensureEmptyLineAbove?: boolean;
-
-  /**
-   * The number of spaces to indent the text.
-   *
-   * @default 0
-   */
-  indent?: number;
 
   /**
    * Whether to wrap the text in a box.
@@ -52,7 +86,7 @@ export const isSprintOptions = (value: string | TemplateStringsArray | SprintOpt
 
 export const sprint = ((optionsOrString: SprintOptionsWithContent | string | TemplateStringsArray, ...values: unknown[]): string => {
   let str: string;
-  let options: SprintOptions = { ensureNewLine: false, ensureEmptyLineAbove: false, indent: 0 };
+  let options: SprintOptions = { ensureNewLine: false, ensureEmptyLineAbove: false };
 
   if (isSprintOptions(optionsOrString)) {
     str = optionsOrString.content;
@@ -60,7 +94,7 @@ export const sprint = ((optionsOrString: SprintOptionsWithContent | string | Tem
   } else if (isString(optionsOrString)) {
     str = optionsOrString;
   } else {
-    str = dedent(chalkTemplate(optionsOrString, ...values));
+    str = processTemplate(optionsOrString, values);
   }
 
   if (options.ensureEmptyLineAbove && !str.startsWith("\n")) {
@@ -75,10 +109,6 @@ export const sprint = ((optionsOrString: SprintOptionsWithContent | string | Tem
     str = boxen(str, options.boxen);
   }
 
-  if (options.indent && options.indent > 0) {
-    str = indentString(str, options.indent);
-  }
-
   return str;
 }) as sprint;
 
@@ -88,6 +118,6 @@ export const sprintln = ((optionsOrString: SprintOptionsWithContent | string | T
   } else if (isString(optionsOrString)) {
     return sprint({ ensureNewLine: true, content: optionsOrString });
   } else {
-    return sprint({ ensureNewLine: true, content: dedent(chalkTemplate(optionsOrString, ...values)) });
+    return sprint({ ensureNewLine: true, content: processTemplate(optionsOrString, values) });
   }
 }) as sprint;

@@ -7,414 +7,66 @@ import {
   SET_ENVIRONMENT_VARIABLE_MUTATION,
 } from "../services/app/edit/operation.js";
 import { ClientError } from "../services/app/error.js";
-import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
-import { ArgError, parseArgs, type ArgsDefinition, type ParseArgsOptions } from "../services/command/arg.js";
-import type { Run, Usage } from "../services/command/command.js";
+import { AppIdentity, AppIdentityArgs, type AppIdentityArgsResult } from "../services/command/app-identity.js";
+import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
+import { defineCommand } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import colors from "../services/output/colors.js";
 import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
 
-export const args = {
-  ...AppIdentityArgs,
-} satisfies ArgsDefinition;
-
-export const parseOptions: ParseArgsOptions = { permissive: true };
-
-export const usage: Usage = () => {
-  return sprint`
-    Manage environment variables for your Gadget application.
-
-    {gray Usage}
-      ggt var <command> [options]
-
-    {gray Commands}
-      list             List all environment variables
-      get <key>        Get the value of an environment variable
-      set <key=value>  Set one or more environment variables
-      delete <key>     Delete one or more environment variables
-      import           Import environment variables from another environment or file
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    Run "ggt var <command> -h" for more information about a specific command.
-  `;
-};
-
-const listUsage = (): string => {
-  return sprint`
-    List all environment variables.
-
-    {gray Usage}
-      ggt var list [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    {gray Examples}
-      {cyanBright $ ggt var list --app=myapp --env=development}
-  `;
-};
-
-const getUsage = (): string => {
-  return sprint`
-    Get the value of an environment variable.
-
-    {gray Usage}
-      ggt var get <key> [options]
-
-    {gray Options}
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    {gray Examples}
-      {cyanBright $ ggt var get DATABASE_URL --app=myapp --env=development}
-  `;
-};
-
-const setUsage = (): string => {
-  return sprint`
-    Set one or more environment variables.
-
-    {gray Usage}
-      ggt var set <key=value> [key=value ...] [options]
-
-    {gray Options}
-      --secret               Mark the variable(s) as secret
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    {gray Examples}
-      {cyanBright $ ggt var set API_KEY=abc123 --app=myapp --env=development}
-      {cyanBright $ ggt var set SECRET_KEY=xyz --secret --app=myapp --env=development}
-      {cyanBright $ ggt var set KEY1=val1 KEY2=val2}
-  `;
-};
-
-const deleteUsage = (): string => {
-  return sprint`
-    Delete one or more environment variables.
-
-    {gray Usage}
-      ggt var delete <key> [key ...] [options]
-
-    {gray Options}
-      -f, --force            Skip confirmation and suppress not-found errors
-      --all                  Delete all environment variables
-      -a, --app <app_name>   Selects the application
-      -e, --env <env_name>   Selects the environment
-
-    {gray Examples}
-      {cyanBright $ ggt var delete API_KEY --app=myapp --env=development}
-      {cyanBright $ ggt var delete --all --force --app=myapp --env=development}
-  `;
-};
-
-const importUsage = (): string => {
-  return sprint`
-    Import environment variables from another environment or a file.
-
-    {gray Usage}
-      ggt var import [options] [key ...]
-
-    {gray Options}
-      --from <env>              Import from another environment
-      --from-file <path>        Import from a .env file
-      --include-values          Copy values when importing from another environment
-      --all                     Import all variables (instead of specifying keys)
-      -a, --app <app_name>      Selects the target application
-      -e, --env <env_name>      Selects the target environment
-
-    {gray Examples}
-      Import all vars from staging as placeholders
-      {cyanBright $ ggt var import --from=staging --all --app=myapp --env=development}
-
-      Import specific vars with values from staging
-      {cyanBright $ ggt var import --from=staging --include-values API_KEY DATABASE_URL}
-
-      Import from a .env file
-      {cyanBright $ ggt var import --from-file=.env.example --all}
-  `;
-};
-
-const subcommandUsage = (subcommand: string | undefined): string => {
-  switch (subcommand) {
-    case "list":
-      return listUsage();
-    case "get":
-      return getUsage();
-    case "set":
-      return setUsage();
-    case "delete":
-      return deleteUsage();
-    case "import":
-      return importUsage();
-    default:
-      // usage() doesn't use ctx, but satisfies the Usage type signature
-      return usage(undefined!); // oxlint-disable-line
-  }
-};
-
 const setArgs = {
-  "--secret": { type: Boolean },
+  "--secret": {
+    type: Boolean,
+    alias: "-s",
+    description: "Mark the variable as secret (write-only)",
+    details:
+      "Secret variables are write-only — their values cannot be read back after being set. Use this for API keys, tokens, and other sensitive values.",
+  },
 } satisfies ArgsDefinition;
 
 const deleteArgs = {
-  "--force": { type: Boolean, alias: "-f" },
-  "--all": { type: Boolean },
+  "--force": {
+    type: Boolean,
+    alias: "-f",
+    description: "Skip confirmation and suppress not-found errors",
+    details: "Skips the confirmation prompt and silently ignores keys that don't exist.",
+  },
+  "--all": {
+    type: Boolean,
+    description: "Delete all environment variables",
+    details: "Deletes every variable in the environment. Combine with --force to skip confirmation.",
+  },
 } satisfies ArgsDefinition;
 
 const importArgs = {
-  "--from": { type: String },
-  "--from-file": { type: String },
-  "--include-values": { type: Boolean },
-  "--all": { type: Boolean },
+  "--from": {
+    type: String,
+    description: "Import from another environment",
+    valueName: "env-name",
+    details: "The name of the source environment to import from. Cannot be combined with --from-file.",
+  },
+  "--from-file": {
+    type: String,
+    description: "Import from a .env file",
+    valueName: "path",
+    details: "Path to a .env file. Supports KEY=value format, comments (#), and quoted values. Cannot be combined with --from.",
+  },
+  "--include-values": {
+    type: Boolean,
+    description: "Copy values when importing from another env",
+    details:
+      "Without this flag, only the keys are imported as empty placeholders. Secret variable values cannot be copied between environments and are skipped.",
+  },
+  "--all": {
+    type: Boolean,
+    description: "Import all variables instead of specifying keys",
+    details: "Imports every variable from the source instead of requiring individual key names.",
+  },
 } satisfies ArgsDefinition;
-
-export const run: Run<typeof args> = async (ctx, args) => {
-  const subcommand = args._.shift();
-
-  // handle -h/--help for subcommand-specific help
-  if (args._.includes("-h") || args._.includes("--help")) {
-    println(subcommandUsage(subcommand));
-    process.exit(0);
-  }
-
-  if (!subcommand) {
-    println(usage(ctx));
-    return;
-  }
-
-  const validSubcommands = ["list", "get", "set", "delete", "import"];
-  if (!validSubcommands.includes(subcommand)) {
-    throw new ArgError(sprint`
-      Unknown subcommand {yellow ${subcommand}}
-
-      Run {gray ggt var -h} for usage
-    `);
-  }
-
-  const directory = await loadSyncJsonDirectory(process.cwd());
-  const appIdentity = await AppIdentity.load(ctx, { command: "var", args, directory });
-
-  switch (subcommand) {
-    case "list":
-      await runList(appIdentity);
-      break;
-    case "get":
-      await runGet(appIdentity, args._);
-      break;
-    case "set":
-      await runSet(appIdentity, args._);
-      break;
-    case "delete":
-      await runDelete(appIdentity, args._);
-      break;
-    case "import":
-      await runImport(ctx, appIdentity, args._);
-      break;
-  }
-};
-
-const runList = async (appIdentity: AppIdentity): Promise<void> => {
-  const data = await appIdentity.edit.query({ query: ENVIRONMENT_VARIABLES_QUERY });
-  const vars = data.environmentVariables;
-
-  if (vars.length === 0) {
-    println("No environment variables found.");
-    return;
-  }
-
-  for (const v of vars) {
-    println(v.key);
-  }
-};
-
-const runGet = async (appIdentity: AppIdentity, positional: string[]): Promise<void> => {
-  const key = positional.shift();
-  if (!key) {
-    throw new ArgError(sprint`
-      Missing required argument: key
-
-      Run {gray ggt var get -h} for usage
-    `);
-  }
-
-  const data = await appIdentity.edit.query({ query: ENVIRONMENT_VARIABLES_QUERY });
-  const envVar = data.environmentVariables.find((v) => v.key === key);
-
-  if (!envVar) {
-    throw new ArgError(sprint`
-      Environment variable not found: ${key}
-    `);
-  }
-
-  if (envVar.isSecret) {
-    throw new ArgError(sprint`
-      ${key} is a secret and its value cannot be read
-    `);
-  }
-
-  println(envVar.value ?? "");
-};
-
-const runSet = async (appIdentity: AppIdentity, positional: string[]): Promise<void> => {
-  const subArgs = parseArgs(setArgs, { argv: positional });
-  const pairs = subArgs._;
-  const isSecret = subArgs["--secret"] ?? false;
-
-  if (pairs.length === 0) {
-    throw new ArgError(sprint`
-      Missing required argument: key=value
-
-      Run {gray ggt var set -h} for usage
-    `);
-  }
-
-  const parsed: { key: string; value: string }[] = [];
-  for (const pair of pairs) {
-    const eqIndex = pair.indexOf("=");
-    if (eqIndex === -1) {
-      throw new ArgError(sprint`
-        Invalid format: ${pair}
-
-        Expected format: KEY=value
-      `);
-    }
-    const key = pair.slice(0, eqIndex);
-    if (!key) {
-      throw new ArgError(sprint`
-        Invalid format: ${pair}
-
-        Expected format: KEY=value
-      `);
-    }
-    parsed.push({
-      key,
-      value: pair.slice(eqIndex + 1),
-    });
-  }
-
-  for (const { key, value } of parsed) {
-    await appIdentity.edit.mutate({
-      mutation: SET_ENVIRONMENT_VARIABLE_MUTATION,
-      variables: { input: { key, value, isSecret } },
-    });
-  }
-
-  const keys = parsed.map((p) => p.key).join(", ");
-  println(`${symbol.tick} Set ${keys}`);
-};
-
-const runDelete = async (appIdentity: AppIdentity, positional: string[]): Promise<void> => {
-  const subArgs = parseArgs(deleteArgs, { argv: positional });
-  const keys = subArgs._;
-  const force = subArgs["--force"] ?? false;
-  const all = subArgs["--all"] ?? false;
-
-  let keysToDelete: string[];
-
-  if (all) {
-    const data = await appIdentity.edit.query({ query: ENVIRONMENT_VARIABLES_QUERY });
-    const vars = data.environmentVariables;
-
-    if (vars.length === 0) {
-      println("No environment variables to delete.");
-      return;
-    }
-
-    keysToDelete = vars.map((v) => v.key);
-
-    if (!force) {
-      println`
-        The following environment variables will be deleted:
-
-          ${keysToDelete.map((k) => `• ${k}`).join("\n          ")}
-      `;
-      await confirm("Are you sure you want to delete all environment variables?");
-    }
-  } else {
-    if (keys.length === 0) {
-      throw new ArgError(sprint`
-        Missing required argument: key
-
-        Run {gray ggt var delete -h} for usage
-      `);
-    }
-
-    keysToDelete = keys;
-
-    if (!force) {
-      await confirm(`Are you sure you want to delete ${keysToDelete.join(", ")}?`);
-    }
-  }
-
-  for (const key of keysToDelete) {
-    try {
-      await appIdentity.edit.mutate({
-        mutation: DELETE_ENVIRONMENT_VARIABLE_MUTATION,
-        variables: { key },
-      });
-    } catch (error) {
-      const isNotFound =
-        error instanceof ClientError &&
-        Array.isArray(error.cause) &&
-        error.cause.every((e: unknown) => typeof e === "object" && e !== null && "message" in e && /not found/i.test(String(e.message)));
-
-      if (force && isNotFound) {
-        // suppress not-found errors when --force is used
-        continue;
-      }
-      throw error;
-    }
-  }
-
-  println(`${symbol.tick} Deleted ${keysToDelete.join(", ")}`);
-};
-
-const runImport = async (ctx: Context, appIdentity: AppIdentity, positional: string[]): Promise<void> => {
-  const subArgs = parseArgs(importArgs, { argv: positional });
-  const from = subArgs["--from"];
-  const fromFile = subArgs["--from-file"];
-  const includeValues = subArgs["--include-values"] ?? false;
-  const all = subArgs["--all"] ?? false;
-  const specifiedKeys = subArgs._;
-
-  if (!from && !fromFile) {
-    throw new ArgError(sprint`
-      Either --from or --from-file is required.
-
-      Run {gray ggt var import -h} for usage
-    `);
-  }
-
-  if (from && fromFile) {
-    throw new ArgError(sprint`
-      Cannot use both --from and --from-file.
-
-      Run {gray ggt var import -h} for usage
-    `);
-  }
-
-  if (!all && specifiedKeys.length === 0) {
-    throw new ArgError(sprint`
-      Specify keys to import or use --all to import all variables.
-
-      Run {gray ggt var import -h} for usage
-    `);
-  }
-
-  if (from) {
-    await importFromEnvironment(ctx, appIdentity, from, specifiedKeys, all, includeValues);
-  } else if (fromFile) {
-    await importFromFile(appIdentity, fromFile, specifiedKeys, all);
-  }
-};
 
 const importFromEnvironment = async (
   ctx: Context,
@@ -426,12 +78,15 @@ const importFromEnvironment = async (
 ): Promise<void> => {
   const sourceEnvironment = appIdentity.application.environments.find((env) => env.name === sourceName.toLowerCase());
   if (!sourceEnvironment) {
-    throw new ArgError(sprint`
-      Unknown environment: ${sourceName}
+    throw new ArgError(
+      sprint`
+        Unknown environment: ${sourceName}
 
-      Available environments:
-        ${appIdentity.application.environments.map((e) => `• ${e.name}`).join("\n        ")}
-    `);
+        Available environments:
+          ${appIdentity.application.environments.map((e) => `• ${e.name}`).join("\n")}
+      `,
+      { usageHint: false },
+    );
   }
 
   const sourceEdit = new Edit(ctx, { ...sourceEnvironment, application: appIdentity.application });
@@ -443,11 +98,14 @@ const importFromEnvironment = async (
     if (!all) {
       const missing = specifiedKeys.filter((k) => !vars.some((v) => v.key === k));
       if (missing.length > 0) {
-        throw new ArgError(sprint`
-          The following keys were not found in the ${sourceName} environment:
+        throw new ArgError(
+          sprint`
+            The following keys were not found in the ${sourceName} environment:
 
-            ${missing.map((k) => `• ${k}`).join("\n            ")}
-        `);
+              ${missing.map((k) => `• ${k}`).join("\n")}
+          `,
+          { usageHint: false },
+        );
       }
       vars = vars.filter((v) => specifiedKeys.includes(v.key));
     }
@@ -508,11 +166,14 @@ const importFromFile = async (appIdentity: AppIdentity, filePath: string, specif
   } else {
     const missing = specifiedKeys.filter((k) => !entries.some((e) => e.key === k));
     if (missing.length > 0) {
-      throw new ArgError(sprint`
-        The following keys were not found in the file:
+      throw new ArgError(
+        sprint`
+          The following keys were not found in the file:
 
-          ${missing.map((k) => `• ${k}`).join("\n          ")}
-      `);
+            ${missing.map((k) => `• ${k}`).join("\n")}
+        `,
+        { usageHint: false },
+      );
     }
     filtered = entries.filter((e) => specifiedKeys.includes(e.key));
   }
@@ -562,3 +223,299 @@ const parseEnvFile = (content: string): { key: string; value: string }[] => {
 
   return entries;
 };
+
+const resolveAppIdentity = async (ctx: Context, args: AppIdentityArgsResult): Promise<AppIdentity> => {
+  const directory = await loadSyncJsonDirectory(process.cwd());
+  return AppIdentity.load(ctx, { command: "var", args, directory });
+};
+
+export default defineCommand({
+  name: "var",
+  description: "Manage your app's environment variables",
+  details: sprint`
+    Environment variables are available as ${colors.hint("process.env.YOUR_VAR")} in your app code. Use them
+    for configuration like API keys and settings that differ between environments. Secret
+    variables are write-only — their values cannot be read back after being set.
+  `,
+  examples: [
+    "ggt var list",
+    "ggt var get DATABASE_URL",
+    "ggt var set API_KEY=abc123",
+    "ggt var set SECRET=xyz --secret",
+    "ggt var set CONNECTION_STRING=postgres://user:pass@host/db",
+    "ggt var delete API_KEY",
+    "ggt var delete --all --force",
+    "ggt var import --from staging --all",
+    "ggt var import --from-file .env --all",
+  ],
+  args: AppIdentityArgs,
+  subcommands: (sub) => ({
+    list: sub({
+      description: "List all environment variable keys",
+      details: sprint`
+        Prints each variable key on its own line. Values are not shown — use
+        ${colors.identifier("ggt var get")} to read a specific value.
+      `,
+      examples: ["ggt var list", "ggt var list --app myapp --env staging"],
+      run: async (ctx, args) => {
+        const appIdentity = await resolveAppIdentity(ctx, args);
+
+        const data = await appIdentity.edit.query({ query: ENVIRONMENT_VARIABLES_QUERY });
+        const vars = data.environmentVariables;
+
+        if (vars.length === 0) {
+          println("No environment variables found.");
+          return;
+        }
+
+        for (const v of vars) {
+          println(v.key);
+        }
+      },
+    }),
+    get: sub({
+      description: "Print the value of an environment variable",
+      details: sprint`
+        Prints the value of a single variable. Secret variables are write-only
+        and cannot be read back — an error is returned if you try.
+      `,
+      examples: ["ggt var get DATABASE_URL", "ggt var get API_KEY --app myapp --env staging"],
+      positionals: [
+        { name: "key", required: true, description: "Variable name", details: "Case-sensitive. Secret variables cannot be read back." },
+      ],
+      run: async (ctx, args) => {
+        const appIdentity = await resolveAppIdentity(ctx, args);
+        // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
+        const key = args._[0]!;
+
+        const data = await appIdentity.edit.query({ query: ENVIRONMENT_VARIABLES_QUERY });
+        const envVar = data.environmentVariables.find((v) => v.key === key);
+
+        if (!envVar) {
+          throw new ArgError(
+            sprint`
+              Environment variable not found: ${key}
+            `,
+            { usageHint: false },
+          );
+        }
+
+        if (envVar.isSecret) {
+          throw new ArgError(
+            sprint`
+              ${key} is a secret and its value cannot be read
+            `,
+            { usageHint: false },
+          );
+        }
+
+        println(envVar.value ?? "");
+      },
+    }),
+    set: sub({
+      description: "Set one or more environment variables",
+      details: sprint`
+        Accepts one or more ${colors.hint("KEY=value")} pairs. The value is everything after the
+        first ${colors.hint("=")}, so values can contain additional ${colors.hint("=")} characters. Use
+        ${colors.hint("--secret")} to mark the variables as write-only.
+      `,
+      examples: [
+        "ggt var set API_KEY=abc123",
+        "ggt var set SECRET=xyz --secret",
+        "ggt var set KEY1=a KEY2=b",
+        "ggt var set CONNECTION_STRING=postgres://user:pass@host/db",
+      ],
+      positionals: [
+        {
+          name: "key=value",
+          required: true,
+          description: "One or more key=value pairs",
+          details:
+            "The value is everything after the first =, so values can contain = characters. Multiple pairs can be passed in a single invocation.",
+        },
+      ],
+      args: setArgs,
+      run: async (ctx, args) => {
+        const appIdentity = await resolveAppIdentity(ctx, args);
+
+        const pairs = args._;
+        const isSecret = args["--secret"] ?? false;
+
+        const parsed: { key: string; value: string }[] = [];
+        for (const pair of pairs) {
+          const eqIndex = pair.indexOf("=");
+          if (eqIndex === -1) {
+            throw new ArgError(
+              sprint`
+                Invalid format: ${pair}
+
+                Expected format: KEY=value
+              `,
+              { usageHint: false },
+            );
+          }
+          const key = pair.slice(0, eqIndex);
+          if (!key) {
+            throw new ArgError(
+              sprint`
+                Invalid format: ${pair}
+
+                Expected format: KEY=value
+              `,
+              { usageHint: false },
+            );
+          }
+          parsed.push({
+            key,
+            value: pair.slice(eqIndex + 1),
+          });
+        }
+
+        for (const { key, value } of parsed) {
+          await appIdentity.edit.mutate({
+            mutation: SET_ENVIRONMENT_VARIABLE_MUTATION,
+            variables: { input: { key, value, isSecret } },
+          });
+        }
+
+        const keys = parsed.map((p) => p.key).join(", ");
+        println(`${symbol.tick} Set ${keys}`);
+      },
+    }),
+    delete: sub({
+      description: "Delete one or more environment variables",
+      details: sprint`
+        Prompts for confirmation before deleting unless ${colors.hint("--force")} is passed. Use
+        ${colors.hint("--all")} to delete every variable in the environment. With ${colors.hint("--force")},
+        missing keys are silently ignored instead of causing an error.
+      `,
+      examples: ["ggt var delete API_KEY", "ggt var delete KEY1 KEY2", "ggt var delete --all --force"],
+      positionals: [
+        {
+          name: "key",
+          description: "Variable name(s) to delete",
+          details: "One or more keys separated by spaces. Use --all to delete every variable.",
+        },
+      ],
+      args: deleteArgs,
+      run: async (ctx, args) => {
+        const appIdentity = await resolveAppIdentity(ctx, args);
+
+        const keys = args._;
+        const force = args["--force"] ?? false;
+        const all = args["--all"] ?? false;
+
+        let keysToDelete: string[];
+
+        if (all) {
+          const data = await appIdentity.edit.query({ query: ENVIRONMENT_VARIABLES_QUERY });
+          const vars = data.environmentVariables;
+
+          if (vars.length === 0) {
+            println("No environment variables to delete.");
+            return;
+          }
+
+          keysToDelete = vars.map((v) => v.key);
+
+          if (!force) {
+            println`
+              The following environment variables will be deleted:
+
+                ${keysToDelete.map((k) => `• ${k}`).join("\n")}
+            `;
+            await confirm("Are you sure you want to delete all environment variables?");
+          }
+        } else {
+          if (keys.length === 0) {
+            throw new ArgError("Missing required argument: key", { usageHint: false });
+          }
+
+          keysToDelete = keys;
+
+          if (!force) {
+            await confirm(`Are you sure you want to delete ${keysToDelete.join(", ")}?`);
+          }
+        }
+
+        const deleted: string[] = [];
+        for (const key of keysToDelete) {
+          try {
+            await appIdentity.edit.mutate({
+              mutation: DELETE_ENVIRONMENT_VARIABLE_MUTATION,
+              variables: { key },
+            });
+            deleted.push(key);
+          } catch (error) {
+            const isNotFound =
+              error instanceof ClientError &&
+              Array.isArray(error.cause) &&
+              error.cause.every(
+                (e: unknown) => typeof e === "object" && e !== null && "message" in e && /not found/i.test(String(e.message)),
+              );
+
+            if (force && isNotFound) {
+              // suppress not-found errors when --force is used
+              continue;
+            }
+            throw error;
+          }
+        }
+
+        if (deleted.length > 0) {
+          println(`${symbol.tick} Deleted ${deleted.join(", ")}`);
+        }
+      },
+    }),
+    import: sub({
+      description: "Import variables from another environment or file",
+      details: sprint`
+        Requires either ${colors.hint("--from")} (another environment) or ${colors.hint("--from-file")} (a
+        ${colors.hint(".env")} file) as the source. By default, variables are imported as
+        placeholders with empty values — pass ${colors.hint("--include-values")} to copy the
+        actual values. Secret values cannot be copied between environments.
+      `,
+      examples: [
+        "ggt var import --from staging --all",
+        "ggt var import --from staging API_KEY DATABASE_URL",
+        "ggt var import --from staging --include-values API_KEY",
+        "ggt var import --from-file .env --all",
+      ],
+      positionals: [
+        {
+          name: "key",
+          description: "Variable name(s) to import (or use --all)",
+          details: "One or more keys to import. Use --all to import every variable from the source.",
+        },
+      ],
+      args: importArgs,
+      run: async (ctx, args) => {
+        const appIdentity = await resolveAppIdentity(ctx, args);
+
+        const from = args["--from"];
+        const fromFile = args["--from-file"];
+        const includeValues = args["--include-values"] ?? false;
+        const all = args["--all"] ?? false;
+        const specifiedKeys = args._;
+
+        if (!from && !fromFile) {
+          throw new ArgError("Either --from or --from-file is required.", { usageHint: false });
+        }
+
+        if (from && fromFile) {
+          throw new ArgError("Cannot use both --from and --from-file.", { usageHint: false });
+        }
+
+        if (!all && specifiedKeys.length === 0) {
+          throw new ArgError("Specify keys to import or use --all to import all variables.", { usageHint: false });
+        }
+
+        if (from) {
+          await importFromEnvironment(ctx, appIdentity, from, specifiedKeys, all, includeValues);
+        } else if (fromFile) {
+          await importFromFile(appIdentity, fromFile, specifiedKeys, all);
+        }
+      },
+    }),
+  }),
+});

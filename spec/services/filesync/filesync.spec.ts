@@ -7,7 +7,7 @@ import nock from "nock";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
-import { args as DevArgs } from "../../../src/commands/dev.js";
+import dev from "../../../src/commands/dev.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit/operation.js";
 import { config } from "../../../src/services/config/config.js";
 import { Changes } from "../../../src/services/filesync/changes.js";
@@ -56,7 +56,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrAskAndInit(testCtx, {
       command: "dev",
-      args: makeArgs(DevArgs, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
+      args: makeArgs(dev.args, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,
     });
     filesync = new FileSync(syncJson);
@@ -456,7 +456,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrAskAndInit(testCtx, {
       command: "dev",
-      args: makeArgs(DevArgs, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
+      args: makeArgs(dev.args, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,
     });
     filesync = new FileSync(syncJson);
@@ -1652,7 +1652,7 @@ describe("FileSync.sync", () => {
   it("merges files when .gadget/sync.json doesn't exist and --allow-unknown-directory is passed", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       args: makeArgs(
-        DevArgs,
+        dev.args,
         "dev",
         appDir,
         `--app=${testApp.slug}`,
@@ -1821,7 +1821,7 @@ describe("FileSync.sync", () => {
 
   it("bumps the correct environment filesVersion when multi-environment is enabled", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      args: makeArgs(DevArgs, "dev", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[2]!.name}`),
+      args: makeArgs(dev.args, "dev", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[2]!.name}`),
       filesVersion1Files: {
         "foo.js": "// foo",
       },

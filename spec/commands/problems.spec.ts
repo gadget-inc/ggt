@@ -1,9 +1,9 @@
 import { beforeEach, describe, it } from "vitest";
 
-import * as problems from "../../src/commands/problems.js";
+import problems from "../../src/commands/problems.js";
 import { PUBLISH_ISSUES_QUERY } from "../../src/services/app/edit/operation.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { nockEditResponse } from "../__support__/graphql.js";
@@ -33,7 +33,7 @@ describe("problems", () => {
       optional: false,
     });
 
-    await problems.run(testCtx, makeArgs(problems.args));
+    await runCommand(testCtx, problems);
 
     expectStdout().toMatchInlineSnapshot(`
       "No problems found.
@@ -74,7 +74,7 @@ describe("problems", () => {
       optional: false,
     });
 
-    await problems.run(testCtx, makeArgs(problems.args));
+    await runCommand(testCtx, problems);
 
     expectStdout().toMatchInlineSnapshot(`
       "! Problems found in your app

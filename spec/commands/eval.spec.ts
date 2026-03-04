@@ -4,22 +4,27 @@ import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import * as eval_ from "../../src/commands/eval.js";
+import eval_ from "../../src/commands/eval.js";
 import * as root from "../../src/commands/root.js";
 import { UNPAUSE_ENVIRONMENT_MUTATION } from "../../src/services/app/edit/operation.js";
 import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { config } from "../../src/services/config/config.js";
+import * as update from "../../src/services/output/update.js";
 import { writeSession } from "../../src/services/user/session.js";
+import { noop } from "../../src/services/util/function.js";
+import { workspacePath } from "../../src/services/util/paths.js";
 import { testApp, nockTestApps } from "../__support__/app.js";
-import { makeArgs, makeRootArgs } from "../__support__/arg.js";
+import { makeRootArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { nockEditResponse } from "../__support__/graphql.js";
+import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { testDirPath } from "../__support__/paths.js";
 import { expectProcessExit } from "../__support__/process.js";
 import { loginTestUser, loginTestUserWithCookie, loginTestUserWithToken, matchAuthHeader } from "../__support__/user.js";
 
-const fixtureClientBundlePath = path.resolve("spec/__fixtures__/gadget-client-bundle.cjs");
+const fixtureClientBundlePath = workspacePath("spec/__fixtures__/gadget-client-bundle.cjs");
 
 const mockClientSource = `
   class Client {
@@ -78,6 +83,7 @@ describe("eval", () => {
   beforeEach(async () => {
     loginTestUser();
     nockTestApps();
+    mock(update, "warnIfUpdateAvailable", noop);
     process.exitCode = undefined;
     delete process.env["GGT_LOG_FORMAT"];
 
@@ -101,12 +107,20 @@ describe("eval", () => {
 
   describe("argument parsing", () => {
     it("errors when no snippet is provided", async () => {
-      await expect(eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test"))).rejects.toThrow(ArgError);
+      await expect(runCommand(testCtx, eval_, "--app", "test")).rejects.toThrow(ArgError);
     });
 
     it("exits with code 1 when no snippet is provided", async () => {
       await expectProcessExit(() => root.run(testCtx, makeRootArgs("eval", "--app", "test")), 1);
-      expectStdout().toContain("Missing required snippet argument");
+      expectStdout().toMatchInlineSnapshot(`
+        "✘ Missing required argument: snippet
+
+        USAGE
+          ggt eval <snippet> [flags]
+
+        Run ggt eval -h for more information.
+        "
+      `);
     });
   });
 
@@ -114,7 +128,7 @@ describe("eval", () => {
     it("evaluates an expression and prints the result", async () => {
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
       expectStdout().toContain("Bob");
@@ -123,10 +137,7 @@ describe("eval", () => {
     it("evaluates a statement with implicit return", async () => {
       nockClientSource();
 
-      await eval_.run(
-        testCtx,
-        makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "const result = await api.user.findFirst(); return result"),
-      );
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "const result = await api.user.findFirst(); return result");
 
       expectStdout().toContain("Alice");
     });
@@ -134,7 +145,7 @@ describe("eval", () => {
     it("prints nothing when result is undefined", async () => {
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "void 0"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "void 0");
 
       expectStdout().toEqual("");
     });
@@ -142,7 +153,7 @@ describe("eval", () => {
     it("has access to process.env", async () => {
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "process.env.GGT_ENV"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "process.env.GGT_ENV");
 
       expectStdout().toContain("test");
     });
@@ -150,7 +161,7 @@ describe("eval", () => {
     it("allows require", async () => {
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "require('node:os').EOL"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "require('node:os').EOL");
 
       expectStdout().toContain("\n");
     });
@@ -159,7 +170,7 @@ describe("eval", () => {
       process.env["GGT_LOG_FORMAT"] = "json";
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toMatchInlineSnapshot(`"[{"id":"1","name":"Alice"},{"id":"2","name":"Bob"}]
 "`);
@@ -169,7 +180,7 @@ describe("eval", () => {
       process.env["GGT_LOG_FORMAT"] = "json";
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "void 0"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "void 0");
 
       expectStdout().toEqual("");
     });
@@ -189,7 +200,7 @@ describe("eval", () => {
       `;
       nockClientSource({ source: clientSource });
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toMatchInlineSnapshot(`"{"error":"connection refused"}
 "`);
@@ -199,7 +210,7 @@ describe("eval", () => {
     it("formats objects with util.inspect", async () => {
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findFirst()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findFirst()");
 
       expectStdout().toContain("id:");
       expectStdout().toContain("name:");
@@ -208,7 +219,7 @@ describe("eval", () => {
     it("sets readonly header by default", async () => {
       nockClientSource({ source: mockHeaderInspectorSource });
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.test.run()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.test.run()");
 
       expectStdout().toContain("x-gadget-developer-readonly");
       expectStdout().toContain("true");
@@ -217,7 +228,7 @@ describe("eval", () => {
     it("omits readonly header with --allow-writes", async () => {
       nockClientSource({ source: mockHeaderInspectorSource });
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "-w", "api.test.run()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "-w", "api.test.run()");
 
       expectStdout().not.toContain("x-gadget-developer-readonly");
     });
@@ -225,7 +236,7 @@ describe("eval", () => {
     it("sets the environment header", async () => {
       nockClientSource({ source: mockHeaderInspectorSource });
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.test.run()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.test.run()");
 
       expectStdout().toContain("x-gadget-environment");
       expectStdout().toContain("development");
@@ -234,7 +245,7 @@ describe("eval", () => {
     it("sets the x-gadget-client header for developer auth", async () => {
       nockClientSource({ source: mockHeaderInspectorSource });
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.test.run()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.test.run()");
 
       expectStdout().toContain("x-gadget-client");
       expectStdout().toContain("graphql-playground");
@@ -247,7 +258,7 @@ describe("eval", () => {
       nockTestApps();
       nockClientSource({ source: mockHeaderInspectorSource });
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.test.run()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.test.run()");
 
       expectStdout().toContain("cookie");
     });
@@ -260,7 +271,7 @@ describe("eval", () => {
       nockTestApps();
       nockClientSource({ source: mockHeaderInspectorSource });
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.test.run()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.test.run()");
 
       expectStdout().toContain("x-platform-access-token");
     });
@@ -268,9 +279,7 @@ describe("eval", () => {
     it("handles syntax error in snippet", async () => {
       nockClientSource();
 
-      await expect(
-        eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "const x = {")),
-      ).rejects.toThrow(ArgError);
+      await expect(runCommand(testCtx, eval_, "--app", "test", "--env", "development", "const x = {")).rejects.toThrow(ArgError);
     });
 
     it("exits with code 1 on syntax error in snippet", async () => {
@@ -294,9 +303,9 @@ describe("eval", () => {
       `;
       nockClientSource({ source: clientSource });
 
-      await expect(
-        eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()")),
-      ).rejects.toThrow("connection refused");
+      await expect(runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()")).rejects.toThrow(
+        "connection refused",
+      );
     });
 
     it("exits with code 1 on runtime error in snippet", async () => {
@@ -324,7 +333,7 @@ describe("eval", () => {
     it("resolves app from --app flag", async () => {
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
     });
@@ -332,10 +341,7 @@ describe("eval", () => {
     it("resolves env from --env flag", async () => {
       nockClientSource({ envName: "cool-environment-development" });
 
-      await eval_.run(
-        testCtx,
-        makeArgs(eval_.args, "eval", "--app", "test", "--env", "cool-environment-development", "api.user.findMany()"),
-      );
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "cool-environment-development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
     });
@@ -343,7 +349,7 @@ describe("eval", () => {
     it("resolves app and env from .gadget/sync.json", async () => {
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "api.user.findMany()");
 
       expectStdout().toContain("Alice");
     });
@@ -356,7 +362,7 @@ describe("eval", () => {
       process.cwd = () => emptyDir;
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
     });
@@ -366,7 +372,7 @@ describe("eval", () => {
     it("writes cache file after fetching from server when filesVersion is available", async () => {
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
       const cachePath = path.join(config.cacheDir, "client-bundles", "test--development--1.js");
@@ -381,7 +387,7 @@ describe("eval", () => {
       await fs.outputFile(cachePath, mockClientSource);
 
       // Do NOT set up a client source HTTP mock — cache should be used
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
     });
@@ -392,7 +398,7 @@ describe("eval", () => {
       process.cwd = () => emptyDir;
       nockClientSource();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
       const cacheDir = path.join(config.cacheDir, "client-bundles");
@@ -421,7 +427,7 @@ describe("eval", () => {
       nockClientSource({ source: pausingClientSource });
       nockUnpause();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
     });
@@ -439,9 +445,7 @@ describe("eval", () => {
       nockClientSource({ source: alwaysPausingSource });
       nockUnpause();
 
-      await expect(
-        eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()")),
-      ).rejects.toThrow(ArgError);
+      await expect(runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()")).rejects.toThrow(ArgError);
     });
 
     it("formats retry failure as JSON in json mode", async () => {
@@ -458,7 +462,7 @@ describe("eval", () => {
       nockClientSource({ source: alwaysPausingSource });
       nockUnpause();
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toMatchInlineSnapshot(`"{"error":"GGT_ENVIRONMENT_PAUSED"}
 "`);
@@ -480,9 +484,9 @@ describe("eval", () => {
       nockClientSource({ source: failingClientSource });
       // Do NOT nock unpause — if unpause is called, nock will fail with unmatched request
 
-      await expect(
-        eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()")),
-      ).rejects.toThrow("some other error");
+      await expect(runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()")).rejects.toThrow(
+        "some other error",
+      );
     });
   });
 
@@ -491,7 +495,7 @@ describe("eval", () => {
       const fixtureSource = await fs.readFile(fixtureClientBundlePath, "utf-8");
       nockClientSource({ source: fixtureSource });
 
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findMany()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
       expectStdout().toContain("Bob");
@@ -502,7 +506,7 @@ describe("eval", () => {
       nockClientSource({ source: fixtureSource });
 
       // The fact that this doesn't error means the Client constructor accepted our options
-      await eval_.run(testCtx, makeArgs(eval_.args, "eval", "--app", "test", "--env", "development", "api.user.findFirst()"));
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findFirst()");
 
       expectStdout().toContain("Alice");
     });

@@ -1,4 +1,5 @@
 import { ArgError } from "../command/arg.js";
+import colors from "../output/colors.js";
 import { sprint } from "../output/sprint.js";
 
 export const FileSyncStrategy = Object.freeze({
@@ -12,8 +13,8 @@ export type FileSyncStrategy = (typeof FileSyncStrategy)[keyof typeof FileSyncSt
 
 export const MergeConflictPreference = Object.freeze({
   CANCEL: sprint`Cancel (Ctrl+C)`,
-  LOCAL: sprint`Keep {underline local} conflicting changes`,
-  ENVIRONMENT: sprint`Keep {underline environment}'s conflicting changes`,
+  LOCAL: sprint`Keep ${colors.emphasis("local")} conflicting changes`,
+  ENVIRONMENT: sprint`Keep ${colors.emphasis("environment")}'s conflicting changes`,
 });
 
 export type MergeConflictPreference = (typeof MergeConflictPreference)[keyof typeof MergeConflictPreference];
@@ -24,9 +25,9 @@ export const MergeConflictPreferenceArg = (value: string, name: string): MergeCo
   }
 
   throw new ArgError(sprint`
-      ${name} must be {bold local} or {bold environment}
+      ${name} must be ${colors.identifier("local")} or ${colors.identifier("environment")}
 
-      {bold EXAMPLES:}
+      ${colors.header("EXAMPLES:")}
         ${name}=local
         ${name}=environment
     `);

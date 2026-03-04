@@ -37,3 +37,12 @@ export const sortBySimilar = (input: string, options: readonly string[]): [close
   assert(options.length > 0, "options must not be empty");
   return [...options].sort((a, b) => levenshtein.get(a, input) - levenshtein.get(b, input)) as [string, ...string[]];
 };
+
+/**
+ * Returns the option most similar to the given input string.
+ *
+ * @throws {AssertionError} if `options` is empty.
+ */
+export const closestMatch = (input: string, options: readonly string[]): string => {
+  return sortBySimilar(input, options)[0];
+};

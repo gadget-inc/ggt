@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import * as status from "../../src/commands/status.js";
+import status from "../../src/commands/status.js";
 import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { acquireDevLock } from "../../src/services/filesync/dev-lock.js";
 import { UnknownDirectoryError } from "../../src/services/filesync/error.js";
 import { SyncJson } from "../../src/services/filesync/sync-json.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
@@ -30,7 +30,7 @@ describe("status", () => {
       },
     });
 
-    await status.run(testCtx, makeArgs(status.args));
+    await runCommand(testCtx, status);
 
     expectStdout().toMatchInlineSnapshot(`
       "Application  test
@@ -58,7 +58,7 @@ describe("status", () => {
       },
     });
 
-    await status.run(testCtx, makeArgs(status.args));
+    await runCommand(testCtx, status);
 
     expectStdout().toMatchInlineSnapshot(`
       "Application  test
@@ -93,7 +93,7 @@ describe("status", () => {
       },
     });
 
-    await status.run(testCtx, makeArgs(status.args));
+    await runCommand(testCtx, status);
 
     expectStdout().toMatchInlineSnapshot(`
       "Application  test
@@ -129,7 +129,7 @@ describe("status", () => {
       },
     });
 
-    await status.run(testCtx, makeArgs(status.args));
+    await runCommand(testCtx, status);
 
     expectStdout().toMatchInlineSnapshot(`
       "Application  test
@@ -164,7 +164,7 @@ describe("status", () => {
 
     await acquireDevLock(syncJson.directory);
 
-    await status.run(testCtx, makeArgs(status.args));
+    await runCommand(testCtx, status);
 
     expectStdout().toMatchInlineSnapshot(`
       "Application  test
@@ -185,7 +185,7 @@ describe("status", () => {
   });
 
   it("throws ArgError when positional arguments are provided", async () => {
-    const error = await expectError(() => status.run(testCtx, makeArgs(status.args, "status", "extra")));
+    const error = await expectError(() => runCommand(testCtx, status, "extra"));
 
     expect(error).toBeInstanceOf(ArgError);
   });
@@ -193,7 +193,7 @@ describe("status", () => {
   it("throws UnknownDirectoryError when not in a synced directory", async () => {
     mock(SyncJson, "load", () => undefined);
 
-    const error = await expectError(() => status.run(testCtx, makeArgs(status.args)));
+    const error = await expectError(() => runCommand(testCtx, status));
 
     expect(error).toBeInstanceOf(UnknownDirectoryError);
   });
@@ -211,7 +211,7 @@ describe("status", () => {
       },
     });
 
-    await status.run(testCtx, makeArgs(status.args));
+    await runCommand(testCtx, status);
 
     expectStdout().toContain("conflicting changes");
   });

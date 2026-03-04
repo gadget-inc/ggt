@@ -4,9 +4,6 @@
 
 `ggt logs` now prints recent logs and exits by default.
 
-Breaking changes:
-
-- streaming now requires `--follow` / `-f`
-- `--tail` / `-t` were removed
+Breaking change: streaming now requires `--follow` / `-f`.
 
 Also adds one-shot filtering with `--start` and `--log-level`.

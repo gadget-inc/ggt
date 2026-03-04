@@ -8,7 +8,6 @@
     ".direnv",
     ".envrc",
     ".git",
-    ".jj",
     ".vscode",
     "__fixtures__",
     "__generated__",

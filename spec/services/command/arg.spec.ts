@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { parseArgs } from "../../../src/services/command/arg.js";
 
 describe("parseArgs", () => {

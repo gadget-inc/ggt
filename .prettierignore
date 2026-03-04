@@ -1,7 +1,0 @@
-__fixtures__
-__generated__
-dist
-tmp/*
-!tmp/apps
-pnpm-lock.yaml
-.direnv

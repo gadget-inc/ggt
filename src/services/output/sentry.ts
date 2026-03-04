@@ -1,6 +1,8 @@
+import os from "node:os";
+
 import type * as SentryModule from "@sentry/node";
 import ms from "ms";
-import os from "node:os";
+
 import type { RootArgsResult } from "../../commands/root.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";

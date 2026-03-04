@@ -1,10 +1,11 @@
-import fs from "fs-extra";
 import os from "node:os";
+
+import fs from "fs-extra";
 import pMap from "p-map";
-import pTimeout from "p-timeout";
 import type { Promisable } from "type-fest";
-import { assert, expect, type Assertion } from "vitest";
+import { assert, expect, vi, type Assertion } from "vitest";
 import { z, type ZodSchema } from "zod";
+
 import {
   FileSyncEncoding,
   type FileSyncChangedEventInput,
@@ -18,8 +19,9 @@ import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
 } from "../../src/services/app/edit/operation.js";
+import { AppIdentity } from "../../src/services/command/app-identity.js";
 import type { Command } from "../../src/services/command/command.js";
-import { Directory, swallowEnoent, type Hashes } from "../../src/services/filesync/directory.js";
+import { Directory, type Hashes } from "../../src/services/filesync/directory.js";
 import type { File } from "../../src/services/filesync/file.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
 import { isEqualHashes } from "../../src/services/filesync/hashes.js";
@@ -27,7 +29,6 @@ import { SyncJson, SyncJsonArgs, type SyncJsonArgsResult, type SyncJsonState } f
 import { noop } from "../../src/services/util/function.js";
 import { isNil } from "../../src/services/util/is.js";
 import { defaults } from "../../src/services/util/object.js";
-import { PromiseSignal } from "../../src/services/util/promise.js";
 import type { PartialExcept } from "../../src/services/util/types.js";
 import { testApp, testEnvironment } from "./app.js";
 import { makeArgs } from "./arg.js";
@@ -240,8 +241,10 @@ export const makeSyncScenario = async ({
   }
 
   mockRestore(SyncJson.load);
-  const syncJson = await SyncJson.loadOrInit(testCtx, { command, args, directory: localDir });
+  mockRestore(AppIdentity.load);
+  const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
   mock(SyncJson, "load", () => syncJson);
+  mock(AppIdentity, "load", () => syncJson.appIdentity);
 
   const filesync = new FileSync(syncJson);
 
@@ -435,50 +438,30 @@ export const makeSyncScenario = async ({
 
     waitUntilLocalFilesVersion: async (filesVersion) => {
       log.trace("waiting for local files version", { filesVersion });
-      const signal = new PromiseSignal();
       const localSyncJsonPath = localDir.absolute(".gadget/sync.json");
 
-      // oxlint-disable-next-line no-misused-promises
-      const interval = setInterval(async () => {
-        try {
+      await vi.waitFor(
+        async () => {
           log.trace("checking local files version", { filesVersion });
           const state = (await fs.readJSON(localSyncJsonPath)) as SyncJsonState;
           const environment = state.environments[state.environment];
           assertOrFail(environment, "environment must exist");
-
-          if (BigInt(state.environments[state.environment]!.filesVersion) === filesVersion) {
-            log.trace("signaling local files version", { filesVersion });
-            signal.resolve();
-            clearInterval(interval);
-          }
-        } catch (error) {
-          swallowEnoent(error);
-        }
-      }, 100);
-
-      await pTimeout(signal, {
-        message: `Timed out waiting for gadget files version to become ${filesVersion}`,
-        milliseconds: timeoutMs("5s"),
-      });
+          expect(BigInt(environment.filesVersion)).toBe(filesVersion);
+        },
+        { timeout: timeoutMs("5s"), interval: 100 },
+      );
     },
 
     waitUntilGadgetFilesVersion: async (filesVersion) => {
       log.trace("waiting for gadget files version", { filesVersion });
-      const signal = new PromiseSignal();
 
-      const interval = setInterval(() => {
-        log.trace("checking gadget files version", { filesVersion });
-        if (filesVersionDirs.has(filesVersion)) {
-          log.trace("signaling gadget files version", { filesVersion });
-          signal.resolve();
-          clearInterval(interval);
-        }
-      }, 100);
-
-      await pTimeout(signal, {
-        message: `Timed out waiting for gadget files version to become ${filesVersion}`,
-        milliseconds: timeoutMs("5s"),
-      });
+      await vi.waitFor(
+        () => {
+          log.trace("checking gadget files version", { filesVersion });
+          expect(filesVersionDirs.has(filesVersion)).toBe(true);
+        },
+        { timeout: timeoutMs("5s"), interval: 100 },
+      );
     },
 
     emitGadgetChanges: async (changes) => {
@@ -518,6 +501,9 @@ export const makeSyncScenario = async ({
 
           // format .gadget/sync.json on a single line so inline snapshots are easier to read
           local[".gadget/sync.json"] = JSON.stringify(JSON.parse(local[".gadget/sync.json"]!));
+
+          // exclude dev-lock.json since it's ephemeral runtime state with unstable content (PID, timestamp)
+          delete local[".gadget/dev-lock.json"];
 
           return {
             localDir: local,

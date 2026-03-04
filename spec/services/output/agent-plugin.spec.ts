@@ -1,8 +1,10 @@
 import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
 import { Directory } from "../../../src/services/filesync/directory.js";
 import {
+  agentPluginShaPath,
   installAgentsMdScaffold,
   installGadgetSkillsIntoProject,
   maybePromptAgentsMd,
@@ -14,13 +16,21 @@ import { mock, mockConfirm } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
 
-const makeProject = async (name: string): Promise<Directory> => {
+const makeProject = async (name: string, { empty = false }: { empty?: boolean } = {}): Promise<Directory> => {
   const dir = testDirPath(name);
   await fs.ensureDir(dir);
+  if (!empty) {
+    // create a placeholder user file so hasNonGadgetFiles() is true
+    await fs.outputFile(`${dir}/index.js`, "");
+  }
   return Directory.init(dir);
 };
 
+const MOCK_COMMIT_SHA = "abc123def456";
+
 const mockTreeAndDownloads = (): void => {
+  nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: MOCK_COMMIT_SHA });
+
   nock("https://api.github.com")
     .get(/\/repos\/gadget-inc\/skills\/git\/trees\//)
     .reply(200, {
@@ -167,9 +177,68 @@ describe("agent-plugin", () => {
       expect(await fs.pathExists(directory.absolute(".agents/skills/gadget-actions/SKILL.md"))).toBe(true);
       expectStdout().toContain("Installed skills:");
     });
+
+    it("saves commit SHA to cache after successful install", async () => {
+      const directory = await makeProject("skills-sha");
+
+      mockTreeAndDownloads();
+
+      await installGadgetSkillsIntoProject({ ctx: testCtx, directory });
+
+      const sha = await fs.readFile(agentPluginShaPath(directory), "utf8");
+      expect(sha).toBe(MOCK_COMMIT_SHA);
+    });
+
+    it("does not save SHA if install fails", async () => {
+      const directory = await makeProject("skills-sha-fail");
+
+      nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: MOCK_COMMIT_SHA });
+      nock("https://api.github.com")
+        .get(/\/repos\/gadget-inc\/skills\/git\/trees\//)
+        .replyWithError("network error");
+
+      await installGadgetSkillsIntoProject({ ctx: testCtx, directory });
+
+      expect(await fs.pathExists(agentPluginShaPath(directory))).toBe(false);
+    });
   });
 
   describe("maybePromptAgentsMd", () => {
+    it("skips prompt if directory does not exist", async () => {
+      const directory = await makeProject("prompt-agents-nonexistent");
+      await fs.remove(directory.path);
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptAgentsMd({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
+    it("skips prompt if directory is empty", async () => {
+      const directory = await makeProject("prompt-agents-empty", { empty: true });
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptAgentsMd({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
+    it("skips prompt if directory has only .gadget files", async () => {
+      const directory = await makeProject("prompt-agents-dot-gadget-only", { empty: true });
+      await fs.outputFile(directory.absolute(".gadget/sync.json"), "{}");
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptAgentsMd({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
     it("never asks again for a project after the user says no", async () => {
       const directory = await makeProject("prompt-agents-no");
 
@@ -214,6 +283,41 @@ describe("agent-plugin", () => {
   });
 
   describe("maybePromptGadgetSkills", () => {
+    it("skips prompt if directory does not exist", async () => {
+      const directory = await makeProject("prompt-skills-nonexistent");
+      await fs.remove(directory.path);
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptGadgetSkills({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
+    it("skips prompt if directory is empty", async () => {
+      const directory = await makeProject("prompt-skills-empty", { empty: true });
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptGadgetSkills({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
+    it("skips prompt if directory has only .gadget files", async () => {
+      const directory = await makeProject("prompt-skills-dot-gadget-only", { empty: true });
+      await fs.outputFile(directory.absolute(".gadget/sync.json"), "{}");
+
+      mockConfirm(true, () => {
+        throw new Error("confirm was called unexpectedly");
+      });
+      await maybePromptGadgetSkills({ ctx: testCtx, directory });
+
+      expectStdout().toBe("");
+    });
+
     it("never asks again for a project after the user says no", async () => {
       const directory = await makeProject("prompt-skills-no");
 
@@ -260,6 +364,7 @@ describe("agent-plugin", () => {
       const directory = await makeProject("prompt-skills-tree-fail");
 
       mockConfirm(true);
+      nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: "abc" });
       nock("https://api.github.com")
         .get(/\/repos\/gadget-inc\/skills\/git\/trees\//)
         .replyWithError("network error");
@@ -273,6 +378,7 @@ describe("agent-plugin", () => {
       const directory = await makeProject("prompt-skills-tree-403");
 
       mockConfirm(true);
+      nock("https://api.github.com").get("/repos/gadget-inc/skills/commits/main").reply(200, { sha: "abc" });
       nock("https://api.github.com")
         .get(/\/repos\/gadget-inc\/skills\/git\/trees\//)
         .reply(403, {});

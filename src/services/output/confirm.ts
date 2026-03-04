@@ -1,6 +1,8 @@
-import chalk from "chalk";
 import process from "node:process";
+
+import chalk from "chalk";
 import type { Promisable } from "type-fest";
+
 import { defaults } from "../util/object.js";
 import type { PartialExcept } from "../util/types.js";
 import { output } from "./output.js";

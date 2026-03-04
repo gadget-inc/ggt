@@ -1,9 +1,11 @@
+import { randomUUID } from "node:crypto";
+
 import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import nock from "nock";
-import { randomUUID } from "node:crypto";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
 import { args as DevArgs } from "../../../src/commands/dev.js";
 import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit/operation.js";
@@ -52,7 +54,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
     nockTestApps();
 
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
-    syncJson = await SyncJson.loadOrInit(testCtx, {
+    syncJson = await SyncJson.loadOrAskAndInit(testCtx, {
       command: "dev",
       args: makeArgs(DevArgs, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,
@@ -326,7 +328,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     await filesync.syncJson.directory.loadIgnoreFile();
 
-    expect(filesync.syncJson.directory.ignores("file2.js")).toBe(true);
+    expect(filesync.syncJson.directory.ignores("file2.js", false)).toBe(true);
 
     await writeToLocalFilesystem(testCtx, {
       filesVersion: 1n,
@@ -334,7 +336,27 @@ describe("FileSync._writeToLocalFilesystem", () => {
       delete: [],
     });
 
-    expect(filesync.syncJson.directory.ignores("file2.js")).toBe(false);
+    expect(filesync.syncJson.directory.ignores("file2.js", false)).toBe(false);
+  });
+
+  it("clears ignore patterns when .ignore is deleted", async () => {
+    await writeDir(localDir, {
+      ".ignore": "file2.js",
+      "file1.js": "one",
+      "file2.js": "two",
+    });
+
+    await filesync.syncJson.directory.loadIgnoreFile();
+
+    expect(filesync.syncJson.directory.ignores("file2.js", false)).toBe(true);
+
+    await writeToLocalFilesystem(testCtx, {
+      filesVersion: 1n,
+      files: [],
+      delete: [".ignore"],
+    });
+
+    expect(filesync.syncJson.directory.ignores("file2.js", false)).toBe(false);
   });
 
   it("ensures the filesVersion is greater than or equal to the current filesVersion", async () => {
@@ -432,7 +454,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
     nockTestApps();
 
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
-    syncJson = await SyncJson.loadOrInit(testCtx, {
+    syncJson = await SyncJson.loadOrAskAndInit(testCtx, {
       command: "dev",
       args: makeArgs(DevArgs, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,

@@ -1,0 +1,15 @@
+{
+  "printWidth": 140,
+  "experimentalSortImports": {},
+  "experimentalSortPackageJson": true,
+  "ignorePatterns": [
+    "spec/__fixtures__/**",
+    "src/__generated__/**",
+    "dist",
+    "tmp/*",
+    "!tmp/apps",
+    ".direnv",
+    ".worktrees",
+    "spec/services/filesync/directory.spec.ts"
+  ]
+}

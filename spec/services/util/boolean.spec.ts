@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { parseBoolean } from "../../../src/services/util/boolean.js";
 
 describe("parseBoolean", () => {

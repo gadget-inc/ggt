@@ -1,25 +1,29 @@
-import type { GraphQLError } from "graphql";
 import assert from "node:assert";
+
+import type { GraphQLError } from "graphql";
 import pluralize from "pluralize";
 import type { CloseEvent, ErrorEvent } from "ws";
+
 import { GGTError, IsBug } from "../output/report.js";
 import { sprint } from "../output/sprint.js";
 import { uniq } from "../util/collection.js";
 import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString, isStringArray } from "../util/is.js";
 import { serializeError } from "../util/object.js";
-import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "./edit/operation.js";
+import { isRetryableNetworkErrorCode } from "../util/retry.js";
+import type { GraphQLOperation } from "./edit/operation.js";
+import { getOperationName } from "./edit/operation.js";
 
 export class ClientError extends GGTError {
   public isBug: IsBug;
 
+  readonly operationName: string | undefined;
+
   override cause: string | string[] | Error | readonly GraphQLError[] | CloseEvent | ErrorEvent;
 
-  constructor(
-    readonly request: GraphQLQuery | GraphQLMutation | GraphQLSubscription | undefined,
-    cause: unknown,
-    isBug?: IsBug,
-  ) {
+  constructor(operation: GraphQLOperation, cause: unknown, isBug?: IsBug) {
     super("An error occurred while communicating with Gadget");
+
+    this.operationName = getOperationName(operation);
 
     if (isBug) {
       this.isBug = isBug;
@@ -68,6 +72,10 @@ export class ClientError extends GGTError {
       case isCloseEvent(this.cause):
         body = "The connection to Gadget closed unexpectedly.";
         break;
+      case (isError(this.cause) && isRetryableNetworkErrorCode(this.cause)) ||
+        (isErrorEvent(this.cause) && isRetryableNetworkErrorCode(this.cause.error)):
+        body = "Please check your internet connection and try again.";
+        break;
       case isErrorEvent(this.cause) || isError(this.cause):
         body = this.cause.message;
         break;
@@ -83,12 +91,20 @@ export class ClientError extends GGTError {
         break;
     }
 
+    if (this.operationName) {
+      body += ` (running "${this.operationName}")`;
+    }
+
     return this.message + "\n\n" + body;
   }
 }
 
 export class AuthenticationError extends ClientError {
-  constructor(request: GraphQLQuery | GraphQLMutation | GraphQLSubscription | undefined) {
-    super(request, "Request authentication failed due to the session expiring while running the command. Please sign-in again.", IsBug.NO);
+  constructor(operation: GraphQLOperation) {
+    super(
+      operation,
+      "Request authentication failed due to the session expiring while running the command. Please sign-in again.",
+      IsBug.NO,
+    );
   }
 }

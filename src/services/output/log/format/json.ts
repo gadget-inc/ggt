@@ -1,4 +1,5 @@
 import stripAnsi from "strip-ansi";
+
 import { isObject, isString } from "../../../util/is.js";
 import type { Formatter } from "./format.js";
 

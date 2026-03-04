@@ -1,5 +1,7 @@
-import { HTTPError, type OptionsInit } from "got";
 import assert from "node:assert";
+
+import { HTTPError, type OptionsInit } from "got";
+
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { readSession, readToken } from "../user/session.js";

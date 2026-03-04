@@ -7,13 +7,6 @@
   },
   "compilerOptions": {
     /* Type Checking */
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noPropertyAccessFromIndexSignature": true,
     "strict": true,
 
     /* Modules */

@@ -1,6 +1,8 @@
-import ms from "ms";
 import inspector from "node:inspector";
 import process from "node:process";
+
+import ms from "ms";
+
 import { parseBoolean } from "../../src/services/util/boolean.js";
 import { isString } from "../../src/services/util/is.js";
 

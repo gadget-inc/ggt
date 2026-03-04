@@ -1,7 +1,9 @@
+import assert from "node:assert";
+
 import chalk from "chalk";
 import indentString from "indent-string";
-import assert from "node:assert";
 import terminalLink from "terminal-link";
+
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { type Run, type Usage } from "../services/command/command.js";
 import { env } from "../services/config/env.js";
@@ -18,7 +20,7 @@ import { spin, type spinner } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { ts } from "../services/output/timestamp.js";
 import { unreachable } from "../services/util/assert.js";
-import { isGraphQLErrors } from "../services/util/is.js";
+import { parseGraphQLErrors } from "../services/util/is.js";
 import { args as PushArgs } from "./push.js";
 
 export type DeployArgs = typeof args;
@@ -43,11 +45,11 @@ export const usage: Usage = (_ctx) => {
         $ ggt deploy [options]
 
   {gray Options}
-        -a, --app <app_name>           Selects a specific app to deploy. Default set on ".gadget/sync.json"
-        --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Default set on ".gadget/sync.json"
+        -a, --app <app_name>           Selects a specific app to deploy. Defaults to the app synced to the current directory, if there is one.
+        --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Defaults to the environment synced to the current directory, if there is one.
         --force                        Deploys by discarding any changes made to the environment directory since last sync
-        --allow-different-directory    Deploys from any local directory with existing files, even if the ".gadget/sync.json" file is missing
-        --allow-different-app          Deploys a different app using the --app command, instead of the one specified in the “.gadget/sync.json” file
+        --allow-different-directory    Deploys from any local directory with existing files, even if the directory hasn't been synced before
+        --allow-different-app          Deploys a different app using the --app command, instead of the most recently synced one in the current directory
         --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
         --allow-data-delete            Deploys even if it results in the deletion of data in production
         --allow-charges                Deploys even if it results in additional charges to your plan
@@ -60,7 +62,7 @@ export const usage: Usage = (_ctx) => {
 
 export const run: Run<DeployArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { command: "deploy", args, directory });
+  const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "deploy", args, directory });
 
   println({
     ensureEmptyLineAbove: true,
@@ -132,22 +134,21 @@ export const run: Run<DeployArgs> = async (ctx, args) => {
       ctx.log.error("failed to deploy", { error });
       spinner?.fail(stepToSpinnerStart(syncJson, currentStep) + " " + ts());
 
-      if (isGraphQLErrors(error.cause)) {
-        const graphqlError = error.cause[0];
+      const graphqlErrors = parseGraphQLErrors(error.cause);
+      if (graphqlErrors) {
+        const graphqlError = graphqlErrors[0];
         assert(graphqlError, "expected graphqlError to be defined");
 
-        if (graphqlError.extensions) {
-          switch (true) {
-            case graphqlError.extensions["requiresUpgrade"]:
-              println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
-              process.exit(1);
-              break;
-            case graphqlError.extensions["requiresAdditionalCharge"]:
-              println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
-              await confirm({ ensureEmptyLineAbove: true, content: "Do you want to continue?" });
-              subscription.resubscribe({ ...variables, allowCharges: true });
-              return;
-          }
+        switch (true) {
+          case graphqlError.extensions["requiresUpgrade"]:
+            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
+            process.exit(1);
+          // falls through
+          case graphqlError.extensions["requiresAdditionalCharge"]:
+            println({ ensureEmptyLineAbove: true, content: graphqlError.message.replace(/GGT_PAYMENT_REQUIRED:?\s*/, "") });
+            await confirm({ ensureEmptyLineAbove: true, content: "Do you want to continue?" });
+            subscription.resubscribe({ ...variables, allowCharges: true });
+            return;
         }
       }
 

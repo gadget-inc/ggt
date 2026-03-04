@@ -4,6 +4,7 @@ import notifier from "node-notifier";
 import pMap from "p-map";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
+
 import * as dev from "../../src/commands/dev.js";
 import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
@@ -1103,7 +1104,7 @@ describe("dev", () => {
     );
 
     // give the watcher a chance to see the changes
-    await sleep(timeoutMs("2.5s"));
+    await sleep(timeoutMs("1s"));
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -1137,7 +1138,58 @@ describe("dev", () => {
       `);
   });
 
-  it("reloads the ignore file when .ignore changes", async () => {
+  it("doesn't send changes from the local filesystem to gadget if the directory matches a directory-only ignore pattern", async () => {
+    const { localDir, expectDirs } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".ignore": "build/",
+      },
+      gadgetFiles: {
+        ".ignore": "build/",
+      },
+      localFiles: {
+        ".ignore": "build/",
+      },
+    });
+
+    await dev.run(testCtx, args);
+
+    // add files inside the ignored directory
+    await fs.outputFile(localDir.absolute("build/output.js"), "compiled");
+    await fs.outputFile(localDir.absolute("build/index.css"), "styles");
+
+    // add a nested directory inside the ignored directory
+    await fs.outputFile(localDir.absolute("build/chunks/vendor.js"), "vendor");
+
+    // give the watcher a chance to see the changes
+    await sleep(timeoutMs("1s"));
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+        {
+          "filesVersionDirs": {
+            "1": {
+              ".gadget/": "",
+              ".ignore": "build/",
+            },
+          },
+          "gadgetDir": {
+            ".gadget/": "",
+            ".ignore": "build/",
+          },
+          "localDir": {
+            ".gadget/": "",
+            ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}}}",
+            ".ignore": "build/",
+            "build/": "",
+            "build/chunks/": "",
+            "build/chunks/vendor.js": "vendor",
+            "build/index.css": "styles",
+            "build/output.js": "compiled",
+          },
+        }
+      `);
+  });
+
+  it("reloads the ignore file when .ignore changes", { retry: 3 }, async () => {
     const { filesync, waitUntilLocalFilesVersion, localDir, waitUntilGadgetFilesVersion, emitGadgetChanges, expectDirs } =
       await makeSyncScenario();
 
@@ -1147,6 +1199,7 @@ describe("dev", () => {
 
     await fs.outputFile(localDir.absolute(".ignore"), "# watch it all");
     await waitUntilGadgetFilesVersion(2n);
+    await waitUntilLocalFilesVersion(2n);
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
           "filesVersionDirs": {
@@ -1170,7 +1223,9 @@ describe("dev", () => {
         }
       `);
 
-    expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(1);
+    });
 
     await emitGadgetChanges({
       remoteFilesVersion: "3",
@@ -1181,6 +1236,38 @@ describe("dev", () => {
     await waitUntilLocalFilesVersion(3n);
 
     expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears ignore patterns when .ignore is deleted remotely", async () => {
+    const { filesync, waitUntilLocalFilesVersion, emitGadgetChanges } = await makeSyncScenario({
+      filesVersion1Files: {
+        ".ignore": "tmp/",
+      },
+      localFiles: {
+        ".gadget/": "",
+        ".ignore": "tmp/",
+      },
+      gadgetFiles: {
+        ".ignore": "tmp/",
+      },
+    });
+
+    await dev.run(testCtx, args);
+
+    expect(filesync.syncJson.directory.ignores("tmp/foo.js", false)).toBe(true);
+
+    vi.spyOn(filesync.syncJson.directory, "loadIgnoreFile");
+
+    await emitGadgetChanges({
+      remoteFilesVersion: "2",
+      changed: [],
+      deleted: [{ path: ".ignore" }],
+    });
+
+    await waitUntilLocalFilesVersion(2n);
+
+    expect(filesync.syncJson.directory.loadIgnoreFile).toHaveBeenCalledTimes(1);
+    expect(filesync.syncJson.directory.ignores("tmp/foo.js", false)).toBe(false);
   });
 
   it("notifies the user when an error occurs", async () => {

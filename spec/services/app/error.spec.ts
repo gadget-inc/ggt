@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+
+import { FILE_SYNC_HASHES_QUERY, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../../src/services/app/edit/operation.js";
 import { AuthenticationError, ClientError } from "../../../src/services/app/error.js";
 import { IsBug } from "../../../src/services/output/report.js";
 
@@ -82,10 +84,27 @@ describe("ClientError", () => {
     it("formats single GraphQL error", () => {
       const error = new ClientError(undefined, [{ message: "Field 'user' not found", extensions: {} }]);
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      expect(rendered).toContain("Gadget responded with the following error:");
-      expect(rendered).toContain("Field 'user' not found");
+        Gadget responded with the following error:
+
+          • Field 'user' not found"
+      `);
+    });
+
+    it("formats GraphQL error with operation name", () => {
+      const error = new ClientError(FILE_SYNC_HASHES_QUERY, [
+        { message: "GGT_INTERNAL_ERROR: error querying clickhouse: Timeout exceeded", extensions: {} },
+      ]);
+
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
+
+        Gadget responded with the following error:
+
+          • GGT_INTERNAL_ERROR: error querying clickhouse: Timeout exceeded (running "FileSyncHashes")"
+      `);
     });
 
     it("formats multiple GraphQL errors", () => {
@@ -94,11 +113,14 @@ describe("ClientError", () => {
         { message: "Error 2", extensions: {} },
       ]);
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      expect(rendered).toContain("Gadget responded with the following errors:");
-      expect(rendered).toContain("Error 1");
-      expect(rendered).toContain("Error 2");
+        Gadget responded with the following errors:
+
+          • Error 1
+          • Error 2"
+      `);
     });
 
     it("deduplicates GraphQL errors with same message", () => {
@@ -108,12 +130,14 @@ describe("ClientError", () => {
         { message: "Other error", extensions: {} },
       ]);
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      // Should only appear once
-      const duplicateCount = (rendered.match(/Duplicate error/g) || []).length;
-      expect(duplicateCount).toBe(1);
-      expect(rendered).toContain("Other error");
+        Gadget responded with the following errors:
+
+          • Duplicate error
+          • Other error"
+      `);
     });
 
     it("renders CloseEvent message", () => {
@@ -124,9 +148,11 @@ describe("ClientError", () => {
         wasClean: false,
       });
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      expect(rendered).toContain("The connection to Gadget closed unexpectedly.");
+        The connection to Gadget closed unexpectedly."
+      `);
     });
 
     it("renders ErrorEvent message", () => {
@@ -136,49 +162,147 @@ describe("ClientError", () => {
         error: undefined,
       });
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      expect(rendered).toContain("WebSocket connection failed");
+        WebSocket connection failed"
+      `);
     });
 
     it("renders Error message", () => {
       const error = new ClientError(undefined, new Error("Something broke"));
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      expect(rendered).toContain("Something broke");
+        Something broke"
+      `);
     });
 
     it("renders single string array element", () => {
       const error = new ClientError(undefined, ["Only one error"]);
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      expect(rendered).toContain("Only one error");
+        Only one error"
+      `);
     });
 
     it("renders multiple string array elements joined by comma", () => {
       const error = new ClientError(undefined, ["Error A", "Error B", "Error C"]);
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      expect(rendered).toContain("Error A, Error B, Error C");
+        Error A, Error B, Error C"
+      `);
     });
 
     it("renders string cause directly", () => {
       const error = new ClientError(undefined, "Direct error message");
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      expect(rendered).toContain("Direct error message");
+        Direct error message"
+      `);
     });
 
     it("includes the base message", () => {
       const error = new ClientError(undefined, "Some error");
 
-      const rendered = error.render();
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
 
-      expect(rendered).toContain("An error occurred while communicating with Gadget");
+        Some error"
+      `);
+    });
+
+    it("renders network error message for Error with retryable network code", () => {
+      const cause = new Error("connect ECONNREFUSED 127.0.0.1:443");
+      (cause as NodeJS.ErrnoException).code = "ECONNREFUSED";
+      const error = new ClientError(undefined, cause);
+
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
+
+        Please check your internet connection and try again."
+      `);
+    });
+
+    it("renders network error message with operation name when request is available", () => {
+      const cause = new Error("getaddrinfo EAI_AGAIN");
+      (cause as NodeJS.ErrnoException).code = "EAI_AGAIN";
+      const error = new ClientError(FILE_SYNC_HASHES_QUERY, cause);
+
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
+
+        Please check your internet connection and try again. (running "FileSyncHashes")"
+      `);
+    });
+
+    it("renders network error message for ErrorEvent with retryable network code", () => {
+      const innerError = new Error("connect ETIMEDOUT");
+      (innerError as NodeJS.ErrnoException).code = "ETIMEDOUT";
+      const cause = {
+        type: "error",
+        message: "Connection failed",
+        error: innerError,
+      };
+      const error = new ClientError(undefined, cause);
+
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
+
+        Please check your internet connection and try again."
+      `);
+    });
+
+    it("renders network error for ErrorEvent with operation name", () => {
+      const innerError = new Error("connect ENOTFOUND");
+      (innerError as NodeJS.ErrnoException).code = "ENOTFOUND";
+      const cause = {
+        type: "error",
+        message: "Connection failed",
+        error: innerError,
+      };
+      const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, cause);
+
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
+
+        Please check your internet connection and try again. (running "RemoteFileSyncEvents")"
+      `);
+    });
+
+    it("falls through to regular Error rendering for non-network errors", () => {
+      const cause = new Error("Something else broke");
+      const error = new ClientError(undefined, cause);
+
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
+
+        Something else broke"
+      `);
+      expect(error.render()).not.toContain("network error");
+    });
+
+    it("falls through to regular ErrorEvent rendering for non-network ErrorEvents", () => {
+      const cause = {
+        type: "error",
+        message: "WebSocket protocol error",
+        error: new Error("protocol violation"),
+      };
+      const error = new ClientError(undefined, cause);
+
+      expect(error.render()).toMatchInlineSnapshot(`
+        "An error occurred while communicating with Gadget
+
+        WebSocket protocol error"
+      `);
+      expect(error.render()).not.toContain("network error");
     });
   });
 });

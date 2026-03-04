@@ -1,5 +1,7 @@
 import assert from "node:assert";
+
 import { z } from "zod";
+
 import { login } from "../../commands/login.js";
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";

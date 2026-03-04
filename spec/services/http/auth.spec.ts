@@ -1,5 +1,6 @@
 import { HTTPError } from "got";
 import { describe, expect, it, vi } from "vitest";
+
 import { config } from "../../../src/services/config/config.js";
 import {
   isGadgetServicesRequest,

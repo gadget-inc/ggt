@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { formatPretty } from "../../../../../src/services/output/log/format/pretty.js";
 import { Level } from "../../../../../src/services/output/log/level.js";
 import { withEnv } from "../../../../__support__/env.js";

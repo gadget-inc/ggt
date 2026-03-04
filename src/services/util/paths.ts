@@ -1,4 +1,5 @@
 import path from "node:path";
+
 import { packageJsonPath } from "./package-json.js";
 
 /**

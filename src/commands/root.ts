@@ -1,9 +1,11 @@
 import arg from "arg";
+
 import { parseArgs, type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
 import { Commands, importCommand, isCommand, type Run, type Usage } from "../services/command/command.js";
 import { verbosityToLevel } from "../services/output/log/level.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
+import { setSentryTags } from "../services/output/sentry.js";
 import { sprint } from "../services/output/sprint.js";
 import { shouldCheckForUpdate } from "../services/output/update.js";
 import { sortBySimilar } from "../services/util/collection.js";
@@ -33,6 +35,8 @@ export const usage: Usage = () => {
       status           Show your local and environment's file changes
       push             Push your local files to your environment
       pull             Pull your environment's files to your local computer
+      var              Manage environment variables
+      env              Manage environments
       add              Add models, fields, actions, routes and environments to your app
       open             Open a Gadget location in your browser
       list             List your available applications
@@ -80,6 +84,10 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
     process.exit(0);
   }
 
+  // resolve command aliases
+  const commandAliases: Record<string, string> = { envs: "env", problem: "problems", log: "logs" };
+  commandName = commandAliases[commandName] ?? commandName;
+
   if (!isCommand(commandName)) {
     const [closest] = sortBySimilar(commandName, Commands);
     println`
@@ -93,14 +101,19 @@ export const run: Run<RootArgs> = async (parent, args): Promise<void> => {
   }
 
   const command = await importCommand(commandName);
+  setSentryTags({ command: commandName });
 
   if (args["-h"] ?? args["--help"]) {
-    println(command.usage(ctx));
-    process.exit(0);
+    if (!command.parseOptions?.permissive || args._.length === 0) {
+      println(command.usage(ctx));
+      process.exit(0);
+    }
+    // pass -h through to the command's run function for subcommand-level help
+    args._.push("-h");
   }
 
   try {
-    await command.run(ctx.child({ name: commandName }), parseArgs(command.args ?? {}, { argv: args._ }));
+    await command.run(ctx.child({ name: commandName }), parseArgs(command.args ?? {}, { ...command.parseOptions, argv: args._ }));
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

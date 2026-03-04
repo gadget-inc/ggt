@@ -1,4 +1,5 @@
 import { assert, beforeEach, expect, vi, type MockInstance } from "vitest";
+
 import * as confirm from "../../src/services/output/confirm.js";
 import { output } from "../../src/services/output/output.js";
 import * as select from "../../src/services/output/select.js";

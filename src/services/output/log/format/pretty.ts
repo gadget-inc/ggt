@@ -1,8 +1,9 @@
-import dayjs from "dayjs";
 import assert from "node:assert";
-import terminalLink from "terminal-link";
-import { type Environment } from "../../../app/app.js";
 
+import dayjs from "dayjs";
+import terminalLink from "terminal-link";
+
+import { type Environment } from "../../../app/app.js";
 import { config } from "../../../config/config.js";
 import { isNil, isObject } from "../../../util/is.js";
 import { serializeObjectToHTTPQuery } from "../../../util/querystring.js";

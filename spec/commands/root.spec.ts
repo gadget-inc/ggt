@@ -1,5 +1,7 @@
 import process from "node:process";
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
 import * as root from "../../src/commands/root.js";
 import * as command from "../../src/services/command/command.js";
 import { importCommand, type CommandModule } from "../../src/services/command/command.js";
@@ -68,6 +70,8 @@ describe("root", () => {
         status           Show your local and environment's file changes
         push             Push your local files to your environment
         pull             Pull your environment's files to your local computer
+        var              Manage environment variables
+        env              Manage environments
         add              Add models, fields, actions, routes and environments to your app
         open             Open a Gadget location in your browser
         list             List your available applications
@@ -100,11 +104,49 @@ describe("root", () => {
     expectStdout().toMatchInlineSnapshot(`
       "Unknown command foobar
 
-      Did you mean open?
+      Did you mean var?
 
       Run ggt --help for usage
       "
     `);
+  });
+
+  it("resolves 'envs' alias to the env command", async () => {
+    const cmd = await importCommand("env");
+    mock(cmd, "run", noop);
+
+    await root.run(testCtx, makeRootArgs("envs"));
+
+    expect(cmd.run).toHaveBeenCalled();
+  });
+
+  it("resolves 'problem' alias to the problems command", async () => {
+    const cmd = await importCommand("problems");
+    mock(cmd, "run", noop);
+
+    await root.run(testCtx, makeRootArgs("problem"));
+
+    expect(cmd.run).toHaveBeenCalled();
+  });
+
+  it("resolves 'log' alias to the logs command", async () => {
+    const cmd = await importCommand("logs");
+    mock(cmd, "run", noop);
+
+    await root.run(testCtx, makeRootArgs("log"));
+
+    expect(cmd.run).toHaveBeenCalled();
+  });
+
+  // ensure the alias resolves to the canonical command name before the
+  // AllowedProdCommands check in AppIdentity.load, so "ggt log --env production" works
+  it("passes args through to the resolved command when using an alias", async () => {
+    const cmd = await importCommand("logs");
+    mock(cmd, "run", noop);
+
+    await root.run(testCtx, makeRootArgs("log", "--env", "production"));
+
+    expect(cmd.run).toHaveBeenCalled();
   });
 
   describe.each(command.Commands)("when %s is given", (name) => {

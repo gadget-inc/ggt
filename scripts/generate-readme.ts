@@ -6,6 +6,7 @@ import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkToc from "remark-toc";
 import { dedent } from "ts-dedent";
+
 import { usage } from "../src/commands/root.js";
 import { Commands, importCommand } from "../src/services/command/command.js";
 import { Context } from "../src/services/command/context.js";
@@ -52,4 +53,4 @@ readme = readme.replace(
 
 const file = await remark().use(remarkGfm).use(remarkToc, { tight: true }).process(readme);
 await fs.writeFile("README.md", String(file));
-await $`npx prettier -w README.md`;
+await $`npx oxfmt README.md`;

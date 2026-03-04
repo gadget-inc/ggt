@@ -1,7 +1,8 @@
-import { findUp } from "find-up";
-import fs from "fs-extra";
 import assert from "node:assert";
 import { fileURLToPath } from "node:url";
+
+import { findUp } from "find-up";
+import fs from "fs-extra";
 import type { Package } from "normalize-package-data";
 import normalizePackageData from "normalize-package-data";
 

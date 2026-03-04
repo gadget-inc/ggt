@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { makeSyncScenario } from "../../spec/__support__/filesync.js";
 import { expectProcessExit } from "../../spec/__support__/process.js";
 import * as deploy from "../../src/commands/deploy.js";
@@ -834,7 +835,7 @@ describe("deploy", () => {
 
       An error occurred while communicating with Gadget
 
-      The connection to Gadget closed unexpectedly.
+      The connection to Gadget closed unexpectedly. (running "PublishStatus")
 
       If you think this is a bug, use the link below to create an issue on GitHub.
 

@@ -17,7 +17,8 @@ Usage
   ggt add field <model_path>/<field_name>:<field_type>
 
 Options
-  -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
+  -a, --app <app_name> Selects the app to add to. Defaults to the app synced to the current directory, if there is one.
+  -e, --env <env_name> Selects the environment to add to. Defaults to the environment synced to the current directory, if there is one.
 
 Examples
   Add a new model 'post' with out fields:
@@ -60,7 +61,8 @@ Usage
   ggt add field <model_path>/<field_name>:<field_type>
 
 Options
-  -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
+  -a, --app <app_name> Selects the app to add to. Defaults to the app synced to the current directory, if there is one.
+  -e, --env <env_name> Selects the environment to add to. Defaults to the environment synced to the current directory, if there is one.
 
 Examples
   Add a new model 'post' with out fields:
@@ -87,10 +89,11 @@ Examples
 `;
 
 exports[`root > when agent-plugin is given > prints the usage when --help is passed 1`] = `
-"Install Gadget agent plugins (AGENTS.md + skills) into the current project.
+"Install or update Gadget agent plugins (AGENTS.md + skills).
 
 Usage
   ggt agent-plugin install [--force]
+  ggt agent-plugin update
 
 Flags
   --force    Overwrite/reinstall even if already present
@@ -98,10 +101,11 @@ Flags
 `;
 
 exports[`root > when agent-plugin is given > prints the usage when -h is passed 1`] = `
-"Install Gadget agent plugins (AGENTS.md + skills) into the current project.
+"Install or update Gadget agent plugins (AGENTS.md + skills).
 
 Usage
   ggt agent-plugin install [--force]
+  ggt agent-plugin update
 
 Flags
   --force    Overwrite/reinstall even if already present
@@ -145,7 +149,8 @@ Usage
       DIRECTORY: The directory containing your Gadget app (default: current directory)
 
 Options
-      -e, --env <env_name>        Selects the environment to debug. Default set on ".gadget/sync.json"
+      -a, --app <app_name>        Selects the app to debug. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>        Selects the environment to debug. Defaults to the environment synced to the current directory, if there is one.
       -p, --port <port>           Local port for the inspector proxy (default: 9229)
       --configure <editor>        Configure debugger for vscode, cursor
 
@@ -175,7 +180,8 @@ Usage
       DIRECTORY: The directory containing your Gadget app (default: current directory)
 
 Options
-      -e, --env <env_name>        Selects the environment to debug. Default set on ".gadget/sync.json"
+      -a, --app <app_name>        Selects the app to debug. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>        Selects the environment to debug. Defaults to the environment synced to the current directory, if there is one.
       -p, --port <port>           Local port for the inspector proxy (default: 9229)
       --configure <editor>        Configure debugger for vscode, cursor
 
@@ -205,11 +211,11 @@ Usage
       $ ggt deploy [options]
 
 Options
-      -a, --app <app_name>           Selects a specific app to deploy. Default set on ".gadget/sync.json"
-      --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Default set on ".gadget/sync.json"
+      -a, --app <app_name>           Selects a specific app to deploy. Defaults to the app synced to the current directory, if there is one.
+      --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Defaults to the environment synced to the current directory, if there is one.
       --force                        Deploys by discarding any changes made to the environment directory since last sync
-      --allow-different-directory    Deploys from any local directory with existing files, even if the ".gadget/sync.json" file is missing
-      --allow-different-app          Deploys a different app using the --app command, instead of the one specified in the “.gadget/sync.json” file
+      --allow-different-directory    Deploys from any local directory with existing files, even if the directory hasn't been synced before
+      --allow-different-app          Deploys a different app using the --app command, instead of the most recently synced one in the current directory
       --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
       --allow-data-delete            Deploys even if it results in the deletion of data in production
       --allow-charges                Deploys even if it results in additional charges to your plan
@@ -231,11 +237,11 @@ Usage
       $ ggt deploy [options]
 
 Options
-      -a, --app <app_name>           Selects a specific app to deploy. Default set on ".gadget/sync.json"
-      --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Default set on ".gadget/sync.json"
+      -a, --app <app_name>           Selects a specific app to deploy. Defaults to the app synced to the current directory, if there is one.
+      --from, -e, --env <env_name>   Selects a specific environment to sync and deploy from. Defaults to the environment synced to the current directory, if there is one.
       --force                        Deploys by discarding any changes made to the environment directory since last sync
-      --allow-different-directory    Deploys from any local directory with existing files, even if the ".gadget/sync.json" file is missing
-      --allow-different-app          Deploys a different app using the --app command, instead of the one specified in the “.gadget/sync.json” file
+      --allow-different-directory    Deploys from any local directory with existing files, even if the directory hasn't been synced before
+      --allow-different-app          Deploys a different app using the --app command, instead of the most recently synced one in the current directory
       --allow-problems               Deploys despite any existing issues found in the app (gelly errors, typescript errors etc.)
       --allow-data-delete            Deploys even if it results in the deletion of data in production
       --allow-charges                Deploys even if it results in additional charges to your plan
@@ -260,11 +266,11 @@ Usage
       DIRECTORY: The directory to sync files to (default: the current directory)
 
 Options
-      -a, --app <app_name>        Selects the app to sync files with. Default set on ".gadget/sync.json"
-      -e, --env <env_name>        Selects the environment to sync files with. Default set on ".gadget/sync.json"
+      -a, --app <app_name>        Selects the app to sync files with. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>        Selects the environment to sync files with. Defaults to the environment synced to the current directory, if there is one.
       --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
-      --allow-unknown-directory   Syncs to any local directory with existing files, even if the ".gadget/sync.json" file is missing
-      --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
+      --allow-unknown-directory   Syncs to any local directory with existing files, even if the directory hasn't been synced before
+      --allow-different-app       Syncs with a different app using the --app command, instead of the most recently synced one in the current directory
       --log-level <level>         Sets the log level for incoming application logs (default: info)
       --no-logs                   Disables outputting application logs to the console
       --my-logs                   Only outputs user sourced logs
@@ -310,11 +316,11 @@ Usage
       DIRECTORY: The directory to sync files to (default: the current directory)
 
 Options
-      -a, --app <app_name>        Selects the app to sync files with. Default set on ".gadget/sync.json"
-      -e, --env <env_name>        Selects the environment to sync files with. Default set on ".gadget/sync.json"
+      -a, --app <app_name>        Selects the app to sync files with. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>        Selects the environment to sync files with. Defaults to the environment synced to the current directory, if there is one.
       --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
-      --allow-unknown-directory   Syncs to any local directory with existing files, even if the ".gadget/sync.json" file is missing
-      --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
+      --allow-unknown-directory   Syncs to any local directory with existing files, even if the directory hasn't been synced before
+      --allow-different-app       Syncs with a different app using the --app command, instead of the most recently synced one in the current directory
       --log-level <level>         Sets the log level for incoming application logs (default: info)
       --no-logs                   Disables outputting application logs to the console
       --my-logs                   Only outputs user sourced logs
@@ -343,6 +349,92 @@ Examples
 
       sync a custom path with a specific app, environment and preselect all changes from local on conflicts
       $ ggt dev ~/gadget/example --app=example --env=development --prefer=local
+"
+`;
+
+exports[`root > when env is given > prints the usage when --help is passed 1`] = `
+"Manage environments for your Gadget application.
+
+Usage
+  ggt env <command> [options]
+
+Commands
+  list             List all environments
+  create <name>    Create a new environment
+  delete <name>    Delete an environment
+  unpause <name>   Unpause a paused environment
+  use <name>       Switch the active environment
+
+Options
+  -a, --app <app_name>   Selects the application
+
+Run "ggt env <command> -h" for more information about a specific command.
+"
+`;
+
+exports[`root > when env is given > prints the usage when -h is passed 1`] = `
+"Manage environments for your Gadget application.
+
+Usage
+  ggt env <command> [options]
+
+Commands
+  list             List all environments
+  create <name>    Create a new environment
+  delete <name>    Delete an environment
+  unpause <name>   Unpause a paused environment
+  use <name>       Switch the active environment
+
+Options
+  -a, --app <app_name>   Selects the application
+
+Run "ggt env <command> -h" for more information about a specific command.
+"
+`;
+
+exports[`root > when eval is given > prints the usage when --help is passed 1`] = `
+"Evaluates a JavaScript snippet against a Gadget app's API client.
+
+The snippet receives an api variable (a pre-constructed Gadget API client
+authenticated as the developer). Results are formatted like Node.js REPL output.
+Writes are disallowed by default; use --allow-writes to enable them.
+
+Usage
+      $ ggt eval [options] <snippet>
+
+Options
+      -a, --app <app_name>         Selects a specific app. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>         Selects a specific environment. Defaults to the environment synced to the current directory, if there is one.
+      -w, --allow-writes           Allow write operations (default is read-only)
+          --json                   Output result as JSON instead of Node.js inspect format (root flag)
+
+Examples
+      $ ggt eval 'api.user.findMany()'
+      $ ggt eval --app my-app --env staging 'api.user.findFirst()'
+      $ ggt eval -a my-app -w 'api.user.delete("123")'
+"
+`;
+
+exports[`root > when eval is given > prints the usage when -h is passed 1`] = `
+"Evaluates a JavaScript snippet against a Gadget app's API client.
+
+The snippet receives an api variable (a pre-constructed Gadget API client
+authenticated as the developer). Results are formatted like Node.js REPL output.
+Writes are disallowed by default; use --allow-writes to enable them.
+
+Usage
+      $ ggt eval [options] <snippet>
+
+Options
+      -a, --app <app_name>         Selects a specific app. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>         Selects a specific environment. Defaults to the environment synced to the current directory, if there is one.
+      -w, --allow-writes           Allow write operations (default is read-only)
+          --json                   Output result as JSON instead of Node.js inspect format (root flag)
+
+Examples
+      $ ggt eval 'api.user.findMany()'
+      $ ggt eval --app my-app --env staging 'api.user.findFirst()'
+      $ ggt eval -a my-app -w 'api.user.delete("123")'
 "
 `;
 
@@ -409,8 +501,8 @@ Options
       -ll, --log-level <level>       Sets the log level for incoming application logs in --tail mode (default: info)
       --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
       --json                         Output logs in JSON format
-      -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
-      -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+      -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
+      -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
 
 Examples
       Print recent logs from your development environment
@@ -445,8 +537,8 @@ Options
       -ll, --log-level <level>       Sets the log level for incoming application logs in --tail mode (default: info)
       --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
       --json                         Output logs in JSON format
-      -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
-      -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+      -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
+      -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
 
 Examples
       Print recent logs from your development environment
@@ -482,8 +574,8 @@ Usage
       + schema              Opens schema editor for a specific model
 
 Options
-      -a, --app <app_name>   Selects the application to open in your browser. Default set on ".gadget/sync.json"
-      -e, --env <env_name>   Selects the environment to open in your browser. Default set on ".gadget/sync.json"
+      -a, --app <app_name>   Selects the application to open in your browser. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>   Selects the environment to open in your browser. Defaults to the environment synced to the current directory, if there is one.
       --show-all             Shows all schema, or data options by listing your available models
 
 Examples
@@ -529,8 +621,8 @@ Usage
       + schema              Opens schema editor for a specific model
 
 Options
-      -a, --app <app_name>   Selects the application to open in your browser. Default set on ".gadget/sync.json"
-      -e, --env <env_name>   Selects the environment to open in your browser. Default set on ".gadget/sync.json"
+      -a, --app <app_name>   Selects the application to open in your browser. Defaults to the app synced to the current directory, if there is one.
+      -e, --env <env_name>   Selects the environment to open in your browser. Defaults to the environment synced to the current directory, if there is one.
       --show-all             Shows all schema, or data options by listing your available models
 
 Examples
@@ -560,6 +652,22 @@ Examples
 "
 `;
 
+exports[`root > when problems is given > prints the usage when --help is passed 1`] = `
+"Shows any problems (errors, warnings) found in your Gadget application.
+
+Usage
+      ggt problems
+"
+`;
+
+exports[`root > when problems is given > prints the usage when -h is passed 1`] = `
+"Shows any problems (errors, warnings) found in your Gadget application.
+
+Usage
+      ggt problems
+"
+`;
+
 exports[`root > when pull is given > prints the usage when --help is passed 1`] = `
 "Pulls your environment files to your local directory.
 
@@ -570,11 +678,11 @@ Usage
       ggt pull [options]
 
 Options
-      -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
-      -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+      -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
+      -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
       --force                        Forces a pull by discarding any changes made on your local directory since last sync
-      --allow-different-directory    Pulls changes from any environment directory, even if the ".gadget/sync.json" file is missing
-      --allow-different-app          Pulls changes to a different app using --app command, instead of the one in the “.gadget/sync.json” file
+      --allow-different-directory    Pulls changes from any environment directory, even if the directory hasn't been synced before
+      --allow-different-app          Pulls changes to a different app using --app command, instead of the most recently synced one in the current directory
 
 Examples
       Pull all development environment changes by discarding any changes made locally
@@ -592,11 +700,11 @@ Usage
       ggt pull [options]
 
 Options
-      -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
-      -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+      -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
+      -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
       --force                        Forces a pull by discarding any changes made on your local directory since last sync
-      --allow-different-directory    Pulls changes from any environment directory, even if the ".gadget/sync.json" file is missing
-      --allow-different-app          Pulls changes to a different app using --app command, instead of the one in the “.gadget/sync.json” file
+      --allow-different-directory    Pulls changes from any environment directory, even if the directory hasn't been synced before
+      --allow-different-app          Pulls changes to a different app using --app command, instead of the most recently synced one in the current directory
 
 Examples
       Pull all development environment changes by discarding any changes made locally
@@ -614,11 +722,11 @@ Usage
       ggt push [options]
 
 Options
-      -a, --app <app_name>           Selects the app to push local changes to. Default set on ".gadget/sync.json"
-      -e, --env, --to <env_name>     Selects the environment to push local changes to. Default set on ".gadget/sync.json"
+      -a, --app <app_name>           Selects the app to push local changes to. Defaults to the app synced to the current directory, if there is one.
+      -e, --env, --to <env_name>     Selects the environment to push local changes to. Defaults to the environment synced to the current directory, if there is one.
       --force                        Forces a push by discarding any changes made on your environment directory since last sync
-      --allow-different-directory    Pushes changes from any local directory with existing files, even if the ".gadget/sync.json" file is missing
-      --allow-different-app          Pushes changes to an app using --app command, instead of the one in the “.gadget/sync.json” file
+      --allow-different-directory    Pushes changes from any local directory with existing files, even if the directory hasn't been synced before
+      --allow-different-app          Pushes changes to an app using --app command, instead of the most recently synced one in the current directory
 
 Examples
       Push all local changes to the main environment by discarding any changes made on main
@@ -636,11 +744,11 @@ Usage
       ggt push [options]
 
 Options
-      -a, --app <app_name>           Selects the app to push local changes to. Default set on ".gadget/sync.json"
-      -e, --env, --to <env_name>     Selects the environment to push local changes to. Default set on ".gadget/sync.json"
+      -a, --app <app_name>           Selects the app to push local changes to. Defaults to the app synced to the current directory, if there is one.
+      -e, --env, --to <env_name>     Selects the environment to push local changes to. Defaults to the environment synced to the current directory, if there is one.
       --force                        Forces a push by discarding any changes made on your environment directory since last sync
-      --allow-different-directory    Pushes changes from any local directory with existing files, even if the ".gadget/sync.json" file is missing
-      --allow-different-app          Pushes changes to an app using --app command, instead of the one in the “.gadget/sync.json” file
+      --allow-different-directory    Pushes changes from any local directory with existing files, even if the directory hasn't been synced before
+      --allow-different-app          Pushes changes to an app using --app command, instead of the most recently synced one in the current directory
 
 Examples
       Push all local changes to the main environment by discarding any changes made on main
@@ -661,6 +769,48 @@ exports[`root > when status is given > prints the usage when -h is passed 1`] = 
 
 Usage
       ggt status
+"
+`;
+
+exports[`root > when var is given > prints the usage when --help is passed 1`] = `
+"Manage environment variables for your Gadget application.
+
+Usage
+  ggt var <command> [options]
+
+Commands
+  list             List all environment variables
+  get <key>        Get the value of an environment variable
+  set <key=value>  Set one or more environment variables
+  delete <key>     Delete one or more environment variables
+  import           Import environment variables from another environment or file
+
+Options
+  -a, --app <app_name>   Selects the application
+  -e, --env <env_name>   Selects the environment
+
+Run "ggt var <command> -h" for more information about a specific command.
+"
+`;
+
+exports[`root > when var is given > prints the usage when -h is passed 1`] = `
+"Manage environment variables for your Gadget application.
+
+Usage
+  ggt var <command> [options]
+
+Commands
+  list             List all environment variables
+  get <key>        Get the value of an environment variable
+  set <key=value>  Set one or more environment variables
+  delete <key>     Delete one or more environment variables
+  import           Import environment variables from another environment or file
+
+Options
+  -a, --app <app_name>   Selects the application
+  -e, --env <env_name>   Selects the environment
+
+Run "ggt var <command> -h" for more information about a specific command.
 "
 `;
 

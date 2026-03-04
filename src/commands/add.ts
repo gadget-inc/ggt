@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import terminalLink from "terminal-link";
+
 import { getGlobalActions, getModels } from "../services/app/app.js";
 import {
   CREATE_ACTION_MUTATION,
@@ -69,7 +70,8 @@ export const usage: Usage = () => {
     ggt add field <model_path>/<field_name>:<field_type>
 
   {gray Options}
-    -e, --env <env_name> Selects the environment to add to. Default set on ".gadget/sync.json"
+    -a, --app <app_name> Selects the app to add to. Defaults to the app synced to the current directory, if there is one.
+    -e, --env <env_name> Selects the environment to add to. Defaults to the environment synced to the current directory, if there is one.
 
   {gray Examples}
     Add a new model 'post' with out fields:
@@ -244,7 +246,7 @@ const actionSubCommand = async (ctx: Context, { args, filesync }: { args: AddArg
     const modelName = parsedPaths[parsedPaths.length - 1];
 
     return (
-      model.apiIdentifier.toUpperCase() === modelName?.toUpperCase() &&
+      model.apiIdentifier.toUpperCase() === modelName.toUpperCase() &&
       model.namespace?.join("/") === parsedPaths.slice(0, parsedPaths.length - 1).join("/")
     );
   });
@@ -338,7 +340,7 @@ const routeSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgs
 const fieldSubCommand = async (ctx: Context, { args, filesync }: { args: AddArgsResult; filesync: FileSync }): Promise<void> => {
   const syncJson = filesync.syncJson;
 
-  const splitPathAndField = args._[1]?.split("/");
+  const splitPathAndField = args._.at(1)?.split("/");
 
   if (!splitPathAndField) {
     throw new ArgError(sprint`Failed to add field, invalid field path definition

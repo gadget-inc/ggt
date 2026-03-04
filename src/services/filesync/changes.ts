@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import pluralize from "pluralize";
+
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { Level } from "../output/log/level.js";

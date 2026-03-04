@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, type MockInstance } from "vitest";
+
 import { config } from "../../src/services/config/config.js";
 import { packageJson } from "../../src/services/util/package-json.js";
 import { mock } from "./mock.js";

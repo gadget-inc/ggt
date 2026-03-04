@@ -1,6 +1,8 @@
-import nock from "nock";
 import { randomUUID } from "node:crypto";
+
+import nock from "nock";
 import { expect, vi } from "vitest";
+
 import { config } from "../../src/services/config/config.js";
 import { loadCookie } from "../../src/services/http/auth.js";
 import { readToken, writeSession } from "../../src/services/user/session.js";

@@ -1,10 +1,9 @@
-import assert from "node:assert";
 import type { Context } from "../../command/context.js";
 import type { HttpOptions } from "../../http/http.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import type { Environment } from "../app.js";
 import { Client } from "../client.js";
-import type { GraphQLQuery } from "../edit/operation.js";
+import { getOperationName, type GraphQLQuery } from "../edit/operation.js";
 import { ClientError } from "../error.js";
 
 export class Api {
@@ -42,8 +41,7 @@ export class Api {
     variables?: Thunk<Query["Variables"]> | null;
     http?: HttpOptions;
   }): Promise<Query["Data"]> {
-    const name = /query (\w+)/.exec(query)?.[1];
-    assert(name, "query name not found");
+    const name = getOperationName(query);
 
     const ctx = this.ctx.child({
       name: "api",

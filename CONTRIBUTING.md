@@ -36,8 +36,9 @@ src/              → Source code
 ### Building
 
 ```bash
-pnpm run build          # Build once
-pnpm run dev            # Build + test in watch mode
+pnpm run build            # Build once
+pnpm run dev              # Build + test in watch mode
+pnpm run generate:graphql # Regenerate GraphQL types
 ```
 
 ### Running ggt
@@ -70,18 +71,16 @@ Both commands reference `$WORKSPACE_ROOT/dist/main.js`, which is set by [`.envrc
 <details>
 <summary><strong>Environment Variables</strong></summary>
 
-| Variable                     | Description                                           | Default                                  |
-| ---------------------------- | ----------------------------------------------------- | ---------------------------------------- |
-| `GGT_ENV`                    | Environment (`production` or `development`)           | `production`                             |
-| `GGT_LOG_LEVEL`              | Log level (`trace`, `debug`, `info`, `warn`, `error`) | none                                     |
-| `GGT_LOG_FORMAT`             | Log format (`pretty` or `json`)                       | `pretty`                                 |
-| `GGT_SESSION`                | API session token                                     | Contents of `GGT_CONFIG_DIR/session.txt` |
-| `GGT_GADGET_APP_DOMAIN`      | Gadget API domain                                     | `gadget.app`                             |
-| `GGT_GADGET_SERVICES_DOMAIN` | Gadget Services domain                                | `app.gadget.dev`                         |
-| `GGT_CONFIG_DIR`             | Config directory                                      | `~/.config/ggt` (Unix)                   |
-| `GGT_CACHE_DIR`              | Cache directory                                       | `~/Library/Caches/ggt` (macOS)           |
-| `GGT_DATA_DIR`               | Data directory                                        | `~/.local/share/ggt` (Unix)              |
-| `GGT_SENTRY_ENABLED`         | Enable error reporting                                | `true`                                   |
+- `GGT_ENV` — Environment (`production` or `development`). Default: `production`
+- `GGT_LOG_LEVEL` — Log level (`trace`, `debug`, `info`, `warn`, `error`). Default: none
+- `GGT_LOG_FORMAT` — Log format (`pretty` or `json`). Default: `pretty`
+- `GGT_SESSION` — API session token. Default: contents of `GGT_CONFIG_DIR/session.txt`
+- `GGT_GADGET_APP_DOMAIN` — Gadget API domain. Default: `gadget.app`
+- `GGT_GADGET_SERVICES_DOMAIN` — Gadget Services domain. Default: `app.gadget.dev`
+- `GGT_CONFIG_DIR` — Config directory. Default: `~/.config/ggt` (Unix)
+- `GGT_CACHE_DIR` — Cache directory. Default: `~/Library/Caches/ggt` (macOS)
+- `GGT_DATA_DIR` — Data directory. Default: `~/.local/share/ggt` (Unix)
+- `GGT_SENTRY_ENABLED` — Enable error reporting. Default: `true`
 
 Use `-v` for verbose output (`-vv` for debug, `-vvv` for trace).
 
@@ -105,15 +104,13 @@ Each test gets its own directory in `tmp/spec/<test-name>/` for temporary files.
 
 The `spec/__support__/` directory provides utilities for common test scenarios:
 
-| Utility              | Purpose                                           |
-| -------------------- | ------------------------------------------------- |
-| `testCtx`            | Pre-initialized `Context` available in every test |
-| `makeArgs()`         | Parse command-line arguments for testing commands |
-| `loginTestUser()`    | Set up authenticated user session                 |
-| `nockTestApps()`     | Mock the apps API endpoint                        |
-| `nockEditResponse()` | Mock GraphQL edit responses                       |
-| `makeSyncScenario()` | Create a complete file sync test environment      |
-| `expectDir()`        | Assert directory contents match expected files    |
+- `testCtx` — Pre-initialized `Context` available in every test
+- `makeArgs()` — Parse command-line arguments for testing commands
+- `loginTestUser()` — Set up authenticated user session
+- `nockTestApps()` — Mock the apps API endpoint
+- `nockEditResponse()` — Mock GraphQL edit responses
+- `makeSyncScenario()` — Create a complete file sync test environment
+- `expectDir()` — Assert directory contents match expected files
 
 ### Example Test
 
@@ -145,6 +142,31 @@ describe("push", () => {
   });
 });
 ```
+
+### Integration Tests
+
+Integration tests run the built CLI as a subprocess against the production Gadget API with no mocking. They live in `spec/integration/` and use a separate vitest config.
+
+**Prerequisites:**
+
+- An `INTEGRATION_TEST_TOKEN` environment variable with a valid Gadget CLI token
+- The tests use the `ggt-integration-tests` Gadget app on the `development` environment
+
+**Local setup:**
+
+Add the token to your `.envrc.local` (git-ignored):
+
+```bash
+export INTEGRATION_TEST_TOKEN=<your-token>
+```
+
+**Running:**
+
+```bash
+pnpm run build && pnpm test:integration
+```
+
+When `INTEGRATION_TEST_TOKEN` is not set, all integration tests are skipped gracefully (not failed).
 
 ## Linting
 

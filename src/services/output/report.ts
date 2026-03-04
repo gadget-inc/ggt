@@ -1,12 +1,15 @@
-import cleanStack from "clean-stack";
 import { randomUUID } from "node:crypto";
+
+import cleanStack from "clean-stack";
 import terminalLink from "terminal-link";
+
 import type { RootArgsResult } from "../../commands/root.js";
 import type { Context } from "../command/context.js";
 import { env } from "../config/env.js";
-import { isAbortError } from "../util/is.js";
+import { isAbortError, isObject } from "../util/is.js";
 import { serializeError } from "../util/object.js";
 import { workspaceRoot } from "../util/paths.js";
+import { isRetryableNetworkErrorCode } from "../util/retry.js";
 import { println } from "./print.js";
 import { initSentry, sendErrorToSentry } from "./sentry.js";
 import { sprint, sprintln, type SprintOptions } from "./sprint.js";
@@ -89,6 +92,9 @@ export abstract class GGTError extends Error {
     if (cause instanceof GGTError) {
       return cause;
     }
+    if (isRetryableNetworkErrorCode(cause) || (isObject(cause) && "cause" in cause && isRetryableNetworkErrorCode(cause.cause))) {
+      return new NetworkError(cause);
+    }
     return new UnexpectedError(cause);
   }
 
@@ -155,6 +161,27 @@ export class UnexpectedError extends GGTError {
     const serialized = serializeError(this.cause);
     const body = serialized.stack || serialized.message || this.stack;
     return this.message + ".\n\n" + body;
+  }
+}
+
+/**
+ * A network connectivity error (DNS failure, connection refused, etc.).
+ *
+ * Not a bug — the user's network is unavailable or cannot reach Gadget.
+ */
+export class NetworkError extends GGTError {
+  isBug = IsBug.MAYBE;
+
+  constructor(override cause: unknown) {
+    super("A network error occurred");
+  }
+
+  protected render(): string {
+    return sprint`
+      A network error occurred while communicating with Gadget.
+
+      Please check your internet connection and try again.
+    `;
   }
 }
 

@@ -28,6 +28,7 @@
     "no-empty-pattern": "warn",
     "no-empty-static-block": "warn",
     "no-eval": "warn",
+    "no-fallthrough": "warn",
     "no-ex-assign": "warn",
     "no-extra-boolean-cast": "warn",
     "no-func-assign": "warn",
@@ -172,7 +173,7 @@
     "builtin": true
   },
   "globals": {},
-  "ignorePatterns": ["node_modules", "dist", "tmp", "__fixtures__", "__generated__", ".direnv"],
+  "ignorePatterns": ["node_modules", "dist", "tmp", "__fixtures__", "__generated__", ".direnv", ".worktrees"],
   "overrides": [
     {
       "files": ["src/**"],

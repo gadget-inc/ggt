@@ -1,4 +1,5 @@
 appvalue
+clickhouse
 codegen
 commandsstop
 dedenting
@@ -30,17 +31,21 @@ jsonify
 linkcode
 localappdata
 logql
+mkdirs
 nothrow
 notificationcenter
 notifysend
 oclif
 outdir
+oxfmt
+oxfmtrc
 oxlint
 oxlintrc
 packagejson
 pagedown
 pageup
 postbuild
+println
 printlns
 promisable
 retryable
@@ -59,3 +64,4 @@ unstub
 unthunk
 usagestop
 vitest
+worktrees

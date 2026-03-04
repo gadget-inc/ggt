@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+
 import * as logs from "../../src/commands/logs.js";
 import {
   ENVIRONMENT_LOGS_SUBSCRIPTION,
@@ -16,6 +17,7 @@ import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { makeMockEditSubscriptions, nockEditResponse, type MockEditSubscriptions } from "../__support__/graphql.js";
 import { expectStdout, mockStdout } from "../__support__/output.js";
+import { timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
 
 describe("logs", () => {
@@ -27,14 +29,10 @@ describe("logs", () => {
     mockEditGraphQL: MockEditSubscriptions,
     subscription: GraphQLSubscription,
   ): Promise<ReturnType<MockEditSubscriptions["expectSubscription"]>> => {
-    for (let i = 0; i < 50; i++) {
-      try {
-        return mockEditGraphQL.expectSubscription(subscription);
-      } catch {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-      }
-    }
-    throw new Error("Subscription was not registered in time");
+    return vi.waitFor(() => mockEditGraphQL.expectSubscription(subscription), {
+      timeout: timeoutMs("5s"),
+      interval: 10,
+    });
   };
 
   // Permissive schema for tests that don't validate specific variables

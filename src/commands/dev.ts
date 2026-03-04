@@ -1,18 +1,23 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import chalk from "chalk";
 import dayjs from "dayjs";
 import ms from "ms";
-import path from "node:path";
 import Watcher from "watcher";
 import which from "which";
+
 import type { EditSubscription } from "../services/app/edit/edit.js";
 import type { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
 import { Changes } from "../services/filesync/changes.js";
+import { acquireDevLock, releaseDevLock } from "../services/filesync/dev-lock.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
 import { maybePromptAgentsMd, maybePromptGadgetSkills } from "../services/output/agent-plugin.js";
 import { footer } from "../services/output/footer.js";
 import { LoggingArgs } from "../services/output/log/structured.js";
@@ -58,11 +63,11 @@ export const usage: Usage = (_ctx) => {
         DIRECTORY: The directory to sync files to (default: the current directory)
 
   {gray Options}
-        -a, --app <app_name>        Selects the app to sync files with. Default set on ".gadget/sync.json"
-        -e, --env <env_name>        Selects the environment to sync files with. Default set on ".gadget/sync.json"
+        -a, --app <app_name>        Selects the app to sync files with. Defaults to the app synced to the current directory, if there is one.
+        -e, --env <env_name>        Selects the environment to sync files with. Defaults to the environment synced to the current directory, if there is one.
         --prefer <source>           Auto-select changes from 'local' or 'environment' source on conflict
-        --allow-unknown-directory   Syncs to any local directory with existing files, even if the ".gadget/sync.json" file is missing
-        --allow-different-app       Syncs with a different app using the --app command, instead of the one specified in the .gadget/sync.json file
+        --allow-unknown-directory   Syncs to any local directory with existing files, even if the directory hasn't been synced before
+        --allow-different-app       Syncs with a different app using the --app command, instead of the most recently synced one in the current directory
         --log-level <level>         Sets the log level for incoming application logs (default: info)
         --no-logs                   Disables outputting application logs to the console
         --my-logs                   Only outputs user sourced logs
@@ -100,7 +105,11 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { command: "dev", args, directory });
+  const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "dev", args, directory });
+  await acquireDevLock(directory);
+  ctx.onAbort(async () => {
+    await releaseDevLock(directory);
+  });
   await maybePromptAgentsMd({ ctx, directory: syncJson.directory });
   await maybePromptGadgetSkills({ ctx, directory: syncJson.directory });
   footer({ ensureEmptyLineAbove: true, content: syncJson.sprint() });
@@ -225,7 +234,7 @@ export const run: Run<DevArgs> = async (ctx, args) => {
   let logsSubscription: EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> | undefined;
 
   if (!args["--no-logs"]) {
-    logsSubscription = filesync.subscribeToEnvironmentLogs(args, {
+    logsSubscription = subscribeToEnvironmentLogs(syncJson.edit, args, {
       onError: (error) => {
         ctx.abort(error);
       },
@@ -285,7 +294,18 @@ export const run: Run<DevArgs> = async (ctx, args) => {
       // watch everything
       recursive: true,
       // don't emit changes to .gadget/ files because they're readonly (Gadget manages them)
-      ignore: (path: string) => syncJson.directory.relative(path).startsWith(".gadget") || syncJson.directory.ignores(path),
+      ignore: (filePath: string, isDirectory?: boolean) => {
+        const relative = syncJson.directory.relative(filePath);
+        if (relative.startsWith(".gadget")) return true;
+        if (isDirectory === undefined) {
+          try {
+            isDirectory = fs.statSync(filePath).isDirectory();
+          } catch {
+            isDirectory = false;
+          }
+        }
+        return syncJson.directory.ignores(filePath, isDirectory);
+      },
       // emit rename/renameDir events
       renameDetection: true,
       // how long to wait for an add event to be followed by an unlink
@@ -301,14 +321,16 @@ export const run: Run<DevArgs> = async (ctx, args) => {
 
       ctx.log.trace("file event", { event, isDirectory, path: normalizedPath });
 
-      if (filepath === syncJson.directory.absolute(".ignore")) {
-        syncJson.directory.loadIgnoreFile().catch((error: unknown) => ctx.abort(error));
-      } else if (syncJson.directory.ignores(filepath)) {
+      if (recentWritesToLocalFilesystem.delete(normalizedPath)) {
+        ctx.log.trace("ignoring event because we caused it", { event, path: normalizedPath });
         return;
       }
 
-      if (recentWritesToLocalFilesystem.delete(normalizedPath)) {
-        ctx.log.trace("ignoring event because we caused it", { event, path: normalizedPath });
+      if (filepath === syncJson.directory.absolute(".ignore")) {
+        if (!syncJson.directory.ignoreFileLoadedWithin(ms("2s"))) {
+          syncJson.directory.loadIgnoreFile().catch((error: unknown) => ctx.abort(error));
+        }
+      } else if (syncJson.directory.ignores(filepath, isDirectory)) {
         return;
       }
 

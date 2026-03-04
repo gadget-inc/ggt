@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import nock from "nock";
 import { beforeEach, expect, vi } from "vitest";
+
 import { installJsonExtensions, uninstallJsonExtensions } from "../src/services/util/json.js";
 import { mockConfig, mockPackageJson } from "./__support__/config.js";
 import { mockContext } from "./__support__/context.js";

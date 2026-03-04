@@ -1,5 +1,7 @@
 import { inspect } from "node:util";
+
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
+
 import * as root from "../src/commands/root.js";
 import { ggt } from "../src/ggt.js";
 import * as command from "../src/services/command/command.js";

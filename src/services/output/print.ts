@@ -15,21 +15,20 @@ export type PrintOptions = SprintOptionsWithContent & {
 
 export type print = {
   /**
-   * Prints the given string as is.
+   * Prints the given string as is, or prints the given content with
+   * options.
    *
-   * @param str - The string to print.
+   * @param strOrOptions - The string to print, or options with content.
    * @example
    * print("Hello, world!");
    * // => "Hello, world!"
    *
-   * print(`
-   *   Hello, world!
+   * print({ ensureEmptyLineAbove: true, content: "Hello, world!" });
+   * // => "\nHello, world!"
    *
-   *   How are you?
-   * `);
-   * // => "\n  Hello, world!\n\n  How are you?\n"
+   * @see PrintOptions
    */
-  (str: string): void;
+  (strOrOptions: string | PrintOptions): void;
 
   /**
    * Prints the given template string with dedent and chalk-template.
@@ -57,30 +56,6 @@ export type print = {
    * @see chalk-template https://github.com/chalk/chalk-template
    */
   (template: TemplateStringsArray, ...values: unknown[]): void;
-
-  /**
-   * Configures print with options before printing the given template
-   * string with dedent and chalk-template.
-   *
-   * @example
-   * ```
-   * let name = "Jane";
-   * print({ ensureEmptyLineAbove: true })`Hello, ${name}!`;
-   * // => "\nHello, Jane!"
-   *
-   * print({ ensureEmptyLineAbove: true })`Hello, {red ${name}}!`;
-   * // => "\nHello, \u001b[31mJane\u001b[39m!"
-   *
-   * print({ ensureEmptyLineAbove: true })`
-   *   Hello, {red ${name}}!
-   *
-   *   How are you?
-   * `;
-   * // => "\nHello, \u001b[31mJane\u001b[39m!\n\nHow are you?"
-   * ```
-   * @see PrintOptions
-   */
-  (options: PrintOptions): void;
 };
 
 export const print = ((optionsOrString: PrintOptions | string | TemplateStringsArray, ...values: unknown[]): void => {

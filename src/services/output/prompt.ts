@@ -1,8 +1,10 @@
-import ansiEscapes from "ansi-escapes";
 import assert from "node:assert";
 import EventEmitter from "node:events";
 import process from "node:process";
 import readline from "node:readline";
+
+import ansiEscapes from "ansi-escapes";
+
 import { output } from "./output.js";
 
 /**
@@ -60,9 +62,8 @@ export class Prompt extends EventEmitter {
       process.stdin.setRawMode(true);
     }
 
-    const isSelect = ["SelectPrompt"].includes(this.constructor.name);
     const keypress = (str: string, key: StdinKey): void => {
-      const action = getPromptAction(key, isSelect);
+      const action = getPromptAction(key);
       if (action === false) {
         this._(str, key);
       } else if (action && typeof this[action] === "function") {
@@ -141,7 +142,7 @@ export type StdinKey = {
   meta: boolean;
 };
 
-const getPromptAction = (key: StdinKey, isSelect: boolean): PromptAction | false | undefined => {
+const getPromptAction = (key: StdinKey): PromptAction | false | undefined => {
   if (key.meta && key.name !== "escape") {
     return;
   }
@@ -157,15 +158,8 @@ const getPromptAction = (key: StdinKey, isSelect: boolean): PromptAction | false
         return "last";
       case "g":
         return "reset";
-    }
-  }
-
-  if (isSelect) {
-    if (key.name === "j") {
-      return "down";
-    }
-    if (key.name === "k") {
-      return "up";
+      default:
+        return;
     }
   }
 

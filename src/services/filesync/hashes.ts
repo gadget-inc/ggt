@@ -1,4 +1,5 @@
 import assert from "node:assert";
+
 import type { Context } from "../command/context.js";
 import { type Create, type Delete, type Update } from "./changes.js";
 import type { Hash, Hashes } from "./directory.js";
@@ -69,7 +70,7 @@ export const getNecessaryChanges = (
       continue;
     }
 
-    const targetHash = target[sourcePath];
+    const targetHash = target[sourcePath] as Hash | undefined;
     if (!targetHash) {
       if (!sourcePath.endsWith("/") || !targetPaths.some((targetPath) => targetPath.startsWith(sourcePath))) {
         // sourcePath is a file and it doesn't exist in target OR
@@ -119,7 +120,7 @@ export const withoutUnnecessaryChanges = (
   const necessaryChanges = new ChangesWithHash();
 
   for (const [path, change] of changes) {
-    const existingHash = existing[path];
+    const existingHash = existing[path] as Hash | undefined;
     if (change.type === "delete" && !existingHash) {
       // already deleted
       ctx.log.trace("already deleted", { path });
@@ -172,7 +173,7 @@ export const isEqualHash = (_path: string, aHash: Hash, bHash: Hash): boolean =>
 
 export const isEqualHashes = (ctx: Context, a: Hashes, b: Hashes): boolean => {
   for (const [aPath, aHash] of Object.entries(a)) {
-    const bHash = b[aPath];
+    const bHash = b[aPath] as Hash | undefined;
     if (!bHash || !isEqualHash(aPath, aHash, bHash)) {
       ctx.log.debug("hashes are not equal", { path: aPath, aHash, bHash });
       return false;

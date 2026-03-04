@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import type { Server as HttpServer, IncomingMessage, ServerResponse } from "node:http";
@@ -6,13 +5,16 @@ import { createServer } from "node:http";
 import path from "node:path";
 import process, { nextTick } from "node:process";
 import type { Duplex } from "node:stream";
+
+import chalk from "chalk";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
+
+import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import type { ArgsDefinition } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
 import { config } from "../services/config/config.js";
-import { UnknownDirectoryError } from "../services/filesync/error.js";
-import { loadSyncJsonDirectory, SyncJson, SyncJsonArgs } from "../services/filesync/sync-json.js";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { loadAuthHeaders } from "../services/http/auth.js";
 import { http } from "../services/http/http.js";
 import { LoggingArgs } from "../services/output/log/structured.js";
@@ -28,7 +30,7 @@ const StartingMessage = "Starting ggt debugger";
 const RunningMessage = "ggt debugger running on";
 
 export const args = {
-  ...SyncJsonArgs,
+  ...AppIdentityArgs,
   ...LoggingArgs,
   "--port": {
     type: Number,
@@ -53,7 +55,8 @@ export const usage: Usage = (_ctx) => {
           DIRECTORY: The directory containing your Gadget app (default: current directory)
 
     {gray Options}
-          -e, --env <env_name>        Selects the environment to debug. Default set on ".gadget/sync.json"
+          -a, --app <app_name>        Selects the app to debug. Defaults to the app synced to the current directory, if there is one.
+          -e, --env <env_name>        Selects the environment to debug. Defaults to the environment synced to the current directory, if there is one.
           -p, --port <port>           Local port for the inspector proxy (default: 9229)
           --configure <editor>        Configure debugger for ${SupportedEditors.join(", ")}
 
@@ -83,11 +86,7 @@ type DebuggerSessionResponse = {
 
 export const run: Run<DebuggerArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(args._[0] || process.cwd());
-  const syncJson = await SyncJson.load(ctx, { command: "debugger", args, directory });
-
-  if (!syncJson) {
-    throw new UnknownDirectoryError({ command: "debugger", args, directory });
-  }
+  const appIdentity = await AppIdentity.load(ctx, { command: "debugger", args, directory });
 
   // Handle --configure option
   if (args["--configure"]) {
@@ -116,12 +115,12 @@ export const run: Run<DebuggerArgs> = async (ctx, args) => {
     return;
   }
 
-  const spinner = spin(`${StartingMessage} for ${syncJson.environment.name} environment`);
+  const spinner = spin(`${StartingMessage} for ${appIdentity.environment.name} environment`);
   ctx.log.info("debugger command started");
 
   ctx.log.trace("sync json loaded", {
-    app: syncJson.environment.application.slug,
-    environment: syncJson.environment.name,
+    app: appIdentity.environment.application.slug,
+    environment: appIdentity.environment.name,
   });
 
   const authHeaders = loadAuthHeaders(ctx);
@@ -141,7 +140,7 @@ export const run: Run<DebuggerArgs> = async (ctx, args) => {
   }
 
   const proxy = new DebuggerProxy(ctx, {
-    syncJson,
+    appIdentity,
     authHeaders,
     sessionId,
     port,
@@ -170,7 +169,7 @@ export const run: Run<DebuggerArgs> = async (ctx, args) => {
 };
 
 type DebuggerProxyOptions = {
-  syncJson: SyncJson;
+  appIdentity: AppIdentity;
   authHeaders: Record<string, string>;
   sessionId: string;
   port: number;
@@ -181,7 +180,7 @@ type DebuggerProxyOptions = {
  */
 class DebuggerProxy {
   private readonly _ctx: Context;
-  private readonly _syncJson: SyncJson;
+  private readonly _appIdentity: AppIdentity;
   private readonly _authHeaders: Record<string, string>;
   private readonly _sessionId: string;
   private readonly _port: number;
@@ -193,7 +192,7 @@ class DebuggerProxy {
 
   constructor(ctx: Context, options: DebuggerProxyOptions) {
     this._ctx = ctx;
-    this._syncJson = options.syncJson;
+    this._appIdentity = options.appIdentity;
     this._authHeaders = options.authHeaders;
     this._sessionId = options.sessionId;
     this._port = options.port;
@@ -220,7 +219,7 @@ class DebuggerProxy {
   }
 
   private _buildSubdomain(): string {
-    const { application, name, type } = this._syncJson.environment;
+    const { application, name, type } = this._appIdentity.environment;
     return type === "production" ? application.slug : `${application.slug}--${name}`;
   }
 
@@ -251,7 +250,7 @@ class DebuggerProxy {
   private _handleVersionRequest(res: ServerResponse): void {
     const versionPayload = {
       "Protocol-Version": "1.1",
-      Browser: `node.js/${this._syncJson.environment.nodeVersion}`,
+      Browser: `node.js/${this._appIdentity.environment.nodeVersion}`,
     };
     this._ctx.log.trace("debugger proxy http version request payload", { payload: versionPayload });
     res.setHeader("Content-Type", "application/json");
@@ -264,7 +263,7 @@ class DebuggerProxy {
         id: this._sessionId,
         type: "node",
         title: "ggt debugger",
-        description: `authenticated CDP proxy to current sandbox process for ${this._syncJson.environment.application.slug}@${this._syncJson.environment.name}`,
+        description: `authenticated CDP proxy to current sandbox process for ${this._appIdentity.environment.application.slug}@${this._appIdentity.environment.name}`,
         faviconUrl: "https://assets.gadget.dev/assets/environment/dev/favicon-32.png",
         webSocketDebuggerUrl: `ws://127.0.0.1:${this._port}/${this._sessionId}`,
       },

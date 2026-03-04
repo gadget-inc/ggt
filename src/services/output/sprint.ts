@@ -3,6 +3,7 @@ import boxen from "boxen";
 import chalkTemplate from "chalk-template";
 import indentString from "indent-string";
 import { dedent } from "ts-dedent";
+
 import { isArray, isString } from "../util/is.js";
 import { omit } from "../util/object.js";
 
@@ -49,10 +50,7 @@ export const isSprintOptions = (value: string | TemplateStringsArray | SprintOpt
   return !isString(value) && !isArray(value);
 };
 
-export const sprint = ((
-  optionsOrString: SprintOptionsWithContent | string | TemplateStringsArray,
-  ...values: unknown[]
-): sprint | string => {
+export const sprint = ((optionsOrString: SprintOptionsWithContent | string | TemplateStringsArray, ...values: unknown[]): string => {
   let str: string;
   let options: SprintOptions = { ensureNewLine: false, ensureEmptyLineAbove: false, indent: 0 };
 
@@ -84,10 +82,7 @@ export const sprint = ((
   return str;
 }) as sprint;
 
-export const sprintln = ((
-  optionsOrString: SprintOptionsWithContent | string | TemplateStringsArray,
-  ...values: unknown[]
-): sprint | string => {
+export const sprintln = ((optionsOrString: SprintOptionsWithContent | string | TemplateStringsArray, ...values: unknown[]): string => {
   if (isSprintOptions(optionsOrString)) {
     return sprint({ ensureNewLine: true, ...optionsOrString });
   } else if (isString(optionsOrString)) {

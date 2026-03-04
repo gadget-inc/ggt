@@ -1,4 +1,5 @@
 import { describe, it } from "vitest";
+
 import * as version from "../../src/commands/version.js";
 import { testCtx } from "../__support__/context.js";
 import { expectStdout } from "../__support__/output.js";

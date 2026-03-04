@@ -1,3 +1,9 @@
+import assert from "node:assert";
+import { createHash } from "node:crypto";
+import path from "node:path";
+import { Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
+
 /* eslint-disable func-style */
 /**
  * DO NOT MODIFY
@@ -8,11 +14,6 @@
 import fs from "fs-extra";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
-import assert from "node:assert";
-import { createHash } from "node:crypto";
-import path from "node:path";
-import { Transform } from "node:stream";
-import { pipeline } from "node:stream/promises";
 import normalizePath from "normalize-path";
 
 /**
@@ -30,7 +31,7 @@ export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git", ".shopi
  *
  * NOTE: This is the _only_ thing that is allowed to be different between gadget and ggt.
  */
-export const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/backup", "yarn-error.log"] as const;
+export const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/dev-lock.json", ".gadget/backup", "yarn-error.log"] as const;
 
 /**
  * Represents a directory that is being synced.
@@ -48,6 +49,12 @@ export class Directory {
    * Whether the directory is currently being hashed.
    */
   private _isHashing = false;
+
+  /**
+   * Timestamp of the last {@linkcode loadIgnoreFile} call, used to
+   * deduplicate redundant reloads from duplicate FSEvents.
+   */
+  private _lastIgnoreFileLoadTime = 0;
 
   private constructor(
     /**
@@ -67,6 +74,9 @@ export class Directory {
   static async init(dir: string): Promise<Directory> {
     const directory = new Directory(dir);
     await directory.loadIgnoreFile();
+    // don't count the init call as a recent load — the timestamp is
+    // only meaningful once the file watcher is running
+    directory._lastIgnoreFileLoadTime = 0;
     return directory;
   }
 
@@ -130,6 +140,7 @@ export class Directory {
    * exist, it is silently ignored.
    */
   async loadIgnoreFile(): Promise<void> {
+    this._lastIgnoreFileLoadTime = Date.now();
     this._ignorer = ignore();
     this._ignorer.add(ALWAYS_IGNORE_PATHS);
 
@@ -146,12 +157,21 @@ export class Directory {
   }
 
   /**
+   * Returns true if {@linkcode loadIgnoreFile} was called within the
+   * given duration. Used to skip redundant watcher-triggered reloads
+   * when a remote write already loaded the ignore file.
+   */
+  ignoreFileLoadedWithin(duration: number): boolean {
+    return Date.now() - this._lastIgnoreFileLoadTime < duration;
+  }
+
+  /**
    * Determines if a file should be ignored based on its filepath.
    *
    * @param filepath - The filepath of the file to check.
    * @returns True if the file should be ignored, false otherwise.
    */
-  ignores(filepath: string): boolean {
+  ignores(filepath: string, isDirectory: boolean): boolean {
     filepath = this.relative(filepath);
     if (filepath === "") {
       // don't ignore the root dir
@@ -165,6 +185,11 @@ export class Directory {
 
     // false = don't trim trailing slashes
     filepath = normalizePath(filepath, false);
+
+    if (isDirectory && !filepath.endsWith("/")) {
+      filepath += "/";
+    }
+
     if (this._isHashing && HASHING_IGNORE_PATHS.some((ignored) => filepath.startsWith(ignored))) {
       // special case for hashing
       return true;
@@ -192,7 +217,7 @@ export class Directory {
 
     for await (const entry of await fs.opendir(dir)) {
       const filepath = path.join(dir, entry.name);
-      if (this.ignores(filepath)) {
+      if (this.ignores(filepath, entry.isDirectory())) {
         continue;
       }
 

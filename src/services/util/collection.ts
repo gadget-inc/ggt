@@ -1,5 +1,6 @@
-import levenshtein from "fast-levenshtein";
 import assert from "node:assert";
+
+import levenshtein from "fast-levenshtein";
 
 /**
  * Returns a new array with all falsy values removed. The values

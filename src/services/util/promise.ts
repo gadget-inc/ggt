@@ -1,6 +1,7 @@
-import ms from "ms";
 import type { TimerOptions } from "node:timers";
 import { setTimeout } from "node:timers/promises";
+
+import ms from "ms";
 
 export const delay = (duration: ms.StringValue, options?: TimerOptions): Promise<void> => setTimeout(ms(duration), undefined, options);
 

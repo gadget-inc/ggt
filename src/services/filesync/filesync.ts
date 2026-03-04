@@ -1,32 +1,27 @@
-import chalk from "chalk";
-import { execa } from "execa";
-import fs from "fs-extra";
 import assert from "node:assert";
 import path from "node:path";
 import process from "node:process";
+
+import chalk from "chalk";
+import { execa } from "execa";
+import fs from "fs-extra";
 import pMap from "p-map";
 import PQueue from "p-queue";
 import pluralize from "pluralize";
 import type { Promisable } from "type-fest";
+
 import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
 import { type EditSubscription } from "../app/edit/edit.js";
 import {
-  ENVIRONMENT_LOGS_SUBSCRIPTION,
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
   FILE_SYNC_HASHES_QUERY,
-  LOGS_SEARCH_V3_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-  type LogsSearchV3QueryVariables,
 } from "../app/edit/operation.js";
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
-import { DEFAULT_RETRYABLE_HTTP_ERROR_CODES } from "../http/http.js";
 import { confirm } from "../output/confirm.js";
-import type { Fields } from "../output/log/field.js";
-import { Level } from "../output/log/level.js";
-import { createEnvironmentStructuredLogger, type LoggingArgsResult } from "../output/log/structured.js";
 import { println } from "../output/print.js";
 import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.js";
 import { EdgeCaseError } from "../output/report.js";
@@ -38,6 +33,7 @@ import { ts } from "../output/timestamp.js";
 import { noop } from "../util/function.js";
 import { isENOENTError, isENOTEMPTYError } from "../util/is.js";
 import { serializeError } from "../util/object.js";
+import { RETRYABLE_NETWORK_ERROR_CODES } from "../util/retry.js";
 import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
 import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
@@ -326,82 +322,6 @@ export class FileSync {
     });
   }
 
-  subscribeToEnvironmentLogs(
-    args: LoggingArgsResult,
-    {
-      onError,
-    }: {
-      onError: (error: unknown) => void;
-    },
-  ): EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> {
-    const logger = createEnvironmentStructuredLogger(this.syncJson.environment);
-
-    const includedLevels = Object.entries(Level)
-      .filter(([_, value]) => {
-        return value >= args["--log-level"];
-      })
-      .map(([key]) => key.toLowerCase())
-      .join("|");
-
-    return this.syncJson.edit.subscribe({
-      subscription: ENVIRONMENT_LOGS_SUBSCRIPTION,
-      variables: () => ({
-        query: `{environment_id="${this.syncJson.environment.id}"} | json | level=~"${includedLevels}"${args["--my-logs"] ? ' | source="user"' : ""}`,
-        start: new Date(),
-      }),
-      onError,
-      onData: ({ logsSearchV2 }) => {
-        for (const log of logsSearchV2.data["messages"] as [string, string][]) {
-          const message: unknown = JSON.parse(log[1]);
-          const { msg, name, level, ...fields } = message as Record<string, unknown>;
-
-          logger(
-            level as string,
-            name as string,
-            msg as Lowercase<string>,
-            {
-              ...fields,
-            } as Fields,
-            new Date(Number(log[0]) / 1_000_000),
-          );
-        }
-      },
-    });
-  }
-
-  async queryEnvironmentLogs(args: LoggingArgsResult, variables: Omit<LogsSearchV3QueryVariables, "query">): Promise<void> {
-    const logger = createEnvironmentStructuredLogger(this.syncJson.environment);
-
-    const query = args["--my-logs"] ? 'source:"user"' : "";
-
-    const result = await this.syncJson.edit.query({
-      query: LOGS_SEARCH_V3_QUERY,
-      variables: {
-        query,
-        ...variables,
-      },
-    });
-
-    if (result.logsSearchV3.__typename === "LogSearchErrorResult") {
-      throw new Error(`Logs search failed: ${JSON.stringify(result.logsSearchV3.error)}`);
-    }
-
-    for (const row of result.logsSearchV3.data ?? []) {
-      const fields: Record<string, unknown> = {};
-      if (row.labels) {
-        Object.assign(fields, row.labels);
-      }
-
-      logger(
-        row.level,
-        row.name,
-        (row.message ?? "") as Lowercase<string>,
-        fields as Fields,
-        new Date(Number(row.timestampNanos) / 1_000_000),
-      );
-    }
-  }
-
   /**
    * Subscribes to file changes on Gadget and executes the provided
    * callbacks before and after the changes occur.
@@ -452,7 +372,7 @@ export class FileSync {
             });
 
             const filterIgnoredFiles = (file: { path: string }): boolean => {
-              const ignored = this.syncJson.directory.ignores(file.path);
+              const ignored = this.syncJson.directory.ignores(file.path, file.path.endsWith("/"));
               if (ignored) {
                 ctx.log.warn("skipping received change because file is ignored", { path: file.path });
               }
@@ -676,6 +596,10 @@ export class FileSync {
 
       await fs.remove(this.syncJson.directory.absolute(pathToDelete));
       changes.set(pathToDelete, { type: "delete" });
+    }
+
+    if (options.delete.includes(".ignore")) {
+      await this.syncJson.directory.loadIgnoreFile();
     }
 
     for (const directoryWithDeletedFile of Array.from(directoriesWithDeletedFiles.values()).sort().reverse()) {
@@ -967,11 +891,7 @@ export class FileSync {
             // we can retry this request because
             // expectedRemoteFilesVersion makes it idempotent
             methods: ["POST"],
-            errorCodes: [
-              ...DEFAULT_RETRYABLE_HTTP_ERROR_CODES,
-              "ERR_SSL_SSL/TLS_ALERT_BAD_RECORD_MAC",
-              "EPROTO", // General SSL/TLS protocol errors
-            ],
+            errorCodes: [...RETRYABLE_NETWORK_ERROR_CODES],
             calculateDelay: ({ error, computedValue }) => {
               if (isFilesVersionMismatchError(error.response?.body)) {
                 // don't retry if we get a files version mismatch error

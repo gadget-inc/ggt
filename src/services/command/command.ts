@@ -1,6 +1,8 @@
 import assert from "node:assert";
+
 import type { EmptyObject, Promisable } from "type-fest";
-import type { ArgsDefinition, ArgsDefinitionResult } from "./arg.js";
+
+import type { ArgsDefinition, ArgsDefinitionResult, ParseArgsOptions } from "./arg.js";
 import type { Context } from "./context.js";
 
 /**
@@ -13,8 +15,11 @@ export const Commands = [
   "dev",
   "deploy",
   "status",
+  "problems",
   "push",
   "pull",
+  "var",
+  "env",
   "add",
   "open",
   "list",
@@ -25,6 +30,7 @@ export const Commands = [
   "whoami",
   "configure",
   "agent-plugin",
+  "eval",
   "version",
 ] as const;
 
@@ -51,6 +57,11 @@ export type CommandModule<Args extends ArgsDefinition = EmptyObject> = {
    * The command's {@link ArgsDefinition args}.
    */
   args?: Args;
+
+  /**
+   * Options to pass to {@link parseArgs} when parsing the command's args.
+   */
+  parseOptions?: ParseArgsOptions;
 
   /**
    * The command's {@link Usage usage}.
@@ -94,11 +105,20 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
     case "status":
       module = await import("../../commands/status.js");
       break;
+    case "problems":
+      module = await import("../../commands/problems.js");
+      break;
     case "push":
       module = await import("../../commands/push.js");
       break;
     case "pull":
       module = await import("../../commands/pull.js");
+      break;
+    case "var":
+      module = await import("../../commands/var.js");
+      break;
+    case "env":
+      module = await import("../../commands/env.js");
       break;
     case "add":
       module = await import("../../commands/add.js");
@@ -129,6 +149,9 @@ export const importCommand = async (cmd: Command): Promise<CommandModule> => {
       break;
     case "agent-plugin":
       module = await import("../../commands/agent-plugin.js");
+      break;
+    case "eval":
+      module = await import("../../commands/eval.js");
       break;
     case "version":
       module = await import("../../commands/version.js");

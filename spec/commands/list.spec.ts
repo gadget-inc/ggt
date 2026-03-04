@@ -1,4 +1,5 @@
 import { beforeEach, describe, it } from "vitest";
+
 import * as list from "../../src/commands/list.js";
 import * as app from "../../src/services/app/app.js";
 import { output } from "../../src/services/output/output.js";

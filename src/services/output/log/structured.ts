@@ -1,4 +1,5 @@
 import assert from "node:assert";
+
 import type { Environment } from "../../app/app.js";
 import type { ArgsDefinition, ArgsDefinitionResult } from "../../command/arg.js";
 import { config } from "../../config/config.js";

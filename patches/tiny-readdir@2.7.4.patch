@@ -1,0 +1,44 @@
+diff --git a/dist/index.js b/dist/index.js
+index dcde8399c1297aad9ddd909766fa7c401eb65948..1b2ea2f59e6cc023097046913cba8bc28cb2db68 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -12,7 +12,7 @@ const readdir = (rootPath, options) => {
+     const maxPaths = options?.limit ?? Infinity;
+     const ignore = options?.ignore ?? [];
+     const ignores = castArray(ignore).map(ignore => isFunction(ignore) ? ignore : (targetPath) => ignore.test(targetPath));
+-    const isIgnored = (targetPath) => ignores.some(ignore => ignore(targetPath));
++    const isIgnored = (targetPath, isDirectory) => ignores.some(ignore => ignore(targetPath, isDirectory));
+     const signal = options?.signal ?? { aborted: false };
+     const onDirents = options?.onDirents || (() => { });
+     const directories = [];
+@@ -93,7 +93,7 @@ const readdir = (rootPath, options) => {
+     const handleStat = (dirmap, rootPath, name, stat, depth) => {
+         if (signal.aborted)
+             return;
+-        if (isIgnored(rootPath))
++        if (isIgnored(rootPath, stat.isDirectory()))
+             return;
+         if (stat.isDirectory()) {
+             handleDirectory(dirmap, rootPath, name, depth);
+@@ -111,7 +111,7 @@ const readdir = (rootPath, options) => {
+         const separator = (rootPath === path.sep) ? '' : path.sep;
+         const name = dirent.name;
+         const subPath = `${rootPath}${separator}${name}`;
+-        if (isIgnored(subPath))
++        if (isIgnored(subPath, dirent.isDirectory()))
+             return;
+         if (dirent.isDirectory()) {
+             handleDirectory(dirmap, subPath, name, depth);
+diff --git a/dist/types.d.ts b/dist/types.d.ts
+index 6d2706e9795eb2635024821c7e32a9dc32f05891..d467860a8c3955b6c49764faba4f4d20e09c0bc8 100644
+--- a/dist/types.d.ts
++++ b/dist/types.d.ts
+@@ -16,7 +16,7 @@ type Options = {
+     depth?: number;
+     limit?: number;
+     followSymlinks?: boolean;
+-    ignore?: ArrayMaybe<((targetPath: string) => boolean) | RegExp>;
++    ignore?: ArrayMaybe<((targetPath: string, isDirectory?: boolean) => boolean) | RegExp>;
+     signal?: {
+         aborted: boolean;
+     };

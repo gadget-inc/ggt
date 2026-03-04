@@ -1,8 +1,9 @@
-import fs from "fs-extra";
 import os from "node:os";
 import path from "node:path";
+
+import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { GraphQLQuery } from "../../../src/services/app/edit/operation.js";
+
 import { ClientError } from "../../../src/services/app/error.js";
 import type { Command } from "../../../src/services/command/command.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
@@ -57,11 +58,14 @@ describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
     nockTestApps();
   });
 
-  it.each(["dev", "deploy", "push", "pull", "status", "open"] as const)("renders correctly when %s is passed", async (command) => {
-    const syncJson = await makeSyncJson(command);
-    const error = new UnknownDirectoryError({ command, args: syncJson.args, directory: syncJson.directory });
-    expect(error.sprint()).toMatchSnapshot();
-  });
+  it.each(["dev", "deploy", "push", "pull", "status", "problems", "open"] as const)(
+    "renders correctly when %s is passed",
+    async (command) => {
+      const syncJson = await makeSyncJson(command);
+      const error = new UnknownDirectoryError({ command, args: syncJson.args, directory: syncJson.directory });
+      expect(error.sprint()).toMatchSnapshot();
+    },
+  );
 
   it("renders correctly when the file exists but is invalid", async () => {
     mockOnce(fs, "existsSync", () => true);
@@ -120,8 +124,7 @@ describe("isFilesVersionMismatchError", () => {
   });
 
   it("returns true given an EditGraphQLError", () => {
-    const query = "query { foo }" as GraphQLQuery;
-    expect(isFilesVersionMismatchError(new ClientError(query, [{ message: "Files version mismatch" }]))).toBe(true);
+    expect(isFilesVersionMismatchError(new ClientError(undefined, [{ message: "Files version mismatch" }]))).toBe(true);
   });
 
   it("returns false given an object with a message that does not start with 'Files version mismatch'", () => {

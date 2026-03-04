@@ -1,4 +1,5 @@
 import { expect } from "vitest";
+
 import * as report from "../../src/services/output/report.js";
 import { PromiseSignal } from "../../src/services/util/promise.js";
 import { mock } from "./mock.js";

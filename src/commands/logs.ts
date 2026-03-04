@@ -1,8 +1,11 @@
+import { LOGS_SEARCH_V3_QUERY } from "../services/app/edit/operation.js";
+import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
-import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { LoggingArgs } from "../services/output/log/structured.js";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
+import type { Fields } from "../services/output/log/field.js";
+import { LoggingArgs, createEnvironmentStructuredLogger } from "../services/output/log/structured.js";
 import { sprint } from "../services/output/sprint.js";
 
 // Maps level names to the backend's UserspaceLogLevel integer values
@@ -33,18 +36,23 @@ const parseDirection = (value: string): string => {
 
 const parseLevelArg = (value: string): number => {
   const lower = value.toLowerCase();
-  const level = BACKEND_LEVEL[lower];
-  if (level === undefined) {
-    throw new ArgError(`Invalid level: "${value}". Must be one of: ${VALID_LEVELS.join(", ")}.`);
+
+  switch (lower) {
+    case "debug":
+    case "info":
+    case "warn":
+    case "error":
+      return BACKEND_LEVEL[lower];
+    default:
+      throw new ArgError(`Invalid level: "${value}". Must be one of: ${VALID_LEVELS.join(", ")}.`);
   }
-  return level;
 };
 
 export type LogsArgs = typeof args;
 export type LogsArgsResult = ArgsDefinitionResult<LogsArgs>;
 
 export const args = {
-  ...SyncJsonArgs,
+  ...AppIdentityArgs,
   ...LoggingArgs,
   "--tail": { type: Boolean, alias: ["-t"], default: false },
   "--start": { type: parseDate },
@@ -69,8 +77,8 @@ export const usage: Usage = (_ctx) => {
         -ll, --log-level <level>       Sets the log level for incoming application logs in --tail mode (default: info)
         --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
         --json                         Output logs in JSON format
-        -a, --app <app_name>           Selects the app to pull your environment changes from. Default set on ".gadget/sync.json"
-        -e, --env, --from <env_name>   Selects the environment to pull changes from. Default set on ".gadget/sync.json"
+        -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
+        -e, --env, --from <env_name>   Selects the environment to pull changes from. Defaults to the environment synced to the current directory, if there is one.
 
   {gray Examples}
         Print recent logs from your development environment
@@ -103,11 +111,10 @@ export const run: Run<LogsArgs> = async (ctx, args) => {
   }
 
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.loadOrInit(ctx, { command: "pull", args, directory });
-  const filesync = new FileSync(syncJson);
+  const appIdentity = await AppIdentity.load(ctx, { command: "pull", args, directory });
 
   if (args["--tail"]) {
-    const logsSubscription = filesync.subscribeToEnvironmentLogs(args, {
+    const logsSubscription = subscribeToEnvironmentLogs(appIdentity.edit, args, {
       onError: (error) => {
         ctx.abort(error);
       },
@@ -117,21 +124,49 @@ export const run: Run<LogsArgs> = async (ctx, args) => {
       ctx.log.info("stopping", { reason });
       logsSubscription.unsubscribe();
     });
-  } else {
-    const start = args["--start"] ?? new Date(Date.now() - 5 * 60 * 1000);
-    const end = args["--end"];
-    const direction = args["--direction"];
-    const level = args["--level"];
 
-    if (end && end.getTime() < start.getTime()) {
-      throw new ArgError("--end cannot be before --start.");
-    }
+    return;
+  }
 
-    await filesync.queryEnvironmentLogs(args, {
+  const start = args["--start"] ?? new Date(Date.now() - 5 * 60 * 1000);
+  const end = args["--end"];
+  const direction = args["--direction"];
+  const level = args["--level"];
+
+  if (end && end.getTime() < start.getTime()) {
+    throw new ArgError("--end cannot be before --start.");
+  }
+
+  const query = args["--my-logs"] ? 'source:"user"' : "";
+
+  const result = await appIdentity.edit.query({
+    query: LOGS_SEARCH_V3_QUERY,
+    variables: {
+      query,
       start: start.toISOString(),
       ...(end ? { end: end.toISOString() } : {}),
       ...(direction ? { direction } : {}),
       ...(level ? { level } : {}),
-    });
+    },
+  });
+
+  if (result.logsSearchV3.__typename === "LogSearchErrorResult") {
+    throw new Error(`Logs search failed: ${JSON.stringify(result.logsSearchV3.error)}`);
+  }
+
+  const logger = createEnvironmentStructuredLogger(appIdentity.environment);
+  for (const row of result.logsSearchV3.data ?? []) {
+    const fields: Record<string, unknown> = {};
+    if (row.labels) {
+      Object.assign(fields, row.labels);
+    }
+
+    logger(
+      row.level,
+      row.name,
+      (row.message ?? "") as Lowercase<string>,
+      fields as Fields,
+      new Date(Number(row.timestampNanos) / 1_000_000),
+    );
   }
 };

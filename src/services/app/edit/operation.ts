@@ -1,5 +1,6 @@
 import type { ExecutionResult } from "graphql-ws";
 import type { JsonObject, JsonValue } from "type-fest";
+
 import type {
   CreateActionMutation,
   CreateActionMutationVariables,
@@ -10,8 +11,14 @@ import type {
   CreateModelMutationVariables,
   CreateRouteMutation,
   CreateRouteMutationVariables,
+  DeleteEnvironmentMutation,
+  DeleteEnvironmentMutationVariables,
+  DeleteEnvironmentVariableMutation,
+  DeleteEnvironmentVariableMutationVariables,
   EnvironmentLogsSubscription,
   EnvironmentLogsSubscriptionVariables,
+  EnvironmentVariablesQuery,
+  EnvironmentVariablesQueryVariables,
   FileSyncComparisonHashesQuery,
   FileSyncComparisonHashesQueryVariables,
   FileSyncFilesQuery,
@@ -20,14 +27,35 @@ import type {
   FileSyncHashesQueryVariables,
   PublishFileSyncEventsMutation,
   PublishFileSyncEventsMutationVariables,
+  PublishIssuesQuery,
+  PublishIssuesQueryVariables,
   PublishStatusSubscription,
   PublishStatusSubscriptionVariables,
   RemoteFilesVersionQuery,
   RemoteFilesVersionQueryVariables,
   RemoteFileSyncEventsSubscription,
   RemoteFileSyncEventsSubscriptionVariables,
+  SetEnvironmentVariableMutation,
+  SetEnvironmentVariableMutationVariables,
+  UnpauseEnvironmentMutation,
+  UnpauseEnvironmentMutationVariables,
 } from "../../../__generated__/graphql.js";
 import { sprint } from "../../output/sprint.js";
+
+const operationNames = new Map<string, string>();
+
+/**
+ * Get the operation name from a GraphQL document string, caching the
+ * result for subsequent lookups.
+ */
+export const getOperationName = (operation: string | undefined): string | undefined => {
+  if (!operation) return undefined;
+  let name = operationNames.get(operation);
+  if (name !== undefined) return name;
+  name = /(?:query|mutation|subscription)\s+(\w+)/.exec(operation)?.[1];
+  if (name) operationNames.set(operation, name);
+  return name;
+};
 
 /**
  * A GraphQL query with its associated types.
@@ -64,6 +92,8 @@ export type GraphQLSubscription<
   Extensions extends JsonObject = JsonObject,
   Response extends ExecutionResult<Data, Extensions> = ExecutionResult<Data, Extensions>,
 > = string & { type: "subscription"; Data: Data; Variables: Variables; Extensions: Extensions; Response: Response };
+
+export type GraphQLOperation = GraphQLQuery | GraphQLMutation | GraphQLSubscription | undefined;
 
 // Types for logsSearchV3 query (not yet in codegen schema)
 export type LogRow = {
@@ -322,3 +352,78 @@ export const CREATE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
 `) as GraphQLMutation<CreateEnvironmentMutation, CreateEnvironmentMutationVariables>;
 
 export type CREATE_ENVIRONMENT_MUTATION = typeof CREATE_ENVIRONMENT_MUTATION;
+
+export const UNPAUSE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
+  mutation UnpauseEnvironment {
+    unpauseEnvironment {
+      success
+      alreadyActive
+    }
+  }
+`) as GraphQLMutation<UnpauseEnvironmentMutation, UnpauseEnvironmentMutationVariables>;
+
+export type UNPAUSE_ENVIRONMENT_MUTATION = typeof UNPAUSE_ENVIRONMENT_MUTATION;
+
+export const DELETE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
+  mutation DeleteEnvironment($slug: String!) {
+    deleteEnvironment(slug: $slug)
+  }
+`) as GraphQLMutation<DeleteEnvironmentMutation, DeleteEnvironmentMutationVariables>;
+
+export type DELETE_ENVIRONMENT_MUTATION = typeof DELETE_ENVIRONMENT_MUTATION;
+
+export const PUBLISH_ISSUES_QUERY = sprint(/* GraphQL */ `
+  query PublishIssues {
+    publishIssues {
+      severity
+      message
+      node {
+        type
+        key
+        apiIdentifier
+        name
+        fieldType
+        parentKey
+        parentApiIdentifier
+      }
+      nodeLabels {
+        type
+        identifier
+      }
+    }
+  }
+`) as GraphQLQuery<PublishIssuesQuery, PublishIssuesQueryVariables>;
+
+export type PUBLISH_ISSUES_QUERY = typeof PUBLISH_ISSUES_QUERY;
+
+export const ENVIRONMENT_VARIABLES_QUERY = sprint(/* GraphQL */ `
+  query EnvironmentVariables {
+    environmentVariables {
+      key
+      value
+      isSecret
+    }
+  }
+`) as GraphQLQuery<EnvironmentVariablesQuery, EnvironmentVariablesQueryVariables>;
+
+export type ENVIRONMENT_VARIABLES_QUERY = typeof ENVIRONMENT_VARIABLES_QUERY;
+
+export const SET_ENVIRONMENT_VARIABLE_MUTATION = sprint(/* GraphQL */ `
+  mutation SetEnvironmentVariable($input: SetEnvironmentVariableInput!) {
+    setEnvironmentVariable(input: $input) {
+      remoteFilesVersion
+    }
+  }
+`) as GraphQLMutation<SetEnvironmentVariableMutation, SetEnvironmentVariableMutationVariables>;
+
+export type SET_ENVIRONMENT_VARIABLE_MUTATION = typeof SET_ENVIRONMENT_VARIABLE_MUTATION;
+
+export const DELETE_ENVIRONMENT_VARIABLE_MUTATION = sprint(/* GraphQL */ `
+  mutation DeleteEnvironmentVariable($key: String!) {
+    deleteEnvironmentVariable(key: $key) {
+      remoteFilesVersion
+    }
+  }
+`) as GraphQLMutation<DeleteEnvironmentVariableMutation, DeleteEnvironmentVariableMutationVariables>;
+
+export type DELETE_ENVIRONMENT_VARIABLE_MUTATION = typeof DELETE_ENVIRONMENT_VARIABLE_MUTATION;

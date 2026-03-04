@@ -27,8 +27,12 @@ const DEPLOY_PROGRESS_STEPS = [
   "COMPLETED",
 ] as const;
 
-const emitSuccessfulDeploySequence = async (publishStatus: MockEditSubscription): Promise<void> => {
-  for (const progress of DEPLOY_PROGRESS_STEPS) {
+const emitSuccessfulDeploySequence = async (
+  publishStatus: MockEditSubscription,
+  startFrom: (typeof DEPLOY_PROGRESS_STEPS)[number] = "NOT_STARTED",
+): Promise<void> => {
+  const steps = DEPLOY_PROGRESS_STEPS.slice(DEPLOY_PROGRESS_STEPS.indexOf(startFrom));
+  for (const progress of steps) {
     const base = {
       publishStarted: true,
       remoteFilesVersion: "1",
@@ -228,7 +232,7 @@ describe("deploy", () => {
       },
     });
 
-    await emitSuccessfulDeploySequence(publishStatus);
+    await emitSuccessfulDeploySequence(publishStatus, "STARTING");
 
     expectStdout().toMatchInlineSnapshot(`
       "Deploying development to test.gadget.app https://test.gadget.app/
@@ -331,7 +335,7 @@ describe("deploy", () => {
       },
     });
 
-    await emitSuccessfulDeploySequence(publishStatus);
+    await emitSuccessfulDeploySequence(publishStatus, "STARTING");
 
     expectStdout().toMatchInlineSnapshot(`
       "Deploying development to test.gadget.app https://test.gadget.app/

@@ -1527,7 +1527,7 @@ Run ggt logout --help for more information.
 exports[`root > when logs is given > prints the usage when --help is passed 1`] = `
 "Print recent logs or stream logs from your app
 
-ggt logs prints recent logs and exits by default. Use --follow (-f) to stream logs continuously.
+Prints recent logs and exits by default. Use --follow (-f) to stream logs continuously.
 
 USAGE
   ggt logs [flags]
@@ -1543,8 +1543,7 @@ FLAGS
         is read-only for most commands.
 
   -f, --follow
-        Stream logs continuously. When omitted, ggt logs prints recent logs and
-        exits.
+        Stream logs continuously. When omitted, prints recent logs and exits.
 
   -l, --log-level <level>
         Minimum log level to display. One of: trace, debug, info, warn, error.

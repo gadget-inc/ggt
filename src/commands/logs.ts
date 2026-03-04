@@ -21,7 +21,7 @@ export default defineCommand({
   aliases: ["log"],
   description: "Print recent logs or stream logs from your app",
   details: sprint`
-    ${"ggt logs"} prints recent logs and exits by default. Use ${"--follow"} (${"-f"}) to stream logs continuously.
+    Prints recent logs and exits by default. Use ${"--follow"} (${"-f"}) to stream logs continuously.
   `,
   examples: [
     "ggt logs",
@@ -37,7 +37,7 @@ export default defineCommand({
       alias: ["-f"],
       default: false,
       description: "Stream logs continuously",
-      details: "When omitted, ggt logs prints recent logs and exits.",
+      details: "When omitted, prints recent logs and exits.",
     },
     "--start": {
       type: parseDate,

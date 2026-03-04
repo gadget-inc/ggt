@@ -14,6 +14,8 @@ const parseDate = (value: string): Date => {
   return date;
 };
 
+const ONE_SHOT_WAIT_FOR_DATA_TIMEOUT_MS = 3_000;
+
 export default defineCommand({
   name: "logs",
   aliases: ["log"],
@@ -79,10 +81,15 @@ export default defineCommand({
     await new Promise<void>((resolve, reject) => {
       let settled = false;
       let logsSubscription: { unsubscribe(): void } | undefined;
+      let noDataTimeout: ReturnType<typeof setTimeout> | undefined;
 
       const finish = (done: () => void): void => {
         if (settled) return;
         settled = true;
+        if (noDataTimeout) {
+          clearTimeout(noDataTimeout);
+          noDataTimeout = undefined;
+        }
         logsSubscription?.unsubscribe();
         done();
       };
@@ -94,6 +101,8 @@ export default defineCommand({
         onError: (error) => finish(() => reject(error)),
         onData: () => finish(resolve),
       });
+
+      noDataTimeout = setTimeout(() => finish(resolve), ONE_SHOT_WAIT_FOR_DATA_TIMEOUT_MS);
 
       ctx.onAbort((reason) => {
         finish(() => {

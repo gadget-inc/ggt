@@ -111,6 +111,34 @@ describe("logs", () => {
       expectStdout().toMatchInlineSnapshot(`""`);
     });
 
+    it("exits when one-shot subscriptions receive no data", { timeout: timeoutMs("10s") }, async () => {
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      const runPromise = runCommand(testCtx, logs, "--log-level", "warn");
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+      expect(String(logsSub.variables!["query"])).toContain('level=~"warn|error"');
+
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("timed out waiting for one-shot logs to finish with no data"));
+        }, timeoutMs("6s"));
+
+        void runPromise.then(
+          () => {
+            clearTimeout(timeout);
+            resolve();
+          },
+          (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          },
+        );
+      });
+
+      expectStdout().toMatchInlineSnapshot(`""`);
+    });
+
     it("defaults --start to approximately 5 minutes ago", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
       const mockEditGraphQL = makeMockEditSubscriptions();

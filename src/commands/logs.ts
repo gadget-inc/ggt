@@ -5,6 +5,7 @@ import { defineCommand } from "../services/command/command.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
 import type { Fields } from "../services/output/log/field.js";
+import { Level } from "../services/output/log/level.js";
 import { LoggingArgs, createEnvironmentStructuredLogger } from "../services/output/log/structured.js";
 import { sprint } from "../services/output/sprint.js";
 
@@ -17,13 +18,13 @@ const parseDate = (value: string): Date => {
 };
 
 const includedLevels = (minimumLevel: number): string => {
-  if (minimumLevel <= 2) {
+  if (minimumLevel <= Level.DEBUG) {
     return "debug|info|warn|error";
   }
-  if (minimumLevel === 3) {
+  if (minimumLevel === Level.INFO) {
     return "info|warn|error";
   }
-  if (minimumLevel === 4) {
+  if (minimumLevel === Level.WARN) {
     return "warn|error";
   }
   return "error";

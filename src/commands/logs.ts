@@ -54,7 +54,7 @@ export type LogsArgsResult = ArgsDefinitionResult<LogsArgs>;
 export const args = {
   ...AppIdentityArgs,
   ...LoggingArgs,
-  "--tail": { type: Boolean, alias: ["-t"], default: false },
+  "--follow": { type: Boolean, alias: ["-f"], default: false },
   "--start": { type: parseDate },
   "--end": { type: parseDate },
   "--direction": { type: parseDirection },
@@ -63,18 +63,18 @@ export const args = {
 
 export const usage: Usage = (_ctx) => {
   return sprint`
-  Prints recent logs for an application. Use --tail to stream logs continuously.
+  Prints recent logs for an application. Use --follow to stream logs continuously.
 
   {gray Usage}
         ggt logs [options]
 
   {gray Options}
-        -t, --tail                     Stream logs continuously instead of printing recent logs and exiting
+        -f, --follow                   Stream logs continuously instead of printing recent logs and exiting
         --start <datetime>             Start time for log query (default: 5 minutes ago). ISO 8601 format
         --end <datetime>               End time for log query. ISO 8601 format
         --direction <direction>        Log ordering: "forward" or "backward"
         --level <level>                Minimum log level: debug, info, warn, error
-        -ll, --log-level <level>       Sets the log level for incoming application logs in --tail mode (default: info)
+        -ll, --log-level <level>       Sets the log level for incoming application logs in --follow mode (default: info)
         --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
         --json                         Output logs in JSON format
         -a, --app <app_name>           Selects the app to pull your environment changes from. Defaults to the app synced to the current directory, if there is one.
@@ -91,7 +91,7 @@ export const usage: Usage = (_ctx) => {
         {cyanBright $ ggt logs --level error}
 
         Stream all user logs from your development environment
-        {cyanBright $ ggt logs --tail --env development --my-logs}
+        {cyanBright $ ggt logs --follow --env development --my-logs}
 
         Print recent logs from your production environment in JSON format
         {cyanBright $ ggt logs --env production --json}
@@ -113,7 +113,7 @@ export const run: Run<LogsArgs> = async (ctx, args) => {
   const directory = await loadSyncJsonDirectory(process.cwd());
   const appIdentity = await AppIdentity.load(ctx, { command: "pull", args, directory });
 
-  if (args["--tail"]) {
+  if (args["--follow"]) {
     const logsSubscription = subscribeToEnvironmentLogs(appIdentity.edit, args, {
       onError: (error) => {
         ctx.abort(error);

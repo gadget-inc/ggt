@@ -67,7 +67,7 @@ describe("logs", () => {
     },
   };
 
-  // V2 subscription response format (used for --tail)
+  // V2 subscription response format (used for --follow)
   const logMessage = {
     msg: "hello from server!",
     name: "my-app",
@@ -270,7 +270,7 @@ describe("logs", () => {
     });
   });
 
-  describe("--tail", () => {
+  describe("--follow", () => {
     it("streams server logs continuously via subscription", async () => {
       await makeSyncScenario({
         localFiles: {
@@ -278,7 +278,7 @@ describe("logs", () => {
         },
       });
 
-      const args = makeArgs(logs.args, "logs", "--tail");
+      const args = makeArgs(logs.args, "logs", "--follow");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
       // Start the logs command (which will subscribe asynchronously)
@@ -287,13 +287,35 @@ describe("logs", () => {
       // Wait for the subscription to be registered
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
 
-      // Tail mode should pass start to stream from now
+      // Follow mode should pass start to stream from now
       expect(logsSub.variables).toHaveProperty("start");
       expect(logsSub.variables!["start"]).toBeInstanceOf(Date);
 
       // Emit a log message
       await logsSub.emitResponse(v2SubscriptionResponse);
 
+      await runPromise;
+
+      expectStdout().toMatchInlineSnapshot(`
+      "06:01:22  INFO  my-app: hello from server!
+        foo: bar
+      "
+      `);
+    });
+
+    it("supports -f as alias for --follow", async () => {
+      await makeSyncScenario({
+        localFiles: {
+          ".gadget/": "",
+        },
+      });
+
+      const args = makeArgs(logs.args, "logs", "-f");
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      const runPromise = logs.run(testCtx, args);
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+      await logsSub.emitResponse(v2SubscriptionResponse);
       await runPromise;
 
       expectStdout().toMatchInlineSnapshot(`
@@ -310,7 +332,7 @@ describe("logs", () => {
         },
       });
 
-      const args = makeArgs(logs.args, "logs", "--tail", "--json");
+      const args = makeArgs(logs.args, "logs", "--follow", "--json");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
       await withEnv({ GGT_LOG_FORMAT: "json" }, async () => {

@@ -1,16 +1,16 @@
 import { default as openApp } from "open";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { nockTestApps, testApp, testEnvironment } from "../../spec/__support__/app.js";
-import { makeSyncScenario } from "../../spec/__support__/filesync.js";
-import { mockSelectOnce } from "../../spec/__support__/mock.js";
-import * as open from "../../src/commands/open.js";
+import open from "../../src/commands/open.js";
 import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
 import { ArgError } from "../../src/services/command/arg.js";
-import { makeArgs } from "../__support__/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
+import { nockTestApps, testApp, testEnvironment } from "../__support__/app.js";
 import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
+import { makeSyncScenario } from "../__support__/filesync.js";
 import { nockApiResponse } from "../__support__/graphql.js";
+import { mockSelectOnce } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { loginTestUser } from "../__support__/user.js";
 
@@ -22,7 +22,7 @@ describe("open", () => {
   });
 
   it("opens a browser to the app's editor", async () => {
-    await open.run(testCtx, makeArgs(open.args));
+    await runCommand(testCtx, open);
 
     expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}`);
 
@@ -33,7 +33,7 @@ describe("open", () => {
   });
 
   it("opens a browser to the app's logs viewer", async () => {
-    await open.run(testCtx, makeArgs(open.args, "open", "logs"));
+    await runCommand(testCtx, open, "logs");
 
     expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/logs`);
 
@@ -44,7 +44,7 @@ describe("open", () => {
   });
 
   it("opens a browser to the app's permissions settings page", async () => {
-    await open.run(testCtx, makeArgs(open.args, "open", "permissions"));
+    await runCommand(testCtx, open, "permissions");
 
     expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/settings/permissions`);
 
@@ -57,7 +57,7 @@ describe("open", () => {
   it("opens a browser to the app's data page for a specified model", async () => {
     nockGetModels();
 
-    await open.run(testCtx, makeArgs(open.args, "open", "data", "modelA"));
+    await runCommand(testCtx, open, "data", "modelA");
 
     expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/model/modelA/data`);
 
@@ -70,7 +70,7 @@ describe("open", () => {
   it("opens a browser to the app's schema page for a specified model", async () => {
     nockGetModels();
 
-    await open.run(testCtx, makeArgs(open.args, "open", "schema", "modelA"));
+    await runCommand(testCtx, open, "schema", "modelA");
 
     expect(openApp).toHaveBeenCalledWith(`https://${testApp.primaryDomain}/edit/${testEnvironment.name}/model/modelA/schema`);
 
@@ -84,7 +84,7 @@ describe("open", () => {
     nockGetModels();
     mockSelectOnce("user");
 
-    await open.run(testCtx, makeArgs(open.args, "open", "data", "--show-all"));
+    await runCommand(testCtx, open, "data", "--show-all");
 
     expectStdout().toMatchInlineSnapshot(`
         "Opened data viewer for environment development for model user.
@@ -96,7 +96,7 @@ describe("open", () => {
     nockGetModels();
     mockSelectOnce("user");
 
-    await open.run(testCtx, makeArgs(open.args, "open", "schema", "--show-all"));
+    await runCommand(testCtx, open, "schema", "--show-all");
 
     expectStdout().toMatchInlineSnapshot(`
         "Opened schema viewer for environment development for model user.
@@ -104,10 +104,25 @@ describe("open", () => {
       `);
   });
 
+  it("throws ArgError with closest match suggestion for unknown location", async () => {
+    const error: ArgError = await expectError(() => runCommand(testCtx, open, "ogs"));
+    expect(error).toBeInstanceOf(ArgError);
+    expect(error.sprint()).toMatchInlineSnapshot(`
+      "✘ Unknown location ogs
+
+      Did you mean logs?
+
+      USAGE
+        ggt open [location] [model] [flags]
+
+      Run ggt open -h for more information."
+    `);
+  });
+
   it("displays the closest match for a model that does not exist", async () => {
     nockGetModels();
 
-    const error: ArgError = await expectError(() => open.run(testCtx, makeArgs(open.args, "open", "data", "use")));
+    const error: ArgError = await expectError(() => runCommand(testCtx, open, "data", "use"));
     expect(error).toBeInstanceOf(ArgError);
     expect(error.sprint()).toMatchInlineSnapshot(`
         "✘ Unknown model use

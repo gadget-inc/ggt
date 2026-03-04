@@ -3,7 +3,7 @@ import process from "node:process";
 import nock from "nock";
 import { describe, expect, it, vi } from "vitest";
 
-import * as login from "../../../src/commands/login.js";
+import login from "../../../src/commands/login.js";
 import { config } from "../../../src/services/config/config.js";
 import { loadCookie } from "../../../src/services/http/auth.js";
 import { confirm } from "../../../src/services/output/confirm.js";
@@ -63,7 +63,7 @@ describe("getUserOrLogin", () => {
     mockConfirmOnce();
     vi.spyOn(process, "exit");
 
-    mock(login, "login", () => {
+    mock(login, "run", () => {
       loginTestUserWithCookie({ optional: false });
     });
 
@@ -73,14 +73,14 @@ describe("getUserOrLogin", () => {
 
     expect(confirm).toHaveBeenCalled();
     expect(process.exit).not.toHaveBeenCalled();
-    expect(login.login).toHaveBeenCalled();
+    expect(login.run).toHaveBeenCalled();
     expect(returnedUser).toEqual(testUser);
   });
 
   it("prompts the user to log in if the session is invalid or expired", async () => {
     mockConfirmOnce();
     vi.spyOn(process, "exit");
-    mock(login, "login", () => {
+    mock(login, "run", () => {
       loginTestUser({ optional: false });
       return Promise.resolve();
     });
@@ -93,13 +93,13 @@ describe("getUserOrLogin", () => {
     expect(nock.pendingMocks()).toEqual([]);
     expect(confirm).toHaveBeenCalled();
     expect(process.exit).not.toHaveBeenCalled();
-    expect(login.login).toHaveBeenCalled();
+    expect(login.run).toHaveBeenCalled();
   });
 
   it("calls process.exit if the user declines to log in", async () => {
     writeSession(testCtx, undefined);
     mock(confirm, () => process.exit(0));
-    mock(login, "login", () => {
+    mock(login, "run", () => {
       loginTestUser({ optional: false });
       return Promise.resolve();
     });
@@ -107,7 +107,7 @@ describe("getUserOrLogin", () => {
     await expectProcessExit(() => getUserOrLogin(testCtx, "dev"));
 
     expect(confirm).toHaveBeenCalled();
-    expect(login.login).not.toHaveBeenCalled();
+    expect(login.run).not.toHaveBeenCalled();
     expect(process.exit).toHaveBeenCalledWith(0);
   });
 });

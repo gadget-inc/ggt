@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as logs from "../../src/commands/logs.js";
+import logs from "../../src/commands/logs.js";
 import { ENVIRONMENT_LOGS_SUBSCRIPTION, type GraphQLSubscription } from "../../src/services/app/edit/operation.js";
 import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
 import { mockContext, testCtx } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
 import { expectError } from "../__support__/error.js";
@@ -68,11 +68,9 @@ describe("logs", () => {
   describe("default (one-shot)", () => {
     it("prints server logs and exits", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      const runPromise = logs.run(testCtx, args);
+      const runPromise = runCommand(testCtx, logs);
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
       await logsSub.emitResponse(v2SubscriptionResponse);
       await runPromise;
@@ -84,14 +82,12 @@ describe("logs", () => {
       `);
     });
 
-    it("prints server logs in JSON format with --json", async () => {
+    it("prints server logs in JSON format when GGT_LOG_FORMAT=json", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs", "--json");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
       await withEnv({ GGT_LOG_FORMAT: "json" }, async () => {
-        const runPromise = logs.run(testCtx, args);
+        const runPromise = runCommand(testCtx, logs);
         const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
         await logsSub.emitResponse(v2SubscriptionResponse);
         await runPromise;
@@ -105,11 +101,9 @@ describe("logs", () => {
 
     it("prints nothing when there are no logs", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      const runPromise = logs.run(testCtx, args);
+      const runPromise = runCommand(testCtx, logs);
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
       await logsSub.emitResponse(v2EmptySubscriptionResponse);
       await runPromise;
@@ -119,19 +113,15 @@ describe("logs", () => {
 
     it("defaults --start to approximately 5 minutes ago", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
       const before = Date.now() - 5 * 60 * 1000;
-      const runPromise = logs.run(testCtx, args);
+      const runPromise = runCommand(testCtx, logs);
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
 
-      expect(logsSub.variables).toHaveProperty("start");
-      const start = logsSub.variables!["start"];
+      const start = logsSub.variables!["start"] as unknown;
       expect(start).toBeInstanceOf(Date);
-
-      const startDate = start as unknown as Date;
+      const startDate = start as Date;
       expect(startDate.getTime()).toBeGreaterThanOrEqual(before - 2_000);
       expect(startDate.getTime()).toBeLessThanOrEqual(Date.now());
 
@@ -141,11 +131,9 @@ describe("logs", () => {
 
     it("passes --start through to subscription variables", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs", "--start", "2025-01-01T00:00:00Z");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      const runPromise = logs.run(testCtx, args);
+      const runPromise = runCommand(testCtx, logs, "--start", "2025-01-01T00:00:00Z");
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
       expect(logsSub.variables!["start"]).toEqual(new Date("2025-01-01T00:00:00Z"));
 
@@ -155,11 +143,9 @@ describe("logs", () => {
 
     it("passes --my-logs as query filter", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs", "--my-logs");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      const runPromise = logs.run(testCtx, args);
+      const runPromise = runCommand(testCtx, logs, "--my-logs");
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
       expect(String(logsSub.variables!["query"])).toContain('source="user"');
 
@@ -169,11 +155,9 @@ describe("logs", () => {
 
     it("passes --level as query filter", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs", "--level", "warn");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      const runPromise = logs.run(testCtx, args);
+      const runPromise = runCommand(testCtx, logs, "--level", "warn");
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
       expect(String(logsSub.variables!["query"])).toContain('level=~"warn|error"');
 
@@ -183,23 +167,23 @@ describe("logs", () => {
   });
 
   describe("validation", () => {
-    it("rejects invalid --level", () => {
-      expect(() => makeArgs(logs.args, "logs", "--level", "verbose")).toThrow(ArgError);
+    it("rejects invalid --level", async () => {
+      const error = await expectError(() => runCommand(testCtx, logs, "--level", "verbose"));
+      expect(error).toBeInstanceOf(ArgError);
     });
 
-    it("rejects invalid --start date", () => {
-      expect(() => makeArgs(logs.args, "logs", "--start", "not-a-date")).toThrow(ArgError);
+    it("rejects invalid --start date", async () => {
+      const error = await expectError(() => runCommand(testCtx, logs, "--start", "not-a-date"));
+      expect(error).toBeInstanceOf(ArgError);
     });
   });
 
   describe("--follow", () => {
     it("streams server logs continuously via subscription", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs", "--follow");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      const runPromise = logs.run(testCtx, args);
+      const runPromise = runCommand(testCtx, logs, "--follow");
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
 
       expect(logsSub.variables).toHaveProperty("start");
@@ -217,11 +201,9 @@ describe("logs", () => {
 
     it("supports -f as alias for --follow", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs", "-f");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      const runPromise = logs.run(testCtx, args);
+      const runPromise = runCommand(testCtx, logs, "-f");
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
       await logsSub.emitResponse(v2SubscriptionResponse);
       await runPromise;
@@ -233,14 +215,12 @@ describe("logs", () => {
       `);
     });
 
-    it("streams server logs in JSON format with --json", async () => {
+    it("streams server logs in JSON format when GGT_LOG_FORMAT=json", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-      const args = makeArgs(logs.args, "logs", "--follow", "--json");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
       await withEnv({ GGT_LOG_FORMAT: "json" }, async () => {
-        const runPromise = logs.run(testCtx, args);
+        const runPromise = runCommand(testCtx, logs, "--follow");
         const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
         await logsSub.emitResponse(v2SubscriptionResponse);
         await runPromise;
@@ -255,11 +235,9 @@ describe("logs", () => {
 
   it("handles abort in one-shot mode", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
-
-    const args = makeArgs(logs.args, "logs");
     const mockEditGraphQL = makeMockEditSubscriptions();
 
-    const runPromise = logs.run(testCtx, args);
+    const runPromise = runCommand(testCtx, logs);
     await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
 
     const error = await expectError(async () => {

@@ -5,13 +5,13 @@ import fs from "fs-extra";
 import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkToc from "remark-toc";
+import stripAnsi from "strip-ansi";
 import { dedent } from "ts-dedent";
 
 import { usage } from "../src/commands/root.js";
 import { Commands, importCommand } from "../src/services/command/command.js";
-import { Context } from "../src/services/command/context.js";
+import { renderShortUsage } from "../src/services/command/usage.js";
 
-const ctx = Context.init({ name: "readme" });
 let readme = await fs.readFile("README.md", "utf8");
 
 readme = readme.replace(
@@ -22,7 +22,7 @@ readme = readme.replace(
     \`\`\`sh-session
     $ npm install -g ggt
     $ ggt
-    ${usage(ctx)}
+    ${stripAnsi(await usage())}
     \`\`\`
 
     $1
@@ -32,12 +32,13 @@ readme = readme.replace(
 const commands: string[] = [];
 for (const name of Commands) {
   const cmd = await importCommand(name);
+  if (cmd.hidden) continue;
   commands.push(dedent`
     ### \`ggt ${name}\`
 
     \`\`\`sh-session
     $ ggt ${name} -h
-    ${cmd.usage(ctx)}
+    ${stripAnsi(renderShortUsage(name, cmd, { footer: false }))}
     \`\`\`
   `);
 }

@@ -16,6 +16,7 @@ type BaseSelectOptions<Choice extends string> = SprintOptionsWithContent & {
   formatChoice?: (choice: Choice) => string;
   formatSelection?: (choice: Choice) => string;
   searchable?: boolean;
+  indent?: number;
 };
 
 type FlatChoices<Choice extends string> = {

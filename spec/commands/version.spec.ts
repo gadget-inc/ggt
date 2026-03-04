@@ -1,12 +1,13 @@
 import { describe, it } from "vitest";
 
-import * as version from "../../src/commands/version.js";
+import version from "../../src/commands/version.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { testCtx } from "../__support__/context.js";
 import { expectStdout } from "../__support__/output.js";
 
 describe("version", () => {
   it("prints the version", async () => {
-    await version.run(testCtx, { _: [] });
+    await runCommand(testCtx, version);
 
     expectStdout().toEqual("1.2.3\n");
   });

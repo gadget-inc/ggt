@@ -1,11 +1,11 @@
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import * as push from "../../src/commands/push.js";
+import push from "../../src/commands/push.js";
 import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
@@ -49,7 +49,7 @@ describe("push", () => {
       await fs.outputFile(localDir.absolute(filename), filename);
     }
 
-    await push.run(testCtx, makeArgs(push.args));
+    await runCommand(testCtx, push);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -141,7 +141,7 @@ describe("push", () => {
       await fs.outputFile(localDir.absolute(`tmp/${filename}`), filename);
     }
 
-    await push.run(testCtx, makeArgs(push.args));
+    await runCommand(testCtx, push);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -188,7 +188,7 @@ describe("push", () => {
 
     mockConfirmOnce();
 
-    await push.run(testCtx, makeArgs(push.args));
+    await runCommand(testCtx, push);
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -233,7 +233,7 @@ describe("push", () => {
       },
     });
 
-    await push.run(testCtx, makeArgs(push.args, "push", "--force"));
+    await runCommand(testCtx, push, "--force");
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -280,7 +280,7 @@ describe("push", () => {
       },
     });
 
-    await push.run(testCtx, makeArgs(push.args, "push", "--force"));
+    await runCommand(testCtx, push, "--force");
 
     await expectDirs().resolves.toMatchInlineSnapshot(`
         {
@@ -330,13 +330,13 @@ describe("push", () => {
       },
     });
 
-    await push.run(testCtx, makeArgs(push.args));
+    await runCommand(testCtx, push);
 
     expectStdout().toContain("Nothing to push.");
   });
 
   it("throws ArgError when positional arguments are provided", async () => {
-    const error = await expectError(() => push.run(testCtx, makeArgs(push.args, "push", "extra-arg")));
+    const error = await expectError(() => runCommand(testCtx, push, "extra-arg"));
 
     expect(error).toBeInstanceOf(ArgError);
   });

@@ -5,6 +5,7 @@ import { AppArg } from "../app/arg.js";
 import { Edit } from "../app/edit/edit.js";
 import type { Directory } from "../filesync/directory.js";
 import { SyncJsonState } from "../filesync/sync-json-state.js";
+import colors from "../output/colors.js";
 import { select } from "../output/select.js";
 import { setSentryTags } from "../output/sentry.js";
 import { sprint } from "../output/sprint.js";
@@ -15,8 +16,27 @@ import type { Command } from "./command.js";
 import type { Context } from "./context.js";
 
 export const AppIdentityArgs = {
-  "--app": { type: AppArg, alias: ["-a", "--application"] },
-  "--env": { type: String, alias: ["-e", "--environment"] },
+  "--app": {
+    type: AppArg,
+    alias: ["-a", "--application"],
+    description: "Gadget app to use",
+    valueName: "app-slug",
+    details: sprint`
+      The app slug is the subdomain portion of your app URL (e.g., my-app from
+      my-app.gadget.app). Can be omitted when .gadget/sync.json already records
+      the app.
+    `,
+  },
+  "--env": {
+    type: String,
+    alias: ["-e", "--environment"],
+    description: "Environment to use",
+    valueName: "name",
+    details: sprint`
+      Defaults to the development environment. Production is read-only for most
+      commands.
+    `,
+  },
 } satisfies ArgsDefinition;
 
 export type AppIdentityArgs = typeof AppIdentityArgs;
@@ -84,6 +104,7 @@ export class AppIdentity {
 
           Visit https://gadget.new to create one!
         `,
+        { usageHint: false },
       );
     }
 
@@ -119,7 +140,7 @@ export class AppIdentity {
   }
 }
 
-const AllowedProdCommands = ["pull", "logs", "eval", "var"] as Command[];
+const AllowedProdCommands: Command[] = ["pull", "logs", "eval", "var"] satisfies Command[];
 
 /**
  * Resolves the application from args, sync.json state, or interactive prompt.
@@ -175,8 +196,9 @@ export const loadApplication = async ({
 
       Did you mean one of these?
 
-        • ${similarAppSlugs.join("\n        • ")}
+        ${similarAppSlugs.map((s) => `• ${s}`).join("\n")}
     `,
+    { usageHint: false },
   );
 };
 
@@ -210,8 +232,9 @@ const loadEnvironment = async ({
     // specifically call out that they can't dev, push, etc. to prod
     throw new ArgError(
       sprint`
-        You cannot "ggt ${command}" your {bold production} environment.
+        You cannot "ggt ${command}" your ${colors.identifier("production")} environment.
       `,
+      { usageHint: false },
     );
   }
 
@@ -239,7 +262,8 @@ const loadEnvironment = async ({
 
       Did you mean one of these?
 
-        • ${similarEnvironments.join("\n        • ")}
+        ${similarEnvironments.map((s) => `• ${s}`).join("\n")}
     `,
+    { usageHint: false },
   );
 };

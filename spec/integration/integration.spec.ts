@@ -5,10 +5,10 @@ import fs from "fs-extra";
 import { describe, expect, it, onTestFailed, onTestFinished, vi } from "vitest";
 
 import {
+  type TestDirs,
   KNOWN_REMOTE_FILE,
   TEST_APP,
   TEST_ENV,
-  type TestDirs,
   cleanupTestDirs,
   createTestDirs,
   hasIntegrationToken,

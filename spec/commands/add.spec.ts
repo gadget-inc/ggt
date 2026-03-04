@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { EnvironmentStatus } from "../../src/__generated__/graphql.js";
-import * as add from "../../src/commands/add.js";
+import add, { AddClientError } from "../../src/commands/add.js";
 import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
 import {
   CREATE_ACTION_MUTATION,
@@ -10,14 +10,33 @@ import {
   CREATE_MODEL_MUTATION,
   CREATE_ROUTE_MUTATION,
 } from "../../src/services/app/edit/operation.js";
+import { ClientError } from "../../src/services/app/error.js";
 import { ArgError } from "../../src/services/command/arg.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { nockApiResponse, nockEditResponse } from "../__support__/graphql.js";
+import { mockSystemTime } from "../__support__/time.js";
 import { loginTestUser } from "../__support__/user.js";
+
+describe("AddClientError", () => {
+  it("does not double-bullet messages that already have a bullet prefix", () => {
+    const cause = [{ message: "• already bulleted" }, { message: "plain text" }] as unknown as import("graphql").GraphQLError[];
+
+    const clientError = new ClientError(undefined, cause);
+    const error = new AddClientError(clientError);
+
+    // Each line should have exactly one bullet
+    expect(error.message).toMatchInlineSnapshot(`
+      "• already bulleted
+      • plain text"
+    `);
+  });
+});
+
+mockSystemTime();
 
 describe("add", () => {
   beforeEach(async () => {
@@ -34,7 +53,7 @@ describe("add", () => {
         expectVariables: { path: "modelA", fields: [] },
       });
 
-      await add.run(testCtx, makeArgs(add.args, "add", "model", "modelA"));
+      await runCommand(testCtx, add, "model", "modelA");
     });
 
     it("can add a model with fields", async () => {
@@ -50,22 +69,24 @@ describe("add", () => {
         },
       });
 
-      await add.run(testCtx, makeArgs(add.args, "add", "model", "modelA", "newField:string", "newField2:boolean"));
+      await runCommand(testCtx, add, "model", "modelA", "newField:string", "newField2:boolean");
     });
 
     it("requires a model path", async () => {
-      const error = await expectError(() => add.run(testCtx, makeArgs(add.args, "add", "model")));
+      const error = await expectError(() => runCommand(testCtx, add, "model"));
       expect(error).toBeInstanceOf(ArgError);
       expect(error.sprint()).toMatchInlineSnapshot(`
-          "✘ Failed to add model, missing model path
+        "✘ Missing required argument: model
 
-          Usage
-              ggt add model <model_name> [field_name:field_type ...]"
-        `);
+        USAGE
+          ggt add model <model> [field:type ...] [flags]
+
+        Run ggt add model -h for more information."
+      `);
     });
 
     it.each(["field;string", "field:", ":", ""])('returns ArgErrors when field argument is "%s"', async (invalidFieldArgument) => {
-      const error = await expectError(() => add.run(testCtx, makeArgs(add.args, "add", "model", "modelA", invalidFieldArgument)));
+      const error = await expectError(() => runCommand(testCtx, add, "model", "modelA", invalidFieldArgument));
       expect(error).toBeInstanceOf(ArgError);
       expect(error.sprint()).toContain("is not a valid field definition");
     });
@@ -82,28 +103,31 @@ describe("add", () => {
         },
       });
 
-      await add.run(testCtx, makeArgs(add.args, "add", "field", "modelA/newField:string"));
+      await runCommand(testCtx, add, "field", "modelA/newField:string");
     });
 
     it("returns an ArgError if there's no input", async () => {
-      const error = await expectError(() => add.run(testCtx, makeArgs(add.args, "add", "field")));
+      const error = await expectError(() => runCommand(testCtx, add, "field"));
       expect(error).toBeInstanceOf(ArgError);
+      expect(error.usageHint).toBe(true);
       expect(error.sprint()).toMatchInlineSnapshot(`
-          "✘ Failed to add field, invalid field path definition
+        "✘ Missing required argument: model/field:type
 
-          Usage
-              ggt add field <model_path>/<field_name>:<field_type>"
-        `);
+        USAGE
+          ggt add field <model/field:type> [flags]
+
+        Run ggt add field -h for more information."
+      `);
     });
 
     it.each(["user", "user/"])("returns missing field definition ArgError if the input is %s", async (partialInput) => {
-      const error = await expectError(() => add.run(testCtx, makeArgs(add.args, "add", "field", partialInput)));
+      const error = await expectError(() => runCommand(testCtx, add, "field", partialInput));
       expect(error).toBeInstanceOf(ArgError);
       expect(error.sprint()).toContain("Failed to add field, invalid field definition");
     });
 
     it.each(["user/field", "user/field:", "user/:"])("returns missing field type ArgError if the input is %s", async (partialInput) => {
-      const error = await expectError(() => add.run(testCtx, makeArgs(add.args, "add", "field", partialInput)));
+      const error = await expectError(() => runCommand(testCtx, add, "field", partialInput));
       expect(error).toBeInstanceOf(ArgError);
       expect(error.sprint()).toContain("is not a valid field definition");
     });
@@ -157,19 +181,20 @@ describe("add", () => {
         expectVariables: { path: "actionA" },
       });
 
-      await add.run(testCtx, makeArgs(add.args, "add", "action", "actionA"));
+      await runCommand(testCtx, add, "action", "actionA");
     });
 
     it("requires an action name/path", async () => {
-      const error = await expectError(() => add.run(testCtx, makeArgs(add.args, "add", "action")));
+      const error = await expectError(() => runCommand(testCtx, add, "action"));
       expect(error).toBeInstanceOf(ArgError);
       expect(error.sprint()).toMatchInlineSnapshot(`
-          "✘ Failed to add action, missing action path
+        "✘ Missing required argument: path
 
-          Usage
-              ggt add action [CONTEXT]/<action_name>
-              CONTEXT:Specifies the kind of action. Use "model" for model actions otherwise use "action"."
-        `);
+        USAGE
+          ggt add action <path> [flags]
+
+        Run ggt add action -h for more information."
+      `);
     });
   });
 
@@ -181,40 +206,54 @@ describe("add", () => {
         expectVariables: { method: "GET", path: "routeA" },
       });
 
-      await add.run(testCtx, makeArgs(add.args, "add", "route", "GET", "routeA"));
+      await runCommand(testCtx, add, "route", "GET", "routeA");
     });
 
     it("requires a method argument", async () => {
-      const error = await expectError(() => add.run(testCtx, makeArgs(add.args, "add", "route")));
+      const error = await expectError(() => runCommand(testCtx, add, "route"));
       expect(error).toBeInstanceOf(ArgError);
       expect(error.sprint()).toMatchInlineSnapshot(`
-          "✘ Failed to add route, missing route method
+        "✘ Missing required argument: method
 
-          Usage
-              ggt add route <HTTP_METHOD> <route_path>"
-        `);
+        USAGE
+          ggt add route <method> <path> [flags]
+
+        Run ggt add route -h for more information."
+      `);
     });
 
     it("requires a route name", async () => {
-      const error = await expectError(() => add.run(testCtx, makeArgs(add.args, "add", "route", "GET")));
+      const error = await expectError(() => runCommand(testCtx, add, "route", "GET"));
       expect(error).toBeInstanceOf(ArgError);
       expect(error.sprint()).toMatchInlineSnapshot(`
-          "✘ Failed to add route, missing route path
+        "✘ Missing required argument: path
 
-          Usage
-              ggt add route GET <route_path>"
-        `);
+        USAGE
+          ggt add route <method> <path> [flags]
+
+        Run ggt add route -h for more information."
+      `);
     });
   });
 
   describe("environments", () => {
+    it("generates a locale-invariant default environment name", async () => {
+      nockEditResponse({
+        operation: CREATE_ENVIRONMENT_MUTATION,
+        response: { data: { createEnvironment: { slug: "env-19700101-000000", status: EnvironmentStatus.Active } } },
+        expectVariables: { environment: { slug: "env-19700101-000000", sourceSlug: "development" } },
+      });
+
+      await runCommand(testCtx, add, "environment");
+    });
+
     it("can add an environment with `add env`", async () => {
       nockEditResponse({
         operation: CREATE_ENVIRONMENT_MUTATION,
         response: { data: { createEnvironment: { slug: "development2", status: EnvironmentStatus.Active } } },
         expectVariables: { environment: { slug: "development2", sourceSlug: "development" } },
       });
-      await add.run(testCtx, makeArgs(add.args, "add", "env", "development2"));
+      await runCommand(testCtx, add, "env", "development2");
     });
     it("can add an environment with `add environment`", async () => {
       nockEditResponse({
@@ -222,7 +261,22 @@ describe("add", () => {
         response: { data: { createEnvironment: { slug: "development2", status: EnvironmentStatus.Active } } },
         expectVariables: { environment: { slug: "development2", sourceSlug: "development" } },
       });
-      await add.run(testCtx, makeArgs(add.args, "add", "environment", "development2"));
+      await runCommand(testCtx, add, "environment", "development2");
     });
+  });
+
+  it("throws ArgError for unknown subcommand", async () => {
+    const error = await expectError(() => runCommand(testCtx, add, "bogus"));
+    expect(error).toBeInstanceOf(ArgError);
+    expect(error.message).toMatchInlineSnapshot(`
+      "Unknown subcommand bogus
+
+      Did you mean model?
+
+      USAGE
+        ggt add <command> [flags]
+
+      Run ggt add -h for more information."
+    `);
   });
 });

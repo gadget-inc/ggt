@@ -1,4 +1,5 @@
 import { ArgError } from "../command/arg.js";
+import colors from "../output/colors.js";
 import { sprint } from "../output/sprint.js";
 
 /**
@@ -18,9 +19,9 @@ export const AppArg = (value: string, name: string): string => {
 
   throw new ArgError(
     sprint`
-      ${name} must be the application's {bold slug} or {bold URL}
+      ${name} must be the application's ${colors.identifier("slug")} or ${colors.identifier("URL")}
 
-      {bold EXAMPLES:}
+      ${colors.header("EXAMPLES:")}
         ${name} my-app
         ${name} my-app.gadget.app
         ${name} https://my-app.gadget.app

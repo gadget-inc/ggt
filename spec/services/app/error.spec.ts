@@ -99,11 +99,11 @@ describe("ClientError", () => {
       ]);
 
       expect(error.render()).toMatchInlineSnapshot(`
-        "An error occurred while communicating with Gadget
+        "An error occurred while communicating with Gadget (running "FileSyncHashes")
 
         Gadget responded with the following error:
 
-          • GGT_INTERNAL_ERROR: error querying clickhouse: Timeout exceeded (running "FileSyncHashes")"
+          • GGT_INTERNAL_ERROR: error querying clickhouse: Timeout exceeded"
       `);
     });
 
@@ -237,9 +237,9 @@ describe("ClientError", () => {
       const error = new ClientError(FILE_SYNC_HASHES_QUERY, cause);
 
       expect(error.render()).toMatchInlineSnapshot(`
-        "An error occurred while communicating with Gadget
+        "An error occurred while communicating with Gadget (running "FileSyncHashes")
 
-        Please check your internet connection and try again. (running "FileSyncHashes")"
+        Please check your internet connection and try again."
       `);
     });
 
@@ -271,9 +271,9 @@ describe("ClientError", () => {
       const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, cause);
 
       expect(error.render()).toMatchInlineSnapshot(`
-        "An error occurred while communicating with Gadget
+        "An error occurred while communicating with Gadget (running "RemoteFileSyncEvents")
 
-        Please check your internet connection and try again. (running "RemoteFileSyncEvents")"
+        Please check your internet connection and try again."
       `);
     });
 

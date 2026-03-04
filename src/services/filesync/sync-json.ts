@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { findUp } from "find-up";
 import fs from "fs-extra";
+import indentString from "indent-string";
 import { simpleGit } from "simple-git";
 import terminalLink from "terminal-link";
 
@@ -23,8 +24,26 @@ import { type SyncJsonState } from "./sync-json-state.js";
 
 export const SyncJsonArgs = {
   ...AppIdentityArgs,
-  "--allow-different-app": Boolean,
-  "--allow-unknown-directory": Boolean,
+  "--allow-different-app": {
+    type: Boolean,
+    description: "Allow syncing with a different app",
+    details: sprint`
+      Overrides the app recorded in .gadget/sync.json with the one specified by
+      --app. Use this when you want to reuse an existing directory for a
+      different app.
+    `,
+    brief: false,
+  },
+  "--allow-unknown-directory": {
+    type: Boolean,
+    description: "Allow syncing to an existing directory",
+    details: sprint`
+      Normally, a directory must be empty or already contain
+      .gadget/sync.json. Use this when you want to initialize sync in a
+      directory with existing content.
+    `,
+    brief: false,
+  },
 } satisfies ArgsDefinition;
 
 export type SyncJsonArgs = typeof SyncJsonArgs;
@@ -170,21 +189,24 @@ export class SyncJson {
       }
 
       // the user didn't pass --allow-different-app, so throw an error
-      throw new ArgError(sprint`
-          You were about to sync the following app to the following directory:
+      throw new ArgError(
+        sprint`
+            You were about to sync the following app to the following directory:
 
-              ${appIdentity.application.slug} (${appIdentity.environment.name}) → ${directory.path}
+                ${appIdentity.application.slug} (${appIdentity.environment.name}) → ${directory.path}
 
-          However, that directory has already been synced with this app:
+            However, that directory has already been synced with this app:
 
-              ${state.application} (${state.environment})
+                ${state.application} (${state.environment})
 
-          If you're sure that you want to sync:
+            If you're sure that you want to sync:
 
-              ${appIdentity.application.slug} (${appIdentity.environment.name}) → ${directory.path}
+                ${appIdentity.application.slug} (${appIdentity.environment.name}) → ${directory.path}
 
-          Run "ggt dev" with the {bold --allow-different-app} flag.
-      `);
+            Run "ggt dev" with the ${colors.identifier("--allow-different-app")} flag.
+        `,
+        { usageHint: false },
+      );
     }
 
     let previousEnvironment: string | undefined;
@@ -300,7 +322,7 @@ export class SyncJson {
     `;
 
     if (this.gitBranch) {
-      content += sprintln({ indent: 5, content: `Branch  ${this.gitBranch}` });
+      content += sprintln(indentString(`Branch  ${this.gitBranch}`, 5));
     }
 
     const domain = config.domains.app;

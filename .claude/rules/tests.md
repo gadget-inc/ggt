@@ -138,12 +138,32 @@ nockEditResponse({
 });
 ```
 
+## Asserting on formatted output
+
+When asserting on formatted output — error messages, stdout, rendered text — MUST use `toMatchInlineSnapshot()` instead of `toContain`/`toBe` chains. Inline snapshots capture the full rendered shape and catch unintended regressions in surrounding formatting.
+
+Reserve `toContain` for cases where only partial content matters and the surrounding format is intentionally unchecked (e.g. asserting a specific word appears somewhere in a long log stream).
+
+Update snapshots with `pnpm test --update` or `u` in watch mode.
+
+```typescript
+// MUST — full output assertion
+expectStdout().toMatchInlineSnapshot(`
+  "Pushing files to Gadget...
+  Done!"
+`);
+
+// OK — partial content, format intentionally unchecked
+expect(stderr).toContain("permission denied");
+```
+
+---
+
 ## Gotchas
 
 - **Nock pending mocks** — global teardown asserts `nock.pendingMocks()` is empty. Unused interceptors fail the test on cleanup. Use `optional: true` for interceptors that may not be hit.
 - **process.exit throws** — mocked to throw by default. Unwrapped `process.exit()` calls fail with "process.exit was called unexpectedly". Always use `expectProcessExit(fn, code)`.
 - **vi.mock hoisting** — `vi.mock()` is hoisted; you can't reference same-file variables inside it. Use `vi.hoisted()` or inline values. Check `mockSideEffects()` in global setup before adding your own.
-- **Snapshot updating** — prefer `toMatchInlineSnapshot()`. Update with `pnpm test -u` or `u` in watch mode.
 - **vi.waitFor for polling** — use `vi.waitFor(fn, { timeout, interval })` for async conditions. `timeoutMs()` adjusts for CI/debugger.
 - **`mockContext()`/`mockStdout()` re-registration** — some test suites call `mockContext()` at describe level to get their own context lifecycle. When doing this, also call `mockStdout()` at the same describe level to maintain proper hook ordering. Both must be called at module/describe level, not inside `beforeEach`.
 

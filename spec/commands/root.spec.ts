@@ -1,10 +1,12 @@
+import assert from "node:assert";
 import process from "node:process";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import * as root from "../../src/commands/root.js";
 import * as command from "../../src/services/command/command.js";
-import { importCommand, type CommandModule } from "../../src/services/command/command.js";
+import { importCommand, type CommandConfig, type ParentCommandConfig } from "../../src/services/command/command.js";
+import { runCommand } from "../../src/services/command/run.js";
 import { config } from "../../src/services/config/config.js";
 import { Level } from "../../src/services/output/log/level.js";
 import * as update from "../../src/services/output/update.js";
@@ -17,16 +19,25 @@ import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { expectProcessExit } from "../__support__/process.js";
 
+const parentCommands = new Set<string>();
+const parentSubcommands = new Map<string, string[]>();
+for (const name of command.Commands) {
+  const cmd = await importCommand(name);
+  if ("subcommands" in cmd) {
+    parentCommands.add(name);
+    parentSubcommands.set(name, Object.keys((cmd as ParentCommandConfig).subcommands));
+  }
+}
+
+assert(parentCommands.size > 0, "parentCommands must not be empty — top-level await loop may have silently failed");
+
 describe("root", () => {
   beforeEach(() => {
+    process.argv = ["node", "ggt"];
     mock(process, "once", noopThis);
 
     // don't check for updates
     mock(update, "warnIfUpdateAvailable", noop);
-  });
-
-  afterEach(() => {
-    expect(update.warnIfUpdateAvailable).toHaveBeenCalled();
   });
 
   it("sets GGT_LOG_FORMAT=json when --json is given", async () => {
@@ -61,39 +72,150 @@ describe("root", () => {
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget.
 
-      Usage
-        ggt [COMMAND]
+      USAGE
+        ggt [command]
 
-      Commands
-        dev              Start developing your application
-        deploy           Deploy your environment to production
-        status           Show your local and environment's file changes
-        push             Push your local files to your environment
-        pull             Pull your environment's files to your local computer
-        var              Manage environment variables
-        env              Manage environments
-        add              Add models, fields, actions, routes and environments to your app
-        open             Open a Gadget location in your browser
-        list             List your available applications
-        login            Log in to your account
-        logout           Log out of your account
-        logs             Stream your environment's logs
-        debugger         Connect to the debugger for your environment
-        whoami           Print the currently logged in account
-        configure        Configure default execution options
-        agent-plugin     Install Gadget agent plugins (AGENTS.md + skills)
-        version          Print this version of ggt
+      COMMANDS
+        Development
+        dev             Sync files and stream logs locally
+        deploy          Deploy an environment to production
+        push            Upload local file changes to Gadget
+        pull            Download environment files to your local directory
+        status          Show sync state and pending file changes
+        logs            Print recent logs or stream logs from your app
+        debugger        Connect a debugger to your app's environment
 
-      Flags
-        -h, --help       Print how to use a command
-        -v, --verbose    Print more verbose output
+        Resources
+        add             Add resources to your app
+        var             Manage your app's environment variables
+        env             Manage your app's environments
+        open            Open your app in a browser
+
+        Account
+        login           Log in to Gadget
+        logout          Log out of Gadget
+        whoami          Show the current logged-in user
+        list            List your Gadget apps
+
+        Diagnostics
+        problems        Show errors and warnings in your app
+        eval            Evaluate a JavaScript snippet against your app
+
+        Configuration
+        configure       Manage ggt configuration
+        agent-plugin    Manage plugins for AI coding assistants
+        version         Print the currently installed version
+
+      FLAGS
+        -h, --help       Show command help
+            --version    Print the ggt version
+        -v, --verbose    Increase output verbosity (-vv for debug, -vvv for trace)
             --telemetry  Enable telemetry
+            --json       Output as JSON where supported
 
-      Agent plugins
-        Install AGENTS.md and Gadget agent skills for your coding agent:
-        ggt agent-plugin install
+      Use -h for a summary, --help for full details.
 
-      Run "ggt [COMMAND] -h" for more information about a specific command.
+      Documentation: https://docs.gadget.dev/guides/cli
+      Issues:        https://github.com/gadget-inc/ggt/issues
+      "
+    `);
+  });
+
+  it("prints root usage when 'help' is given", async () => {
+    await expectProcessExit(() => root.run(testCtx, makeRootArgs("help")));
+
+    expectStdout().toMatchInlineSnapshot(`
+      "The command-line interface for Gadget.
+
+      USAGE
+        ggt [command]
+
+      COMMANDS
+        Development
+        dev             Sync files and stream logs locally
+        deploy          Deploy an environment to production
+        push            Upload local file changes to Gadget
+        pull            Download environment files to your local directory
+        status          Show sync state and pending file changes
+        logs            Print recent logs or stream logs from your app
+        debugger        Connect a debugger to your app's environment
+
+        Resources
+        add             Add resources to your app
+        var             Manage your app's environment variables
+        env             Manage your app's environments
+        open            Open your app in a browser
+
+        Account
+        login           Log in to Gadget
+        logout          Log out of Gadget
+        whoami          Show the current logged-in user
+        list            List your Gadget apps
+
+        Diagnostics
+        problems        Show errors and warnings in your app
+        eval            Evaluate a JavaScript snippet against your app
+
+        Configuration
+        configure       Manage ggt configuration
+        agent-plugin    Manage plugins for AI coding assistants
+        version         Print the currently installed version
+
+      FLAGS
+          -h, --help
+                Show command help. Use -h for a compact summary. Use --help for expanded
+                descriptions including flag details.
+
+              --version
+                Print the ggt version. Prints the currently installed ggt version string
+                and exits. Same output as ggt version.
+
+          -v, --verbose
+                Increase output verbosity (-vv for debug, -vvv for trace). Each -v
+                increases the log level: -v shows info messages, -vv enables debug
+                output, and -vvv enables full trace logging.
+
+              --telemetry
+                Enable telemetry. Sends anonymous error reports to help improve ggt.
+                Enabled by default. Use ggt configure to persist this setting.
+
+              --json
+                Output as JSON where supported. Formats all output as newline-delimited
+                JSON instead of human-readable text. Useful for scripting and piping ggt
+                output to other tools.
+
+      Use -h for a summary, --help for full details.
+
+      Documentation: https://docs.gadget.dev/guides/cli
+      Issues:        https://github.com/gadget-inc/ggt/issues
+      "
+    `);
+  });
+
+  it("prints command usage when 'help <command>' is given", async () => {
+    process.argv = ["node", "ggt", "help", "whoami"];
+    await expectProcessExit(() => root.run(testCtx, makeRootArgs("help", "whoami")));
+
+    expectStdout().toMatchInlineSnapshot(`
+      "Show the current logged-in user
+
+      Prints the name and email of the currently authenticated user. If no session
+      is active, prints a not-logged-in message. Run ggt login to authenticate.
+
+      USAGE
+        ggt whoami
+
+      EXAMPLES
+        $ ggt whoami
+      "
+    `);
+  });
+
+  it("prints the version when --version is passed", async () => {
+    await expectProcessExit(() => root.run(testCtx, makeRootArgs("--version")));
+
+    expectStdout().toMatchInlineSnapshot(`
+      "1.2.3
       "
     `);
   });
@@ -112,17 +234,53 @@ describe("root", () => {
   });
 
   it("resolves 'envs' alias to the env command", async () => {
+    const cmd = (await importCommand("env")) as ParentCommandConfig;
+    mock(cmd.subcommands.list, "run", noop as never);
+
+    await root.run(testCtx, makeRootArgs("envs", "list"));
+
+    expect(cmd.subcommands.list.run).toHaveBeenCalled();
+  });
+
+  it("shows help when 'envs' alias is invoked without a subcommand", async () => {
     const cmd = await importCommand("env");
-    mock(cmd, "run", noop);
+    // Call runCommand directly to bypass root.run's try-catch, which
+    // catches the process.exit(0) mock throw and routes it to
+    // reportErrorAndExit instead of letting it propagate.
+    await expectProcessExit(() => runCommand(testCtx, cmd));
 
-    await root.run(testCtx, makeRootArgs("envs"));
+    expectStdout().toMatchInlineSnapshot(`
+      "Manage your app's environments
 
-    expect(cmd.run).toHaveBeenCalled();
+      USAGE
+        ggt env <command> [flags]
+
+      COMMANDS
+        list       List all environments
+        create     Create a new environment
+        delete     Delete an environment
+        unpause    Unpause a paused environment
+        use        Switch the active environment for this directory
+
+      FLAGS
+        -a, --app, --application <app-slug>  Gadget app to use
+
+      EXAMPLES
+        $ ggt env list
+        $ ggt env create staging
+        $ ggt env create staging --from development
+        $ ggt env delete staging --force
+        $ ggt env unpause staging
+        $ ggt env use staging
+
+      Run ggt env --help for more information.
+      "
+    `);
   });
 
   it("resolves 'problem' alias to the problems command", async () => {
     const cmd = await importCommand("problems");
-    mock(cmd, "run", noop);
+    mock(cmd, "run", noop as never);
 
     await root.run(testCtx, makeRootArgs("problem"));
 
@@ -131,7 +289,7 @@ describe("root", () => {
 
   it("resolves 'log' alias to the logs command", async () => {
     const cmd = await importCommand("logs");
-    mock(cmd, "run", noop);
+    mock(cmd, "run", noop as never);
 
     await root.run(testCtx, makeRootArgs("log"));
 
@@ -142,7 +300,7 @@ describe("root", () => {
   // AllowedProdCommands check in AppIdentity.load, so "ggt log --env production" works
   it("passes args through to the resolved command when using an alias", async () => {
     const cmd = await importCommand("logs");
-    mock(cmd, "run", noop);
+    mock(cmd, "run", noop as never);
 
     await root.run(testCtx, makeRootArgs("log", "--env", "production"));
 
@@ -150,35 +308,71 @@ describe("root", () => {
   });
 
   describe.each(command.Commands)("when %s is given", (name) => {
-    let cmd: CommandModule;
+    let cmd: CommandConfig;
 
     beforeEach(async () => {
       cmd = await importCommand(name);
-      mock(cmd, "run", noop);
+      if ("run" in cmd) {
+        mock(cmd, "run", noop as never);
+      }
     });
 
     it.each(["--help", "-h"])("prints the usage when %s is passed", async (flag) => {
+      process.argv = ["node", "ggt", name, flag];
       await expectProcessExit(() => root.run(testCtx, makeRootArgs(name, flag)));
 
+      // toMatchSnapshot used because the parametrized loop generates one snapshot per command; inline would produce N large identical-structure blocks
       expectStdout().toMatchSnapshot();
     });
 
-    it("runs the command", async () => {
-      await root.run(testCtx, makeRootArgs(name));
+    // Parent commands exit via process.exit(0) before warnIfUpdateAvailable runs, so the assertion only applies to leaf commands.
+    if (parentCommands.has(name)) {
+      it("shows help when invoked without a subcommand", async () => {
+        // Call dispatch directly to bypass root.run's try-catch, which
+        // catches the process.exit(0) mock throw and routes it to
+        // reportErrorAndExit instead of letting it propagate.
+        await expectProcessExit(() => runCommand(testCtx, cmd));
 
-      expect(cmd.run).toHaveBeenCalled();
-    });
-
-    it("reports and exits if an error occurs", async () => {
-      const error = new Error("boom!");
-      mock(cmd, "run", () => {
-        throw error;
+        expectStdout().toMatchSnapshot();
       });
 
-      void root.run(testCtx, makeRootArgs(name));
-      await waitForReportErrorAndExit(error);
+      const subNames = parentSubcommands.get(name)!;
 
-      expect(cmd.run).toHaveBeenCalled();
-    });
+      it.each(subNames.flatMap((sub) => [[sub, "-h"] as const, [sub, "--help"] as const]))(
+        "prints the usage for %s when %s is passed",
+        async (sub, flag) => {
+          await expectProcessExit(() => runCommand(testCtx, cmd, sub, flag));
+          expectStdout().toMatchSnapshot();
+        },
+      );
+    } else {
+      // Generate dummy values for required positionals so framework
+      // validation passes and we actually reach command.run().
+      const dummyPositionals = (): string[] => (cmd.positionals ?? []).filter((p) => p.required).map((p) => `test-${p.name}`);
+
+      afterEach(() => {
+        if ("run" in cmd) {
+          expect(update.warnIfUpdateAvailable).toHaveBeenCalled();
+        }
+      });
+
+      it("runs the command", async () => {
+        await root.run(testCtx, makeRootArgs(name, ...dummyPositionals()));
+
+        expect(cmd.run).toHaveBeenCalled();
+      });
+
+      it("reports and exits if an error occurs", async () => {
+        const error = new Error("boom!");
+        mock(cmd, "run", () => {
+          throw error;
+        });
+
+        void root.run(testCtx, makeRootArgs(name, ...dummyPositionals()));
+        await waitForReportErrorAndExit(error);
+
+        expect(cmd.run).toHaveBeenCalled();
+      });
+    }
   });
 });

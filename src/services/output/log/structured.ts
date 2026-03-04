@@ -1,20 +1,34 @@
-import assert from "node:assert";
-
 import type { Environment } from "../../app/app.js";
-import type { ArgsDefinition, ArgsDefinitionResult } from "../../command/arg.js";
+import { hidden, type ArgsDefinition, type ArgsDefinitionResult } from "../../command/arg.js";
 import { config } from "../../config/config.js";
 import { env } from "../../config/env.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { serializeError } from "../../util/object.js";
 import { output } from "../output.js";
 import { addSentryBreadcrumb } from "../sentry.js";
+import { sprint } from "../sprint.js";
 import type { Fields } from "./field.js";
 import { formatters } from "./format/format.js";
 import { Level, parseLevel } from "./level.js";
 
 export const LoggingArgs = {
-  "--log-level": { type: (value) => parseLevel(value, Level.INFO), alias: ["-ll"], default: Level.INFO },
-  "--my-logs": { type: Boolean },
+  "--log-level": {
+    type: (value) => parseLevel(value, Level.INFO),
+    alias: ["-l", hidden("-ll")],
+    default: Level.INFO,
+    description: "Minimum log level to display",
+    valueName: "level",
+    details: sprint`
+      One of: trace, debug, info, warn, error. Defaults to info. Use trace or
+      debug for verbose troubleshooting output.
+    `,
+  },
+  "--my-logs": {
+    type: Boolean,
+    alias: "-m",
+    description: "Show only logs emitted by your code",
+    details: "Filters out built-in platform logs, showing only logs sourced from your own code.",
+  },
 } satisfies ArgsDefinition;
 
 export type LoggingArgs = typeof LoggingArgs;
@@ -51,7 +65,7 @@ export type StructuredLoggerOptions = {
 type StructuredEnvironmentLog = (level: string, name: string, msg: Lowercase<string>, fields?: Fields, timestamp?: Date) => void;
 
 // Less bulky mapping of log levels, specifically for environment logs.
-const levelMap: Record<string, Level> = {
+const levelMap: Partial<Record<string, Level>> = {
   trace: Level.TRACE,
   debug: Level.DEBUG,
   info: Level.INFO,
@@ -73,9 +87,10 @@ export const createEnvironmentStructuredLogger = (environment: Environment): Str
 
     const format = formatters[config.logFormat];
     const parsedLevel = levelMap[level.toLowerCase()];
-    assert(parsedLevel, `Unknown level: ${level}`);
+    // Unknown level strings from environment adapters are silently treated as INFO — crashing on unrecognized levels would break log streaming for apps that emit custom levels.
+    const resolvedLevel = parsedLevel ?? Level.INFO;
 
-    output.writeStdout(format(parsedLevel, name, msg, fields, timestamp, environment));
+    output.writeStdout(format(resolvedLevel, name, msg, fields, timestamp, environment));
   };
 };
 

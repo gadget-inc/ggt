@@ -4,33 +4,56 @@ import type { Fields } from "../output/log/field.js";
 import { Level } from "../output/log/level.js";
 import { type LoggingArgsResult, createEnvironmentStructuredLogger } from "../output/log/structured.js";
 
+type SubscribeMode = "follow" | "one-shot";
+
+export type SubscribeToEnvironmentLogsOptions = {
+  onError: (error: unknown) => void;
+  mode?: SubscribeMode;
+  start?: Date;
+  limit?: number;
+  onData?: () => void;
+};
+
+const includedLevels = (minimumLevel: number): string => {
+  if (minimumLevel <= Level.DEBUG) {
+    return "debug|info|warn|error";
+  }
+  if (minimumLevel === Level.INFO) {
+    return "info|warn|error";
+  }
+  if (minimumLevel === Level.WARN) {
+    return "warn|error";
+  }
+  return "error";
+};
+
+const buildQuery = (edit: Edit, args: LoggingArgsResult): string => {
+  return `{environment_id="${edit.environment.id}"} | json | level=~"${includedLevels(args["--log-level"])}"${args["--my-logs"] ? ' | source="user"' : ""}`;
+};
+
 /**
- * Start a subscription to the environment's server side logs and print them to the console.
+ * Start a subscription to the environment's server-side logs and print them to the console.
  */
 export const subscribeToEnvironmentLogs = (
   edit: Edit,
   args: LoggingArgsResult,
-  {
-    onError,
-  }: {
-    onError: (error: unknown) => void;
-  },
+  { onError, mode = "follow", start, limit, onData }: SubscribeToEnvironmentLogsOptions,
 ): EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> => {
   const logger = createEnvironmentStructuredLogger(edit.environment);
+  const query = buildQuery(edit, args);
 
-  const includedLevels = Object.entries(Level)
-    .filter(([_, value]) => {
-      return value >= args["--log-level"];
-    })
-    .map(([key]) => key.toLowerCase())
-    .join("|");
+  const variables =
+    mode === "follow"
+      ? () => ({ query, start: new Date(), ...(limit ? { limit } : {}) })
+      : {
+          query,
+          start: start ?? new Date(Date.now() - 5 * 60 * 1000),
+          ...(limit ? { limit } : {}),
+        };
 
   return edit.subscribe({
     subscription: ENVIRONMENT_LOGS_SUBSCRIPTION,
-    variables: () => ({
-      query: `{environment_id="${edit.environment.id}"} | json | level=~"${includedLevels}"${args["--my-logs"] ? ' | source="user"' : ""}`,
-      start: new Date(),
-    }),
+    variables,
     onError,
     onData: ({ logsSearchV2 }) => {
       for (const log of logsSearchV2.data["messages"] as [string, string][]) {
@@ -47,6 +70,8 @@ export const subscribeToEnvironmentLogs = (
           new Date(Number(log[0]) / 1_000_000),
         );
       }
+
+      onData?.();
     },
   });
 };

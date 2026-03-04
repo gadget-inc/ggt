@@ -153,11 +153,11 @@ describe("logs", () => {
       await runPromise;
     });
 
-    it("passes --level as query filter", async () => {
+    it("passes --log-level as query filter", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      const runPromise = runCommand(testCtx, logs, "--level", "warn");
+      const runPromise = runCommand(testCtx, logs, "--log-level", "warn");
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
       expect(String(logsSub.variables!["query"])).toContain('level=~"warn|error"');
 
@@ -167,11 +167,6 @@ describe("logs", () => {
   });
 
   describe("validation", () => {
-    it("rejects invalid --level", async () => {
-      const error = await expectError(() => runCommand(testCtx, logs, "--level", "verbose"));
-      expect(error).toBeInstanceOf(ArgError);
-    });
-
     it("rejects invalid --start date", async () => {
       const error = await expectError(() => runCommand(testCtx, logs, "--start", "not-a-date"));
       expect(error).toBeInstanceOf(ArgError);

@@ -1552,13 +1552,11 @@ FLAGS
         Show only logs emitted by your code. Filters out built-in platform logs,
         showing only logs sourced from your own code.
 
-      --level <value>
-
       --start <value>
 
 EXAMPLES
   $ ggt logs
-  $ ggt logs --start 2025-01-01T00:00:00Z --level warn
+  $ ggt logs --start 2025-01-01T00:00:00Z --log-level warn
   $ ggt logs --follow --my-logs
   $ ggt logs --env production --json
 "
@@ -1576,12 +1574,11 @@ FLAGS
   -f, --follow                         
   -l, --log-level <level>              Minimum log level to display
   -m, --my-logs                        Show only logs emitted by your code
-      --level <value>                  
       --start <value>                  
 
 EXAMPLES
   $ ggt logs
-  $ ggt logs --start 2025-01-01T00:00:00Z --level warn
+  $ ggt logs --start 2025-01-01T00:00:00Z --log-level warn
   $ ggt logs --follow --my-logs
   $ ggt logs --env production --json
 

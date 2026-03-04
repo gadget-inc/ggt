@@ -8,9 +8,6 @@ import type { Fields } from "../services/output/log/field.js";
 import { LoggingArgs, createEnvironmentStructuredLogger } from "../services/output/log/structured.js";
 import { sprint } from "../services/output/sprint.js";
 
-const VALID_LEVELS = ["debug", "info", "warn", "error"] as const;
-type LogLevel = (typeof VALID_LEVELS)[number];
-
 const parseDate = (value: string): Date => {
   const date = new Date(value);
   if (isNaN(date.getTime())) {
@@ -19,23 +16,17 @@ const parseDate = (value: string): Date => {
   return date;
 };
 
-const parseLevelArg = (value: string): LogLevel => {
-  const lower = value.toLowerCase();
-
-  switch (lower) {
-    case "debug":
-    case "info":
-    case "warn":
-    case "error":
-      return lower;
-    default:
-      throw new ArgError(`Invalid level: "${value}". Must be one of: ${VALID_LEVELS.join(", ")}.`);
+const includedLevels = (minimumLevel: number): string => {
+  if (minimumLevel <= 2) {
+    return "debug|info|warn|error";
   }
-};
-
-const includedLevels = (minimumLevel: LogLevel): string => {
-  const index = VALID_LEVELS.indexOf(minimumLevel);
-  return VALID_LEVELS.slice(index).join("|");
+  if (minimumLevel === 3) {
+    return "info|warn|error";
+  }
+  if (minimumLevel === 4) {
+    return "warn|error";
+  }
+  return "error";
 };
 
 export default defineCommand({
@@ -47,7 +38,7 @@ export default defineCommand({
   `,
   examples: [
     "ggt logs",
-    "ggt logs --start 2025-01-01T00:00:00Z --level warn",
+    "ggt logs --start 2025-01-01T00:00:00Z --log-level warn",
     "ggt logs --follow --my-logs",
     "ggt logs --env production --json",
   ],
@@ -56,7 +47,6 @@ export default defineCommand({
     ...LoggingArgs,
     "--follow": { type: Boolean, alias: ["-f"], default: false },
     "--start": { type: parseDate },
-    "--level": { type: parseLevelArg },
   },
   run: async (ctx, args) => {
     if (args._.length > 0) {
@@ -89,7 +79,7 @@ export default defineCommand({
     }
 
     const start = args["--start"] ?? new Date(Date.now() - 5 * 60 * 1000);
-    const minimumLevel = args["--level"] ?? "info";
+    const minimumLevel = args["--log-level"];
 
     const query = `{environment_id="${appIdentity.environment.id}"} | json | level=~"${includedLevels(minimumLevel)}"${args["--my-logs"] ? ' | source="user"' : ""}`;
 

@@ -1,13 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
 
 import * as logs from "../../src/commands/logs.js";
-import {
-  ENVIRONMENT_LOGS_SUBSCRIPTION,
-  LOGS_SEARCH_V3_QUERY,
-  type GraphQLSubscription,
-  type LogRow,
-} from "../../src/services/app/edit/operation.js";
+import { ENVIRONMENT_LOGS_SUBSCRIPTION, type GraphQLSubscription } from "../../src/services/app/edit/operation.js";
 import { ArgError } from "../../src/services/command/arg.js";
 import { nockTestApps } from "../__support__/app.js";
 import { makeArgs } from "../__support__/arg.js";
@@ -15,7 +9,7 @@ import { mockContext, testCtx } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
 import { expectError } from "../__support__/error.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
-import { makeMockEditSubscriptions, nockEditResponse, type MockEditSubscriptions } from "../__support__/graphql.js";
+import { makeMockEditSubscriptions, type MockEditSubscriptions } from "../__support__/graphql.js";
 import { expectStdout, mockStdout } from "../__support__/output.js";
 import { timeoutMs } from "../__support__/sleep.js";
 import { loginTestUser } from "../__support__/user.js";
@@ -24,7 +18,6 @@ describe("logs", () => {
   mockStdout();
   mockContext();
 
-  // Helper to wait for a subscription to be registered
   const waitForSubscription = async (
     mockEditGraphQL: MockEditSubscriptions,
     subscription: GraphQLSubscription,
@@ -35,39 +28,9 @@ describe("logs", () => {
     });
   };
 
-  // Permissive schema for tests that don't validate specific variables
-  const anyVariables = z.record(z.string(), z.unknown());
-
   const now = 1753120882299;
   const logTimestamp = (now * 1_000_000).toString();
 
-  const logRow: LogRow = {
-    name: "my-app",
-    timestampNanos: logTimestamp,
-    level: "info",
-    message: "hello from server!",
-    labels: { foo: "bar" },
-  };
-
-  const v3SuccessResponse = {
-    data: {
-      logsSearchV3: {
-        __typename: "LogSearchSuccessResult",
-        data: [logRow],
-      },
-    },
-  };
-
-  const v3EmptyResponse = {
-    data: {
-      logsSearchV3: {
-        __typename: "LogSearchSuccessResult",
-        data: [],
-      },
-    },
-  };
-
-  // V2 subscription response format (used for --follow)
   const logMessage = {
     msg: "hello from server!",
     name: "my-app",
@@ -86,29 +49,33 @@ describe("logs", () => {
     },
   };
 
+  const v2EmptySubscriptionResponse = {
+    data: {
+      logsSearchV2: {
+        status: "ok",
+        data: {
+          messages: [],
+        },
+      },
+    },
+  };
+
   beforeEach(() => {
     loginTestUser();
     nockTestApps();
   });
 
-  describe("default (one-shot query)", () => {
+  describe("default (one-shot)", () => {
     it("prints server logs and exits", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
-
-      const scope = nockEditResponse({
-        operation: LOGS_SEARCH_V3_QUERY,
-        response: v3SuccessResponse,
-        expectVariables: anyVariables,
-      });
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const args = makeArgs(logs.args, "logs");
-      await logs.run(testCtx, args);
+      const mockEditGraphQL = makeMockEditSubscriptions();
 
-      expect(scope.isDone()).toBe(true);
+      const runPromise = logs.run(testCtx, args);
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+      await logsSub.emitResponse(v2SubscriptionResponse);
+      await runPromise;
 
       expectStdout().toMatchInlineSnapshot(`
       "06:01:22  INFO  my-app: hello from server!
@@ -118,22 +85,16 @@ describe("logs", () => {
     });
 
     it("prints server logs in JSON format with --json", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
-
-      nockEditResponse({
-        operation: LOGS_SEARCH_V3_QUERY,
-        response: v3SuccessResponse,
-        expectVariables: anyVariables,
-      });
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const args = makeArgs(logs.args, "logs", "--json");
+      const mockEditGraphQL = makeMockEditSubscriptions();
 
       await withEnv({ GGT_LOG_FORMAT: "json" }, async () => {
-        await logs.run(testCtx, args);
+        const runPromise = logs.run(testCtx, args);
+        const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+        await logsSub.emitResponse(v2SubscriptionResponse);
+        await runPromise;
 
         expectStdout().toMatchInlineSnapshot(`
           "{"level":3,"name":"my-app","msg":"hello from server!","fields":{"foo":"bar"}}
@@ -143,124 +104,85 @@ describe("logs", () => {
     });
 
     it("prints nothing when there are no logs", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
-
-      nockEditResponse({
-        operation: LOGS_SEARCH_V3_QUERY,
-        response: v3EmptyResponse,
-        expectVariables: anyVariables,
-      });
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const args = makeArgs(logs.args, "logs");
-      await logs.run(testCtx, args);
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      const runPromise = logs.run(testCtx, args);
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+      await logsSub.emitResponse(v2EmptySubscriptionResponse);
+      await runPromise;
 
       expectStdout().toMatchInlineSnapshot(`""`);
     });
 
-    it("passes --start, --end, --direction, and --level to the query", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
-
-      const scope = nockEditResponse({
-        operation: LOGS_SEARCH_V3_QUERY,
-        response: v3SuccessResponse,
-        expectVariables: z.object({
-          query: z.string(),
-          start: z.literal("2025-01-01T00:00:00.000Z"),
-          end: z.literal("2025-01-02T00:00:00.000Z"),
-          direction: z.literal("forward"),
-          level: z.literal(40),
-        }),
-      });
-
-      const args = makeArgs(
-        logs.args,
-        "logs",
-        "--start",
-        "2025-01-01T00:00:00Z",
-        "--end",
-        "2025-01-02T00:00:00Z",
-        "--direction",
-        "forward",
-        "--level",
-        "warn",
-      );
-      await logs.run(testCtx, args);
-
-      expect(scope.isDone()).toBe(true);
-    });
-
-    it("defaults --start to 5 minutes ago", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
-
-      const before = new Date(Date.now() - 5 * 60 * 1000);
-
-      nockEditResponse({
-        operation: LOGS_SEARCH_V3_QUERY,
-        response: v3SuccessResponse,
-        expectVariables: z.object({
-          query: z.string(),
-          start: z.string().refine((s) => {
-            const startDate = new Date(s);
-            return startDate.getTime() >= before.getTime() && startDate.getTime() <= Date.now();
-          }, "start should be approximately 5 minutes ago"),
-        }),
-      });
+    it("defaults --start to approximately 5 minutes ago", async () => {
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const args = makeArgs(logs.args, "logs");
-      await logs.run(testCtx, args);
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      const before = Date.now() - 5 * 60 * 1000;
+      const runPromise = logs.run(testCtx, args);
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+
+      expect(logsSub.variables).toHaveProperty("start");
+      const start = logsSub.variables!["start"];
+      expect(start).toBeInstanceOf(Date);
+
+      const startDate = start as unknown as Date;
+      expect(startDate.getTime()).toBeGreaterThanOrEqual(before - 2_000);
+      expect(startDate.getTime()).toBeLessThanOrEqual(Date.now());
+
+      await logsSub.emitResponse(v2EmptySubscriptionResponse);
+      await runPromise;
+    });
+
+    it("passes --start through to subscription variables", async () => {
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+      const args = makeArgs(logs.args, "logs", "--start", "2025-01-01T00:00:00Z");
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      const runPromise = logs.run(testCtx, args);
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+      expect(logsSub.variables!["start"]).toEqual(new Date("2025-01-01T00:00:00Z"));
+
+      await logsSub.emitResponse(v2EmptySubscriptionResponse);
+      await runPromise;
     });
 
     it("passes --my-logs as query filter", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
-
-      nockEditResponse({
-        operation: LOGS_SEARCH_V3_QUERY,
-        response: v3SuccessResponse,
-        expectVariables: z.object({
-          query: z.literal('source:"user"'),
-          start: z.string(),
-        }),
-      });
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const args = makeArgs(logs.args, "logs", "--my-logs");
-      await logs.run(testCtx, args);
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      const runPromise = logs.run(testCtx, args);
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+      expect(String(logsSub.variables!["query"])).toContain('source="user"');
+
+      await logsSub.emitResponse(v2EmptySubscriptionResponse);
+      await runPromise;
+    });
+
+    it("passes --level as query filter", async () => {
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+      const args = makeArgs(logs.args, "logs", "--level", "warn");
+      const mockEditGraphQL = makeMockEditSubscriptions();
+
+      const runPromise = logs.run(testCtx, args);
+      const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+      expect(String(logsSub.variables!["query"])).toContain('level=~"warn|error"');
+
+      await logsSub.emitResponse(v2EmptySubscriptionResponse);
+      await runPromise;
     });
   });
 
   describe("validation", () => {
-    it("rejects --end before --start", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
-
-      const args = makeArgs(logs.args, "logs", "--start", "2025-01-02T00:00:00Z", "--end", "2025-01-01T00:00:00Z");
-      const error = await expectError(() => logs.run(testCtx, args));
-      expect(error).toBeInstanceOf(ArgError);
-      expect(error.message).toContain("--end cannot be before --start");
-    });
-
-    it("rejects invalid --direction", () => {
-      expect(() => makeArgs(logs.args, "logs", "--direction", "sideways")).toThrow(ArgError);
-    });
-
     it("rejects invalid --level", () => {
       expect(() => makeArgs(logs.args, "logs", "--level", "verbose")).toThrow(ArgError);
     });
@@ -272,28 +194,18 @@ describe("logs", () => {
 
   describe("--follow", () => {
     it("streams server logs continuously via subscription", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const args = makeArgs(logs.args, "logs", "--follow");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
-      // Start the logs command (which will subscribe asynchronously)
       const runPromise = logs.run(testCtx, args);
-
-      // Wait for the subscription to be registered
       const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
 
-      // Follow mode should pass start to stream from now
       expect(logsSub.variables).toHaveProperty("start");
       expect(logsSub.variables!["start"]).toBeInstanceOf(Date);
 
-      // Emit a log message
       await logsSub.emitResponse(v2SubscriptionResponse);
-
       await runPromise;
 
       expectStdout().toMatchInlineSnapshot(`
@@ -304,11 +216,7 @@ describe("logs", () => {
     });
 
     it("supports -f as alias for --follow", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const args = makeArgs(logs.args, "logs", "-f");
       const mockEditGraphQL = makeMockEditSubscriptions();
@@ -326,25 +234,15 @@ describe("logs", () => {
     });
 
     it("streams server logs in JSON format with --json", async () => {
-      await makeSyncScenario({
-        localFiles: {
-          ".gadget/": "",
-        },
-      });
+      await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
       const args = makeArgs(logs.args, "logs", "--follow", "--json");
       const mockEditGraphQL = makeMockEditSubscriptions();
 
       await withEnv({ GGT_LOG_FORMAT: "json" }, async () => {
-        // Start the logs command (which will subscribe asynchronously)
         const runPromise = logs.run(testCtx, args);
-
-        // Wait for the subscription to be registered
         const logsSub = await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
-
-        // Emit a log message
         await logsSub.emitResponse(v2SubscriptionResponse);
-
         await runPromise;
 
         expectStdout().toMatchInlineSnapshot(`
@@ -353,5 +251,22 @@ describe("logs", () => {
         `);
       });
     });
+  });
+
+  it("handles abort in one-shot mode", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const args = makeArgs(logs.args, "logs");
+    const mockEditGraphQL = makeMockEditSubscriptions();
+
+    const runPromise = logs.run(testCtx, args);
+    await waitForSubscription(mockEditGraphQL, ENVIRONMENT_LOGS_SUBSCRIPTION);
+
+    const error = await expectError(async () => {
+      testCtx.abort(new Error("stopped"));
+      await runPromise;
+    });
+
+    expect(error.message).toContain("stopped");
   });
 });

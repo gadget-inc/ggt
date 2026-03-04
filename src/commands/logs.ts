@@ -1,4 +1,4 @@
-import { LOGS_SEARCH_V3_QUERY } from "../services/app/edit/operation.js";
+import { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../services/command/arg.js";
 import type { Run, Usage } from "../services/command/command.js";
@@ -8,16 +8,8 @@ import type { Fields } from "../services/output/log/field.js";
 import { LoggingArgs, createEnvironmentStructuredLogger } from "../services/output/log/structured.js";
 import { sprint } from "../services/output/sprint.js";
 
-// Maps level names to the backend's UserspaceLogLevel integer values
-const BACKEND_LEVEL: Record<string, number> = {
-  debug: 20,
-  info: 30,
-  warn: 40,
-  error: 50,
-};
-
-const VALID_LEVELS: readonly string[] = Object.keys(BACKEND_LEVEL);
-const VALID_DIRECTIONS: readonly string[] = ["forward", "backward"];
+const VALID_LEVELS = ["debug", "info", "warn", "error"] as const;
+type LogLevel = (typeof VALID_LEVELS)[number];
 
 const parseDate = (value: string): Date => {
   const date = new Date(value);
@@ -27,14 +19,7 @@ const parseDate = (value: string): Date => {
   return date;
 };
 
-const parseDirection = (value: string): string => {
-  if (!VALID_DIRECTIONS.includes(value)) {
-    throw new ArgError(`Invalid direction: "${value}". Must be "forward" or "backward".`);
-  }
-  return value;
-};
-
-const parseLevelArg = (value: string): number => {
+const parseLevelArg = (value: string): LogLevel => {
   const lower = value.toLowerCase();
 
   switch (lower) {
@@ -42,10 +27,15 @@ const parseLevelArg = (value: string): number => {
     case "info":
     case "warn":
     case "error":
-      return BACKEND_LEVEL[lower];
+      return lower;
     default:
       throw new ArgError(`Invalid level: "${value}". Must be one of: ${VALID_LEVELS.join(", ")}.`);
   }
+};
+
+const includedLevels = (minimumLevel: LogLevel): string => {
+  const index = VALID_LEVELS.indexOf(minimumLevel);
+  return VALID_LEVELS.slice(index).join("|");
 };
 
 export type LogsArgs = typeof args;
@@ -56,8 +46,6 @@ export const args = {
   ...LoggingArgs,
   "--follow": { type: Boolean, alias: ["-f"], default: false },
   "--start": { type: parseDate },
-  "--end": { type: parseDate },
-  "--direction": { type: parseDirection },
   "--level": { type: parseLevelArg },
 } satisfies ArgsDefinition;
 
@@ -71,8 +59,6 @@ export const usage: Usage = (_ctx) => {
   {gray Options}
         -f, --follow                   Stream logs continuously instead of printing recent logs and exiting
         --start <datetime>             Start time for log query (default: 5 minutes ago). ISO 8601 format
-        --end <datetime>               End time for log query. ISO 8601 format
-        --direction <direction>        Log ordering: "forward" or "backward"
         --level <level>                Minimum log level: debug, info, warn, error
         -ll, --log-level <level>       Sets the log level for incoming application logs in --follow mode (default: info)
         --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
@@ -129,44 +115,60 @@ export const run: Run<LogsArgs> = async (ctx, args) => {
   }
 
   const start = args["--start"] ?? new Date(Date.now() - 5 * 60 * 1000);
-  const end = args["--end"];
-  const direction = args["--direction"];
-  const level = args["--level"];
+  const minimumLevel = args["--level"] ?? "info";
 
-  if (end && end.getTime() < start.getTime()) {
-    throw new ArgError("--end cannot be before --start.");
-  }
-
-  const query = args["--my-logs"] ? 'source:"user"' : "";
-
-  const result = await appIdentity.edit.query({
-    query: LOGS_SEARCH_V3_QUERY,
-    variables: {
-      query,
-      start: start.toISOString(),
-      ...(end ? { end: end.toISOString() } : {}),
-      ...(direction ? { direction } : {}),
-      ...(level ? { level } : {}),
-    },
-  });
-
-  if (result.logsSearchV3.__typename === "LogSearchErrorResult") {
-    throw new Error(`Logs search failed: ${JSON.stringify(result.logsSearchV3.error)}`);
-  }
+  const query = `{environment_id="${appIdentity.environment.id}"} | json | level=~"${includedLevels(minimumLevel)}"${args["--my-logs"] ? ' | source="user"' : ""}`;
 
   const logger = createEnvironmentStructuredLogger(appIdentity.environment);
-  for (const row of result.logsSearchV3.data ?? []) {
-    const fields: Record<string, unknown> = {};
-    if (row.labels) {
-      Object.assign(fields, row.labels);
-    }
 
-    logger(
-      row.level,
-      row.name,
-      (row.message ?? "") as Lowercase<string>,
-      fields as Fields,
-      new Date(Number(row.timestampNanos) / 1_000_000),
-    );
-  }
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+    let logsSubscription: { unsubscribe(): void } | undefined;
+
+    const finish = (done: () => void): void => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      logsSubscription?.unsubscribe();
+      done();
+    };
+
+    logsSubscription = appIdentity.edit.subscribe({
+      subscription: ENVIRONMENT_LOGS_SUBSCRIPTION,
+      variables: { query, start, limit: 500 },
+      onError: (error) => {
+        finish(() => reject(error));
+      },
+      onData: ({ logsSearchV2 }) => {
+        for (const log of logsSearchV2.data["messages"] as [string, string][]) {
+          const message: unknown = JSON.parse(log[1]);
+          const { msg, name, level, ...fields } = message as Record<string, unknown>;
+
+          logger(
+            level as string,
+            name as string,
+            msg as Lowercase<string>,
+            {
+              ...fields,
+            } as Fields,
+            new Date(Number(log[0]) / 1_000_000),
+          );
+        }
+
+        finish(resolve);
+      },
+    });
+
+    ctx.onAbort((reason) => {
+      finish(() => {
+        if (reason instanceof Error) {
+          reject(reason);
+        } else {
+          reject(new Error("Aborted"));
+        }
+      });
+    });
+  });
 };

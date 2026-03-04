@@ -495,8 +495,6 @@ Usage
 Options
       -f, --follow                   Stream logs continuously instead of printing recent logs and exiting
       --start <datetime>             Start time for log query (default: 5 minutes ago). ISO 8601 format
-      --end <datetime>               End time for log query. ISO 8601 format
-      --direction <direction>        Log ordering: "forward" or "backward"
       --level <level>                Minimum log level: debug, info, warn, error
       -ll, --log-level <level>       Sets the log level for incoming application logs in --follow mode (default: info)
       --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework
@@ -531,8 +529,6 @@ Usage
 Options
       -f, --follow                   Stream logs continuously instead of printing recent logs and exiting
       --start <datetime>             Start time for log query (default: 5 minutes ago). ISO 8601 format
-      --end <datetime>               End time for log query. ISO 8601 format
-      --direction <direction>        Log ordering: "forward" or "backward"
       --level <level>                Minimum log level: debug, info, warn, error
       -ll, --log-level <level>       Sets the log level for incoming application logs in --follow mode (default: info)
       --my-logs                      Only outputs user sourced logs and exclude logs from the Gadget framework

@@ -68,7 +68,7 @@ const formatValue = (value: string, color: (s: string) => string, indent: number
   return buf.join(EMPTY);
 };
 
-const getEnvironmentLogsUrl = (environment: Environment, queryParams?: Record<string, unknown>): string => {
+export const getEnvironmentLogsUrl = (environment: Environment, queryParams?: Record<string, unknown>): string => {
   let queryString = "";
 
   if (queryParams) {

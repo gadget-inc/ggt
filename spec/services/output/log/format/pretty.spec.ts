@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import type { Application, Environment } from "../../../../../src/services/app/app.js";
-import { config } from "../../../../../src/services/config/config.js";
 import { formatPretty, getEnvironmentLogsUrl } from "../../../../../src/services/output/log/format/pretty.js";
 import { Level } from "../../../../../src/services/output/log/level.js";
 import { withEnv } from "../../../../__support__/env.js";
@@ -212,22 +211,22 @@ describe("formatPretty", () => {
   });
 
   describe("getEnvironmentLogsUrl", () => {
-    it("uses slug without --env suffix for production environments", () => {
+    it("uses primaryDomain with env name in path for production environments", () => {
       const env = makeEnvironment("production", "production");
       const url = getEnvironmentLogsUrl(env);
-      expect(url).toBe(`https://myapp.${config.domains.app}/edit/logs`);
+      expect(url).toBe("https://myapp.gadget.app/edit/production/logs");
     });
 
-    it("uses slug--env suffix for development environments", () => {
+    it("uses primaryDomain with env name in path for development environments", () => {
       const env = makeEnvironment("development", "development");
       const url = getEnvironmentLogsUrl(env);
-      expect(url).toBe(`https://myapp--development.${config.domains.app}/edit/logs`);
+      expect(url).toBe("https://myapp.gadget.app/edit/development/logs");
     });
 
-    it("uses slug--env suffix for test environments", () => {
+    it("uses primaryDomain with env name in path for test environments", () => {
       const env = makeEnvironment("test", "my-test");
       const url = getEnvironmentLogsUrl(env);
-      expect(url).toBe(`https://myapp--my-test.${config.domains.app}/edit/logs`);
+      expect(url).toBe("https://myapp.gadget.app/edit/my-test/logs");
     });
   });
 });

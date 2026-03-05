@@ -68,14 +68,18 @@ const formatValue = (value: string, color: (s: string) => string, indent: number
   return buf.join(EMPTY);
 };
 
-const getEnvironmentLogsUrl = (environment: Environment, queryParams?: Record<string, unknown>): string => {
+export const getEnvironmentLogsUrl = (environment: Environment, queryParams?: Record<string, unknown>): string => {
   let queryString = "";
 
   if (queryParams) {
     queryString = serializeObjectToHTTPQuery(queryParams);
   }
 
-  return `https://${environment.application.slug}--${environment.name}.${config.domains.app}/edit/logs${queryString}`;
+  let subdomain = environment.application.slug;
+  if (environment.type !== "production") {
+    subdomain += `--${environment.name}`;
+  }
+  return `https://${subdomain}.${config.domains.app}/edit/logs${queryString}`;
 };
 
 export const defaultLogqlQuery = (environment?: Environment): string => {

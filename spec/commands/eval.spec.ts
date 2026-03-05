@@ -66,9 +66,10 @@ const nockUnpause = ({ envName = "development" } = {}): void => {
   });
 };
 
-const nockClientSource = ({ appSlug = "test", envName = "development", source = mockClientSource } = {}): void => {
+const nockClientSource = ({ appSlug = "test", envName = "development", envType = "development", source = mockClientSource } = {}): void => {
+  const subdomain = envType === "production" ? appSlug : `${appSlug}--${envName}`;
   matchAuthHeader(
-    nock(`https://${appSlug}--${envName}.${config.domains.app}`)
+    nock(`https://${subdomain}.${config.domains.app}`)
       .get("/api/client/node.js")
       .reply(200, source, { "content-type": "application/javascript" }),
   );
@@ -350,6 +351,27 @@ describe("eval", () => {
       nockClientSource();
 
       await runCommand(testCtx, eval_, "api.user.findMany()");
+
+      expectStdout().toContain("Alice");
+    });
+
+    it("uses slug without --env suffix for production environments", async () => {
+      await fs.outputJSON(syncJsonPath, {
+        application: "test",
+        environment: "production",
+        environments: { production: { filesVersion: "1" } },
+      });
+      nockClientSource({ envName: "production", envType: "production" });
+
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "production", "api.user.findMany()");
+
+      expectStdout().toContain("Alice");
+    });
+
+    it("uses slug--env suffix for non-production environments", async () => {
+      nockClientSource({ envName: "cool-environment-development" });
+
+      await runCommand(testCtx, eval_, "--app", "test", "--env", "cool-environment-development", "api.user.findMany()");
 
       expectStdout().toContain("Alice");
     });

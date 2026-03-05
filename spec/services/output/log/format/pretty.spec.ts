@@ -1,9 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { formatPretty } from "../../../../../src/services/output/log/format/pretty.js";
+import type { Application, Environment } from "../../../../../src/services/app/app.js";
+import { config } from "../../../../../src/services/config/config.js";
+import { formatPretty, getEnvironmentLogsUrl } from "../../../../../src/services/output/log/format/pretty.js";
 import { Level } from "../../../../../src/services/output/log/level.js";
 import { withEnv } from "../../../../__support__/env.js";
 import { mockSystemTime } from "../../../../__support__/time.js";
+
+const makeEnvironment = (type: string, name: string): Environment => {
+  const app: Application = {
+    id: 1n,
+    slug: "myapp",
+    primaryDomain: "myapp.gadget.app",
+    environments: [],
+    team: { id: 1n, name: "team" },
+  };
+  return { id: 1n, name, type, nodeVersion: "22.15.0", application: app } as Environment;
+};
 
 describe("formatPretty", () => {
   mockSystemTime();
@@ -195,6 +208,26 @@ describe("formatPretty", () => {
             19: 19
         "
       `);
+    });
+  });
+
+  describe("getEnvironmentLogsUrl", () => {
+    it("uses slug without --env suffix for production environments", () => {
+      const env = makeEnvironment("production", "production");
+      const url = getEnvironmentLogsUrl(env);
+      expect(url).toBe(`https://myapp.${config.domains.app}/edit/logs`);
+    });
+
+    it("uses slug--env suffix for development environments", () => {
+      const env = makeEnvironment("development", "development");
+      const url = getEnvironmentLogsUrl(env);
+      expect(url).toBe(`https://myapp--development.${config.domains.app}/edit/logs`);
+    });
+
+    it("uses slug--env suffix for test environments", () => {
+      const env = makeEnvironment("test", "my-test");
+      const url = getEnvironmentLogsUrl(env);
+      expect(url).toBe(`https://myapp--my-test.${config.domains.app}/edit/logs`);
     });
   });
 });

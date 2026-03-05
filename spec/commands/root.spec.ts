@@ -82,7 +82,7 @@ describe("root", () => {
         push            Upload local file changes to Gadget
         pull            Download environment files to your local directory
         status          Show sync state and pending file changes
-        logs            Stream logs from your app in real time
+        logs            Print recent logs or stream logs from your app
         debugger        Connect a debugger to your app's environment
 
         Resources
@@ -137,7 +137,7 @@ describe("root", () => {
         push            Upload local file changes to Gadget
         pull            Download environment files to your local directory
         status          Show sync state and pending file changes
-        logs            Stream logs from your app in real time
+        logs            Print recent logs or stream logs from your app
         debugger        Connect a debugger to your app's environment
 
         Resources

@@ -1525,11 +1525,9 @@ Run ggt logout --help for more information.
 `;
 
 exports[`root > when logs is given > prints the usage when --help is passed 1`] = `
-"Stream logs from your app in real time
+"Print recent logs or stream logs from your app
 
-Streams HTTP requests, background action invocations, and console output from your
-environment. Use --my-logs to show only logs emitted by your code.
-Use --log-level to set the minimum severity (e.g. warn or error).
+Prints recent logs and exits by default. Use --follow (-f) to stream logs continuously.
 
 USAGE
   ggt logs [flags]
@@ -1544,6 +1542,9 @@ FLAGS
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
+  -f, --follow
+        Stream logs continuously. When omitted, prints recent logs and exits.
+
   -l, --log-level <level>
         Minimum log level to display. One of: trace, debug, info, warn, error.
         Defaults to info. Use trace or debug for verbose troubleshooting output.
@@ -1552,16 +1553,20 @@ FLAGS
         Show only logs emitted by your code. Filters out built-in platform logs,
         showing only logs sourced from your own code.
 
+      --start <datetime>
+        Start time for one-shot log queries. ISO 8601 timestamp. Defaults to 5
+        minutes ago.
+
 EXAMPLES
   $ ggt logs
-  $ ggt logs --env production
-  $ ggt logs --my-logs --log-level warn
-  $ ggt logs --json
+  $ ggt logs --start 2025-01-01T00:00:00Z --log-level warn
+  $ ggt logs --follow --my-logs
+  $ ggt logs --env production --json
 "
 `;
 
 exports[`root > when logs is given > prints the usage when -h is passed 1`] = `
-"Stream logs from your app in real time
+"Print recent logs or stream logs from your app
 
 USAGE
   ggt logs [flags]
@@ -1569,14 +1574,16 @@ USAGE
 FLAGS
   -a, --app, --application <app-slug>  Gadget app to use
   -e, --env, --environment <name>      Environment to use
+  -f, --follow                         Stream logs continuously
   -l, --log-level <level>              Minimum log level to display
   -m, --my-logs                        Show only logs emitted by your code
+      --start <datetime>               Start time for one-shot log queries
 
 EXAMPLES
   $ ggt logs
-  $ ggt logs --env production
-  $ ggt logs --my-logs --log-level warn
-  $ ggt logs --json
+  $ ggt logs --start 2025-01-01T00:00:00Z --log-level warn
+  $ ggt logs --follow --my-logs
+  $ ggt logs --env production --json
 
 Run ggt logs --help for more information.
 "

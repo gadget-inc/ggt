@@ -16,7 +16,8 @@ const parseDate = (value: string): Date => {
   return date;
 };
 
-const ONE_SHOT_WAIT_FOR_DATA_TIMEOUT = ms("3s");
+const ONE_SHOT_INITIAL_TIMEOUT_MS = ms("3s");
+const ONE_SHOT_SILENCE_TIMEOUT_MS = 100;
 
 export default defineCommand({
   name: "logs",
@@ -83,11 +84,17 @@ export default defineCommand({
     }
 
     const start = args["--start"] ?? new Date(Date.now() - ms("5m"));
+    const queryTime = Date.now();
 
     await new Promise<void>((resolve, reject) => {
       let settled = false;
       let logsSubscription: { unsubscribe(): void } | undefined;
       let noDataTimeout: ReturnType<typeof setTimeout> | undefined;
+
+      const resetTimeout = (): void => {
+        if (noDataTimeout) clearTimeout(noDataTimeout);
+        noDataTimeout = setTimeout(() => finish(resolve), ONE_SHOT_SILENCE_TIMEOUT_MS);
+      };
 
       const finish = (done: () => void): void => {
         if (settled) return;
@@ -105,10 +112,19 @@ export default defineCommand({
         start,
         limit: 500,
         onError: (error) => finish(() => reject(error)),
-        onData: () => finish(resolve),
+        onBatch: (latestTimestampMs) => {
+          if (latestTimestampMs >= queryTime) {
+            // We've caught up to live — historical data is complete
+            finish(resolve);
+          } else {
+            // More historical data may follow, reset with short silence timeout
+            resetTimeout();
+          }
+        },
       });
 
-      noDataTimeout = setTimeout(() => finish(resolve), ONE_SHOT_WAIT_FOR_DATA_TIMEOUT);
+      // Initial timeout is longer to allow for WebSocket connection setup
+      noDataTimeout = setTimeout(() => finish(resolve), ONE_SHOT_INITIAL_TIMEOUT_MS);
 
       ctx.onAbort((reason) => {
         finish(() => {

@@ -13,7 +13,8 @@ export type SubscribeToEnvironmentLogsOptions = {
   mode?: SubscribeMode;
   start?: Date;
   limit?: number;
-  onData?: () => void;
+  /** Called after each batch with the latest log timestamp in ms. */
+  onBatch?: (latestTimestampMs: number) => void;
 };
 
 const includedLevels = (minimumLevel: number): string => {
@@ -39,7 +40,7 @@ const buildQuery = (edit: Edit, args: LoggingArgsResult): string => {
 export const subscribeToEnvironmentLogs = (
   edit: Edit,
   args: LoggingArgsResult,
-  { onError, mode = "follow", start, limit, onData }: SubscribeToEnvironmentLogsOptions,
+  { onError, mode = "follow", start, limit, onBatch }: SubscribeToEnvironmentLogsOptions,
 ): EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> => {
   const logger = createEnvironmentStructuredLogger(edit.environment);
   const query = buildQuery(edit, args);
@@ -54,7 +55,14 @@ export const subscribeToEnvironmentLogs = (
     variables,
     onError,
     onData: ({ logsSearchV2 }) => {
+      let latestTimestampMs = 0;
+
       for (const log of logsSearchV2.data["messages"] as [string, string][]) {
+        const timestampMs = Number(log[0]) / 1_000_000;
+        if (timestampMs > latestTimestampMs) {
+          latestTimestampMs = timestampMs;
+        }
+
         const message: unknown = JSON.parse(log[1]);
         const { msg, name, level, ...fields } = message as Record<string, unknown>;
 
@@ -65,11 +73,11 @@ export const subscribeToEnvironmentLogs = (
           {
             ...fields,
           } as Fields,
-          new Date(Number(log[0]) / 1_000_000),
+          new Date(timestampMs),
         );
       }
 
-      onData?.();
+      onBatch?.(latestTimestampMs);
     },
   });
 };

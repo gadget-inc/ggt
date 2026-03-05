@@ -59,7 +59,11 @@ const loadClient = async (
 
   // Fetch from server if not cached
   if (!clientSource) {
-    const clientUrl = `https://${application.slug}--${environment.name}.${config.domains.app}/api/client/node.js`;
+    let subdomain = application.slug;
+    if (environment.type !== "production") {
+      subdomain += `--${environment.name}`;
+    }
+    const clientUrl = `https://${subdomain}.${config.domains.app}/api/client/node.js`;
     ctx.log.debug("fetching client source", { clientUrl });
 
     try {

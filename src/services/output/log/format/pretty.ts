@@ -75,7 +75,11 @@ const getEnvironmentLogsUrl = (environment: Environment, queryParams?: Record<st
     queryString = serializeObjectToHTTPQuery(queryParams);
   }
 
-  return `https://${environment.application.slug}--${environment.name}.${config.domains.app}/edit/logs${queryString}`;
+  let subdomain = environment.application.slug;
+  if (environment.type !== "production") {
+    subdomain += `--${environment.name}`;
+  }
+  return `https://${subdomain}.${config.domains.app}/edit/logs${queryString}`;
 };
 
 export const defaultLogqlQuery = (environment?: Environment): string => {

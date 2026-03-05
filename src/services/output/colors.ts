@@ -57,6 +57,13 @@ export default {
   /** Inline code, command, and file name references in prose. */
   code: color.cyanBright,
 
+  // Log line tokens
+  /** Source name in a log line (e.g. "gadget-api"). */
+  logName: color.bold,
+  /** Text inside a level badge (on a colored background). Uses RGB white
+   *  so it stays readable regardless of the terminal's whiteBright. */
+  levelBadgeText: color.rgb(255, 255, 255).bold,
+
   // Log level badge backgrounds
   levelPrint: color.bgBlack,
   levelTrace: color.bgBlue,

@@ -32,6 +32,7 @@ linkcode
 localappdata
 logql
 mkdirs
+myapp
 nothrow
 notificationcenter
 notifysend

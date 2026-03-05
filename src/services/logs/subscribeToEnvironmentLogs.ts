@@ -1,3 +1,5 @@
+import ms from "ms";
+
 import type { Edit, EditSubscription } from "../app/edit/edit.js";
 import { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../app/edit/operation.js";
 import type { Fields } from "../output/log/field.js";
@@ -45,7 +47,7 @@ export const subscribeToEnvironmentLogs = (
   const variables =
     mode === "follow"
       ? () => ({ query, start: new Date(), ...(limit ? { limit } : {}) })
-      : () => ({ query, start: start ?? new Date(Date.now() - 5 * 60 * 1000), ...(limit ? { limit } : {}) });
+      : () => ({ query, start: start ?? new Date(Date.now() - ms("5m")), ...(limit ? { limit } : {}) });
 
   return edit.subscribe({
     subscription: ENVIRONMENT_LOGS_SUBSCRIPTION,

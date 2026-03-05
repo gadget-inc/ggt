@@ -1,3 +1,5 @@
+import ms from "ms";
+
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
 import { ArgError } from "../services/command/arg.js";
 import { defineCommand } from "../services/command/command.js";
@@ -14,7 +16,7 @@ const parseDate = (value: string): Date => {
   return date;
 };
 
-const ONE_SHOT_WAIT_FOR_DATA_TIMEOUT_MS = 3_000;
+const ONE_SHOT_WAIT_FOR_DATA_TIMEOUT = ms("3s");
 
 export default defineCommand({
   name: "logs",
@@ -80,7 +82,7 @@ export default defineCommand({
       return;
     }
 
-    const start = args["--start"] ?? new Date(Date.now() - 5 * 60 * 1000);
+    const start = args["--start"] ?? new Date(Date.now() - ms("5m"));
 
     await new Promise<void>((resolve, reject) => {
       let settled = false;
@@ -106,7 +108,7 @@ export default defineCommand({
         onData: () => finish(resolve),
       });
 
-      noDataTimeout = setTimeout(() => finish(resolve), ONE_SHOT_WAIT_FOR_DATA_TIMEOUT_MS);
+      noDataTimeout = setTimeout(() => finish(resolve), ONE_SHOT_WAIT_FOR_DATA_TIMEOUT);
 
       ctx.onAbort((reason) => {
         finish(() => {

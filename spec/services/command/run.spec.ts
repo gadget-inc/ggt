@@ -11,6 +11,22 @@ import { expectProcessExit } from "../../__support__/process.js";
 
 // -- test fixtures --
 
+const allowLeafArgs = {
+  "--force": { type: Boolean, alias: "-f", description: "Force the operation" },
+  "--allow-problems": { type: Boolean, description: "Allow deploying with problems" },
+  "--allow-charges": { type: Boolean, description: "Allow deploying with new charges" },
+  "--allow-data-delete": { type: Boolean, description: "Allow deploying with data loss" },
+} satisfies ArgsDefinition;
+
+const allowLeafRun = vi.fn();
+
+const allowLeafCommand = defineCommand({
+  name: "deploy",
+  description: "Deploy to production",
+  args: allowLeafArgs,
+  run: allowLeafRun,
+});
+
 const leafArgs = {
   "--force": { type: Boolean, alias: "-f", description: "Force the operation" },
 } satisfies ArgsDefinition;
@@ -78,6 +94,7 @@ const verboseParentCommand = defineCommand({
 
 describe("runCommand", () => {
   beforeEach(() => {
+    allowLeafRun.mockReset();
     leafRun.mockReset();
     listRun.mockReset();
     getRun.mockReset();
@@ -189,6 +206,143 @@ describe("runCommand", () => {
       // --force is NOT set as a flag — it's a positional
       const args = leafRun.mock.calls[0]![1] as Record<string, unknown>;
       expect(args["--force"]).toBeUndefined();
+    });
+  });
+
+  describe("allow flags", () => {
+    it("--allow-all sets all allow flags on a leaf command", async () => {
+      await runCommand(testCtx, allowLeafCommand, "--allow-all");
+
+      expect(allowLeafRun).toHaveBeenCalledWith(
+        testCtx,
+        expect.objectContaining({
+          "--allow-problems": true,
+          "--allow-charges": true,
+          "--allow-data-delete": true,
+        }),
+      );
+    });
+
+    it("--allow=shorthand sets the matching flag", async () => {
+      await runCommand(testCtx, allowLeafCommand, "--allow=problems,data-delete");
+
+      expect(allowLeafRun).toHaveBeenCalledWith(
+        testCtx,
+        expect.objectContaining({
+          "--allow-problems": true,
+          "--allow-data-delete": true,
+        }),
+      );
+      const args = allowLeafRun.mock.calls[0]![1] as Record<string, unknown>;
+      expect(args["--allow-charges"]).toBeUndefined();
+    });
+
+    it("--allow shorthand (space-separated) sets the matching flag", async () => {
+      await runCommand(testCtx, allowLeafCommand, "--allow", "charges");
+
+      expect(allowLeafRun).toHaveBeenCalledWith(
+        testCtx,
+        expect.objectContaining({
+          "--allow-charges": true,
+        }),
+      );
+    });
+
+    it("--allow=all is equivalent to --allow-all", async () => {
+      await runCommand(testCtx, allowLeafCommand, "--allow=all");
+
+      expect(allowLeafRun).toHaveBeenCalledWith(
+        testCtx,
+        expect.objectContaining({
+          "--allow-problems": true,
+          "--allow-charges": true,
+          "--allow-data-delete": true,
+        }),
+      );
+    });
+
+    it("composes --allow shorthand with explicit boolean flags", async () => {
+      await runCommand(testCtx, allowLeafCommand, "--allow-problems", "--allow=charges");
+
+      expect(allowLeafRun).toHaveBeenCalledWith(
+        testCtx,
+        expect.objectContaining({
+          "--allow-problems": true,
+          "--allow-charges": true,
+        }),
+      );
+    });
+
+    it("throws ArgError for unknown shorthand", async () => {
+      const error = await expectError(() => runCommand(testCtx, allowLeafCommand, "--allow=bogus"));
+
+      expect(error).toBeInstanceOf(ArgError);
+      expect(error.message).toMatchInlineSnapshot(
+        `"Unknown allow flag "bogus". Did you mean "charges"? Available: problems, charges, data-delete"`,
+      );
+    });
+
+    it("does not inject --allow or --allow-all for commands without allow flags", async () => {
+      // leafCommand has no --allow-* flags, so --allow should be unknown
+      const error = await expectError(() => runCommand(testCtx, leafCommand, "--allow=problems"));
+
+      expect(error).toBeInstanceOf(ArgError);
+      expect(error.message).toMatchInlineSnapshot(`"unknown or unexpected option: --allow"`);
+    });
+
+    it("shows --allow and --allow-all in help for commands with allow flags", async () => {
+      await expectProcessExit(() => runCommand(testCtx, allowLeafCommand, "-h"), 0);
+
+      expectStdout().toMatchInlineSnapshot(`
+        "Deploy to production
+
+        USAGE
+          ggt deploy [flags]
+
+        FLAGS
+          -f, --force              Force the operation
+              --allow-charges      Allow deploying with new charges
+              --allow-data-delete  Allow deploying with data loss
+              --allow-problems     Allow deploying with problems
+
+        Run ggt deploy --help for more information.
+        "
+      `);
+    });
+
+    it("does not show --allow or --allow-all in help for commands without allow flags", async () => {
+      await expectProcessExit(() => runCommand(testCtx, leafCommand, "-h"), 0);
+
+      expectStdout().not.toContain("--allow-all");
+      expectStdout().not.toContain("--allow <flag,...>");
+    });
+
+    it("works with parent commands that have allow flags on subcommands", async () => {
+      const subRun = vi.fn();
+      const parentWithAllow = defineCommand({
+        name: "test",
+        description: "Parent with allow sub",
+        subcommands: (sub) => ({
+          deploy: sub({
+            description: "Deploy",
+            args: {
+              "--allow-problems": { type: Boolean, description: "Allow problems" },
+              "--allow-charges": { type: Boolean, description: "Allow charges" },
+            },
+            run: subRun,
+          }),
+        }),
+      });
+
+      await runCommand(testCtx, parentWithAllow, "deploy", "--allow-all");
+
+      expect(subRun).toHaveBeenCalledWith(
+        testCtx,
+        expect.objectContaining({
+          "--allow-problems": true,
+          "--allow-charges": true,
+        }),
+      );
     });
   });
 

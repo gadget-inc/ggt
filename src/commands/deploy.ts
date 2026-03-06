@@ -88,9 +88,11 @@ export default defineCommand({
     {
       title: "CI/CD Usage",
       content: sprint`
-        In non-interactive environments, pass all ${colors.subdued("--allow-*")} flags to skip
-        interactive prompts:
+        In non-interactive environments, pass ${colors.subdued("--allow-all")} or individual
+        ${colors.subdued("--allow-*")} flags to skip interactive prompts:
 
+          ggt deploy --force --allow-all
+          ggt deploy --force --allow=problems,charges,data-delete
           ggt deploy --force --allow-problems --allow-charges --allow-data-delete
       `,
     },
@@ -102,7 +104,8 @@ export default defineCommand({
   examples: [
     "ggt deploy",
     "ggt deploy --env staging",
-    "ggt deploy --force --allow-problems",
+    "ggt deploy --force --allow-all",
+    "ggt deploy --force --allow=problems,charges,data-delete",
     "ggt deploy --env staging --force --allow-problems --allow-charges --allow-data-delete",
   ],
   args: {

@@ -46,3 +46,11 @@ export const sortBySimilar = (input: string, options: readonly string[]): [close
 export const closestMatch = (input: string, options: readonly string[]): string => {
   return sortBySimilar(input, options)[0];
 };
+
+/**
+ * Returns elements that start with the given prefix, or all elements
+ * if the prefix is empty.
+ */
+export const filterByPrefix = (items: string[], prefix: string): string[] => {
+  return prefix ? items.filter((s) => s.startsWith(prefix)) : items;
+};

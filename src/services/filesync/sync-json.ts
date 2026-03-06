@@ -9,8 +9,8 @@ import terminalLink from "terminal-link";
 
 import { EnvironmentType, type Application, type Environment } from "../app/app.js";
 import { Edit } from "../app/edit/edit.js";
-import { AppIdentity, AppIdentityArgs } from "../command/app-identity.js";
-import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../command/arg.js";
+import { AppIdentity } from "../command/app-identity.js";
+import { ArgError } from "../command/arg.js";
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { config, homePath } from "../config/config.js";
@@ -20,34 +20,10 @@ import { sprint, sprintln, type SprintOptions } from "../output/sprint.js";
 import { defaults } from "../util/object.js";
 import { Directory } from "./directory.js";
 import { UnknownDirectoryError } from "./error.js";
+import type { SyncJsonArgsResult } from "./sync-json-args.js";
 import { type SyncJsonState } from "./sync-json-state.js";
 
-export const SyncJsonArgs = {
-  ...AppIdentityArgs,
-  "--allow-different-app": {
-    type: Boolean,
-    description: "Allow syncing with a different app",
-    details: sprint`
-      Overrides the app recorded in .gadget/sync.json with the one specified by
-      --app. Use this when you want to reuse an existing directory for a
-      different app.
-    `,
-    brief: false,
-  },
-  "--allow-unknown-directory": {
-    type: Boolean,
-    description: "Allow syncing to an existing directory",
-    details: sprint`
-      Normally, a directory must be empty or already contain
-      .gadget/sync.json. Use this when you want to initialize sync in a
-      directory with existing content.
-    `,
-    brief: false,
-  },
-} satisfies ArgsDefinition;
-
-export type SyncJsonArgs = typeof SyncJsonArgs;
-export type SyncJsonArgsResult = ArgsDefinitionResult<SyncJsonArgs>;
+export { SyncJsonArgs, type SyncJsonArgsResult } from "./sync-json-args.js";
 
 /**
  * Tracks the state of the filesystem sync with the Gadget backend.

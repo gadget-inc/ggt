@@ -1,7 +1,6 @@
 import fs from "fs-extra";
 
 import { Application, EnvironmentType, getApplications, groupByTeam, type Environment } from "../app/app.js";
-import { AppArg } from "../app/arg.js";
 import { Edit } from "../app/edit/edit.js";
 import type { Directory } from "../filesync/directory.js";
 import { SyncJsonState } from "../filesync/sync-json-state.js";
@@ -11,36 +10,12 @@ import { setSentryTags } from "../output/sentry.js";
 import { sprint } from "../output/sprint.js";
 import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
-import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "./arg.js";
+import { AppIdentityArgs, type AppIdentityArgsResult } from "./app-identity-args.js";
+import { ArgError } from "./arg.js";
 import type { Command } from "./command.js";
 import type { Context } from "./context.js";
 
-export const AppIdentityArgs = {
-  "--app": {
-    type: AppArg,
-    alias: ["-a", "--application"],
-    description: "Gadget app to use",
-    valueName: "app-slug",
-    details: sprint`
-      The app slug is the subdomain portion of your app URL (e.g., my-app from
-      my-app.gadget.app). Can be omitted when .gadget/sync.json already records
-      the app.
-    `,
-  },
-  "--env": {
-    type: String,
-    alias: ["-e", "--environment"],
-    description: "Environment to use",
-    valueName: "name",
-    details: sprint`
-      Defaults to the development environment. Production is read-only for most
-      commands.
-    `,
-  },
-} satisfies ArgsDefinition;
-
-export type AppIdentityArgs = typeof AppIdentityArgs;
-export type AppIdentityArgsResult = ArgsDefinitionResult<AppIdentityArgs>;
+export { AppIdentityArgs, type AppIdentityArgsResult } from "./app-identity-args.js";
 
 /**
  * An object that knows what app and environment we are working with.

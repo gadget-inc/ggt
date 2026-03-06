@@ -2,6 +2,8 @@ import assert from "node:assert";
 
 import { z } from "zod";
 
+import type { Context } from "../../command/context.js";
+import { filterByPrefix } from "../../util/collection.js";
 import { MemoAllArgs, memo } from "../../util/function.js";
 import { clamp } from "../../util/number.js";
 
@@ -28,6 +30,16 @@ export const parseLevel = memo(MemoAllArgs, (value: unknown, defaultValue: Level
 
   return parsed.success ? parsed.data : defaultValue;
 });
+
+/**
+ * Completes log level names (static).
+ */
+export const completeLogLevel = async (_ctx: Context, partial: string, _argv: string[]): Promise<string[]> => {
+  const levels = Object.keys(Level)
+    .filter((k) => k !== "PRINT")
+    .map((k) => k.toLowerCase());
+  return filterByPrefix(levels, partial);
+};
 
 /**
  * Converts a numeric verbosity value to a log level.

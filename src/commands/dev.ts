@@ -13,6 +13,7 @@ import { Changes } from "../services/filesync/changes.js";
 import { acquireDevLock, releaseDevLock } from "../services/filesync/dev-lock.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
+import { completePreference } from "../services/filesync/strategy.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
@@ -90,6 +91,7 @@ export default defineCommand({
       details:
         "Use 'local' to keep your local file contents or 'environment' to keep the environment's version. Without this flag, you are prompted to choose for each conflict.",
       valueName: "source",
+      complete: completePreference,
     },
     "--file-push-delay": {
       type: Number,

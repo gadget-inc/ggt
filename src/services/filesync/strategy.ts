@@ -1,6 +1,8 @@
 import { ArgError } from "../command/arg.js";
+import type { Context } from "../command/context.js";
 import colors from "../output/colors.js";
 import { sprint } from "../output/sprint.js";
+import { filterByPrefix } from "../util/collection.js";
 
 export const FileSyncStrategy = Object.freeze({
   CANCEL: "cancel",
@@ -19,17 +21,25 @@ export const MergeConflictPreference = Object.freeze({
 
 export type MergeConflictPreference = (typeof MergeConflictPreference)[keyof typeof MergeConflictPreference];
 
+export const MergeConflictPreferenceValues = ["local", "environment"] as const;
+
+/**
+ * Completes the --prefer flag values (static).
+ */
+export const completePreference = async (_ctx: Context, partial: string, _argv: string[]): Promise<string[]> => {
+  return filterByPrefix([...MergeConflictPreferenceValues], partial);
+};
+
 export const MergeConflictPreferenceArg = (value: string, name: string): MergeConflictPreference => {
-  if (["local", "environment"].includes(value)) {
+  if ((MergeConflictPreferenceValues as readonly string[]).includes(value)) {
     return MergeConflictPreference[value.toUpperCase() as keyof typeof MergeConflictPreference];
   }
 
   throw new ArgError(sprint`
-      ${name} must be ${colors.identifier("local")} or ${colors.identifier("environment")}
+      ${name} must be ${MergeConflictPreferenceValues.map((v) => colors.identifier(v)).join(" or ")}
 
       ${colors.header("EXAMPLES:")}
-        ${name}=local
-        ${name}=environment
+        ${MergeConflictPreferenceValues.map((v) => `${name}=${v}`).join("\n")}
     `);
 };
 

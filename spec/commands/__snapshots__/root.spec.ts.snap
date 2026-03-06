@@ -628,6 +628,144 @@ Run ggt agent-plugin --help for more information.
 "
 `;
 
+exports[`root > when completion is given > prints the usage for bash when --help is passed 1`] = `
+"Generate bash completion script
+
+USAGE
+  ggt completion bash
+"
+`;
+
+exports[`root > when completion is given > prints the usage for bash when -h is passed 1`] = `
+"Generate bash completion script
+
+USAGE
+  ggt completion bash
+"
+`;
+
+exports[`root > when completion is given > prints the usage for fish when --help is passed 1`] = `
+"Generate fish completion script
+
+USAGE
+  ggt completion fish
+"
+`;
+
+exports[`root > when completion is given > prints the usage for fish when -h is passed 1`] = `
+"Generate fish completion script
+
+USAGE
+  ggt completion fish
+"
+`;
+
+exports[`root > when completion is given > prints the usage for zsh when --help is passed 1`] = `
+"Generate zsh completion script
+
+USAGE
+  ggt completion zsh
+"
+`;
+
+exports[`root > when completion is given > prints the usage for zsh when -h is passed 1`] = `
+"Generate zsh completion script
+
+USAGE
+  ggt completion zsh
+"
+`;
+
+exports[`root > when completion is given > prints the usage when --help is passed 1`] = `
+"Generate shell completion scripts
+
+Generates a completion script for your shell so that ggt commands,
+subcommands, and flags are suggested when you press Tab. Run one of the
+subcommands below and follow the installation instructions to enable it.
+
+USAGE
+  ggt completion <command>
+
+COMMANDS
+  bash    Generate bash completion script
+  zsh     Generate zsh completion script
+  fish    Generate fish completion script
+
+EXAMPLES
+  $ ggt completion bash
+  $ ggt completion zsh
+  $ ggt completion fish
+
+SETUP
+  Choose the section that matches your shell. After following the steps,
+  open a new terminal (or reload your shell config) for completions to
+  take effect. Re-run the generation command after updating ggt.
+
+  If ggt is not installed globally, you can use npx ggt in place
+  of ggt in the commands below.
+
+  Bash
+    mkdir -p ~/.local/share/ggt
+    ggt completion bash > ~/.local/share/ggt/completion.bash
+
+    Then add this line to your ~/.bashrc (or ~/.bash_profile on macOS):
+      source "$HOME/.local/share/ggt/completion.bash"
+
+  Zsh
+    mkdir -p ~/.local/share/ggt
+    ggt completion zsh > ~/.local/share/ggt/completion.zsh
+
+    Then add this line to your ~/.zshrc:
+      source "$HOME/.local/share/ggt/completion.zsh"
+
+    If you get "command not found: compdef", add this before the line above:
+      autoload -Uz compinit && compinit
+
+  Fish
+    ggt completion fish > ~/.config/fish/completions/ggt.fish
+"
+`;
+
+exports[`root > when completion is given > prints the usage when -h is passed 1`] = `
+"Generate shell completion scripts
+
+USAGE
+  ggt completion <command>
+
+COMMANDS
+  bash    Generate bash completion script
+  zsh     Generate zsh completion script
+  fish    Generate fish completion script
+
+EXAMPLES
+  $ ggt completion bash
+  $ ggt completion zsh
+  $ ggt completion fish
+
+Run ggt completion --help for more information.
+"
+`;
+
+exports[`root > when completion is given > shows help when invoked without a subcommand 1`] = `
+"Generate shell completion scripts
+
+USAGE
+  ggt completion <command>
+
+COMMANDS
+  bash    Generate bash completion script
+  zsh     Generate zsh completion script
+  fish    Generate fish completion script
+
+EXAMPLES
+  $ ggt completion bash
+  $ ggt completion zsh
+  $ ggt completion fish
+
+Run ggt completion --help for more information.
+"
+`;
+
 exports[`root > when configure is given > prints the usage for change when --help is passed 1`] = `
 "Interactively change configuration options
 

@@ -4,6 +4,7 @@ import path from "node:path";
 import fs from "fs-extra";
 import { describe, expect, it, onTestFailed, onTestFinished, vi } from "vitest";
 
+import { timeoutMs } from "../__support__/sleep.js";
 import {
   type TestDirs,
   KNOWN_REMOTE_FILE,
@@ -38,7 +39,7 @@ describe.skipIf(!hasIntegrationToken())("integration", () => {
     const result = await runGgt({
       args: ["pull", "--app", TEST_APP, "--env", TEST_ENV, "--force"],
       dirs,
-      timeout: 120_000,
+      timeout: timeoutMs("2m"),
     });
 
     expect(result.exitCode, `ggt pull failed.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
@@ -52,7 +53,7 @@ describe.skipIf(!hasIntegrationToken())("integration", () => {
     expect(await fs.pathExists(syncJson), `Expected ${syncJson} to exist after pull`).toBe(true);
   });
 
-  it("dev syncs files bidirectionally with gadget", { timeout: 180_000 }, async () => {
+  it("dev syncs files bidirectionally with gadget", { timeout: timeoutMs("3m") }, async () => {
     const dirs = await createTestDirs("dev");
     onTestFinished(() => cleanupTestDirs(dirs));
 
@@ -71,7 +72,7 @@ describe.skipIf(!hasIntegrationToken())("integration", () => {
 
     // Wait for initial sync to complete by checking for a known remote file
     const remoteFile = path.join(dirs.app, KNOWN_REMOTE_FILE);
-    await waitForFile(remoteFile, { timeout: 90_000 });
+    await waitForFile(remoteFile, { timeout: timeoutMs("90s") });
 
     // Write a test file that should sync to Gadget
     const testFileName = `integration-test-${randomUUID()}.txt`;
@@ -97,7 +98,7 @@ describe.skipIf(!hasIntegrationToken())("integration", () => {
         const pullResult = await runGgt({
           args: ["pull", "--app", TEST_APP, "--env", TEST_ENV, "--force"],
           dirs: pullDirs,
-          timeout: 30_000,
+          timeout: timeoutMs("30s"),
         });
 
         expect(pullResult.exitCode, `ggt pull failed.\nstdout: ${pullResult.stdout}\nstderr: ${pullResult.stderr}`).toBe(0);
@@ -106,7 +107,7 @@ describe.skipIf(!hasIntegrationToken())("integration", () => {
         expect(await fs.pathExists(pulledFile), `Expected ${pulledFile} to exist after pull`).toBe(true);
         expect(await fs.readFile(pulledFile, "utf-8")).toBe(testFileContent);
       },
-      { timeout: 60_000, interval: 3_000 },
+      { timeout: timeoutMs("90s"), interval: 5_000 },
     );
 
     // Clean up: delete the test file and give dev time to sync the deletion

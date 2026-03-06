@@ -6,6 +6,7 @@ import fs from "fs-extra";
 import { vi } from "vitest";
 
 import { workspacePath } from "../../src/services/util/paths.js";
+import { timeoutMs } from "../__support__/sleep.js";
 
 /**
  * Check if the integration test token is available.
@@ -111,7 +112,7 @@ export const runGgt = async ({ args, dirs, cwd, timeout }: RunGgtOptions): Promi
     cwd: cwd ?? dirs.app,
     env: subprocessEnv(dirs),
     reject: false,
-    timeout: timeout ?? 60_000,
+    timeout: timeout ?? timeoutMs("1m"),
   });
 
   return {
@@ -173,7 +174,7 @@ export const startGgt = ({ args, dirs, cwd }: Omit<RunGgtOptions, "timeout">): S
  */
 export const waitForFile = async (
   filePath: string,
-  { timeout = 30_000, interval = 500 }: { timeout?: number; interval?: number } = {},
+  { timeout = timeoutMs("30s"), interval = 500 }: { timeout?: number; interval?: number } = {},
 ): Promise<void> => {
   await vi.waitFor(
     async () => {

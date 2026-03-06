@@ -2,6 +2,7 @@ import arg from "arg";
 
 import { println } from "../output/print.js";
 import { closestMatch } from "../util/collection.js";
+import { AllowArgs, extractAllowArgs, getAllowFlags, resolveAllowFlags } from "./allow.js";
 import { aliasName, ArgError, parseArgs, toEntryArray, type ArgsDefinition } from "./arg.js";
 import type { CommandConfig, LeafCommandConfig, ParentCommandConfig, PositionalDef } from "./command.js";
 import type { Context } from "./context.js";
@@ -64,21 +65,25 @@ const runWithUsageHint = async (fn: () => Promise<void> | void, commandPath: str
 };
 
 const runLeaf = async (ctx: Context, command: LeafCommandConfig, argv: string[]): Promise<void> => {
+  const { argsDef, allowFlags, helpMod } = withAllowArgs(command.args ?? {}, command);
+
   // handle help flags
-  const valueTakingFlags = buildValueTakingFlags(command.args ?? {});
+  const valueTakingFlags = buildValueTakingFlags(argsDef);
   const helpLevel = resolveHelpLevel(argv, valueTakingFlags);
   if (helpLevel) {
-    printHelpAndExit(command.name, command, helpLevel);
+    printHelpAndExit(command.name, helpMod, helpLevel);
   }
 
   await runWithUsageHint(
     async () => {
-      const args = parseArgs(command.args ?? {}, { argv, ...command.parseOptions });
+      const extracted = extractAllowArgs(argv, allowFlags);
+      const args = parseArgs(command.args ?? {}, { argv: extracted.cleanedArgv, ...command.parseOptions });
+      resolveAllowFlags(args, allowFlags, extracted);
       validateRequiredPositionals(command.positionals, args._);
       await command.run(ctx, args);
     },
     command.name,
-    command,
+    helpMod,
   );
 };
 
@@ -94,11 +99,17 @@ const runParent = async (ctx: Context, command: ParentCommandConfig, argv: strin
 
   // handle help flags
   const sub = name !== undefined && Object.prototype.hasOwnProperty.call(subcommands, name) ? subcommands[name] : undefined;
-  const mergedValueTakingFlags = sub ? buildValueTakingFlags({ ...command.args, ...sub.args }) : valueTakingFlags;
+  const mergedArgs: ArgsDefinition = sub ? { ...command.args, ...sub.args } : (command.args ?? {});
+  const {
+    argsDef: mergedWithAllow,
+    allowFlags,
+    helpMod: mergedHelpMod,
+  } = withAllowArgs(mergedArgs, sub ? { ...sub, args: mergedArgs } : command);
+  const mergedValueTakingFlags = buildValueTakingFlags(mergedWithAllow);
   const helpLevel = resolveHelpLevel(rest, mergedValueTakingFlags);
   if (helpLevel) {
     if (sub) {
-      printHelpAndExit(`${command.name} ${name}`, { ...sub, args: { ...command.args, ...sub.args } }, helpLevel);
+      printHelpAndExit(`${command.name} ${name}`, mergedHelpMod, helpLevel);
     }
     printHelpAndExit(command.name, command, helpLevel);
   }
@@ -119,19 +130,19 @@ const runParent = async (ctx: Context, command: ParentCommandConfig, argv: strin
     parts.push(renderUsageHint(command.name, command));
     throw new ArgError(parts.join("\n\n"), { usageHint: false });
   }
-  const mergedArgs: ArgsDefinition = { ...command.args, ...sub.args };
   const subCommandPath = `${command.name} ${name}`;
-  const subMod: UsageInput = { ...sub, args: mergedArgs };
   // Subcommands inherit the parent's parseOptions. SubcommandConfig intentionally omits parseOptions to keep the API surface small -- subcommands don't need independent parse mode.
   await runWithUsageHint(
     async () => {
-      const args = parseArgs(mergedArgs, { argv: rest, ...command.parseOptions });
+      const extracted = extractAllowArgs(rest, allowFlags);
+      const args = parseArgs(mergedArgs, { argv: extracted.cleanedArgv, ...command.parseOptions });
+      resolveAllowFlags(args, allowFlags, extracted);
       validateRequiredPositionals(sub.positionals, args._);
       // oxlint-disable-next-line no-unsafe-call -- sub.run is StoredSubcommand["run"], typed (ctx, never) => Promisable<void>
       await sub.run(ctx, args as never);
     },
     subCommandPath,
-    subMod,
+    mergedHelpMod,
   );
 };
 
@@ -208,4 +219,20 @@ const resolveSubcommandName = (token: string, subcommands: ParentCommandConfig["
     if (sub.aliases?.includes(token)) return name;
   }
   return undefined;
+};
+
+/**
+ * If the args definition has `--allow-*` flags, merges in `AllowArgs`
+ * for help rendering and returns the allow flag keys.
+ */
+const withAllowArgs = (
+  argsDef: ArgsDefinition,
+  mod: UsageInput,
+): { argsDef: ArgsDefinition; allowFlags: string[]; helpMod: UsageInput } => {
+  const allowFlags = getAllowFlags(argsDef);
+  if (allowFlags.length === 0) {
+    return { argsDef, allowFlags, helpMod: mod };
+  }
+  const merged = { ...argsDef, ...AllowArgs };
+  return { argsDef: merged, allowFlags, helpMod: { ...mod, args: merged } };
 };

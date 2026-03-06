@@ -29,6 +29,12 @@ FLAGS
         is read-only for most commands.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you
@@ -98,6 +104,12 @@ FLAGS
         is read-only for most commands.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you
@@ -161,6 +173,12 @@ FLAGS
         is read-only for most commands.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you
@@ -233,6 +251,12 @@ FLAGS
         is read-only for most commands.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you
@@ -301,6 +325,12 @@ FLAGS
         is read-only for most commands.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you
@@ -835,6 +865,12 @@ FLAGS
         environment are discarded without prompting.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-charges
         Allow deploying with new charges. Use this flag in CI/CD pipelines to
         skip the interactive billing confirmation prompt that appears when a
@@ -863,13 +899,16 @@ ADDITIONAL FLAGS
 EXAMPLES
   $ ggt deploy
   $ ggt deploy --env staging
-  $ ggt deploy --force --allow-problems
+  $ ggt deploy --force --allow-all
+  $ ggt deploy --force --allow=problems,charges,data-delete
   $ ggt deploy --env staging --force --allow-problems --allow-charges --allow-data-delete
 
 CI/CD USAGE
-  In non-interactive environments, pass all --allow-* flags to skip
-  interactive prompts:
+  In non-interactive environments, pass --allow-all or individual
+  --allow-* flags to skip interactive prompts:
 
+    ggt deploy --force --allow-all
+    ggt deploy --force --allow=problems,charges,data-delete
     ggt deploy --force --allow-problems --allow-charges --allow-data-delete
 
 SEE ALSO
@@ -892,7 +931,8 @@ FLAGS
 EXAMPLES
   $ ggt deploy
   $ ggt deploy --env staging
-  $ ggt deploy --force --allow-problems
+  $ ggt deploy --force --allow-all
+  $ ggt deploy --force --allow=problems,charges,data-delete
   $ ggt deploy --env staging --force --allow-problems --allow-charges --allow-data-delete
 
 Run ggt deploy --help for more information.
@@ -948,6 +988,12 @@ FLAGS
         Without this flag, you are prompted to choose for each conflict.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you
@@ -1403,6 +1449,13 @@ FLAGS
         API call that creates, updates, or deletes records is blocked. Use this
         flag to run mutations like create, update, and delete.
 
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
 EXAMPLES
   $ ggt eval 'api.user.findMany()'
   $ ggt eval 'api.post.findMany({ select: { id: true, title: true } })'
@@ -1744,6 +1797,12 @@ FLAGS
         since the last sync are overwritten by the environment's files.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you
@@ -1810,6 +1869,12 @@ FLAGS
         the environment since the last sync are overwritten by your local files.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you
@@ -1874,6 +1939,12 @@ FLAGS
         is read-only for most commands.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you

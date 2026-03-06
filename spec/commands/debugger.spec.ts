@@ -9,6 +9,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import debuggerCommand from "../../src/commands/debugger.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { config } from "../../src/services/config/config.js";
+import { sprint } from "../../src/services/output/sprint.js";
 import { nockTestApps } from "../__support__/app.js";
 import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario, type SyncScenario } from "../__support__/filesync.js";
@@ -619,6 +620,123 @@ describe("debugger", () => {
       expect(launchJson.configurations[0].name).toBe("Other Config");
       expect(launchJson.configurations[1].name).toBe("Gadget debugger");
       expect(launchJson.configurations[1].port).toBe(9230);
+    });
+
+    it("handles JSONC launch.json with comments and trailing commas", async () => {
+      const { localDir } = await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+      const vscodeDir = path.join(localDir.path, ".vscode");
+      await fs.ensureDir(vscodeDir);
+
+      // Write launch.json as JSONC (comments + trailing comma) — fs.writeJson would produce valid JSON
+      fs.writeFileSync(
+        path.join(vscodeDir, "launch.json"),
+        sprint`
+          {
+            // VS Code launch configuration
+            "version": "0.2.0",
+            "configurations": [
+              {
+                "type": "node",
+                "request": "launch",
+                "name": "Other Config",
+                "program": "${"${workspaceFolder}"}/index.js", // run the app
+              },
+            ]
+          }
+        `,
+      );
+
+      await runCommand(testCtx, debuggerCommand, localDir.path, "--configure", "vscode");
+
+      const launchJson = await fs.readJson(path.join(vscodeDir, "launch.json"));
+      expect(launchJson.configurations).toHaveLength(2);
+      expect(launchJson.configurations[0].name).toBe("Other Config");
+      expect(launchJson.configurations[1]).toMatchObject({
+        type: "node",
+        request: "attach",
+        name: "Gadget debugger",
+        port: 9229,
+      });
+
+      expectStdout().toContain("Configured vscode debugger");
+    });
+
+    it("preserves string values containing comma-brace patterns in JSONC", async () => {
+      const { localDir } = await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+      const vscodeDir = path.join(localDir.path, ".vscode");
+      await fs.ensureDir(vscodeDir);
+
+      // String values containing ",}" and ",]" must survive JSONC stripping
+      fs.writeFileSync(
+        path.join(vscodeDir, "launch.json"),
+        sprint`
+          {
+            "version": "0.2.0",
+            "configurations": [
+              {
+                "type": "node",
+                "request": "launch",
+                "name": "Other Config",
+                "program": "${"${workspaceFolder}"}/index.js",
+                "env": { "PATTERN": "a]b,}" },
+              },
+            ]
+          }
+        `,
+      );
+
+      await runCommand(testCtx, debuggerCommand, localDir.path, "--configure", "vscode");
+
+      const launchJson = await fs.readJson(path.join(vscodeDir, "launch.json"));
+      expect(launchJson.configurations).toHaveLength(2);
+      expect(launchJson.configurations[0].env.PATTERN).toBe("a]b,}");
+      expect(launchJson.configurations[1]).toMatchObject({
+        type: "node",
+        request: "attach",
+        name: "Gadget debugger",
+        port: 9229,
+      });
+    });
+
+    it("handles JSONC tasks.json with comments and trailing commas", async () => {
+      const { localDir } = await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+      const vscodeDir = path.join(localDir.path, ".vscode");
+      await fs.ensureDir(vscodeDir);
+
+      // Write tasks.json as JSONC (comments + trailing comma)
+      fs.writeFileSync(
+        path.join(vscodeDir, "tasks.json"),
+        sprint`
+          {
+            // VS Code tasks
+            "version": "2.0.0",
+            "tasks": [
+              {
+                "label": "build",
+                "type": "shell",
+                "command": "npm run build", // existing task
+              },
+            ]
+          }
+        `,
+      );
+
+      await runCommand(testCtx, debuggerCommand, localDir.path, "--configure", "vscode");
+
+      const tasksJson = await fs.readJson(path.join(vscodeDir, "tasks.json"));
+      expect(tasksJson.tasks).toHaveLength(2);
+      expect(tasksJson.tasks[0].label).toBe("build");
+      expect(tasksJson.tasks[1]).toMatchObject({
+        label: "ggt debugger",
+        type: "shell",
+        command: "ggt debugger",
+        isBackground: true,
+      });
+
+      expectStdout().toContain("Configured vscode debugger");
     });
 
     it("throws error for invalid editor name", async () => {

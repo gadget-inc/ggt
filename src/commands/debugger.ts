@@ -6,6 +6,7 @@ import path from "node:path";
 import process, { nextTick } from "node:process";
 import type { Duplex } from "node:stream";
 
+import stripJsonComments from "strip-json-comments";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 
 import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
@@ -22,6 +23,10 @@ import { reportErrorAndExit } from "../services/output/report.js";
 import { spin } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
+
+const parseJsonc = (text: string): unknown => {
+  return JSON.parse(stripJsonComments(text, { trailingCommas: true }));
+};
 
 const SupportedEditors = ["vscode", "cursor"] as const;
 
@@ -521,7 +526,7 @@ class DebuggerConfigurator {
     }
 
     try {
-      const launchJson = JSON.parse(readFileSync(this.launchJsonPath, "utf-8")) as {
+      const launchJson = parseJsonc(readFileSync(this.launchJsonPath, "utf-8")) as {
         configurations?: VSCodeLaunchConfiguration[];
       };
       const configurations = launchJson.configurations ?? [];
@@ -560,7 +565,7 @@ class DebuggerConfigurator {
     if (existsSync(this.launchJsonPath)) {
       // Read existing launch.json
       const content = readFileSync(this.launchJsonPath, "utf-8");
-      const parsed = JSON.parse(content) as { version?: string; configurations?: VSCodeLaunchConfiguration[] };
+      const parsed = parseJsonc(content) as { version?: string; configurations?: VSCodeLaunchConfiguration[] };
 
       // Ensure configurations array exists
       const configurations = parsed.configurations ?? [];
@@ -612,7 +617,7 @@ class DebuggerConfigurator {
     if (existsSync(this.tasksJsonPath)) {
       // Read existing tasks.json
       const content = readFileSync(this.tasksJsonPath, "utf-8");
-      const parsed = JSON.parse(content) as { version?: string; tasks?: VSCodeTask[] };
+      const parsed = parseJsonc(content) as { version?: string; tasks?: VSCodeTask[] };
 
       // Ensure tasks array exists
       const tasks = parsed.tasks ?? [];

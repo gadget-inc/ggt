@@ -73,15 +73,3 @@ Dispatch is handled by `runCommand()` in `src/services/command/run.ts`, which pa
 1. Create `src/commands/<name>.ts` default-exporting `defineCommand({ ... })`
 2. Add the command name to the `Commands` array in `src/services/command/command.ts`
 3. Add a `case` to the switch in `importCommand()` in the same file
-
-## Multiline strings
-
-MUST use `sprint` template literals for multiline `details` and `sections[].content` strings. Do not use `[...].join("\n")`. Closing backtick aligned to the same column as the property name; content indented 2 spaces deeper:
-
-```typescript
-  details: sprint`
-    Content here.
-  `,
-```
-
-**Key files:** `src/services/command/command.ts`, `src/services/command/arg.ts`, `src/services/command/run.ts`, `src/services/command/usage.ts`

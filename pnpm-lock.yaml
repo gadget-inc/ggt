@@ -229,6 +229,9 @@ importers:
       strip-ansi:
         specifier: ^7.1.2
         version: 7.2.0
+      strip-json-comments:
+        specifier: ^5.0.3
+        version: 5.0.3
       tcp-port-used:
         specifier: ^1.0.2
         version: 1.0.2
@@ -4329,6 +4332,10 @@ packages:
   strip-final-newline@4.0.0:
     resolution: {integrity: sha512-aulFJcD6YK8V1G7iRB5tigAP4TsHBZZrOV8pjV++zdUwmeV8uzbY7yn6h9MswN62adStNZFuCIx4haBnRuMDaw==}
     engines: {node: '>=18'}
+
+  strip-json-comments@5.0.3:
+    resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
+    engines: {node: '>=14.16'}
 
   stubborn-fs@1.2.5:
     resolution: {integrity: sha512-H2N9c26eXjzL/S/K+i/RHHcFanE74dptvvjM8iwzwbVcWY/zjBbgRqF3K0DY4+OD+uTTASTBvDoxPDaPN02D7g==}
@@ -9266,6 +9273,8 @@ snapshots:
   strip-bom@3.0.0: {}
 
   strip-final-newline@4.0.0: {}
+
+  strip-json-comments@5.0.3: {}
 
   stubborn-fs@1.2.5: {}
 

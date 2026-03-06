@@ -1,4 +1,5 @@
 import { args as rootArgs } from "../../commands/root.js";
+import { AllowArgs, getAllowFlags } from "../command/allow.js";
 import { extractFlags, type FlagDef } from "../command/arg.js";
 import { Commands, importCommand } from "../command/command.js";
 
@@ -35,7 +36,9 @@ export const getCompletionData = async (): Promise<CompletionData> => {
     if (mod.hidden) {
       continue;
     }
-    const flags = extractFlags(mod.args ?? {}).filter((f) => !f.hidden);
+    const commandArgs = mod.args ?? {};
+    const mergedArgs = getAllowFlags(commandArgs).length > 0 ? { ...commandArgs, ...AllowArgs } : commandArgs;
+    const flags = extractFlags(mergedArgs).filter((f) => !f.hidden);
     const description = mod.description;
     const subcommands: CompletionSubcommandDef[] = Object.entries("subcommands" in mod && mod.subcommands ? mod.subcommands : {}).map(
       ([name, sub]) => ({

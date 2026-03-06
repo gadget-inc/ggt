@@ -21,22 +21,22 @@ _ggt_completions() {
 
   case "\${COMP_WORDS[1]}" in
     dev)
-      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --log-level -l --my-logs -m --prefer --file-push-delay --file-watch-debounce --file-watch-poll-interval --file-watch-poll-timeout --file-watch-rename-timeout --no-logs --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --log-level -l --my-logs -m --prefer --file-push-delay --file-watch-debounce --file-watch-poll-interval --file-watch-poll-timeout --file-watch-rename-timeout --no-logs --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
       ;;
     deploy)
-      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --from --allow-different-app --allow-unknown-directory --force -f --allow-problems --allow-issues --allow-charges --allow-data-delete --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --from --allow-different-app --allow-unknown-directory --force -f --allow-problems --allow-issues --allow-charges --allow-data-delete --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
       ;;
     status)
-      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
       ;;
     problems)
       COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --help -h --version --verbose -v --telemetry --json" -- "$cur"))
       ;;
     push)
-      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --to --allow-different-app --allow-unknown-directory --force -f --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --to --allow-different-app --allow-unknown-directory --force -f --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
       ;;
     pull)
-      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --from --allow-different-app --allow-unknown-directory --force -f --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --from --allow-different-app --allow-unknown-directory --force -f --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
       ;;
     var)
       if [[ $COMP_CWORD -eq 2 ]]; then
@@ -92,26 +92,26 @@ _ggt_completions() {
       ;;
     add)
       if [[ $COMP_CWORD -eq 2 ]]; then
-        COMPREPLY=($(compgen -W "model action route field environment --app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+        COMPREPLY=($(compgen -W "model action route field environment --app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
       else
         case "\${COMP_WORDS[2]}" in
           model)
-            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           action)
-            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           route)
-            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           field)
-            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           environment)
-            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           *)
-            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
         esac
       fi
@@ -175,7 +175,7 @@ _ggt_completions() {
       fi
       ;;
     eval)
-      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-writes -w --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "--app -a --application --env -e --environment --allow-writes -w --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
       ;;
     version)
       COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
@@ -302,6 +302,8 @@ complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-poll-interval
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-poll-timeout -x -d 'Timeout in ms for file watch polling'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-rename-timeout -x -d 'Timeout in ms for detecting file renames'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l no-logs -d 'Don'\\''t stream logs while syncing'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow-all -d 'Enable all --allow-* flags'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
@@ -321,6 +323,8 @@ complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-problems -d 'Al
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-issues -d 'Allow deploying with problems'
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-charges -d 'Allow deploying with new charges'
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-data-delete -d 'Allow deploying with data loss'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-all -d 'Enable all --allow-* flags'
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
@@ -334,6 +338,8 @@ complete -c ggt -n '__fish_seen_subcommand_from status' -l env -s e -ra '(ggt --
 complete -c ggt -n '__fish_seen_subcommand_from status' -l environment -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-all -d 'Enable all --allow-* flags'
 complete -c ggt -n '__fish_seen_subcommand_from status' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from status' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from status' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
@@ -360,6 +366,8 @@ complete -c ggt -n '__fish_seen_subcommand_from push' -l to -ra '(ggt --__comple
 complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
 complete -c ggt -n '__fish_seen_subcommand_from push' -l force -s f -d 'Push without prompting, discarding environment changes'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-all -d 'Enable all --allow-* flags'
 complete -c ggt -n '__fish_seen_subcommand_from push' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from push' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from push' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
@@ -375,6 +383,8 @@ complete -c ggt -n '__fish_seen_subcommand_from pull' -l from -ra '(ggt --__comp
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l force -s f -d 'Pull without prompting, discarding local changes'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-all -d 'Enable all --allow-* flags'
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
@@ -478,6 +488,8 @@ complete -c ggt -n '__fish_seen_subcommand_from add' -l env -s e -ra '(ggt --__c
 complete -c ggt -n '__fish_seen_subcommand_from add' -l environment -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-all -d 'Enable all --allow-* flags'
 complete -c ggt -n '__ggt_needs_subcommand add' -a 'model' -d 'Add a new data model'
 complete -c ggt -n '__ggt_needs_subcommand add' -a 'action' -d 'Add an action to a model or as a global action'
 complete -c ggt -n '__ggt_needs_subcommand add' -a 'route' -d 'Add an HTTP route'
@@ -633,6 +645,8 @@ complete -c ggt -n '__fish_seen_subcommand_from eval' -l application -ra '(ggt -
 complete -c ggt -n '__fish_seen_subcommand_from eval' -l env -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from eval' -l environment -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from eval' -l allow-writes -s w -d 'Allow write operations (read-only by default)'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l allow-all -d 'Enable all --allow-* flags'
 complete -c ggt -n '__fish_seen_subcommand_from eval' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from eval' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from eval' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
@@ -936,6 +950,8 @@ _ggt_add() {
             '(--env -e --environment)''--environment[Environment to use]:value:_ggt_dynamic' \\
     '--allow-different-app[Allow syncing with a different app]' \\
     '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+    '--allow[Enable allow flags (comma-separated)]:value: ' \\
+    '--allow-all[Enable all --allow-* flags]' \\
     '1:subcommand:->subcommand' \\
     '*::arg:->args'
 
@@ -968,7 +984,9 @@ _ggt_add() {
             '(--env -e --environment)''-e[Environment to use]:value:_ggt_dynamic' \\
             '(--env -e --environment)''--environment[Environment to use]:value:_ggt_dynamic' \\
             '--allow-different-app[Allow syncing with a different app]' \\
-            '--allow-unknown-directory[Allow syncing to an existing directory]'
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         action)
           _arguments \\
@@ -986,7 +1004,9 @@ _ggt_add() {
             '(--env -e --environment)''-e[Environment to use]:value:_ggt_dynamic' \\
             '(--env -e --environment)''--environment[Environment to use]:value:_ggt_dynamic' \\
             '--allow-different-app[Allow syncing with a different app]' \\
-            '--allow-unknown-directory[Allow syncing to an existing directory]'
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         route)
           _arguments \\
@@ -1004,7 +1024,9 @@ _ggt_add() {
             '(--env -e --environment)''-e[Environment to use]:value:_ggt_dynamic' \\
             '(--env -e --environment)''--environment[Environment to use]:value:_ggt_dynamic' \\
             '--allow-different-app[Allow syncing with a different app]' \\
-            '--allow-unknown-directory[Allow syncing to an existing directory]'
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         field)
           _arguments \\
@@ -1022,7 +1044,9 @@ _ggt_add() {
             '(--env -e --environment)''-e[Environment to use]:value:_ggt_dynamic' \\
             '(--env -e --environment)''--environment[Environment to use]:value:_ggt_dynamic' \\
             '--allow-different-app[Allow syncing with a different app]' \\
-            '--allow-unknown-directory[Allow syncing to an existing directory]'
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         environment)
           _arguments \\
@@ -1040,7 +1064,9 @@ _ggt_add() {
             '(--env -e --environment)''-e[Environment to use]:value:_ggt_dynamic' \\
             '(--env -e --environment)''--environment[Environment to use]:value:_ggt_dynamic' \\
             '--allow-different-app[Allow syncing with a different app]' \\
-            '--allow-unknown-directory[Allow syncing to an existing directory]'
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
       esac
       ;;
@@ -1292,7 +1318,9 @@ _ggt() {
             '--file-watch-poll-interval[Interval in ms for polling file changes]:value: ' \\
             '--file-watch-poll-timeout[Timeout in ms for file watch polling]:value: ' \\
             '--file-watch-rename-timeout[Timeout in ms for detecting file renames]:value: ' \\
-            '--no-logs[Don'\\''t stream logs while syncing]'
+            '--no-logs[Don'\\''t stream logs while syncing]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         deploy)
           _arguments \\
@@ -1317,7 +1345,9 @@ _ggt() {
             '(--allow-problems --allow-issues)''--allow-problems[Allow deploying with problems]' \\
             '(--allow-problems --allow-issues)''--allow-issues[Allow deploying with problems]' \\
             '--allow-charges[Allow deploying with new charges]' \\
-            '--allow-data-delete[Allow deploying with data loss]'
+            '--allow-data-delete[Allow deploying with data loss]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         status)
           _arguments \\
@@ -1335,7 +1365,9 @@ _ggt() {
             '(--env -e --environment)''-e[Environment to use]:value:_ggt_dynamic' \\
             '(--env -e --environment)''--environment[Environment to use]:value:_ggt_dynamic' \\
             '--allow-different-app[Allow syncing with a different app]' \\
-            '--allow-unknown-directory[Allow syncing to an existing directory]'
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         problems)
           _arguments \\
@@ -1372,7 +1404,9 @@ _ggt() {
             '--allow-different-app[Allow syncing with a different app]' \\
             '--allow-unknown-directory[Allow syncing to an existing directory]' \\
             '(--force -f)''--force[Push without prompting, discarding environment changes]' \\
-            '(--force -f)''-f[Push without prompting, discarding environment changes]'
+            '(--force -f)''-f[Push without prompting, discarding environment changes]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         pull)
           _arguments \\
@@ -1393,7 +1427,9 @@ _ggt() {
             '--allow-different-app[Allow syncing with a different app]' \\
             '--allow-unknown-directory[Allow syncing to an existing directory]' \\
             '(--force -f)''--force[Pull without prompting, discarding local changes]' \\
-            '(--force -f)''-f[Pull without prompting, discarding local changes]'
+            '(--force -f)''-f[Pull without prompting, discarding local changes]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         var)
           _ggt_var
@@ -1526,7 +1562,9 @@ _ggt() {
             '(--env -e --environment)''-e[Environment to use]:value:_ggt_dynamic' \\
             '(--env -e --environment)''--environment[Environment to use]:value:_ggt_dynamic' \\
             '(--allow-writes -w)''--allow-writes[Allow write operations (read-only by default)]' \\
-            '(--allow-writes -w)''-w[Allow write operations (read-only by default)]'
+            '(--allow-writes -w)''-w[Allow write operations (read-only by default)]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
           ;;
         version)
           _arguments \\

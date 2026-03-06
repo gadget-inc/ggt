@@ -1851,6 +1851,142 @@ Run ggt push --help for more information.
 "
 `;
 
+exports[`root > when shopify is given > prints the usage for connect when --help is passed 1`] = `
+"Create and configure a Shopify connection for this app
+
+Creates development and production Shopify app configs using the app name,
+adds the default Shopify models, and adds the required default Shopify scopes.
+
+USAGE
+  ggt shopify connect [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+      --app-name <value>
+        Shopify app name override. Defaults to your Gadget app slug.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt shopify connect
+  $ ggt shopify connect --app-name my-shop
+"
+`;
+
+exports[`root > when shopify is given > prints the usage for connect when -h is passed 1`] = `
+"Create and configure a Shopify connection for this app
+
+USAGE
+  ggt shopify connect [flags]
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+      --app-name <value>               Shopify app name override
+
+EXAMPLES
+  $ ggt shopify connect
+  $ ggt shopify connect --app-name my-shop
+
+Run ggt shopify connect --help for more information.
+"
+`;
+
+exports[`root > when shopify is given > prints the usage when --help is passed 1`] = `
+"Manage Shopify connection setup
+
+USAGE
+  ggt shopify <command> [flags]
+
+COMMANDS
+  connect    Create and configure a Shopify connection for this app
+
+FLAGS
+  -a, --app, --application <app-slug>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <name>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt shopify connect
+  $ ggt shopify connect --app-name my-shop
+"
+`;
+
+exports[`root > when shopify is given > prints the usage when -h is passed 1`] = `
+"Manage Shopify connection setup
+
+USAGE
+  ggt shopify <command> [flags]
+
+COMMANDS
+  connect    Create and configure a Shopify connection for this app
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt shopify connect
+  $ ggt shopify connect --app-name my-shop
+
+Run ggt shopify --help for more information.
+"
+`;
+
+exports[`root > when shopify is given > shows help when invoked without a subcommand 1`] = `
+"Manage Shopify connection setup
+
+USAGE
+  ggt shopify <command> [flags]
+
+COMMANDS
+  connect    Create and configure a Shopify connection for this app
+
+FLAGS
+  -a, --app, --application <app-slug>  Gadget app to use
+  -e, --env, --environment <name>      Environment to use
+
+EXAMPLES
+  $ ggt shopify connect
+  $ ggt shopify connect --app-name my-shop
+
+Run ggt shopify --help for more information.
+"
+`;
+
 exports[`root > when status is given > prints the usage when --help is passed 1`] = `
 "Show sync state and pending file changes
 

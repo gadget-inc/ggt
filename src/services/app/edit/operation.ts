@@ -19,6 +19,7 @@ import type {
   EnvironmentLogsSubscriptionVariables,
   EnvironmentVariablesQuery,
   EnvironmentVariablesQueryVariables,
+  FileSyncEncoding,
   FileSyncComparisonHashesQuery,
   FileSyncComparisonHashesQueryVariables,
   FileSyncFilesQuery,
@@ -233,6 +234,37 @@ export const PUBLISH_STATUS_SUBSCRIPTION = sprint(/* GraphQL */ `
 `) as GraphQLSubscription<PublishStatusSubscription, PublishStatusSubscriptionVariables>;
 
 export type PUBLISH_STATUS_SUBSCRIPTION = typeof PUBLISH_STATUS_SUBSCRIPTION;
+
+type ConnectShopifyMutation = {
+  connectShopify: {
+    remoteFilesVersion: string;
+    changed: { path: string; mode: number; content: string; encoding: FileSyncEncoding }[];
+    deleted: { path: string }[];
+  };
+};
+
+type ConnectShopifyMutationVariables = {
+  appName: string;
+};
+
+export const CONNECT_SHOPIFY_MUTATION = sprint(/* GraphQL */ `
+  mutation ConnectShopify($appName: String!) {
+    connectShopify(appName: $appName) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+      deleted {
+        path
+      }
+    }
+  }
+`) as GraphQLMutation<ConnectShopifyMutation, ConnectShopifyMutationVariables>;
+
+export type CONNECT_SHOPIFY_MUTATION = typeof CONNECT_SHOPIFY_MUTATION;
 
 export const CREATE_MODEL_MUTATION = sprint(/* GraphQL */ `
   mutation createModel($path: String!, $fields: [CreateModelFieldsInput!]) {

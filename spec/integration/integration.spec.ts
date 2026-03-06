@@ -32,7 +32,7 @@ describe.skipIf(!hasIntegrationToken())("integration", () => {
     expect(result.stdout).toMatch(/You are logged in as .+/);
   });
 
-  it("pull downloads files from gadget", async () => {
+  it("pull downloads files from gadget", { timeout: timeoutMs("2m") }, async () => {
     const dirs = await createTestDirs("pull");
     onTestFinished(() => cleanupTestDirs(dirs));
 
@@ -53,7 +53,7 @@ describe.skipIf(!hasIntegrationToken())("integration", () => {
     expect(await fs.pathExists(syncJson), `Expected ${syncJson} to exist after pull`).toBe(true);
   });
 
-  it("dev syncs files bidirectionally with gadget", { timeout: timeoutMs("3m") }, async () => {
+  it("dev syncs files bidirectionally with gadget", { timeout: timeoutMs("4m") }, async () => {
     const dirs = await createTestDirs("dev");
     onTestFinished(() => cleanupTestDirs(dirs));
 

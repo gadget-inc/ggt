@@ -7,7 +7,7 @@ import { type Environment } from "../../../app/app.js";
 import { config } from "../../../config/config.js";
 import { isNil, isObject } from "../../../util/is.js";
 import { serializeObjectToHTTPQuery } from "../../../util/querystring.js";
-import colors, { color } from "../../colors.js";
+import colors from "../../colors.js";
 import { symbol } from "../../symbols.js";
 import { Level } from "../level.js";
 import type { Formatter } from "./format.js";
@@ -196,24 +196,24 @@ const formatTimestamp = (timestamp?: Date): string => {
 const formatLevel = (level: Level): string => {
   switch (level) {
     case Level.PRINT:
-      return colors.levelPrint(color.whiteBright.bold(" PRINT "));
+      return colors.levelPrint(colors.levelBadgeText(" PRINT "));
     case Level.TRACE:
-      return colors.levelTrace(color.whiteBright.bold(" TRACE "));
+      return colors.levelTrace(colors.levelBadgeText(" TRACE "));
     case Level.DEBUG:
-      return colors.levelDebug(color.whiteBright.bold(" DEBUG "));
+      return colors.levelDebug(colors.levelBadgeText(" DEBUG "));
     case Level.INFO:
-      return colors.levelInfo(color.whiteBright.bold(" INFO "));
+      return colors.levelInfo(colors.levelBadgeText(" INFO "));
     case Level.WARN:
-      return colors.levelWarn(color.whiteBright.bold(" WARN "));
+      return colors.levelWarn(colors.levelBadgeText(" WARN "));
     case Level.ERROR:
-      return colors.levelError(color.whiteBright.bold(" ERROR "));
+      return colors.levelError(colors.levelBadgeText(" ERROR "));
     // case "fatal":
     //   return red(colors.bold(level));
   }
 };
 
 const formatName = (name: string): string => {
-  return color.whiteBright(name);
+  return colors.logName(name);
 };
 
 const formatMessage = (msg: unknown): string => {
@@ -228,7 +228,7 @@ const formatMessage = (msg: unknown): string => {
   }
   const lines = msgStr.split(NEW_LINE);
   if (lines.length === 1) {
-    return SPACE + color.whiteBright(msgStr);
+    return SPACE + msgStr;
   }
   return NEW_LINE + lines.map((line) => SPACE + SPACE + line).join(NEW_LINE);
 };

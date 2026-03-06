@@ -1,5 +1,39 @@
 # @gadgetinc/ggt
 
+## 3.0.0
+
+### Major Changes
+
+- 7f446cf: `ggt logs` now prints recent logs and exits by default.
+
+  Breaking change: streaming now requires `--follow` / `-f`.
+
+  Also adds one-shot filtering with `--start` and `--log-level`.
+
+### Minor Changes
+
+- 0980eb6: Add `--allow` and `--allow-all` shorthands for commands with allow flags
+
+  Commands that define `--allow-*` flags now automatically support `--allow <flag,...>` and `--allow-all` as convenient shorthands. Unknown values suggest the closest match, and a bare `--allow` at end of argv throws a clear error.
+
+- 4e88609: Overhaul CLI help output with consistent, structured formatting
+
+  All commands now display structured help with USAGE, COMMANDS, FLAGS, and ARGUMENTS
+  sections. Two help levels are supported: `-h` shows a compact summary with a footer
+  pointing to `--help`, which shows full details including examples and prose sections.
+
+  Commands are grouped by category (Development, Resources, Account, Diagnostics,
+  Configuration) in the root help output. Flag descriptions are normalized as prose
+  in an expanded layout with bold group headers.
+
+  Internally, all commands have been migrated to a declarative `defineCommand()` API, replacing the previous imperative `usage(ctx)` pattern.
+
+### Patch Changes
+
+- 26f04ca: Fix `ggt debugger --configure vscode` crashing when existing `.vscode/launch.json` or `tasks.json` contains comments or trailing commas
+- 616e3db: Fix trace_id log URLs to use path-based editor routing (`primaryDomain/edit/{env}/logs`) instead of subdomain-based routing.
+- 8140636: Fix `ggt eval` and log URLs using `--production` subdomain for production environments. Production uses just the app slug (e.g. `myapp.gadget.app`), not `myapp--production.gadget.app`.
+
 ## 2.3.0
 
 ### Minor Changes

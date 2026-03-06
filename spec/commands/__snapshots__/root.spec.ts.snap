@@ -401,6 +401,12 @@ FLAGS
         is read-only for most commands.
 
 ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
       --allow-different-app
         Allow syncing with a different app. Overrides the app recorded in
         .gadget/sync.json with the one specified by --app. Use this when you

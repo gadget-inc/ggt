@@ -89,7 +89,10 @@ const runLeaf = async (ctx: Context, command: LeafCommandConfig, argv: string[])
 
 const runParent = async (ctx: Context, command: ParentCommandConfig, argv: string[]): Promise<void> => {
   const { subcommands } = command;
-  const valueTakingFlags = buildValueTakingFlags(command.args ?? {});
+  // Include AllowArgs in the parent's value-taking flags so that `--allow <value>`
+  // doesn't misidentify the value token as a subcommand name.
+  const { argsDef: parentWithAllow, helpMod: parentHelpMod } = withAllowArgs(command.args ?? {}, command);
+  const valueTakingFlags = buildValueTakingFlags(parentWithAllow);
 
   // find the subcommand name (first positional token) and remove it from argv
   const positional = findFirstPositional(argv, valueTakingFlags);
@@ -111,12 +114,12 @@ const runParent = async (ctx: Context, command: ParentCommandConfig, argv: strin
     if (sub) {
       printHelpAndExit(`${command.name} ${name}`, mergedHelpMod, helpLevel);
     }
-    printHelpAndExit(command.name, command, helpLevel);
+    printHelpAndExit(command.name, parentHelpMod, helpLevel);
   }
 
   // no subcommand given — show parent help
   if (!name) {
-    return printHelpAndExit(command.name, command, "-h");
+    return printHelpAndExit(command.name, parentHelpMod, "-h");
   }
 
   // unknown subcommand
@@ -127,7 +130,7 @@ const runParent = async (ctx: Context, command: ParentCommandConfig, argv: strin
     if (suggestion) {
       parts.push(`Did you mean ${suggestion}?`);
     }
-    parts.push(renderUsageHint(command.name, command));
+    parts.push(renderUsageHint(command.name, parentHelpMod));
     throw new ArgError(parts.join("\n\n"), { usageHint: false });
   }
   const subCommandPath = `${command.name} ${name}`;

@@ -15,6 +15,7 @@ export type FlagDef = {
   valueName?: string;
   hidden?: boolean;
   brief?: boolean;
+  hasCompleter?: boolean;
 };
 
 export type ArgsDefinition = Record<string, ArgDefinition>;
@@ -32,6 +33,7 @@ type ArgDefinition<Handler extends arg.Handler = arg.Handler> = {
   valueName?: string;
   hidden?: boolean;
   brief?: boolean;
+  complete?: (ctx: import("./context.js").Context, partial: string, argv: string[]) => Promise<string[]>;
 };
 
 export type ParseArgsOptions = {
@@ -192,8 +194,23 @@ export const extractFlags = (args: ArgsDefinition): FlagDef[] => {
     if (value.valueName !== undefined) flag.valueName = value.valueName;
     if (value.hidden !== undefined) flag.hidden = value.hidden;
     if (value.brief !== undefined) flag.brief = value.brief;
+    if (typeof value.complete === "function") flag.hasCompleter = true;
     flags.push(flag);
   }
 
   return flags;
+};
+
+/**
+ * Collects all flag names and aliases into a flat word list.
+ */
+export const flagWords = (flags: FlagDef[]): string[] => {
+  const words: string[] = [];
+  for (const f of flags) {
+    words.push(f.name);
+    for (const a of f.aliases) {
+      words.push(a);
+    }
+  }
+  return words;
 };

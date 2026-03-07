@@ -1,3 +1,4 @@
+import { completeEnvironment } from "../services/app/app.js";
 import { ArgError } from "../services/command/arg.js";
 import { defineCommand } from "../services/command/command.js";
 import { FileSync } from "../services/filesync/filesync.js";
@@ -27,6 +28,7 @@ export default defineCommand({
       alias: ["-e", "--environment", "--from"],
       description: "Environment to pull from",
       valueName: "environment",
+      complete: completeEnvironment,
       details: "Defaults to the development environment recorded in .gadget/sync.json.",
     },
     "--force": {

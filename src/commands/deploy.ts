@@ -3,6 +3,7 @@ import assert from "node:assert";
 import indentString from "indent-string";
 import terminalLink from "terminal-link";
 
+import { completeEnvironment } from "../services/app/app.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { defineCommand } from "../services/command/command.js";
 import { env } from "../services/config/env.js";
@@ -121,6 +122,7 @@ export default defineCommand({
       alias: ["-e", "--environment", "--from"],
       description: "Environment to deploy from",
       valueName: "environment",
+      complete: completeEnvironment,
       details:
         "The source development environment whose files and schema will be deployed to production. Defaults to the environment recorded in .gadget/sync.json.",
     },

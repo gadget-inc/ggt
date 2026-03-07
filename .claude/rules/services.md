@@ -55,7 +55,7 @@ Defined in `src/services/output/`.
 
 ### Formatting
 
-- `sprint` / `sprintln` — template literal tag combining `chalk-template` + `dedent`. Also accepts options form: `sprint({ content, indent, boxen, ensureNewLine, ensureEmptyLineAbove })`
+- `sprint` / `sprintln` — template literal tag combining `chalk-template` + `dedent`. Also accepts options form: `sprint({ content, indent, boxen, ensureNewLine, ensureEmptyLineAbove })`. Multiline interpolated values are automatically aligned to the insertion column (`alignMultilineValues`), so use plain `"\n"` in `.join()` — never pad with manual spaces.
 - `println` / `print` — write formatted text to stdout (no-op in JSON mode unless `json` option is set)
 
 ### Interactive elements

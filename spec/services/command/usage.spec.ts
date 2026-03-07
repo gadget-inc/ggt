@@ -793,6 +793,7 @@ describe("renderCommandList", () => {
     expect(output).toContain("login");
     expect(output).toContain("logout");
     expect(output).toContain("version");
+    expect(output).toContain("completion");
   });
 
   it("excludes commands marked as hidden", async () => {

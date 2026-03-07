@@ -4,7 +4,8 @@ import { getConflicts, printConflicts } from "../services/filesync/conflicts.js"
 import { getDevStatus } from "../services/filesync/dev-lock.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { SyncJsonArgs } from "../services/filesync/sync-json-args.js";
+import { SyncJson, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";

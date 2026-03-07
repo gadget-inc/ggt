@@ -23,12 +23,20 @@ import { reportErrorAndExit } from "../services/output/report.js";
 import { spin } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
+import { filterByPrefix } from "../services/util/collection.js";
 
 const parseJsonc = (text: string): unknown => {
   return JSON.parse(stripJsonComments(text, { trailingCommas: true }));
 };
 
 const SupportedEditors = ["vscode", "cursor"] as const;
+
+/**
+ * Completes supported editor names for debugger --configure (static).
+ */
+const completeEditor = async (_ctx: Context, partial: string, _argv: string[]): Promise<string[]> => {
+  return filterByPrefix([...SupportedEditors], partial);
+};
 
 const StartingMessage = "Starting ggt debugger";
 const RunningMessage = "ggt debugger running on";
@@ -688,6 +696,7 @@ export default defineCommand({
       alias: "-c",
       description: "Write editor debug config files (vscode, cursor)",
       valueName: "editor",
+      complete: completeEditor,
       details: "Generates .vscode/launch.json and tasks.json for one-click attach debugging. Works with both VS Code and Cursor.",
     },
   },

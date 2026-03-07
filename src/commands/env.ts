@@ -3,6 +3,7 @@ import path from "node:path";
 import fs from "fs-extra";
 
 import { type Application, EnvironmentType, getApplications, type Environment } from "../services/app/app.js";
+import { completeEnvironment } from "../services/app/app.js";
 import { Edit } from "../services/app/edit/edit.js";
 import { CREATE_ENVIRONMENT_MUTATION, DELETE_ENVIRONMENT_MUTATION, UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
 import { AppIdentityArgs, loadApplication } from "../services/command/app-identity.js";
@@ -234,6 +235,7 @@ export default defineCommand({
           description: "Clone from an existing environment",
           details: "Clones the source environment's data and schema. If omitted, the current environment is used as the source.",
           valueName: "env-name",
+          complete: completeEnvironment,
         },
         "--use": {
           type: Boolean,

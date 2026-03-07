@@ -9,6 +9,7 @@ import { addSentryBreadcrumb } from "../sentry.js";
 import { sprint } from "../sprint.js";
 import type { Fields } from "./field.js";
 import { formatters } from "./format/format.js";
+import { completeLogLevel } from "./level.js";
 import { Level, parseLevel } from "./level.js";
 
 export const LoggingArgs = {
@@ -18,6 +19,7 @@ export const LoggingArgs = {
     default: Level.INFO,
     description: "Minimum log level to display",
     valueName: "level",
+    complete: completeLogLevel,
     details: sprint`
       One of: trace, debug, info, warn, error. Defaults to info. Use trace or
       debug for verbose troubleshooting output.

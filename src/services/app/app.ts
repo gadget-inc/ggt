@@ -152,8 +152,8 @@ export const completeEnvironment = async (ctx: Context, partial: string, argv: s
 const findAppFromArgv = async (apps: Application[], argv: string[]): Promise<Application | undefined> => {
   const { AppIdentityArgs } = await import("../command/app-identity-args.js");
   const { toEntryArray, aliasName } = await import("../command/arg.js");
-  const [appKey] = Object.keys(AppIdentityArgs);
-  const def = AppIdentityArgs[appKey as keyof typeof AppIdentityArgs];
+  const appKey = "--app";
+  const def = AppIdentityArgs[appKey];
   const flagNames = new Set([appKey, ...toEntryArray(def.alias).map(aliasName)]);
 
   for (let i = 0; i < argv.length; i++) {

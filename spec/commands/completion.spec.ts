@@ -880,6 +880,30 @@ describe("completion", () => {
       expect(output).toContain("push\n");
     });
 
+    it("excludes hidden commands from completion candidates", async () => {
+      const origImport = importCommand;
+      const { mock: mockFn, mockRestore: restoreFn } = await import("../__support__/mock.js");
+      const commandModule = await import("../../src/services/command/command.js");
+
+      mockFn(commandModule, "importCommand", async (...args: Parameters<typeof origImport>) => {
+        const result = await origImport(...args);
+        if (args[0] === "version") {
+          return { ...result, hidden: true };
+        }
+        return result;
+      });
+
+      try {
+        await handleCompletionRequest(testCtx, [""]);
+        const output = getOutput();
+        const lines = output.split("\n");
+        expect(lines).not.toContain("version");
+        expect(lines).toContain("dev");
+      } finally {
+        restoreFn(commandModule.importCommand);
+      }
+    });
+
     it("completes command names with partial match", async () => {
       await handleCompletionRequest(testCtx, ["de"]);
       const output = getOutput();

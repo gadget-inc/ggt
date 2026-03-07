@@ -97,7 +97,9 @@ const getCompletionCandidates = async (ctx: Context, tokens: string[]): Promise<
   // No command yet — complete command names + root flags
   if (!commandName || !isCommand(commandName) || !mod) {
     if (!commandName) {
-      const commandNames = filterByPrefix([...Commands], partial);
+      const modules = await Promise.all(Commands.map((cmd) => importCommand(cmd)));
+      const visibleCommands = Commands.filter((_, i) => !modules[i].hidden);
+      const commandNames = filterByPrefix(visibleCommands, partial);
       const rootFlagNames = getFlagNames(rootArgs, partial);
       return [...commandNames, ...rootFlagNames];
     }

@@ -34,7 +34,7 @@ const SupportedEditors = ["vscode", "cursor"] as const;
 /**
  * Completes supported editor names for debugger --configure (static).
  */
-export const completeEditor = async (_ctx: Context, partial: string, _argv: string[]): Promise<string[]> => {
+const completeEditor = async (_ctx: Context, partial: string, _argv: string[]): Promise<string[]> => {
   return filterByPrefix([...SupportedEditors], partial);
 };
 

@@ -816,9 +816,7 @@ _ggt_var() {
             '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
             '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
             '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
-            '(--from -e --env)''--from[Import from another environment]:value:_ggt_dynamic' \\
-            '(--from -e --env)''-e[Import from another environment]:value:_ggt_dynamic' \\
-            '(--from -e --env)''--env[Import from another environment]:value:_ggt_dynamic' \\
+            '--from[Import from another environment]:value:_ggt_dynamic' \\
             '--from-file[Import from a .env file]:value: ' \\
             '--include-values[Copy values when importing from another env]' \\
             '--all[Import all variables instead of specifying keys]'

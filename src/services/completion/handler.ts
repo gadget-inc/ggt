@@ -3,7 +3,14 @@ import arg from "arg";
 import { args as rootArgs } from "../../commands/root.js";
 import { withAllowArgs } from "../command/allow.js";
 import { extractFlags, flagWords, aliasName, toEntryArray, type ArgsDefinition } from "../command/arg.js";
-import { type CommandConfig, Commands, importCommand, isCommand } from "../command/command.js";
+import {
+  type CommandConfig,
+  type ParentCommandConfig,
+  Commands,
+  importCommand,
+  isCommand,
+  resolveCommandAlias,
+} from "../command/command.js";
 import type { Context } from "../command/context.js";
 import { filterByPrefix } from "../util/collection.js";
 
@@ -65,11 +72,25 @@ const getCompletionCandidates = async (ctx: Context, tokens: string[]): Promise<
   // Compute merged args once: root + command (with allow args) + subcommand
   let mergedArgs: ArgsDefinition = rootArgs;
 
-  if (commandMatch && isCommand(commandMatch.value)) {
-    mod = await importCommand(commandMatch.value);
+  // Resolve command name, checking aliases if not a direct match
+  let resolvedCommand = commandMatch?.value;
+  if (resolvedCommand && !isCommand(resolvedCommand)) {
+    resolvedCommand = await resolveCommandAlias(resolvedCommand);
+  }
+
+  if (resolvedCommand && isCommand(resolvedCommand)) {
+    mod = await importCommand(resolvedCommand);
     mergedArgs = { ...rootArgs, ...withAllowArgs(mod.args ?? {}) };
-    const subMatch = findFirstPositional(preceding, mergedArgs, commandMatch.index + 1);
+    const subMatch = findFirstPositional(preceding, mergedArgs, (commandMatch?.index ?? 0) + 1);
     subcommandName = subMatch?.value;
+
+    // Resolve subcommand aliases
+    if (subcommandName && "subcommands" in mod && mod.subcommands) {
+      const resolved = resolveSubcommandAlias(subcommandName, (mod as ParentCommandConfig).subcommands);
+      if (resolved) {
+        subcommandName = resolved;
+      }
+    }
   }
 
   // Check if the last preceding token is a flag that expects a value,
@@ -84,7 +105,7 @@ const getCompletionCandidates = async (ctx: Context, tokens: string[]): Promise<
   }
 
   // No command yet — complete command names + root flags
-  if (!commandName || !isCommand(commandName) || !mod) {
+  if (!commandName || !mod) {
     if (!commandName) {
       const modules = await Promise.all(Commands.map((cmd) => importCommand(cmd)));
       const visibleCommands = Commands.filter((_, i) => !modules[i].hidden);
@@ -103,7 +124,7 @@ const getCompletionCandidates = async (ctx: Context, tokens: string[]): Promise<
   }
 
   // Leaf command or subcommand chosen — complete flags
-  if ("subcommands" in mod && mod.subcommands && subcommandName && subcommandName in mod.subcommands) {
+  if ("subcommands" in mod && mod.subcommands && subcommandName && Object.prototype.hasOwnProperty.call(mod.subcommands, subcommandName)) {
     return getFlagNames({ ...mergedArgs, ...mod.subcommands[subcommandName].args }, partial);
   }
 
@@ -127,7 +148,7 @@ const tryCompleteFlag = async (
     return findAndCallCompleter(ctx, rootArgs, flagToken, partial, argv);
   }
 
-  if ("subcommands" in mod && mod.subcommands && subcommandName && subcommandName in mod.subcommands) {
+  if ("subcommands" in mod && mod.subcommands && subcommandName && Object.prototype.hasOwnProperty.call(mod.subcommands, subcommandName)) {
     return findAndCallCompleter(ctx, { ...mergedArgs, ...mod.subcommands[subcommandName].args }, flagToken, partial, argv);
   }
 
@@ -185,6 +206,17 @@ const resolveFlag = (args: ArgsDefinition, flagToken: string): string | undefine
     }
   }
 
+  return undefined;
+};
+
+/**
+ * Resolves a subcommand token to its canonical name, checking direct lookup then aliases.
+ */
+const resolveSubcommandAlias = (token: string, subcommands: ParentCommandConfig["subcommands"]): string | undefined => {
+  if (Object.prototype.hasOwnProperty.call(subcommands, token)) return token;
+  for (const [name, sub] of Object.entries(subcommands)) {
+    if (sub.aliases?.includes(token)) return name;
+  }
   return undefined;
 };
 

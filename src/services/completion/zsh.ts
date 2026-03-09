@@ -69,7 +69,7 @@ export const generateZshCompletions = (data: CompletionData): string => {
       lines.push(`          _ggt_${sanitizeName(cmd.name)}`);
       lines.push("          ;;");
     } else {
-      const allFlags = [...data.rootFlags, ...cmd.flags];
+      const allFlags = deduplicateFlags([...data.rootFlags, ...cmd.flags]);
       lines.push(`        ${cmd.name})`);
       lines.push("          _arguments \\");
       const flagSpecs = allFlags.map((f) => zshFlagSpec(f));
@@ -105,13 +105,9 @@ const generateSubcommandHelper = (cmd: CommandDef, rootFlags: FlagDef[]): string
   lines.push("");
   lines.push("  _arguments -C \\");
 
-  // root flags
-  for (const flag of rootFlags) {
-    lines.push(`    ${zshFlagSpec(flag)} \\`);
-  }
-
-  // command-level flags
-  for (const flag of cmd.flags) {
+  // root + command-level flags, deduplicated
+  const parentFlags = deduplicateFlags([...rootFlags, ...cmd.flags]);
+  for (const flag of parentFlags) {
     lines.push(`    ${zshFlagSpec(flag)} \\`);
   }
 
@@ -133,7 +129,7 @@ const generateSubcommandHelper = (cmd: CommandDef, rootFlags: FlagDef[]): string
   lines.push("      case $words[1] in");
 
   for (const sub of cmd.subcommands) {
-    const allFlags = [...rootFlags, ...cmd.flags, ...sub.flags];
+    const allFlags = deduplicateFlags([...rootFlags, ...cmd.flags, ...sub.flags]);
     lines.push(`        ${sub.name})`);
     if (allFlags.length > 0) {
       lines.push("          _arguments \\");
@@ -152,6 +148,37 @@ const generateSubcommandHelper = (cmd: CommandDef, rootFlags: FlagDef[]): string
   lines.push("}");
 
   return lines;
+};
+
+/**
+ * Deduplicates flags that share overlapping alias names.
+ * When two flags declare the same alias (e.g., both `--environment` and `--from`
+ * declare `-e` and `--env`), later flags have their conflicting aliases stripped
+ * so zsh doesn't receive duplicate `_arguments` specs.
+ */
+const deduplicateFlags = (flags: FlagDef[]): FlagDef[] => {
+  const seen = new Set<string>();
+  const result: FlagDef[] = [];
+
+  for (const flag of flags) {
+    // Check if the canonical name is already claimed
+    if (seen.has(flag.name)) {
+      continue;
+    }
+
+    // Filter out aliases that are already claimed by a previous flag
+    const uniqueAliases = flag.aliases.filter((a) => !seen.has(a));
+
+    // Register all names for this flag
+    seen.add(flag.name);
+    for (const a of uniqueAliases) {
+      seen.add(a);
+    }
+
+    result.push(uniqueAliases.length === flag.aliases.length ? flag : { ...flag, aliases: uniqueAliases });
+  }
+
+  return result;
 };
 
 /**

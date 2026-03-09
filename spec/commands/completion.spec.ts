@@ -492,6 +492,38 @@ describe("completion", () => {
       });
     });
 
+    describe("zsh flag deduplication", () => {
+      it("strips duplicate aliases when two flags share the same alias names", () => {
+        const duplicateData: CompletionData = {
+          rootFlags: [],
+          commands: [
+            {
+              name: "test-cmd",
+              description: "A test command",
+              flags: [{ name: "--environment", type: "string", description: "Environment", aliases: ["-e", "--env"], hidden: false }],
+              subcommands: [
+                {
+                  name: "import",
+                  description: "Import stuff",
+                  flags: [{ name: "--from", type: "string", description: "Import from env", aliases: ["-e", "--env"], hidden: false }],
+                },
+              ],
+            },
+          ],
+        };
+        const output = generateZshCompletions(duplicateData);
+        // --environment should keep its -e and --env aliases
+        expect(output).toContain("'(--environment -e --env)''--environment");
+        expect(output).toContain("'(--environment -e --env)''-e");
+        expect(output).toContain("'(--environment -e --env)''--env");
+        // --from should NOT have -e or --env (already claimed by --environment)
+        expect(output).toContain("'--from[Import from env]");
+        // there should be no exclusion group for --from since it has no remaining aliases
+        expect(output).not.toContain("'(--from -e");
+        expect(output).not.toContain("'(--from --env");
+      });
+    });
+
     describe("file completion suppression", () => {
       const testData: CompletionData = {
         rootFlags: [{ name: "--help", type: "boolean", description: "Show help", aliases: ["-h"], hidden: false, hasCompleter: false }],
@@ -941,6 +973,29 @@ describe("completion", () => {
       await handleCompletionRequest(testCtx, ["nonexistent", ""]);
       const output = getOutput();
       expect(output).toBe("");
+    });
+
+    it("completes flags for a command alias", async () => {
+      // "log" is an alias for "logs"
+      await handleCompletionRequest(testCtx, ["log", "--"]);
+      const output = getOutput();
+      expect(output).toContain("--app\n");
+      expect(output).toContain("--env\n");
+    });
+
+    it("completes subcommands for a command alias", async () => {
+      // "envs" is an alias for "env"
+      await handleCompletionRequest(testCtx, ["envs", ""]);
+      const output = getOutput();
+      expect(output).toContain("list\n");
+    });
+
+    it("completes flags for a subcommand alias", async () => {
+      // "ls" is an alias for "list" under the "env" command
+      await handleCompletionRequest(testCtx, ["env", "ls", "--"]);
+      const output = getOutput();
+      // should get flags from the "list" subcommand
+      expect(output).toContain("--help\n");
     });
 
     describe("with auth and apps", () => {

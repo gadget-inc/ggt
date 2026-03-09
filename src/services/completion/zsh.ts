@@ -18,7 +18,7 @@ export const generateZshCompletions = (data: CompletionData): string => {
   if (hasDynamicFlags) {
     lines.push("_ggt_dynamic() {");
     lines.push("  local -a results");
-    lines.push('  results=(${(f)"$(ggt --__complete ${words[@]:1} 2>/dev/null)"})');
+    lines.push('  results=(${(f)"$(ggt --__complete ${_ggt_words[@]:1} 2>/dev/null)"})');
     lines.push("  compadd -a results");
     lines.push("}");
     lines.push("");
@@ -36,6 +36,10 @@ export const generateZshCompletions = (data: CompletionData): string => {
   lines.push("_ggt() {");
   lines.push("  local -a commands");
   lines.push("  local state");
+  if (hasDynamicFlags) {
+    lines.push("  # Save the full word list before _arguments -C locally scopes $words");
+    lines.push('  local -a _ggt_words=("${words[@]}")');
+  }
   lines.push("");
   lines.push("  _arguments -C \\");
 

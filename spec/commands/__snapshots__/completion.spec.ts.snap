@@ -694,7 +694,7 @@ exports[`completion > shell generators > zsh output matches snapshot 1`] = `
 
 _ggt_dynamic() {
   local -a results
-  results=(\${(f)"$(ggt --__complete \${words[@]:1} 2>/dev/null)"})
+  results=(\${(f)"$(ggt --__complete \${_ggt_words[@]:1} 2>/dev/null)"})
   compadd -a results
 }
 
@@ -1254,6 +1254,8 @@ _ggt_completion() {
 _ggt() {
   local -a commands
   local state
+  # Save the full word list before _arguments -C locally scopes $words
+  local -a _ggt_words=("\${words[@]}")
 
   _arguments -C \\
     '(--help -h)''--help[Show command help]' \\

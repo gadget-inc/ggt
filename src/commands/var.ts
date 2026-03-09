@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 
+import { EnvArg } from "../services/app/app.js";
 import { Edit } from "../services/app/edit/edit.js";
 import {
   DELETE_ENVIRONMENT_VARIABLE_MUTATION,
@@ -44,9 +45,8 @@ const deleteArgs = {
 
 const importArgs = {
   "--from": {
-    type: String,
+    ...EnvArg,
     description: "Import from another environment",
-    valueName: "env-name",
     details: "The name of the source environment to import from. Cannot be combined with --from-file.",
   },
   "--from-file": {

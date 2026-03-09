@@ -490,10 +490,10 @@ export default defineCommand({
           command: "pull",
           args: {
             _: [],
-            "--app": undefined,
+            "--application": undefined,
             "--allow-unknown-directory": undefined,
             "--allow-different-app": undefined,
-            "--env": newEnvName,
+            "--environment": newEnvName,
           },
           directory: await loadSyncJsonDirectory(process.cwd()),
         });

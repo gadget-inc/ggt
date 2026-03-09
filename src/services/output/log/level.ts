@@ -29,6 +29,10 @@ export const parseLevel = memo(MemoAllArgs, (value: unknown, defaultValue: Level
   return parsed.success ? parsed.data : defaultValue;
 });
 
+export const levels = Object.keys(Level)
+  .filter((k) => k !== "PRINT")
+  .map((k) => k.toLowerCase());
+
 /**
  * Converts a numeric verbosity value to a log level.
  *

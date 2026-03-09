@@ -62,7 +62,7 @@ export class UnknownDirectoryError extends GGTError {
           If you're running "ggt dev" for the first time, we recommend
           using a gadget specific directory like this:
 
-            ggt dev ~/gadget/${this.details.args["--app"] ?? "<name>"}
+            ggt dev ~/gadget/${this.details.args["--application"] ?? "<name>"}
 
           To use a non-empty directory without a ".gadget/sync.json" file,
           run "ggt dev" again with the "--allow-unknown-directory" flag:

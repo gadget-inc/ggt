@@ -255,7 +255,7 @@ describe("AppIdentity.load", () => {
 
   describe("errors", () => {
     it(`throws ${ArgError.name} when --app is passed a slug that does not exist within the user's list of available apps`, async () => {
-      args["--app"] = "does-not-exist";
+      args["--application"] = "does-not-exist";
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
@@ -301,7 +301,7 @@ describe("AppIdentity.load", () => {
     });
 
     it(`throws ${ArgError.name} when --env is passed production for a non-allowed command`, async () => {
-      args["--env"] = "production";
+      args["--environment"] = "production";
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
@@ -315,7 +315,7 @@ describe("AppIdentity.load", () => {
     });
 
     it(`throws ${ArgError.name} when --env is passed an environment that is not in the list of valid environments for the app`, async () => {
-      args["--env"] = "does-not-exist";
+      args["--environment"] = "does-not-exist";
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
@@ -388,7 +388,7 @@ describe("AppIdentity.load", () => {
       'does not allow --env=production when the command is "%s"',
       async (command) => {
         args._ = [command];
-        args["--env"] = "production";
+        args["--environment"] = "production";
         await expect(
           AppIdentity.load(testCtx, {
             command,
@@ -401,7 +401,7 @@ describe("AppIdentity.load", () => {
 
     it.each(AllowedProdCommands)('does allow --env=production when the command is "%s"', async (command) => {
       args._ = [command];
-      args["--env"] = "production";
+      args["--environment"] = "production";
       const appIdentity = await AppIdentity.load(testCtx, {
         command,
         args,
@@ -412,7 +412,7 @@ describe("AppIdentity.load", () => {
     });
 
     it("treats production case-insensitively", async () => {
-      args["--env"] = "Production";
+      args["--environment"] = "Production";
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,

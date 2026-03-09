@@ -9,6 +9,13 @@ export const getAllowFlags = (args: ArgsDefinition): string[] => {
 };
 
 /**
+ * Returns args merged with AllowArgs if the command has `--allow-*` flags.
+ */
+export const withAllowArgs = (args: ArgsDefinition): ArgsDefinition => {
+  return getAllowFlags(args).length > 0 ? { ...args, ...AllowArgs } : args;
+};
+
+/**
  * Args definition for `--allow` and `--allow-all`, injected automatically
  * into commands that have `--allow-*` flags for help text display.
  */

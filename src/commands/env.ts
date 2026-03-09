@@ -2,7 +2,7 @@ import path from "node:path";
 
 import fs from "fs-extra";
 
-import { type Application, EnvironmentType, getApplications, type Environment } from "../services/app/app.js";
+import { type Application, EnvArg, EnvironmentType, getApplications, type Environment } from "../services/app/app.js";
 import { Edit } from "../services/app/edit/edit.js";
 import { CREATE_ENVIRONMENT_MUTATION, DELETE_ENVIRONMENT_MUTATION, UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
 import { AppIdentityArgs, loadApplication } from "../services/command/app-identity.js";
@@ -23,12 +23,12 @@ import { getUserOrLogin } from "../services/user/user.js";
 import { sortBySimilar } from "../services/util/collection.js";
 
 const parentArgs = {
-  "--app": AppIdentityArgs["--app"],
+  "--application": AppIdentityArgs["--application"],
 } satisfies ArgsDefinition;
 
 const resolveApplication = async (
   ctx: Context,
-  args: { "--app"?: string },
+  args: { "--application"?: string },
 ): Promise<{ application: Application; state?: SyncJsonState }> => {
   const user = await getUserOrLogin(ctx, "env");
   const availableApps = await getApplications(ctx);
@@ -230,10 +230,9 @@ export default defineCommand({
       ],
       args: {
         "--from": {
-          type: String,
+          ...EnvArg,
           description: "Clone from an existing environment",
           details: "Clones the source environment's data and schema. If omitted, the current environment is used as the source.",
-          valueName: "env-name",
         },
         "--use": {
           type: Boolean,

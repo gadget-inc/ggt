@@ -104,6 +104,7 @@ describe("root", () => {
         Configuration
         configure       Manage ggt configuration
         agent-plugin    Manage plugins for AI coding assistants
+        completion      Generate shell completion scripts
         version         Print the currently installed version
 
       FLAGS
@@ -159,6 +160,7 @@ describe("root", () => {
         Configuration
         configure       Manage ggt configuration
         agent-plugin    Manage plugins for AI coding assistants
+        completion      Generate shell completion scripts
         version         Print the currently installed version
 
       FLAGS
@@ -263,7 +265,7 @@ describe("root", () => {
         use        Switch the active environment for this directory
 
       FLAGS
-        -a, --app, --application <app-slug>  Gadget app to use
+        -a, --app, --application <app>  Gadget app to use
 
       EXAMPLES
         $ ggt env list

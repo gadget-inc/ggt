@@ -48,17 +48,17 @@ describe("flagLeft", () => {
     expect(result).toBe("-v, --verbose");
   });
 
-  it("puts canonical long name before shorter long aliases", () => {
+  it("sorts prefix-family long flags by length, then rest", () => {
     const flag: FlagDef = {
-      name: "--env",
-      aliases: ["-e", "--to", "--environment"],
+      name: "--environment",
+      aliases: ["-e", "--to", "--env"],
       type: "string",
       description: "Select the environment",
     };
-    expect(flagLeft(flag)).toBe("-e, --env, --to, --environment <value>");
+    expect(flagLeft(flag)).toBe("-e, --env, --environment, --to <value>");
   });
 
-  it("puts canonical long name before alphabetically-first alias", () => {
+  it("puts canonical first when no alias shares its prefix", () => {
     const flag: FlagDef = { name: "--allow-problems", aliases: ["--allow-issues"], type: "boolean", description: "Allow problems" };
     expect(flagLeft(flag)).toBe("    --allow-problems, --allow-issues");
   });
@@ -793,6 +793,7 @@ describe("renderCommandList", () => {
     expect(output).toContain("login");
     expect(output).toContain("logout");
     expect(output).toContain("version");
+    expect(output).toContain("completion");
   });
 
   it("excludes commands marked as hidden", async () => {

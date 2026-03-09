@@ -1,0 +1,1595 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`completion > shell generators > bash output matches snapshot 1`] = `
+"# bash completion for ggt -*- shell-script -*-
+
+_ggt_completions() {
+  local cur="\${COMP_WORDS[COMP_CWORD]}"
+
+  local prev="\${COMP_WORDS[COMP_CWORD-1]}"
+
+  case "$prev" in
+    --application|-a|--app|--environment|-e|--env|--log-level|-l|--prefer|--from|--to|--configure|-c)
+      COMPREPLY=($(ggt --__complete "\${COMP_WORDS[@]:1}" 2>/dev/null))
+      return ;;
+  esac
+
+  if [[ $COMP_CWORD -eq 1 ]]; then
+    COMPREPLY=($(compgen -W "dev deploy status problems push pull var env add open list login logout logs debugger whoami configure agent-plugin eval version completion --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+    return
+  fi
+
+  case "\${COMP_WORDS[1]}" in
+    dev)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --log-level -l --my-logs -m --prefer --file-push-delay --file-watch-debounce --file-watch-poll-interval --file-watch-poll-timeout --file-watch-rename-timeout --no-logs --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    deploy)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --from --allow-different-app --allow-unknown-directory --force -f --allow-problems --allow-issues --allow-charges --allow-data-delete --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    status)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    problems)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    push)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --to --allow-different-app --allow-unknown-directory --force -f --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    pull)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --from --allow-different-app --allow-unknown-directory --force -f --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    var)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "list get set delete import --application -a --app --environment -e --env --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          list)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          get)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          set)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --secret -s --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          delete)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --force -f --all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          import)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --from -e --env --from-file --include-values --all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    env)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "list create delete unpause use --application -a --app --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          list)
+            COMPREPLY=($(compgen -W "--application -a --app --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          create)
+            COMPREPLY=($(compgen -W "--application -a --app --from -e --env --use -u --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          delete)
+            COMPREPLY=($(compgen -W "--application -a --app --force -f --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          unpause)
+            COMPREPLY=($(compgen -W "--application -a --app --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          use)
+            COMPREPLY=($(compgen -W "--application -a --app --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--application -a --app --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    add)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "model action route field environment --application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          model)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          action)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          route)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          field)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          environment)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    open)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --show-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    list)
+      COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    login)
+      COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    logout)
+      COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    logs)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --log-level -l --my-logs -m --follow -f --start --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    debugger)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --port -p --configure -c --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    whoami)
+      COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    configure)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "show change clear --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          show)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          change)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          clear)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    agent-plugin)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "install update --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          install)
+            COMPREPLY=($(compgen -W "--force -f --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          update)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    eval)
+      COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-writes -w --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    version)
+      COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      ;;
+    completion)
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "bash zsh fish --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      else
+        case "\${COMP_WORDS[2]}" in
+          bash)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          zsh)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          fish)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+  esac
+}
+
+complete -F _ggt_completions ggt
+"
+`;
+
+exports[`completion > shell generators > fish output matches snapshot 1`] = `
+"# fish completion for ggt
+
+# Disable file completions by default
+complete -c ggt -f
+
+# Helper: check if a specific subcommand of a parent command has been entered
+function __ggt_seen_subcommand
+  set -l parent $argv[1]
+  set -l sub $argv[2]
+  set -l cmd (commandline -opc)
+  set -l found_parent 0
+  for word in $cmd
+    if test $found_parent -eq 1
+      if test $word = $sub
+        return 0
+      end
+    end
+    if test $word = $parent
+      set found_parent 1
+    end
+  end
+  return 1
+end
+
+# Helper: check if we are positioned for a subcommand (parent seen, no subcommand yet)
+# Known limitation: flag values (e.g. \`--app myapp\`) are mistaken for subcommands
+function __ggt_needs_subcommand
+  set -l parent $argv[1]
+  set -l cmd (commandline -opc)
+  set -l found_parent 0
+  for word in $cmd
+    if test $found_parent -eq 1
+      # if the word after the parent is not a flag, a subcommand was entered
+      if not string match -q -- '-*' $word
+        return 1
+      end
+    end
+    if test $word = $parent
+      set found_parent 1
+    end
+  end
+  # parent was found but no subcommand yet
+  if test $found_parent -eq 1
+    return 0
+  end
+  return 1
+end
+
+# Root flags
+complete -c ggt -n '__fish_use_subcommand' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_use_subcommand' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_use_subcommand' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_use_subcommand' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_use_subcommand' -l json -d 'Output as JSON where supported'
+
+# Commands
+complete -c ggt -n '__fish_use_subcommand' -a 'dev' -d 'Sync files and stream logs locally'
+complete -c ggt -n '__fish_use_subcommand' -a 'deploy' -d 'Deploy an environment to production'
+complete -c ggt -n '__fish_use_subcommand' -a 'status' -d 'Show sync state and pending file changes'
+complete -c ggt -n '__fish_use_subcommand' -a 'problems' -d 'Show errors and warnings in your app'
+complete -c ggt -n '__fish_use_subcommand' -a 'push' -d 'Upload local file changes to Gadget'
+complete -c ggt -n '__fish_use_subcommand' -a 'pull' -d 'Download environment files to your local directory'
+complete -c ggt -n '__fish_use_subcommand' -a 'var' -d 'Manage your app'\\''s environment variables'
+complete -c ggt -n '__fish_use_subcommand' -a 'env' -d 'Manage your app'\\''s environments'
+complete -c ggt -n '__fish_use_subcommand' -a 'add' -d 'Add resources to your app'
+complete -c ggt -n '__fish_use_subcommand' -a 'open' -d 'Open your app in a browser'
+complete -c ggt -n '__fish_use_subcommand' -a 'list' -d 'List your Gadget apps'
+complete -c ggt -n '__fish_use_subcommand' -a 'login' -d 'Log in to Gadget'
+complete -c ggt -n '__fish_use_subcommand' -a 'logout' -d 'Log out of Gadget'
+complete -c ggt -n '__fish_use_subcommand' -a 'logs' -d 'Print recent logs or stream logs from your app'
+complete -c ggt -n '__fish_use_subcommand' -a 'debugger' -d 'Connect a debugger to your app'\\''s environment'
+complete -c ggt -n '__fish_use_subcommand' -a 'whoami' -d 'Show the current logged-in user'
+complete -c ggt -n '__fish_use_subcommand' -a 'configure' -d 'Manage ggt configuration'
+complete -c ggt -n '__fish_use_subcommand' -a 'agent-plugin' -d 'Manage plugins for AI coding assistants'
+complete -c ggt -n '__fish_use_subcommand' -a 'eval' -d 'Evaluate a JavaScript snippet against your app'
+complete -c ggt -n '__fish_use_subcommand' -a 'version' -d 'Print the currently installed version'
+complete -c ggt -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completion scripts'
+
+# dev
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow-different-app -d 'Allow syncing with a different app'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l log-level -s l -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Minimum log level to display'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l my-logs -s m -d 'Show only logs emitted by your code'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l prefer -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Auto-resolve conflicts using the given source'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-push-delay -x -d 'Delay in ms before pushing file changes'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-debounce -x -d 'Debounce in ms for file watch events'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-poll-interval -x -d 'Interval in ms for polling file changes'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-poll-timeout -x -d 'Timeout in ms for file watch polling'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-rename-timeout -x -d 'Timeout in ms for detecting file renames'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l no-logs -d 'Don'\\''t stream logs while syncing'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow-all -d 'Enable all --allow-* flags'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l json -d 'Output as JSON where supported'
+
+# deploy
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to deploy from'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to deploy from'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l from -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to deploy from'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-different-app -d 'Allow syncing with a different app'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l force -s f -d 'Skip the push confirmation prompt'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-problems -d 'Allow deploying with problems'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-issues -d 'Allow deploying with problems'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-charges -d 'Allow deploying with new charges'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-data-delete -d 'Allow deploying with data loss'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-all -d 'Enable all --allow-* flags'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l json -d 'Output as JSON where supported'
+
+# status
+complete -c ggt -n '__fish_seen_subcommand_from status' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-different-app -d 'Allow syncing with a different app'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-all -d 'Enable all --allow-* flags'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l json -d 'Output as JSON where supported'
+
+# problems
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l json -d 'Output as JSON where supported'
+
+# push
+complete -c ggt -n '__fish_seen_subcommand_from push' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to push to'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to push to'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l to -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to push to'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-different-app -d 'Allow syncing with a different app'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l force -s f -d 'Push without prompting, discarding environment changes'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-all -d 'Enable all --allow-* flags'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l json -d 'Output as JSON where supported'
+
+# pull
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to pull from'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to pull from'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l from -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to pull from'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-different-app -d 'Allow syncing with a different app'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l force -s f -d 'Pull without prompting, discarding local changes'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-all -d 'Enable all --allow-* flags'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l json -d 'Output as JSON where supported'
+
+# var
+complete -c ggt -n '__fish_seen_subcommand_from var' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'list' -d 'List all environment variable keys'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'get' -d 'Print the value of an environment variable'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'set' -d 'Set one or more environment variables'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'delete' -d 'Delete one or more environment variables'
+complete -c ggt -n '__ggt_needs_subcommand var' -a 'import' -d 'Import variables from another environment or file'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l secret -s s -d 'Mark the variable as secret (write-only)'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l force -s f -d 'Skip confirmation and suppress not-found errors'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l all -d 'Delete all environment variables'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l from -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Import from another environment'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Import from another environment'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l from-file -x -d 'Import from a .env file'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l include-values -d 'Copy values when importing from another env'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l all -d 'Import all variables instead of specifying keys'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var list' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var get' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var set' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var delete' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l json -d 'Output as JSON where supported'
+
+# env
+complete -c ggt -n '__fish_seen_subcommand_from env' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'list' -d 'List all environments'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'create' -d 'Create a new environment'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'delete' -d 'Delete an environment'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'unpause' -d 'Unpause a paused environment'
+complete -c ggt -n '__ggt_needs_subcommand env' -a 'use' -d 'Switch the active environment for this directory'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l from -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Clone from an existing environment'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Clone from an existing environment'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l use -s u -d 'Switch to the new environment after creation'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l force -s f -d 'Skip confirmation'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env list' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env delete' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env unpause' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env use' -l json -d 'Output as JSON where supported'
+
+# add
+complete -c ggt -n '__fish_seen_subcommand_from add' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-different-app -d 'Allow syncing with a different app'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-all -d 'Enable all --allow-* flags'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'model' -d 'Add a new data model'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'action' -d 'Add an action to a model or as a global action'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'route' -d 'Add an HTTP route'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'field' -d 'Add a field to an existing model'
+complete -c ggt -n '__ggt_needs_subcommand add' -a 'environment' -d 'Create a new environment by cloning'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add model' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add action' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add route' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add field' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add environment' -l json -d 'Output as JSON where supported'
+
+# open
+complete -c ggt -n '__fish_seen_subcommand_from open' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l show-all -d 'Prompt to pick a model from the full list'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l json -d 'Output as JSON where supported'
+
+# list
+complete -c ggt -n '__fish_seen_subcommand_from list' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from list' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from list' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from list' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from list' -l json -d 'Output as JSON where supported'
+
+# login
+complete -c ggt -n '__fish_seen_subcommand_from login' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from login' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from login' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from login' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from login' -l json -d 'Output as JSON where supported'
+
+# logout
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from logout' -l json -d 'Output as JSON where supported'
+
+# logs
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l log-level -s l -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Minimum log level to display'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l my-logs -s m -d 'Show only logs emitted by your code'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l follow -s f -d 'Stream logs continuously'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l start -x -d 'Start time for one-shot log queries'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l json -d 'Output as JSON where supported'
+
+# debugger
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l port -s p -x -d 'Local port for the CDP proxy'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l configure -s c -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Write editor debug config files (vscode, cursor)'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l json -d 'Output as JSON where supported'
+
+# whoami
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from whoami' -l json -d 'Output as JSON where supported'
+
+# configure
+complete -c ggt -n '__ggt_needs_subcommand configure' -a 'show' -d 'Show current configured defaults'
+complete -c ggt -n '__ggt_needs_subcommand configure' -a 'change' -d 'Interactively change configuration options'
+complete -c ggt -n '__ggt_needs_subcommand configure' -a 'clear' -d 'Remove all configured defaults'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from configure' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand configure show' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand configure change' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand configure clear' -l json -d 'Output as JSON where supported'
+
+# agent-plugin
+complete -c ggt -n '__ggt_needs_subcommand agent-plugin' -a 'install' -d 'Install agent plugins into the current project'
+complete -c ggt -n '__ggt_needs_subcommand agent-plugin' -a 'update' -d 'Update agent plugins to the latest version'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l force -s f -d 'Overwrite existing files even if already present'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin update' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin update' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin update' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin update' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from agent-plugin' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand agent-plugin update' -l json -d 'Output as JSON where supported'
+
+# eval
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l allow-writes -s w -d 'Allow write operations (read-only by default)'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l allow-all -d 'Enable all --allow-* flags'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l json -d 'Output as JSON where supported'
+
+# version
+complete -c ggt -n '__fish_seen_subcommand_from version' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from version' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from version' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from version' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from version' -l json -d 'Output as JSON where supported'
+
+# completion
+complete -c ggt -n '__ggt_needs_subcommand completion' -a 'bash' -d 'Generate bash completion script'
+complete -c ggt -n '__ggt_needs_subcommand completion' -a 'zsh' -d 'Generate zsh completion script'
+complete -c ggt -n '__ggt_needs_subcommand completion' -a 'fish' -d 'Generate fish completion script'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from completion' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand completion bash' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand completion zsh' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand completion fish' -l json -d 'Output as JSON where supported'
+"
+`;
+
+exports[`completion > shell generators > zsh output matches snapshot 1`] = `
+"#compdef ggt
+
+_ggt_dynamic() {
+  local -a results
+  results=(\${(f)"$(ggt --__complete \${words[@]:1} 2>/dev/null)"})
+  compadd -a results
+}
+
+_ggt_var() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+    '--version[Print the ggt version]' \\
+    '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON where supported]' \\
+    '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+    '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'list:List all environment variable keys'
+        'get:Print the value of an environment variable'
+        'set:Set one or more environment variables'
+        'delete:Delete one or more environment variables'
+        'import:Import variables from another environment or file'
+      )
+      _describe -t subcommands 'var subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        list)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic'
+          ;;
+        get)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic'
+          ;;
+        set)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '(--secret -s)''--secret[Mark the variable as secret (write-only)]' \\
+            '(--secret -s)''-s[Mark the variable as secret (write-only)]'
+          ;;
+        delete)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '(--force -f)''--force[Skip confirmation and suppress not-found errors]' \\
+            '(--force -f)''-f[Skip confirmation and suppress not-found errors]' \\
+            '--all[Delete all environment variables]'
+          ;;
+        import)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '(--from -e --env)''--from[Import from another environment]:value:_ggt_dynamic' \\
+            '(--from -e --env)''-e[Import from another environment]:value:_ggt_dynamic' \\
+            '(--from -e --env)''--env[Import from another environment]:value:_ggt_dynamic' \\
+            '--from-file[Import from a .env file]:value: ' \\
+            '--include-values[Copy values when importing from another env]' \\
+            '--all[Import all variables instead of specifying keys]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_env() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+    '--version[Print the ggt version]' \\
+    '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON where supported]' \\
+    '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'list:List all environments'
+        'create:Create a new environment'
+        'delete:Delete an environment'
+        'unpause:Unpause a paused environment'
+        'use:Switch the active environment for this directory'
+      )
+      _describe -t subcommands 'env subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        list)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic'
+          ;;
+        create)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--from -e --env)''--from[Clone from an existing environment]:value:_ggt_dynamic' \\
+            '(--from -e --env)''-e[Clone from an existing environment]:value:_ggt_dynamic' \\
+            '(--from -e --env)''--env[Clone from an existing environment]:value:_ggt_dynamic' \\
+            '(--use -u)''--use[Switch to the new environment after creation]' \\
+            '(--use -u)''-u[Switch to the new environment after creation]'
+          ;;
+        delete)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--force -f)''--force[Skip confirmation]' \\
+            '(--force -f)''-f[Skip confirmation]'
+          ;;
+        unpause)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic'
+          ;;
+        use)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_add() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+    '--version[Print the ggt version]' \\
+    '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON where supported]' \\
+    '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+    '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+    '--allow-different-app[Allow syncing with a different app]' \\
+    '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+    '--allow[Enable allow flags (comma-separated)]:value: ' \\
+    '--allow-all[Enable all --allow-* flags]' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'model:Add a new data model'
+        'action:Add an action to a model or as a global action'
+        'route:Add an HTTP route'
+        'field:Add a field to an existing model'
+        'environment:Create a new environment by cloning'
+      )
+      _describe -t subcommands 'add subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        model)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        action)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        route)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        field)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        environment)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_configure() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+    '--version[Print the ggt version]' \\
+    '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON where supported]' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'show:Show current configured defaults'
+        'change:Interactively change configuration options'
+        'clear:Remove all configured defaults'
+      )
+      _describe -t subcommands 'configure subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        show)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+        change)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+        clear)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_agent_plugin() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+    '--version[Print the ggt version]' \\
+    '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON where supported]' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'install:Install agent plugins into the current project'
+        'update:Update agent plugins to the latest version'
+      )
+      _describe -t subcommands 'agent-plugin subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        install)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--force -f)''--force[Overwrite existing files even if already present]' \\
+            '(--force -f)''-f[Overwrite existing files even if already present]'
+          ;;
+        update)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt_completion() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+    '--version[Print the ggt version]' \\
+    '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON where supported]' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'bash:Generate bash completion script'
+        'zsh:Generate zsh completion script'
+        'fish:Generate fish completion script'
+      )
+      _describe -t subcommands 'completion subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        bash)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+        zsh)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+        fish)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt() {
+  local -a commands
+  local state
+
+  _arguments -C \\
+    '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+    '--version[Print the ggt version]' \\
+    '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON where supported]' \\
+    '1:command:->command' \\
+    '*::arg:->args'
+
+  case $state in
+    command)
+      commands=(
+        'dev:Sync files and stream logs locally'
+        'deploy:Deploy an environment to production'
+        'status:Show sync state and pending file changes'
+        'problems:Show errors and warnings in your app'
+        'push:Upload local file changes to Gadget'
+        'pull:Download environment files to your local directory'
+        'var:Manage your app'\\''s environment variables'
+        'env:Manage your app'\\''s environments'
+        'add:Add resources to your app'
+        'open:Open your app in a browser'
+        'list:List your Gadget apps'
+        'login:Log in to Gadget'
+        'logout:Log out of Gadget'
+        'logs:Print recent logs or stream logs from your app'
+        'debugger:Connect a debugger to your app'\\''s environment'
+        'whoami:Show the current logged-in user'
+        'configure:Manage ggt configuration'
+        'agent-plugin:Manage plugins for AI coding assistants'
+        'eval:Evaluate a JavaScript snippet against your app'
+        'version:Print the currently installed version'
+        'completion:Generate shell completion scripts'
+      )
+      _describe -t commands 'ggt command' commands
+      ;;
+    args)
+      case $words[1] in
+        dev)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '(--log-level -l)''--log-level[Minimum log level to display]:value:_ggt_dynamic' \\
+            '(--log-level -l)''-l[Minimum log level to display]:value:_ggt_dynamic' \\
+            '(--my-logs -m)''--my-logs[Show only logs emitted by your code]' \\
+            '(--my-logs -m)''-m[Show only logs emitted by your code]' \\
+            '--prefer[Auto-resolve conflicts using the given source]:value:_ggt_dynamic' \\
+            '--file-push-delay[Delay in ms before pushing file changes]:value: ' \\
+            '--file-watch-debounce[Debounce in ms for file watch events]:value: ' \\
+            '--file-watch-poll-interval[Interval in ms for polling file changes]:value: ' \\
+            '--file-watch-poll-timeout[Timeout in ms for file watch polling]:value: ' \\
+            '--file-watch-rename-timeout[Timeout in ms for detecting file renames]:value: ' \\
+            '--no-logs[Don'\\''t stream logs while syncing]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        deploy)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env --from)''--environment[Environment to deploy from]:value:_ggt_dynamic' \\
+            '(--environment -e --env --from)''-e[Environment to deploy from]:value:_ggt_dynamic' \\
+            '(--environment -e --env --from)''--env[Environment to deploy from]:value:_ggt_dynamic' \\
+            '(--environment -e --env --from)''--from[Environment to deploy from]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '(--force -f)''--force[Skip the push confirmation prompt]' \\
+            '(--force -f)''-f[Skip the push confirmation prompt]' \\
+            '(--allow-problems --allow-issues)''--allow-problems[Allow deploying with problems]' \\
+            '(--allow-problems --allow-issues)''--allow-issues[Allow deploying with problems]' \\
+            '--allow-charges[Allow deploying with new charges]' \\
+            '--allow-data-delete[Allow deploying with data loss]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        status)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        problems)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic'
+          ;;
+        push)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env --to)''--environment[Environment to push to]:value:_ggt_dynamic' \\
+            '(--environment -e --env --to)''-e[Environment to push to]:value:_ggt_dynamic' \\
+            '(--environment -e --env --to)''--env[Environment to push to]:value:_ggt_dynamic' \\
+            '(--environment -e --env --to)''--to[Environment to push to]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '(--force -f)''--force[Push without prompting, discarding environment changes]' \\
+            '(--force -f)''-f[Push without prompting, discarding environment changes]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        pull)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env --from)''--environment[Environment to pull from]:value:_ggt_dynamic' \\
+            '(--environment -e --env --from)''-e[Environment to pull from]:value:_ggt_dynamic' \\
+            '(--environment -e --env --from)''--env[Environment to pull from]:value:_ggt_dynamic' \\
+            '(--environment -e --env --from)''--from[Environment to pull from]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '(--force -f)''--force[Pull without prompting, discarding local changes]' \\
+            '(--force -f)''-f[Pull without prompting, discarding local changes]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        var)
+          _ggt_var
+          ;;
+        env)
+          _ggt_env
+          ;;
+        add)
+          _ggt_add
+          ;;
+        open)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--show-all[Prompt to pick a model from the full list]'
+          ;;
+        list)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+        login)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+        logout)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+        logs)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '(--log-level -l)''--log-level[Minimum log level to display]:value:_ggt_dynamic' \\
+            '(--log-level -l)''-l[Minimum log level to display]:value:_ggt_dynamic' \\
+            '(--my-logs -m)''--my-logs[Show only logs emitted by your code]' \\
+            '(--my-logs -m)''-m[Show only logs emitted by your code]' \\
+            '(--follow -f)''--follow[Stream logs continuously]' \\
+            '(--follow -f)''-f[Stream logs continuously]' \\
+            '--start[Start time for one-shot log queries]:value: '
+          ;;
+        debugger)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '(--port -p)''--port[Local port for the CDP proxy]:value: ' \\
+            '(--port -p)''-p[Local port for the CDP proxy]:value: ' \\
+            '(--configure -c)''--configure[Write editor debug config files (vscode, cursor)]:value:_ggt_dynamic' \\
+            '(--configure -c)''-c[Write editor debug config files (vscode, cursor)]:value:_ggt_dynamic'
+          ;;
+        whoami)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+        configure)
+          _ggt_configure
+          ;;
+        agent-plugin)
+          _ggt_agent_plugin
+          ;;
+        eval)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '(--allow-writes -w)''--allow-writes[Allow write operations (read-only by default)]' \\
+            '(--allow-writes -w)''-w[Allow write operations (read-only by default)]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        version)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]'
+          ;;
+        completion)
+          _ggt_completion
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ggt "$@"
+"
+`;

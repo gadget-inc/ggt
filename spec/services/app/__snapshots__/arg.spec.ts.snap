@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AppArg > rejects ~ 1`] = `
+exports[`AppSlug > rejects ~ 1`] = `
 "--app must be the application's slug or URL
 
 EXAMPLES:

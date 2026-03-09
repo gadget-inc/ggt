@@ -52,7 +52,7 @@ export type FileSyncScenarioOptions = {
   /**
    * The arguments to pass to the {@linkcode SyncJson} instance.
    *
-   * @default { _: [testDirPath("local")], ["--app"]: testEnvironment.application.slug, ["--env"]: testEnvironment.name }
+   * @default { _: [testDirPath("local")], ["--application"]: testEnvironment.application.slug, ["--environment"]: testEnvironment.name }
    */
   args?: SyncJsonArgsResult;
 

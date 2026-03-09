@@ -13,7 +13,7 @@ import { Changes } from "../services/filesync/changes.js";
 import { acquireDevLock, releaseDevLock } from "../services/filesync/dev-lock.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
+import { FileSyncStrategy, MergeConflictPreferenceArg, MergeConflictPreferenceValues } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
 import { maybePromptAgentsMd, maybePromptGadgetSkills } from "../services/output/agent-plugin.js";
@@ -28,6 +28,7 @@ import { spin } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
 import { unreachable } from "../services/util/assert.js";
+import { filterByPrefix } from "../services/util/collection.js";
 import { debounceAsync } from "../services/util/function.js";
 import { isAbortError } from "../services/util/is.js";
 import { delay } from "../services/util/promise.js";
@@ -90,6 +91,7 @@ export default defineCommand({
       details:
         "Use 'local' to keep your local file contents or 'environment' to keep the environment's version. Without this flag, you are prompted to choose for each conflict.",
       valueName: "source",
+      complete: async (_ctx, partial, _argv) => filterByPrefix([...MergeConflictPreferenceValues], partial),
     },
     "--file-push-delay": {
       type: Number,

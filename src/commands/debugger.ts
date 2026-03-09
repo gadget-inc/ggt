@@ -23,6 +23,7 @@ import { reportErrorAndExit } from "../services/output/report.js";
 import { spin } from "../services/output/spinner.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
+import { filterByPrefix } from "../services/util/collection.js";
 
 const parseJsonc = (text: string): unknown => {
   return JSON.parse(stripJsonComments(text, { trailingCommas: true }));
@@ -688,6 +689,7 @@ export default defineCommand({
       alias: "-c",
       description: "Write editor debug config files (vscode, cursor)",
       valueName: "editor",
+      complete: async (_ctx, partial, _argv) => filterByPrefix([...SupportedEditors], partial),
       details: "Generates .vscode/launch.json and tasks.json for one-click attach debugging. Works with both VS Code and Cursor.",
     },
   },

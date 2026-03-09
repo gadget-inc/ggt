@@ -2,6 +2,7 @@ import type { Environment } from "../../app/app.js";
 import { hidden, type ArgsDefinition, type ArgsDefinitionResult } from "../../command/arg.js";
 import { config } from "../../config/config.js";
 import { env } from "../../config/env.js";
+import { filterByPrefix } from "../../util/collection.js";
 import { unthunk, type Thunk } from "../../util/function.js";
 import { serializeError } from "../../util/object.js";
 import { output } from "../output.js";
@@ -9,7 +10,7 @@ import { addSentryBreadcrumb } from "../sentry.js";
 import { sprint } from "../sprint.js";
 import type { Fields } from "./field.js";
 import { formatters } from "./format/format.js";
-import { Level, parseLevel } from "./level.js";
+import { Level, levels, parseLevel } from "./level.js";
 
 export const LoggingArgs = {
   "--log-level": {
@@ -18,6 +19,7 @@ export const LoggingArgs = {
     default: Level.INFO,
     description: "Minimum log level to display",
     valueName: "level",
+    complete: async (_ctx, partial, _argv) => filterByPrefix(levels, partial),
     details: sprint`
       One of: trace, debug, info, warn, error. Defaults to info. Use trace or
       debug for verbose troubleshooting output.

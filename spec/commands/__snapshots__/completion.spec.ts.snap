@@ -213,6 +213,17 @@ exports[`completion > shell generators > fish output matches snapshot 1`] = `
 # Disable file completions by default
 complete -c ggt -f
 
+# Helper: invoke ggt's dynamic completer with correct partial
+function __ggt_complete
+  set -l tokens (commandline -opc)[2..]
+  set -l current (commandline -ct)
+  if string match -q -- '-*' $current
+    ggt --__complete $tokens $current '' 2>/dev/null
+  else
+    ggt --__complete $tokens $current 2>/dev/null
+  end
+end
+
 # Helper: check if a specific subcommand of a parent command has been entered
 function __ggt_seen_subcommand
   set -l parent $argv[1]
@@ -287,15 +298,15 @@ complete -c ggt -n '__fish_use_subcommand' -a 'version' -d 'Print the currently 
 complete -c ggt -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completion scripts'
 
 # dev
-complete -c ggt -n '__fish_seen_subcommand_from dev' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from dev' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from dev' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from dev' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
-complete -c ggt -n '__fish_seen_subcommand_from dev' -l log-level -s l -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Minimum log level to display'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l log-level -s l -rfa '(__ggt_complete)' -d 'Minimum log level to display'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l my-logs -s m -d 'Show only logs emitted by your code'
-complete -c ggt -n '__fish_seen_subcommand_from dev' -l prefer -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Auto-resolve conflicts using the given source'
+complete -c ggt -n '__fish_seen_subcommand_from dev' -l prefer -rfa '(__ggt_complete)' -d 'Auto-resolve conflicts using the given source'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-push-delay -x -d 'Delay in ms before pushing file changes'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-debounce -x -d 'Debounce in ms for file watch events'
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l file-watch-poll-interval -x -d 'Interval in ms for polling file changes'
@@ -311,11 +322,11 @@ complete -c ggt -n '__fish_seen_subcommand_from dev' -l telemetry -d 'Enable tel
 complete -c ggt -n '__fish_seen_subcommand_from dev' -l json -d 'Output as JSON where supported'
 
 # deploy
-complete -c ggt -n '__fish_seen_subcommand_from deploy' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from deploy' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from deploy' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to deploy from'
-complete -c ggt -n '__fish_seen_subcommand_from deploy' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to deploy from'
-complete -c ggt -n '__fish_seen_subcommand_from deploy' -l from -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to deploy from'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to deploy from'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l env -rfa '(__ggt_complete)' -d 'Environment to deploy from'
+complete -c ggt -n '__fish_seen_subcommand_from deploy' -l from -rfa '(__ggt_complete)' -d 'Environment to deploy from'
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l force -s f -d 'Skip the push confirmation prompt'
@@ -332,10 +343,10 @@ complete -c ggt -n '__fish_seen_subcommand_from deploy' -l telemetry -d 'Enable 
 complete -c ggt -n '__fish_seen_subcommand_from deploy' -l json -d 'Output as JSON where supported'
 
 # status
-complete -c ggt -n '__fish_seen_subcommand_from status' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from status' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from status' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from status' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from status' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from status' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
 complete -c ggt -n '__fish_seen_subcommand_from status' -l allow -x -d 'Enable allow flags (comma-separated)'
@@ -347,10 +358,10 @@ complete -c ggt -n '__fish_seen_subcommand_from status' -l telemetry -d 'Enable 
 complete -c ggt -n '__fish_seen_subcommand_from status' -l json -d 'Output as JSON where supported'
 
 # problems
-complete -c ggt -n '__fish_seen_subcommand_from problems' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from problems' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from problems' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from problems' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from problems' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from problems' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from problems' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from problems' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
@@ -358,11 +369,11 @@ complete -c ggt -n '__fish_seen_subcommand_from problems' -l telemetry -d 'Enabl
 complete -c ggt -n '__fish_seen_subcommand_from problems' -l json -d 'Output as JSON where supported'
 
 # push
-complete -c ggt -n '__fish_seen_subcommand_from push' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from push' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from push' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to push to'
-complete -c ggt -n '__fish_seen_subcommand_from push' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to push to'
-complete -c ggt -n '__fish_seen_subcommand_from push' -l to -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to push to'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to push to'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l env -rfa '(__ggt_complete)' -d 'Environment to push to'
+complete -c ggt -n '__fish_seen_subcommand_from push' -l to -rfa '(__ggt_complete)' -d 'Environment to push to'
 complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from push' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
 complete -c ggt -n '__fish_seen_subcommand_from push' -l force -s f -d 'Push without prompting, discarding environment changes'
@@ -375,11 +386,11 @@ complete -c ggt -n '__fish_seen_subcommand_from push' -l telemetry -d 'Enable te
 complete -c ggt -n '__fish_seen_subcommand_from push' -l json -d 'Output as JSON where supported'
 
 # pull
-complete -c ggt -n '__fish_seen_subcommand_from pull' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from pull' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from pull' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to pull from'
-complete -c ggt -n '__fish_seen_subcommand_from pull' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to pull from'
-complete -c ggt -n '__fish_seen_subcommand_from pull' -l from -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to pull from'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to pull from'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l env -rfa '(__ggt_complete)' -d 'Environment to pull from'
+complete -c ggt -n '__fish_seen_subcommand_from pull' -l from -rfa '(__ggt_complete)' -d 'Environment to pull from'
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l force -s f -d 'Pull without prompting, discarding local changes'
@@ -392,10 +403,10 @@ complete -c ggt -n '__fish_seen_subcommand_from pull' -l telemetry -d 'Enable te
 complete -c ggt -n '__fish_seen_subcommand_from pull' -l json -d 'Output as JSON where supported'
 
 # var
-complete -c ggt -n '__fish_seen_subcommand_from var' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from var' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from var' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from var' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from var' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
 complete -c ggt -n '__ggt_needs_subcommand var' -a 'list' -d 'List all environment variable keys'
 complete -c ggt -n '__ggt_needs_subcommand var' -a 'get' -d 'Print the value of an environment variable'
 complete -c ggt -n '__ggt_needs_subcommand var' -a 'set' -d 'Set one or more environment variables'
@@ -404,8 +415,8 @@ complete -c ggt -n '__ggt_needs_subcommand var' -a 'import' -d 'Import variables
 complete -c ggt -n '__ggt_seen_subcommand var set' -l secret -s s -d 'Mark the variable as secret (write-only)'
 complete -c ggt -n '__ggt_seen_subcommand var delete' -l force -s f -d 'Skip confirmation and suppress not-found errors'
 complete -c ggt -n '__ggt_seen_subcommand var delete' -l all -d 'Delete all environment variables'
-complete -c ggt -n '__ggt_seen_subcommand var import' -l from -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Import from another environment'
-complete -c ggt -n '__ggt_seen_subcommand var import' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Import from another environment'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l from -s e -rfa '(__ggt_complete)' -d 'Import from another environment'
+complete -c ggt -n '__ggt_seen_subcommand var import' -l env -rfa '(__ggt_complete)' -d 'Import from another environment'
 complete -c ggt -n '__ggt_seen_subcommand var import' -l from-file -x -d 'Import from a .env file'
 complete -c ggt -n '__ggt_seen_subcommand var import' -l include-values -d 'Copy values when importing from another env'
 complete -c ggt -n '__ggt_seen_subcommand var import' -l all -d 'Import all variables instead of specifying keys'
@@ -441,15 +452,15 @@ complete -c ggt -n '__ggt_seen_subcommand var delete' -l json -d 'Output as JSON
 complete -c ggt -n '__ggt_seen_subcommand var import' -l json -d 'Output as JSON where supported'
 
 # env
-complete -c ggt -n '__fish_seen_subcommand_from env' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from env' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from env' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
 complete -c ggt -n '__ggt_needs_subcommand env' -a 'list' -d 'List all environments'
 complete -c ggt -n '__ggt_needs_subcommand env' -a 'create' -d 'Create a new environment'
 complete -c ggt -n '__ggt_needs_subcommand env' -a 'delete' -d 'Delete an environment'
 complete -c ggt -n '__ggt_needs_subcommand env' -a 'unpause' -d 'Unpause a paused environment'
 complete -c ggt -n '__ggt_needs_subcommand env' -a 'use' -d 'Switch the active environment for this directory'
-complete -c ggt -n '__ggt_seen_subcommand env create' -l from -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Clone from an existing environment'
-complete -c ggt -n '__ggt_seen_subcommand env create' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Clone from an existing environment'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l from -s e -rfa '(__ggt_complete)' -d 'Clone from an existing environment'
+complete -c ggt -n '__ggt_seen_subcommand env create' -l env -rfa '(__ggt_complete)' -d 'Clone from an existing environment'
 complete -c ggt -n '__ggt_seen_subcommand env create' -l use -s u -d 'Switch to the new environment after creation'
 complete -c ggt -n '__ggt_seen_subcommand env delete' -l force -s f -d 'Skip confirmation'
 complete -c ggt -n '__fish_seen_subcommand_from env' -l help -s h -d 'Show command help'
@@ -484,10 +495,10 @@ complete -c ggt -n '__ggt_seen_subcommand env unpause' -l json -d 'Output as JSO
 complete -c ggt -n '__ggt_seen_subcommand env use' -l json -d 'Output as JSON where supported'
 
 # add
-complete -c ggt -n '__fish_seen_subcommand_from add' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from add' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from add' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from add' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from add' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-different-app -d 'Allow syncing with a different app'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l allow -x -d 'Enable allow flags (comma-separated)'
@@ -529,10 +540,10 @@ complete -c ggt -n '__ggt_seen_subcommand add field' -l json -d 'Output as JSON 
 complete -c ggt -n '__ggt_seen_subcommand add environment' -l json -d 'Output as JSON where supported'
 
 # open
-complete -c ggt -n '__fish_seen_subcommand_from open' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from open' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from open' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from open' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from open' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from open' -l show-all -d 'Prompt to pick a model from the full list'
 complete -c ggt -n '__fish_seen_subcommand_from open' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from open' -l version -d 'Print the ggt version'
@@ -562,11 +573,11 @@ complete -c ggt -n '__fish_seen_subcommand_from logout' -l telemetry -d 'Enable 
 complete -c ggt -n '__fish_seen_subcommand_from logout' -l json -d 'Output as JSON where supported'
 
 # logs
-complete -c ggt -n '__fish_seen_subcommand_from logs' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from logs' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from logs' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from logs' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from logs' -l log-level -s l -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Minimum log level to display'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from logs' -l log-level -s l -rfa '(__ggt_complete)' -d 'Minimum log level to display'
 complete -c ggt -n '__fish_seen_subcommand_from logs' -l my-logs -s m -d 'Show only logs emitted by your code'
 complete -c ggt -n '__fish_seen_subcommand_from logs' -l follow -s f -d 'Stream logs continuously'
 complete -c ggt -n '__fish_seen_subcommand_from logs' -l start -x -d 'Start time for one-shot log queries'
@@ -577,12 +588,12 @@ complete -c ggt -n '__fish_seen_subcommand_from logs' -l telemetry -d 'Enable te
 complete -c ggt -n '__fish_seen_subcommand_from logs' -l json -d 'Output as JSON where supported'
 
 # debugger
-complete -c ggt -n '__fish_seen_subcommand_from debugger' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from debugger' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from debugger' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from debugger' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from debugger' -l port -s p -x -d 'Local port for the CDP proxy'
-complete -c ggt -n '__fish_seen_subcommand_from debugger' -l configure -s c -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Write editor debug config files (vscode, cursor)'
+complete -c ggt -n '__fish_seen_subcommand_from debugger' -l configure -s c -rfa '(__ggt_complete)' -d 'Write editor debug config files (vscode, cursor)'
 complete -c ggt -n '__fish_seen_subcommand_from debugger' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from debugger' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from debugger' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
@@ -642,10 +653,10 @@ complete -c ggt -n '__ggt_seen_subcommand agent-plugin install' -l json -d 'Outp
 complete -c ggt -n '__ggt_seen_subcommand agent-plugin update' -l json -d 'Output as JSON where supported'
 
 # eval
-complete -c ggt -n '__fish_seen_subcommand_from eval' -l application -s a -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from eval' -l app -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Gadget app to use'
-complete -c ggt -n '__fish_seen_subcommand_from eval' -l environment -s e -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
-complete -c ggt -n '__fish_seen_subcommand_from eval' -l env -ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from eval' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from eval' -l allow-writes -s w -d 'Allow write operations (read-only by default)'
 complete -c ggt -n '__fish_seen_subcommand_from eval' -l allow -x -d 'Enable allow flags (comma-separated)'
 complete -c ggt -n '__fish_seen_subcommand_from eval' -l allow-all -d 'Enable all --allow-* flags'

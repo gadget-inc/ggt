@@ -13,6 +13,24 @@ export const generateFishCompletions = (data: CompletionData): string => {
   lines.push("complete -c ggt -f");
   lines.push("");
 
+  // helper function for dynamic completions
+  // When fish matches a flag (e.g. -a for --app) and evaluates the -a completer
+  // for the flag's value, `commandline -ct` still returns the flag token itself
+  // (e.g. "-a") if there's no space after it. This helper detects that case and
+  // includes the flag as a preceding token with an empty partial, so the handler
+  // sees e.g. ["dev", "-a", ""] and recognizes it as flag value completion.
+  lines.push("# Helper: invoke ggt's dynamic completer with correct partial");
+  lines.push("function __ggt_complete");
+  lines.push("  set -l tokens (commandline -opc)[2..]");
+  lines.push("  set -l current (commandline -ct)");
+  lines.push("  if string match -q -- '-*' $current");
+  lines.push("    ggt --__complete $tokens $current '' 2>/dev/null");
+  lines.push("  else");
+  lines.push("    ggt --__complete $tokens $current 2>/dev/null");
+  lines.push("  end");
+  lines.push("end");
+  lines.push("");
+
   // helper function for subcommand detection
   const subcommandParents = data.commands.filter((c) => c.subcommands.length > 0);
   if (subcommandParents.length > 0) {
@@ -143,7 +161,7 @@ const fishFlagLine = (flag: FlagDef, condition: string): string[] => {
 
   if (flag.type === "string" || flag.type === "number") {
     if (flag.hasCompleter) {
-      commonParts.push("-ra '(ggt --__complete (commandline -opc)[2..] (commandline -ct) 2>/dev/null)'");
+      commonParts.push("-rfa '(__ggt_complete)'");
     } else {
       commonParts.push("-x");
     }

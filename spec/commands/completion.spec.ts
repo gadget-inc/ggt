@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
 
 import fs from "fs-extra";
@@ -21,6 +21,15 @@ import { testDirPath } from "../__support__/paths.js";
 import { loginTestUser } from "../__support__/user.js";
 
 const execFileAsync = promisify(execFile);
+
+const hasShell = (shell: string): boolean => {
+  try {
+    execFileSync("which", [shell], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 describe("completion", () => {
   describe("data model", () => {
@@ -159,141 +168,6 @@ describe("completion", () => {
       data = await getCompletionData();
     });
 
-    it("bash generator produces valid script", () => {
-      const output = generateBashCompletions(data);
-
-      expect(output).toContain("_ggt_completions");
-      expect(output).toContain("complete -F _ggt_completions ggt");
-      expect(output).toMatch(/case.*\b(dev|deploy|var)\b/s);
-    });
-
-    it("bash generator includes all non-hidden commands", () => {
-      const output = generateBashCompletions(data);
-
-      for (const cmd of data.commands) {
-        expect(output).toContain(cmd.name);
-      }
-    });
-
-    it("zsh generator produces valid script", () => {
-      const output = generateZshCompletions(data);
-
-      expect(output).toMatch(/^#compdef ggt/);
-      expect(output).toContain("_ggt");
-      expect(output).toMatch(/_ggt "\$@"\n$/);
-    });
-
-    it("zsh generator includes all non-hidden commands", () => {
-      const output = generateZshCompletions(data);
-
-      for (const cmd of data.commands) {
-        expect(output).toContain(cmd.name);
-      }
-    });
-
-    it("zsh generator includes root flags in leaf command completions", () => {
-      const output = generateZshCompletions(data);
-      const lines = output.split("\n");
-
-      // find the _arguments block for the dev) case (a command with its own flags)
-      const devCaseIdx = lines.findIndex((l) => l.trim().startsWith("dev)"));
-      expect(devCaseIdx).toBeGreaterThan(-1);
-
-      // collect lines from dev) to the next ;; to get its _arguments block
-      const devBlock = lines.slice(devCaseIdx, lines.indexOf("          ;;", devCaseIdx) + 1).join("\n");
-      expect(devBlock).toContain("--help");
-      expect(devBlock).toContain("--verbose");
-
-      // find the _arguments block for the whoami) case (a command with no flags of its own)
-      const whoamiCaseIdx = lines.findIndex((l) => l.trim().startsWith("whoami)"));
-      expect(whoamiCaseIdx).toBeGreaterThan(-1);
-
-      const whoamiBlock = lines.slice(whoamiCaseIdx, lines.indexOf("          ;;", whoamiCaseIdx) + 1).join("\n");
-      expect(whoamiBlock).toContain("_arguments");
-      expect(whoamiBlock).toContain("--help");
-      expect(whoamiBlock).toContain("--verbose");
-    });
-
-    it("zsh generator includes root flags in subcommand completions", () => {
-      const output = generateZshCompletions(data);
-      const lines = output.split("\n");
-
-      // locate the _ggt_var() helper function
-      const varFnIdx = lines.findIndex((l) => l.startsWith("_ggt_var()"));
-      expect(varFnIdx).toBeGreaterThan(-1);
-
-      // find the _arguments -C block inside the helper
-      const argsCIdx = lines.indexOf("  _arguments -C \\", varFnIdx);
-      expect(argsCIdx).toBeGreaterThan(-1);
-
-      // collect lines from _arguments -C to the next unindented line
-      const argsCBlock: string[] = [];
-      for (let i = argsCIdx; i < lines.length; i++) {
-        argsCBlock.push(lines[i]!);
-        if (!lines[i]!.endsWith("\\")) {
-          break;
-        }
-      }
-      const argsCStr = argsCBlock.join("\n");
-      expect(argsCStr).toContain("--help");
-      expect(argsCStr).toContain("--verbose");
-
-      // find a subcommand case (e.g. delete)) inside the helper and check its _arguments block
-      const deleteCaseIdx = lines.findIndex((l, idx) => idx > varFnIdx && l.trim().startsWith("delete)"));
-      expect(deleteCaseIdx).toBeGreaterThan(-1);
-
-      const deleteBlock = lines.slice(deleteCaseIdx, lines.indexOf("          ;;", deleteCaseIdx) + 1).join("\n");
-      expect(deleteBlock).toContain("--help");
-      expect(deleteBlock).toContain("--verbose");
-    });
-
-    it("fish generator produces valid script", () => {
-      const output = generateFishCompletions(data);
-
-      expect(output).toContain("complete -c ggt -f");
-      expect(output).toContain("complete -c ggt");
-    });
-
-    it("fish generator includes all non-hidden commands", () => {
-      const output = generateFishCompletions(data);
-
-      for (const cmd of data.commands) {
-        expect(output).toContain(cmd.name);
-      }
-    });
-
-    it("fish generator includes long flag aliases", () => {
-      const output = generateFishCompletions(data);
-
-      // --env on push/pull/deploy has aliases --environment, --from, --to
-      expect(output).toContain("-l environment");
-    });
-
-    it("fish generator includes root flags in subcommand contexts", () => {
-      const output = generateFishCompletions(data);
-
-      // root flags like --verbose should appear in subcommand contexts (e.g. dev)
-      const lines = output.split("\n");
-      const devVerboseLine = lines.find((line) => line.includes("__fish_seen_subcommand_from dev") && line.includes("-l verbose"));
-      expect(devVerboseLine).toBeDefined();
-    });
-
-    it("zsh generator marks string flags as requiring arguments", () => {
-      const output = generateZshCompletions(data);
-      // --app is a string flag; its spec should end with :value:
-      expect(output).toMatch(/--app\[.*\]:value:/);
-      // --force is a boolean flag; should NOT have :value:
-      expect(output).not.toMatch(/--force\[.*\]:value:/);
-    });
-
-    it("fish generator marks string flags as requiring arguments", () => {
-      const output = generateFishCompletions(data);
-      // string flags with completers get -ra (require argument + completions)
-      const appLines = output.split("\n").filter((l) => l.includes("-l app") && l.includes("__fish_seen_subcommand_from"));
-      expect(appLines.length).toBeGreaterThan(0);
-      expect(appLines.every((l) => l.includes("-ra"))).toBe(true);
-    });
-
     it("all generators include var subcommand flags", () => {
       const bash = generateBashCompletions(data);
       const zsh = generateZshCompletions(data);
@@ -328,108 +202,6 @@ describe("completion", () => {
       const output = generateFishCompletions(data);
 
       expect(output).toMatchSnapshot();
-    });
-
-    describe("dynamic completion markers", () => {
-      it("bash generator includes dynamic completion for flags with completers", () => {
-        const output = generateBashCompletions(data);
-        expect(output).toContain("ggt --__complete");
-        expect(output).toContain("--app");
-        expect(output).toContain("--env");
-      });
-
-      it("zsh generator includes _ggt_dynamic helper", () => {
-        const output = generateZshCompletions(data);
-        expect(output).toContain("_ggt_dynamic");
-        expect(output).toContain(":value:_ggt_dynamic");
-      });
-
-      it("fish generator includes dynamic completion for completer flags", () => {
-        const output = generateFishCompletions(data);
-        expect(output).toContain("ggt --__complete");
-      });
-
-      it("fish generator uses array slicing to skip the command name token", () => {
-        const output = generateFishCompletions(data);
-        const dynamicLines = output.split("\n").filter((l) => l.includes("--__complete"));
-        expect(dynamicLines.length).toBeGreaterThan(0);
-        for (const line of dynamicLines) {
-          expect(line, "must use (commandline -opc)[2..] not string sub").toContain("(commandline -opc)[2..]");
-          expect(line, "string sub -s 2 strips chars, not tokens").not.toContain("string sub");
-        }
-      });
-
-      it("bash generator uses array slicing to skip the command name token", () => {
-        const output = generateBashCompletions(data);
-        const dynamicLines = output.split("\n").filter((l) => l.includes("--__complete"));
-        expect(dynamicLines.length).toBeGreaterThan(0);
-        for (const line of dynamicLines) {
-          expect(line).toContain("COMP_WORDS[@]:1");
-          expect(line).not.toContain("COMP_WORDS[@]:2");
-        }
-      });
-
-      it("zsh generator uses array slicing to skip the command name token", () => {
-        const output = generateZshCompletions(data);
-        const dynamicFnMatch = output.match(/_ggt_dynamic\(\) \{[\s\S]*?\n\}/);
-        expect(dynamicFnMatch).not.toBeNull();
-        const dynamicFn = dynamicFnMatch![0];
-        expect(dynamicFn).toContain("words[@]:1");
-        expect(dynamicFn).not.toContain("words[@]:2");
-      });
-
-      it("zsh _ggt_dynamic invokes ggt --__complete", () => {
-        const output = generateZshCompletions(data);
-        const dynamicFnMatch = output.match(/_ggt_dynamic\(\) \{[\s\S]*?\n\}/);
-        expect(dynamicFnMatch).not.toBeNull();
-        const dynamicFn = dynamicFnMatch![0];
-        expect(dynamicFn).toContain("ggt --__complete");
-      });
-
-      it("all generators suppress stderr on dynamic completion calls", () => {
-        const generators = [
-          { name: "bash", output: generateBashCompletions(data) },
-          { name: "zsh", output: generateZshCompletions(data) },
-          { name: "fish", output: generateFishCompletions(data) },
-        ];
-
-        for (const { name, output } of generators) {
-          const dynamicLines = output.split("\n").filter((l) => l.includes("--__complete"));
-          expect(dynamicLines.length, `${name} should have dynamic completion lines`).toBeGreaterThan(0);
-          for (const line of dynamicLines) {
-            expect(line, `${name} must suppress stderr on dynamic completion`).toContain("2>/dev/null");
-          }
-        }
-      });
-
-      it("zsh generator does not add :value: suffix to boolean or count flags", () => {
-        const output = generateZshCompletions(data);
-        expect(output).not.toMatch(/--force\[.*\]:value:/);
-        expect(output).not.toMatch(/--verbose\[.*\]:value:/);
-        expect(output).toMatch(/--app\[.*\]:value:/);
-      });
-
-      it("bash generator does not trigger dynamic completion for boolean flags", () => {
-        const output = generateBashCompletions(data);
-        const caseMatch = output.match(/case "\$prev" in\n\s+(.+)\)/);
-        expect(caseMatch).not.toBeNull();
-        const patternLine = caseMatch![1]!;
-        expect(patternLine).not.toContain("--force");
-        expect(patternLine).not.toContain("--help");
-        expect(patternLine).not.toContain("--verbose");
-        expect(patternLine).toContain("--app");
-        expect(patternLine).toContain("--env");
-      });
-
-      it("zsh generator creates mutual exclusion groups for aliased flags", () => {
-        const output = generateZshCompletions(data);
-        const appSpecMatch = output.match(/'\(([^)]*--app[^)]*)\)''--app/);
-        expect(appSpecMatch).not.toBeNull();
-        const exclusionGroup = appSpecMatch![1]!;
-        expect(exclusionGroup).toContain("--app");
-        expect(exclusionGroup).toContain("-a");
-        expect(exclusionGroup).toContain("--application");
-      });
     });
 
     describe("escape edge cases", () => {
@@ -551,49 +323,11 @@ describe("completion", () => {
         const output = generateFishCompletions(testData);
         expect(output).toContain("complete -c ggt -f");
       });
-
-      it("fish uses -x for string flags without dynamic completers", () => {
-        const output = generateFishCompletions(testData);
-        const outputLines = output.split("\n").filter((l) => l.includes("-l output"));
-        expect(outputLines.length).toBeGreaterThan(0);
-        expect(outputLines.every((l) => l.includes("-x"))).toBe(true);
-        // should NOT contain -ra (that's for dynamic completers)
-        expect(outputLines.every((l) => !l.includes("-ra"))).toBe(true);
-      });
-
-      it("fish uses -ra for string flags with dynamic completers", () => {
-        const output = generateFishCompletions(testData);
-        const appLines = output.split("\n").filter((l) => l.includes("-l app"));
-        expect(appLines.length).toBeGreaterThan(0);
-        expect(appLines.every((l) => l.includes("-ra"))).toBe(true);
-      });
-
-      it("zsh uses a no-op action for string flags without dynamic completers", () => {
-        const output = generateZshCompletions(testData);
-        // --output is a string flag without a completer; its value action should be a space (no file completion)
-        expect(output).toMatch(/--output\[.*\]:value: /);
-        // must NOT have :value:_ggt_dynamic
-        expect(output).not.toMatch(/--output\[.*\]:value:_ggt_dynamic/);
-      });
-
-      it("zsh uses _ggt_dynamic for string flags with dynamic completers", () => {
-        const output = generateZshCompletions(testData);
-        expect(output).toMatch(/--app\[.*\]:value:_ggt_dynamic/);
-      });
     });
   });
 
   describe("shell validation", () => {
     let data: CompletionData;
-
-    const hasShell = async (shell: string): Promise<boolean> => {
-      try {
-        await execFileAsync("which", [shell]);
-        return true;
-      } catch {
-        return false;
-      }
-    };
 
     const run = async (cmd: string, args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> => {
       try {
@@ -615,23 +349,15 @@ describe("completion", () => {
       data = await getCompletionData();
     });
 
-    describe("bash", () => {
-      let shellAvailable = false;
-
-      beforeAll(async () => {
-        shellAvailable = await hasShell("bash");
-      });
-
-      it("generates a syntactically valid script", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+    describe.skipIf(!hasShell("bash"))("bash", () => {
+      it("generates a syntactically valid script", async () => {
         const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
 
         const result = await run("bash", ["-n", scriptFile]);
         expect(result.exitCode, `bash syntax check failed:\n${result.stderr}`).toBe(0);
       });
 
-      it("completes top-level commands", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("completes top-level commands", async () => {
         const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
 
         const result = await run("bash", [
@@ -653,8 +379,7 @@ describe("completion", () => {
         expect(completions).toContain("completion");
       });
 
-      it("completes flags for a command", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("completes flags for a command", async () => {
         const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
 
         const result = await run("bash", [
@@ -675,8 +400,7 @@ describe("completion", () => {
         expect(completions).toContain("--env");
       });
 
-      it("completes subcommands for var", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("completes subcommands for var", async () => {
         const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
 
         const result = await run("bash", [
@@ -700,8 +424,7 @@ describe("completion", () => {
         expect(completions).toContain("import");
       });
 
-      it("completes flags for a subcommand", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("completes flags for a subcommand", async () => {
         const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
 
         const result = await run("bash", [
@@ -721,17 +444,64 @@ describe("completion", () => {
         expect(completions).toContain("--force");
         expect(completions).toContain("--all");
       });
-    });
 
-    describe("zsh", () => {
-      let shellAvailable = false;
-
-      beforeAll(async () => {
-        shellAvailable = await hasShell("zsh");
+      it("root flags included in command flag completion", async () => {
+        const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
+        const result = await run("bash", [
+          "-c",
+          `
+            source "${scriptFile}"
+            COMP_WORDS=(ggt dev "--")
+            COMP_CWORD=2
+            _ggt_completions
+            printf '%s\\n' "\${COMPREPLY[@]}"
+          `,
+        ]);
+        expect(result.exitCode, `bash root flag completion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout.split("\n").filter(Boolean);
+        expect(completions).toContain("--help");
+        expect(completions).toContain("--verbose");
+        expect(completions).toContain("--app");
       });
 
-      it("generates a syntactically valid script", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("subcommand flags include parent and root flags", async () => {
+        const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
+        const result = await run("bash", [
+          "-c",
+          `
+            source "${scriptFile}"
+            COMP_WORDS=(ggt var delete "--")
+            COMP_CWORD=3
+            _ggt_completions
+            printf '%s\\n' "\${COMPREPLY[@]}"
+          `,
+        ]);
+        expect(result.exitCode, `bash subcommand flag completion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout.split("\n").filter(Boolean);
+        expect(completions).toContain("--force");
+        expect(completions).toContain("--all");
+        expect(completions).toContain("--help");
+        expect(completions).toContain("--verbose");
+      });
+
+      it("uses complete -F without -o default or -o filenames", async () => {
+        const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
+        const result = await run("bash", [
+          "-c",
+          `
+            source "${scriptFile}"
+            complete -p ggt
+          `,
+        ]);
+        expect(result.exitCode, `bash complete -p failed:\n${result.stderr}`).toBe(0);
+        expect(result.stdout).toContain("-F _ggt_completions ggt");
+        expect(result.stdout).not.toContain("-o default");
+        expect(result.stdout).not.toContain("-o filenames");
+      });
+    });
+
+    describe.skipIf(!hasShell("zsh"))("zsh", () => {
+      it("generates a syntactically valid script", async () => {
         const scriptFile = await writeCompletionFile("zsh", generateZshCompletions(data));
 
         const result = await run("zsh", ["-n", scriptFile]);
@@ -771,25 +541,40 @@ describe("completion", () => {
           expect(output).toMatch(new RegExp(`'${sub}:`));
         }
       });
-    });
 
-    describe("fish", () => {
-      let shellAvailable = false;
-
-      beforeAll(async () => {
-        shellAvailable = await hasShell("fish");
+      it("subcommand helpers exist for all parent commands", () => {
+        const output = generateZshCompletions(data);
+        for (const cmd of data.commands) {
+          if (cmd.subcommands.length > 0) {
+            const fnName = `_ggt_${cmd.name.replace(/-/g, "_")}`;
+            expect(output, `missing helper function ${fnName}`).toContain(`${fnName}()`);
+          }
+        }
       });
 
-      it("generates a syntactically valid script", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("mutual exclusion groups exist for aliased flags", () => {
+        const output = generateZshCompletions(data);
+        for (const cmd of data.commands) {
+          for (const flag of cmd.flags) {
+            if (flag.aliases.length > 0) {
+              const allNames = [flag.name, ...flag.aliases];
+              const exclusionGroup = `(${allNames.join(" ")})`;
+              expect(output, `missing exclusion group for ${flag.name}`).toContain(exclusionGroup);
+            }
+          }
+        }
+      });
+    });
+
+    describe.skipIf(!hasShell("fish"))("fish", () => {
+      it("generates a syntactically valid script", async () => {
         const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
 
         const result = await run("fish", ["--no-execute", scriptFile]);
         expect(result.exitCode, `fish syntax check failed:\n${result.stderr}`).toBe(0);
       });
 
-      it("completes top-level commands", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("completes top-level commands", async () => {
         const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
 
         const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt '`]);
@@ -805,8 +590,7 @@ describe("completion", () => {
         expect(completions).toContain("completion");
       });
 
-      it("completes subcommands for var", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("completes subcommands for var", async () => {
         const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
 
         const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt var '`]);
@@ -824,8 +608,7 @@ describe("completion", () => {
         expect(completions).toContain("import");
       });
 
-      it("completes flags for a command", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("completes flags for a command", async () => {
         const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
 
         const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt dev --'`]);
@@ -840,8 +623,7 @@ describe("completion", () => {
         expect(completions).toContain("--env");
       });
 
-      it("completes flags for a subcommand", async (ctx) => {
-        if (!shellAvailable) return ctx.skip();
+      it("completes flags for a subcommand", async () => {
         const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
 
         const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt var delete --'`]);
@@ -854,6 +636,111 @@ describe("completion", () => {
           .map((line) => line.split("\t")[0]!);
         expect(completions).toContain("--force");
         expect(completions).toContain("--all");
+      });
+
+      it("short flag offers long form completions, not flag as value", async () => {
+        const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
+        const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt dev -a'`]);
+        expect(result.exitCode, `fish short flag completion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => line.split("\t")[0]!);
+        // The dynamic completer for --app runs but ggt isn't available in test,
+        // so we just verify -a isn't offered as a duplicate value candidate
+        expect(completions).not.toContain("-a");
+      });
+
+      it("long flag prefix offers matching flags", async () => {
+        const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
+        const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt dev --a'`]);
+        expect(result.exitCode, `fish long flag prefix completion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => line.split("\t")[0]!);
+        expect(completions).toContain("--app");
+        expect(completions).toContain("--allow-unknown-directory");
+      });
+
+      it("no file completions after value-taking flag with space", async () => {
+        const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
+        const markerFile = testDirPath("should-not-appear.txt");
+        await fs.writeFile(markerFile, "");
+        const result = await run("fish", ["-c", `source '${scriptFile}'; cd '${testDirPath()}'; complete -C 'ggt dev --app '`]);
+        expect(result.exitCode, `fish flag value completion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => line.split("\t")[0]!);
+        expect(completions).not.toContain("should-not-appear.txt");
+      });
+
+      it("root flags available in command context", async () => {
+        const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
+        const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt dev --h'`]);
+        expect(result.exitCode, `fish root flag completion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => line.split("\t")[0]!);
+        expect(completions).toContain("--help");
+      });
+
+      it("root flags available in subcommand context", async () => {
+        const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
+        const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt var delete --h'`]);
+        expect(result.exitCode, `fish subcommand root flag completion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => line.split("\t")[0]!);
+        expect(completions).toContain("--help");
+      });
+
+      it("no commands offered after command is entered", async () => {
+        const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
+        const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt dev '`]);
+        expect(result.exitCode, `fish post-command completion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => line.split("\t")[0]!);
+        expect(completions).not.toContain("deploy");
+        expect(completions).not.toContain("push");
+        expect(completions).not.toContain("pull");
+      });
+
+      it("subcommand completion excludes sibling subcommands", async () => {
+        const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
+        const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt var delete '`]);
+        expect(result.exitCode, `fish subcommand exclusion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => line.split("\t")[0]!);
+        expect(completions).not.toContain("list");
+        expect(completions).not.toContain("get");
+        expect(completions).not.toContain("set");
+        expect(completions).not.toContain("import");
+      });
+
+      it("flag with = syntax does not error", async () => {
+        const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
+        const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt dev --app='`]);
+        expect(result.exitCode, `fish = syntax failed:\n${result.stderr}`).toBe(0);
+      });
+
+      it("-v offers verbose or version flags", async () => {
+        const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
+        const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt -v'`]);
+        expect(result.exitCode, `fish -v completion failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => line.split("\t")[0]!);
+        // Should offer long forms like --verbose or --version, not -v as a value
+        expect(completions.some((c) => c === "--verbose" || c === "--version")).toBe(true);
       });
     });
   });

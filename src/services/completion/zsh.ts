@@ -1,4 +1,4 @@
-import type { FlagDef } from "../command/arg.js";
+import { deduplicateFlags, type FlagDef } from "../command/arg.js";
 import type { CommandDef, CompletionData } from "./completions.js";
 
 /**
@@ -152,37 +152,6 @@ const generateSubcommandHelper = (cmd: CommandDef, rootFlags: FlagDef[]): string
   lines.push("}");
 
   return lines;
-};
-
-/**
- * Deduplicates flags that share overlapping alias names.
- * When two flags declare the same alias (e.g., both `--environment` and `--from`
- * declare `-e` and `--env`), later flags have their conflicting aliases stripped
- * so zsh doesn't receive duplicate `_arguments` specs.
- */
-const deduplicateFlags = (flags: FlagDef[]): FlagDef[] => {
-  const seen = new Set<string>();
-  const result: FlagDef[] = [];
-
-  for (const flag of flags) {
-    // Check if the canonical name is already claimed
-    if (seen.has(flag.name)) {
-      continue;
-    }
-
-    // Filter out aliases that are already claimed by a previous flag
-    const uniqueAliases = flag.aliases.filter((a) => !seen.has(a));
-
-    // Register all names for this flag
-    seen.add(flag.name);
-    for (const a of uniqueAliases) {
-      seen.add(a);
-    }
-
-    result.push(uniqueAliases.length === flag.aliases.length ? flag : { ...flag, aliases: uniqueAliases });
-  }
-
-  return result;
 };
 
 /**

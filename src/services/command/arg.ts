@@ -204,6 +204,34 @@ export const extractFlags = (args: ArgsDefinition): FlagDef[] => {
 };
 
 /**
+ * Deduplicates flags that share overlapping alias names.
+ * When two flags declare the same alias (e.g., both `--environment` and `--from`
+ * declare `-e` and `--env`), later flags have their conflicting aliases stripped
+ * so completion generators don't receive duplicate specs.
+ */
+export const deduplicateFlags = (flags: FlagDef[]): FlagDef[] => {
+  const seen = new Set<string>();
+  const result: FlagDef[] = [];
+
+  for (const flag of flags) {
+    if (seen.has(flag.name)) {
+      continue;
+    }
+
+    const uniqueAliases = flag.aliases.filter((a) => !seen.has(a));
+
+    seen.add(flag.name);
+    for (const a of uniqueAliases) {
+      seen.add(a);
+    }
+
+    result.push(uniqueAliases.length === flag.aliases.length ? flag : { ...flag, aliases: uniqueAliases });
+  }
+
+  return result;
+};
+
+/**
  * Collects all flag names and aliases into a flat word list.
  */
 export const flagWords = (flags: FlagDef[]): string[] => {

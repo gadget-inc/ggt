@@ -1,4 +1,4 @@
-import { flagWords, type FlagDef } from "../command/arg.js";
+import { deduplicateFlags, flagWords, type FlagDef } from "../command/arg.js";
 import type { CompletionData } from "./completions.js";
 
 /**
@@ -70,7 +70,7 @@ export const generateBashCompletions = (data: CompletionData): string => {
       lines.push('        case "${COMP_WORDS[2]}" in');
 
       for (const sub of cmd.subcommands) {
-        const subFlagList = flagWords([...cmd.flags, ...sub.flags]);
+        const subFlagList = flagWords(deduplicateFlags([...cmd.flags, ...sub.flags]));
         lines.push(`          ${sub.name})`);
         lines.push(`            COMPREPLY=($(compgen -W "${[...subFlagList, ...rootFlagWords].join(" ")}" -- "$cur"))`);
         lines.push("            ;;");

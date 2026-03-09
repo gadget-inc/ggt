@@ -56,7 +56,7 @@ _ggt_completions() {
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --force -f --all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           import)
-            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --from -e --env --from-file --include-values --all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --from --from-file --include-values --all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           *)
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --help -h --version --verbose -v --telemetry --json" -- "$cur"))

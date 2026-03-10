@@ -1,11 +1,14 @@
 import { z } from "zod";
 
+import type { ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
 import { config } from "../config/config.js";
 import { maybeLoadAuthHeaders } from "../http/auth.js";
 import { http } from "../http/http.js";
+import { sprint } from "../output/sprint.js";
 import { Api } from "./api/api.js";
 import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "./api/operation.js";
+import { AppSlug } from "./arg.js";
 
 export const EnvironmentType = Object.freeze({
   Development: "development",
@@ -52,6 +55,35 @@ export const GlobalActionApiIdentifier = z.object({
 });
 
 export type GlobalActionApiIdentifier = z.infer<typeof GlobalActionApiIdentifier>;
+
+/**
+ * Arg definition for the --app flag.
+ */
+export const AppArg = {
+  type: AppSlug,
+  alias: ["-a", "--app"],
+  description: "Gadget app to use",
+  valueName: "app",
+  details: sprint`
+    The app slug is the subdomain portion of your app URL (e.g., my-app from
+    my-app.gadget.app). Can be omitted when .gadget/sync.json already records
+    the app.
+  `,
+} satisfies ArgsDefinition[string];
+
+/**
+ * Arg definition for the --env flag.
+ */
+export const EnvArg = {
+  type: String,
+  alias: ["-e", "--env"],
+  description: "Environment to use",
+  valueName: "env",
+  details: sprint`
+    Defaults to the development environment. Production is read-only for most
+    commands.
+  `,
+} satisfies ArgsDefinition[string];
 
 /**
  * Retrieves a list of apps for the given user. If the user is not

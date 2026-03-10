@@ -21,18 +21,6 @@ import { output } from "../services/output/output.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
-const unpauseEnvironment = async (ctx: Context, environment: Environment): Promise<void> => {
-  const edit = new Edit(ctx, environment);
-  try {
-    const { unpauseEnvironment } = await edit.mutate({ mutation: UNPAUSE_ENVIRONMENT_MUTATION });
-    if (unpauseEnvironment.success && !unpauseEnvironment.alreadyActive) {
-      ctx.log.info("unpaused environment", { environment: environment.name });
-    }
-  } finally {
-    await edit.dispose();
-  }
-};
-
 const loadClient = async (
   ctx: Context,
   args: { "--allow-writes"?: boolean },
@@ -230,7 +218,15 @@ export default defineCommand({
         const message = error instanceof Error ? error.message : String(error);
         if (message.includes("GGT_ENVIRONMENT_PAUSED")) {
           ctx.log.info("environment is paused, unpausing and retrying", { environment: environment.name });
-          await unpauseEnvironment(ctx, environment);
+          const edit = new Edit(ctx, environment);
+          try {
+            const { unpauseEnvironment } = await edit.mutate({ mutation: UNPAUSE_ENVIRONMENT_MUTATION });
+            if (unpauseEnvironment.success && !unpauseEnvironment.alreadyActive) {
+              ctx.log.info("unpaused environment", { environment: environment.name });
+            }
+          } finally {
+            await edit.dispose();
+          }
           return await fn(client, require);
         }
         throw error;

@@ -263,7 +263,7 @@ describe("root", () => {
         use        Switch the active environment for this directory
 
       FLAGS
-        -a, --app, --application <app-slug>  Gadget app to use
+        -a, --app, --application <app>  Gadget app to use
 
       EXAMPLES
         $ ggt env list

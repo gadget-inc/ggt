@@ -8,14 +8,6 @@ import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironm
 import { LoggingArgs } from "../services/output/log/structured.js";
 import { sprint } from "../services/output/sprint.js";
 
-const parseDate = (value: string): Date => {
-  const date = new Date(value);
-  if (isNaN(date.getTime())) {
-    throw new ArgError(`Invalid date: "${value}". Use an ISO 8601 format like "2025-01-01T00:00:00Z".`);
-  }
-  return date;
-};
-
 const ONE_SHOT_INITIAL_TIMEOUT_MS = ms("3s");
 const ONE_SHOT_SILENCE_TIMEOUT_MS = 100;
 
@@ -43,7 +35,13 @@ export default defineCommand({
       details: "When omitted, prints recent logs and exits.",
     },
     "--start": {
-      type: parseDate,
+      type: (value: string): Date => {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+          throw new ArgError(`Invalid date: "${value}". Use an ISO 8601 format like "2025-01-01T00:00:00Z".`);
+        }
+        return date;
+      },
       description: "Start time for one-shot log queries",
       valueName: "datetime",
       details: "ISO 8601 timestamp. Defaults to 5 minutes ago.",

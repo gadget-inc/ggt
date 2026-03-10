@@ -118,10 +118,11 @@ export const flagValueSuffix = (flag: FlagDef): string => {
 export const flagNamePrefix = (flag: FlagDef): string => {
   const isShort = (a: string): boolean => /^-[^-]/.test(a);
   const shortAliases = [...flag.aliases.filter(isShort), ...(isShort(flag.name) ? [flag.name] : [])].sort((a, b) => a.length - b.length);
-  const longCanonical = flag.name.startsWith("--") ? [flag.name] : [];
-  const longRest = flag.aliases.filter((a) => a.startsWith("--")).sort((a, b) => a.length - b.length);
-  const longAliases = [...longCanonical, ...longRest];
-  const allParts = [...shortAliases, ...longAliases];
+  const allLong = [...(flag.name.startsWith("--") ? [flag.name] : []), ...flag.aliases.filter((a) => a.startsWith("--"))];
+  const isFamily = (a: string): boolean => a.startsWith(flag.name) || flag.name.startsWith(a);
+  const family = allLong.filter(isFamily).sort((a, b) => a.length - b.length);
+  const rest = allLong.filter((a) => !isFamily(a)).sort((a, b) => a.length - b.length);
+  const allParts = [...shortAliases, ...family, ...rest];
   const aliasPrefix = shortAliases.length > 0 ? "" : "    ";
   return `${aliasPrefix}${allParts.join(", ")}`;
 };

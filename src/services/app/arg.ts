@@ -11,7 +11,7 @@ import { sprint } from "../output/sprint.js";
  * @returns The application's slug.
  * @throws {ArgError} If the value is not a valid slug or URL.
  */
-export const AppArg = (value: string, name: string): string => {
+export const AppSlug = (value: string, name: string): string => {
   const slug = /^(https:\/\/)?(?<slug>[\w-]+?)(--development)?(\..*)?$/.exec(value)?.groups?.["slug"];
   if (slug) {
     return slug;

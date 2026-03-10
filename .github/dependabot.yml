@@ -1,7 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: /
+    directories:
+      - "/"
+      - "!/spec/__fixtures__/**"
     versioning-strategy: increase
     open-pull-requests-limit: 10
     schedule:

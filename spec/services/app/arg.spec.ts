@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { AppArg } from "../../../src/services/app/arg.js";
+import { AppSlug } from "../../../src/services/app/arg.js";
 import { ArgError } from "../../../src/services/command/arg.js";
 import { expectError } from "../../__support__/error.js";
 
-describe("AppArg", () => {
+describe("AppSlug", () => {
   it.each([
     "my-app",
     "my-app.gadget.app",
@@ -15,11 +15,11 @@ describe("AppArg", () => {
     "https://my-app.gadget.app/edit/files/routes/GET.js",
     "https://my-app.gadget.app/edit/cool-new-environment",
   ])("accepts %s", (value) => {
-    expect(AppArg(value, "--app")).toEqual("my-app");
+    expect(AppSlug(value, "--app")).toEqual("my-app");
   });
 
   it.each(["~"])("rejects %s", async (value) => {
-    const error = await expectError(() => AppArg(value, "--app"));
+    const error = await expectError(() => AppSlug(value, "--app"));
     expect(error).toBeInstanceOf(ArgError);
     expect(error.message).toMatchSnapshot();
   });

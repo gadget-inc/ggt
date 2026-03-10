@@ -96,19 +96,6 @@ const parseFieldValues = (fields: string[]): [{ name: string; fieldType: string 
   return [modelFields, problems];
 };
 
-/**
- * Creates a default environment name based on the current date and time.
- */
-const makeDefaultEnvName = (): string => {
-  const now = new Date();
-  const pad = (n: number): string => String(n).padStart(2, "0");
-  const date = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}`;
-  // getUTCHours() returns 0 at midnight (yielding "00"), unlike the prior
-  // toLocaleTimeString approach which returned "24:xx".
-  const time = `${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}`;
-  return `env-${date}-${time}`;
-};
-
 export default defineCommand({
   name: "add",
   description: "Add resources to your app",
@@ -468,7 +455,16 @@ export default defineCommand({
       run: async (ctx, args) => {
         const { filesync } = await setupAddSync(ctx, args);
         const syncJson = filesync.syncJson;
-        const newEnvName = args._[0] ?? makeDefaultEnvName();
+        let newEnvName = args._[0];
+        if (!newEnvName) {
+          const now = new Date();
+          const pad = (n: number): string => String(n).padStart(2, "0");
+          const date = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}`;
+          // getUTCHours() returns 0 at midnight (yielding "00"), unlike the prior
+          // toLocaleTimeString approach which returned "24:xx".
+          const time = `${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}`;
+          newEnvName = `env-${date}-${time}`;
+        }
 
         try {
           await syncJson.edit.mutate({
@@ -490,10 +486,10 @@ export default defineCommand({
           command: "pull",
           args: {
             _: [],
-            "--app": undefined,
+            "--application": undefined,
             "--allow-unknown-directory": undefined,
             "--allow-different-app": undefined,
-            "--env": newEnvName,
+            "--environment": newEnvName,
           },
           directory: await loadSyncJsonDirectory(process.cwd()),
         });

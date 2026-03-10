@@ -120,7 +120,7 @@ describe("SyncJson.loadOrInit", () => {
   });
 
   it(`throws ${ArgError.name} when --app is passed a slug that does not exist within the user's list of available apps`, async () => {
-    args["--app"] = "does-not-exist";
+    args["--application"] = "does-not-exist";
     const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir }));
 
     expect(error).toBeInstanceOf(ArgError);
@@ -137,7 +137,7 @@ describe("SyncJson.loadOrInit", () => {
   });
 
   it(`throws ${ArgError.name} when --env is passed production`, async () => {
-    args["--env"] = "production";
+    args["--environment"] = "production";
     const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir }));
 
     expect(error).toBeInstanceOf(ArgError);
@@ -145,7 +145,7 @@ describe("SyncJson.loadOrInit", () => {
   });
 
   it(`throws ${ArgError.name} when --env is passed an environment that is not in the list of valid environments for the app`, async () => {
-    args["--env"] = "does-not-exist";
+    args["--environment"] = "does-not-exist";
     const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir }));
 
     expect(error).toBeInstanceOf(ArgError);
@@ -199,7 +199,7 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    args["--app"] = testApp2.slug;
+    args["--application"] = testApp2.slug;
     args["--allow-different-app"] = true;
     const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
 
@@ -221,7 +221,7 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    args["--env"] = testApp.environments[2]!.name;
+    args["--environment"] = testApp.environments[2]!.name;
     const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
 
     expect(syncJson.state).toEqual({
@@ -244,7 +244,7 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    args["--env"] = testApp.environments[3]!.name;
+    args["--environment"] = testApp.environments[3]!.name;
     const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
 
     expect(syncJson.state).toEqual({
@@ -263,7 +263,7 @@ describe("SyncJson.loadOrInit", () => {
     const devSyncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
     expect(devSyncJson).not.toBeInstanceOf(EphemeralSyncJson);
 
-    args["--env"] = "production";
+    args["--environment"] = "production";
     const prodSyncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
     expect(prodSyncJson).toBeInstanceOf(EphemeralSyncJson);
   });

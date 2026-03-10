@@ -1,7 +1,6 @@
 import fs from "fs-extra";
 
-import { Application, EnvironmentType, getApplications, groupByTeam, type Environment } from "../app/app.js";
-import { AppArg } from "../app/arg.js";
+import { AppArg, Application, EnvArg, EnvironmentType, getApplications, groupByTeam, type Environment } from "../app/app.js";
 import { Edit } from "../app/edit/edit.js";
 import type { Directory } from "../filesync/directory.js";
 import { SyncJsonState } from "../filesync/sync-json-state.js";
@@ -15,28 +14,15 @@ import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "./arg.
 import type { Command } from "./command.js";
 import type { Context } from "./context.js";
 
+export { AppArg, EnvArg } from "../app/app.js";
+
+/**
+ * Combined args definition for --app and --env flags used by commands
+ * that need to identify a Gadget application and environment.
+ */
 export const AppIdentityArgs = {
-  "--app": {
-    type: AppArg,
-    alias: ["-a", "--application"],
-    description: "Gadget app to use",
-    valueName: "app-slug",
-    details: sprint`
-      The app slug is the subdomain portion of your app URL (e.g., my-app from
-      my-app.gadget.app). Can be omitted when .gadget/sync.json already records
-      the app.
-    `,
-  },
-  "--env": {
-    type: String,
-    alias: ["-e", "--environment"],
-    description: "Environment to use",
-    valueName: "name",
-    details: sprint`
-      Defaults to the development environment. Production is read-only for most
-      commands.
-    `,
-  },
+  "--application": AppArg,
+  "--environment": EnvArg,
 } satisfies ArgsDefinition;
 
 export type AppIdentityArgs = typeof AppIdentityArgs;
@@ -151,12 +137,12 @@ export const loadApplication = async ({
   state,
   selectPrompt = "Which application do you want to develop?",
 }: {
-  args: { "--app"?: string };
+  args: { "--application"?: string };
   availableApps: Application[];
   state?: SyncJsonState;
   selectPrompt?: string;
 }): Promise<Application> => {
-  let appSlug = args["--app"] || state?.application;
+  let appSlug = args["--application"] || state?.application;
   if (!appSlug) {
     // the user didn't specify an app, ask them to select one
     const groupedChoices: [string, string[]][] = Array.from(groupByTeam(availableApps)).map(([teamName, apps]) => [
@@ -219,7 +205,7 @@ const loadEnvironment = async ({
     selectableEnvironments.push(...application.environments.filter((env) => env.type === EnvironmentType.Production));
   }
 
-  let selectedEnvironment = args["--env"] || state?.environment;
+  let selectedEnvironment = args["--environment"] || state?.environment;
   if (!selectedEnvironment) {
     // user didn't specify an environment, ask them to select one
     selectedEnvironment = await select({

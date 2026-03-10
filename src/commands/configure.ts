@@ -1,20 +1,8 @@
 import { defineCommand } from "../services/command/command.js";
-import { clearDefaultsConfig, type DefaultsConfigData, loadDefaultsConfig, promptDefaultsConfig } from "../services/config/defaults.js";
+import { clearDefaultsConfig, loadDefaultsConfig, promptDefaultsConfig } from "../services/config/defaults.js";
 import colors from "../services/output/colors.js";
 import { sprint } from "../services/output/sprint.js";
 import { printTable } from "../services/output/table.js";
-
-const printDefaultsConfig = (defaults: DefaultsConfigData): void => {
-  printTable({
-    json: defaults,
-    headers: ["Option", "Configured Value"],
-    rows: [
-      ["telemetry", String(defaults.telemetry)],
-      ["json", String(defaults.json)],
-    ],
-    borders: "thick",
-  });
-};
 
 export default defineCommand({
   name: "configure",
@@ -34,7 +22,16 @@ export default defineCommand({
       `,
       examples: ["ggt configure show"],
       run: async (ctx) => {
-        printDefaultsConfig(await loadDefaultsConfig(ctx, false));
+        const defaults = await loadDefaultsConfig(ctx, false);
+        printTable({
+          json: defaults,
+          headers: ["Option", "Configured Value"],
+          rows: [
+            ["telemetry", String(defaults.telemetry)],
+            ["json", String(defaults.json)],
+          ],
+          borders: "thick",
+        });
       },
     }),
     change: sub({

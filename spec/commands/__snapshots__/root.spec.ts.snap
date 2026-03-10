@@ -19,12 +19,12 @@ ARGUMENTS
         you'll be prompted to choose.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -62,8 +62,8 @@ ARGUMENTS
   path        Action path (e.g. model/post/publish or action/audit)
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt add action model/post/publish
@@ -94,12 +94,12 @@ ARGUMENTS
         (e.g. env-20260303-142530).
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -136,8 +136,8 @@ ARGUMENTS
   name        Name for the new environment (auto-generated if omitted)
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt add environment staging
@@ -163,12 +163,12 @@ ARGUMENTS
         post/published:boolean).
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -207,8 +207,8 @@ ARGUMENTS
   model/field:type    Model path and field definition
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt add field post/published:boolean
@@ -241,12 +241,12 @@ ARGUMENTS
         pair separated by a colon (e.g. title:string).
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -285,8 +285,8 @@ ARGUMENTS
   field:type ...    Optional field definitions (name:type pairs)
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt add model post
@@ -315,12 +315,12 @@ ARGUMENTS
         /webhooks/stripe). Leading slash is required.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -360,8 +360,8 @@ ARGUMENTS
   path        Route path
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt add route GET /hello
@@ -391,12 +391,12 @@ COMMANDS
   environment    Create a new environment by cloning
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -455,8 +455,8 @@ COMMANDS
   environment    Create a new environment by cloning
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt add model post
@@ -485,8 +485,8 @@ COMMANDS
   environment    Create a new environment by cloning
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt add model post
@@ -789,7 +789,7 @@ ARGUMENTS
         omitted.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
@@ -799,7 +799,7 @@ FLAGS
         .vscode/launch.json and tasks.json for one-click attach debugging. Works
         with both VS Code and Cursor.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -827,10 +827,10 @@ ARGUMENTS
   directory    App directory to use
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -c, --configure <editor>             Write editor debug config files (vscode, cursor)
-  -e, --env, --environment <name>      Environment to use
-  -p, --port <port>                    Local port for the CDP proxy
+  -a, --app, --application <app>  Gadget app to use
+  -c, --configure <editor>        Write editor debug config files (vscode, cursor)
+  -e, --env, --environment <env>  Environment to use
+  -p, --port <port>               Local port for the CDP proxy
 
 EXAMPLES
   $ ggt debugger
@@ -856,12 +856,12 @@ USAGE
   ggt deploy [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --from, --environment <environment>
+  -e, --env, --environment, --from <env>
         Environment to deploy from. The source development environment whose
         files and schema will be deployed to production. Defaults to the
         environment recorded in .gadget/sync.json.
@@ -930,9 +930,9 @@ USAGE
   ggt deploy [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>             Gadget app to use
-  -e, --env, --from, --environment <environment>  Environment to deploy from
-  -f, --force                                     Skip the push confirmation prompt
+  -a, --app, --application <app>          Gadget app to use
+  -e, --env, --environment, --from <env>  Environment to deploy from
+  -f, --force                             Skip the push confirmation prompt
 
 EXAMPLES
   $ ggt deploy
@@ -966,12 +966,12 @@ ARGUMENTS
         created. Defaults to the current working directory when omitted.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -1071,12 +1071,12 @@ ARGUMENTS
   directory    Directory to sync files to
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
-  -l, --log-level <level>              Minimum log level to display
-  -m, --my-logs                        Show only logs emitted by your code
-      --no-logs                        Don't stream logs while syncing
-      --prefer <source>                Auto-resolve conflicts using the given source
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+  -l, --log-level <level>         Minimum log level to display
+  -m, --my-logs                   Show only logs emitted by your code
+      --no-logs                   Don't stream logs while syncing
+      --prefer <source>           Auto-resolve conflicts using the given source
 
 EXAMPLES
   $ ggt dev
@@ -1108,7 +1108,7 @@ ARGUMENTS
         unique within the app.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
@@ -1117,7 +1117,7 @@ FLAGS
         Switch to the new environment after creation. Updates .gadget/sync.json
         to point at the new environment so subsequent commands target it.
 
-      --from <env-name>
+      --from <env>
         Clone from an existing environment. Clones the source environment's data
         and schema. If omitted, the current environment is used as the source.
 
@@ -1138,9 +1138,9 @@ ARGUMENTS
   name        New environment name
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -u, --use                            Switch to the new environment after creation
-      --from <env-name>                Clone from an existing environment
+  -a, --app, --application <app>  Gadget app to use
+  -u, --use                       Switch to the new environment after creation
+      --from <env>                Clone from an existing environment
 
 EXAMPLES
   $ ggt env create staging
@@ -1167,7 +1167,7 @@ ARGUMENTS
         Environment name. The production environment cannot be deleted.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
@@ -1192,8 +1192,8 @@ ARGUMENTS
   name        Environment name
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -f, --force                          Skip confirmation
+  -a, --app, --application <app>  Gadget app to use
+  -f, --force                     Skip confirmation
 
 EXAMPLES
   $ ggt env delete staging
@@ -1213,7 +1213,7 @@ USAGE
   ggt env list [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
@@ -1231,7 +1231,7 @@ USAGE
   ggt env list [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
+  -a, --app, --application <app>  Gadget app to use
 
 EXAMPLES
   $ ggt env list
@@ -1257,7 +1257,7 @@ ARGUMENTS
         Environment name. Must match an existing environment in the app.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
@@ -1278,7 +1278,7 @@ ARGUMENTS
   name        Environment name
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
+  -a, --app, --application <app>  Gadget app to use
 
 EXAMPLES
   $ ggt env unpause staging
@@ -1304,7 +1304,7 @@ ARGUMENTS
         sync target.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
@@ -1325,7 +1325,7 @@ ARGUMENTS
   name        Environment name
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
+  -a, --app, --application <app>  Gadget app to use
 
 EXAMPLES
   $ ggt env use staging
@@ -1353,7 +1353,7 @@ COMMANDS
   use        Switch the active environment for this directory
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
@@ -1382,7 +1382,7 @@ COMMANDS
   use        Switch the active environment for this directory
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
+  -a, --app, --application <app>  Gadget app to use
 
 EXAMPLES
   $ ggt env list
@@ -1410,7 +1410,7 @@ COMMANDS
   use        Switch the active environment for this directory
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
+  -a, --app, --application <app>  Gadget app to use
 
 EXAMPLES
   $ ggt env list
@@ -1441,12 +1441,12 @@ ARGUMENTS
         expression is printed. Use --json for machine-readable output.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -1482,9 +1482,9 @@ ARGUMENTS
   snippet     JavaScript expression or statement to run
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
-  -w, --allow-writes                   Allow write operations (read-only by default)
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+  -w, --allow-writes              Allow write operations (read-only by default)
 
 EXAMPLES
   $ ggt eval 'api.user.findMany()'
@@ -1592,12 +1592,12 @@ USAGE
   ggt logs [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -1631,12 +1631,12 @@ USAGE
   ggt logs [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
-  -f, --follow                         Stream logs continuously
-  -l, --log-level <level>              Minimum log level to display
-  -m, --my-logs                        Show only logs emitted by your code
-      --start <datetime>               Start time for one-shot log queries
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+  -f, --follow                    Stream logs continuously
+  -l, --log-level <level>         Minimum log level to display
+  -m, --my-logs                   Show only logs emitted by your code
+      --start <datetime>          Start time for one-shot log queries
 
 EXAMPLES
   $ ggt logs
@@ -1667,12 +1667,12 @@ ARGUMENTS
         locations. Use --show-all to pick from a list instead.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -1712,9 +1712,9 @@ ARGUMENTS
   model       Model name for data or schema locations
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
-      --show-all                       Prompt to pick a model from the full list
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+      --show-all                  Prompt to pick a model from the full list
 
 EXAMPLES
   $ ggt open
@@ -1741,12 +1741,12 @@ USAGE
   ggt problems [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -1765,8 +1765,8 @@ USAGE
   ggt problems [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt problems
@@ -1789,12 +1789,12 @@ USAGE
   ggt pull [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --from, --environment <environment>
+  -e, --env, --environment, --from <env>
         Environment to pull from. Defaults to the development environment
         recorded in .gadget/sync.json.
 
@@ -1837,9 +1837,9 @@ USAGE
   ggt pull [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>             Gadget app to use
-  -e, --env, --from, --environment <environment>  Environment to pull from
-  -f, --force                                     Pull without prompting, discarding local changes
+  -a, --app, --application <app>          Gadget app to use
+  -e, --env, --environment, --from <env>  Environment to pull from
+  -f, --force                             Pull without prompting, discarding local changes
 
 EXAMPLES
   $ ggt pull
@@ -1861,12 +1861,12 @@ USAGE
   ggt push [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --to, --environment <environment>
+  -e, --env, --environment, --to <env>
         Environment to push to. Defaults to the development environment recorded
         in .gadget/sync.json. Production cannot be pushed to.
 
@@ -1909,9 +1909,9 @@ USAGE
   ggt push [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>           Gadget app to use
-  -e, --env, --to, --environment <environment>  Environment to push to
-  -f, --force                                   Push without prompting, discarding environment changes
+  -a, --app, --application <app>        Gadget app to use
+  -e, --env, --environment, --to <env>  Environment to push to
+  -f, --force                           Push without prompting, discarding environment changes
 
 EXAMPLES
   $ ggt push
@@ -1935,12 +1935,12 @@ USAGE
   ggt status [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -1974,8 +1974,8 @@ USAGE
   ggt status [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt status
@@ -2001,12 +2001,12 @@ ARGUMENTS
         --all to delete every variable.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -2035,10 +2035,10 @@ ARGUMENTS
   key         Variable name(s) to delete
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
-  -f, --force                          Skip confirmation and suppress not-found errors
-      --all                            Delete all environment variables
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+  -f, --force                     Skip confirmation and suppress not-found errors
+      --all                       Delete all environment variables
 
 EXAMPLES
   $ ggt var delete API_KEY
@@ -2063,12 +2063,12 @@ ARGUMENTS
         Variable name. Case-sensitive. Secret variables cannot be read back.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -2088,8 +2088,8 @@ ARGUMENTS
   key         Variable name
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt var get DATABASE_URL
@@ -2116,12 +2116,12 @@ ARGUMENTS
         Use --all to import every variable from the source.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -2129,7 +2129,7 @@ FLAGS
         Import all variables instead of specifying keys. Imports every variable
         from the source instead of requiring individual key names.
 
-      --from <env-name>
+      --from <env>
         Import from another environment. The name of the source environment to
         import from. Cannot be combined with --from-file.
 
@@ -2160,12 +2160,12 @@ ARGUMENTS
   key         Variable name(s) to import (or use --all)
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
-      --all                            Import all variables instead of specifying keys
-      --from <env-name>                Import from another environment
-      --from-file <path>               Import from a .env file
-      --include-values                 Copy values when importing from another env
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+      --all                       Import all variables instead of specifying keys
+      --from <env>                Import from another environment
+      --from-file <path>          Import from a .env file
+      --include-values            Copy values when importing from another env
 
 EXAMPLES
   $ ggt var import --from staging --all
@@ -2187,12 +2187,12 @@ USAGE
   ggt var list [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -2209,8 +2209,8 @@ USAGE
   ggt var list [flags]
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt var list
@@ -2237,12 +2237,12 @@ ARGUMENTS
         single invocation.
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -2269,9 +2269,9 @@ ARGUMENTS
   key=value    One or more key=value pairs
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
-  -s, --secret                         Mark the variable as secret (write-only)
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+  -s, --secret                    Mark the variable as secret (write-only)
 
 EXAMPLES
   $ ggt var set API_KEY=abc123
@@ -2301,12 +2301,12 @@ COMMANDS
   import    Import variables from another environment or file
 
 FLAGS
-  -a, --app, --application <app-slug>
+  -a, --app, --application <app>
         Gadget app to use. The app slug is the subdomain portion of your app URL
         (e.g., my-app from my-app.gadget.app). Can be omitted when
         .gadget/sync.json already records the app.
 
-  -e, --env, --environment <name>
+  -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
@@ -2337,8 +2337,8 @@ COMMANDS
   import    Import variables from another environment or file
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt var list
@@ -2369,8 +2369,8 @@ COMMANDS
   import    Import variables from another environment or file
 
 FLAGS
-  -a, --app, --application <app-slug>  Gadget app to use
-  -e, --env, --environment <name>      Environment to use
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
 
 EXAMPLES
   $ ggt var list

@@ -3,6 +3,7 @@ import assert from "node:assert";
 import indentString from "indent-string";
 import terminalLink from "terminal-link";
 
+import { EnvArg } from "../services/app/app.js";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
 import { defineCommand } from "../services/command/command.js";
 import { env } from "../services/config/env.js";
@@ -116,11 +117,10 @@ export default defineCommand({
       description: "Skip the push confirmation prompt",
       details: "Any conflicting changes on the environment are discarded without prompting.",
     },
-    "--env": {
-      type: String,
-      alias: ["-e", "--environment", "--from"],
+    "--environment": {
+      ...EnvArg,
+      alias: ["-e", "--env", "--from"],
       description: "Environment to deploy from",
-      valueName: "environment",
       details:
         "The source development environment whose files and schema will be deployed to production. Defaults to the environment recorded in .gadget/sync.json.",
     },

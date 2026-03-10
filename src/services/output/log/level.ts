@@ -16,6 +16,10 @@ export const Level = {
   PRINT: 6,
 } as const;
 
+export const levels = Object.keys(Level)
+  .filter((k) => k !== "PRINT")
+  .map((k) => k.toLowerCase());
+
 export const parseLevel = memo(MemoAllArgs, (value: unknown, defaultValue: Level): Level => {
   let parsed = z
     .enum(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"])

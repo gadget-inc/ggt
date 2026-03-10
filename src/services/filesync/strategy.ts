@@ -19,46 +19,17 @@ export const MergeConflictPreference = Object.freeze({
 
 export type MergeConflictPreference = (typeof MergeConflictPreference)[keyof typeof MergeConflictPreference];
 
+export const MergeConflictPreferenceValues = ["local", "environment"] as const;
+
 export const MergeConflictPreferenceArg = (value: string, name: string): MergeConflictPreference => {
-  if (["local", "environment"].includes(value)) {
+  if ((MergeConflictPreferenceValues as readonly string[]).includes(value)) {
     return MergeConflictPreference[value.toUpperCase() as keyof typeof MergeConflictPreference];
   }
 
   throw new ArgError(sprint`
-      ${name} must be ${colors.identifier("local")} or ${colors.identifier("environment")}
+      ${name} must be ${MergeConflictPreferenceValues.map((v) => colors.identifier(v)).join(" or ")}
 
       ${colors.header("EXAMPLES:")}
-        ${name}=local
-        ${name}=environment
+        ${MergeConflictPreferenceValues.map((v) => `${name}=${v}`).join("\n")}
     `);
 };
-
-// export type FileSyncArgs = DevArgs | PushArgs | PullArgs;
-
-// export const getFileSyncStrategy = (ctx: Context<FileSyncArgs>): FileSyncStrategy | undefined => {
-//   switch (true) {
-//     case ctx.args["--push"]:
-//       return FileSyncStrategy.PUSH;
-//     case ctx.args["--pull"]:
-//       return FileSyncStrategy.PULL;
-//     case ctx.args["--merge"]:
-//       return FileSyncStrategy.MERGE;
-//     default:
-//       return undefined;
-//   }
-// };
-
-// export const validateFileSyncStrategy = (ctx: Context<FileSyncArgs>): void => {
-//   const strategies = ["--push", "--pull", "--merge"] as const;
-//   for (const strategy of strategies) {
-//     if (!ctx.args[strategy]) {
-//       continue;
-//     }
-
-//     for (const conflicting of strategies.filter((s) => s !== strategy)) {
-//       if (ctx.args[conflicting]) {
-//         throw new ArgError(sprint`{bold ${strategy}} and {bold ${conflicting}} cannot be used together`);
-//       }
-//     }
-//   }
-// };

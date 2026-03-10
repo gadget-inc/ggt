@@ -213,7 +213,7 @@ export class SyncJson {
     if (state.environment !== appIdentity.environment.name) {
       // the user specified a different environment
 
-      if (appIdentity.environment.type !== "production") {
+      if (appIdentity.environment.type !== EnvironmentType.Production) {
         // the new environment isn't a production environment, so let
         // the user know that we're changing environments (we're not
         // using the EphemeralSyncJson class)
@@ -289,7 +289,7 @@ export class SyncJson {
     };
 
     syncJson =
-      appIdentity.environment.type === "production"
+      appIdentity.environment.type === EnvironmentType.Production
         ? new EphemeralSyncJson(ctx, args, directory, appIdentity, undefined, state)
         : new SyncJson(ctx, args, directory, appIdentity, undefined, state);
 

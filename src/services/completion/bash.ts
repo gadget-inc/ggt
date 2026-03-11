@@ -13,21 +13,21 @@ export const generateBashCompletions = (data: CompletionData): string => {
   lines.push('  local cur="${COMP_WORDS[COMP_CWORD]}"');
   lines.push("");
 
-  // collect flag names that have dynamic completers and value-taking flags without completers
+  // classify flags: dynamic completers, path flags (file completion), other value flags (suppress)
   const completerFlags = new Set<string>();
-  const nonCompleterValueFlags = new Set<string>();
+  const pathFlags = new Set<string>();
+  const otherValueFlags = new Set<string>();
   const classifyFlags = (flags: FlagDef[]): void => {
     for (const f of flags) {
       if (f.hasCompleter) {
         completerFlags.add(f.name);
-        for (const a of f.aliases) {
-          completerFlags.add(a);
-        }
+        for (const a of f.aliases) completerFlags.add(a);
+      } else if (f.valueName === "path") {
+        pathFlags.add(f.name);
+        for (const a of f.aliases) pathFlags.add(a);
       } else if (f.type === "string" || f.type === "number") {
-        nonCompleterValueFlags.add(f.name);
-        for (const a of f.aliases) {
-          nonCompleterValueFlags.add(a);
-        }
+        otherValueFlags.add(f.name);
+        for (const a of f.aliases) otherValueFlags.add(a);
       }
     }
   };
@@ -39,7 +39,7 @@ export const generateBashCompletions = (data: CompletionData): string => {
     }
   }
 
-  if (completerFlags.size > 0 || nonCompleterValueFlags.size > 0) {
+  if (completerFlags.size > 0 || pathFlags.size > 0 || otherValueFlags.size > 0) {
     lines.push('  local prev="${COMP_WORDS[COMP_CWORD-1]}"');
     lines.push("");
     lines.push('  case "$prev" in');
@@ -49,8 +49,13 @@ export const generateBashCompletions = (data: CompletionData): string => {
       lines.push('      COMPREPLY=($(ggt --__complete "${COMP_WORDS[@]:1}" 2>/dev/null))');
       lines.push("      return ;;");
     }
-    if (nonCompleterValueFlags.size > 0) {
-      lines.push(`    ${[...nonCompleterValueFlags].join("|")})`);
+    if (pathFlags.size > 0) {
+      lines.push(`    ${[...pathFlags].join("|")})`);
+      lines.push('      COMPREPLY=($(compgen -f -- "$cur"))');
+      lines.push("      return ;;");
+    }
+    if (otherValueFlags.size > 0) {
+      lines.push(`    ${[...otherValueFlags].join("|")})`);
       lines.push("      return ;;");
     }
     lines.push("  esac");

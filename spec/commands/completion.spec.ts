@@ -317,7 +317,7 @@ describe("completion", () => {
       });
     });
 
-    describe("file completion suppression", () => {
+    describe("file completion for path-valued flags", () => {
       const testData: CompletionData = {
         rootFlags: [{ name: "--help", type: "boolean", description: "Show help", aliases: ["-h"], hidden: false, hasCompleter: false }],
         commands: [
@@ -327,7 +327,16 @@ describe("completion", () => {
             aliases: [],
             flags: [
               { name: "--app", type: "string", description: "App", aliases: ["-a"], hidden: false, hasCompleter: true },
-              { name: "--output", type: "string", description: "Output format", aliases: [], hidden: false, hasCompleter: false },
+              {
+                name: "--from-file",
+                type: "string",
+                description: "Import from file",
+                aliases: [],
+                hidden: false,
+                hasCompleter: false,
+                valueName: "path",
+              },
+              { name: "--port", type: "number", description: "Port number", aliases: ["-p"], hidden: false, hasCompleter: false },
               { name: "--force", type: "boolean", description: "Force", aliases: ["-f"], hidden: false, hasCompleter: false },
             ],
             subcommands: [],
@@ -335,10 +344,31 @@ describe("completion", () => {
         ],
       };
 
-      it("bash does not use -o default", () => {
+      it("bash uses compgen -f for path flags and suppresses other value flags", () => {
         const output = generateBashCompletions(testData);
+
+        // path flags get file completion
+        expect(output).toMatch(/--from-file\)\s*\n\s*COMPREPLY=\(\$\(compgen -f -- "\$cur"\)\)/);
+        // non-path value flags get suppressed
+        expect(output).toMatch(/--port\|-p\)\s*\n\s*return ;;/);
+        // no blanket -o default
         expect(output).not.toContain("-o default");
-        expect(output).toContain("complete -F _ggt_completions ggt");
+      });
+
+      it("zsh uses _files action for path flags", () => {
+        const output = generateZshCompletions(testData);
+
+        expect(output).toContain("--from-file[Import from file]:value:_files");
+        expect(output).toMatch(/--port\[Port number\]:value: /);
+      });
+
+      it("fish uses -rF for path flags and -x for other value flags", () => {
+        const output = generateFishCompletions(testData);
+
+        // path flags get -rF (require arg, force file completion)
+        expect(output).toMatch(/-l from-file.*-rF/);
+        // non-path value flags get -x (require arg, no file completion)
+        expect(output).toMatch(/-l port.*-x/);
       });
 
       it("fish disables file completions globally", () => {

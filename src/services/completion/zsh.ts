@@ -174,7 +174,7 @@ const zshFlagSpec = (flag: FlagDef): string => {
   const exclusion = allNames.length > 1 ? `'(${allNames.join(" ")})'` : "";
 
   // trailing space in ":value: " signals free-form arg to zsh _arguments
-  const argSuffix = needsArg ? (flag.hasCompleter ? ":value:_ggt_dynamic" : ":value: ") : "";
+  const argSuffix = needsArg ? (flag.hasCompleter ? ":value:_ggt_dynamic" : flag.valueName === "path" ? ":value:_files" : ":value: ") : "";
 
   if (allNames.length === 1) {
     return `${exclusion}'${flag.name}[${desc}]${argSuffix}'`;

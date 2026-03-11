@@ -13,7 +13,10 @@ _ggt_completions() {
       local IFS=$'\\n'
       COMPREPLY=($(ggt --__complete "\${COMP_WORDS[@]:1}" 2>/dev/null))
       return ;;
-    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--from-file|--start|--port|-p)
+    --from-file)
+      COMPREPLY=($(compgen -f -- "$cur"))
+      return ;;
+    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--start|--port|-p)
       return ;;
   esac
 
@@ -560,7 +563,7 @@ complete -c ggt -n '__ggt_seen_subcommand var -- set -- --application -a --app -
 complete -c ggt -n '__ggt_seen_subcommand var -- delete -- --application -a --app --environment -e --env' -l force -s f -d 'Skip confirmation and suppress not-found errors'
 complete -c ggt -n '__ggt_seen_subcommand var -- delete -- --application -a --app --environment -e --env' -l all -d 'Delete all environment variables'
 complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l from -rfa '(__ggt_complete)' -d 'Import from another environment'
-complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l from-file -x -d 'Import from a .env file'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l from-file -rF -d 'Import from a .env file'
 complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l include-values -d 'Copy values when importing from another env'
 complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l all -d 'Import all variables instead of specifying keys'
 complete -c ggt -n '__fish_seen_subcommand_from var' -l help -s h -d 'Show command help'
@@ -972,7 +975,7 @@ _ggt_var() {
             '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
             '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
             '--from[Import from another environment]:value:_ggt_dynamic' \\
-            '--from-file[Import from a .env file]:value: ' \\
+            '--from-file[Import from a .env file]:value:_files' \\
             '--include-values[Copy values when importing from another env]' \\
             '--all[Import all variables instead of specifying keys]'
           ;;

@@ -220,6 +220,8 @@ const fishFlagLine = (flag: FlagDef, condition: string): string[] => {
   if (flag.type === "string" || flag.type === "number") {
     if (flag.hasCompleter) {
       commonParts.push("-rfa '(__ggt_complete)'");
+    } else if (flag.valueName === "path") {
+      commonParts.push("-rF");
     } else {
       commonParts.push("-x");
     }

@@ -1,0 +1,56 @@
+import { flags as rootFlagsDef } from "../../commands/root.js";
+import { withAllowFlags } from "../command/allow.js";
+import { Commands, importCommand } from "../command/command.js";
+import { extractFlags, type FlagDef } from "../command/flag.js";
+
+export type CompletionSubcommandDef = {
+  name: string;
+  description: string;
+  aliases: string[];
+  flags: FlagDef[];
+};
+
+export type CommandDef = {
+  name: string;
+  description: string;
+  aliases: string[];
+  flags: FlagDef[];
+  subcommands: CompletionSubcommandDef[];
+};
+
+export type CompletionData = {
+  rootFlags: FlagDef[];
+  commands: CommandDef[];
+};
+
+/**
+ * Builds the complete completion data by introspecting all commands.
+ */
+export const getCompletionData = async (): Promise<CompletionData> => {
+  const rootFlags = extractFlags(rootFlagsDef).filter((f) => !f.hidden);
+
+  const commands: CommandDef[] = [];
+
+  const modules = await Promise.all(Commands.map((cmd) => importCommand(cmd)));
+  for (const [i, cmd] of Commands.entries()) {
+    const mod = modules[i];
+    if (mod.hidden) {
+      continue;
+    }
+    const mergedFlagsDef = withAllowFlags(mod.flags ?? {});
+    const flags = extractFlags(mergedFlagsDef).filter((f) => !f.hidden);
+    const description = mod.description;
+    const subcommands: CompletionSubcommandDef[] = Object.entries("subcommands" in mod && mod.subcommands ? mod.subcommands : {}).map(
+      ([name, sub]) => ({
+        name,
+        description: sub.description,
+        aliases: (sub as { aliases?: readonly string[] }).aliases?.slice() ?? [],
+        flags: extractFlags(sub.flags ?? {}).filter((f) => !f.hidden),
+      }),
+    );
+
+    commands.push({ name: cmd, description, aliases: (mod as { aliases?: readonly string[] }).aliases?.slice() ?? [], flags, subcommands });
+  }
+
+  return { rootFlags, commands };
+};

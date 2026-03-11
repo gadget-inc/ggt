@@ -34,6 +34,7 @@ export const Commands = [
   "agent-plugin",
   "eval",
   "version",
+  "completion",
 ] as const;
 
 /**
@@ -248,6 +249,9 @@ export const importCommand = async (cmd: Command): Promise<CommandConfig> => {
     case "version":
       module = await import("../../commands/version.js");
       break;
+    case "completion":
+      module = await import("../../commands/completion.js");
+      break;
   }
 
   const config = module.default as CommandConfig | undefined;
@@ -262,7 +266,7 @@ export const commandGroups: readonly { label: string; commands: readonly Command
   { label: "Resources", commands: ["add", "var", "env", "open"] },
   { label: "Account", commands: ["login", "logout", "whoami", "list"] },
   { label: "Diagnostics", commands: ["problems", "eval"] },
-  { label: "Configuration", commands: ["configure", "agent-plugin", "version"] },
+  { label: "Configuration", commands: ["configure", "agent-plugin", "completion", "version"] },
 ];
 
 /** Loads all command modules once; subsequent calls return the cached result. */

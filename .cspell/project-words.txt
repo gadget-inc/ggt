@@ -1,11 +1,17 @@
 appvalue
 clickhouse
 codegen
+compadd
+compdef
+compgen
+compinit
+compreply
 commandsstop
 dedenting
 dggt
 direnv
 discarder
+cword
 eaddrnotavail
 eexist
 ehostunreach
@@ -14,6 +20,7 @@ enotdir
 enotempty
 envrc
 eproto
+esac
 esbuild
 execa
 filesync

@@ -65,11 +65,16 @@ export default defineCommand({
   }),
 });
 
+// Mirrors Shopify CLI's conf/env-paths resolution for projectName "shopify-cli-kit":
+// - Windows: %APPDATA%\shopify-cli-kit-nodejs\Config\config.json
+// - macOS: ~/Library/Preferences/shopify-cli-kit-nodejs/config.json
+// - Linux/other: $XDG_CONFIG_HOME/shopify-cli-kit-nodejs/config.json (or ~/.config/...)
+// References:
+// - https://github.com/Shopify/cli/blob/3.91.0/packages/cli-kit/src/private/node/conf-store.ts
+// - https://github.com/sindresorhus/conf/blob/v13.1.0/source/index.ts
+// - https://github.com/sindresorhus/env-paths/blob/v3.0.0/index.js
 const getShopifyCliConfigPath = (): string => {
   if (config.windows) {
-    // Shopify CLI uses the `conf` npm package which delegates to `env-paths`.
-    // On Windows, env-paths resolves `config` to: path.join(APPDATA, name, "Config")
-    // See: https://github.com/Shopify/cli/blob/3.91.0/packages/cli-kit/src/public/node/local-storage.ts
     const appData = process.env["APPDATA"] ?? path.join(config.homeDir, "AppData", "Roaming");
     return path.join(appData, "shopify-cli-kit-nodejs", "Config", "config.json");
   }

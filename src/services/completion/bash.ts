@@ -2,6 +2,21 @@ import { flagWords, type FlagDef } from "../command/flag.js";
 import type { CompletionData } from "./completions.js";
 
 /**
+ * Collects all flag names and aliases for flags that take a value (string or number).
+ */
+const valueFlagNames = (...flagSets: FlagDef[][]): string[] => {
+  const names: string[] = [];
+  for (const flags of flagSets) {
+    for (const f of flags) {
+      if (f.type === "string" || f.type === "number") {
+        names.push(f.name, ...f.aliases);
+      }
+    }
+  }
+  return names;
+};
+
+/**
  * Generates a complete Bash completion script for ggt.
  */
 export const generateBashCompletions = (data: CompletionData): string => {
@@ -61,14 +76,40 @@ export const generateBashCompletions = (data: CompletionData): string => {
   for (const cmd of data.commands) {
     if (cmd.subcommands.length > 0) {
       lines.push(`    ${[cmd.name, ...cmd.aliases].join("|")})`);
-      lines.push("      if [[ $COMP_CWORD -eq 2 ]]; then");
+
+      // Collect all flag names (root + command) that take a value, so the
+      // subcommand-finding loop can skip the flag's argument.
+      const valueFlagList = valueFlagNames(data.rootFlags, cmd.flags);
+
+      // Find the subcommand word by scanning COMP_WORDS after the command,
+      // skipping flags and their values.
+      lines.push("      local sub_cmd=");
+      lines.push("      local __skip_next=0");
+      lines.push("      for ((i=2; i < COMP_CWORD; i++)); do");
+      lines.push('        local w="${COMP_WORDS[i]}"');
+      lines.push("        if [[ $__skip_next -eq 1 ]]; then");
+      lines.push("          __skip_next=0");
+      lines.push("          continue");
+      lines.push("        fi");
+      if (valueFlagList.length > 0) {
+        lines.push('        case "$w" in');
+        lines.push(`          ${valueFlagList.join("|")}) __skip_next=1; continue ;;`);
+        lines.push("        esac");
+      }
+      lines.push('        if [[ "$w" != -* ]]; then');
+      lines.push('          sub_cmd="$w"');
+      lines.push("          break");
+      lines.push("        fi");
+      lines.push("      done");
+      lines.push("");
 
       const subNames = cmd.subcommands.flatMap((s) => [s.name, ...s.aliases]);
       const cmdFlagList = flagWords(cmd.flags);
-      lines.push(`        COMPREPLY=($(compgen -W "${[...subNames, ...cmdFlagList, ...rootFlagWords].join(" ")}" -- "$cur"))`);
 
+      lines.push('      if [[ -z "$sub_cmd" ]]; then');
+      lines.push(`        COMPREPLY=($(compgen -W "${[...subNames, ...cmdFlagList, ...rootFlagWords].join(" ")}" -- "$cur"))`);
       lines.push("      else");
-      lines.push('        case "${COMP_WORDS[2]}" in');
+      lines.push('        case "$sub_cmd" in');
 
       for (const sub of cmd.subcommands) {
         const subFlagList = flagWords([...cmd.flags, ...sub.flags]);

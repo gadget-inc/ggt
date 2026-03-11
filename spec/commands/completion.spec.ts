@@ -506,6 +506,44 @@ describe("completion", () => {
         expect(completions).toContain("--verbose");
       });
 
+      it("completes subcommand flags when value-taking flags precede the subcommand", async () => {
+        const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
+        const result = await run("bash", [
+          "-c",
+          `
+            source "${scriptFile}"
+            COMP_WORDS=(ggt var --app myapp delete "--")
+            COMP_CWORD=5
+            _ggt_completions
+            printf '%s\\n' "\${COMPREPLY[@]}"
+          `,
+        ]);
+        expect(result.exitCode, `bash subcommand flag completion with preceding flags failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout.split("\n").filter(Boolean);
+        expect(completions).toContain("--force");
+        expect(completions).toContain("--all");
+      });
+
+      it("completes subcommands when value-taking flags precede the subcommand position", async () => {
+        const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
+        const result = await run("bash", [
+          "-c",
+          `
+            source "${scriptFile}"
+            COMP_WORDS=(ggt var --app myapp "")
+            COMP_CWORD=4
+            _ggt_completions
+            printf '%s\\n' "\${COMPREPLY[@]}"
+          `,
+        ]);
+        expect(result.exitCode, `bash subcommand completion with preceding flags failed:\n${result.stderr}`).toBe(0);
+        const completions = result.stdout.split("\n").filter(Boolean);
+        expect(completions).toContain("list");
+        expect(completions).toContain("get");
+        expect(completions).toContain("set");
+        expect(completions).toContain("delete");
+      });
+
       it("uses complete -F without -o default or -o filenames", async () => {
         const scriptFile = await writeCompletionFile("bash", generateBashCompletions(data));
         const result = await run("bash", [

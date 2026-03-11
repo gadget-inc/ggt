@@ -37,15 +37,18 @@ export const generateFishCompletions = (data: CompletionData): string => {
   const subcommandParents = data.commands.filter((c) => c.subcommands.length > 0);
   if (subcommandParents.length > 0) {
     lines.push("# Helper: check if a specific subcommand of a parent command has been entered");
-    lines.push("# Usage: __ggt_seen_subcommand parentName [parentAlias...] -- subName [subAlias...]");
+    lines.push("# Usage: __ggt_seen_subcommand parentName [parentAlias...] -- subName [subAlias...] -- valueFlagName ...");
     lines.push("function __ggt_seen_subcommand");
     lines.push("  set -l parents");
     lines.push("  set -l subs");
-    lines.push("  set -l after_sep 0");
+    lines.push("  set -l vflags");
+    lines.push("  set -l sep_count 0");
     lines.push("  for arg in $argv");
     lines.push("    if test $arg = '--'");
-    lines.push("      set after_sep 1");
-    lines.push("    else if test $after_sep -eq 1");
+    lines.push("      set sep_count (math $sep_count + 1)");
+    lines.push("    else if test $sep_count -eq 2");
+    lines.push("      set -a vflags $arg");
+    lines.push("    else if test $sep_count -eq 1");
     lines.push("      set -a subs $arg");
     lines.push("    else");
     lines.push("      set -a parents $arg");
@@ -53,8 +56,17 @@ export const generateFishCompletions = (data: CompletionData): string => {
     lines.push("  end");
     lines.push("  set -l cmd (commandline -opc)");
     lines.push("  set -l found_parent 0");
+    lines.push("  set -l skip_next 0");
     lines.push("  for word in $cmd");
     lines.push("    if test $found_parent -eq 1");
+    lines.push("      if test $skip_next -eq 1");
+    lines.push("        set skip_next 0");
+    lines.push("        continue");
+    lines.push("      end");
+    lines.push("      if set -q vflags[1]; and contains -- $word $vflags");
+    lines.push("        set skip_next 1");
+    lines.push("        continue");
+    lines.push("      end");
     lines.push("      if contains -- $word $subs");
     lines.push("        return 0");
     lines.push("      end");
@@ -155,10 +167,11 @@ export const generateFishCompletions = (data: CompletionData): string => {
       }
 
       // subcommand-specific flags
+      const vFlagsSuffix = vFlags.length > 0 ? ` -- ${vFlags.join(" ")}` : "";
       for (const sub of cmd.subcommands) {
         const subNames = [sub.name, ...sub.aliases].join(" ");
         for (const flag of sub.flags) {
-          lines.push(...fishFlagLine(flag, `__ggt_seen_subcommand ${cmdNames} -- ${subNames}`));
+          lines.push(...fishFlagLine(flag, `__ggt_seen_subcommand ${cmdNames} -- ${subNames}${vFlagsSuffix}`));
         }
       }
 
@@ -167,7 +180,7 @@ export const generateFishCompletions = (data: CompletionData): string => {
         lines.push(...fishFlagLine(flag, `__fish_seen_subcommand_from ${cmdNames}`));
         for (const sub of cmd.subcommands) {
           const subNames = [sub.name, ...sub.aliases].join(" ");
-          lines.push(...fishFlagLine(flag, `__ggt_seen_subcommand ${cmdNames} -- ${subNames}`));
+          lines.push(...fishFlagLine(flag, `__ggt_seen_subcommand ${cmdNames} -- ${subNames}${vFlagsSuffix}`));
         }
       }
     } else {

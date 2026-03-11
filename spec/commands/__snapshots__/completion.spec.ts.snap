@@ -228,15 +228,18 @@ function __ggt_complete
 end
 
 # Helper: check if a specific subcommand of a parent command has been entered
-# Usage: __ggt_seen_subcommand parentName [parentAlias...] -- subName [subAlias...]
+# Usage: __ggt_seen_subcommand parentName [parentAlias...] -- subName [subAlias...] -- valueFlagName ...
 function __ggt_seen_subcommand
   set -l parents
   set -l subs
-  set -l after_sep 0
+  set -l vflags
+  set -l sep_count 0
   for arg in $argv
     if test $arg = '--'
-      set after_sep 1
-    else if test $after_sep -eq 1
+      set sep_count (math $sep_count + 1)
+    else if test $sep_count -eq 2
+      set -a vflags $arg
+    else if test $sep_count -eq 1
       set -a subs $arg
     else
       set -a parents $arg
@@ -244,8 +247,17 @@ function __ggt_seen_subcommand
   end
   set -l cmd (commandline -opc)
   set -l found_parent 0
+  set -l skip_next 0
   for word in $cmd
     if test $found_parent -eq 1
+      if test $skip_next -eq 1
+        set skip_next 0
+        continue
+      end
+      if set -q vflags[1]; and contains -- $word $vflags
+        set skip_next 1
+        continue
+      end
       if contains -- $word $subs
         return 0
       end
@@ -449,43 +461,43 @@ complete -c ggt -n '__ggt_needs_subcommand var -- --application -a --app --envir
 complete -c ggt -n '__ggt_needs_subcommand var -- --application -a --app --environment -e --env' -a 'set' -d 'Set one or more environment variables'
 complete -c ggt -n '__ggt_needs_subcommand var -- --application -a --app --environment -e --env' -a 'delete' -d 'Delete one or more environment variables'
 complete -c ggt -n '__ggt_needs_subcommand var -- --application -a --app --environment -e --env' -a 'import' -d 'Import variables from another environment or file'
-complete -c ggt -n '__ggt_seen_subcommand var -- set' -l secret -s s -d 'Mark the variable as secret (write-only)'
-complete -c ggt -n '__ggt_seen_subcommand var -- delete' -l force -s f -d 'Skip confirmation and suppress not-found errors'
-complete -c ggt -n '__ggt_seen_subcommand var -- delete' -l all -d 'Delete all environment variables'
-complete -c ggt -n '__ggt_seen_subcommand var -- import' -l from -rfa '(__ggt_complete)' -d 'Import from another environment'
-complete -c ggt -n '__ggt_seen_subcommand var -- import' -l from-file -x -d 'Import from a .env file'
-complete -c ggt -n '__ggt_seen_subcommand var -- import' -l include-values -d 'Copy values when importing from another env'
-complete -c ggt -n '__ggt_seen_subcommand var -- import' -l all -d 'Import all variables instead of specifying keys'
+complete -c ggt -n '__ggt_seen_subcommand var -- set -- --application -a --app --environment -e --env' -l secret -s s -d 'Mark the variable as secret (write-only)'
+complete -c ggt -n '__ggt_seen_subcommand var -- delete -- --application -a --app --environment -e --env' -l force -s f -d 'Skip confirmation and suppress not-found errors'
+complete -c ggt -n '__ggt_seen_subcommand var -- delete -- --application -a --app --environment -e --env' -l all -d 'Delete all environment variables'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l from -rfa '(__ggt_complete)' -d 'Import from another environment'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l from-file -x -d 'Import from a .env file'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l include-values -d 'Copy values when importing from another env'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l all -d 'Import all variables instead of specifying keys'
 complete -c ggt -n '__fish_seen_subcommand_from var' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand var -- list' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand var -- get' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand var -- set' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand var -- delete' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand var -- import' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var -- list -- --application -a --app --environment -e --env' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var -- get -- --application -a --app --environment -e --env' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var -- set -- --application -a --app --environment -e --env' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var -- delete -- --application -a --app --environment -e --env' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from var' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand var -- list' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand var -- get' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand var -- set' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand var -- delete' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand var -- import' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var -- list -- --application -a --app --environment -e --env' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var -- get -- --application -a --app --environment -e --env' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var -- set -- --application -a --app --environment -e --env' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var -- delete -- --application -a --app --environment -e --env' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from var' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand var -- list' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand var -- get' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand var -- set' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand var -- delete' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand var -- import' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var -- list -- --application -a --app --environment -e --env' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var -- get -- --application -a --app --environment -e --env' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var -- set -- --application -a --app --environment -e --env' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var -- delete -- --application -a --app --environment -e --env' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
 complete -c ggt -n '__fish_seen_subcommand_from var' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand var -- list' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand var -- get' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand var -- set' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand var -- delete' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand var -- import' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var -- list -- --application -a --app --environment -e --env' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var -- get -- --application -a --app --environment -e --env' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var -- set -- --application -a --app --environment -e --env' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var -- delete -- --application -a --app --environment -e --env' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l telemetry -d 'Enable telemetry'
 complete -c ggt -n '__fish_seen_subcommand_from var' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand var -- list' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand var -- get' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand var -- set' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand var -- delete' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand var -- import' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var -- list -- --application -a --app --environment -e --env' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var -- get -- --application -a --app --environment -e --env' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var -- set -- --application -a --app --environment -e --env' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var -- delete -- --application -a --app --environment -e --env' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand var -- import -- --application -a --app --environment -e --env' -l json -d 'Output as JSON where supported'
 
 # env
 complete -c ggt -n '__fish_seen_subcommand_from env envs' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
@@ -496,39 +508,39 @@ complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -
 complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -a 'delete' -d 'Delete an environment'
 complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -a 'unpause' -d 'Unpause a paused environment'
 complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -a 'use' -d 'Switch the active environment for this directory'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- create' -l from -rfa '(__ggt_complete)' -d 'Clone from an existing environment'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- create' -l use -s u -d 'Switch to the new environment after creation'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- delete' -l force -s f -d 'Skip confirmation'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- create -- --application -a --app' -l from -rfa '(__ggt_complete)' -d 'Clone from an existing environment'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- create -- --application -a --app' -l use -s u -d 'Switch to the new environment after creation'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- delete -- --application -a --app' -l force -s f -d 'Skip confirmation'
 complete -c ggt -n '__fish_seen_subcommand_from env envs' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- create' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- delete' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- use' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls -- --application -a --app' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- create -- --application -a --app' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- delete -- --application -a --app' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause -- --application -a --app' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- use -- --application -a --app' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from env envs' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- create' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- delete' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- use' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls -- --application -a --app' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- create -- --application -a --app' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- delete -- --application -a --app' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause -- --application -a --app' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- use -- --application -a --app' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from env envs' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- create' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- delete' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- use' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls -- --application -a --app' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- create -- --application -a --app' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- delete -- --application -a --app' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause -- --application -a --app' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- use -- --application -a --app' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
 complete -c ggt -n '__fish_seen_subcommand_from env envs' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- create' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- delete' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- use' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls -- --application -a --app' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- create -- --application -a --app' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- delete -- --application -a --app' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause -- --application -a --app' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- use -- --application -a --app' -l telemetry -d 'Enable telemetry'
 complete -c ggt -n '__fish_seen_subcommand_from env envs' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- create' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- delete' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand env envs -- use' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- list ls -- --application -a --app' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- create -- --application -a --app' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- delete -- --application -a --app' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- unpause -- --application -a --app' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand env envs -- use -- --application -a --app' -l json -d 'Output as JSON where supported'
 
 # add
 complete -c ggt -n '__fish_seen_subcommand_from add' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
@@ -546,35 +558,35 @@ complete -c ggt -n '__ggt_needs_subcommand add -- --application -a --app --envir
 complete -c ggt -n '__ggt_needs_subcommand add -- --application -a --app --environment -e --env --allow' -a 'environment' -d 'Create a new environment by cloning'
 complete -c ggt -n '__ggt_needs_subcommand add -- --application -a --app --environment -e --env --allow' -a 'env' -d 'Create a new environment by cloning'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand add -- model' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand add -- action' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand add -- route' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand add -- field' -l help -s h -d 'Show command help'
-complete -c ggt -n '__ggt_seen_subcommand add -- environment env' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add -- model -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add -- action -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add -- route -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add -- field -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand add -- environment env -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand add -- model' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand add -- action' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand add -- route' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand add -- field' -l version -d 'Print the ggt version'
-complete -c ggt -n '__ggt_seen_subcommand add -- environment env' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add -- model -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add -- action -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add -- route -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add -- field -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand add -- environment env -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand add -- model' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand add -- action' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand add -- route' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand add -- field' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
-complete -c ggt -n '__ggt_seen_subcommand add -- environment env' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add -- model -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add -- action -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add -- route -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add -- field -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand add -- environment env -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand add -- model' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand add -- action' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand add -- route' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand add -- field' -l telemetry -d 'Enable telemetry'
-complete -c ggt -n '__ggt_seen_subcommand add -- environment env' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add -- model -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add -- action -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add -- route -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add -- field -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand add -- environment env -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand add -- model' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand add -- action' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand add -- route' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand add -- field' -l json -d 'Output as JSON where supported'
-complete -c ggt -n '__ggt_seen_subcommand add -- environment env' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add -- model -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add -- action -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add -- route -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add -- field -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand add -- environment env -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
 
 # open
 complete -c ggt -n '__fish_seen_subcommand_from open' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'

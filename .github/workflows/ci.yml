@@ -7,6 +7,8 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -28,6 +30,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -56,6 +60,8 @@ jobs:
           dist/main.js
 
   test:
+    permissions:
+      contents: read
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -82,6 +88,8 @@ jobs:
   # Integration tests share a single Gadget app as a backend, so they must
   # run one at a time to avoid interfering with each other.
   integration:
+    permissions:
+      contents: read
     if: github.repository == 'gadget-inc/ggt'
     strategy:
       fail-fast: false

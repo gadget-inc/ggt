@@ -37,7 +37,7 @@ src/              → Source code
 
 ```bash
 pnpm run build            # Build once
-pnpm run dev              # Build + test in watch mode
+pnpm run build:watch      # Rebuild on file changes
 pnpm run generate:graphql # Regenerate GraphQL types
 ```
 
@@ -65,7 +65,7 @@ Both commands reference `$WORKSPACE_ROOT/dist/main.js`, which is set by [`.envrc
 
 > [!TIP]
 >
-> - Use `pnpm run build:watch` to continuously rebuild on file changes, so `ggt`/`dggt` always have fresh output. Alternatively, `pnpm run dev` runs both `build:watch` and `test:watch` in parallel.
+> - Use `pnpm run build:watch` to continuously rebuild on file changes, so `ggt`/`dggt` always have fresh output.
 > - When working on file sync, use `tmp/apps/` as your sync directory to keep synced files separate from `ggt` source code.
 
 <details>

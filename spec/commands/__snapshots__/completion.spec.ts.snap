@@ -258,19 +258,39 @@ function __ggt_seen_subcommand
 end
 
 # Helper: check if we are positioned for a subcommand (parent seen, no subcommand yet)
-# Known limitation: flag values (e.g. \`--app myapp\`) are mistaken for subcommands
-# Usage: __ggt_needs_subcommand parentName [parentAlias...]
+# Usage: __ggt_needs_subcommand parentName [parentAlias...] -- valueFlagName ...
 function __ggt_needs_subcommand
+  set -l parents
+  set -l vflags
+  set -l after_sep 0
+  for a in $argv
+    if test $a = '--'
+      set after_sep 1
+    else if test $after_sep -eq 1
+      set -a vflags $a
+    else
+      set -a parents $a
+    end
+  end
   set -l cmd (commandline -opc)
   set -l found_parent 0
+  set -l skip_next 0
   for word in $cmd
     if test $found_parent -eq 1
-      # if the word after the parent is not a flag, a subcommand was entered
-      if not string match -q -- '-*' $word
-        return 1
+      if test $skip_next -eq 1
+        set skip_next 0
+        continue
       end
+      if contains -- $word $vflags
+        set skip_next 1
+        continue
+      end
+      if string match -q -- '-*' $word
+        continue
+      end
+      return 1
     end
-    if contains -- $word $argv
+    if contains -- $word $parents
       set found_parent 1
     end
   end
@@ -424,11 +444,11 @@ complete -c ggt -n '__fish_seen_subcommand_from var' -l application -s a -rfa '(
 complete -c ggt -n '__fish_seen_subcommand_from var' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
 complete -c ggt -n '__fish_seen_subcommand_from var' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
 complete -c ggt -n '__fish_seen_subcommand_from var' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
-complete -c ggt -n '__ggt_needs_subcommand var' -a 'list' -d 'List all environment variable keys'
-complete -c ggt -n '__ggt_needs_subcommand var' -a 'get' -d 'Print the value of an environment variable'
-complete -c ggt -n '__ggt_needs_subcommand var' -a 'set' -d 'Set one or more environment variables'
-complete -c ggt -n '__ggt_needs_subcommand var' -a 'delete' -d 'Delete one or more environment variables'
-complete -c ggt -n '__ggt_needs_subcommand var' -a 'import' -d 'Import variables from another environment or file'
+complete -c ggt -n '__ggt_needs_subcommand var -- --application -a --app --environment -e --env' -a 'list' -d 'List all environment variable keys'
+complete -c ggt -n '__ggt_needs_subcommand var -- --application -a --app --environment -e --env' -a 'get' -d 'Print the value of an environment variable'
+complete -c ggt -n '__ggt_needs_subcommand var -- --application -a --app --environment -e --env' -a 'set' -d 'Set one or more environment variables'
+complete -c ggt -n '__ggt_needs_subcommand var -- --application -a --app --environment -e --env' -a 'delete' -d 'Delete one or more environment variables'
+complete -c ggt -n '__ggt_needs_subcommand var -- --application -a --app --environment -e --env' -a 'import' -d 'Import variables from another environment or file'
 complete -c ggt -n '__ggt_seen_subcommand var -- set' -l secret -s s -d 'Mark the variable as secret (write-only)'
 complete -c ggt -n '__ggt_seen_subcommand var -- delete' -l force -s f -d 'Skip confirmation and suppress not-found errors'
 complete -c ggt -n '__ggt_seen_subcommand var -- delete' -l all -d 'Delete all environment variables'
@@ -470,12 +490,12 @@ complete -c ggt -n '__ggt_seen_subcommand var -- import' -l json -d 'Output as J
 # env
 complete -c ggt -n '__fish_seen_subcommand_from env envs' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
 complete -c ggt -n '__fish_seen_subcommand_from env envs' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
-complete -c ggt -n '__ggt_needs_subcommand env envs' -a 'list' -d 'List all environments'
-complete -c ggt -n '__ggt_needs_subcommand env envs' -a 'ls' -d 'List all environments'
-complete -c ggt -n '__ggt_needs_subcommand env envs' -a 'create' -d 'Create a new environment'
-complete -c ggt -n '__ggt_needs_subcommand env envs' -a 'delete' -d 'Delete an environment'
-complete -c ggt -n '__ggt_needs_subcommand env envs' -a 'unpause' -d 'Unpause a paused environment'
-complete -c ggt -n '__ggt_needs_subcommand env envs' -a 'use' -d 'Switch the active environment for this directory'
+complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -a 'list' -d 'List all environments'
+complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -a 'ls' -d 'List all environments'
+complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -a 'create' -d 'Create a new environment'
+complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -a 'delete' -d 'Delete an environment'
+complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -a 'unpause' -d 'Unpause a paused environment'
+complete -c ggt -n '__ggt_needs_subcommand env envs -- --application -a --app' -a 'use' -d 'Switch the active environment for this directory'
 complete -c ggt -n '__ggt_seen_subcommand env envs -- create' -l from -rfa '(__ggt_complete)' -d 'Clone from an existing environment'
 complete -c ggt -n '__ggt_seen_subcommand env envs -- create' -l use -s u -d 'Switch to the new environment after creation'
 complete -c ggt -n '__ggt_seen_subcommand env envs -- delete' -l force -s f -d 'Skip confirmation'
@@ -519,12 +539,12 @@ complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-different-app -d '
 complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l allow -x -d 'Enable allow flags (comma-separated)'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l allow-all -d 'Enable all --allow-* flags'
-complete -c ggt -n '__ggt_needs_subcommand add' -a 'model' -d 'Add a new data model'
-complete -c ggt -n '__ggt_needs_subcommand add' -a 'action' -d 'Add an action to a model or as a global action'
-complete -c ggt -n '__ggt_needs_subcommand add' -a 'route' -d 'Add an HTTP route'
-complete -c ggt -n '__ggt_needs_subcommand add' -a 'field' -d 'Add a field to an existing model'
-complete -c ggt -n '__ggt_needs_subcommand add' -a 'environment' -d 'Create a new environment by cloning'
-complete -c ggt -n '__ggt_needs_subcommand add' -a 'env' -d 'Create a new environment by cloning'
+complete -c ggt -n '__ggt_needs_subcommand add -- --application -a --app --environment -e --env --allow' -a 'model' -d 'Add a new data model'
+complete -c ggt -n '__ggt_needs_subcommand add -- --application -a --app --environment -e --env --allow' -a 'action' -d 'Add an action to a model or as a global action'
+complete -c ggt -n '__ggt_needs_subcommand add -- --application -a --app --environment -e --env --allow' -a 'route' -d 'Add an HTTP route'
+complete -c ggt -n '__ggt_needs_subcommand add -- --application -a --app --environment -e --env --allow' -a 'field' -d 'Add a field to an existing model'
+complete -c ggt -n '__ggt_needs_subcommand add -- --application -a --app --environment -e --env --allow' -a 'environment' -d 'Create a new environment by cloning'
+complete -c ggt -n '__ggt_needs_subcommand add -- --application -a --app --environment -e --env --allow' -a 'env' -d 'Create a new environment by cloning'
 complete -c ggt -n '__fish_seen_subcommand_from add' -l help -s h -d 'Show command help'
 complete -c ggt -n '__ggt_seen_subcommand add -- model' -l help -s h -d 'Show command help'
 complete -c ggt -n '__ggt_seen_subcommand add -- action' -l help -s h -d 'Show command help'

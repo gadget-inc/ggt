@@ -2,19 +2,19 @@ import arg from "arg";
 
 import { println } from "../output/print.js";
 import { closestMatch } from "../util/collection.js";
-import { AllowArgs, extractAllowArgs, getAllowFlags, resolveAllowFlags } from "./allow.js";
-import { aliasName, ArgError, parseArgs, toEntryArray, type ArgsDefinition } from "./arg.js";
+import { AllowFlags, extractAllowFlags, getAllowFlags, resolveAllowFlags } from "./allow.js";
 import type { CommandConfig, LeafCommandConfig, ParentCommandConfig, PositionalDef } from "./command.js";
 import type { Context } from "./context.js";
+import { aliasName, FlagError, parseFlags, toEntryArray, type FlagsDefinition } from "./flag.js";
 import { renderDetailedUsage, renderShortUsage, renderUsageHint, type UsageInput } from "./usage.js";
 
 /**
  * Runs a command, handling argument parsing, subcommand routing,
  * alias resolution, and help flag rendering.
  *
- * For leaf commands: parses args and calls `command.run`.
+ * For leaf commands: parses flags and calls `command.run`.
  * For parent commands: resolves the subcommand from argv, merges
- * parent and subcommand args, and calls the subcommand's `run`.
+ * parent and subcommand flags, and calls the subcommand's `run`.
  */
 export const runCommand = async (ctx: Context, command: CommandConfig, ...argv: string[]): Promise<void> => {
   if (command.subcommands) {
@@ -42,13 +42,13 @@ const resolveHelpLevel = (argv: string[], valueTakingFlags: Set<string>): "-h" |
 
 /**
  * Validates that all required positional arguments are present in the
- * parsed `_` array. Throws an ArgError for the first missing one.
+ * parsed `_` array. Throws an FlagError for the first missing one.
  */
 const validateRequiredPositionals = (positionals: readonly PositionalDef[] | undefined, parsedPositionals: string[]): void => {
   if (!positionals) return;
   for (const [i, def] of positionals.entries()) {
     if (def.required && i >= parsedPositionals.length) {
-      throw new ArgError(`Missing required argument: ${def.name}`);
+      throw new FlagError(`Missing required argument: ${def.name}`);
     }
   }
 };
@@ -57,7 +57,7 @@ const runWithUsageHint = async (fn: () => Promise<void> | void, commandPath: str
   try {
     await fn();
   } catch (error) {
-    if (error instanceof ArgError && error.usageHint) {
+    if (error instanceof FlagError && error.usageHint) {
       error.attachUsageHint(renderUsageHint(commandPath, mod));
     }
     throw error;
@@ -65,10 +65,10 @@ const runWithUsageHint = async (fn: () => Promise<void> | void, commandPath: str
 };
 
 const runLeaf = async (ctx: Context, command: LeafCommandConfig, argv: string[]): Promise<void> => {
-  const { argsDef, allowFlags, helpMod } = withAllowArgs(command.args ?? {}, command);
+  const { flagsDef, allowFlags, helpMod } = withAllowFlags(command.flags ?? {}, command);
 
   // handle help flags
-  const valueTakingFlags = buildValueTakingFlags(argsDef);
+  const valueTakingFlags = buildValueTakingFlags(flagsDef);
   const helpLevel = resolveHelpLevel(argv, valueTakingFlags);
   if (helpLevel) {
     printHelpAndExit(command.name, helpMod, helpLevel);
@@ -76,11 +76,11 @@ const runLeaf = async (ctx: Context, command: LeafCommandConfig, argv: string[])
 
   await runWithUsageHint(
     async () => {
-      const extracted = extractAllowArgs(argv, allowFlags);
-      const args = parseArgs(command.args ?? {}, { argv: extracted.cleanedArgv, ...command.parseOptions });
-      resolveAllowFlags(args, allowFlags, extracted);
-      validateRequiredPositionals(command.positionals, args._);
-      await command.run(ctx, args);
+      const extracted = extractAllowFlags(argv, allowFlags);
+      const flags = parseFlags(command.flags ?? {}, { argv: extracted.cleanedArgv, ...command.parseOptions });
+      resolveAllowFlags(flags, allowFlags, extracted);
+      validateRequiredPositionals(command.positionals, flags._);
+      await command.run(ctx, flags);
     },
     command.name,
     helpMod,
@@ -89,9 +89,9 @@ const runLeaf = async (ctx: Context, command: LeafCommandConfig, argv: string[])
 
 const runParent = async (ctx: Context, command: ParentCommandConfig, argv: string[]): Promise<void> => {
   const { subcommands } = command;
-  // Include AllowArgs in the parent's value-taking flags so that `--allow <value>`
+  // Include AllowFlags in the parent's value-taking flags so that `--allow <value>`
   // doesn't misidentify the value token as a subcommand name.
-  const { argsDef: parentWithAllow, helpMod: parentHelpMod } = withAllowArgs(command.args ?? {}, command);
+  const { flagsDef: parentWithAllow, helpMod: parentHelpMod } = withAllowFlags(command.flags ?? {}, command);
   const valueTakingFlags = buildValueTakingFlags(parentWithAllow);
 
   // find the subcommand name (first positional token) and remove it from argv
@@ -102,12 +102,12 @@ const runParent = async (ctx: Context, command: ParentCommandConfig, argv: strin
 
   // handle help flags
   const sub = name !== undefined && Object.prototype.hasOwnProperty.call(subcommands, name) ? subcommands[name] : undefined;
-  const mergedArgs: ArgsDefinition = sub ? { ...command.args, ...sub.args } : (command.args ?? {});
+  const mergedFlags: FlagsDefinition = sub ? { ...command.flags, ...sub.flags } : (command.flags ?? {});
   const {
-    argsDef: mergedWithAllow,
+    flagsDef: mergedWithAllow,
     allowFlags,
     helpMod: mergedHelpMod,
-  } = withAllowArgs(mergedArgs, sub ? { ...sub, args: mergedArgs } : command);
+  } = withAllowFlags(mergedFlags, sub ? { ...sub, flags: mergedFlags } : command);
   const mergedValueTakingFlags = buildValueTakingFlags(mergedWithAllow);
   const helpLevel = resolveHelpLevel(rest, mergedValueTakingFlags);
   if (helpLevel) {
@@ -131,18 +131,18 @@ const runParent = async (ctx: Context, command: ParentCommandConfig, argv: strin
       parts.push(`Did you mean ${suggestion}?`);
     }
     parts.push(renderUsageHint(command.name, parentHelpMod));
-    throw new ArgError(parts.join("\n\n"), { usageHint: false });
+    throw new FlagError(parts.join("\n\n"), { usageHint: false });
   }
   const subCommandPath = `${command.name} ${name}`;
   // Subcommands inherit the parent's parseOptions. SubcommandConfig intentionally omits parseOptions to keep the API surface small -- subcommands don't need independent parse mode.
   await runWithUsageHint(
     async () => {
-      const extracted = extractAllowArgs(rest, allowFlags);
-      const args = parseArgs(mergedArgs, { argv: extracted.cleanedArgv, ...command.parseOptions });
-      resolveAllowFlags(args, allowFlags, extracted);
-      validateRequiredPositionals(sub.positionals, args._);
+      const extracted = extractAllowFlags(rest, allowFlags);
+      const flags = parseFlags(mergedFlags, { argv: extracted.cleanedArgv, ...command.parseOptions });
+      resolveAllowFlags(flags, allowFlags, extracted);
+      validateRequiredPositionals(sub.positionals, flags._);
       // oxlint-disable-next-line no-unsafe-call -- sub.run is StoredSubcommand["run"], typed (ctx, never) => Promisable<void>
-      await sub.run(ctx, args as never);
+      await sub.run(ctx, flags as never);
     },
     subCommandPath,
     mergedHelpMod,
@@ -153,9 +153,9 @@ const runParent = async (ctx: Context, command: ParentCommandConfig, argv: strin
  * Builds a set of flag tokens (including aliases) whose type takes a
  * value — i.e. everything except Boolean and arg.COUNT.
  */
-const buildValueTakingFlags = (args: ArgsDefinition): Set<string> => {
+const buildValueTakingFlags = (flagsDef: FlagsDefinition): Set<string> => {
   const flags = new Set<string>();
-  for (const [key, value] of Object.entries(args)) {
+  for (const [key, value] of Object.entries(flagsDef)) {
     if (value.type === Boolean) {
       continue;
     }
@@ -225,17 +225,17 @@ const resolveSubcommandName = (token: string, subcommands: ParentCommandConfig["
 };
 
 /**
- * If the args definition has `--allow-*` flags, merges in `AllowArgs`
+ * If the flags definition has `--allow-*` flags, merges in `AllowFlags`
  * for help rendering and returns the allow flag keys.
  */
-const withAllowArgs = (
-  argsDef: ArgsDefinition,
+const withAllowFlags = (
+  flagsDef: FlagsDefinition,
   mod: UsageInput,
-): { argsDef: ArgsDefinition; allowFlags: string[]; helpMod: UsageInput } => {
-  const allowFlags = getAllowFlags(argsDef);
+): { flagsDef: FlagsDefinition; allowFlags: string[]; helpMod: UsageInput } => {
+  const allowFlags = getAllowFlags(flagsDef);
   if (allowFlags.length === 0) {
-    return { argsDef, allowFlags, helpMod: mod };
+    return { flagsDef, allowFlags, helpMod: mod };
   }
-  const merged = { ...argsDef, ...AllowArgs };
-  return { argsDef: merged, allowFlags, helpMod: { ...mod, args: merged } };
+  const merged = { ...flagsDef, ...AllowFlags };
+  return { flagsDef: merged, allowFlags, helpMod: { ...mod, flags: merged } };
 };

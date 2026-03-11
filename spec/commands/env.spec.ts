@@ -11,7 +11,7 @@ import {
   DELETE_ENVIRONMENT_MUTATION,
   UNPAUSE_ENVIRONMENT_MUTATION,
 } from "../../src/services/app/edit/operation.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { config } from "../../src/services/config/config.js";
 import { confirm } from "../../src/services/output/confirm.js";
@@ -97,7 +97,7 @@ describe("env", () => {
 
     it("errors when no name provided", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "create", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: name"`);
     });
 
@@ -277,7 +277,7 @@ describe("env", () => {
 
         // No nockEditResponse — the error is thrown before the create mutation
         const error = await expectError(() => runCommand(testCtx, envCommand, "create", "staging", "--use", "--app=test"));
-        expect(error).toBeInstanceOf(ArgError);
+        expect(error).toBeInstanceOf(FlagError);
         expect(error.message).toMatchInlineSnapshot(`
           "Cannot use --use: this directory is synced to other-app, but you specified test.
 
@@ -354,19 +354,19 @@ describe("env", () => {
 
     it("errors when trying to delete production", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "delete", "production", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Cannot delete the production environment."`);
     });
 
     it("errors when no name provided", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "delete", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: name"`);
     });
 
     it("errors when environment not found", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "delete", "nonexistent", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown environment: nonexistent
 
@@ -386,7 +386,7 @@ describe("env", () => {
       matchAuthHeader(nock(`https://${config.domains.services}`).get("/auth/api/apps").reply(200, [emptyApp, testApp2]));
 
       const error = await expectError(() => runCommand(testCtx, envCommand, "delete", "staging", "--app=empty-app"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"No environments found for empty-app."`);
     });
 
@@ -447,13 +447,13 @@ describe("env", () => {
 
     it("errors when no name provided", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "unpause", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: name"`);
     });
 
     it("errors when environment not found", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "unpause", "nonexistent", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown environment: nonexistent
 
@@ -525,7 +525,7 @@ describe("env", () => {
 
     it("errors when trying to use production", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "use", "production", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Cannot use the production environment.
 
@@ -535,13 +535,13 @@ describe("env", () => {
 
     it("errors when no name provided", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "use", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: name"`);
     });
 
     it("errors when environment not found", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "use", "nonexistent", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown environment: nonexistent
 
@@ -574,7 +574,7 @@ describe("env", () => {
   describe("unknown subcommand", () => {
     it("errors on unknown subcommand", async () => {
       const error = await expectError(() => runCommand(testCtx, envCommand, "bogus", "--app=test"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown subcommand bogus
 

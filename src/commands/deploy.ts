@@ -10,7 +10,7 @@ import { env } from "../services/config/env.js";
 import { deletedSymbol, updatedSymbol } from "../services/filesync/changes.js";
 import { DeployDisallowedError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
 import { confirm } from "../services/output/confirm.js";
 import { output } from "../services/output/output.js";
@@ -109,8 +109,8 @@ export default defineCommand({
     "ggt deploy --force --allow=problems,charges,data-delete",
     "ggt deploy --env staging --force --allow-problems --allow-charges --allow-data-delete",
   ],
-  args: {
-    ...SyncJsonArgs,
+  flags: {
+    ...SyncJsonFlags,
     "--force": {
       type: Boolean,
       alias: "-f",
@@ -147,9 +147,9 @@ export default defineCommand({
       brief: false,
     },
   },
-  run: async (ctx, args) => {
+  run: async (ctx, flags) => {
     const directory = await loadSyncJsonDirectory(process.cwd());
-    const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "deploy", args, directory });
+    const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "deploy", flags, directory });
 
     println({
       ensureEmptyLineAbove: true,
@@ -165,7 +165,7 @@ export default defineCommand({
       //  therefore, we need to push before we can deploy
       await filesync.print(ctx, { hashes });
 
-      if (!args["--force"]) {
+      if (!flags["--force"]) {
         // they didn't pass --force, so we need to ask them if they want to push
         println({
           ensureEmptyLineAbove: true,
@@ -205,9 +205,9 @@ export default defineCommand({
 
     const variables = {
       localFilesVersion: String(syncJson.filesVersion),
-      force: args["--allow-problems"],
-      allowDeletedData: args["--allow-data-delete"],
-      allowCharges: args["--allow-charges"],
+      force: flags["--allow-problems"],
+      allowDeletedData: flags["--allow-data-delete"],
+      allowCharges: flags["--allow-charges"],
     };
 
     let spinner: spinner | undefined;
@@ -314,8 +314,8 @@ export default defineCommand({
             await confirm("Do you want to continue?");
             subscription.resubscribe({ ...variables, force: true, allowDeletedData: true });
           } else {
-            const allowDataDelete = args["--allow-data-delete"];
-            const allowProblems = args["--allow-problems"];
+            const allowDataDelete = flags["--allow-data-delete"];
+            const allowProblems = flags["--allow-problems"];
 
             if (!allowDataDelete && !allowProblems) {
               throw new UnexpectedError("expected --allow-data-delete or --allow-problems to be true");

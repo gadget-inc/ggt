@@ -21,7 +21,6 @@ import { confirm } from "../../../src/services/output/confirm.js";
 import { EdgeCaseError } from "../../../src/services/output/report.js";
 import { PromiseSignal } from "../../../src/services/util/promise.js";
 import { nockTestApps, testApp } from "../../__support__/app.js";
-import { makeArgs } from "../../__support__/arg.js";
 import { testCtx } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
 import { expectDir, writeDir } from "../../__support__/files.js";
@@ -33,6 +32,7 @@ import {
   makeSyncScenario,
   type FileSyncScenarioOptions,
 } from "../../__support__/filesync.js";
+import { makeFlags } from "../../__support__/flag.js";
 import { nockEditResponse } from "../../__support__/graphql.js";
 import { mock, mockConfirmOnce, mockOnce, mockSelectOnce } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
@@ -42,7 +42,7 @@ import { mockSystemTime } from "../../__support__/time.js";
 import { loginTestUser, matchAuthHeader } from "../../__support__/user.js";
 
 describe("FileSync._writeToLocalFilesystem", () => {
-  // let testCtx: Context<SyncJsonArgs>;
+  // let testCtx: Context<SyncJsonFlags>;
   let localDir: Directory;
   let syncJson: SyncJson;
   let filesync: FileSync;
@@ -56,7 +56,7 @@ describe("FileSync._writeToLocalFilesystem", () => {
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrAskAndInit(testCtx, {
       command: "dev",
-      args: makeArgs(dev.args, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
+      flags: makeFlags(dev.flags, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,
     });
     filesync = new FileSync(syncJson);
@@ -456,7 +456,7 @@ describe("FileSync._sendChangesToEnvironment", () => {
     localDir = await loadSyncJsonDirectory(testDirPath("local"));
     syncJson = await SyncJson.loadOrAskAndInit(testCtx, {
       command: "dev",
-      args: makeArgs(dev.args, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
+      flags: makeFlags(dev.flags, "dev", `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`),
       directory: localDir,
     });
     filesync = new FileSync(syncJson);
@@ -1651,8 +1651,8 @@ describe("FileSync.sync", () => {
 
   it("merges files when .gadget/sync.json doesn't exist and --allow-unknown-directory is passed", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      args: makeArgs(
-        dev.args,
+      flags: makeFlags(
+        dev.flags,
         "dev",
         appDir,
         `--app=${testApp.slug}`,
@@ -1821,7 +1821,7 @@ describe("FileSync.sync", () => {
 
   it("bumps the correct environment filesVersion when multi-environment is enabled", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
-      args: makeArgs(dev.args, "dev", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[2]!.name}`),
+      flags: makeFlags(dev.flags, "dev", appDir, `--app=${testApp.slug}`, `--env=${testApp.environments[2]!.name}`),
       filesVersion1Files: {
         "foo.js": "// foo",
       },

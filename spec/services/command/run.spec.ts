@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ArgError, type ArgsDefinition } from "../../../src/services/command/arg.js";
 import { defineCommand } from "../../../src/services/command/command.js";
+import { FlagError, type FlagsDefinition } from "../../../src/services/command/flag.js";
 import { runCommand } from "../../../src/services/command/run.js";
 import { noop } from "../../../src/services/util/function.js";
 import { testCtx } from "../../__support__/context.js";
@@ -11,43 +11,43 @@ import { expectProcessExit } from "../../__support__/process.js";
 
 // -- test fixtures --
 
-const allowLeafArgs = {
+const allowLeafFlags = {
   "--force": { type: Boolean, alias: "-f", description: "Force the operation" },
   "--allow-problems": { type: Boolean, description: "Allow deploying with problems" },
   "--allow-charges": { type: Boolean, description: "Allow deploying with new charges" },
   "--allow-data-delete": { type: Boolean, description: "Allow deploying with data loss" },
-} satisfies ArgsDefinition;
+} satisfies FlagsDefinition;
 
 const allowLeafRun = vi.fn();
 
 const allowLeafCommand = defineCommand({
   name: "deploy",
   description: "Deploy to production",
-  args: allowLeafArgs,
+  flags: allowLeafFlags,
   run: allowLeafRun,
 });
 
-const leafArgs = {
+const leafFlags = {
   "--force": { type: Boolean, alias: "-f", description: "Force the operation" },
-} satisfies ArgsDefinition;
+} satisfies FlagsDefinition;
 
 const leafRun = vi.fn();
 
 const leafCommand = defineCommand({
   name: "test",
   description: "A test leaf command",
-  args: leafArgs,
+  flags: leafFlags,
   run: leafRun,
 });
 
-const parentArgs = {
+const parentFlags = {
   "--app": { type: String, alias: "-a", description: "Select the application", valueName: "name" },
-} satisfies ArgsDefinition;
+} satisfies FlagsDefinition;
 
-const parentArgsWithVerbose = {
+const parentFlagsWithVerbose = {
   "--app": { type: String, alias: "-a", description: "Select the application", valueName: "name" },
   "--verbose": { type: Boolean, alias: "-v", description: "Verbose output" },
-} satisfies ArgsDefinition;
+} satisfies FlagsDefinition;
 
 const listRun = vi.fn();
 const getRun = vi.fn();
@@ -55,7 +55,7 @@ const getRun = vi.fn();
 const parentCommand = defineCommand({
   name: "test",
   description: "A test parent command",
-  args: parentArgs,
+  flags: parentFlags,
   subcommands: (sub) => ({
     list: sub({
       description: "List all items",
@@ -64,7 +64,7 @@ const parentCommand = defineCommand({
     }),
     get: sub({
       description: "Get a specific item",
-      args: {
+      flags: {
         "--id": { type: String, description: "Item ID", valueName: "id" },
       },
       run: getRun,
@@ -75,7 +75,7 @@ const parentCommand = defineCommand({
 const verboseParentCommand = defineCommand({
   name: "test",
   description: "A test parent command",
-  args: parentArgsWithVerbose,
+  flags: parentFlagsWithVerbose,
   subcommands: (sub) => ({
     list: sub({
       description: "List all items",
@@ -84,7 +84,7 @@ const verboseParentCommand = defineCommand({
     }),
     get: sub({
       description: "Get a specific item",
-      args: {
+      flags: {
         "--id": { type: String, description: "Item ID", valueName: "id" },
       },
       run: getRun,
@@ -101,7 +101,7 @@ describe("runCommand", () => {
   });
 
   describe("routing", () => {
-    it("routes to leaf run with parsed args", async () => {
+    it("routes to leaf run with parsed flags", async () => {
       await runCommand(testCtx, leafCommand, "--force");
 
       expect(leafRun).toHaveBeenCalledWith(testCtx, expect.objectContaining({ "--force": true }));
@@ -119,7 +119,7 @@ describe("runCommand", () => {
       expect(listRun).toHaveBeenCalledWith(testCtx, expect.objectContaining({ _: [] }));
     });
 
-    it("merges parent and subcommand args", async () => {
+    it("merges parent and subcommand flags", async () => {
       await runCommand(testCtx, parentCommand, "get", "--app", "myapp", "--id", "42");
 
       expect(getRun).toHaveBeenCalledWith(
@@ -204,8 +204,8 @@ describe("runCommand", () => {
 
       expect(leafRun).toHaveBeenCalledWith(testCtx, expect.objectContaining({ _: ["--force"] }));
       // --force is NOT set as a flag — it's a positional
-      const args = leafRun.mock.calls[0]![1] as Record<string, unknown>;
-      expect(args["--force"]).toBeUndefined();
+      const flags = leafRun.mock.calls[0]![1] as Record<string, unknown>;
+      expect(flags["--force"]).toBeUndefined();
     });
   });
 
@@ -233,8 +233,8 @@ describe("runCommand", () => {
           "--allow-data-delete": true,
         }),
       );
-      const args = allowLeafRun.mock.calls[0]![1] as Record<string, unknown>;
-      expect(args["--allow-charges"]).toBeUndefined();
+      const flags = allowLeafRun.mock.calls[0]![1] as Record<string, unknown>;
+      expect(flags["--allow-charges"]).toBeUndefined();
     });
 
     it("--allow shorthand (space-separated) sets the matching flag", async () => {
@@ -273,10 +273,10 @@ describe("runCommand", () => {
       );
     });
 
-    it("throws ArgError for unknown shorthand", async () => {
+    it("throws FlagError for unknown shorthand", async () => {
       const error = await expectError(() => runCommand(testCtx, allowLeafCommand, "--allow=bogus"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(
         `"Unknown allow flag "bogus". Did you mean "charges"? Available: problems, charges, data-delete"`,
       );
@@ -286,7 +286,7 @@ describe("runCommand", () => {
       // leafCommand has no --allow-* flags, so --allow should be unknown
       const error = await expectError(() => runCommand(testCtx, leafCommand, "--allow=problems"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"unknown or unexpected option: --allow"`);
     });
 
@@ -325,7 +325,7 @@ describe("runCommand", () => {
         subcommands: (sub) => ({
           deploy: sub({
             description: "Deploy",
-            args: {
+            flags: {
               "--allow-problems": { type: Boolean, description: "Allow problems" },
               "--allow-charges": { type: Boolean, description: "Allow charges" },
             },
@@ -367,7 +367,7 @@ describe("runCommand", () => {
         name: "test",
         description: "A detailed leaf command",
         details: "This is a longer description\nwith multiple lines.",
-        args: leafArgs,
+        flags: leafFlags,
         run: noop,
       });
 
@@ -413,7 +413,7 @@ describe("runCommand", () => {
         name: "test",
         description: "A parent with detail",
         details: "Extended parent detail section.",
-        args: parentArgs,
+        flags: parentFlags,
         subcommands: (sub) => ({
           list: sub({ description: "List items", run: listRun }),
         }),
@@ -444,7 +444,7 @@ describe("runCommand", () => {
         name: "test",
         description: "A parent with detail",
         details: "Extended parent detail section.",
-        args: parentArgs,
+        flags: parentFlags,
         subcommands: (sub) => ({
           list: sub({ description: "List items", run: listRun }),
         }),
@@ -490,12 +490,12 @@ describe("runCommand", () => {
       const detailedParent = defineCommand({
         name: "test",
         description: "A parent with detailed sub",
-        args: parentArgs,
+        flags: parentFlags,
         subcommands: (sub) => ({
           info: sub({
             description: "Show info",
             details: "Extended info detail section.",
-            args: {
+            flags: {
               "--verbose": { type: Boolean, description: "Verbose output" },
             },
             run: noop,
@@ -535,10 +535,10 @@ describe("runCommand", () => {
 
     it("does not treat -h as help when it follows a value-taking flag (space-separated)", async () => {
       // The arg parser rejects -h because it looks like a flag, not a
-      // value for --app, so an ArgError is thrown instead of showing help.
+      // value for --app, so an FlagError is thrown instead of showing help.
       const error = await expectError(() => runCommand(testCtx, parentCommand, "--app", "-h", "list"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       // crucially, it did NOT show help -- it routed to "list" and attempted to parse
       expect(error.message).toMatchInlineSnapshot(`"option requires argument: --app"`);
       expect(error.usageHintText).toMatchInlineSnapshot(`
@@ -579,7 +579,7 @@ describe("runCommand", () => {
       `);
     });
 
-    it("shows parent help with merged args when subcommand has --help", async () => {
+    it("shows parent help with merged flags when subcommand has --help", async () => {
       await expectProcessExit(() => runCommand(testCtx, parentCommand, "get", "--help"), 0);
 
       expectStdout().toMatchInlineSnapshot(`
@@ -619,12 +619,12 @@ describe("runCommand", () => {
       const detailedParent = defineCommand({
         name: "test",
         description: "A parent with detailed sub",
-        args: parentArgs,
+        flags: parentFlags,
         subcommands: (sub) => ({
           info: sub({
             description: "Show info",
             details: "Extended info detail section.",
-            args: {
+            flags: {
               "--verbose": { type: Boolean, description: "Verbose output", details: "Show all available details\nin the output." },
             },
             run: noop,
@@ -654,10 +654,10 @@ describe("runCommand", () => {
   });
 
   describe("errors", () => {
-    it("throws ArgError for unknown subcommand", async () => {
+    it("throws FlagError for unknown subcommand", async () => {
       const error = await expectError(() => runCommand(testCtx, parentCommand, "bogus"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown subcommand bogus
 
@@ -670,7 +670,7 @@ describe("runCommand", () => {
       `);
     });
 
-    it("throws ArgError for unknown subcommand when subcommands is empty", async () => {
+    it("throws FlagError for unknown subcommand when subcommands is empty", async () => {
       const emptyParent = defineCommand({
         name: "test",
         description: "A parent with no subcommands",
@@ -679,7 +679,7 @@ describe("runCommand", () => {
 
       const error = await expectError(() => runCommand(testCtx, emptyParent, "bogus"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown subcommand bogus
 
@@ -691,9 +691,9 @@ describe("runCommand", () => {
       expect(error.message).not.toContain("Did you mean");
     });
 
-    it("throws ArgError for unknown flag on leaf command", async () => {
+    it("throws FlagError for unknown flag on leaf command", async () => {
       const error = await expectError(() => runCommand(testCtx, leafCommand, "--bogus"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"unknown or unexpected option: --bogus"`);
       expect(error.usageHintText).toMatchInlineSnapshot(`
         "USAGE
@@ -706,7 +706,7 @@ describe("runCommand", () => {
     it("unknown subcommand error includes Did you mean suggestion and usage hint", async () => {
       const error = await expectError(() => runCommand(testCtx, parentCommand, "lis"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown subcommand lis
 
@@ -719,10 +719,10 @@ describe("runCommand", () => {
       `);
     });
 
-    it("throws ArgError for unknown flag on subcommand", async () => {
+    it("throws FlagError for unknown flag on subcommand", async () => {
       const error = await expectError(() => runCommand(testCtx, parentCommand, "get", "--bogus"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"unknown or unexpected option: --bogus"`);
       expect(error.usageHintText).toMatchInlineSnapshot(`
         "USAGE
@@ -732,10 +732,10 @@ describe("runCommand", () => {
       `);
     });
 
-    it("throws ArgError for missing required flag value", async () => {
+    it("throws FlagError for missing required flag value", async () => {
       const error = await expectError(() => runCommand(testCtx, parentCommand, "get", "--id"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"option requires argument: --id"`);
       expect(error.usageHintText).toMatchInlineSnapshot(`
         "USAGE
@@ -745,21 +745,21 @@ describe("runCommand", () => {
       `);
     });
 
-    it("enriches ArgError with usage hint when usageHint is true (default)", async () => {
+    it("enriches FlagError with usage hint when usageHint is true (default)", async () => {
       const throwingCommand = defineCommand({
         name: "throwing",
         description: "A command that throws with usageHint",
-        args: {
+        flags: {
           "--name": { type: String, description: "A name", valueName: "name" },
         },
         run: () => {
-          throw new ArgError("Missing required argument: name");
+          throw new FlagError("Missing required argument: name");
         },
       });
 
       const error = await expectError(() => runCommand(testCtx, throwingCommand));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: name"`);
       expect(error.usageHintText).toMatchInlineSnapshot(`
         "USAGE
@@ -769,18 +769,18 @@ describe("runCommand", () => {
       `);
     });
 
-    it("does not enrich ArgError when usageHint is false", async () => {
+    it("does not enrich FlagError when usageHint is false", async () => {
       const throwingCommand = defineCommand({
         name: "throwing",
         description: "A command that throws without usageHint",
         run: () => {
-          throw new ArgError("Some validation error", { usageHint: false });
+          throw new FlagError("Some validation error", { usageHint: false });
         },
       });
 
       const error = await expectError(() => runCommand(testCtx, throwingCommand));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Some validation error"`);
       expect(error.message).not.toContain("USAGE");
       expect(error.message).not.toContain("-h");
@@ -788,7 +788,7 @@ describe("runCommand", () => {
   });
 
   describe("required positional validation", () => {
-    it("throws ArgError with usage hint when a required positional is missing on a leaf command", async () => {
+    it("throws FlagError with usage hint when a required positional is missing on a leaf command", async () => {
       const cmd = defineCommand({
         name: "leaf-pos",
         description: "Leaf with required positional",
@@ -798,7 +798,7 @@ describe("runCommand", () => {
 
       const error = await expectError(() => runCommand(testCtx, cmd));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: file"`);
       expect(error.usageHintText).toMatchInlineSnapshot(`
         "USAGE
@@ -854,7 +854,7 @@ describe("runCommand", () => {
 
       const error = await expectError(() => runCommand(testCtx, parentCmd, "route"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: METHOD"`);
       expect(error.usageHintText).toMatchInlineSnapshot(`
         "USAGE
@@ -882,7 +882,7 @@ describe("runCommand", () => {
 
       const error = await expectError(() => runCommand(testCtx, parentCmd, "route", "GET"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: path"`);
       expect(error.usageHintText).toMatchInlineSnapshot(`
         "USAGE
@@ -892,11 +892,11 @@ describe("runCommand", () => {
       `);
     });
 
-    it("throws ArgError with usage hint for missing required positional on a subcommand", async () => {
+    it("throws FlagError with usage hint for missing required positional on a subcommand", async () => {
       const parentCmd = defineCommand({
         name: "resource",
         description: "Manage resources",
-        args: {
+        flags: {
           "--app": { type: String, description: "App name" },
         },
         subcommands: (sub) => ({
@@ -910,7 +910,7 @@ describe("runCommand", () => {
 
       const error = await expectError(() => runCommand(testCtx, parentCmd, "get"));
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: KEY"`);
       expect(error.usageHintText).toMatchInlineSnapshot(`
         "USAGE

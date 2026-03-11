@@ -11,7 +11,7 @@ import {
   CREATE_ROUTE_MUTATION,
 } from "../../src/services/app/edit/operation.js";
 import { ClientError } from "../../src/services/app/error.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { nockTestApps } from "../__support__/app.js";
 import { testCtx } from "../__support__/context.js";
@@ -74,7 +74,7 @@ describe("add", () => {
 
     it("requires a model path", async () => {
       const error = await expectError(() => runCommand(testCtx, add, "model"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toMatchInlineSnapshot(`
         "✘ Missing required argument: model
 
@@ -85,9 +85,9 @@ describe("add", () => {
       `);
     });
 
-    it.each(["field;string", "field:", ":", ""])('returns ArgErrors when field argument is "%s"', async (invalidFieldArgument) => {
+    it.each(["field;string", "field:", ":", ""])('returns FlagErrors when field argument is "%s"', async (invalidFieldArgument) => {
       const error = await expectError(() => runCommand(testCtx, add, "model", "modelA", invalidFieldArgument));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toContain("is not a valid field definition");
     });
   });
@@ -106,9 +106,9 @@ describe("add", () => {
       await runCommand(testCtx, add, "field", "modelA/newField:string");
     });
 
-    it("returns an ArgError if there's no input", async () => {
+    it("returns an FlagError if there's no input", async () => {
       const error = await expectError(() => runCommand(testCtx, add, "field"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.usageHint).toBe(true);
       expect(error.sprint()).toMatchInlineSnapshot(`
         "✘ Missing required argument: model/field:type
@@ -120,15 +120,15 @@ describe("add", () => {
       `);
     });
 
-    it.each(["user", "user/"])("returns missing field definition ArgError if the input is %s", async (partialInput) => {
+    it.each(["user", "user/"])("returns missing field definition FlagError if the input is %s", async (partialInput) => {
       const error = await expectError(() => runCommand(testCtx, add, "field", partialInput));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toContain("Failed to add field, invalid field definition");
     });
 
-    it.each(["user/field", "user/field:", "user/:"])("returns missing field type ArgError if the input is %s", async (partialInput) => {
+    it.each(["user/field", "user/field:", "user/:"])("returns missing field type FlagError if the input is %s", async (partialInput) => {
       const error = await expectError(() => runCommand(testCtx, add, "field", partialInput));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toContain("is not a valid field definition");
     });
   });
@@ -186,7 +186,7 @@ describe("add", () => {
 
     it("requires an action name/path", async () => {
       const error = await expectError(() => runCommand(testCtx, add, "action"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toMatchInlineSnapshot(`
         "✘ Missing required argument: path
 
@@ -211,7 +211,7 @@ describe("add", () => {
 
     it("requires a method argument", async () => {
       const error = await expectError(() => runCommand(testCtx, add, "route"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toMatchInlineSnapshot(`
         "✘ Missing required argument: method
 
@@ -224,7 +224,7 @@ describe("add", () => {
 
     it("requires a route name", async () => {
       const error = await expectError(() => runCommand(testCtx, add, "route", "GET"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toMatchInlineSnapshot(`
         "✘ Missing required argument: path
 
@@ -265,9 +265,9 @@ describe("add", () => {
     });
   });
 
-  it("throws ArgError for unknown subcommand", async () => {
+  it("throws FlagError for unknown subcommand", async () => {
     const error = await expectError(() => runCommand(testCtx, add, "bogus"));
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.message).toMatchInlineSnapshot(`
       "Unknown subcommand bogus
 

@@ -7,7 +7,7 @@ import {
   ENVIRONMENT_VARIABLES_QUERY,
   SET_ENVIRONMENT_VARIABLE_MUTATION,
 } from "../../src/services/app/edit/operation.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
@@ -96,7 +96,7 @@ describe("var", () => {
       });
 
       const error = await expectError(() => runCommand(testCtx, vars, "get", "API_KEY"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"API_KEY is a secret and its value cannot be read"`);
     });
 
@@ -109,7 +109,7 @@ describe("var", () => {
       });
 
       const error = await expectError(() => runCommand(testCtx, vars, "get", "MISSING_KEY"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Environment variable not found: MISSING_KEY"`);
     });
 
@@ -117,7 +117,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "get"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: key"`);
     });
   });
@@ -204,7 +204,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "set", "INVALID_FORMAT"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Invalid format: INVALID_FORMAT
 
@@ -216,7 +216,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "set", "=value"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Invalid format: =value
 
@@ -228,7 +228,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "set"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: key=value"`);
     });
   });
@@ -333,7 +333,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "delete"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Missing required argument: key"`);
     });
   });
@@ -458,7 +458,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "import", "--from=nonexistent", "--all"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown environment: nonexistent
 
@@ -480,7 +480,7 @@ describe("var", () => {
       });
 
       const error = await expectError(() => runCommand(testCtx, vars, "import", "--from=cool-environment-development", "MISSING"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "The following keys were not found in the cool-environment-development environment:
 
@@ -581,7 +581,7 @@ describe("var", () => {
       await writeDir(testDirPath(), { "test.env": "KEY1=val1\n" });
 
       const error = await expectError(() => runCommand(testCtx, vars, "import", `--from-file=${envFilePath}`, "MISSING"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "The following keys were not found in the file:
 
@@ -595,7 +595,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "import", "--all"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Either --from or --from-file is required."`);
     });
 
@@ -603,7 +603,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "import", "--from=staging", "--from-file=.env"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Cannot use both --from and --from-file."`);
     });
 
@@ -611,7 +611,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "import", "--from=staging"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"Specify keys to import or use --all to import all variables."`);
     });
   });
@@ -621,7 +621,7 @@ describe("var", () => {
       await makeSyncScenario();
 
       const error = await expectError(() => runCommand(testCtx, vars, "bogus"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown subcommand bogus
 

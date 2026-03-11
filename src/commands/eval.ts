@@ -8,10 +8,10 @@ import fs from "fs-extra";
 import type { Application, Environment } from "../services/app/app.js";
 import { Edit } from "../services/app/edit/edit.js";
 import { UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
-import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
-import { ArgError } from "../services/command/arg.js";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
 import { defineCommand } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
+import { FlagError } from "../services/command/flag.js";
 import { config } from "../services/config/config.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { loadAuthHeaders } from "../services/http/auth.js";
@@ -23,7 +23,7 @@ import { sprint } from "../services/output/sprint.js";
 
 const loadClient = async (
   ctx: Context,
-  args: { "--allow-writes"?: boolean },
+  flags: { "--allow-writes"?: boolean },
   snippet: string,
   application: Application,
   environment: Environment,
@@ -63,7 +63,7 @@ const loadClient = async (
       });
     } catch (error: unknown) {
       ctx.log.error("failed to fetch client source", { error });
-      throw new ArgError(
+      throw new FlagError(
         sprint`
           Failed to fetch the API client for ${application.slug} (${environment.name}).
 
@@ -97,7 +97,7 @@ const loadClient = async (
   const Client = moduleObj.exports["Client"] as (new (options: Record<string, unknown>) => Record<string, unknown>) | undefined;
 
   if (!Client) {
-    throw new ArgError(
+    throw new FlagError(
       sprint`
         Failed to load the API client for ${application.slug} (${environment.name}).
 
@@ -120,7 +120,7 @@ const loadClient = async (
           // Tell the Gadget server to authenticate this request as the developer
           headers["x-gadget-client"] = "graphql-playground";
           headers["x-gadget-environment"] = environment.name;
-          if (!args["--allow-writes"]) {
+          if (!flags["--allow-writes"]) {
             headers["x-gadget-developer-readonly"] = "true";
           }
         },
@@ -147,7 +147,7 @@ const loadClient = async (
       // oxlint-disable-next-line @typescript-eslint/no-unsafe-call
       fn = new AsyncFunction("api", "require", snippet) as typeof fn;
     } catch (error: unknown) {
-      throw new ArgError(
+      throw new FlagError(
         sprint`
           Syntax error in snippet:
 
@@ -188,8 +188,8 @@ export default defineCommand({
       details: "The result of the last expression is printed. Use --json for machine-readable output.",
     },
   ],
-  args: {
-    ...AppIdentityArgs,
+  flags: {
+    ...AppIdentityFlags,
     "--allow-writes": {
       type: Boolean,
       alias: "-w",
@@ -198,18 +198,18 @@ export default defineCommand({
         "Without this flag, any API call that creates, updates, or deletes records is blocked. Use this flag to run mutations like create, update, and delete.",
     },
   },
-  run: async (ctx, args) => {
+  run: async (ctx, flags) => {
     // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-    const snippet = args._[0]!;
+    const snippet = flags._[0]!;
 
     const directory = await loadSyncJsonDirectory(process.cwd());
-    const appIdentity = await AppIdentity.load(ctx, { command: "eval", args, directory });
+    const appIdentity = await AppIdentity.load(ctx, { command: "eval", flags, directory });
 
     const application = appIdentity.application;
     const environment = appIdentity.environment;
     const filesVersion = appIdentity.syncJsonState?.environments[environment.name]?.filesVersion;
 
-    const { client, fn } = await loadClient(ctx, args, snippet, application, environment, filesVersion);
+    const { client, fn } = await loadClient(ctx, flags, snippet, application, environment, filesVersion);
 
     const execSnippet = async (): Promise<unknown> => {
       try {
@@ -244,7 +244,7 @@ export default defineCommand({
         process.exitCode = 1;
         return;
       }
-      throw new ArgError(
+      throw new FlagError(
         sprint`
           Error executing snippet:
 

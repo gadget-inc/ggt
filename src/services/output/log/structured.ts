@@ -1,5 +1,5 @@
 import type { Environment } from "../../app/app.js";
-import { hidden, type ArgsDefinition, type ArgsDefinitionResult } from "../../command/arg.js";
+import { hidden, type FlagsDefinition, type FlagsResult } from "../../command/flag.js";
 import { config } from "../../config/config.js";
 import { env } from "../../config/env.js";
 import { unthunk, type Thunk } from "../../util/function.js";
@@ -11,7 +11,7 @@ import type { Fields } from "./field.js";
 import { formatters } from "./format/format.js";
 import { Level, parseLevel } from "./level.js";
 
-export const LoggingArgs = {
+export const LoggingFlags = {
   "--log-level": {
     type: (value) => parseLevel(value, Level.INFO),
     alias: ["-l", hidden("-ll")],
@@ -29,10 +29,10 @@ export const LoggingArgs = {
     description: "Show only logs emitted by your code",
     details: "Filters out built-in platform logs, showing only logs sourced from your own code.",
   },
-} satisfies ArgsDefinition;
+} satisfies FlagsDefinition;
 
-export type LoggingArgs = typeof LoggingArgs;
-export type LoggingArgsResult = ArgsDefinitionResult<LoggingArgs>;
+export type LoggingFlags = typeof LoggingFlags;
+export type LoggingFlagsResult = FlagsResult<LoggingFlags>;
 
 type StructuredLog = (msg: Lowercase<string>, fields?: Fields, devFields?: Fields) => void;
 

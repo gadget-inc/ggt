@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { FlagDef } from "../../../src/services/command/arg.js";
 import { Commands, importCommand, renderCommandList } from "../../../src/services/command/command.js";
+import type { FlagDef } from "../../../src/services/command/flag.js";
 import {
   flagLeft,
   formatFlag,
@@ -101,7 +101,7 @@ describe("renderShortUsage", () => {
   it("shows footer when a flag has details", () => {
     const mod: UsageInput = {
       description: "Test command",
-      args: {
+      flags: {
         "--flag": {
           type: Boolean,
           description: "A flag",
@@ -128,7 +128,7 @@ describe("renderShortUsage", () => {
   it("does not show footer when flags have no details", () => {
     const mod: UsageInput = {
       description: "Push your local files",
-      args: {
+      flags: {
         "--app": { type: String, alias: "-a", description: "Select the application" },
         "--force": { type: Boolean, alias: "-f", description: "Force the operation" },
       },
@@ -197,7 +197,7 @@ describe("renderShortUsage", () => {
     const mod: UsageInput = {
       description: "Start developing",
       positionals: [{ name: "DIRECTORY", description: "The directory to sync", placeholder: "[DIRECTORY]" }],
-      args: {
+      flags: {
         "--force": { type: Boolean, description: "Force the operation" },
       },
     };
@@ -237,7 +237,7 @@ describe("renderShortUsage", () => {
     const mod: UsageInput = {
       description: "Start developing",
       positionals: [{ name: "DIRECTORY", description: 'The local directory to sync files to (default: ".")', placeholder: "[DIRECTORY]" }],
-      args: {
+      flags: {
         "--force": { type: Boolean, description: "Force the operation" },
       },
     };
@@ -262,7 +262,7 @@ describe("renderShortUsage", () => {
     const mod: UsageInput = {
       description: "Start developing your application",
       positionals: [{ name: "DIRECTORY", description: 'The local directory to sync files to (default: ".")', placeholder: "[DIRECTORY]" }],
-      args: {
+      flags: {
         "--app": { type: String, alias: "-a", description: "Select the application", valueName: "name" },
         "--env": { type: String, alias: "-e", description: "Select the environment", valueName: "environment" },
         "--force": { type: Boolean, description: "Force the operation" },
@@ -294,7 +294,7 @@ describe("renderShortUsage", () => {
   it("hides brief: false flags from the FLAGS section", () => {
     const mod: UsageInput = {
       description: "Test command",
-      args: {
+      flags: {
         "--visible": { type: Boolean, description: "A visible flag" },
         "--advanced": { type: Boolean, description: "An advanced flag", brief: false },
       },
@@ -318,7 +318,7 @@ describe("renderShortUsage", () => {
   it("still shows [flags] suffix when only brief: false flags exist", () => {
     const mod: UsageInput = {
       description: "Test command",
-      args: {
+      flags: {
         "--advanced": { type: Boolean, description: "An advanced flag", brief: false },
       },
     };
@@ -338,7 +338,7 @@ describe("renderShortUsage", () => {
   it("shows footer when brief: false flags exist", () => {
     const mod: UsageInput = {
       description: "Test command",
-      args: {
+      flags: {
         "--visible": { type: Boolean, description: "A visible flag" },
         "--advanced": { type: Boolean, description: "An advanced flag", brief: false },
       },
@@ -352,7 +352,7 @@ describe("renderShortUsage", () => {
   it("does not show footer when only hidden flags have details", () => {
     const mod: UsageInput = {
       description: "Test command",
-      args: {
+      flags: {
         "--visible": { type: Boolean, description: "A visible flag" },
         "--secret": { type: Boolean, description: "A hidden flag", details: "Hidden details", hidden: true },
       },
@@ -446,7 +446,7 @@ describe("renderDetailedUsage", () => {
   it("renders expanded flag format when a flag has details", () => {
     const mod: UsageInput = {
       description: "Start developing",
-      args: {
+      flags: {
         "--prefer": {
           type: String,
           description: "Conflict resolution preference",
@@ -506,7 +506,7 @@ describe("renderDetailedUsage", () => {
     const mod: UsageInput = {
       description: "Start developing",
       details: "Some detail to trigger detailed usage path.",
-      args: {
+      flags: {
         "--prefer": {
           type: String,
           description: "Conflict resolution preference",
@@ -541,7 +541,7 @@ describe("renderDetailedUsage", () => {
     const mod: UsageInput = {
       description: "Start developing your application",
       details: "Watches your local files and syncs them to your Gadget environment.\n\nChanges are tracked since last sync.",
-      args: {
+      flags: {
         "--prefer": {
           type: String,
           description: "Conflict resolution preference",
@@ -581,7 +581,7 @@ describe("renderDetailedUsage", () => {
     const mod: UsageInput = {
       description: "Deploy an environment",
       details: "Deploys to production.",
-      args: {
+      flags: {
         "--force": { type: Boolean, alias: "-f", description: "Force the operation", details: "Skips all prompts." },
         "--allow-problems": {
           type: Boolean,
@@ -624,7 +624,7 @@ describe("renderDetailedUsage", () => {
   it("preserves blank lines between paragraphs in flag details", () => {
     const mod: UsageInput = {
       description: "Desc",
-      args: {
+      flags: {
         "--flag": {
           type: Boolean,
           description: "A flag",
@@ -655,7 +655,7 @@ describe("renderUsageHint", () => {
     const mod: UsageInput = {
       description: "Push your local files",
       positionals: [{ name: "path", required: true, description: "Target path" }],
-      args: {
+      flags: {
         "--force": { type: Boolean, alias: "-f", description: "Force the operation" },
       },
     };
@@ -708,7 +708,7 @@ describe("flag sorting", () => {
   it("sorts short-alias flags before long-only flags", () => {
     const mod: UsageInput = {
       description: "Deploy an environment",
-      args: {
+      flags: {
         "--allow-different-app": { type: Boolean, description: "Allow different app" },
         "--allow-unknown-directory": { type: Boolean, description: "Allow unknown directory" },
         "--force": { type: Boolean, alias: "-f", description: "Force the deploy" },
@@ -727,7 +727,7 @@ describe("flag sorting", () => {
   it("sorts flags with short aliases by alias letter", () => {
     const mod: UsageInput = {
       description: "Test command",
-      args: {
+      flags: {
         "--force": { type: Boolean, alias: "-f", description: "Force" },
         "--app": { type: String, alias: "-a", description: "App" },
         "--env": { type: String, alias: "-e", description: "Env" },
@@ -747,7 +747,7 @@ describe("flag sorting", () => {
   it("sorts long-only flags alphabetically", () => {
     const mod: UsageInput = {
       description: "Test command",
-      args: {
+      flags: {
         "--zebra": { type: Boolean, description: "Zebra" },
         "--alpha": { type: Boolean, description: "Alpha" },
         "--middle": { type: Boolean, description: "Middle" },
@@ -767,7 +767,7 @@ describe("flag sorting", () => {
   it("applies same sort order in detailed usage", () => {
     const mod: UsageInput = {
       description: "Test command",
-      args: {
+      flags: {
         "--allow-different-app": { type: Boolean, description: "Allow different app" },
         "--force": { type: Boolean, alias: "-f", description: "Force", details: "Force details." },
       },
@@ -826,7 +826,7 @@ describe("hasDetailedContent", () => {
     expect(
       hasDetailedContent({
         description: "Test",
-        args: { "--flag": { type: Boolean, description: "A flag", details: "Detailed" } },
+        flags: { "--flag": { type: Boolean, description: "A flag", details: "Detailed" } },
       }),
     ).toBe(true);
   });
@@ -844,7 +844,7 @@ describe("hasDetailedContent", () => {
     expect(
       hasDetailedContent({
         description: "Test",
-        args: { "--advanced": { type: Boolean, description: "Advanced", brief: false } },
+        flags: { "--advanced": { type: Boolean, description: "Advanced", brief: false } },
       }),
     ).toBe(true);
   });

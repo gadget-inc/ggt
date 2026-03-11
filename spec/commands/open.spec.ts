@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import open from "../../src/commands/open.js";
 import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { nockTestApps, testApp, testEnvironment } from "../__support__/app.js";
 import { testCtx } from "../__support__/context.js";
@@ -104,9 +104,9 @@ describe("open", () => {
       `);
   });
 
-  it("throws ArgError with closest match suggestion for unknown location", async () => {
-    const error: ArgError = await expectError(() => runCommand(testCtx, open, "ogs"));
-    expect(error).toBeInstanceOf(ArgError);
+  it("throws FlagError with closest match suggestion for unknown location", async () => {
+    const error: FlagError = await expectError(() => runCommand(testCtx, open, "ogs"));
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.sprint()).toMatchInlineSnapshot(`
       "✘ Unknown location ogs
 
@@ -122,8 +122,8 @@ describe("open", () => {
   it("displays the closest match for a model that does not exist", async () => {
     nockGetModels();
 
-    const error: ArgError = await expectError(() => runCommand(testCtx, open, "data", "use"));
-    expect(error).toBeInstanceOf(ArgError);
+    const error: FlagError = await expectError(() => runCommand(testCtx, open, "data", "use"));
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.sprint()).toMatchInlineSnapshot(`
         "✘ Unknown model use
 

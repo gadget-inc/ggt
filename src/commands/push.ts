@@ -1,8 +1,8 @@
 import { EnvArg } from "../services/app/app.js";
-import { ArgError } from "../services/command/arg.js";
 import { defineCommand } from "../services/command/command.js";
+import { FlagError } from "../services/command/flag.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
 import { confirm } from "../services/output/confirm.js";
 import { println } from "../services/output/print.js";
@@ -23,8 +23,8 @@ export default defineCommand({
     },
   ],
   examples: ["ggt push", "ggt push --env main", "ggt push --env main --force"],
-  args: {
-    ...SyncJsonArgs,
+  flags: {
+    ...SyncJsonFlags,
     "--environment": {
       ...EnvArg,
       alias: ["-e", "--env", "--to"],
@@ -38,9 +38,9 @@ export default defineCommand({
       details: "Any changes on the environment since the last sync are overwritten by your local files.",
     },
   },
-  run: async (ctx, args) => {
-    if (args._.length > 0) {
-      throw new ArgError(
+  run: async (ctx, flags) => {
+    if (flags._.length > 0) {
+      throw new FlagError(
         sprint`
           "ggt push" does not take any positional arguments.
 
@@ -51,7 +51,7 @@ export default defineCommand({
     }
 
     const directory = await loadSyncJsonDirectory(process.cwd());
-    const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "push", args, directory });
+    const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "push", flags, directory });
     const filesync = new FileSync(syncJson);
     const hashes = await filesync.hashes(ctx);
 
@@ -64,7 +64,7 @@ export default defineCommand({
       // show them the environment changes they will discard
       await filesync.print(ctx, { hashes });
 
-      if (!args["--force"]) {
+      if (!flags["--force"]) {
         // they didn't pass --force, so we need to ask them if they want to discard the environment changes
         await confirm({
           ensureEmptyLineAbove: true,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { AppSlug } from "../../../src/services/app/arg.js";
-import { ArgError } from "../../../src/services/command/arg.js";
+import { FlagError } from "../../../src/services/command/flag.js";
 import { expectError } from "../../__support__/error.js";
 
 describe("AppSlug", () => {
@@ -20,7 +20,7 @@ describe("AppSlug", () => {
 
   it.each(["~"])("rejects %s", async (value) => {
     const error = await expectError(() => AppSlug(value, "--app"));
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.message).toMatchSnapshot();
   });
 });

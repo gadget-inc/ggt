@@ -1,64 +1,64 @@
 import arg from "arg";
 import { describe, expect, it } from "vitest";
 
-import { extractFlags, hidden, parseArgs, toEntryArray } from "../../../src/services/command/arg.js";
+import { extractFlags, hidden, parseFlags, toEntryArray } from "../../../src/services/command/flag.js";
 
-describe("parseArgs", () => {
+describe("parseFlags", () => {
   it("works", () => {
     process.argv = ["node", "test", "--hello", "world"];
 
-    const args = parseArgs({ "--hello": { type: String } });
+    const flags = parseFlags({ "--hello": { type: String } });
 
-    expect(args).toEqual({ "--hello": "world", _: [] });
+    expect(flags).toEqual({ "--hello": "world", _: [] });
   });
 
   it("works with defaults", () => {
     process.argv = ["node", "test"];
 
-    const args = parseArgs({ "--hello": { type: String, default: "world" } });
+    const flags = parseFlags({ "--hello": { type: String, default: "world" } });
 
-    expect(args).toEqual({ "--hello": "world", _: [] });
+    expect(flags).toEqual({ "--hello": "world", _: [] });
   });
 
   it("works with aliases", () => {
     process.argv = ["node", "test", "-h", "world"];
 
-    const args = parseArgs({ "--hello": { type: String, alias: "-h" } });
+    const flags = parseFlags({ "--hello": { type: String, alias: "-h" } });
 
-    expect(args).toEqual({ "--hello": "world", _: [] });
+    expect(flags).toEqual({ "--hello": "world", _: [] });
   });
 
   it("works with aliases and defaults", () => {
     process.argv = ["node", "test"];
 
-    const args = parseArgs({ "--hello": { type: String, alias: "-h", default: "world" } });
+    const flags = parseFlags({ "--hello": { type: String, alias: "-h", default: "world" } });
 
     process.argv = ["node", "test", "-h", "world"];
 
-    const args2 = parseArgs({ "--hello": { type: String, alias: "-h", default: "world" } });
+    const flags2 = parseFlags({ "--hello": { type: String, alias: "-h", default: "world" } });
 
-    expect(args).toEqual({ "--hello": "world", _: [] });
-    expect(args2).toEqual(args);
+    expect(flags).toEqual({ "--hello": "world", _: [] });
+    expect(flags2).toEqual(flags);
   });
 
   it("works with options", () => {
     process.argv = ["node", "test"];
 
-    const args = parseArgs(
+    const flags = parseFlags(
       { "--hello": { type: String }, "--help": { type: Boolean } },
       { argv: ["--hello", "world", "git", "--help"], permissive: true, stopAtPositional: true },
     );
 
-    expect(args).toEqual({ "--hello": "world", _: ["git", "--help"] });
+    expect(flags).toEqual({ "--hello": "world", _: ["git", "--help"] });
   });
 
   it("resolves hidden alias at parse time", () => {
     process.argv = ["node", "test", "--debug"];
 
-    const args = parseArgs({ "--verbose": { type: Boolean, alias: ["-v", hidden("--debug")] } });
+    const flags = parseFlags({ "--verbose": { type: Boolean, alias: ["-v", hidden("--debug")] } });
 
-    expect(args).toEqual({ "--verbose": true, _: [] });
-    expect("--debug" in args).toBe(false);
+    expect(flags).toEqual({ "--verbose": true, _: [] });
+    expect("--debug" in flags).toBe(false);
   });
 });
 

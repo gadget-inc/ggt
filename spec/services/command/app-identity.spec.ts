@@ -2,14 +2,14 @@ import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import * as app from "../../../src/services/app/app.js";
-import { AppIdentity, AppIdentityArgs, type AppIdentityArgsResult } from "../../../src/services/command/app-identity.js";
-import { ArgError } from "../../../src/services/command/arg.js";
+import { AppIdentity, AppIdentityFlags, type AppIdentityFlagsResult } from "../../../src/services/command/app-identity.js";
 import { Commands, type Command } from "../../../src/services/command/command.js";
+import { FlagError } from "../../../src/services/command/flag.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import { nockTestApps, testApp, testApp2 } from "../../__support__/app.js";
-import { makeArgs } from "../../__support__/arg.js";
 import { testCtx } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
+import { makeFlags } from "../../__support__/flag.js";
 import { mockOnce, mockSelectOnce } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
@@ -18,7 +18,7 @@ import { loginTestUser } from "../../__support__/user.js";
 
 describe("AppIdentity.load", () => {
   let command: Command;
-  let args: AppIdentityArgsResult;
+  let flags: AppIdentityFlagsResult;
   let localDir: Directory;
   let outputSyncJson: <const State extends app.Application | Record<string, unknown>>(state: State) => Promise<State>;
 
@@ -27,7 +27,7 @@ describe("AppIdentity.load", () => {
     nockTestApps();
 
     command = "dev";
-    args = makeArgs(AppIdentityArgs, command, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`);
+    flags = makeFlags(AppIdentityFlags, command, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`);
     localDir = await Directory.init(testDirPath("local"));
 
     outputSyncJson = async (state) => {
@@ -36,10 +36,10 @@ describe("AppIdentity.load", () => {
     };
   });
 
-  it("resolves the app and environment from --app and --env args", async () => {
+  it("resolves the app and environment from --app and --env flags", async () => {
     const appIdentity = await AppIdentity.load(testCtx, {
       command,
-      args,
+      flags,
       directory: localDir,
     });
 
@@ -47,7 +47,7 @@ describe("AppIdentity.load", () => {
     expect(appIdentity.environment.name).toBe(testApp.environments[0]!.name);
   });
 
-  it("resolves the app and environment from .gadget/sync.json when no args are provided", async () => {
+  it("resolves the app and environment from .gadget/sync.json when no flags are provided", async () => {
     await outputSyncJson({
       application: testApp.slug,
       environment: "development",
@@ -56,10 +56,10 @@ describe("AppIdentity.load", () => {
       },
     });
 
-    args = makeArgs(AppIdentityArgs, command);
+    flags = makeFlags(AppIdentityFlags, command);
     const appIdentity = await AppIdentity.load(testCtx, {
       command,
-      args,
+      flags,
       directory: localDir,
     });
 
@@ -76,10 +76,10 @@ describe("AppIdentity.load", () => {
       },
     });
 
-    args = makeArgs(AppIdentityArgs, command, `--app=${testApp2.slug}`, `--env=${testApp2.environments[0]!.name}`);
+    flags = makeFlags(AppIdentityFlags, command, `--app=${testApp2.slug}`, `--env=${testApp2.environments[0]!.name}`);
     const appIdentity = await AppIdentity.load(testCtx, {
       command,
-      args,
+      flags,
       directory: localDir,
     });
 
@@ -95,10 +95,10 @@ describe("AppIdentity.load", () => {
       },
     });
 
-    args = makeArgs(AppIdentityArgs, command, `--env=${testApp.environments[2]!.name}`);
+    flags = makeFlags(AppIdentityFlags, command, `--env=${testApp.environments[2]!.name}`);
     const appIdentity = await AppIdentity.load(testCtx, {
       command,
-      args,
+      flags,
       directory: localDir,
     });
 
@@ -106,12 +106,12 @@ describe("AppIdentity.load", () => {
   });
 
   it("shows apps that the user can select when no --app is provided and no .gadget/sync.json exists", async () => {
-    args = makeArgs(AppIdentityArgs, "dev");
+    flags = makeFlags(AppIdentityFlags, "dev");
     await expectProcessExit(
       async () =>
         await AppIdentity.load(testCtx, {
           command,
-          args,
+          flags,
           directory: localDir,
         }),
       1,
@@ -135,12 +135,12 @@ describe("AppIdentity.load", () => {
   });
 
   it("shows environments that the user can select when --app is provided but no --env", async () => {
-    args = makeArgs(AppIdentityArgs, command, `--app=${testApp.slug}`);
+    flags = makeFlags(AppIdentityFlags, command, `--app=${testApp.slug}`);
     await expectProcessExit(
       async () =>
         await AppIdentity.load(testCtx, {
           command,
-          args,
+          flags,
           directory: localDir,
         }),
       1,
@@ -160,12 +160,12 @@ describe("AppIdentity.load", () => {
   });
 
   it("uses the app selected by the user when no --app is provided", async () => {
-    args = makeArgs(AppIdentityArgs, command, `--env=${testApp2.environments[0]!.name}`);
+    flags = makeFlags(AppIdentityFlags, command, `--env=${testApp2.environments[0]!.name}`);
     mockSelectOnce(testApp2.slug);
 
     const appIdentity = await AppIdentity.load(testCtx, {
       command,
-      args,
+      flags,
       directory: localDir,
     });
 
@@ -173,12 +173,12 @@ describe("AppIdentity.load", () => {
   });
 
   it("uses the environment selected by the user when no --env is provided", async () => {
-    args = makeArgs(AppIdentityArgs, command, `--app=${testApp.slug}`);
+    flags = makeFlags(AppIdentityFlags, command, `--app=${testApp.slug}`);
     mockSelectOnce(testApp.environments[2]!.name);
 
     const appIdentity = await AppIdentity.load(testCtx, {
       command,
-      args,
+      flags,
       directory: localDir,
     });
 
@@ -189,7 +189,7 @@ describe("AppIdentity.load", () => {
     it("is undefined when no .gadget/sync.json exists", async () => {
       const appIdentity = await AppIdentity.load(testCtx, {
         command,
-        args,
+        flags,
         directory: localDir,
       });
 
@@ -201,7 +201,7 @@ describe("AppIdentity.load", () => {
 
       const appIdentity = await AppIdentity.load(testCtx, {
         command,
-        args,
+        flags,
         directory: localDir,
       });
 
@@ -213,7 +213,7 @@ describe("AppIdentity.load", () => {
 
       const appIdentity = await AppIdentity.load(testCtx, {
         command,
-        args,
+        flags,
         directory: localDir,
       });
 
@@ -229,10 +229,10 @@ describe("AppIdentity.load", () => {
         },
       });
 
-      args = makeArgs(AppIdentityArgs, command);
+      flags = makeFlags(AppIdentityFlags, command);
       const appIdentity = await AppIdentity.load(testCtx, {
         command,
-        args,
+        flags,
         directory: localDir,
       });
 
@@ -244,7 +244,7 @@ describe("AppIdentity.load", () => {
     it("is initialized", async () => {
       const appIdentity = await AppIdentity.load(testCtx, {
         command,
-        args,
+        flags,
         directory: localDir,
       });
 
@@ -254,17 +254,17 @@ describe("AppIdentity.load", () => {
   });
 
   describe("errors", () => {
-    it(`throws ${ArgError.name} when --app is passed a slug that does not exist within the user's list of available apps`, async () => {
-      args["--application"] = "does-not-exist";
+    it(`throws ${FlagError.name} when --app is passed a slug that does not exist within the user's list of available apps`, async () => {
+      flags["--application"] = "does-not-exist";
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
-          args,
+          flags,
           directory: localDir,
         }),
       );
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown application:
 
@@ -277,7 +277,7 @@ describe("AppIdentity.load", () => {
       `);
     });
 
-    it(`throws ${ArgError.name} when .gadget/sync.json references an app that no longer exists`, async () => {
+    it(`throws ${FlagError.name} when .gadget/sync.json references an app that no longer exists`, async () => {
       await outputSyncJson({
         application: "deleted-app",
         environment: "development",
@@ -286,45 +286,45 @@ describe("AppIdentity.load", () => {
         },
       });
 
-      args = makeArgs(AppIdentityArgs, command);
+      flags = makeFlags(AppIdentityFlags, command);
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
-          args,
+          flags,
           directory: localDir,
         }),
       );
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatch(/Unknown application/);
       expect(error.message).toMatch(/deleted-app/);
     });
 
-    it(`throws ${ArgError.name} when --env is passed production for a non-allowed command`, async () => {
-      args["--environment"] = "production";
+    it(`throws ${FlagError.name} when --env is passed production for a non-allowed command`, async () => {
+      flags["--environment"] = "production";
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
-          args,
+          flags,
           directory: localDir,
         }),
       );
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`"You cannot "ggt dev" your production environment."`);
     });
 
-    it(`throws ${ArgError.name} when --env is passed an environment that is not in the list of valid environments for the app`, async () => {
-      args["--environment"] = "does-not-exist";
+    it(`throws ${FlagError.name} when --env is passed an environment that is not in the list of valid environments for the app`, async () => {
+      flags["--environment"] = "does-not-exist";
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
-          args,
+          flags,
           directory: localDir,
         }),
       );
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
         "Unknown environment:
 
@@ -338,7 +338,7 @@ describe("AppIdentity.load", () => {
       `);
     });
 
-    it(`throws ${ArgError.name} when .gadget/sync.json references an environment that no longer exists`, async () => {
+    it(`throws ${FlagError.name} when .gadget/sync.json references an environment that no longer exists`, async () => {
       await outputSyncJson({
         application: testApp.slug,
         environment: "deleted-env",
@@ -347,32 +347,32 @@ describe("AppIdentity.load", () => {
         },
       });
 
-      args = makeArgs(AppIdentityArgs, command);
+      flags = makeFlags(AppIdentityFlags, command);
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
-          args,
+          flags,
           directory: localDir,
         }),
       );
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatch(/Unknown environment/);
       expect(error.message).toMatch(/deleted-env/);
     });
 
-    it(`throws ${ArgError.name} if the user doesn't have any available apps`, async () => {
+    it(`throws ${FlagError.name} if the user doesn't have any available apps`, async () => {
       mockOnce(app, "getApplications", () => []);
 
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
-          args,
+          flags,
           directory: localDir,
         }),
       );
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatchInlineSnapshot(`
           "You (test@example.com) don't have have any Gadget applications.
 
@@ -387,12 +387,12 @@ describe("AppIdentity.load", () => {
     it.each(Commands.filter((x) => !AllowedProdCommands.includes(x as any)))(
       'does not allow --env=production when the command is "%s"',
       async (command) => {
-        args._ = [command];
-        args["--environment"] = "production";
+        flags._ = [command];
+        flags["--environment"] = "production";
         await expect(
           AppIdentity.load(testCtx, {
             command,
-            args,
+            flags,
             directory: localDir,
           }),
         ).rejects.toThrowErrorMatchingSnapshot();
@@ -400,11 +400,11 @@ describe("AppIdentity.load", () => {
     );
 
     it.each(AllowedProdCommands)('does allow --env=production when the command is "%s"', async (command) => {
-      args._ = [command];
-      args["--environment"] = "production";
+      flags._ = [command];
+      flags["--environment"] = "production";
       const appIdentity = await AppIdentity.load(testCtx, {
         command,
-        args,
+        flags,
         directory: localDir,
       });
 
@@ -412,16 +412,16 @@ describe("AppIdentity.load", () => {
     });
 
     it("treats production case-insensitively", async () => {
-      args["--environment"] = "Production";
+      flags["--environment"] = "Production";
       const error = await expectError(() =>
         AppIdentity.load(testCtx, {
           command,
-          args,
+          flags,
           directory: localDir,
         }),
       );
 
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toMatch(/production/);
     });
   });

@@ -2,8 +2,8 @@ import chalk from "chalk";
 import ms from "ms";
 
 import * as root from "./commands/root.js";
-import { parseArgs } from "./services/command/arg.js";
 import { Context } from "./services/command/context.js";
+import { parseFlags } from "./services/command/flag.js";
 import { loadDefaultsConfig } from "./services/config/defaults.js";
 import { output } from "./services/output/output.js";
 import { println } from "./services/output/print.js";
@@ -18,18 +18,18 @@ export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> =>
   }
 
   try {
-    const rootArgs = parseArgs(root.args, { argv: process.argv.slice(2), permissive: true });
+    const rootFlags = parseFlags(root.flags, { argv: process.argv.slice(2), permissive: true });
 
     const configData = await loadDefaultsConfig(ctx, true);
-    /* If the related arg is specified by the user, then ignore whatever the default is. */
-    rootArgs["--telemetry"] ??= configData.telemetry;
-    rootArgs["--json"] ??= configData.json;
+    /* If the related flag is specified by the user, then ignore whatever the default is. */
+    rootFlags["--telemetry"] ??= configData.telemetry;
+    rootFlags["--json"] ??= configData.json;
 
     installJsonExtensions();
-    await installErrorHandlers(ctx, rootArgs);
+    await installErrorHandlers(ctx, rootFlags);
     installSignalHandler(ctx);
 
-    await root.run(ctx, rootArgs);
+    await root.run(ctx, rootFlags);
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

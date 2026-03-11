@@ -8,10 +8,10 @@ import {
   SET_ENVIRONMENT_VARIABLE_MUTATION,
 } from "../services/app/edit/operation.js";
 import { ClientError } from "../services/app/error.js";
-import { AppIdentity, AppIdentityArgs, type AppIdentityArgsResult } from "../services/command/app-identity.js";
-import { ArgError } from "../services/command/arg.js";
+import { AppIdentity, AppIdentityFlags, type AppIdentityFlagsResult } from "../services/command/app-identity.js";
 import { defineCommand } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
+import { FlagError } from "../services/command/flag.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
 import { confirm } from "../services/output/confirm.js";
@@ -19,9 +19,9 @@ import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
 
-const resolveAppIdentity = async (ctx: Context, args: AppIdentityArgsResult): Promise<AppIdentity> => {
+const resolveAppIdentity = async (ctx: Context, flags: AppIdentityFlagsResult): Promise<AppIdentity> => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  return AppIdentity.load(ctx, { command: "var", args, directory });
+  return AppIdentity.load(ctx, { command: "var", flags, directory });
 };
 
 export default defineCommand({
@@ -43,7 +43,7 @@ export default defineCommand({
     "ggt var import --from staging --all",
     "ggt var import --from-file .env --all",
   ],
-  args: AppIdentityArgs,
+  flags: AppIdentityFlags,
   subcommands: (sub) => ({
     list: sub({
       description: "List all environment variable keys",
@@ -52,8 +52,8 @@ export default defineCommand({
         ${colors.identifier("ggt var get")} to read a specific value.
       `,
       examples: ["ggt var list", "ggt var list --app myapp --env staging"],
-      run: async (ctx, args) => {
-        const appIdentity = await resolveAppIdentity(ctx, args);
+      run: async (ctx, flags) => {
+        const appIdentity = await resolveAppIdentity(ctx, flags);
 
         const data = await appIdentity.edit.query({ query: ENVIRONMENT_VARIABLES_QUERY });
         const vars = data.environmentVariables;
@@ -78,16 +78,16 @@ export default defineCommand({
       positionals: [
         { name: "key", required: true, description: "Variable name", details: "Case-sensitive. Secret variables cannot be read back." },
       ],
-      run: async (ctx, args) => {
-        const appIdentity = await resolveAppIdentity(ctx, args);
+      run: async (ctx, flags) => {
+        const appIdentity = await resolveAppIdentity(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const key = args._[0]!;
+        const key = flags._[0]!;
 
         const data = await appIdentity.edit.query({ query: ENVIRONMENT_VARIABLES_QUERY });
         const envVar = data.environmentVariables.find((v) => v.key === key);
 
         if (!envVar) {
-          throw new ArgError(
+          throw new FlagError(
             sprint`
               Environment variable not found: ${key}
             `,
@@ -96,7 +96,7 @@ export default defineCommand({
         }
 
         if (envVar.isSecret) {
-          throw new ArgError(
+          throw new FlagError(
             sprint`
               ${key} is a secret and its value cannot be read
             `,
@@ -129,7 +129,7 @@ export default defineCommand({
             "The value is everything after the first =, so values can contain = characters. Multiple pairs can be passed in a single invocation.",
         },
       ],
-      args: {
+      flags: {
         "--secret": {
           type: Boolean,
           alias: "-s",
@@ -138,17 +138,17 @@ export default defineCommand({
             "Secret variables are write-only — their values cannot be read back after being set. Use this for API keys, tokens, and other sensitive values.",
         },
       },
-      run: async (ctx, args) => {
-        const appIdentity = await resolveAppIdentity(ctx, args);
+      run: async (ctx, flags) => {
+        const appIdentity = await resolveAppIdentity(ctx, flags);
 
-        const pairs = args._;
-        const isSecret = args["--secret"] ?? false;
+        const pairs = flags._;
+        const isSecret = flags["--secret"] ?? false;
 
         const parsed: { key: string; value: string }[] = [];
         for (const pair of pairs) {
           const eqIndex = pair.indexOf("=");
           if (eqIndex === -1) {
-            throw new ArgError(
+            throw new FlagError(
               sprint`
                 Invalid format: ${pair}
 
@@ -159,7 +159,7 @@ export default defineCommand({
           }
           const key = pair.slice(0, eqIndex);
           if (!key) {
-            throw new ArgError(
+            throw new FlagError(
               sprint`
                 Invalid format: ${pair}
 
@@ -200,7 +200,7 @@ export default defineCommand({
           details: "One or more keys separated by spaces. Use --all to delete every variable.",
         },
       ],
-      args: {
+      flags: {
         "--force": {
           type: Boolean,
           alias: "-f",
@@ -213,12 +213,12 @@ export default defineCommand({
           details: "Deletes every variable in the environment. Combine with --force to skip confirmation.",
         },
       },
-      run: async (ctx, args) => {
-        const appIdentity = await resolveAppIdentity(ctx, args);
+      run: async (ctx, flags) => {
+        const appIdentity = await resolveAppIdentity(ctx, flags);
 
-        const keys = args._;
-        const force = args["--force"] ?? false;
-        const all = args["--all"] ?? false;
+        const keys = flags._;
+        const force = flags["--force"] ?? false;
+        const all = flags["--all"] ?? false;
 
         let keysToDelete: string[];
 
@@ -243,7 +243,7 @@ export default defineCommand({
           }
         } else {
           if (keys.length === 0) {
-            throw new ArgError("Missing required argument: key", { usageHint: false });
+            throw new FlagError("Missing required argument: key", { usageHint: false });
           }
 
           keysToDelete = keys;
@@ -303,7 +303,7 @@ export default defineCommand({
           details: "One or more keys to import. Use --all to import every variable from the source.",
         },
       ],
-      args: {
+      flags: {
         "--from": {
           ...EnvArg,
           alias: [],
@@ -328,31 +328,31 @@ export default defineCommand({
           details: "Imports every variable from the source instead of requiring individual key names.",
         },
       },
-      run: async (ctx, args) => {
-        const appIdentity = await resolveAppIdentity(ctx, args);
+      run: async (ctx, flags) => {
+        const appIdentity = await resolveAppIdentity(ctx, flags);
 
-        const from = args["--from"];
-        const fromFile = args["--from-file"];
-        const includeValues = args["--include-values"] ?? false;
-        const all = args["--all"] ?? false;
-        const specifiedKeys = args._;
+        const from = flags["--from"];
+        const fromFile = flags["--from-file"];
+        const includeValues = flags["--include-values"] ?? false;
+        const all = flags["--all"] ?? false;
+        const specifiedKeys = flags._;
 
         if (!from && !fromFile) {
-          throw new ArgError("Either --from or --from-file is required.", { usageHint: false });
+          throw new FlagError("Either --from or --from-file is required.", { usageHint: false });
         }
 
         if (from && fromFile) {
-          throw new ArgError("Cannot use both --from and --from-file.", { usageHint: false });
+          throw new FlagError("Cannot use both --from and --from-file.", { usageHint: false });
         }
 
         if (!all && specifiedKeys.length === 0) {
-          throw new ArgError("Specify keys to import or use --all to import all variables.", { usageHint: false });
+          throw new FlagError("Specify keys to import or use --all to import all variables.", { usageHint: false });
         }
 
         if (from) {
           const sourceEnvironment = appIdentity.application.environments.find((env) => env.name === from.toLowerCase());
           if (!sourceEnvironment) {
-            throw new ArgError(
+            throw new FlagError(
               sprint`
                 Unknown environment: ${from}
 
@@ -372,7 +372,7 @@ export default defineCommand({
             if (!all) {
               const missing = specifiedKeys.filter((k) => !vars.some((v) => v.key === k));
               if (missing.length > 0) {
-                throw new ArgError(
+                throw new FlagError(
                   sprint`
                     The following keys were not found in the ${from} environment:
 
@@ -467,7 +467,7 @@ export default defineCommand({
           } else {
             const missing = specifiedKeys.filter((k) => !entries.some((e) => e.key === k));
             if (missing.length > 0) {
-              throw new ArgError(
+              throw new FlagError(
                 sprint`
                   The following keys were not found in the file:
 

@@ -9,12 +9,12 @@ import {
   CREATE_ROUTE_MUTATION,
 } from "../services/app/edit/operation.js";
 import { ClientError } from "../services/app/error.js";
-import { ArgError, type ArgsDefinitionResult } from "../services/command/arg.js";
 import { defineCommand } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
+import { FlagError, type FlagsResult } from "../services/command/flag.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
 import { println } from "../services/output/print.js";
 import { GGTError, IsBug } from "../services/output/report.js";
@@ -54,13 +54,13 @@ export class AddClientError extends GGTError {
   }
 }
 
-type AddArgsResult = ArgsDefinitionResult<typeof SyncJsonArgs>;
+type AddFlagsResult = FlagsResult<typeof SyncJsonFlags>;
 
-const setupAddSync = async (ctx: Context, args: AddArgsResult): Promise<{ filesync: FileSync }> => {
+const setupAddSync = async (ctx: Context, flags: AddFlagsResult): Promise<{ filesync: FileSync }> => {
   const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { command: "add", args, directory });
+  const syncJson = await SyncJson.load(ctx, { command: "add", flags, directory });
   if (!syncJson) {
-    throw new UnknownDirectoryError({ command: "add", args, directory });
+    throw new UnknownDirectoryError({ command: "add", flags, directory });
   }
 
   const filesync = new FileSync(syncJson);
@@ -131,7 +131,7 @@ export default defineCommand({
     "ggt add route GET /hello",
     "ggt add environment staging",
   ],
-  args: SyncJsonArgs,
+  flags: SyncJsonFlags,
   subcommands: (sub) => ({
     model: sub({
       description: "Add a new data model",
@@ -155,18 +155,18 @@ export default defineCommand({
           details: "Each field is a name:type pair separated by a colon (e.g. title:string).",
         },
       ],
-      run: async (ctx, args) => {
-        const { filesync } = await setupAddSync(ctx, args);
+      run: async (ctx, flags) => {
+        const { filesync } = await setupAddSync(ctx, flags);
         const syncJson = filesync.syncJson;
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const modelApiIdentifier = args._[0]!;
+        const modelApiIdentifier = flags._[0]!;
 
         const modelFieldsList: { name: string; fieldType: string }[] = [];
-        if (args._.length > 1) {
-          const [modelFields, problems] = parseFieldValues(args._.slice(1));
+        if (flags._.length > 1) {
+          const [modelFields, problems] = parseFieldValues(flags._.slice(1));
 
           if (problems.length > 0) {
-            throw new ArgError(
+            throw new FlagError(
               sprint`
                 Failed to add model:
 
@@ -234,11 +234,11 @@ export default defineCommand({
           details: "If the path is ambiguous because a model and action namespace share the same name, you'll be prompted to choose.",
         },
       ],
-      run: async (ctx, args) => {
-        const { filesync } = await setupAddSync(ctx, args);
+      run: async (ctx, flags) => {
+        const { filesync } = await setupAddSync(ctx, flags);
         const syncJson = filesync.syncJson;
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const path = args._[0]!;
+        const path = flags._[0]!;
 
         const models = await getModels(ctx, syncJson.environment);
         const globalActions = await getGlobalActions(ctx, syncJson.environment);
@@ -335,13 +335,13 @@ export default defineCommand({
           details: "The URL path for the route handler (e.g. /hello, /webhooks/stripe). Leading slash is required.",
         },
       ],
-      run: async (ctx, args) => {
-        const { filesync } = await setupAddSync(ctx, args);
+      run: async (ctx, flags) => {
+        const { filesync } = await setupAddSync(ctx, flags);
         const syncJson = filesync.syncJson;
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const routeMethod = args._[0]!;
+        const routeMethod = flags._[0]!;
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const routePath = args._[1]!;
+        const routePath = flags._[1]!;
 
         try {
           const result = (
@@ -381,12 +381,12 @@ export default defineCommand({
           details: "Format is model/field:type (e.g. post/published:boolean).",
         },
       ],
-      run: async (ctx, args) => {
-        const { filesync } = await setupAddSync(ctx, args);
+      run: async (ctx, flags) => {
+        const { filesync } = await setupAddSync(ctx, flags);
         const syncJson = filesync.syncJson;
 
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const splitPathAndField = args._[0]!.split("/");
+        const splitPathAndField = flags._[0]!.split("/");
 
         const modelFieldsList: { name: string; fieldType: string }[] = [];
 
@@ -394,7 +394,7 @@ export default defineCommand({
           const [modelFields, problems] = parseFieldValues([splitPathAndField[1]]);
 
           if (problems.length > 0) {
-            throw new ArgError(
+            throw new FlagError(
               sprint`
                 Failed to add field:
 
@@ -406,7 +406,7 @@ export default defineCommand({
 
           modelFieldsList.push(...modelFields);
         } else {
-          throw new ArgError("Failed to add field, invalid field definition", { usageHint: false });
+          throw new FlagError("Failed to add field, invalid field definition", { usageHint: false });
         }
 
         try {
@@ -452,10 +452,10 @@ export default defineCommand({
           details: "The name is lowercased automatically. If omitted, a timestamped name is generated (e.g. env-20260303-142530).",
         },
       ],
-      run: async (ctx, args) => {
-        const { filesync } = await setupAddSync(ctx, args);
+      run: async (ctx, flags) => {
+        const { filesync } = await setupAddSync(ctx, flags);
         const syncJson = filesync.syncJson;
-        let newEnvName = args._[0];
+        let newEnvName = flags._[0];
         if (!newEnvName) {
           const now = new Date();
           const pad = (n: number): string => String(n).padStart(2, "0");
@@ -484,7 +484,7 @@ export default defineCommand({
         // Try to switch to newly made env
         const pullFromNewEnvSyncJson = await SyncJson.load(ctx, {
           command: "pull",
-          args: {
+          flags: {
             _: [],
             "--application": undefined,
             "--allow-unknown-directory": undefined,

@@ -1,9 +1,9 @@
 import colors from "../output/colors.js";
-import { extractFlags, type ArgsDefinition, type FlagDef } from "./arg.js";
 import type { PositionalDef, StoredSubcommand } from "./command.js";
+import { extractFlags, type FlagsDefinition, type FlagDef } from "./flag.js";
 
 /**
- * Help text style conventions for all commands and shared args:
+ * Help text style conventions for all commands and shared flags:
  *
  * - description: sentence case, no trailing period, imperative present tense,
  *   fits within MIN_FLAG_PAD (24 chars) column budget for flag rows; aim for
@@ -29,7 +29,7 @@ import type { PositionalDef, StoredSubcommand } from "./command.js";
 export type UsageInput = {
   description: string;
   positionals?: readonly PositionalDef[];
-  args?: ArgsDefinition;
+  flags?: FlagsDefinition;
   details?: string;
   examples?: readonly string[];
   sections?: readonly { title: string; content: string }[];
@@ -308,7 +308,7 @@ const renderExamples = (lines: string[], mod: UsageInput): void => {
  */
 export const renderShortUsage = (commandName: string, mod: UsageInput, options?: { footer?: boolean; flags?: FlagDef[] }): string => {
   const lines: string[] = [];
-  const allFlags = options?.flags ?? (mod.args ? extractFlags(mod.args) : []);
+  const allFlags = options?.flags ?? (mod.flags ? extractFlags(mod.flags) : []);
 
   // pass only description (no details) for short help
   renderDescription(lines, { description: mod.description });
@@ -335,7 +335,7 @@ export const renderShortUsage = (commandName: string, mod: UsageInput, options?:
  * output (details, sections, or flag/positionalArg details).
  */
 export const hasDetailedContent = (mod: UsageInput, flags?: FlagDef[]): boolean => {
-  const resolvedFlags = flags ?? (mod.args ? extractFlags(mod.args) : []);
+  const resolvedFlags = flags ?? (mod.flags ? extractFlags(mod.flags) : []);
   return !!(
     mod.details ||
     mod.sections?.length ||
@@ -352,7 +352,7 @@ export const hasDetailedContent = (mod: UsageInput, flags?: FlagDef[]): boolean 
  * reminder is helpful.
  */
 export const renderUsageHint = (commandName: string, mod: UsageInput): string => {
-  const allFlags = mod.args ? extractFlags(mod.args) : [];
+  const allFlags = mod.flags ? extractFlags(mod.flags) : [];
   const flags = sortFlags(allFlags.filter((f) => !f.hidden));
   const lines: string[] = [];
 
@@ -371,7 +371,7 @@ export const renderUsageHint = (commandName: string, mod: UsageInput): string =>
  * titled prose sections.
  */
 export const renderDetailedUsage = (commandName: string, mod: UsageInput): string => {
-  const allFlags = mod.args ? extractFlags(mod.args) : [];
+  const allFlags = mod.flags ? extractFlags(mod.flags) : [];
   const flags = sortFlags(allFlags.filter((f) => !f.hidden));
   if (!hasDetailedContent(mod, flags)) {
     return renderShortUsage(commandName, mod, { footer: false, flags: allFlags });

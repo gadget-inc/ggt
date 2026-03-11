@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import type { ArgsDefinition } from "../command/arg.js";
 import type { Context } from "../command/context.js";
+import type { FlagsDefinition } from "../command/flag.js";
 import { config } from "../config/config.js";
 import { maybeLoadAuthHeaders } from "../http/auth.js";
 import { http } from "../http/http.js";
@@ -57,7 +57,7 @@ export const GlobalActionApiIdentifier = z.object({
 export type GlobalActionApiIdentifier = z.infer<typeof GlobalActionApiIdentifier>;
 
 /**
- * Arg definition for the --app flag.
+ * Flag definition for the --app flag.
  */
 export const AppArg = {
   type: AppSlug,
@@ -69,10 +69,10 @@ export const AppArg = {
     my-app.gadget.app). Can be omitted when .gadget/sync.json already records
     the app.
   `,
-} satisfies ArgsDefinition[string];
+} satisfies FlagsDefinition[string];
 
 /**
- * Arg definition for the --env flag.
+ * Flag definition for the --env flag.
  */
 export const EnvArg = {
   type: String,
@@ -83,7 +83,7 @@ export const EnvArg = {
     Defaults to the development environment. Production is read-only for most
     commands.
   `,
-} satisfies ArgsDefinition[string];
+} satisfies FlagsDefinition[string];
 
 /**
  * Retrieves a list of apps for the given user. If the user is not

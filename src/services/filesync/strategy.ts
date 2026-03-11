@@ -1,4 +1,4 @@
-import { ArgError } from "../command/arg.js";
+import { FlagError } from "../command/flag.js";
 import colors from "../output/colors.js";
 import { sprint } from "../output/sprint.js";
 
@@ -26,7 +26,7 @@ export const MergeConflictPreferenceArg = (value: string, name: string): MergeCo
     return MergeConflictPreference[value.toUpperCase() as keyof typeof MergeConflictPreference];
   }
 
-  throw new ArgError(sprint`
+  throw new FlagError(sprint`
       ${name} must be ${MergeConflictPreferenceValues.map((v) => colors.identifier(v)).join(" or ")}
 
       ${colors.header("EXAMPLES:")}

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import status from "../../src/commands/status.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { acquireDevLock } from "../../src/services/filesync/dev-lock.js";
 import { UnknownDirectoryError } from "../../src/services/filesync/error.js";
@@ -184,10 +184,10 @@ describe("status", () => {
     `);
   });
 
-  it("throws ArgError when positional arguments are provided", async () => {
+  it("throws FlagError when positional arguments are provided", async () => {
     const error = await expectError(() => runCommand(testCtx, status, "extra"));
 
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
   });
 
   it("throws UnknownDirectoryError when not in a synced directory", async () => {

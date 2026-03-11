@@ -4,8 +4,8 @@ import type { Promisable } from "type-fest";
 
 import colors from "../output/colors.js";
 import { memo, MemoFirstCall } from "../util/function.js";
-import type { ArgsDefinition, ArgsDefinitionResult, ParseArgsOptions } from "./arg.js";
 import type { Context } from "./context.js";
+import type { FlagsDefinition, FlagsResult, ParseFlagsOptions } from "./flag.js";
 
 /**
  * The list of available commands.
@@ -60,32 +60,32 @@ export type PositionalDef = {
  * A leaf command that directly executes a run function.
  * The `subcommands` field is `never` to discriminate from parent commands.
  */
-export type LeafCommandConfig<A extends ArgsDefinition = ArgsDefinition> = {
+export type LeafCommandConfig<A extends FlagsDefinition = FlagsDefinition> = {
   name: string;
   description: string;
   hidden?: boolean;
   positionals?: readonly PositionalDef[];
-  args?: A;
-  parseOptions?: ParseArgsOptions;
+  flags?: A;
+  parseOptions?: ParseFlagsOptions;
   aliases?: readonly string[];
   details?: string;
   examples?: readonly string[];
   sections?: readonly { title: string; content: string }[];
-  run: (ctx: Context, args: ArgsDefinitionResult<A>) => Promisable<void>;
+  run: (ctx: Context, flags: FlagsResult<A>) => Promisable<void>;
   subcommands?: never;
 };
 
 /**
- * A subcommand within a parent command, combining parent args with its own.
+ * A subcommand within a parent command, combining parent flags with its own.
  */
-export type SubcommandConfig<PA extends ArgsDefinition = {}, SA extends ArgsDefinition = {}> = {
+export type SubcommandConfig<PA extends FlagsDefinition = {}, SA extends FlagsDefinition = {}> = {
   description: string;
   details?: string;
   aliases?: readonly string[];
   positionals?: readonly PositionalDef[];
-  args?: SA;
+  flags?: SA;
   examples?: readonly string[];
-  run: (ctx: Context, args: ArgsDefinitionResult<PA & SA>) => Promisable<void>;
+  run: (ctx: Context, flags: FlagsResult<PA & SA>) => Promisable<void>;
 };
 
 /**
@@ -93,9 +93,9 @@ export type SubcommandConfig<PA extends ArgsDefinition = {}, SA extends ArgsDefi
  * Preserves the structural fields needed for dispatch and help rendering
  * without carrying the generic SA parameter that causes variance issues.
  */
-export type StoredSubcommand = Omit<SubcommandConfig, "run" | "args"> & {
-  args?: ArgsDefinition;
-  run: (ctx: Context, args: never) => Promisable<void>;
+export type StoredSubcommand = Omit<SubcommandConfig, "run" | "flags"> & {
+  flags?: FlagsDefinition;
+  run: (ctx: Context, flags: never) => Promisable<void>;
 };
 
 /**
@@ -103,24 +103,24 @@ export type StoredSubcommand = Omit<SubcommandConfig, "run" | "args"> & {
  * Accepts a fully-typed `SubcommandConfig` for inference inside `run`,
  * then returns the type-erased `StoredSubcommand` for storage.
  */
-export type SubHelper<PA extends ArgsDefinition> = <SA extends ArgsDefinition = {}>(config: SubcommandConfig<PA, SA>) => StoredSubcommand;
+export type SubHelper<PA extends FlagsDefinition> = <SA extends FlagsDefinition = {}>(config: SubcommandConfig<PA, SA>) => StoredSubcommand;
 
 /**
  * The input shape for the `subcommands` callback in parent commands.
  */
-export type ParentInput<PA extends ArgsDefinition> = (sub: SubHelper<PA>) => Record<string, StoredSubcommand>;
+export type ParentInput<PA extends FlagsDefinition> = (sub: SubHelper<PA>) => Record<string, StoredSubcommand>;
 
 /**
  * A parent command that dispatches to subcommands.
  * The `run` field is `never` to discriminate from leaf commands.
  */
-export type ParentCommandConfig<PA extends ArgsDefinition = ArgsDefinition> = {
+export type ParentCommandConfig<PA extends FlagsDefinition = FlagsDefinition> = {
   name: string;
   description: string;
   hidden?: boolean;
   positionals?: readonly PositionalDef[];
-  args?: PA;
-  parseOptions?: ParseArgsOptions;
+  flags?: PA;
+  parseOptions?: ParseFlagsOptions;
   aliases?: readonly string[];
   details?: string;
   examples?: readonly string[];
@@ -131,7 +131,7 @@ export type ParentCommandConfig<PA extends ArgsDefinition = ArgsDefinition> = {
 
 /**
  * A command config is either a leaf command or a parent command.
- * Uses `any` for the args type parameter so concretely-typed commands
+ * Uses `any` for the flags type parameter so concretely-typed commands
  * are assignable without variance issues at dispatch boundaries.
  */
 // oxlint-disable-next-line no-explicit-any -- required for variance at dispatch boundaries
@@ -139,29 +139,29 @@ export type CommandConfig = LeafCommandConfig<any> | ParentCommandConfig<any>;
 
 /**
  * Creates a leaf command configuration with full type inference.
- * When `args` is provided, the return type preserves it as required.
+ * When `flags` is provided, the return type preserves it as required.
  */
-export function defineCommand<A extends ArgsDefinition>(
-  config: LeafCommandConfig<A> & { name: string; args: A },
-): LeafCommandConfig<A> & { args: A };
-export function defineCommand<A extends ArgsDefinition>(config: LeafCommandConfig<A> & { name: string }): LeafCommandConfig<A>;
+export function defineCommand<A extends FlagsDefinition>(
+  config: LeafCommandConfig<A> & { name: string; flags: A },
+): LeafCommandConfig<A> & { flags: A };
+export function defineCommand<A extends FlagsDefinition>(config: LeafCommandConfig<A> & { name: string }): LeafCommandConfig<A>;
 
 /**
  * Creates a parent command configuration with full type inference.
  * The `subcommands` callback receives a `sub` helper for defining subcommands.
  */
-export function defineCommand<PA extends ArgsDefinition = {}>(
+export function defineCommand<PA extends FlagsDefinition = {}>(
   config: Omit<ParentCommandConfig<PA>, "subcommands"> & { name: string; subcommands: ParentInput<PA> },
 ): ParentCommandConfig<PA>;
 
 export function defineCommand(
   config:
-    | LeafCommandConfig<ArgsDefinition>
-    | (Omit<ParentCommandConfig<ArgsDefinition>, "subcommands"> & { subcommands: ParentInput<ArgsDefinition> }),
+    | LeafCommandConfig<FlagsDefinition>
+    | (Omit<ParentCommandConfig<FlagsDefinition>, "subcommands"> & { subcommands: ParentInput<FlagsDefinition> }),
 ): CommandConfig {
   if ("subcommands" in config && typeof config.subcommands === "function") {
     // Safe identity cast: the generic SA parameter only affects TypeScript inference at the call site; at runtime sub returns its argument unchanged.
-    const sub: SubHelper<ArgsDefinition> = (subConfig) => subConfig;
+    const sub: SubHelper<FlagsDefinition> = (subConfig) => subConfig;
     return { ...config, subcommands: config.subcommands(sub) } as ParentCommandConfig;
   }
   return config as LeafCommandConfig;

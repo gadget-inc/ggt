@@ -25,16 +25,16 @@ import { Directory, type Hashes } from "../../src/services/filesync/directory.js
 import type { File } from "../../src/services/filesync/file.js";
 import { FileSync } from "../../src/services/filesync/filesync.js";
 import { isEqualHashes } from "../../src/services/filesync/hashes.js";
-import { SyncJson, SyncJsonArgs, type SyncJsonArgsResult, type SyncJsonState } from "../../src/services/filesync/sync-json.js";
+import { SyncJson, SyncJsonFlags, type SyncJsonFlagsResult, type SyncJsonState } from "../../src/services/filesync/sync-json.js";
 import { noop } from "../../src/services/util/function.js";
 import { isNil } from "../../src/services/util/is.js";
 import { defaults } from "../../src/services/util/object.js";
 import type { PartialExcept } from "../../src/services/util/types.js";
 import { testApp, testEnvironment } from "./app.js";
-import { makeArgs } from "./arg.js";
 import { testCtx } from "./context.js";
 import { assertOrFail, log } from "./debug.js";
 import { readDir, writeDir, type Files } from "./files.js";
+import { makeFlags } from "./flag.js";
 import { makeMockEditSubscriptions, nockEditResponse, type MockEditSubscription } from "./graphql.js";
 import { prettyJSON } from "./json.js";
 import { mock, mockRestore } from "./mock.js";
@@ -54,7 +54,7 @@ export type FileSyncScenarioOptions = {
    *
    * @default { _: [testDirPath("local")], ["--application"]: testEnvironment.application.slug, ["--environment"]: testEnvironment.name }
    */
-  args?: SyncJsonArgsResult;
+  flags?: SyncJsonFlagsResult;
 
   /**
    * The files at filesVersion 1.
@@ -182,7 +182,7 @@ export type SyncScenario = {
  */
 export const makeSyncScenario = async ({
   command,
-  args,
+  flags,
   filesVersion1Files,
   localFiles,
   gadgetFiles,
@@ -190,8 +190,8 @@ export const makeSyncScenario = async ({
   afterPublishFileSyncEvents,
 }: Partial<FileSyncScenarioOptions> = {}): Promise<SyncScenario> => {
   command ??= "dev";
-  args ??= makeArgs(
-    SyncJsonArgs,
+  flags ??= makeFlags(
+    SyncJsonFlags,
     command,
     testDirPath("local"),
     `--app=${testEnvironment.application.slug}`,
@@ -242,7 +242,7 @@ export const makeSyncScenario = async ({
 
   mockRestore(SyncJson.load);
   mockRestore(AppIdentity.load);
-  const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
+  const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir });
   mock(SyncJson, "load", () => syncJson);
   mock(AppIdentity, "load", () => syncJson.appIdentity);
 

@@ -9,10 +9,10 @@ import terminalLink from "terminal-link";
 
 import { EnvironmentType, type Application, type Environment } from "../app/app.js";
 import { Edit } from "../app/edit/edit.js";
-import { AppIdentity, AppIdentityArgs } from "../command/app-identity.js";
-import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "../command/arg.js";
+import { AppIdentity, AppIdentityFlags } from "../command/app-identity.js";
 import type { Command } from "../command/command.js";
 import type { Context } from "../command/context.js";
+import { FlagError, type FlagsDefinition, type FlagsResult } from "../command/flag.js";
 import { config, homePath } from "../config/config.js";
 import colors from "../output/colors.js";
 import { println } from "../output/print.js";
@@ -22,8 +22,8 @@ import { Directory } from "./directory.js";
 import { UnknownDirectoryError } from "./error.js";
 import { type SyncJsonState } from "./sync-json-state.js";
 
-export const SyncJsonArgs = {
-  ...AppIdentityArgs,
+export const SyncJsonFlags = {
+  ...AppIdentityFlags,
   "--allow-different-app": {
     type: Boolean,
     description: "Allow syncing with a different app",
@@ -44,10 +44,10 @@ export const SyncJsonArgs = {
     `,
     brief: false,
   },
-} satisfies ArgsDefinition;
+} satisfies FlagsDefinition;
 
-export type SyncJsonArgs = typeof SyncJsonArgs;
-export type SyncJsonArgsResult = ArgsDefinitionResult<SyncJsonArgs>;
+export type SyncJsonFlags = typeof SyncJsonFlags;
+export type SyncJsonFlagsResult = FlagsResult<SyncJsonFlags>;
 
 /**
  * Tracks the state of the filesystem sync with the Gadget backend.
@@ -70,9 +70,9 @@ export class SyncJson {
     readonly ctx: Context,
 
     /**
-     * The parsed {@linkcode SyncJsonArgs} that the user passed to ggt.
+     * The parsed {@linkcode SyncJsonFlags} that the user passed to ggt.
      */
-    readonly args: SyncJsonArgsResult,
+    readonly flags: SyncJsonFlagsResult,
 
     /**
      * The root directory of the local filesystem, or in other words,
@@ -150,14 +150,14 @@ export class SyncJson {
     ctx: Context,
     {
       command,
-      args,
+      flags,
       directory,
       appIdentity,
-    }: { command: Command; args: SyncJsonArgsResult; directory: Directory; appIdentity?: AppIdentity },
+    }: { command: Command; flags: SyncJsonFlagsResult; directory: Directory; appIdentity?: AppIdentity },
   ): Promise<SyncJson | undefined> {
     ctx = ctx.child({ name: "sync-json" });
 
-    appIdentity ??= await AppIdentity.load(ctx, { command, args, directory });
+    appIdentity ??= await AppIdentity.load(ctx, { command, flags, directory });
     const state = appIdentity.syncJsonState;
 
     if (!state) {
@@ -168,7 +168,7 @@ export class SyncJson {
 
     if (state.application !== appIdentity.application.slug) {
       // .gadget/sync.json is associated with a different app
-      if (args["--allow-different-app"]) {
+      if (flags["--allow-different-app"]) {
         // the user passed --allow-different-app, so use the application
         // and environment they specified and clobber everything
         const state = {
@@ -181,15 +181,15 @@ export class SyncJson {
 
         const syncJson =
           appIdentity.environment.type === EnvironmentType.Production
-            ? new EphemeralSyncJson(ctx, args, directory, appIdentity, undefined, state)
-            : new SyncJson(ctx, args, directory, appIdentity, undefined, state);
+            ? new EphemeralSyncJson(ctx, flags, directory, appIdentity, undefined, state)
+            : new SyncJson(ctx, flags, directory, appIdentity, undefined, state);
 
         await syncJson.loadGitBranch();
         return syncJson;
       }
 
       // the user didn't pass --allow-different-app, so throw an error
-      throw new ArgError(
+      throw new FlagError(
         sprint`
             You were about to sync the following app to the following directory:
 
@@ -238,8 +238,8 @@ export class SyncJson {
 
     const syncJson =
       appIdentity.environment.type === EnvironmentType.Production
-        ? new EphemeralSyncJson(ctx, args, directory, appIdentity, previousEnvironment, state)
-        : new SyncJson(ctx, args, directory, appIdentity, previousEnvironment, state);
+        ? new EphemeralSyncJson(ctx, flags, directory, appIdentity, previousEnvironment, state)
+        : new SyncJson(ctx, flags, directory, appIdentity, previousEnvironment, state);
 
     await syncJson.save(syncJson.filesVersion);
     await syncJson.loadGitBranch();
@@ -258,21 +258,21 @@ export class SyncJson {
    */
   static async loadOrAskAndInit(
     ctx: Context,
-    { command, args, directory }: { command: Command; args: SyncJsonArgsResult; directory: Directory },
+    { command, flags, directory }: { command: Command; flags: SyncJsonFlagsResult; directory: Directory },
   ): Promise<SyncJson> {
     ctx = ctx.child({ name: "sync-json" });
 
-    const appIdentity = await AppIdentity.load(ctx, { command, args, directory });
+    const appIdentity = await AppIdentity.load(ctx, { command, flags, directory });
 
-    let syncJson = await SyncJson.load(ctx, { command, args, directory, appIdentity });
+    let syncJson = await SyncJson.load(ctx, { command, flags, directory, appIdentity });
     if (syncJson) {
       // the .gadget/sync.json file already exists and is valid
       return syncJson;
     }
 
-    if ((await directory.hasFiles()) && !args["--allow-unknown-directory"]) {
+    if ((await directory.hasFiles()) && !flags["--allow-unknown-directory"]) {
       // the directory isn't empty and the user didn't pass --allow-unknown-directory
-      throw new UnknownDirectoryError({ command, args, directory });
+      throw new UnknownDirectoryError({ command, flags, directory });
     }
 
     // the directory is empty or the user passed
@@ -290,8 +290,8 @@ export class SyncJson {
 
     syncJson =
       appIdentity.environment.type === EnvironmentType.Production
-        ? new EphemeralSyncJson(ctx, args, directory, appIdentity, undefined, state)
-        : new SyncJson(ctx, args, directory, appIdentity, undefined, state);
+        ? new EphemeralSyncJson(ctx, flags, directory, appIdentity, undefined, state)
+        : new SyncJson(ctx, flags, directory, appIdentity, undefined, state);
 
     await syncJson.save(syncJson.filesVersion);
     await syncJson.loadGitBranch();

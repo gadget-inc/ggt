@@ -5,10 +5,10 @@ import fs from "fs-extra";
 import { type Application, EnvArg, EnvironmentType, getApplications, type Environment } from "../services/app/app.js";
 import { Edit } from "../services/app/edit/edit.js";
 import { CREATE_ENVIRONMENT_MUTATION, DELETE_ENVIRONMENT_MUTATION, UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
-import { AppIdentityArgs, loadApplication } from "../services/command/app-identity.js";
-import { ArgError, type ArgsDefinition } from "../services/command/arg.js";
+import { AppIdentityFlags, loadApplication } from "../services/command/app-identity.js";
 import { defineCommand } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
+import { FlagError, type FlagsDefinition } from "../services/command/flag.js";
 import type { Directory } from "../services/filesync/directory.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { SyncJsonState } from "../services/filesync/sync-json-state.js";
@@ -22,19 +22,19 @@ import { printTable } from "../services/output/table.js";
 import { getUserOrLogin } from "../services/user/user.js";
 import { sortBySimilar } from "../services/util/collection.js";
 
-const parentArgs = {
-  "--application": AppIdentityArgs["--application"],
-} satisfies ArgsDefinition;
+const parentFlags = {
+  "--application": AppIdentityFlags["--application"],
+} satisfies FlagsDefinition;
 
 const resolveApplication = async (
   ctx: Context,
-  args: { "--application"?: string },
+  flags: { "--application"?: string },
 ): Promise<{ application: Application; state?: SyncJsonState }> => {
   const user = await getUserOrLogin(ctx, "env");
   const availableApps = await getApplications(ctx);
 
   if (availableApps.length === 0) {
-    throw new ArgError(
+    throw new FlagError(
       sprint`
         You (${user.email}) don't have any Gadget applications.
 
@@ -55,7 +55,7 @@ const resolveApplication = async (
   }
 
   const application = await loadApplication({
-    args,
+    flags,
     availableApps,
     state,
     selectPrompt: "Which application do you want to manage environments for?",
@@ -71,7 +71,7 @@ const findEnvironmentOrThrow = (application: Application, name: string): Environ
   }
 
   if (application.environments.length === 0) {
-    throw new ArgError(
+    throw new FlagError(
       sprint`
         No environments found for ${application.slug}.
       `,
@@ -84,7 +84,7 @@ const findEnvironmentOrThrow = (application: Application, name: string): Environ
     application.environments.map((env) => env.name),
   ).slice(0, 5);
 
-  throw new ArgError(
+  throw new FlagError(
     sprint`
       Unknown environment: ${name}
 
@@ -100,7 +100,7 @@ const getEditForApp = (ctx: Context, application: Application, targetEnv?: Envir
   const environment = targetEnv ?? application.environments.find((env) => env.type === EnvironmentType.Development);
 
   if (!environment) {
-    throw new ArgError(`No development environment found for ${application.slug}.`, { usageHint: false });
+    throw new FlagError(`No development environment found for ${application.slug}.`, { usageHint: false });
   }
 
   return new Edit(ctx, { ...environment, application });
@@ -128,7 +128,7 @@ const activateEnvironment = async (application: Application, envName: string): P
       const state = SyncJsonState.parse(JSON.parse(syncJsonFile));
 
       if (state.application !== application.slug) {
-        throw new ArgError(
+        throw new FlagError(
           sprint`
           This directory is synced to ${colors.warning(state.application)}, but you specified ${colors.warning(application.slug)}.
 
@@ -183,7 +183,7 @@ export default defineCommand({
     "ggt env unpause staging",
     "ggt env use staging",
   ],
-  args: parentArgs,
+  flags: parentFlags,
   subcommands: (sub) => ({
     list: sub({
       aliases: ["ls"],
@@ -193,8 +193,8 @@ export default defineCommand({
         a "no environments found" message if the app has none.
       `,
       examples: ["ggt env list", "ggt env list --app myapp"],
-      run: async (ctx, args) => {
-        const { application } = await resolveApplication(ctx, args);
+      run: async (ctx, flags) => {
+        const { application } = await resolveApplication(ctx, flags);
         const envs = application.environments;
 
         if (envs.length === 0) {
@@ -228,7 +228,7 @@ export default defineCommand({
           details: "The name is lowercased automatically. Must be unique within the app.",
         },
       ],
-      args: {
+      flags: {
         "--from": {
           ...EnvArg,
           alias: [],
@@ -242,21 +242,21 @@ export default defineCommand({
           details: "Updates .gadget/sync.json to point at the new environment so subsequent commands target it.",
         },
       },
-      run: async (ctx, args) => {
-        const { application, state } = await resolveApplication(ctx, args);
+      run: async (ctx, flags) => {
+        const { application, state } = await resolveApplication(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const rawName = args._[0]!;
+        const rawName = flags._[0]!;
         // Use the explicit --from flag if provided, otherwise fall back to the currently
         // active environment when the app matches (so `env create` inherits context naturally).
-        const from = (args["--from"] ?? (state?.application === application.slug ? state.environment : undefined))?.toLowerCase();
-        const use = args["--use"] ?? false;
+        const from = (flags["--from"] ?? (state?.application === application.slug ? state.environment : undefined))?.toLowerCase();
+        const use = flags["--use"] ?? false;
 
         const name = rawName.toLowerCase();
 
         // Validate --use before creating the environment to avoid creating an
         // environment on the server that can't be activated locally
         if (use && state?.application && state.application !== application.slug) {
-          throw new ArgError(
+          throw new FlagError(
             sprint`
               Cannot use ${colors.subdued("--use")}: this directory is synced to ${colors.warning(state.application)}, but you specified ${colors.warning(application.slug)}.
 
@@ -300,7 +300,7 @@ export default defineCommand({
           details: "The production environment cannot be deleted.",
         },
       ],
-      args: {
+      flags: {
         "--force": {
           type: Boolean,
           alias: "-f",
@@ -308,15 +308,15 @@ export default defineCommand({
           details: "Deletes the environment immediately without a confirmation prompt.",
         },
       },
-      run: async (ctx, args) => {
-        const { application, state } = await resolveApplication(ctx, args);
+      run: async (ctx, flags) => {
+        const { application, state } = await resolveApplication(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const name = args._[0]!;
+        const name = flags._[0]!;
 
         const environment = findEnvironmentOrThrow(application, name);
 
         if (environment.type === EnvironmentType.Production) {
-          throw new ArgError(
+          throw new FlagError(
             sprint`
               Cannot delete the ${colors.identifier("production")} environment.
             `,
@@ -324,7 +324,7 @@ export default defineCommand({
           );
         }
 
-        if (!args["--force"]) {
+        if (!flags["--force"]) {
           await confirm(`Are you sure you want to delete the ${environment.name} environment?`);
         }
 
@@ -366,10 +366,10 @@ export default defineCommand({
           details: "Must match an existing environment in the app.",
         },
       ],
-      run: async (ctx, args) => {
-        const { application } = await resolveApplication(ctx, args);
+      run: async (ctx, flags) => {
+        const { application } = await resolveApplication(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const name = args._[0]!;
+        const name = flags._[0]!;
 
         const environment = findEnvironmentOrThrow(application, name);
 
@@ -405,15 +405,15 @@ export default defineCommand({
           details: "The production environment cannot be set as the active sync target.",
         },
       ],
-      run: async (ctx, args) => {
-        const { application } = await resolveApplication(ctx, args);
+      run: async (ctx, flags) => {
+        const { application } = await resolveApplication(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const name = args._[0]!;
+        const name = flags._[0]!;
 
         const environment = findEnvironmentOrThrow(application, name);
 
         if (environment.type === EnvironmentType.Production) {
-          throw new ArgError(
+          throw new FlagError(
             sprint`
               Cannot use the ${colors.identifier("production")} environment.
 

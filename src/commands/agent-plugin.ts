@@ -36,7 +36,7 @@ export default defineCommand({
         current directory.
       `,
       examples: ["ggt agent-plugin install", "ggt agent-plugin install --force"],
-      args: {
+      flags: {
         "--force": {
           type: Boolean,
           alias: "-f",
@@ -44,9 +44,9 @@ export default defineCommand({
           details: "Overwrites existing AGENTS.md and skill files. Without this flag, existing files are left untouched.",
         },
       },
-      run: async (ctx, args) => {
+      run: async (ctx, flags) => {
         const directory = await resolveProjectRoot();
-        const force = args["--force"] ?? false;
+        const force = flags["--force"] ?? false;
 
         await installAgentsMdScaffold({ ctx, directory, force });
         await installGadgetSkillsIntoProject({ ctx, directory, force });

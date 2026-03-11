@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import pull from "../../src/commands/pull.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
@@ -341,10 +341,10 @@ describe("pull", () => {
     expectStdout().toContain("Nothing to pull.");
   });
 
-  it("throws ArgError when positional arguments are provided", async () => {
+  it("throws FlagError when positional arguments are provided", async () => {
     const error = await expectError(() => runCommand(testCtx, pull, "some-path"));
 
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
   });
 
   // can't write these tests until makeSyncScenario supports multiple environments

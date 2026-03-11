@@ -1,7 +1,7 @@
 import { PUBLISH_ISSUES_QUERY } from "../services/app/edit/operation.js";
-import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
-import { ArgError } from "../services/command/arg.js";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
 import { defineCommand } from "../services/command/command.js";
+import { FlagError } from "../services/command/flag.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
 import { println } from "../services/output/print.js";
@@ -18,10 +18,10 @@ export default defineCommand({
     cleanly with a success message when no problems are found.
   `,
   examples: ["ggt problems", "ggt problems --app myBlog", "ggt problems --env staging", "ggt problems --app myBlog --env production"],
-  args: AppIdentityArgs,
-  run: async (ctx, args) => {
-    if (args._.length > 0) {
-      throw new ArgError(
+  flags: AppIdentityFlags,
+  run: async (ctx, flags) => {
+    if (flags._.length > 0) {
+      throw new FlagError(
         sprint`
           "ggt problems" does not take any positional arguments.
 
@@ -32,7 +32,7 @@ export default defineCommand({
     }
 
     const directory = await loadSyncJsonDirectory(process.cwd());
-    const appIdentity = await AppIdentity.load(ctx, { command: "problems", args, directory });
+    const appIdentity = await AppIdentity.load(ctx, { command: "problems", flags, directory });
 
     const { publishIssues } = await appIdentity.edit.query({ query: PUBLISH_ISSUES_QUERY });
 

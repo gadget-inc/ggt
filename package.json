@@ -31,7 +31,6 @@
     "build:watch": "pnpm run build --minify=false --sources-content=false --watch",
     "changeset": "changeset",
     "clean": "rimraf dist tmp/spec",
-    "dev": "run-p -s 'test:watch --no-clear-screen' 'build:watch'",
     "generate:graphql": "graphql-codegen --config=graphql-codegen.yml",
     "lint": "pnpm run --aggregate-output '/^lint:(?!fix).*/'",
     "lint:cspell": "cspell . --no-progress --show-suggestions --show-context",
@@ -97,7 +96,6 @@
     "node-notifier": "^10.0.1",
     "normalize-package-data": "^8.0.0",
     "normalize-path": "^3.0.0",
-    "npm-run-all2": "^7.0.0",
     "open": "^11.0.0",
     "oxfmt": "^0.37.0",
     "oxlint": "^1.49.0",
@@ -133,14 +131,5 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "pnpm@10.11.0",
-  "pnpm": {
-    "overrides": {
-      "rollup@>=4.0.0 <4.59.0": ">=4.59.0",
-      "minimatch@>=10.0.0 <10.2.3": ">=10.2.3",
-      "lodash@>=4.0.0 <=4.17.22": ">=4.17.23",
-      "js-yaml@>=4.0.0 <4.1.1": ">=4.1.1",
-      "diff@>=4.0.0 <4.0.4": ">=4.0.4"
-    }
-  }
+  "packageManager": "pnpm@10.11.0"
 }

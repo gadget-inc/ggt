@@ -179,7 +179,7 @@ export const findAppFromArgv = (apps: Application[], argv: string[]): Applicatio
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (appFlagNames.has(arg)) {
-      const slug = argv[i + 1];
+      const slug = argv[++i];
       if (slug) {
         const app = apps.find((a) => a.slug === slug);
         if (app) return app;

@@ -23,4 +23,11 @@ describe("findAppFromArgv", () => {
     const result = findAppFromArgv([testApp], ["--app", "nonexistent"]);
     expect(result).toBeUndefined();
   });
+
+  it("skips the value token after an unmatched app flag so it is not re-examined as a flag", () => {
+    // "--app" takes "-a" as its value (no match), then "-a" should NOT be
+    // re-examined as a flag that reads "test" as its value.
+    const result = findAppFromArgv([testApp], ["--app", "-a", testApp.slug]);
+    expect(result).toBeUndefined();
+  });
 });

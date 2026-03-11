@@ -13,6 +13,8 @@ _ggt_completions() {
       local IFS=$'\\n'
       COMPREPLY=($(ggt --__complete "\${COMP_WORDS[@]:1}" 2>/dev/null))
       return ;;
+    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--from-file|--start|--port|-p)
+      return ;;
   esac
 
   if [[ $COMP_CWORD -eq 1 ]]; then

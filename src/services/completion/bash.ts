@@ -13,34 +13,46 @@ export const generateBashCompletions = (data: CompletionData): string => {
   lines.push('  local cur="${COMP_WORDS[COMP_CWORD]}"');
   lines.push("");
 
-  // collect all flag names that have dynamic completers
+  // collect flag names that have dynamic completers and value-taking flags without completers
   const completerFlags = new Set<string>();
-  const addCompleterFlags = (flags: FlagDef[]): void => {
+  const nonCompleterValueFlags = new Set<string>();
+  const classifyFlags = (flags: FlagDef[]): void => {
     for (const f of flags) {
       if (f.hasCompleter) {
         completerFlags.add(f.name);
         for (const a of f.aliases) {
           completerFlags.add(a);
         }
+      } else if (f.type === "string" || f.type === "number") {
+        nonCompleterValueFlags.add(f.name);
+        for (const a of f.aliases) {
+          nonCompleterValueFlags.add(a);
+        }
       }
     }
   };
-  addCompleterFlags(data.rootFlags);
+  classifyFlags(data.rootFlags);
   for (const cmd of data.commands) {
-    addCompleterFlags(cmd.flags);
+    classifyFlags(cmd.flags);
     for (const sub of cmd.subcommands) {
-      addCompleterFlags(sub.flags);
+      classifyFlags(sub.flags);
     }
   }
 
-  if (completerFlags.size > 0) {
+  if (completerFlags.size > 0 || nonCompleterValueFlags.size > 0) {
     lines.push('  local prev="${COMP_WORDS[COMP_CWORD-1]}"');
     lines.push("");
     lines.push('  case "$prev" in');
-    lines.push(`    ${[...completerFlags].join("|")})`);
-    lines.push("      local IFS=$'\\n'");
-    lines.push('      COMPREPLY=($(ggt --__complete "${COMP_WORDS[@]:1}" 2>/dev/null))');
-    lines.push("      return ;;");
+    if (completerFlags.size > 0) {
+      lines.push(`    ${[...completerFlags].join("|")})`);
+      lines.push("      local IFS=$'\\n'");
+      lines.push('      COMPREPLY=($(ggt --__complete "${COMP_WORDS[@]:1}" 2>/dev/null))');
+      lines.push("      return ;;");
+    }
+    if (nonCompleterValueFlags.size > 0) {
+      lines.push(`    ${[...nonCompleterValueFlags].join("|")})`);
+      lines.push("      return ;;");
+    }
     lines.push("  esac");
     lines.push("");
   }

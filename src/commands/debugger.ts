@@ -689,6 +689,10 @@ export default defineCommand({
       description: "Write editor debug config files (vscode, cursor)",
       valueName: "editor",
       details: "Generates .vscode/launch.json and tasks.json for one-click attach debugging. Works with both VS Code and Cursor.",
+      complete: async (_ctx, partial) => {
+        const { filterByPrefix } = await import("../services/util/collection.js");
+        return filterByPrefix([...SupportedEditors], partial);
+      },
     },
   },
   run: async (ctx, flags) => {

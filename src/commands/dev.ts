@@ -13,7 +13,7 @@ import { Changes } from "../services/filesync/changes.js";
 import { acquireDevLock, releaseDevLock } from "../services/filesync/dev-lock.js";
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
+import { FileSyncStrategy, MergeConflictPreferenceArg, MergeConflictPreferenceValues } from "../services/filesync/strategy.js";
 import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
 import { maybePromptAgentsMd, maybePromptGadgetSkills } from "../services/output/agent-plugin.js";
@@ -90,6 +90,10 @@ export default defineCommand({
       details:
         "Use 'local' to keep your local file contents or 'environment' to keep the environment's version. Without this flag, you are prompted to choose for each conflict.",
       valueName: "source",
+      complete: async (_ctx, partial, _argv) => {
+        const { filterByPrefix } = await import("../services/util/collection.js");
+        return filterByPrefix([...MergeConflictPreferenceValues], partial);
+      },
     },
     "--file-push-delay": {
       type: Number,

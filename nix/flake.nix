@@ -13,14 +13,17 @@
       in
       {
         packages = {
+          bash = pkgs.bash;
           corepack = pkgs.corepack;
           direnv = pkgs.direnv;
+          fish = pkgs.fish;
           git = pkgs.git;
           mkcert = pkgs.mkcert;
           nix-direnv = pkgs.nix-direnv;
           nixpkgs-fmt = pkgs.nixpkgs-fmt;
           nodejs = pkgs.nodejs_20;
           yarn = pkgs.yarn.override { nodejs = flake.packages.nodejs; };
+          zsh = pkgs.zsh;
 
           ggt = pkgs.writeShellScriptBin "ggt" ''
             GGT_ENV=production "$WORKSPACE_ROOT"/dist/main.js "$@"

@@ -9,6 +9,18 @@ export const getAllowFlags = (flagsDef: FlagsDefinition): string[] => {
 };
 
 /**
+ * If the flags definition has `--allow-*` flags, merges in `AllowFlags`
+ * and returns the combined definition. Otherwise returns the original.
+ */
+export const withAllowFlags = (flagsDef: FlagsDefinition): FlagsDefinition => {
+  const allowFlags = getAllowFlags(flagsDef);
+  if (allowFlags.length === 0) {
+    return flagsDef;
+  }
+  return { ...flagsDef, ...AllowFlags };
+};
+
+/**
  * Flags definition for `--allow` and `--allow-all`, injected automatically
  * into commands that have `--allow-*` flags for help text display.
  */

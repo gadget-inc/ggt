@@ -3,6 +3,21 @@ import { withAllowFlags } from "../command/allow.js";
 import { Commands, importCommand } from "../command/command.js";
 import { extractFlags, type FlagDef } from "../command/flag.js";
 
+/**
+ * Collects all flag names and aliases for flags that take a value (string or number).
+ */
+export const valueFlagNames = (...flagSets: FlagDef[][]): string[] => {
+  const names: string[] = [];
+  for (const flags of flagSets) {
+    for (const f of flags) {
+      if (f.type === "string" || f.type === "number") {
+        names.push(f.name, ...f.aliases);
+      }
+    }
+  }
+  return names;
+};
+
 export type CompletionSubcommandDef = {
   name: string;
   description: string;

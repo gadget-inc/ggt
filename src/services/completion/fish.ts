@@ -1,5 +1,5 @@
 import type { FlagDef } from "../command/flag.js";
-import type { CompletionData } from "./completions.js";
+import { valueFlagNames, type CompletionData } from "./completions.js";
 
 /**
  * Generates a complete Fish completion script for ggt.
@@ -198,21 +198,6 @@ export const generateFishCompletions = (data: CompletionData): string => {
   }
 
   return lines.join("\n");
-};
-
-/**
- * Collects all names and aliases for flags that take a value (string or number).
- */
-const valueFlagNames = (...flagSets: FlagDef[][]): string[] => {
-  const names: string[] = [];
-  for (const flags of flagSets) {
-    for (const f of flags) {
-      if (f.type === "string" || f.type === "number") {
-        names.push(f.name, ...f.aliases);
-      }
-    }
-  }
-  return names;
 };
 
 /**

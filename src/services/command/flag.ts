@@ -5,6 +5,7 @@ import type { Simplify } from "type-fest";
 import { GGTError, IsBug, UnexpectedError } from "../output/report.js";
 import { symbol } from "../output/symbols.js";
 import { isNil } from "../util/is.js";
+import type { Context } from "./context.js";
 
 export type FlagDef = {
   name: string;
@@ -15,15 +16,16 @@ export type FlagDef = {
   valueName?: string;
   hidden?: boolean;
   brief?: boolean;
+  hasCompleter?: boolean;
 };
 
-export type ArgsDefinition = Record<string, ArgDefinition>;
+export type FlagsDefinition = Record<string, FlagDefinition>;
 
 type AliasEntry = string | { name: string; hidden: true };
 
 export const hidden = (name: string): AliasEntry => ({ name, hidden: true });
 
-type ArgDefinition<Handler extends arg.Handler = arg.Handler> = {
+type FlagDefinition<Handler extends arg.Handler = arg.Handler> = {
   type: Handler;
   alias?: AliasEntry | AliasEntry[];
   default?: ReturnType<Handler>;
@@ -32,9 +34,10 @@ type ArgDefinition<Handler extends arg.Handler = arg.Handler> = {
   valueName?: string;
   hidden?: boolean;
   brief?: boolean;
+  complete?: (ctx: Context, partial: string, argv: string[]) => Promise<string[]>;
 };
 
-export type ParseArgsOptions = {
+export type ParseFlagsOptions = {
   /**
    * A list of arguments to parse.
    */
@@ -67,9 +70,12 @@ export const toEntryArray = (alias: AliasEntry | AliasEntry[] | undefined): Alia
 
 export const aliasName = (entry: AliasEntry): string => (typeof entry === "string" ? entry : entry.name);
 
+/** Returns all names for a flag (canonical + aliases), including hidden aliases. Use {@link extractFlags} when hidden aliases should be excluded. */
+export const allFlagNames = (key: string, def: FlagDefinition): string[] => [key, ...toEntryArray(def.alias).map(aliasName)];
+
 const isVisibleAlias = (entry: AliasEntry): boolean => typeof entry === "string";
 
-export const parseArgs = <Args extends ArgsDefinition>(args: Args, options?: arg.Options): ArgsDefinitionResult<Args> => {
+export const parseFlags = <Args extends FlagsDefinition>(args: Args, options?: arg.Options): FlagsResult<Args> => {
   const spec: arg.Spec = {};
   const defaultValues: Record<string, unknown> = {};
 
@@ -89,12 +95,12 @@ export const parseArgs = <Args extends ArgsDefinition>(args: Args, options?: arg
         parsed[key] = value as never;
       }
     }
-    return parsed as ArgsDefinitionResult<Args>;
+    return parsed as FlagsResult<Args>;
   } catch (error: unknown) {
     if (error instanceof arg.ArgError) {
       // convert arg.ArgError to GGTError
       // oxlint-disable-next-line no-ex-assign
-      error = new ArgError(error.message);
+      error = new FlagError(error.message);
     }
     if (error instanceof GGTError) {
       throw error;
@@ -103,7 +109,7 @@ export const parseArgs = <Args extends ArgsDefinition>(args: Args, options?: arg
   }
 };
 
-export class ArgError extends GGTError {
+export class FlagError extends GGTError {
   isBug = IsBug.NO;
   usageHint: boolean;
   usageHintText?: string;
@@ -145,9 +151,9 @@ export class ArgError extends GGTError {
  * };
  * ```
  */
-export type ArgsDefinitionResult<Args extends ArgsDefinition, Keys extends keyof Args = keyof Args> = Simplify<{
+export type FlagsResult<Args extends FlagsDefinition, Keys extends keyof Args = keyof Args> = Simplify<{
   // Filter out index-signature keys (widened 'string') so only literal flag keys appear in the result type.
-  [Key in Keys as string extends Key ? never : Key]: Args[Key] extends ArgDefinition<infer Handler>
+  [Key in Keys as string extends Key ? never : Key]: Args[Key] extends FlagDefinition<infer Handler>
     ? Args[Key] extends { default: unknown }
       ? NonNullable<ReturnType<Handler>>
       : ReturnType<Handler> | undefined
@@ -172,13 +178,13 @@ const resolveType = (handler: unknown): FlagDef["type"] => {
 };
 
 /**
- * Extracts flag definitions from an ArgsDefinition object.
+ * Extracts flag definitions from a FlagsDefinition object.
  *
  * The returned array includes flags where `hidden === true`. Callers are
  * responsible for filtering them before display (e.g. `usage.ts` filters
  * with `allFlags.filter((f) => !f.hidden)`).
  */
-export const extractFlags = (args: ArgsDefinition): FlagDef[] => {
+export const extractFlags = (args: FlagsDefinition): FlagDef[] => {
   const flags: FlagDef[] = [];
 
   for (const [key, value] of Object.entries(args)) {
@@ -192,8 +198,23 @@ export const extractFlags = (args: ArgsDefinition): FlagDef[] => {
     if (value.valueName !== undefined) flag.valueName = value.valueName;
     if (value.hidden !== undefined) flag.hidden = value.hidden;
     if (value.brief !== undefined) flag.brief = value.brief;
+    if (typeof value.complete === "function") flag.hasCompleter = true;
     flags.push(flag);
   }
 
   return flags;
+};
+
+/**
+ * Collects all flag names and aliases into a flat word list.
+ */
+export const flagWords = (flags: FlagDef[]): string[] => {
+  const words: string[] = [];
+  for (const f of flags) {
+    words.push(f.name);
+    for (const a of f.aliases) {
+      words.push(a);
+    }
+  }
+  return words;
 };

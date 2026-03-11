@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import push from "../../src/commands/push.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { confirm } from "../../src/services/output/confirm.js";
 import { nockTestApps } from "../__support__/app.js";
@@ -335,9 +335,9 @@ describe("push", () => {
     expectStdout().toContain("Nothing to push.");
   });
 
-  it("throws ArgError when positional arguments are provided", async () => {
+  it("throws FlagError when positional arguments are provided", async () => {
     const error = await expectError(() => runCommand(testCtx, push, "extra-arg"));
 
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
   });
 });

@@ -9,10 +9,10 @@ import type { Duplex } from "node:stream";
 import stripJsonComments from "strip-json-comments";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 
-import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
-import { ArgError } from "../services/command/arg.js";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
 import { defineCommand } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
+import { FlagError } from "../services/command/flag.js";
 import { config } from "../services/config/config.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { loadAuthHeaders } from "../services/http/auth.js";
@@ -674,8 +674,8 @@ export default defineCommand({
       details: "Defaults to the current working directory when omitted.",
     },
   ],
-  args: {
-    ...AppIdentityArgs,
+  flags: {
+    ...AppIdentityFlags,
     "--port": {
       type: Number,
       alias: ["-p"],
@@ -691,21 +691,21 @@ export default defineCommand({
       details: "Generates .vscode/launch.json and tasks.json for one-click attach debugging. Works with both VS Code and Cursor.",
     },
   },
-  run: async (ctx, args) => {
-    const directory = await loadSyncJsonDirectory(args._[0] ?? process.cwd());
-    const appIdentity = await AppIdentity.load(ctx, { command: "debugger", args, directory });
+  run: async (ctx, flags) => {
+    const directory = await loadSyncJsonDirectory(flags._[0] ?? process.cwd());
+    const appIdentity = await AppIdentity.load(ctx, { command: "debugger", flags, directory });
 
     // Handle --configure option
-    if (args["--configure"]) {
-      const editor = args["--configure"].toLowerCase();
+    if (flags["--configure"]) {
+      const editor = flags["--configure"].toLowerCase();
       if (!SupportedEditors.includes(editor as (typeof SupportedEditors)[number])) {
-        throw new ArgError(`Invalid editor "${args["--configure"]}". Supported editors: ${SupportedEditors.join(", ")}`, {
+        throw new FlagError(`Invalid editor "${flags["--configure"]}". Supported editors: ${SupportedEditors.join(", ")}`, {
           usageHint: false,
         });
       }
 
       const configurator = new DebuggerConfigurator(directory.path);
-      const port = args["--port"] ?? 9229;
+      const port = flags["--port"] ?? 9229;
       configurator.configure(port);
 
       println({
@@ -733,7 +733,7 @@ export default defineCommand({
     });
 
     const authHeaders = loadAuthHeaders(ctx);
-    const port = args["--port"] ?? 9229;
+    const port = flags["--port"] ?? 9229;
     const sessionId = randomUUID();
 
     // Check if VS Code launch configuration exists

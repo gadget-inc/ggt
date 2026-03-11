@@ -1,4 +1,4 @@
-import { ArgError } from "../command/arg.js";
+import { FlagError } from "../command/flag.js";
 import colors from "../output/colors.js";
 import { sprint } from "../output/sprint.js";
 
@@ -9,7 +9,7 @@ import { sprint } from "../output/sprint.js";
  * @param value - The value of the argument.
  * @param name - The name of the argument. e.g. "-a" or "--app".
  * @returns The application's slug.
- * @throws {ArgError} If the value is not a valid slug or URL.
+ * @throws {FlagError} If the value is not a valid slug or URL.
  */
 export const AppSlug = (value: string, name: string): string => {
   const slug = /^(https:\/\/)?(?<slug>[\w-]+?)(--development)?(\..*)?$/.exec(value)?.groups?.["slug"];
@@ -17,7 +17,7 @@ export const AppSlug = (value: string, name: string): string => {
     return slug;
   }
 
-  throw new ArgError(
+  throw new FlagError(
     sprint`
       ${name} must be the application's ${colors.identifier("slug")} or ${colors.identifier("URL")}
 

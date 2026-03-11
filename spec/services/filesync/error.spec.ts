@@ -14,10 +14,10 @@ import {
   YarnNotFoundError,
   isFilesVersionMismatchError,
 } from "../../../src/services/filesync/error.js";
-import { SyncJson, SyncJsonArgs } from "../../../src/services/filesync/sync-json.js";
+import { SyncJson, SyncJsonFlags } from "../../../src/services/filesync/sync-json.js";
 import { nockTestApps, testEnvironment } from "../../__support__/app.js";
-import { makeArgs } from "../../__support__/arg.js";
 import { testCtx } from "../../__support__/context.js";
+import { makeFlags } from "../../__support__/flag.js";
 import { mockOnce } from "../../__support__/mock.js";
 import { loginTestUser } from "../../__support__/user.js";
 
@@ -38,11 +38,11 @@ describe(YarnNotFoundError.name, () => {
 // Unix path that keeps failing in CI
 describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
   const makeSyncJson = async (command: Command): Promise<SyncJson> => {
-    const args = makeArgs(SyncJsonArgs, command, `--app=${testEnvironment.application.slug}`, `--env=${testEnvironment.name}`);
+    const flags = makeFlags(SyncJsonFlags, command, `--app=${testEnvironment.application.slug}`, `--env=${testEnvironment.name}`);
     const directory = await Directory.init(path.resolve("/Users/jane/doe/"));
 
     // @ts-expect-error - SyncJson's constructor is private
-    const syncJson: SyncJson = new SyncJson(testCtx, args, directory, testEnvironment, undefined, {
+    const syncJson: SyncJson = new SyncJson(testCtx, flags, directory, testEnvironment, undefined, {
       application: testEnvironment.application.slug,
       environment: testEnvironment.name,
       environments: {
@@ -62,7 +62,7 @@ describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
     "renders correctly when %s is passed",
     async (command) => {
       const syncJson = await makeSyncJson(command);
-      const error = new UnknownDirectoryError({ command, args: syncJson.args, directory: syncJson.directory });
+      const error = new UnknownDirectoryError({ command, flags: syncJson.flags, directory: syncJson.directory });
       expect(error.sprint()).toMatchSnapshot();
     },
   );
@@ -70,7 +70,7 @@ describe.skipIf(os.platform() === "win32")(UnknownDirectoryError.name, () => {
   it("renders correctly when the file exists but is invalid", async () => {
     mockOnce(fs, "existsSync", () => true);
     const syncJson = await makeSyncJson("dev");
-    const error = new UnknownDirectoryError({ command: "dev", args: syncJson.args, directory: syncJson.directory });
+    const error = new UnknownDirectoryError({ command: "dev", flags: syncJson.flags, directory: syncJson.directory });
     expect(error.sprint()).toMatchSnapshot();
   });
 });

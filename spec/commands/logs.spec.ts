@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import logs from "../../src/commands/logs.js";
 import { ENVIRONMENT_LOGS_SUBSCRIPTION, type GraphQLSubscription } from "../../src/services/app/edit/operation.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { nockTestApps } from "../__support__/app.js";
 import { mockContext, testCtx } from "../__support__/context.js";
@@ -197,13 +197,13 @@ describe("logs", () => {
   describe("validation", () => {
     it("rejects invalid --start date", async () => {
       const error = await expectError(() => runCommand(testCtx, logs, "--start", "not-a-date"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
     });
 
     it("rejects --start with --follow", async () => {
       await makeSyncScenario({ localFiles: { ".gadget/": "" } });
       const error = await expectError(() => runCommand(testCtx, logs, "--follow", "--start", "2025-01-01T00:00:00Z"));
-      expect(error).toBeInstanceOf(ArgError);
+      expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toContain("--start cannot be used with --follow");
     });
   });

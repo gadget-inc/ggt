@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { extractAllowArgs, getAllowFlags, resolveAllowFlags } from "../../../src/services/command/allow.js";
-import { ArgError } from "../../../src/services/command/arg.js";
+import { extractAllowFlags, getAllowFlags, resolveAllowFlags } from "../../../src/services/command/allow.js";
+import { FlagError } from "../../../src/services/command/flag.js";
 
 describe("getAllowFlags", () => {
-  it("returns allow-* keys from an args definition", () => {
-    const args = {
+  it("returns allow-* keys from a flags definition", () => {
+    const flags = {
       "--force": { type: Boolean },
       "--allow-problems": { type: Boolean },
       "--allow-charges": { type: Boolean },
       "--env": { type: String },
     };
 
-    expect(getAllowFlags(args)).toEqual(["--allow-problems", "--allow-charges"]);
+    expect(getAllowFlags(flags)).toEqual(["--allow-problems", "--allow-charges"]);
   });
 
   it("returns an empty array when no allow flags exist", () => {
@@ -20,11 +20,11 @@ describe("getAllowFlags", () => {
   });
 });
 
-describe("extractAllowArgs", () => {
+describe("extractAllowFlags", () => {
   const hasAllowFlags = ["--allow-problems"];
 
   it("extracts --allow-all from argv", () => {
-    const result = extractAllowArgs(["--force", "--allow-all", "--env", "staging"], hasAllowFlags);
+    const result = extractAllowFlags(["--force", "--allow-all", "--env", "staging"], hasAllowFlags);
 
     expect(result).toEqual({
       cleanedArgv: ["--force", "--env", "staging"],
@@ -34,7 +34,7 @@ describe("extractAllowArgs", () => {
   });
 
   it("extracts --allow=value from argv", () => {
-    const result = extractAllowArgs(["--force", "--allow=problems,charges"], hasAllowFlags);
+    const result = extractAllowFlags(["--force", "--allow=problems,charges"], hasAllowFlags);
 
     expect(result).toEqual({
       cleanedArgv: ["--force"],
@@ -44,7 +44,7 @@ describe("extractAllowArgs", () => {
   });
 
   it("extracts --allow value from argv", () => {
-    const result = extractAllowArgs(["--allow", "problems", "--force"], hasAllowFlags);
+    const result = extractAllowFlags(["--allow", "problems", "--force"], hasAllowFlags);
 
     expect(result).toEqual({
       cleanedArgv: ["--force"],
@@ -54,7 +54,7 @@ describe("extractAllowArgs", () => {
   });
 
   it("handles multiple --allow flags", () => {
-    const result = extractAllowArgs(["--allow", "problems", "--allow=charges"], hasAllowFlags);
+    const result = extractAllowFlags(["--allow", "problems", "--allow=charges"], hasAllowFlags);
 
     expect(result).toEqual({
       cleanedArgv: [],
@@ -64,7 +64,7 @@ describe("extractAllowArgs", () => {
   });
 
   it("passes through unrelated flags unchanged", () => {
-    const result = extractAllowArgs(["--force", "--env", "staging"], hasAllowFlags);
+    const result = extractAllowFlags(["--force", "--env", "staging"], hasAllowFlags);
 
     expect(result).toEqual({
       cleanedArgv: ["--force", "--env", "staging"],
@@ -74,7 +74,7 @@ describe("extractAllowArgs", () => {
   });
 
   it("passes --allow-* flags through to cleanedArgv", () => {
-    const result = extractAllowArgs(["--allow-problems", "--allow-data-delete"], hasAllowFlags);
+    const result = extractAllowFlags(["--allow-problems", "--allow-data-delete"], hasAllowFlags);
 
     expect(result).toEqual({
       cleanedArgv: ["--allow-problems", "--allow-data-delete"],
@@ -83,13 +83,13 @@ describe("extractAllowArgs", () => {
     });
   });
 
-  it("throws ArgError for bare --allow at end of argv", () => {
-    expect(() => extractAllowArgs(["--force", "--allow"], hasAllowFlags)).toThrow(ArgError);
-    expect(() => extractAllowArgs(["--force", "--allow"], hasAllowFlags)).toThrow('Flag "--allow" requires a value');
+  it("throws FlagError for bare --allow at end of argv", () => {
+    expect(() => extractAllowFlags(["--force", "--allow"], hasAllowFlags)).toThrow(FlagError);
+    expect(() => extractAllowFlags(["--force", "--allow"], hasAllowFlags)).toThrow('Flag "--allow" requires a value');
   });
 
   it("handles --allow= with empty value", () => {
-    const result = extractAllowArgs(["--allow="], hasAllowFlags);
+    const result = extractAllowFlags(["--allow="], hasAllowFlags);
 
     expect(result).toEqual({
       cleanedArgv: [],
@@ -99,7 +99,7 @@ describe("extractAllowArgs", () => {
   });
 
   it("consumes next token as allow value even when it looks like a flag", () => {
-    const result = extractAllowArgs(["--allow", "--force"], hasAllowFlags);
+    const result = extractAllowFlags(["--allow", "--force"], hasAllowFlags);
 
     expect(result).toEqual({
       cleanedArgv: [],
@@ -110,7 +110,7 @@ describe("extractAllowArgs", () => {
 
   it("returns argv unchanged when allowFlags is empty", () => {
     const argv = ["--force", "--allow=foo", "--allow-all"];
-    const result = extractAllowArgs(argv, []);
+    const result = extractAllowFlags(argv, []);
 
     expect(result).toEqual({
       cleanedArgv: argv,
@@ -121,7 +121,7 @@ describe("extractAllowArgs", () => {
   });
 
   it("does not consume --allow tokens after -- separator", () => {
-    const result = extractAllowArgs(["--force", "--", "--allow=foo", "--allow-all"], hasAllowFlags);
+    const result = extractAllowFlags(["--force", "--", "--allow=foo", "--allow-all"], hasAllowFlags);
 
     expect(result).toEqual({
       cleanedArgv: ["--force", "--", "--allow=foo", "--allow-all"],
@@ -135,116 +135,116 @@ describe("resolveAllowFlags", () => {
   const allowFlags = ["--allow-problems", "--allow-charges", "--allow-data-delete"];
 
   it("sets all flags when allowAll is true", () => {
-    const args: Record<string, unknown> = {};
+    const flags: Record<string, unknown> = {};
 
-    resolveAllowFlags(args, allowFlags, { allowAll: true, allowValues: [] });
+    resolveAllowFlags(flags, allowFlags, { allowAll: true, allowValues: [] });
 
-    expect(args["--allow-problems"]).toBe(true);
-    expect(args["--allow-charges"]).toBe(true);
-    expect(args["--allow-data-delete"]).toBe(true);
+    expect(flags["--allow-problems"]).toBe(true);
+    expect(flags["--allow-charges"]).toBe(true);
+    expect(flags["--allow-data-delete"]).toBe(true);
   });
 
   it("sets all flags when --allow=all is passed", () => {
-    const args: Record<string, unknown> = {};
+    const flags: Record<string, unknown> = {};
 
-    resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["all"] });
+    resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["all"] });
 
-    expect(args["--allow-problems"]).toBe(true);
-    expect(args["--allow-charges"]).toBe(true);
-    expect(args["--allow-data-delete"]).toBe(true);
+    expect(flags["--allow-problems"]).toBe(true);
+    expect(flags["--allow-charges"]).toBe(true);
+    expect(flags["--allow-data-delete"]).toBe(true);
   });
 
   it("resolves comma-separated shorthands", () => {
-    const args: Record<string, unknown> = {};
+    const flags: Record<string, unknown> = {};
 
-    resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["problems,data-delete"] });
+    resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["problems,data-delete"] });
 
-    expect(args["--allow-problems"]).toBe(true);
-    expect(args["--allow-charges"]).toBeUndefined();
-    expect(args["--allow-data-delete"]).toBe(true);
+    expect(flags["--allow-problems"]).toBe(true);
+    expect(flags["--allow-charges"]).toBeUndefined();
+    expect(flags["--allow-data-delete"]).toBe(true);
   });
 
   it("resolves individual shorthands", () => {
-    const args: Record<string, unknown> = {};
+    const flags: Record<string, unknown> = {};
 
-    resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["charges"] });
+    resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["charges"] });
 
-    expect(args["--allow-problems"]).toBeUndefined();
-    expect(args["--allow-charges"]).toBe(true);
+    expect(flags["--allow-problems"]).toBeUndefined();
+    expect(flags["--allow-charges"]).toBe(true);
   });
 
-  it("throws ArgError for unknown shorthands", () => {
-    const args: Record<string, unknown> = {};
+  it("throws FlagError for unknown shorthands", () => {
+    const flags: Record<string, unknown> = {};
 
     expect(() => {
-      resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["unknown"] });
-    }).toThrow(ArgError);
+      resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["unknown"] });
+    }).toThrow(FlagError);
   });
 
   it("includes available options and suggestion in error message", () => {
-    const args: Record<string, unknown> = {};
+    const flags: Record<string, unknown> = {};
 
     expect(() => {
-      resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["problem"] });
+      resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["problem"] });
     }).toThrow(/Did you mean "problems"\?/);
     expect(() => {
-      resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["problem"] });
+      resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["problem"] });
     }).toThrow(/Available: problems, charges, data-delete/);
   });
 
   it("renders full error message for unknown shorthand", () => {
-    const args: Record<string, unknown> = {};
+    const flags: Record<string, unknown> = {};
 
     expect(() => {
-      resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["nope"] });
+      resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["nope"] });
     }).toThrow(/Unknown allow flag "nope".*Available: problems, charges, data-delete/);
   });
 
   it("is a no-op for --allow-all when allowFlags is empty", () => {
-    const args: Record<string, unknown> = { "--force": true };
+    const flags: Record<string, unknown> = { "--force": true };
 
-    resolveAllowFlags(args, [], { allowAll: true, allowValues: [] });
+    resolveAllowFlags(flags, [], { allowAll: true, allowValues: [] });
 
-    expect(args).toEqual({ "--force": true });
+    expect(flags).toEqual({ "--force": true });
   });
 
   it("ignores empty strings from comma splitting", () => {
-    const args: Record<string, unknown> = {};
+    const flags: Record<string, unknown> = {};
 
-    resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["problems,,charges,"] });
+    resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["problems,,charges,"] });
 
-    expect(args["--allow-problems"]).toBe(true);
-    expect(args["--allow-charges"]).toBe(true);
-    expect(args["--allow-data-delete"]).toBeUndefined();
+    expect(flags["--allow-problems"]).toBe(true);
+    expect(flags["--allow-charges"]).toBe(true);
+    expect(flags["--allow-data-delete"]).toBeUndefined();
   });
 
   it("sets all flags when 'all' appears in a comma-separated list", () => {
-    const args: Record<string, unknown> = {};
+    const flags: Record<string, unknown> = {};
 
-    resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["all,problems"] });
+    resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["all,problems"] });
 
-    expect(args["--allow-problems"]).toBe(true);
-    expect(args["--allow-charges"]).toBe(true);
-    expect(args["--allow-data-delete"]).toBe(true);
+    expect(flags["--allow-problems"]).toBe(true);
+    expect(flags["--allow-charges"]).toBe(true);
+    expect(flags["--allow-data-delete"]).toBe(true);
   });
 
   it("composes --allow-all with individual flags", () => {
-    const args: Record<string, unknown> = { "--allow-problems": true };
+    const flags: Record<string, unknown> = { "--allow-problems": true };
 
-    resolveAllowFlags(args, allowFlags, { allowAll: true, allowValues: [] });
+    resolveAllowFlags(flags, allowFlags, { allowAll: true, allowValues: [] });
 
-    expect(args["--allow-problems"]).toBe(true);
-    expect(args["--allow-charges"]).toBe(true);
-    expect(args["--allow-data-delete"]).toBe(true);
+    expect(flags["--allow-problems"]).toBe(true);
+    expect(flags["--allow-charges"]).toBe(true);
+    expect(flags["--allow-data-delete"]).toBe(true);
   });
 
   it("composes --allow shorthand with explicit boolean flags", () => {
-    const args: Record<string, unknown> = { "--allow-problems": true };
+    const flags: Record<string, unknown> = { "--allow-problems": true };
 
-    resolveAllowFlags(args, allowFlags, { allowAll: false, allowValues: ["charges"] });
+    resolveAllowFlags(flags, allowFlags, { allowAll: false, allowValues: ["charges"] });
 
-    expect(args["--allow-problems"]).toBe(true);
-    expect(args["--allow-charges"]).toBe(true);
-    expect(args["--allow-data-delete"]).toBeUndefined();
+    expect(flags["--allow-problems"]).toBe(true);
+    expect(flags["--allow-charges"]).toBe(true);
+    expect(flags["--allow-data-delete"]).toBeUndefined();
   });
 });

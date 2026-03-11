@@ -4,7 +4,7 @@ import type { Edit, EditSubscription } from "../app/edit/edit.js";
 import { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../app/edit/operation.js";
 import type { Fields } from "../output/log/field.js";
 import { Level } from "../output/log/level.js";
-import { type LoggingArgsResult, createEnvironmentStructuredLogger } from "../output/log/structured.js";
+import { type LoggingFlagsResult, createEnvironmentStructuredLogger } from "../output/log/structured.js";
 
 type SubscribeMode = "follow" | "one-shot";
 
@@ -30,8 +30,8 @@ const includedLevels = (minimumLevel: number): string => {
   return "error";
 };
 
-const buildQuery = (edit: Edit, args: LoggingArgsResult): string => {
-  return `{environment_id="${edit.environment.id}"} | json | level=~"${includedLevels(args["--log-level"])}"${args["--my-logs"] ? ' | source="user"' : ""}`;
+const buildQuery = (edit: Edit, flags: LoggingFlagsResult): string => {
+  return `{environment_id="${edit.environment.id}"} | json | level=~"${includedLevels(flags["--log-level"])}"${flags["--my-logs"] ? ' | source="user"' : ""}`;
 };
 
 /**
@@ -39,11 +39,11 @@ const buildQuery = (edit: Edit, args: LoggingArgsResult): string => {
  */
 export const subscribeToEnvironmentLogs = (
   edit: Edit,
-  args: LoggingArgsResult,
+  flags: LoggingFlagsResult,
   { onError, mode = "follow", start, limit, onBatch }: SubscribeToEnvironmentLogsOptions,
 ): EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> => {
   const logger = createEnvironmentStructuredLogger(edit.environment);
-  const query = buildQuery(edit, args);
+  const query = buildQuery(edit, flags);
 
   const variables =
     mode === "follow"

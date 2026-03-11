@@ -1,10 +1,10 @@
-import { ArgError } from "../services/command/arg.js";
 import { defineCommand } from "../services/command/command.js";
+import { FlagError } from "../services/command/flag.js";
 import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
 import { getDevStatus } from "../services/filesync/dev-lock.js";
 import { UnknownDirectoryError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
@@ -20,10 +20,10 @@ export default defineCommand({
       3. Any pending file changes on either side since the last sync.
   `,
   examples: ["ggt status", "ggt status --app myapp --env staging"],
-  args: SyncJsonArgs,
-  run: async (ctx, args) => {
-    if (args._.length > 0) {
-      throw new ArgError(
+  flags: SyncJsonFlags,
+  run: async (ctx, flags) => {
+    if (flags._.length > 0) {
+      throw new FlagError(
         sprint`
           "ggt status" does not take any positional arguments.
 
@@ -34,9 +34,9 @@ export default defineCommand({
     }
 
     const directory = await loadSyncJsonDirectory(process.cwd());
-    const syncJson = await SyncJson.load(ctx, { command: "status", args, directory });
+    const syncJson = await SyncJson.load(ctx, { command: "status", flags, directory });
     if (!syncJson) {
-      throw new UnknownDirectoryError({ command: "status", args, directory });
+      throw new UnknownDirectoryError({ command: "status", flags, directory });
     }
 
     syncJson.print();

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import configure from "../../src/commands/configure.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import * as defaults from "../../src/services/config/defaults.js";
 import { noop } from "../../src/services/util/function.js";
@@ -76,9 +76,9 @@ describe("configure", () => {
     expect(defaults.promptDefaultsConfig).toHaveBeenCalled();
   });
 
-  it("throws ArgError for unknown subcommand", async () => {
+  it("throws FlagError for unknown subcommand", async () => {
     const error = await expectError(() => runCommand(testCtx, configure, "bogus"));
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.message).toMatchInlineSnapshot(`
       "Unknown subcommand bogus
 

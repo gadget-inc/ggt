@@ -1,11 +1,11 @@
 import ms from "ms";
 
-import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
-import { ArgError } from "../services/command/arg.js";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
 import { defineCommand } from "../services/command/command.js";
+import { FlagError } from "../services/command/flag.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
-import { LoggingArgs } from "../services/output/log/structured.js";
+import { LoggingFlags } from "../services/output/log/structured.js";
 import { sprint } from "../services/output/sprint.js";
 
 const ONE_SHOT_INITIAL_TIMEOUT_MS = ms("3s");
@@ -24,9 +24,9 @@ export default defineCommand({
     "ggt logs --follow --my-logs",
     "ggt logs --env production --json",
   ],
-  args: {
-    ...AppIdentityArgs,
-    ...LoggingArgs,
+  flags: {
+    ...AppIdentityFlags,
+    ...LoggingFlags,
     "--follow": {
       type: Boolean,
       alias: ["-f"],
@@ -38,7 +38,7 @@ export default defineCommand({
       type: (value: string): Date => {
         const date = new Date(value);
         if (isNaN(date.getTime())) {
-          throw new ArgError(`Invalid date: "${value}". Use an ISO 8601 format like "2025-01-01T00:00:00Z".`);
+          throw new FlagError(`Invalid date: "${value}". Use an ISO 8601 format like "2025-01-01T00:00:00Z".`);
         }
         return date;
       },
@@ -47,9 +47,9 @@ export default defineCommand({
       details: "ISO 8601 timestamp. Defaults to 5 minutes ago.",
     },
   },
-  run: async (ctx, args) => {
-    if (args._.length > 0) {
-      throw new ArgError(
+  run: async (ctx, flags) => {
+    if (flags._.length > 0) {
+      throw new FlagError(
         sprint`
           "ggt logs" does not take any positional arguments.
 
@@ -60,14 +60,14 @@ export default defineCommand({
     }
 
     const directory = await loadSyncJsonDirectory(process.cwd());
-    const appIdentity = await AppIdentity.load(ctx, { command: "logs", args, directory });
+    const appIdentity = await AppIdentity.load(ctx, { command: "logs", flags, directory });
 
-    if (args["--follow"] && args["--start"]) {
-      throw new ArgError("--start cannot be used with --follow. --start is only for one-shot log queries.");
+    if (flags["--follow"] && flags["--start"]) {
+      throw new FlagError("--start cannot be used with --follow. --start is only for one-shot log queries.");
     }
 
-    if (args["--follow"]) {
-      const logsSubscription = subscribeToEnvironmentLogs(appIdentity.edit, args, {
+    if (flags["--follow"]) {
+      const logsSubscription = subscribeToEnvironmentLogs(appIdentity.edit, flags, {
         onError: (error) => {
           ctx.abort(error);
         },
@@ -81,7 +81,7 @@ export default defineCommand({
       return;
     }
 
-    const start = args["--start"] ?? new Date(Date.now() - ms("5m"));
+    const start = flags["--start"] ?? new Date(Date.now() - ms("5m"));
     const queryTime = Date.now();
 
     await new Promise<void>((resolve, reject) => {
@@ -105,7 +105,7 @@ export default defineCommand({
         done();
       };
 
-      logsSubscription = subscribeToEnvironmentLogs(appIdentity.edit, args, {
+      logsSubscription = subscribeToEnvironmentLogs(appIdentity.edit, flags, {
         mode: "one-shot",
         start,
         limit: 500,

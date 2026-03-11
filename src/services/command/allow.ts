@@ -1,18 +1,18 @@
 import { closestMatch } from "../util/collection.js";
-import { ArgError, type ArgsDefinition } from "./arg.js";
+import { FlagError, type FlagsDefinition } from "./flag.js";
 
 /**
- * Scans an ArgsDefinition for `--allow-*` flags, returning the matching keys.
+ * Scans an FlagsDefinition for `--allow-*` flags, returning the matching keys.
  */
-export const getAllowFlags = (args: ArgsDefinition): string[] => {
-  return Object.keys(args).filter((key) => key.startsWith("--allow-"));
+export const getAllowFlags = (flagsDef: FlagsDefinition): string[] => {
+  return Object.keys(flagsDef).filter((key) => key.startsWith("--allow-"));
 };
 
 /**
- * Args definition for `--allow` and `--allow-all`, injected automatically
+ * Flags definition for `--allow` and `--allow-all`, injected automatically
  * into commands that have `--allow-*` flags for help text display.
  */
-export const AllowArgs: ArgsDefinition = {
+export const AllowFlags: FlagsDefinition = {
   "--allow": {
     type: String,
     description: "Enable allow flags (comma-separated)",
@@ -33,7 +33,7 @@ export const AllowArgs: ArgsDefinition = {
  * This preprocessing step is needed because `--allow` accepts
  * comma-separated shorthands that don't fit neatly into the arg parser.
  */
-export const extractAllowArgs = (
+export const extractAllowFlags = (
   argv: string[],
   allowFlags: string[],
 ): { cleanedArgv: string[]; allowAll: boolean; allowValues: string[] } => {
@@ -67,7 +67,7 @@ export const extractAllowArgs = (
 
       if (token === "--allow") {
         if (i + 1 >= argv.length) {
-          throw new ArgError('Flag "--allow" requires a value');
+          throw new FlagError('Flag "--allow" requires a value');
         }
         allowValues.push(argv[i + 1] as string);
         i += 2;
@@ -90,12 +90,12 @@ export const extractAllowArgs = (
 
 /**
  * Expands `--allow` and `--allow-all` shorthands into the individual
- * boolean `--allow-*` flags on the parsed args object.
+ * boolean `--allow-*` flags on the parsed flags object.
  *
- * Mutates `args` in place. Throws ArgError for unknown shorthands.
+ * Mutates `flags` in place. Throws FlagError for unknown shorthands.
  */
 export const resolveAllowFlags = (
-  args: Record<string, unknown>,
+  flags: Record<string, unknown>,
   allowFlags: string[],
   extracted: { allowAll: boolean; allowValues: string[] },
 ): void => {
@@ -122,7 +122,7 @@ export const resolveAllowFlags = (
 
   if (hasAll) {
     for (const flag of allowFlags) {
-      args[flag] = true;
+      flags[flag] = true;
     }
   }
 
@@ -135,8 +135,8 @@ export const resolveAllowFlags = (
       const parts = [`Unknown allow flag "${shorthand}".`];
       if (suggestion) parts.push(`Did you mean "${suggestion}"?`);
       parts.push(`Available: ${keys.join(", ")}`);
-      throw new ArgError(parts.join(" "));
+      throw new FlagError(parts.join(" "));
     }
-    args[flag] = true;
+    flags[flag] = true;
   }
 };

@@ -1,8 +1,8 @@
 import arg from "arg";
 
-import { extractFlags, hidden, type ArgsDefinition, type ArgsDefinitionResult, type FlagDef } from "../services/command/arg.js";
 import { Commands, importCommand, isCommand, renderCommandList, resolveCommandAlias } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
+import { extractFlags, hidden, type FlagsDefinition, type FlagsResult, type FlagDef } from "../services/command/flag.js";
 import { runCommand } from "../services/command/run.js";
 import { flagLeft, flagNamePrefix, flagValueSuffix, formatFlag, wrapText } from "../services/command/usage.js";
 import colors from "../services/output/colors.js";
@@ -16,13 +16,13 @@ import { closestMatch } from "../services/util/collection.js";
 import { isNil } from "../services/util/is.js";
 import { packageJson } from "../services/util/package-json.js";
 
-export type RootArgs = typeof args;
-export type RootArgsResult = ArgsDefinitionResult<RootArgs>;
+export type RootFlags = typeof flags;
+export type RootFlagsResult = FlagsResult<RootFlags>;
 
 // root.ts is intentionally not converted to defineCommand because it is the
 // dispatch entry point that resolves and delegates to sub-commands, not a
 // standard sub-command itself.
-export const args = {
+export const flags = {
   "--help": {
     type: Boolean,
     alias: "-h",
@@ -51,19 +51,19 @@ export const args = {
     details:
       "Formats all output as newline-delimited JSON instead of human-readable text. Useful for scripting and piping ggt output to other tools.",
   },
-} satisfies ArgsDefinition;
+} satisfies FlagsDefinition;
 
 export const usage = async (helpLevel: "-h" | "--help" = "-h"): Promise<string> => {
   const commandList = await renderCommandList();
 
-  const flags = extractFlags(args).filter((f) => !f.hidden);
+  const visibleFlags = extractFlags(flags).filter((f) => !f.hidden);
   let flagLines: string;
 
   if (helpLevel === "--help") {
-    flagLines = renderExpandedFlags(flags);
+    flagLines = renderExpandedFlags(visibleFlags);
   } else {
-    const maxLeft = Math.max(0, ...flags.map((f) => flagLeft(f).length + 2));
-    flagLines = flags.map((f) => formatFlag(f, maxLeft, 0)).join("\n");
+    const maxLeft = Math.max(0, ...visibleFlags.map((f) => flagLeft(f).length + 2));
+    flagLines = visibleFlags.map((f) => formatFlag(f, maxLeft, 0)).join("\n");
   }
 
   return sprint`
@@ -101,20 +101,20 @@ const renderExpandedFlags = (flags: FlagDef[]): string => {
     .join("\n\n");
 };
 
-export const run = async (parent: Context, args: RootArgsResult): Promise<void> => {
+export const run = async (parent: Context, rootFlags: RootFlagsResult): Promise<void> => {
   const ctx = parent.child({ name: "root" });
 
-  if (args["--version"]) {
+  if (rootFlags["--version"]) {
     println(packageJson.version);
     process.exit(0);
   }
 
-  if (args["--json"]) {
+  if (rootFlags["--json"]) {
     process.env["GGT_LOG_FORMAT"] = "json";
   }
 
-  if (args["--verbose"]) {
-    process.env["GGT_LOG_LEVEL"] = verbosityToLevel(args["--verbose"]).toString();
+  if (rootFlags["--verbose"]) {
+    process.env["GGT_LOG_LEVEL"] = verbosityToLevel(rootFlags["--verbose"]).toString();
   }
 
   if (await shouldCheckForUpdate(ctx)) {
@@ -122,23 +122,23 @@ export const run = async (parent: Context, args: RootArgsResult): Promise<void> 
     await warnIfUpdateAvailable(ctx);
   }
 
-  let commandName = args._.shift();
+  let commandName = rootFlags._.shift();
   if (isNil(commandName)) {
-    const helpLevel = args["--help"] ? (process.argv.includes("-h") && !process.argv.includes("--help") ? "-h" : "--help") : "-h";
+    const helpLevel = rootFlags["--help"] ? (process.argv.includes("-h") && !process.argv.includes("--help") ? "-h" : "--help") : "-h";
     println(await usage(helpLevel));
     process.exit(0);
   }
 
   // handle `ggt help [command]`
   if (commandName === "help") {
-    const helpTarget = args._.shift();
+    const helpTarget = rootFlags._.shift();
     if (isNil(helpTarget)) {
       println(await usage("--help"));
       process.exit(0);
     }
     // treat as `ggt <command> --help`
     commandName = helpTarget;
-    args["--help"] = true;
+    rootFlags["--help"] = true;
   }
 
   if (!isCommand(commandName)) {
@@ -165,14 +165,14 @@ export const run = async (parent: Context, args: RootArgsResult): Promise<void> 
 
   // handle root-level help flags before the error-catching boundary so
   // process.exit(0) is not caught and misinterpreted as a command failure
-  const helpFlag = args["--help"] ? (process.argv.includes("-h") && !process.argv.includes("--help") ? "-h" : "--help") : undefined;
+  const helpFlag = rootFlags["--help"] ? (process.argv.includes("-h") && !process.argv.includes("--help") ? "-h" : "--help") : undefined;
   if (helpFlag) {
-    await runCommand(ctx.child({ name: command.name }), command, helpFlag, ...args._);
+    await runCommand(ctx.child({ name: command.name }), command, helpFlag, ...rootFlags._);
     return;
   }
 
   try {
-    await runCommand(ctx.child({ name: command.name }), command, ...args._);
+    await runCommand(ctx.child({ name: command.name }), command, ...rootFlags._);
   } catch (error) {
     await reportErrorAndExit(ctx, error);
   }

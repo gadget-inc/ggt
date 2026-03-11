@@ -11,10 +11,10 @@ import { config } from "../../src/services/config/config.js";
 import { Level } from "../../src/services/output/log/level.js";
 import * as update from "../../src/services/output/update.js";
 import { noop, noopThis } from "../../src/services/util/function.js";
-import { makeRootArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
 import { withEnv } from "../__support__/env.js";
 import { waitForReportErrorAndExit } from "../__support__/error.js";
+import { makeRootFlags } from "../__support__/flag.js";
 import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
 import { expectProcessExit } from "../__support__/process.js";
@@ -44,7 +44,7 @@ describe("root", () => {
     await withEnv({ GGT_LOG_FORMAT: undefined }, async () => {
       expect(config.logFormat).toBe("pretty");
 
-      await expectProcessExit(() => root.run(testCtx, makeRootArgs("--json")));
+      await expectProcessExit(() => root.run(testCtx, makeRootFlags("--json")));
 
       expect(process.env["GGT_LOG_FORMAT"]).toBe("json");
       expect(config.logFormat).toBe("json");
@@ -59,7 +59,7 @@ describe("root", () => {
     await withEnv({ GGT_LOG_LEVEL: undefined }, async () => {
       expect(config.logLevel).toBe(Level.PRINT);
 
-      await expectProcessExit(() => root.run(testCtx, makeRootArgs(flag)));
+      await expectProcessExit(() => root.run(testCtx, makeRootFlags(flag)));
 
       expect(process.env["GGT_LOG_LEVEL"]).toBe(String(level));
       expect(config.logLevel).toBe(level);
@@ -67,7 +67,7 @@ describe("root", () => {
   });
 
   it("prints root usage when no command is given", async () => {
-    await expectProcessExit(() => root.run(testCtx, makeRootArgs()));
+    await expectProcessExit(() => root.run(testCtx, makeRootFlags()));
 
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget.
@@ -122,7 +122,7 @@ describe("root", () => {
   });
 
   it("prints root usage when 'help' is given", async () => {
-    await expectProcessExit(() => root.run(testCtx, makeRootArgs("help")));
+    await expectProcessExit(() => root.run(testCtx, makeRootFlags("help")));
 
     expectStdout().toMatchInlineSnapshot(`
       "The command-line interface for Gadget.
@@ -194,7 +194,7 @@ describe("root", () => {
 
   it("prints command usage when 'help <command>' is given", async () => {
     process.argv = ["node", "ggt", "help", "whoami"];
-    await expectProcessExit(() => root.run(testCtx, makeRootArgs("help", "whoami")));
+    await expectProcessExit(() => root.run(testCtx, makeRootFlags("help", "whoami")));
 
     expectStdout().toMatchInlineSnapshot(`
       "Show the current logged-in user
@@ -212,7 +212,7 @@ describe("root", () => {
   });
 
   it("prints the version when --version is passed", async () => {
-    await expectProcessExit(() => root.run(testCtx, makeRootArgs("--version")));
+    await expectProcessExit(() => root.run(testCtx, makeRootFlags("--version")));
 
     expectStdout().toMatchInlineSnapshot(`
       "1.2.3
@@ -221,7 +221,7 @@ describe("root", () => {
   });
 
   it("prints out a helpful message when an unknown command is given", async () => {
-    await expectProcessExit(() => root.run(testCtx, makeRootArgs("foobar")), 1);
+    await expectProcessExit(() => root.run(testCtx, makeRootFlags("foobar")), 1);
 
     expectStdout().toMatchInlineSnapshot(`
       "Unknown command foobar
@@ -237,7 +237,7 @@ describe("root", () => {
     const cmd = (await importCommand("env")) as ParentCommandConfig;
     mock(cmd.subcommands.list, "run", noop as never);
 
-    await root.run(testCtx, makeRootArgs("envs", "list"));
+    await root.run(testCtx, makeRootFlags("envs", "list"));
 
     expect(cmd.subcommands.list.run).toHaveBeenCalled();
   });
@@ -282,7 +282,7 @@ describe("root", () => {
     const cmd = await importCommand("problems");
     mock(cmd, "run", noop as never);
 
-    await root.run(testCtx, makeRootArgs("problem"));
+    await root.run(testCtx, makeRootFlags("problem"));
 
     expect(cmd.run).toHaveBeenCalled();
   });
@@ -291,7 +291,7 @@ describe("root", () => {
     const cmd = await importCommand("logs");
     mock(cmd, "run", noop as never);
 
-    await root.run(testCtx, makeRootArgs("log"));
+    await root.run(testCtx, makeRootFlags("log"));
 
     expect(cmd.run).toHaveBeenCalled();
   });
@@ -302,7 +302,7 @@ describe("root", () => {
     const cmd = await importCommand("logs");
     mock(cmd, "run", noop as never);
 
-    await root.run(testCtx, makeRootArgs("log", "--env", "production"));
+    await root.run(testCtx, makeRootFlags("log", "--env", "production"));
 
     expect(cmd.run).toHaveBeenCalled();
   });
@@ -319,7 +319,7 @@ describe("root", () => {
 
     it.each(["--help", "-h"])("prints the usage when %s is passed", async (flag) => {
       process.argv = ["node", "ggt", name, flag];
-      await expectProcessExit(() => root.run(testCtx, makeRootArgs(name, flag)));
+      await expectProcessExit(() => root.run(testCtx, makeRootFlags(name, flag)));
 
       // toMatchSnapshot used because the parametrized loop generates one snapshot per command; inline would produce N large identical-structure blocks
       expectStdout().toMatchSnapshot();
@@ -357,7 +357,7 @@ describe("root", () => {
       });
 
       it("runs the command", async () => {
-        await root.run(testCtx, makeRootArgs(name, ...dummyPositionals()));
+        await root.run(testCtx, makeRootFlags(name, ...dummyPositionals()));
 
         expect(cmd.run).toHaveBeenCalled();
       });
@@ -368,7 +368,7 @@ describe("root", () => {
           throw error;
         });
 
-        void root.run(testCtx, makeRootArgs(name, ...dummyPositionals()));
+        void root.run(testCtx, makeRootFlags(name, ...dummyPositionals()));
         await waitForReportErrorAndExit(error);
 
         expect(cmd.run).toHaveBeenCalled();

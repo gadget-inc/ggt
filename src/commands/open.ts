@@ -1,9 +1,9 @@
 import open from "open";
 
 import { getModels } from "../services/app/app.js";
-import { AppIdentity, AppIdentityArgs } from "../services/command/app-identity.js";
-import { ArgError } from "../services/command/arg.js";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
 import { defineCommand } from "../services/command/command.js";
+import { FlagError } from "../services/command/flag.js";
 import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
 import { println } from "../services/output/print.js";
@@ -58,19 +58,19 @@ export default defineCommand({
       details: "Required for data and schema locations. Use --show-all to pick from a list instead.",
     },
   ],
-  args: {
-    ...AppIdentityArgs,
+  flags: {
+    ...AppIdentityFlags,
     "--show-all": {
       type: Boolean,
       description: "Prompt to pick a model from the full list",
       details: "Displays an interactive picker with all models in your app. Useful when you don't remember the exact model name.",
     },
   },
-  run: async (ctx, args) => {
+  run: async (ctx, flags) => {
     const directory = await loadSyncJsonDirectory(process.cwd());
-    const appIdentity = await AppIdentity.load(ctx, { command: "open", args, directory });
+    const appIdentity = await AppIdentity.load(ctx, { command: "open", flags, directory });
 
-    const locationArg = args._[0];
+    const locationArg = flags._[0];
     if (!locationArg) {
       await open(`https://${appIdentity.environment.application.primaryDomain}/edit/${appIdentity.environment.name}`);
       println`
@@ -80,7 +80,7 @@ export default defineCommand({
     }
 
     if (!Locations.includes(locationArg as Location)) {
-      throw new ArgError(
+      throw new FlagError(
         sprint`
           Unknown location ${colors.warning(locationArg)}
 
@@ -112,12 +112,12 @@ export default defineCommand({
       case "schema": {
         const remoteModelApiIdentifiers = (await getModels(ctx, appIdentity.environment)).map((e) => e.apiIdentifier);
 
-        let modelApiIdentifier = args._[1];
+        let modelApiIdentifier = flags._[1];
         if (!modelApiIdentifier) {
-          if (args["--show-all"]) {
+          if (flags["--show-all"]) {
             modelApiIdentifier = await select({ choices: remoteModelApiIdentifiers, content: "Which model do you wish to open?" });
           } else {
-            throw new ArgError(
+            throw new FlagError(
               sprint`
                 "ggt open ${location}" requires a model to be specified.
 
@@ -131,7 +131,7 @@ export default defineCommand({
         }
 
         if (!remoteModelApiIdentifiers.includes(modelApiIdentifier)) {
-          throw new ArgError(
+          throw new FlagError(
             sprint`
               Unknown model ${colors.warning(modelApiIdentifier)}
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ArgError } from "../../../src/services/command/arg.js";
+import { FlagError } from "../../../src/services/command/flag.js";
 import { FileSyncStrategy, MergeConflictPreference, MergeConflictPreferenceArg } from "../../../src/services/filesync/strategy.js";
 
 describe("FileSyncStrategy", () => {
@@ -41,8 +41,8 @@ describe("MergeConflictPreferenceArg", () => {
     expect(result).toBe(MergeConflictPreference.ENVIRONMENT);
   });
 
-  it("throws ArgError for invalid values", () => {
-    expect(() => MergeConflictPreferenceArg("invalid", "--prefer")).toThrow(ArgError);
+  it("throws FlagError for invalid values", () => {
+    expect(() => MergeConflictPreferenceArg("invalid", "--prefer")).toThrow(FlagError);
   });
 
   it("throws with helpful message including valid options", () => {
@@ -50,10 +50,10 @@ describe("MergeConflictPreferenceArg", () => {
       MergeConflictPreferenceArg("wrong", "--prefer");
       expect.fail("Should have thrown");
     } catch (error) {
-      expect(error).toBeInstanceOf(ArgError);
-      expect((error as ArgError).message).toContain("--prefer");
-      expect((error as ArgError).message).toContain("local");
-      expect((error as ArgError).message).toContain("environment");
+      expect(error).toBeInstanceOf(FlagError);
+      expect((error as FlagError).message).toContain("--prefer");
+      expect((error as FlagError).message).toContain("local");
+      expect((error as FlagError).message).toContain("environment");
     }
   });
 
@@ -62,15 +62,15 @@ describe("MergeConflictPreferenceArg", () => {
       MergeConflictPreferenceArg("bad", "--conflict-preference");
       expect.fail("Should have thrown");
     } catch (error) {
-      expect(error).toBeInstanceOf(ArgError);
-      expect((error as ArgError).message).toContain("--conflict-preference=local");
-      expect((error as ArgError).message).toContain("--conflict-preference=environment");
+      expect(error).toBeInstanceOf(FlagError);
+      expect((error as FlagError).message).toContain("--conflict-preference=local");
+      expect((error as FlagError).message).toContain("--conflict-preference=environment");
     }
   });
 
   it("is case-sensitive", () => {
-    expect(() => MergeConflictPreferenceArg("LOCAL", "--prefer")).toThrow(ArgError);
-    expect(() => MergeConflictPreferenceArg("Local", "--prefer")).toThrow(ArgError);
-    expect(() => MergeConflictPreferenceArg("ENVIRONMENT", "--prefer")).toThrow(ArgError);
+    expect(() => MergeConflictPreferenceArg("LOCAL", "--prefer")).toThrow(FlagError);
+    expect(() => MergeConflictPreferenceArg("Local", "--prefer")).toThrow(FlagError);
+    expect(() => MergeConflictPreferenceArg("ENVIRONMENT", "--prefer")).toThrow(FlagError);
   });
 });

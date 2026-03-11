@@ -1,8 +1,8 @@
 import { EnvArg } from "../services/app/app.js";
-import { ArgError } from "../services/command/arg.js";
 import { defineCommand } from "../services/command/command.js";
+import { FlagError } from "../services/command/flag.js";
 import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { println } from "../services/output/print.js";
 import { sprint } from "../services/output/sprint.js";
 
@@ -21,8 +21,8 @@ export default defineCommand({
     },
   ],
   examples: ["ggt pull", "ggt pull --env staging", "ggt pull --env production --force"],
-  args: {
-    ...SyncJsonArgs,
+  flags: {
+    ...SyncJsonFlags,
     "--environment": {
       ...EnvArg,
       alias: ["-e", "--env", "--from"],
@@ -36,9 +36,9 @@ export default defineCommand({
       details: "Any local changes since the last sync are overwritten by the environment's files.",
     },
   },
-  run: async (ctx, args) => {
-    if (args._.length > 0) {
-      throw new ArgError(
+  run: async (ctx, flags) => {
+    if (flags._.length > 0) {
+      throw new FlagError(
         sprint`
           "ggt pull" does not take any positional arguments.
 
@@ -49,7 +49,7 @@ export default defineCommand({
     }
 
     const directory = await loadSyncJsonDirectory(process.cwd());
-    const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "pull", args, directory });
+    const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "pull", flags, directory });
     const filesync = new FileSync(syncJson);
     const hashes = await filesync.hashes(ctx);
 
@@ -63,6 +63,6 @@ export default defineCommand({
       await filesync.print(ctx, { hashes });
     }
 
-    await filesync.pull(ctx, { hashes, force: args["--force"] });
+    await filesync.pull(ctx, { hashes, force: flags["--force"] });
   },
 });

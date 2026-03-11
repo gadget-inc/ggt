@@ -28,8 +28,8 @@ All imports are from `spec/__support__/`.
 ### Setting up a test
 
 - **testCtx** (context) — pre-initialized `Context` for passing to commands/services
-- **makeArgs(args, ...argv)** (arg) — parse CLI argv into typed args, e.g. `makeArgs(push.args, "push", "--force")`
-- **makeRootArgs(...argv)** (arg) — parse root-level args only
+- **makeFlags(flagsDef, ...argv)** (flag) — parse CLI argv into typed flags, e.g. `makeFlags(push.flags, "push", "--force")`
+- **makeRootFlags(...argv)** (flag) — parse root-level flags only
 - **loginTestUser()** (user) — nock `/auth/api/current-user` with cookie or token auth (randomly chosen). Use `loginTestUserWithToken` / `loginTestUserWithCookie` when you need a specific auth method.
 - **matchAuthHeader** (user) — mutable export set by `loginTestUser`; use to add auth matching to custom nock interceptors
 - **nockTestApps()** (app) — nock the `/auth/api/apps` endpoint (optional + persistent by default)
@@ -99,7 +99,7 @@ See `__support__/filesync.ts` for additional exports.
 import { beforeEach, describe, it } from "vitest";
 import * as push from "../../src/commands/push.js";
 import { nockTestApps } from "../__support__/app.js";
-import { makeArgs } from "../__support__/arg.js";
+import { makeFlags } from "../__support__/flag.js";
 import { testCtx } from "../__support__/context.js";
 import { makeSyncScenario } from "../__support__/filesync.js";
 import { loginTestUser } from "../__support__/user.js";
@@ -115,7 +115,7 @@ describe("push", () => {
       localFiles: { ".gadget/": "" },
     });
 
-    await push.run(testCtx, makeArgs(push.args));
+    await push.run(testCtx, makeFlags(push.flags));
 
     await expectDirs().resolves.toMatchInlineSnapshot(`...`);
   });

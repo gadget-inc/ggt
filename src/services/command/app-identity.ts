@@ -10,23 +10,23 @@ import { setSentryTags } from "../output/sentry.js";
 import { sprint } from "../output/sprint.js";
 import { getUserOrLogin } from "../user/user.js";
 import { sortBySimilar } from "../util/collection.js";
-import { ArgError, type ArgsDefinition, type ArgsDefinitionResult } from "./arg.js";
 import type { Command } from "./command.js";
 import type { Context } from "./context.js";
+import { FlagError, type FlagsDefinition, type FlagsResult } from "./flag.js";
 
 export { AppArg, EnvArg } from "../app/app.js";
 
 /**
- * Combined args definition for --app and --env flags used by commands
+ * Combined flags definition for --app and --env flags used by commands
  * that need to identify a Gadget application and environment.
  */
-export const AppIdentityArgs = {
+export const AppIdentityFlags = {
   "--application": AppArg,
   "--environment": EnvArg,
-} satisfies ArgsDefinition;
+} satisfies FlagsDefinition;
 
-export type AppIdentityArgs = typeof AppIdentityArgs;
-export type AppIdentityArgsResult = ArgsDefinitionResult<AppIdentityArgs>;
+export type AppIdentityFlags = typeof AppIdentityFlags;
+export type AppIdentityFlagsResult = FlagsResult<AppIdentityFlags>;
 
 /**
  * An object that knows what app and environment we are working with.
@@ -46,9 +46,9 @@ export class AppIdentity {
     readonly ctx: Context,
 
     /**
-     * The parsed {@linkcode AppIdentityArgs} that the user passed to ggt.
+     * The parsed {@linkcode AppIdentityFlags} that the user passed to ggt.
      */
-    readonly args: AppIdentityArgsResult,
+    readonly flags: AppIdentityFlagsResult,
 
     /**
      * The {@linkcode Environment} we are working with.
@@ -67,24 +67,24 @@ export class AppIdentity {
   }
 
   /**
-   * Loads a {@linkcode AppIdentity} from the specified directory, or using the command line args. Always returns an identity by using the given input, or by asking the user if not enough information is provided.
+   * Loads a {@linkcode AppIdentity} from the specified directory, or using the command line flags. Always returns an identity by using the given input, or by asking the user if not enough information is provided.
    *
    * - Ensures a user is logged in.
    * - Ensures the user has at least one application.
    * - Uses the app/env from the local .gadget/sync.json file if it exists
-   * - Uses the app/env from the command line args if provided
+   * - Uses the app/env from the command line flags if provided
    * - Asks the user to select an app/env if not enough information is provided
    */
   static async load(
     ctx: Context,
-    { command, args, directory }: { command: Command; args: AppIdentityArgsResult; directory: Directory },
+    { command, flags, directory }: { command: Command; flags: AppIdentityFlagsResult; directory: Directory },
   ): Promise<AppIdentity> {
     ctx = ctx.child({ name: "app-identity" });
 
     const user = await getUserOrLogin(ctx, command);
     const availableApps = await getApplications(ctx);
     if (availableApps.length === 0) {
-      throw new ArgError(
+      throw new FlagError(
         sprint`
           You (${user.email}) don't have have any Gadget applications.
 
@@ -110,15 +110,15 @@ export class AppIdentity {
       }
     }
 
-    const application = await loadApplication({ args, availableApps, state });
-    const environment = await loadEnvironment({ command, args, application, state });
+    const application = await loadApplication({ flags, availableApps, state });
+    const environment = await loadEnvironment({ command, flags, application, state });
 
     setSentryTags({
       application_id: application.id,
       environment_id: environment.id,
     });
 
-    return new AppIdentity(ctx, args, environment, state);
+    return new AppIdentity(ctx, flags, environment, state);
   }
 
   get application(): Application {
@@ -129,20 +129,20 @@ export class AppIdentity {
 const AllowedProdCommands: Command[] = ["pull", "logs", "eval", "var"] satisfies Command[];
 
 /**
- * Resolves the application from args, sync.json state, or interactive prompt.
+ * Resolves the application from flags, sync.json state, or interactive prompt.
  */
 export const loadApplication = async ({
-  args,
+  flags,
   availableApps,
   state,
   selectPrompt = "Which application do you want to develop?",
 }: {
-  args: { "--application"?: string };
+  flags: { "--application"?: string };
   availableApps: Application[];
   state?: SyncJsonState;
   selectPrompt?: string;
 }): Promise<Application> => {
-  let appSlug = args["--application"] || state?.application;
+  let appSlug = flags["--application"] || state?.application;
   if (!appSlug) {
     // the user didn't specify an app, ask them to select one
     const groupedChoices: [string, string[]][] = Array.from(groupByTeam(availableApps)).map(([teamName, apps]) => [
@@ -174,7 +174,7 @@ export const loadApplication = async ({
   ).slice(0, 5);
 
   // TODO: differentiate between incorrect --app vs state.application?
-  throw new ArgError(
+  throw new FlagError(
     sprint`
       Unknown application:
 
@@ -190,12 +190,12 @@ export const loadApplication = async ({
 
 const loadEnvironment = async ({
   command,
-  args,
+  flags,
   application,
   state,
 }: {
   command: Command;
-  args: AppIdentityArgsResult;
+  flags: AppIdentityFlagsResult;
   application: Application;
   state?: SyncJsonState;
 }): Promise<Environment> => {
@@ -205,7 +205,7 @@ const loadEnvironment = async ({
     selectableEnvironments.push(...application.environments.filter((env) => env.type === EnvironmentType.Production));
   }
 
-  let selectedEnvironment = args["--environment"] || state?.environment;
+  let selectedEnvironment = flags["--environment"] || state?.environment;
   if (!selectedEnvironment) {
     // user didn't specify an environment, ask them to select one
     selectedEnvironment = await select({
@@ -216,7 +216,7 @@ const loadEnvironment = async ({
 
   if (selectedEnvironment.toLowerCase() === "production" && !AllowedProdCommands.includes(command)) {
     // specifically call out that they can't dev, push, etc. to prod
-    throw new ArgError(
+    throw new FlagError(
       sprint`
         You cannot "ggt ${command}" your ${colors.identifier("production")} environment.
       `,
@@ -240,7 +240,7 @@ const loadEnvironment = async ({
     selectableEnvironments.map((env) => env.name),
   ).slice(0, 5);
 
-  throw new ArgError(
+  throw new FlagError(
     sprint`
       Unknown environment:
 

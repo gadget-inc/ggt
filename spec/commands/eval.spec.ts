@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import eval_ from "../../src/commands/eval.js";
 import * as root from "../../src/commands/root.js";
 import { UNPAUSE_ENVIRONMENT_MUTATION } from "../../src/services/app/edit/operation.js";
-import { ArgError } from "../../src/services/command/arg.js";
+import { FlagError } from "../../src/services/command/flag.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { config } from "../../src/services/config/config.js";
 import * as update from "../../src/services/output/update.js";
@@ -15,8 +15,8 @@ import { writeSession } from "../../src/services/user/session.js";
 import { noop } from "../../src/services/util/function.js";
 import { workspacePath } from "../../src/services/util/paths.js";
 import { testApp, nockTestApps } from "../__support__/app.js";
-import { makeRootArgs } from "../__support__/arg.js";
 import { testCtx } from "../__support__/context.js";
+import { makeRootFlags } from "../__support__/flag.js";
 import { nockEditResponse } from "../__support__/graphql.js";
 import { mock } from "../__support__/mock.js";
 import { expectStdout } from "../__support__/output.js";
@@ -108,11 +108,11 @@ describe("eval", () => {
 
   describe("argument parsing", () => {
     it("errors when no snippet is provided", async () => {
-      await expect(runCommand(testCtx, eval_, "--app", "test")).rejects.toThrow(ArgError);
+      await expect(runCommand(testCtx, eval_, "--app", "test")).rejects.toThrow(FlagError);
     });
 
     it("exits with code 1 when no snippet is provided", async () => {
-      await expectProcessExit(() => root.run(testCtx, makeRootArgs("eval", "--app", "test")), 1);
+      await expectProcessExit(() => root.run(testCtx, makeRootFlags("eval", "--app", "test")), 1);
       expectStdout().toMatchInlineSnapshot(`
         "✘ Missing required argument: snippet
 
@@ -280,13 +280,13 @@ describe("eval", () => {
     it("handles syntax error in snippet", async () => {
       nockClientSource();
 
-      await expect(runCommand(testCtx, eval_, "--app", "test", "--env", "development", "const x = {")).rejects.toThrow(ArgError);
+      await expect(runCommand(testCtx, eval_, "--app", "test", "--env", "development", "const x = {")).rejects.toThrow(FlagError);
     });
 
     it("exits with code 1 on syntax error in snippet", async () => {
       nockClientSource();
 
-      await expectProcessExit(() => root.run(testCtx, makeRootArgs("eval", "--app", "test", "--env", "development", "const x = {")), 1);
+      await expectProcessExit(() => root.run(testCtx, makeRootFlags("eval", "--app", "test", "--env", "development", "const x = {")), 1);
       expectStdout().toContain("Syntax error in snippet");
     });
 
@@ -324,7 +324,7 @@ describe("eval", () => {
       nockClientSource({ source: clientSource });
 
       await expectProcessExit(
-        () => root.run(testCtx, makeRootArgs("eval", "--app", "test", "--env", "development", "api.user.findMany()")),
+        () => root.run(testCtx, makeRootFlags("eval", "--app", "test", "--env", "development", "api.user.findMany()")),
         1,
       );
       expectStdout().toContain("Error executing snippet");
@@ -454,7 +454,7 @@ describe("eval", () => {
       expectStdout().toContain("Alice");
     });
 
-    it("formats retry failure as ArgError", async () => {
+    it("formats retry failure as FlagError", async () => {
       const alwaysPausingSource = `
         class Client {
           constructor(options) { this._options = options; }
@@ -467,7 +467,7 @@ describe("eval", () => {
       nockClientSource({ source: alwaysPausingSource });
       nockUnpause();
 
-      await expect(runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()")).rejects.toThrow(ArgError);
+      await expect(runCommand(testCtx, eval_, "--app", "test", "--env", "development", "api.user.findMany()")).rejects.toThrow(FlagError);
     });
 
     it("formats retry failure as JSON in json mode", async () => {

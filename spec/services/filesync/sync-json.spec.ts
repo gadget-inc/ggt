@@ -3,22 +3,22 @@ import terminalLink from "terminal-link";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import * as app from "../../../src/services/app/app.js";
-import { ArgError } from "../../../src/services/command/arg.js";
 import { type Command } from "../../../src/services/command/command.js";
+import { FlagError } from "../../../src/services/command/flag.js";
 import { Directory } from "../../../src/services/filesync/directory.js";
 import { UnknownDirectoryError } from "../../../src/services/filesync/error.js";
 import {
   EphemeralSyncJson,
   SyncJson,
-  SyncJsonArgs,
+  SyncJsonFlags,
   type AnySyncJsonState,
-  type SyncJsonArgsResult,
+  type SyncJsonFlagsResult,
 } from "../../../src/services/filesync/sync-json.js";
 import { nockTestApps, testApp, testApp2 } from "../../__support__/app.js";
-import { makeArgs } from "../../__support__/arg.js";
 import { testCtx } from "../../__support__/context.js";
 import { expectError } from "../../__support__/error.js";
 import { makeSyncScenario } from "../../__support__/filesync.js";
+import { makeFlags } from "../../__support__/flag.js";
 import { mockOnce } from "../../__support__/mock.js";
 import { expectStdout } from "../../__support__/output.js";
 import { testDirPath } from "../../__support__/paths.js";
@@ -27,7 +27,7 @@ import { loginTestUser } from "../../__support__/user.js";
 
 describe("SyncJson.loadOrInit", () => {
   let command: Command;
-  let args: SyncJsonArgsResult;
+  let flags: SyncJsonFlagsResult;
   let localDir: Directory;
   let outputSyncJson: <const State extends AnySyncJsonState>(state: State) => Promise<State>;
 
@@ -36,7 +36,7 @@ describe("SyncJson.loadOrInit", () => {
     nockTestApps();
 
     command = "dev";
-    args = makeArgs(SyncJsonArgs, command, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`);
+    flags = makeFlags(SyncJsonFlags, command, `--app=${testApp.slug}`, `--env=${testApp.environments[0]!.name}`);
     localDir = await Directory.init(testDirPath("local"));
 
     outputSyncJson = async (state) => {
@@ -54,14 +54,14 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
+    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir });
 
     expect(syncJson.state).toEqual(state);
   });
 
   it("shows apps that the user can load", async () => {
-    args = makeArgs(SyncJsonArgs, "dev");
-    await expectProcessExit(async () => await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir }), 1);
+    flags = makeFlags(SyncJsonFlags, "dev");
+    await expectProcessExit(async () => await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir }), 1);
 
     expectStdout().toMatchInlineSnapshot(`
       "Which application do you want to develop?
@@ -81,7 +81,7 @@ describe("SyncJson.loadOrInit", () => {
   });
 
   it("uses default state if .gadget/sync.json does not exist and the directory is empty", async () => {
-    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
+    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir });
 
     expect(syncJson.state).toEqual({
       application: testApp.slug,
@@ -95,20 +95,20 @@ describe("SyncJson.loadOrInit", () => {
   it(`throws ${UnknownDirectoryError.name} if .gadget/sync.json does not exist and the directory is not empty`, async () => {
     await fs.outputFile(localDir.absolute("foo.js"), "// foo");
 
-    await expect(SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir })).rejects.toThrow(UnknownDirectoryError);
+    await expect(SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir })).rejects.toThrow(UnknownDirectoryError);
   });
 
   it(`throws ${UnknownDirectoryError.name} if .gadget/sync.json has invalid json`, async () => {
     await fs.outputFile(localDir.absolute(".gadget/sync.json"), '{"foo":"bar"}');
 
-    await expect(SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir })).rejects.toThrow(UnknownDirectoryError);
+    await expect(SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir })).rejects.toThrow(UnknownDirectoryError);
   });
 
   it(`does not throw ${UnknownDirectoryError.name} if .gadget/sync.json has invalid json and --allow-unknown-directory is passed`, async () => {
     await fs.outputFile(localDir.absolute(".gadget/sync.json"), '{"foo":"bar"}');
 
-    args["--allow-unknown-directory"] = true;
-    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
+    flags["--allow-unknown-directory"] = true;
+    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir });
 
     expect(syncJson.state).toEqual({
       application: testApp.slug,
@@ -119,11 +119,11 @@ describe("SyncJson.loadOrInit", () => {
     });
   });
 
-  it(`throws ${ArgError.name} when --app is passed a slug that does not exist within the user's list of available apps`, async () => {
-    args["--application"] = "does-not-exist";
-    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir }));
+  it(`throws ${FlagError.name} when --app is passed a slug that does not exist within the user's list of available apps`, async () => {
+    flags["--application"] = "does-not-exist";
+    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir }));
 
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.message).toMatchInlineSnapshot(`
       "Unknown application:
 
@@ -136,19 +136,19 @@ describe("SyncJson.loadOrInit", () => {
     `);
   });
 
-  it(`throws ${ArgError.name} when --env is passed production`, async () => {
-    args["--environment"] = "production";
-    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir }));
+  it(`throws ${FlagError.name} when --env is passed production`, async () => {
+    flags["--environment"] = "production";
+    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir }));
 
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.message).toMatchInlineSnapshot(`"You cannot "ggt dev" your production environment."`);
   });
 
-  it(`throws ${ArgError.name} when --env is passed an environment that is not in the list of valid environments for the app`, async () => {
-    args["--environment"] = "does-not-exist";
-    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir }));
+  it(`throws ${FlagError.name} when --env is passed an environment that is not in the list of valid environments for the app`, async () => {
+    flags["--environment"] = "does-not-exist";
+    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir }));
 
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.message).toMatchInlineSnapshot(`
       "Unknown environment:
 
@@ -162,12 +162,12 @@ describe("SyncJson.loadOrInit", () => {
     `);
   });
 
-  it(`throws ${ArgError.name} if the user doesn't have any available apps`, async () => {
+  it(`throws ${FlagError.name} if the user doesn't have any available apps`, async () => {
     mockOnce(app, "getApplications", () => []);
 
-    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir }));
+    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir }));
 
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.message).toMatchInlineSnapshot(`
         "You (test@example.com) don't have have any Gadget applications.
 
@@ -175,7 +175,7 @@ describe("SyncJson.loadOrInit", () => {
     `);
   });
 
-  it(`throws ${ArgError.name} when --app is passed a different slug than the one in .gadget/sync.json`, async () => {
+  it(`throws ${FlagError.name} when --app is passed a different slug than the one in .gadget/sync.json`, async () => {
     await outputSyncJson({
       application: testApp2.slug,
       environment: testApp2.environments[0]!.name,
@@ -184,13 +184,13 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir }));
+    const error = await expectError(() => SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir }));
 
-    expect(error).toBeInstanceOf(ArgError);
+    expect(error).toBeInstanceOf(FlagError);
     expect(error.message).toMatch(/^You were about to sync the following app to the following directory:/);
   });
 
-  it(`does not throw ${ArgError.name} when --app is passed a different app name than the one in .gadget/sync.json and --allow-different-app is passed`, async () => {
+  it(`does not throw ${FlagError.name} when --app is passed a different app name than the one in .gadget/sync.json and --allow-different-app is passed`, async () => {
     await outputSyncJson({
       application: testApp.slug,
       environment: testApp.environments[0]!.name,
@@ -199,9 +199,9 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    args["--application"] = testApp2.slug;
-    args["--allow-different-app"] = true;
-    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
+    flags["--application"] = testApp2.slug;
+    flags["--allow-different-app"] = true;
+    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir });
 
     expect(syncJson.state).toEqual({
       application: testApp2.slug,
@@ -212,7 +212,7 @@ describe("SyncJson.loadOrInit", () => {
     });
   });
 
-  it(`does not throw ${ArgError.name} when --env is passed a different environment than the one in .gadget/sync.json`, async () => {
+  it(`does not throw ${FlagError.name} when --env is passed a different environment than the one in .gadget/sync.json`, async () => {
     await outputSyncJson({
       application: testApp.slug,
       environment: testApp.environments[0]!.name,
@@ -221,8 +221,8 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    args["--environment"] = testApp.environments[2]!.name;
-    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
+    flags["--environment"] = testApp.environments[2]!.name;
+    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir });
 
     expect(syncJson.state).toEqual({
       application: testApp.slug,
@@ -244,8 +244,8 @@ describe("SyncJson.loadOrInit", () => {
       },
     });
 
-    args["--environment"] = testApp.environments[3]!.name;
-    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
+    flags["--environment"] = testApp.environments[3]!.name;
+    const syncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir });
 
     expect(syncJson.state).toEqual({
       ...initialState,
@@ -259,12 +259,12 @@ describe("SyncJson.loadOrInit", () => {
 
   it("returns ephemeral sync json when --env=production", async () => {
     command = "pull";
-    args._ = [command];
-    const devSyncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
+    flags._ = [command];
+    const devSyncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir });
     expect(devSyncJson).not.toBeInstanceOf(EphemeralSyncJson);
 
-    args["--environment"] = "production";
-    const prodSyncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, args, directory: localDir });
+    flags["--environment"] = "production";
+    const prodSyncJson = await SyncJson.loadOrAskAndInit(testCtx, { command, flags, directory: localDir });
     expect(prodSyncJson).toBeInstanceOf(EphemeralSyncJson);
   });
 });

@@ -14,12 +14,12 @@ import { acquireDevLock, releaseDevLock } from "../services/filesync/dev-lock.js
 import { YarnNotFoundError } from "../services/filesync/error.js";
 import { FileSync } from "../services/filesync/filesync.js";
 import { FileSyncStrategy, MergeConflictPreferenceArg } from "../services/filesync/strategy.js";
-import { SyncJson, SyncJsonArgs, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
 import { maybePromptAgentsMd, maybePromptGadgetSkills } from "../services/output/agent-plugin.js";
 import colors from "../services/output/colors.js";
 import { footer } from "../services/output/footer.js";
-import { LoggingArgs } from "../services/output/log/structured.js";
+import { LoggingFlags } from "../services/output/log/structured.js";
 import { notify } from "../services/output/notify.js";
 import { println } from "../services/output/print.js";
 import { reportErrorAndExit } from "../services/output/report.js";
@@ -81,9 +81,9 @@ export default defineCommand({
       details: "If the directory does not exist, it will be created. Defaults to the current working directory when omitted.",
     },
   ],
-  args: {
-    ...SyncJsonArgs,
-    ...LoggingArgs,
+  flags: {
+    ...SyncJsonFlags,
+    ...LoggingFlags,
     "--prefer": {
       type: MergeConflictPreferenceArg,
       description: "Auto-resolve conflicts using the given source",
@@ -143,13 +143,13 @@ export default defineCommand({
         "Useful when you only need file sync without log output, for example when running alongside a separate ggt logs session or in a background terminal.",
     },
   },
-  run: async (ctx, args) => {
+  run: async (ctx, flags) => {
     if (!(await which("yarn", { nothrow: true }))) {
       throw new YarnNotFoundError();
     }
 
-    const directory = await loadSyncJsonDirectory(args._[0] ?? process.cwd());
-    const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "dev", args, directory });
+    const directory = await loadSyncJsonDirectory(flags._[0] ?? process.cwd());
+    const syncJson = await SyncJson.loadOrAskAndInit(ctx, { command: "dev", flags, directory });
     await acquireDevLock(directory);
     ctx.onAbort(async () => {
       await releaseDevLock(directory);
@@ -277,8 +277,8 @@ export default defineCommand({
 
     let logsSubscription: EditSubscription<ENVIRONMENT_LOGS_SUBSCRIPTION> | undefined;
 
-    if (!args["--no-logs"]) {
-      logsSubscription = subscribeToEnvironmentLogs(syncJson.edit, args, {
+    if (!flags["--no-logs"]) {
+      logsSubscription = subscribeToEnvironmentLogs(syncJson.edit, flags, {
         onError: (error) => {
           ctx.abort(error);
         },
@@ -293,7 +293,7 @@ export default defineCommand({
     /**
      * A debounced function that sends the local file changes to Gadget.
      */
-    const mergeChangesWithEnvironment = debounceAsync(args["--file-push-delay"], async (): Promise<void> => {
+    const mergeChangesWithEnvironment = debounceAsync(flags["--file-push-delay"], async (): Promise<void> => {
       try {
         const lastGitBranch = syncJson.gitBranch;
         await syncJson.loadGitBranch();
@@ -354,9 +354,9 @@ export default defineCommand({
         renameDetection: true,
         // how long to wait for an add event to be followed by an unlink
         // event, and vice versa (i.e. a rename event)
-        renameTimeout: args["--file-watch-rename-timeout"],
+        renameTimeout: flags["--file-watch-rename-timeout"],
         // how long to wait before emitting a change event (helps avoid duplicate events)
-        debounce: args["--file-watch-debounce"],
+        debounce: flags["--file-watch-debounce"],
       },
       (event: string, absolutePath: string, renamedPath: string) => {
         const filepath = event === "rename" || event === "renameDir" ? renamedPath : absolutePath;

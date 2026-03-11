@@ -43,37 +43,13 @@ const sampleShopifyCliSessionPayload = (): JsonObject => ({
   },
 });
 
-type ShopifyCliConfigLocation = "windows" | "macos" | "rest";
+const writeShopifyCliConfig = async (sessionPayload: JsonObject) => {
+  let configPath = path.join(testDirPath("xdg-config"), "shopify-cli-kit-nodejs", "config.json");
 
-const runtimeShopifyCliConfigLocation = (): ShopifyCliConfigLocation => {
   if (config.windows) {
-    return "windows";
-  }
-
-  if (process.env["XDG_CONFIG_HOME"]) {
-    return "rest";
-  }
-
-  if (config.macos) {
-    return "macos";
-  }
-
-  return "rest";
-};
-
-const writeShopifyCliConfig = async (sessionPayload: JsonObject, location: ShopifyCliConfigLocation) => {
-  let configPath: string;
-
-  switch (location) {
-    case "windows":
-      configPath = path.join(testDirPath("windows-appdata"), "shopify-cli-kit-nodejs", "Config", "config.json");
-      break;
-    case "macos":
-      configPath = path.join(testDirPath("home-macos"), "Library", "Preferences", "shopify-cli-kit-nodejs", "config.json");
-      break;
-    case "rest":
-      configPath = path.join(testDirPath("xdg-config"), "shopify-cli-kit-nodejs", "config.json");
-      break;
+    configPath = path.join(testDirPath("windows-appdata"), "shopify-cli-kit-nodejs", "Config", "config.json");
+  } else if (!process.env["XDG_CONFIG_HOME"] && config.macos) {
+    configPath = path.join(testDirPath("home-macos"), "Library", "Preferences", "shopify-cli-kit-nodejs", "config.json");
   }
 
   await fs.outputFile(configPath, JSON.stringify({ sessionStore: JSON.stringify(sessionPayload) }));
@@ -122,7 +98,7 @@ describe("shopify", () => {
 
   it("imports Shopify CLI session first and connects using the synced app slug by default", async () => {
     const sessionPayload = sampleShopifyCliSessionPayload();
-    await writeShopifyCliConfig(sessionPayload, runtimeShopifyCliConfigLocation());
+    await writeShopifyCliConfig(sessionPayload);
 
     mockImportSuccess(sessionPayload);
     mockSingleOrg();
@@ -135,7 +111,7 @@ describe("shopify", () => {
 
   it("connects using an overridden app name and organization id", async () => {
     const sessionPayload = sampleShopifyCliSessionPayload();
-    await writeShopifyCliConfig(sessionPayload, runtimeShopifyCliConfigLocation());
+    await writeShopifyCliConfig(sessionPayload);
 
     mockImportSuccess(sessionPayload);
     mockConnectSuccess("custom-shopify-app", "org-2");
@@ -152,7 +128,7 @@ describe("shopify", () => {
 
   it("errors when importing Shopify CLI session fails", async () => {
     const sessionPayload = sampleShopifyCliSessionPayload();
-    await writeShopifyCliConfig(sessionPayload, runtimeShopifyCliConfigLocation());
+    await writeShopifyCliConfig(sessionPayload);
 
     nockEditResponse({
       operation: IMPORT_SHOPIFY_CLI_SESSION_MUTATION,
@@ -166,7 +142,7 @@ describe("shopify", () => {
 
   it("errors when no Shopify organizations are found", async () => {
     const sessionPayload = sampleShopifyCliSessionPayload();
-    await writeShopifyCliConfig(sessionPayload, runtimeShopifyCliConfigLocation());
+    await writeShopifyCliConfig(sessionPayload);
 
     mockImportSuccess(sessionPayload);
 
@@ -185,7 +161,7 @@ describe("shopify", () => {
 
   it("prints available organizations and errors when multiple organizations are found without an id", async () => {
     const sessionPayload = sampleShopifyCliSessionPayload();
-    await writeShopifyCliConfig(sessionPayload, runtimeShopifyCliConfigLocation());
+    await writeShopifyCliConfig(sessionPayload);
 
     mockImportSuccess(sessionPayload);
 

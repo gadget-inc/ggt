@@ -71,6 +71,7 @@ unref
 unstub
 unthunk
 usagestop
+vflags
 vitest
 worktree
 worktrees

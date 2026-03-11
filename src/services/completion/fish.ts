@@ -68,19 +68,39 @@ export const generateFishCompletions = (data: CompletionData): string => {
     lines.push("");
 
     lines.push("# Helper: check if we are positioned for a subcommand (parent seen, no subcommand yet)");
-    lines.push("# Known limitation: flag values (e.g. `--app myapp`) are mistaken for subcommands");
-    lines.push("# Usage: __ggt_needs_subcommand parentName [parentAlias...]");
+    lines.push("# Usage: __ggt_needs_subcommand parentName [parentAlias...] -- valueFlagName ...");
     lines.push("function __ggt_needs_subcommand");
+    lines.push("  set -l parents");
+    lines.push("  set -l vflags");
+    lines.push("  set -l after_sep 0");
+    lines.push("  for a in $argv");
+    lines.push("    if test $a = '--'");
+    lines.push("      set after_sep 1");
+    lines.push("    else if test $after_sep -eq 1");
+    lines.push("      set -a vflags $a");
+    lines.push("    else");
+    lines.push("      set -a parents $a");
+    lines.push("    end");
+    lines.push("  end");
     lines.push("  set -l cmd (commandline -opc)");
     lines.push("  set -l found_parent 0");
+    lines.push("  set -l skip_next 0");
     lines.push("  for word in $cmd");
     lines.push("    if test $found_parent -eq 1");
-    lines.push("      # if the word after the parent is not a flag, a subcommand was entered");
-    lines.push("      if not string match -q -- '-*' $word");
-    lines.push("        return 1");
+    lines.push("      if test $skip_next -eq 1");
+    lines.push("        set skip_next 0");
+    lines.push("        continue");
     lines.push("      end");
+    lines.push("      if contains -- $word $vflags");
+    lines.push("        set skip_next 1");
+    lines.push("        continue");
+    lines.push("      end");
+    lines.push("      if string match -q -- '-*' $word");
+    lines.push("        continue");
+    lines.push("      end");
+    lines.push("      return 1");
     lines.push("    end");
-    lines.push("    if contains -- $word $argv");
+    lines.push("    if contains -- $word $parents");
     lines.push("      set found_parent 1");
     lines.push("    end");
     lines.push("  end");
@@ -123,11 +143,14 @@ export const generateFishCompletions = (data: CompletionData): string => {
       }
 
       // subcommand names
+      const vFlags = valueFlagNames(cmd.flags, data.rootFlags);
+      const needsSubCond =
+        vFlags.length > 0 ? `__ggt_needs_subcommand ${cmdNames} -- ${vFlags.join(" ")}` : `__ggt_needs_subcommand ${cmdNames}`;
       for (const sub of cmd.subcommands) {
         const desc = escapeFish(sub.description);
-        lines.push(`complete -c ggt -n '__ggt_needs_subcommand ${cmdNames}' -a '${sub.name}' -d '${desc}'`);
+        lines.push(`complete -c ggt -n '${needsSubCond}' -a '${sub.name}' -d '${desc}'`);
         for (const alias of sub.aliases) {
-          lines.push(`complete -c ggt -n '__ggt_needs_subcommand ${cmdNames}' -a '${alias}' -d '${desc}'`);
+          lines.push(`complete -c ggt -n '${needsSubCond}' -a '${alias}' -d '${desc}'`);
         }
       }
 
@@ -162,6 +185,21 @@ export const generateFishCompletions = (data: CompletionData): string => {
   }
 
   return lines.join("\n");
+};
+
+/**
+ * Collects all names and aliases for flags that take a value (string or number).
+ */
+const valueFlagNames = (...flagSets: FlagDef[][]): string[] => {
+  const names: string[] = [];
+  for (const flags of flagSets) {
+    for (const f of flags) {
+      if (f.type === "string" || f.type === "number") {
+        names.push(f.name, ...f.aliases);
+      }
+    }
+  }
+  return names;
 };
 
 /**

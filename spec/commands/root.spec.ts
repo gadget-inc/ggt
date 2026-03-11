@@ -104,6 +104,7 @@ describe("root", () => {
         Configuration
         configure       Manage ggt configuration
         agent-plugin    Manage plugins for AI coding assistants
+        completion      Generate shell completion scripts
         version         Print the currently installed version
 
       FLAGS
@@ -159,6 +160,7 @@ describe("root", () => {
         Configuration
         configure       Manage ggt configuration
         agent-plugin    Manage plugins for AI coding assistants
+        completion      Generate shell completion scripts
         version         Print the currently installed version
 
       FLAGS

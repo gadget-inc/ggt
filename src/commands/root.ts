@@ -51,6 +51,10 @@ export const flags = {
     details:
       "Formats all output as newline-delimited JSON instead of human-readable text. Useful for scripting and piping ggt output to other tools.",
   },
+  "--__complete": {
+    type: Boolean,
+    hidden: true,
+  },
 } satisfies FlagsDefinition;
 
 export const usage = async (helpLevel: "-h" | "--help" = "-h"): Promise<string> => {
@@ -103,6 +107,12 @@ const renderExpandedFlags = (flags: FlagDef[]): string => {
 
 export const run = async (parent: Context, rootFlags: RootFlagsResult): Promise<void> => {
   const ctx = parent.child({ name: "root" });
+
+  if (rootFlags["--__complete"]) {
+    const { handleCompletionRequest } = await import("../services/completion/handler.js");
+    await handleCompletionRequest(ctx, rootFlags._);
+    process.exit(0);
+  }
 
   if (rootFlags["--version"]) {
     println(packageJson.version);

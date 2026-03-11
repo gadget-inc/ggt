@@ -157,6 +157,51 @@ describe("login", () => {
     expect(server.close).toHaveBeenCalled();
   });
 
+  it("ignores requests without a session param and keeps waiting for the real callback", async () => {
+    writeSession(testCtx, undefined);
+    mock(user, "getUser", () => testUser);
+
+    void runCommand(testCtx, login);
+    await serverListening;
+    await openedBrowser;
+
+    // simulate a spurious request (e.g. favicon, health check, port-forwarding probe)
+    const spuriousReq = new http.IncomingMessage(undefined as any);
+    spuriousReq.url = "/favicon.ico";
+
+    const spuriousRes = new http.ServerResponse(spuriousReq);
+    vi.spyOn(spuriousRes, "writeHead");
+    vi.spyOn(spuriousRes, "end");
+
+    requestListener!(spuriousReq, spuriousRes);
+
+    // spurious request should get a 404, not crash the server
+    expect(spuriousRes.writeHead).toHaveBeenCalledWith(404);
+    expect(spuriousRes.end).toHaveBeenCalled();
+
+    // the login flow should still be waiting — session not set, server not closed
+    expect(readSession(testCtx)).toBeUndefined();
+    expect(user.getUser).not.toHaveBeenCalled();
+    expect(server.close).not.toHaveBeenCalled();
+
+    // now send the real callback with a session
+    const req = new http.IncomingMessage(undefined as any);
+    req.url = "?session=test";
+
+    const res = new http.ServerResponse(req);
+    vi.spyOn(res, "writeHead");
+    vi.spyOn(res, "end");
+
+    requestListener!(req, res);
+
+    await serverClosed;
+    expect(readSession(testCtx)).toBe("test");
+    expect(user.getUser).toHaveBeenCalled();
+    expect(res.writeHead).toHaveBeenCalledWith(303, { Location: `https://${config.domains.services}/auth/cli?success=true` });
+    expect(res.end).toHaveBeenCalled();
+    expect(server.close).toHaveBeenCalled();
+  });
+
   it("redirects to /auth/cli?success=false if an error occurs while setting the session", async () => {
     writeSession(testCtx, undefined);
     mock(user, "getUser", () => {

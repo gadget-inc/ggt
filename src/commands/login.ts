@@ -29,13 +29,17 @@ export default defineCommand({
       const receiveSession = new Promise<void>((resolve, reject) => {
         // oxlint-disable-next-line no-misused-promises
         server = http.createServer(async (req, res) => {
+          const session = req.url ? new URL(req.url, `http://localhost:${port}`).searchParams.get("session") : null;
+          if (!session) {
+            // Ignore spurious requests (favicon, health checks, port-forwarding probes)
+            res.writeHead(404);
+            res.end();
+            return;
+          }
+
           const landingPage = new URL(`https://${config.domains.services}/auth/cli`);
 
           try {
-            assert(req.url, "missing url");
-            const session = new URL(req.url, `http://localhost:${port}`).searchParams.get("session");
-            assert(session, "missing session");
-
             writeSession(ctx, session);
 
             const user = await getUser(ctx);

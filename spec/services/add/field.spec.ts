@@ -2,7 +2,7 @@ import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { AddClientError } from "../../../src/commands/add.js";
-import { addFields, parseFieldTarget } from "../../../src/services/add/field.js";
+import { addFields, parseFieldTarget, parseFieldValues } from "../../../src/services/add/field.js";
 import { CREATE_MODEL_FIELDS_MUTATION } from "../../../src/services/app/edit/operation.js";
 import { nockTestApps } from "../../__support__/app.js";
 import { testCtx } from "../../__support__/context.js";
@@ -10,6 +10,74 @@ import { expectError } from "../../__support__/error.js";
 import { makeSyncScenario } from "../../__support__/filesync.js";
 import { nockEditResponse } from "../../__support__/graphql.js";
 import { loginTestUser } from "../../__support__/user.js";
+
+describe("parseFieldValues", () => {
+  it("parses a single field definition", () => {
+    const [fields, problems] = parseFieldValues(["title:string"]);
+    expect(problems).toEqual([]);
+    expect(fields).toEqual([{ name: "title", fieldType: "string" }]);
+  });
+
+  it("parses multiple field definitions", () => {
+    const [fields, problems] = parseFieldValues(["title:string", "count:number", "active:boolean"]);
+    expect(problems).toEqual([]);
+    expect(fields).toEqual([
+      { name: "title", fieldType: "string" },
+      { name: "count", fieldType: "number" },
+      { name: "active", fieldType: "boolean" },
+    ]);
+  });
+
+  it("strips extra colons from the field name", () => {
+    const [fields, problems] = parseFieldValues(["na::me:string"]);
+    expect(problems).toEqual([]);
+    expect(fields).toEqual([{ name: "name", fieldType: "string" }]);
+  });
+
+  it("reports a problem for missing type after colon", () => {
+    const [fields, problems] = parseFieldValues(["title:"]);
+    expect(fields).toEqual([]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("is not a valid field definition");
+  });
+
+  it("reports a problem for bare colon", () => {
+    const [fields, problems] = parseFieldValues([":"]);
+    expect(fields).toEqual([]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("is not a valid field definition");
+  });
+
+  it("reports a problem for missing colon separator", () => {
+    const [fields, problems] = parseFieldValues(["field;string"]);
+    expect(fields).toEqual([]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("is not a valid field definition");
+  });
+
+  it("reports a problem for empty string", () => {
+    const [fields, problems] = parseFieldValues([""]);
+    expect(fields).toEqual([]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("is not a valid field definition");
+  });
+
+  it("returns empty arrays for empty input", () => {
+    const [fields, problems] = parseFieldValues([]);
+    expect(fields).toEqual([]);
+    expect(problems).toEqual([]);
+  });
+
+  it("collects problems and valid fields together", () => {
+    const [fields, problems] = parseFieldValues(["title:string", "bad", "count:number"]);
+    expect(fields).toEqual([
+      { name: "title", fieldType: "string" },
+      { name: "count", fieldType: "number" },
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("is not a valid field definition");
+  });
+});
 
 describe("parseFieldTarget", () => {
   it("parses model/field:type", () => {

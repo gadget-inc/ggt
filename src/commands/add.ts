@@ -8,14 +8,17 @@ import { addRoute } from "../services/add/route.js";
 import { getGlobalActions, getModels } from "../services/app/app.js";
 import { ClientError } from "../services/app/error.js";
 import { defineCommand } from "../services/command/command.js";
-import { FlagError } from "../services/command/flag.js";
-import { loadFileSyncFromCwd } from "../services/command/load.js";
-import { SyncJsonFlags } from "../services/filesync/sync-json.js";
+import type { Context } from "../services/command/context.js";
+import { FlagError, type FlagsResult } from "../services/command/flag.js";
+import { UnknownDirectoryError } from "../services/filesync/error.js";
+import { FileSync } from "../services/filesync/filesync.js";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
 import { println } from "../services/output/print.js";
 import { GGTError, IsBug } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
+import { ts } from "../services/output/timestamp.js";
 import { uniq } from "../services/util/collection.js";
 import { isGraphQLErrors } from "../services/util/is.js";
 
@@ -47,6 +50,32 @@ export class AddClientError extends GGTError {
     `;
   }
 }
+
+type AddFlagsResult = FlagsResult<typeof SyncJsonFlags>;
+
+const setupAddSync = async (ctx: Context, flags: AddFlagsResult): Promise<{ filesync: FileSync; syncJson: SyncJson }> => {
+  const directory = await loadSyncJsonDirectory(process.cwd());
+  const syncJson = await SyncJson.load(ctx, { command: "add", flags, directory });
+  if (!syncJson) {
+    throw new UnknownDirectoryError({ command: "add", flags, directory });
+  }
+
+  const filesync = new FileSync(syncJson);
+  const hashes = await filesync.hashes(ctx, { silent: true });
+
+  if (!hashes.inSync) {
+    await filesync.merge(ctx, {
+      hashes,
+      printEnvironmentChangesOptions: { limit: 5 },
+      printLocalChangesOptions: { limit: 5 },
+      silent: true,
+    });
+  }
+
+  println({ ensureEmptyLineAbove: true, content: `${colors.created(symbol.tick)} Sync completed ${ts()}` });
+
+  return { filesync, syncJson };
+};
 
 export default defineCommand({
   name: "add",
@@ -108,7 +137,7 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync, syncJson } = await loadFileSyncFromCwd(ctx, { command: "add", flags });
+        const { filesync, syncJson } = await setupAddSync(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const modelApiIdentifier = flags._[0]!;
 
@@ -170,7 +199,7 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync, syncJson } = await loadFileSyncFromCwd(ctx, { command: "add", flags });
+        const { filesync, syncJson } = await setupAddSync(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const path = flags._[0]!;
 
@@ -215,7 +244,7 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync, syncJson } = await loadFileSyncFromCwd(ctx, { command: "add", flags });
+        const { filesync, syncJson } = await setupAddSync(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const routeMethod = flags._[0]!;
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
@@ -253,7 +282,7 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync, syncJson } = await loadFileSyncFromCwd(ctx, { command: "add", flags });
+        const { filesync, syncJson } = await setupAddSync(ctx, flags);
 
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const input = flags._[0]!;
@@ -306,7 +335,7 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { syncJson } = await loadFileSyncFromCwd(ctx, { command: "add", flags });
+        const { syncJson } = await setupAddSync(ctx, flags);
 
         let newEnvName = flags._[0];
         if (!newEnvName) {

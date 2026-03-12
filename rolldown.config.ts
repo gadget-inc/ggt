@@ -14,7 +14,7 @@ export default defineConfig({
       ? false
       : {
           compress: true,
-          mangle: { keepNames: true },
+          mangle: true,
         },
   },
 });

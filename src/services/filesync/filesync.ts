@@ -646,7 +646,11 @@ export class FileSync {
         // the os's default umask makes setting the mode during creation
         // not work, so an additional fs.chmod call is necessary to
         // ensure the file has the correct mode
-        await fs.chmod(absolutePath, file.mode & 0o777);
+        try {
+          await fs.chmod(absolutePath, file.mode & 0o777);
+        } catch (error) {
+          swallowEnoent(error);
+        }
       }
 
       if (absolutePath === this.syncJson.directory.absolute(".ignore")) {

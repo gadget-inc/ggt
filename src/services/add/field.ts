@@ -5,11 +5,28 @@ import { ClientError } from "../app/error.js";
 import type { Context } from "../command/context.js";
 import type { FileSync } from "../filesync/filesync.js";
 import type { SyncJson } from "../filesync/sync-json.js";
-import colors from "../output/colors.js";
-import { println } from "../output/print.js";
-import { parseFieldValues } from "./model.js";
+import { sprint } from "../output/sprint.js";
 
-export type AddFieldResult = {
+/**
+ * Parse field definitions like "name:string" into { name, fieldType } objects.
+ */
+export const parseFieldValues = (fields: string[]): [{ name: string; fieldType: string }[], problems: string[]] => {
+  const problems: string[] = [];
+  const modelFields: { name: string; fieldType: string }[] = [];
+
+  for (const field of fields) {
+    const matches = /^(.*):+(.*)$/.exec(field);
+    if (!matches || matches.length !== 3 || !matches[1] || !matches[2]) {
+      problems.push(sprint`${field} is not a valid field definition`);
+    } else {
+      modelFields.push({ name: matches[1].replace(/:+/g, ""), fieldType: matches[2] });
+    }
+  }
+
+  return [modelFields, problems];
+};
+
+export type AddFieldsResult = {
   fieldName: string;
   remoteFilesVersion: string;
   changed: CreateModelFieldsMutation["createModelFields"]["changed"];
@@ -44,9 +61,9 @@ export const parseFieldTarget = (
 };
 
 /**
- * Add a field to an existing model.
+ * Add fields to an existing model.
  */
-export const addField = async (
+export const addFields = async (
   ctx: Context,
   {
     syncJson,
@@ -59,7 +76,7 @@ export const addField = async (
     modelApiIdentifier: string;
     fields: Array<{ name: string; fieldType: string }>;
   },
-): Promise<AddFieldResult> => {
+): Promise<AddFieldsResult> => {
   let result;
 
   try {
@@ -87,11 +104,4 @@ export const addField = async (
     remoteFilesVersion: result.remoteFilesVersion,
     changed: result.changed,
   };
-};
-
-/**
- * Print success message after adding a field.
- */
-export const printAddFieldResult = (result: AddFieldResult): void => {
-  println({ ensureEmptyLineAbove: true, content: `Field ${colors.code(result.fieldName)} added successfully.` });
 };

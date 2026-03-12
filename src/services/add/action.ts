@@ -114,10 +114,3 @@ export const addAction = async (
     changed: result.changed,
   };
 };
-
-/**
- * Print success message after adding an action.
- */
-export const printAddActionResult = (result: AddActionResult): void => {
-  println({ ensureEmptyLineAbove: true, content: `Action ${colors.code(result.path)} added successfully.` });
-};

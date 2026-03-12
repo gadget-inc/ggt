@@ -1,8 +1,10 @@
-import { addAction, printAddActionResult, resolveActionPath } from "../services/add/action.js";
-import { addEnvironment, generateDefaultEnvName, printAddEnvironmentResult, switchToNewEnvironment } from "../services/add/environment.js";
-import { addField, parseFieldTarget, printAddFieldResult } from "../services/add/field.js";
-import { addModel, parseFieldValues, printAddModelResult } from "../services/add/model.js";
-import { addRoute, printAddRouteResult } from "../services/add/route.js";
+import terminalLink from "terminal-link";
+
+import { addAction, resolveActionPath } from "../services/add/action.js";
+import { addEnvironment, generateDefaultEnvName, switchToNewEnvironment } from "../services/add/environment.js";
+import { addFields, parseFieldTarget, parseFieldValues } from "../services/add/field.js";
+import { addModel } from "../services/add/model.js";
+import { addRoute } from "../services/add/route.js";
 import { getGlobalActions, getModels } from "../services/app/app.js";
 import { ClientError } from "../services/app/error.js";
 import { defineCommand } from "../services/command/command.js";
@@ -10,8 +12,10 @@ import { FlagError } from "../services/command/flag.js";
 import { loadFileSyncFromCwd } from "../services/command/load.js";
 import { SyncJsonFlags } from "../services/filesync/sync-json.js";
 import colors from "../services/output/colors.js";
+import { println } from "../services/output/print.js";
 import { GGTError, IsBug } from "../services/output/report.js";
 import { sprint } from "../services/output/sprint.js";
+import { symbol } from "../services/output/symbols.js";
 import { uniq } from "../services/util/collection.js";
 import { isGraphQLErrors } from "../services/util/is.js";
 
@@ -38,7 +42,7 @@ export class AddClientError extends GGTError {
 
   protected override render(): string {
     return sprint`
-      ${colors.deleted("\u2717")} Failed to add:
+      ${colors.deleted(symbol.cross)} Failed to add:
        ${this.message}
     `;
   }
@@ -126,14 +130,25 @@ export default defineCommand({
           modelFieldsList = modelFields;
         }
 
-        const result = await addModel(ctx, {
+        await addModel(ctx, {
           syncJson,
           filesync,
           modelApiIdentifier,
           fields: modelFieldsList,
         });
 
-        printAddModelResult(result, syncJson);
+        const modelPrintout = terminalLink.isSupported
+          ? terminalLink(
+              modelApiIdentifier,
+              `https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}/model/${modelApiIdentifier}/schema`,
+            )
+          : modelApiIdentifier;
+
+        println({ ensureEmptyLineAbove: true, content: colors.subdued("New model created in environment.") });
+        println({
+          ensureEmptyLineAbove: true,
+          content: `${colors.created(symbol.tick)} Model ${colors.code(modelPrintout)} added successfully.`,
+        });
       },
     }),
     action: sub({
@@ -164,13 +179,13 @@ export default defineCommand({
 
         const resolved = await resolveActionPath(path, models, globalActions);
 
-        const result = await addAction(ctx, {
+        await addAction(ctx, {
           syncJson,
           filesync,
           path: resolved.path,
         });
 
-        printAddActionResult(result);
+        println({ ensureEmptyLineAbove: true, content: `Action ${colors.code(path)} added successfully.` });
       },
     }),
     route: sub({
@@ -206,14 +221,14 @@ export default defineCommand({
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const routePath = flags._[1]!;
 
-        const result = await addRoute(ctx, {
+        await addRoute(ctx, {
           syncJson,
           filesync,
           method: routeMethod,
           path: routePath,
         });
 
-        printAddRouteResult(result);
+        println({ ensureEmptyLineAbove: true, content: `Route ${colors.code(routePath)} added successfully.` });
       },
     }),
     field: sub({
@@ -261,14 +276,14 @@ export default defineCommand({
           );
         }
 
-        const result = await addField(ctx, {
+        await addFields(ctx, {
           syncJson,
           filesync,
           modelApiIdentifier: parsed.modelApiIdentifier,
           fields: [{ name: parsed.fieldName, fieldType: parsed.fieldType }],
         });
 
-        printAddFieldResult(result);
+        println({ ensureEmptyLineAbove: true, content: `Field ${colors.code(parsed.fieldName)} added successfully.` });
       },
     }),
     environment: sub({
@@ -298,12 +313,12 @@ export default defineCommand({
           newEnvName = generateDefaultEnvName();
         }
 
-        const result = await addEnvironment(ctx, {
+        await addEnvironment(ctx, {
           syncJson,
           name: newEnvName,
         });
 
-        printAddEnvironmentResult(result);
+        println({ ensureEmptyLineAbove: true, content: `Environment ${colors.code(newEnvName)} added successfully.` });
 
         // Switch to newly made env
         await switchToNewEnvironment(ctx, {

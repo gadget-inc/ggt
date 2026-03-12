@@ -2,7 +2,8 @@ import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { AddClientError } from "../../../src/commands/add.js";
-import { addModel, parseFieldValues } from "../../../src/services/add/model.js";
+import { parseFieldValues } from "../../../src/services/add/field.js";
+import { addModel } from "../../../src/services/add/model.js";
 import { CREATE_MODEL_MUTATION } from "../../../src/services/app/edit/operation.js";
 import { nockTestApps } from "../../__support__/app.js";
 import { testCtx } from "../../__support__/context.js";

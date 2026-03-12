@@ -5,8 +5,6 @@ import { ClientError } from "../app/error.js";
 import type { Context } from "../command/context.js";
 import type { FileSync } from "../filesync/filesync.js";
 import type { SyncJson } from "../filesync/sync-json.js";
-import colors from "../output/colors.js";
-import { println } from "../output/print.js";
 
 export type AddRouteResult = {
   method: string;
@@ -57,11 +55,4 @@ export const addRoute = async (
     remoteFilesVersion: result.remoteFilesVersion,
     changed: result.changed,
   };
-};
-
-/**
- * Print success message after adding a route.
- */
-export const printAddRouteResult = (result: AddRouteResult): void => {
-  println({ ensureEmptyLineAbove: true, content: `Route ${colors.code(result.path)} added successfully.` });
 };

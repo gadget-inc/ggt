@@ -2,7 +2,7 @@ import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { AddClientError } from "../../../src/commands/add.js";
-import { addField, parseFieldTarget } from "../../../src/services/add/field.js";
+import { addFields, parseFieldTarget } from "../../../src/services/add/field.js";
 import { CREATE_MODEL_FIELDS_MUTATION } from "../../../src/services/app/edit/operation.js";
 import { nockTestApps } from "../../__support__/app.js";
 import { testCtx } from "../../__support__/context.js";
@@ -67,7 +67,7 @@ describe("parseFieldTarget", () => {
   });
 });
 
-describe("addField", () => {
+describe("addFields", () => {
   beforeEach(async () => {
     loginTestUser();
     nockTestApps();
@@ -86,7 +86,7 @@ describe("addField", () => {
       },
     });
 
-    const result = await addField(testCtx, {
+    const result = await addFields(testCtx, {
       syncJson,
       filesync,
       modelApiIdentifier: "post",
@@ -108,7 +108,7 @@ describe("addField", () => {
     });
 
     const error = await expectError(() =>
-      addField(testCtx, {
+      addFields(testCtx, {
         syncJson,
         filesync,
         modelApiIdentifier: "post",

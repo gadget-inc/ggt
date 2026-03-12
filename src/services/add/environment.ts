@@ -5,7 +5,6 @@ import type { Context } from "../command/context.js";
 import { FileSync } from "../filesync/filesync.js";
 import { loadSyncJsonDirectory, SyncJson } from "../filesync/sync-json.js";
 import type { SyncJson as SyncJsonType } from "../filesync/sync-json.js";
-import colors from "../output/colors.js";
 import { println } from "../output/print.js";
 
 export type AddEnvironmentResult = {
@@ -50,13 +49,6 @@ export const addEnvironment = async (
   }
 
   return { name };
-};
-
-/**
- * Print success message after adding an environment.
- */
-export const printAddEnvironmentResult = (result: AddEnvironmentResult): void => {
-  println({ ensureEmptyLineAbove: true, content: `Environment ${colors.code(result.name)} added successfully.` });
 };
 
 /**

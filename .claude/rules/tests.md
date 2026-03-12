@@ -16,7 +16,7 @@ Tests live in `spec/` (mirroring `src/`) using Vitest. Setup in `spec/vitest.set
 - Config dirs (`config.configDir`, `cacheDir`, `dataDir`) point to test tmp dirs
 - `packageJson.version` fixed to `"1.2.3"`; `config.versionFull` fixed to a stable string
 - Nock: `nock.cleanAll()` before each test; **pending mocks asserted on cleanup**
-- Side-effect mocks: `execa`, `get-port`, `node-notifier`, `open`, `which`, `simple-git`
+- Side-effect mocks: `execa`, `get-port`, `open`, `which`, `simple-git`
 - `process.exit` mocked to **throw** — always wrap with `expectProcessExit(fn, code)`
 - Memoization cleared between tests via `clearMemoized()`
 - JSON extensions installed/uninstalled each test

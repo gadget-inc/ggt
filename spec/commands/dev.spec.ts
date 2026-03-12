@@ -1,6 +1,5 @@
 import fs from "fs-extra";
 import ms from "ms";
-import notifier from "node-notifier";
 import pMap from "p-map";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
@@ -11,7 +10,6 @@ import { ClientError } from "../../src/services/app/error.js";
 import { runCommand } from "../../src/services/command/run.js";
 import { YarnNotFoundError } from "../../src/services/filesync/error.js";
 import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
-import { assetsPath } from "../../src/services/util/paths.js";
 import { nockTestApps, testApp } from "../__support__/app.js";
 import { testCtx } from "../__support__/context.js";
 import { waitForReportErrorAndExit } from "../__support__/error.js";
@@ -1271,6 +1269,7 @@ describe("dev", () => {
   });
 
   it("notifies the user when an error occurs", async () => {
+    const stderrSpy = vi.spyOn(process.stderr, "write").mockReturnValue(true);
     const { expectGadgetChangesSubscription } = await makeSyncScenario();
 
     await runDev();
@@ -1282,18 +1281,8 @@ describe("dev", () => {
 
     await waitForReportErrorAndExit(error);
 
-    expect(notifier.notify).toHaveBeenCalledWith(
-      {
-        title: "Gadget",
-        subtitle: "Uh oh!",
-        message: "An error occurred while syncing files",
-        sound: true,
-        timeout: false,
-        icon: assetsPath("favicon-128@4x.png"),
-        contentImage: assetsPath("favicon-128@4x.png"),
-      },
-      expect.any(Function),
-    );
+    expect(stderrSpy).toHaveBeenCalledWith("\x07");
+    stderrSpy.mockRestore();
   });
 
   it("throws YarnNotFoundError if yarn is not found", async () => {

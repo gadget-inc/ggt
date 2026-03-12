@@ -41,8 +41,6 @@ logql
 mkdirs
 myapp
 nothrow
-notificationcenter
-notifysend
 oclif
 outdir
 oxfmt

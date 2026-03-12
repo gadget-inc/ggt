@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
@@ -10,7 +11,7 @@ describe("main", () => {
       // Run a script that patches process.versions.node before importing the built main.js
       const script = `
         Object.defineProperty(process.versions, 'node', { value: '20.0.0', configurable: true });
-        await import(${JSON.stringify("file://" + workspacePath("src/main.ts"))});
+        await import(${JSON.stringify(pathToFileURL(workspacePath("src/main.ts")).href)});
       `;
 
       try {

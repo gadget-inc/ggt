@@ -127,7 +127,7 @@
     "zod": "^4.3.6"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "packageManager": "pnpm@10.11.0"
 }

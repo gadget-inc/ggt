@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { FlagError } from "../../../src/services/command/flag.js";
-import { FileSyncStrategy, MergeConflictPreference, MergeConflictPreferenceArg } from "../../../src/services/filesync/strategy.js";
+import { FlagError } from "../../../src/services/command/flag.ts";
+import { FileSyncStrategy, MergeConflictPreference, MergeConflictPreferenceArg } from "../../../src/services/filesync/strategy.ts";
 
 describe("FileSyncStrategy", () => {
   it("has expected values", () => {

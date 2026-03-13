@@ -1,7 +1,7 @@
 import { describe, expect, it, test, vi } from "vitest";
 
-import { Context, type OnAbort } from "../../../src/services/command/context.js";
-import { mockOnce } from "../../__support__/mock.js";
+import { Context, type OnAbort } from "../../../src/services/command/context.ts";
+import { mockOnce } from "../../__support__/mock.ts";
 
 describe("Context.onAbort", () => {
   it("calls the callback when the context is aborted", () => {

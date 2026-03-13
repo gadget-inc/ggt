@@ -5,9 +5,9 @@ import chalk from "chalk";
 import type { SpinnerName } from "cli-spinners";
 import cliSpinners from "cli-spinners";
 
-import { output } from "./output.js";
-import { type SprintOptionsWithContent } from "./sprint.js";
-import { symbol } from "./symbols.js";
+import { output } from "./output.ts";
+import { type SprintOptionsWithContent } from "./sprint.ts";
+import { symbol } from "./symbols.ts";
 
 export type SpinnerOptions = SprintOptionsWithContent & {
   /**

@@ -1,4 +1,4 @@
-#!/usr/bin/env node --loader=ts-node/esm --no-warnings
+#!/usr/bin/env node --experimental-transform-types --no-warnings
 
 import { $ } from "execa";
 import fs from "fs-extra";
@@ -8,9 +8,9 @@ import remarkToc from "remark-toc";
 import stripAnsi from "strip-ansi";
 import { dedent } from "ts-dedent";
 
-import { usage } from "../src/commands/root.js";
-import { Commands, importCommand } from "../src/services/command/command.js";
-import { renderShortUsage } from "../src/services/command/usage.js";
+import { usage } from "../src/commands/root.ts";
+import { Commands, importCommand } from "../src/services/command/command.ts";
+import { renderShortUsage } from "../src/services/command/usage.ts";
 
 let readme = await fs.readFile("README.md", "utf8");
 

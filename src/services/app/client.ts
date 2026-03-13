@@ -7,17 +7,17 @@ import PQueue from "p-queue";
 import type { Promisable } from "type-fest";
 import WebSocket from "ws";
 
-import type { Context } from "../command/context.js";
-import { config } from "../config/config.js";
-import { loadAuthHeaders } from "../http/auth.js";
-import { http, type HttpOptions } from "../http/http.js";
-import { getUser } from "../user/user.js";
-import { noop, unthunk, type Thunk } from "../util/function.js";
-import { isArray, isObject } from "../util/is.js";
-import { calculateBackoffDelay, DEFAULT_RETRY_LIMIT, isRetryableErrorCause, type RetryOptions } from "../util/retry.js";
-import type { Environment } from "./app.js";
-import { type GraphQLMutation, type GraphQLQuery, type GraphQLSubscription } from "./edit/operation.js";
-import { AuthenticationError, ClientError } from "./error.js";
+import type { Context } from "../command/context.ts";
+import { config } from "../config/config.ts";
+import { loadAuthHeaders } from "../http/auth.ts";
+import { http, type HttpOptions } from "../http/http.ts";
+import { getUser } from "../user/user.ts";
+import { noop, unthunk, type Thunk } from "../util/function.ts";
+import { isArray, isObject } from "../util/is.ts";
+import { calculateBackoffDelay, DEFAULT_RETRY_LIMIT, isRetryableErrorCause, type RetryOptions } from "../util/retry.ts";
+import type { Environment } from "./app.ts";
+import { type GraphQLMutation, type GraphQLQuery, type GraphQLSubscription } from "./edit/operation.ts";
+import { AuthenticationError, ClientError } from "./error.ts";
 
 /**
  * An object that can be used to unsubscribe and resubscribe to an

@@ -1,8 +1,8 @@
-import { defineCommand } from "../services/command/command.js";
-import colors from "../services/output/colors.js";
-import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
-import { packageJson } from "../services/util/package-json.js";
+import { defineCommand } from "../services/command/command.ts";
+import colors from "../services/output/colors.ts";
+import { println } from "../services/output/print.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { packageJson } from "../services/util/package-json.ts";
 
 export default defineCommand({
   name: "version",

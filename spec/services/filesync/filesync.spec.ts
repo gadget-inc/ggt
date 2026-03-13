@@ -6,24 +6,24 @@ import { GraphQLError } from "graphql";
 import nock from "nock";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FileSyncEncoding } from "../../../src/__generated__/graphql.js";
-import dev from "../../../src/commands/dev.js";
-import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit/operation.js";
-import { config } from "../../../src/services/config/config.js";
-import { Changes } from "../../../src/services/filesync/changes.js";
-import { supportsPermissions, type Directory } from "../../../src/services/filesync/directory.js";
-import { TooManyMergeAttemptsError, TooManyPushAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.js";
-import { FileSync, MAX_PUSH_CONTENT_LENGTH } from "../../../src/services/filesync/filesync.js";
-import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.js";
-import { SyncJson, loadSyncJsonDirectory } from "../../../src/services/filesync/sync-json.js";
-import { loadCookie } from "../../../src/services/http/auth.js";
-import { confirm } from "../../../src/services/output/confirm.js";
-import { EdgeCaseError } from "../../../src/services/output/report.js";
-import { PromiseSignal } from "../../../src/services/util/promise.js";
-import { nockTestApps, testApp } from "../../__support__/app.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectError } from "../../__support__/error.js";
-import { expectDir, writeDir } from "../../__support__/files.js";
+import { FileSyncEncoding } from "../../../src/__generated__/graphql.ts";
+import dev from "../../../src/commands/dev.ts";
+import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit/operation.ts";
+import { config } from "../../../src/services/config/config.ts";
+import { Changes } from "../../../src/services/filesync/changes.ts";
+import { supportsPermissions, type Directory } from "../../../src/services/filesync/directory.ts";
+import { TooManyMergeAttemptsError, TooManyPushAttemptsError, isFilesVersionMismatchError } from "../../../src/services/filesync/error.ts";
+import { FileSync, MAX_PUSH_CONTENT_LENGTH } from "../../../src/services/filesync/filesync.ts";
+import { MergeConflictPreference as ConflictPreference } from "../../../src/services/filesync/strategy.ts";
+import { SyncJson, loadSyncJsonDirectory } from "../../../src/services/filesync/sync-json.ts";
+import { loadCookie } from "../../../src/services/http/auth.ts";
+import { confirm } from "../../../src/services/output/confirm.ts";
+import { EdgeCaseError } from "../../../src/services/output/report.ts";
+import { PromiseSignal } from "../../../src/services/util/promise.ts";
+import { nockTestApps, testApp } from "../../__support__/app.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectError } from "../../__support__/error.ts";
+import { expectDir, writeDir } from "../../__support__/files.ts";
 import {
   defaultFileMode,
   expectPublishVariables,
@@ -31,15 +31,15 @@ import {
   makeFile,
   makeSyncScenario,
   type FileSyncScenarioOptions,
-} from "../../__support__/filesync.js";
-import { makeFlags } from "../../__support__/flag.js";
-import { nockEditResponse } from "../../__support__/graphql.js";
-import { mock, mockConfirmOnce, mockOnce, mockSelectOnce } from "../../__support__/mock.js";
-import { expectStdout } from "../../__support__/output.js";
-import { testDirPath } from "../../__support__/paths.js";
-import { expectProcessExit } from "../../__support__/process.js";
-import { mockSystemTime } from "../../__support__/time.js";
-import { loginTestUser, matchAuthHeader } from "../../__support__/user.js";
+} from "../../__support__/filesync.ts";
+import { makeFlags } from "../../__support__/flag.ts";
+import { nockEditResponse } from "../../__support__/graphql.ts";
+import { mock, mockConfirmOnce, mockOnce, mockSelectOnce } from "../../__support__/mock.ts";
+import { expectStdout } from "../../__support__/output.ts";
+import { testDirPath } from "../../__support__/paths.ts";
+import { expectProcessExit } from "../../__support__/process.ts";
+import { mockSystemTime } from "../../__support__/time.ts";
+import { loginTestUser, matchAuthHeader } from "../../__support__/user.ts";
 
 describe("FileSync._writeToLocalFilesystem", () => {
   // let testCtx: Context<SyncJsonFlags>;

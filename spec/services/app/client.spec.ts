@@ -3,12 +3,12 @@ import type { Sink } from "graphql-ws";
 import type { JsonObject } from "type-fest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Environment } from "../../../src/services/app/app.js";
-import { Client } from "../../../src/services/app/client.js";
-import type { GraphQLSubscription } from "../../../src/services/app/edit/operation.js";
-import { ClientError } from "../../../src/services/app/error.js";
-import { testCtx } from "../../__support__/context.js";
-import { loginTestUser } from "../../__support__/user.js";
+import type { Environment } from "../../../src/services/app/app.ts";
+import { Client } from "../../../src/services/app/client.ts";
+import type { GraphQLSubscription } from "../../../src/services/app/edit/operation.ts";
+import { ClientError } from "../../../src/services/app/error.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { loginTestUser } from "../../__support__/user.ts";
 
 const mockSubscription = "subscription { test }" as GraphQLSubscription<JsonObject, JsonObject>;
 

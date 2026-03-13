@@ -1,16 +1,16 @@
 import open from "open";
 
-import { getModels } from "../services/app/app.js";
-import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
-import { defineCommand } from "../services/command/command.js";
-import { FlagError } from "../services/command/flag.js";
-import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import colors from "../services/output/colors.js";
-import { println } from "../services/output/print.js";
-import { select } from "../services/output/select.js";
-import { sprint } from "../services/output/sprint.js";
-import { closestMatch } from "../services/util/collection.js";
-import { isNever } from "../services/util/is.js";
+import { getModels } from "../services/app/app.ts";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.ts";
+import { defineCommand } from "../services/command/command.ts";
+import { FlagError } from "../services/command/flag.ts";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import colors from "../services/output/colors.ts";
+import { println } from "../services/output/print.ts";
+import { select } from "../services/output/select.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { closestMatch } from "../services/util/collection.ts";
+import { isNever } from "../services/util/is.ts";
 
 const Locations = ["logs", "permissions", "data", "schema"] as const;
 

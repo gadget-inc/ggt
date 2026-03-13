@@ -1,11 +1,11 @@
 import chalk from "chalk";
 import { describe, expect, it } from "vitest";
 
-import colors, { color } from "../../../src/services/output/colors.js";
-import { print } from "../../../src/services/output/print.js";
-import { printTable } from "../../../src/services/output/table.js";
-import { withEnv } from "../../__support__/env.js";
-import { expectStdout } from "../../__support__/output.js";
+import colors, { color } from "../../../src/services/output/colors.ts";
+import { print } from "../../../src/services/output/print.ts";
+import { printTable } from "../../../src/services/output/table.ts";
+import { withEnv } from "../../__support__/env.ts";
+import { expectStdout } from "../../__support__/output.ts";
 
 describe("print", () => {
   it("prints to stdout", () => {

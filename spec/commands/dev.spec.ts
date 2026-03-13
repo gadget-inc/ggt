@@ -4,20 +4,20 @@ import pMap from "p-map";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import which from "which";
 
-import dev from "../../src/commands/dev.js";
-import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
-import { ClientError } from "../../src/services/app/error.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { YarnNotFoundError } from "../../src/services/filesync/error.js";
-import { FileSyncStrategy } from "../../src/services/filesync/strategy.js";
-import { nockTestApps, testApp } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { waitForReportErrorAndExit } from "../__support__/error.js";
-import { makeFile, makeSyncScenario } from "../__support__/filesync.js";
-import { mock, mockSelectOnce } from "../__support__/mock.js";
-import { testDirPath } from "../__support__/paths.js";
-import { sleep, timeoutMs } from "../__support__/sleep.js";
-import { loginTestUser } from "../__support__/user.js";
+import dev from "../../src/commands/dev.ts";
+import { REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../src/services/app/edit/operation.ts";
+import { ClientError } from "../../src/services/app/error.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { YarnNotFoundError } from "../../src/services/filesync/error.ts";
+import { FileSyncStrategy } from "../../src/services/filesync/strategy.ts";
+import { nockTestApps, testApp } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { waitForReportErrorAndExit } from "../__support__/error.ts";
+import { makeFile, makeSyncScenario } from "../__support__/filesync.ts";
+import { mock, mockSelectOnce } from "../__support__/mock.ts";
+import { testDirPath } from "../__support__/paths.ts";
+import { sleep, timeoutMs } from "../__support__/sleep.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 describe("dev", () => {
   let defaultArgv: string[];

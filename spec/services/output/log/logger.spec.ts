@@ -1,9 +1,9 @@
 import { describe, it } from "vitest";
 
-import { createLogger } from "../../../../src/services/output/log/logger.js";
-import { withEnv } from "../../../__support__/env.js";
-import { expectStderr, mockStderr } from "../../../__support__/output.js";
-import { mockSystemTime } from "../../../__support__/time.js";
+import { createLogger } from "../../../../src/services/output/log/logger.ts";
+import { withEnv } from "../../../__support__/env.ts";
+import { expectStderr, mockStderr } from "../../../__support__/output.ts";
+import { mockSystemTime } from "../../../__support__/time.ts";
 
 describe("createLogger", () => {
   mockStderr();

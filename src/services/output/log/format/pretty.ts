@@ -3,14 +3,14 @@ import assert from "node:assert";
 import dayjs from "dayjs";
 import terminalLink from "terminal-link";
 
-import { type Environment } from "../../../app/app.js";
-import { config } from "../../../config/config.js";
-import { isNil, isObject } from "../../../util/is.js";
-import { serializeObjectToHTTPQuery } from "../../../util/querystring.js";
-import colors from "../../colors.js";
-import { symbol } from "../../symbols.js";
-import { Level } from "../level.js";
-import type { Formatter } from "./format.js";
+import { type Environment } from "../../../app/app.ts";
+import { config } from "../../../config/config.ts";
+import { isNil, isObject } from "../../../util/is.ts";
+import { serializeObjectToHTTPQuery } from "../../../util/querystring.ts";
+import colors from "../../colors.ts";
+import { symbol } from "../../symbols.ts";
+import { Level } from "../level.ts";
+import type { Formatter } from "./format.ts";
 
 export const formatPretty: Formatter = (level, name, msg, fields, timestamp, environment) => {
   return `${formatTimestamp(timestamp)} ${formatLevel(level)} ${formatName(name)}:${formatMessage(msg)}${formatFields(fields, { indent: 2, timestamp, environment })}${NEW_LINE}`;

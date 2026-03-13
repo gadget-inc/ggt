@@ -1,9 +1,9 @@
 import figures from "figures";
 import { describe, it } from "vitest";
 
-import { Changes, printChanges } from "../../../src/services/filesync/changes.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectStdout } from "../../__support__/output.js";
+import { Changes, printChanges } from "../../../src/services/filesync/changes.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectStdout } from "../../__support__/output.ts";
 
 describe("printChanges", () => {
   it("prints the changes in present tense", () => {

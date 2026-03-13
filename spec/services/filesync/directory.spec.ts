@@ -14,11 +14,11 @@ import {
   HASHING_IGNORE_PATHS,
   NEVER_IGNORE_PATHS,
   supportsPermissions,
-} from "../../../src/services/filesync/directory.js";
-import appHashesNoPermissions from "../../__fixtures__/app-hashes-no-permissions.json";
-import appHashes from "../../__fixtures__/app-hashes.json";
-import { type Files, writeDir } from "../../__support__/files.js";
-import { appFixturePath, testDirPath } from "../../__support__/paths.js";
+} from "../../../src/services/filesync/directory.ts";
+import appHashesNoPermissions from "../../__fixtures__/app-hashes-no-permissions.json" with { type: "json" };
+import appHashes from "../../__fixtures__/app-hashes.json" with { type: "json" };
+import { type Files, writeDir } from "../../__support__/files.ts";
+import { appFixturePath, testDirPath } from "../../__support__/paths.ts";
 
 describe("Directory.relative", () => {
   it("converts an absolute path to a relative path", async () => {

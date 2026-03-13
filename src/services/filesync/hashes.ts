@@ -1,8 +1,8 @@
 import assert from "node:assert";
 
-import type { Context } from "../command/context.js";
-import { type Create, type Delete, type Update } from "./changes.js";
-import type { Hash, Hashes } from "./directory.js";
+import type { Context } from "../command/context.ts";
+import { type Create, type Delete, type Update } from "./changes.ts";
+import type { Hash, Hashes } from "./directory.ts";
 
 export type CreateWithHash = Create & { targetHash: Hash };
 export type UpdateWithHash = Update & { sourceHash: Hash; targetHash: Hash };

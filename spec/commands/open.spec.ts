@@ -1,18 +1,18 @@
 import { default as openApp } from "open";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import open from "../../src/commands/open.js";
-import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
-import { FlagError } from "../../src/services/command/flag.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { nockTestApps, testApp, testEnvironment } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { expectError } from "../__support__/error.js";
-import { makeSyncScenario } from "../__support__/filesync.js";
-import { nockApiResponse } from "../__support__/graphql.js";
-import { mockSelectOnce } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { loginTestUser } from "../__support__/user.js";
+import open from "../../src/commands/open.ts";
+import { GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.ts";
+import { FlagError } from "../../src/services/command/flag.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { nockTestApps, testApp, testEnvironment } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { expectError } from "../__support__/error.ts";
+import { makeSyncScenario } from "../__support__/filesync.ts";
+import { nockApiResponse } from "../__support__/graphql.ts";
+import { mockSelectOnce } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 describe("open", () => {
   beforeEach(async () => {

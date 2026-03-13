@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { AppSlug } from "../../../src/services/app/arg.js";
-import { FlagError } from "../../../src/services/command/flag.js";
-import { expectError } from "../../__support__/error.js";
+import { AppSlug } from "../../../src/services/app/arg.ts";
+import { FlagError } from "../../../src/services/command/flag.ts";
+import { expectError } from "../../__support__/error.ts";
 
 describe("AppSlug", () => {
   it.each([

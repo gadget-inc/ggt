@@ -2,10 +2,10 @@ import arg from "arg";
 import chalk from "chalk";
 import type { Simplify } from "type-fest";
 
-import { GGTError, IsBug, UnexpectedError } from "../output/report.js";
-import { symbol } from "../output/symbols.js";
-import { isNil } from "../util/is.js";
-import type { Context } from "./context.js";
+import { GGTError, IsBug, UnexpectedError } from "../output/report.ts";
+import { symbol } from "../output/symbols.ts";
+import { isNil } from "../util/is.ts";
+import type { Context } from "./context.ts";
 
 export type FlagDef = {
   name: string;

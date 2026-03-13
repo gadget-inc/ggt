@@ -1,10 +1,10 @@
 import ms from "ms";
 
-import type { Edit, EditSubscription } from "../app/edit/edit.js";
-import { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../app/edit/operation.js";
-import type { Fields } from "../output/log/field.js";
-import { Level } from "../output/log/level.js";
-import { type LoggingFlagsResult, createEnvironmentStructuredLogger } from "../output/log/structured.js";
+import type { Edit, EditSubscription } from "../app/edit/edit.ts";
+import { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../app/edit/operation.ts";
+import type { Fields } from "../output/log/field.ts";
+import { Level } from "../output/log/level.ts";
+import { type LoggingFlagsResult, createEnvironmentStructuredLogger } from "../output/log/structured.ts";
 
 type SubscribeMode = "follow" | "one-shot";
 

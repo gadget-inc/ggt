@@ -4,8 +4,8 @@ import assert from "node:assert";
 import mimicFunction from "mimic-function";
 import type { SetReturnType } from "type-fest";
 
-import { isFunction } from "./is.js";
-import { type AnyFunction } from "./types.js";
+import { isFunction } from "./is.ts";
+import { type AnyFunction } from "./types.ts";
 
 const memoizedFns = new Set<MemoizedFn>();
 

@@ -1,8 +1,8 @@
-import { defineCommand } from "../services/command/command.js";
-import { clearDefaultsConfig, loadDefaultsConfig, promptDefaultsConfig } from "../services/config/defaults.js";
-import colors from "../services/output/colors.js";
-import { sprint } from "../services/output/sprint.js";
-import { printTable } from "../services/output/table.js";
+import { defineCommand } from "../services/command/command.ts";
+import { clearDefaultsConfig, loadDefaultsConfig, promptDefaultsConfig } from "../services/config/defaults.ts";
+import colors from "../services/output/colors.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { printTable } from "../services/output/table.ts";
 
 export default defineCommand({
   name: "configure",

@@ -10,39 +10,39 @@ import PQueue from "p-queue";
 import pluralize from "pluralize";
 import type { Promisable } from "type-fest";
 
-import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.js";
-import { type EditSubscription } from "../app/edit/edit.js";
+import { FileSyncEncoding, type FileSyncChangedEventInput, type FileSyncDeletedEventInput } from "../../__generated__/graphql.ts";
+import { type EditSubscription } from "../app/edit/edit.ts";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
   FILE_SYNC_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-} from "../app/edit/operation.js";
-import type { Command } from "../command/command.js";
-import type { Context } from "../command/context.js";
-import colors from "../output/colors.js";
-import { confirm } from "../output/confirm.js";
-import { println } from "../output/print.js";
-import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.js";
-import { EdgeCaseError } from "../output/report.js";
-import { select } from "../output/select.js";
-import { spin, type spinner } from "../output/spinner.js";
-import { sprint, sprintln } from "../output/sprint.js";
-import { symbol } from "../output/symbols.js";
-import { ts } from "../output/timestamp.js";
-import { noop } from "../util/function.js";
-import { isENOENTError, isENOTEMPTYError } from "../util/is.js";
-import { serializeError } from "../util/object.js";
-import { RETRYABLE_NETWORK_ERROR_CODES } from "../util/retry.js";
-import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.js";
-import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.js";
-import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.js";
-import { isFilesVersionMismatchError, swallowFilesVersionMismatch, TooManyMergeAttemptsError, TooManyPushAttemptsError } from "./error.js";
-import type { File } from "./file.js";
-import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.js";
-import { MergeConflictPreference } from "./strategy.js";
-import { type SyncJson } from "./sync-json.js";
+} from "../app/edit/operation.ts";
+import type { Command } from "../command/command.ts";
+import type { Context } from "../command/context.ts";
+import colors from "../output/colors.ts";
+import { confirm } from "../output/confirm.ts";
+import { println } from "../output/print.ts";
+import { filesyncProblemsToProblems, sprintProblems } from "../output/problems.ts";
+import { EdgeCaseError } from "../output/report.ts";
+import { select } from "../output/select.ts";
+import { spin, type spinner } from "../output/spinner.ts";
+import { sprint, sprintln } from "../output/sprint.ts";
+import { symbol } from "../output/symbols.ts";
+import { ts } from "../output/timestamp.ts";
+import { noop } from "../util/function.ts";
+import { isENOENTError, isENOTEMPTYError } from "../util/is.ts";
+import { serializeError } from "../util/object.ts";
+import { RETRYABLE_NETWORK_ERROR_CODES } from "../util/retry.ts";
+import { Changes, printChanges, sprintChanges, type PrintChangesOptions } from "./changes.ts";
+import { getConflicts, printConflicts, withoutConflictingChanges } from "./conflicts.ts";
+import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.ts";
+import { isFilesVersionMismatchError, swallowFilesVersionMismatch, TooManyMergeAttemptsError, TooManyPushAttemptsError } from "./error.ts";
+import type { File } from "./file.ts";
+import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.ts";
+import { MergeConflictPreference } from "./strategy.ts";
+import { type SyncJson } from "./sync-json.ts";
 
 /**
  * The maximum attempts to automatically merge local and environment

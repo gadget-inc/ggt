@@ -9,9 +9,9 @@ import {
   isProcessAlive,
   readDevLock,
   releaseDevLock,
-} from "../../../src/services/filesync/dev-lock.js";
-import { Directory } from "../../../src/services/filesync/directory.js";
-import { testDirPath } from "../../__support__/paths.js";
+} from "../../../src/services/filesync/dev-lock.ts";
+import { Directory } from "../../../src/services/filesync/directory.ts";
+import { testDirPath } from "../../__support__/paths.ts";
 
 describe("dev-lock", () => {
   const makeDir = async (): Promise<Directory> => {

@@ -1,12 +1,12 @@
 import { assert, beforeEach, expect, vi, type MockInstance } from "vitest";
 
-import * as confirm from "../../src/services/output/confirm.js";
-import { output } from "../../src/services/output/output.js";
-import * as select from "../../src/services/output/select.js";
-import { sprintln } from "../../src/services/output/sprint.js";
-import { noop } from "../../src/services/util/function.js";
-import type { FunctionPropertyNames } from "../../src/services/util/types.js";
-import { printStackTraceAndFail } from "./debug.js";
+import * as confirm from "../../src/services/output/confirm.ts";
+import { output } from "../../src/services/output/output.ts";
+import * as select from "../../src/services/output/select.ts";
+import { sprintln } from "../../src/services/output/sprint.ts";
+import { noop } from "../../src/services/util/function.ts";
+import type { FunctionPropertyNames } from "../../src/services/util/types.ts";
+import { printStackTraceAndFail } from "./debug.ts";
 
 export type Mock = {
   /**

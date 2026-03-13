@@ -39,8 +39,8 @@ import type {
   SetEnvironmentVariableMutationVariables,
   UnpauseEnvironmentMutation,
   UnpauseEnvironmentMutationVariables,
-} from "../../../__generated__/graphql.js";
-import { sprint } from "../../output/sprint.js";
+} from "../../../__generated__/graphql.ts";
+import { sprint } from "../../output/sprint.ts";
 
 const operationNames = new Map<string, string>();
 

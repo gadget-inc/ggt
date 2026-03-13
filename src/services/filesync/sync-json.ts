@@ -7,20 +7,20 @@ import indentString from "indent-string";
 import { simpleGit } from "simple-git";
 import terminalLink from "terminal-link";
 
-import { EnvironmentType, type Application, type Environment } from "../app/app.js";
-import { Edit } from "../app/edit/edit.js";
-import { AppIdentity, AppIdentityFlags } from "../command/app-identity.js";
-import type { Command } from "../command/command.js";
-import type { Context } from "../command/context.js";
-import { FlagError, type FlagsDefinition, type FlagsResult } from "../command/flag.js";
-import { config, homePath } from "../config/config.js";
-import colors from "../output/colors.js";
-import { println } from "../output/print.js";
-import { sprint, sprintln, type SprintOptions } from "../output/sprint.js";
-import { defaults } from "../util/object.js";
-import { Directory } from "./directory.js";
-import { UnknownDirectoryError } from "./error.js";
-import { type SyncJsonState } from "./sync-json-state.js";
+import { EnvironmentType, type Application, type Environment } from "../app/app.ts";
+import { Edit } from "../app/edit/edit.ts";
+import { AppIdentity, AppIdentityFlags } from "../command/app-identity.ts";
+import type { Command } from "../command/command.ts";
+import type { Context } from "../command/context.ts";
+import { FlagError, type FlagsDefinition, type FlagsResult } from "../command/flag.ts";
+import { config, homePath } from "../config/config.ts";
+import colors from "../output/colors.ts";
+import { println } from "../output/print.ts";
+import { sprint, sprintln, type SprintOptions } from "../output/sprint.ts";
+import { defaults } from "../util/object.ts";
+import { Directory } from "./directory.ts";
+import { UnknownDirectoryError } from "./error.ts";
+import { type SyncJsonState } from "./sync-json-state.ts";
 
 export const SyncJsonFlags = {
   ...AppIdentityFlags,
@@ -403,4 +403,4 @@ const loadBranch = async (ctx: Context, { directory }: { directory: Directory })
   }
 };
 
-export { AnySyncJsonState, SyncJsonState, SyncJsonStateV1 } from "./sync-json-state.js";
+export { AnySyncJsonState, SyncJsonState, SyncJsonStateV1 } from "./sync-json-state.ts";

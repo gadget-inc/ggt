@@ -3,12 +3,12 @@ import process from "node:process";
 import chalk from "chalk";
 import type { Promisable } from "type-fest";
 
-import { defaults } from "../util/object.js";
-import type { PartialExcept } from "../util/types.js";
-import { output } from "./output.js";
-import { println, type PrintOptions } from "./print.js";
-import { Prompt, type StdinKey } from "./prompt.js";
-import { sprintln } from "./sprint.js";
+import { defaults } from "../util/object.ts";
+import type { PartialExcept } from "../util/types.ts";
+import { output } from "./output.ts";
+import { println, type PrintOptions } from "./print.ts";
+import { Prompt, type StdinKey } from "./prompt.ts";
+import { sprintln } from "./sprint.ts";
 
 export type ConfirmOptions = PrintOptions & {
   /**

@@ -1,4 +1,4 @@
-import { MemoFirstArg, memo } from "./function.js";
+import { MemoFirstArg, memo } from "./function.ts";
 
 /**
  * Parses a string value and returns a boolean value.

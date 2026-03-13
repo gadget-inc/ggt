@@ -3,21 +3,21 @@ import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CloseEvent, ErrorEvent } from "ws";
 
-import { Client } from "../../../src/services/app/client.js";
-import { Edit } from "../../../src/services/app/edit/edit.js";
+import { Client } from "../../../src/services/app/client.ts";
+import { Edit } from "../../../src/services/app/edit/edit.ts";
 import {
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
   REMOTE_FILES_VERSION_QUERY,
-} from "../../../src/services/app/edit/operation.js";
-import { ClientError } from "../../../src/services/app/error.js";
-import { config } from "../../../src/services/config/config.js";
-import { loadCookie } from "../../../src/services/http/auth.js";
-import { testApp, testEnvironment } from "../../__support__/app.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectError } from "../../__support__/error.js";
-import { makeMockEditSubscriptions, nockEditResponse } from "../../__support__/graphql.js";
-import { loginTestUser } from "../../__support__/user.js";
+} from "../../../src/services/app/edit/operation.ts";
+import { ClientError } from "../../../src/services/app/error.ts";
+import { config } from "../../../src/services/config/config.ts";
+import { loadCookie } from "../../../src/services/http/auth.ts";
+import { testApp, testEnvironment } from "../../__support__/app.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectError } from "../../__support__/error.ts";
+import { makeMockEditSubscriptions, nockEditResponse } from "../../__support__/graphql.ts";
+import { loginTestUser } from "../../__support__/user.ts";
 
 describe("Edit", () => {
   beforeEach(() => {

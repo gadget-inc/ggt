@@ -1,15 +1,15 @@
 import { beforeEach, describe, it } from "vitest";
 
-import problems from "../../src/commands/problems.js";
-import { PUBLISH_ISSUES_QUERY } from "../../src/services/app/edit/operation.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { nockTestApps } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { makeSyncScenario } from "../__support__/filesync.js";
-import { nockEditResponse } from "../__support__/graphql.js";
-import { expectStdout } from "../__support__/output.js";
-import { mockSystemTime } from "../__support__/time.js";
-import { loginTestUser } from "../__support__/user.js";
+import problems from "../../src/commands/problems.ts";
+import { PUBLISH_ISSUES_QUERY } from "../../src/services/app/edit/operation.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { nockTestApps } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { makeSyncScenario } from "../__support__/filesync.ts";
+import { nockEditResponse } from "../__support__/graphql.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { mockSystemTime } from "../__support__/time.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 describe("problems", () => {
   mockSystemTime();

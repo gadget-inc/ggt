@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { delay, PromiseSignal, PromiseWrapper } from "../../../src/services/util/promise.js";
+import { delay, PromiseSignal, PromiseWrapper } from "../../../src/services/util/promise.ts";
 
 describe("delay", () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import arg from "arg";
 import { describe, expect, it } from "vitest";
 
-import { extractFlags, hidden, parseFlags, toEntryArray } from "../../../src/services/command/flag.js";
+import { extractFlags, hidden, parseFlags, toEntryArray } from "../../../src/services/command/flag.ts";
 
 describe("parseFlags", () => {
   it("works", () => {

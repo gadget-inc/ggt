@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { closestMatch, compact, sortBySimilar, uniq } from "../../../src/services/util/collection.js";
+import { closestMatch, compact, sortBySimilar, uniq } from "../../../src/services/util/collection.ts";
 
 describe("compact", () => {
   it("removes null and undefined values", () => {

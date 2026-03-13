@@ -41,7 +41,7 @@
     "test": "vitest",
     "test:integration": "vitest --config spec/integration/vitest.integration.config.ts",
     "test:watch": "pnpm run test --standalone --watch",
-    "version": "changeset version && oxfmt CHANGELOG.md && node --loader=ts-node/esm --no-warnings scripts/generate-readme.ts"
+    "version": "changeset version && oxfmt CHANGELOG.md && node --experimental-transform-types --no-warnings scripts/generate-readme.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
@@ -117,7 +117,6 @@
     "tcp-port-used": "^1.0.2",
     "terminal-link": "^5.0.0",
     "ts-dedent": "^2.2.0",
-    "ts-node": "^10.9.2",
     "type-fest": "^5.4.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15",

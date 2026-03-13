@@ -1,7 +1,7 @@
 import stripAnsi from "strip-ansi";
 
-import { isObject, isString } from "../../../util/is.js";
-import type { Formatter } from "./format.js";
+import { isObject, isString } from "../../../util/is.ts";
+import type { Formatter } from "./format.ts";
 
 export const formatJson: Formatter = (level, name, msg, fields) => {
   if (msg) {

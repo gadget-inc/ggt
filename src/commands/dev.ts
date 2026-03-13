@@ -6,31 +6,31 @@ import ms from "ms";
 import Watcher from "watcher";
 import which from "which";
 
-import type { EditSubscription } from "../services/app/edit/edit.js";
-import type { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../services/app/edit/operation.js";
-import { defineCommand } from "../services/command/command.js";
-import { Changes } from "../services/filesync/changes.js";
-import { acquireDevLock, releaseDevLock } from "../services/filesync/dev-lock.js";
-import { YarnNotFoundError } from "../services/filesync/error.js";
-import { FileSync } from "../services/filesync/filesync.js";
-import { FileSyncStrategy, MergeConflictPreferenceArg, MergeConflictPreferenceValues } from "../services/filesync/strategy.js";
-import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
-import { maybePromptAgentsMd, maybePromptGadgetSkills } from "../services/output/agent-plugin.js";
-import colors from "../services/output/colors.js";
-import { footer } from "../services/output/footer.js";
-import { LoggingFlags } from "../services/output/log/structured.js";
-import { notify } from "../services/output/notify.js";
-import { println } from "../services/output/print.js";
-import { reportErrorAndExit } from "../services/output/report.js";
-import { select } from "../services/output/select.js";
-import { spin } from "../services/output/spinner.js";
-import { sprint } from "../services/output/sprint.js";
-import { symbol } from "../services/output/symbols.js";
-import { unreachable } from "../services/util/assert.js";
-import { debounceAsync } from "../services/util/function.js";
-import { isAbortError } from "../services/util/is.js";
-import { delay } from "../services/util/promise.js";
+import type { EditSubscription } from "../services/app/edit/edit.ts";
+import type { ENVIRONMENT_LOGS_SUBSCRIPTION } from "../services/app/edit/operation.ts";
+import { defineCommand } from "../services/command/command.ts";
+import { Changes } from "../services/filesync/changes.ts";
+import { acquireDevLock, releaseDevLock } from "../services/filesync/dev-lock.ts";
+import { YarnNotFoundError } from "../services/filesync/error.ts";
+import { FileSync } from "../services/filesync/filesync.ts";
+import { FileSyncStrategy, MergeConflictPreferenceArg, MergeConflictPreferenceValues } from "../services/filesync/strategy.ts";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.ts";
+import { maybePromptAgentsMd, maybePromptGadgetSkills } from "../services/output/agent-plugin.ts";
+import colors from "../services/output/colors.ts";
+import { footer } from "../services/output/footer.ts";
+import { LoggingFlags } from "../services/output/log/structured.ts";
+import { notify } from "../services/output/notify.ts";
+import { println } from "../services/output/print.ts";
+import { reportErrorAndExit } from "../services/output/report.ts";
+import { select } from "../services/output/select.ts";
+import { spin } from "../services/output/spinner.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { symbol } from "../services/output/symbols.ts";
+import { unreachable } from "../services/util/assert.ts";
+import { debounceAsync } from "../services/util/function.ts";
+import { isAbortError } from "../services/util/is.ts";
+import { delay } from "../services/util/promise.ts";
 
 export default defineCommand({
   name: "dev",
@@ -91,7 +91,7 @@ export default defineCommand({
         "Use 'local' to keep your local file contents or 'environment' to keep the environment's version. Without this flag, you are prompted to choose for each conflict.",
       valueName: "source",
       complete: async (_ctx, partial, _argv) => {
-        const { filterByPrefix } = await import("../services/util/collection.js");
+        const { filterByPrefix } = await import("../services/util/collection.ts");
         return filterByPrefix([...MergeConflictPreferenceValues], partial);
       },
     },

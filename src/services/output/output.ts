@@ -6,9 +6,9 @@ import isInteractive from "is-interactive";
 import stringWidth from "string-width";
 import stripAnsi from "strip-ansi";
 
-import { env } from "../config/env.js";
-import { unthunk } from "../util/function.js";
-import { isObject } from "../util/is.js";
+import { env } from "../config/env.ts";
+import { unthunk } from "../util/function.ts";
+import { isObject } from "../util/is.ts";
 
 let cursorIsHidden = false;
 

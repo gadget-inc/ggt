@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { FILE_SYNC_HASHES_QUERY, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../../src/services/app/edit/operation.js";
-import { AuthenticationError, ClientError } from "../../../src/services/app/error.js";
-import { IsBug } from "../../../src/services/output/report.js";
+import { FILE_SYNC_HASHES_QUERY, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../../src/services/app/edit/operation.ts";
+import { AuthenticationError, ClientError } from "../../../src/services/app/error.ts";
+import { IsBug } from "../../../src/services/output/report.ts";
 
 describe("ClientError", () => {
   describe("constructor", () => {

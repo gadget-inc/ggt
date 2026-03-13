@@ -5,14 +5,14 @@ import ms from "ms";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { config } from "../../../src/services/config/config.js";
-import { Directory } from "../../../src/services/filesync/directory.js";
-import { agentPluginShaPath } from "../../../src/services/output/agent-plugin.js";
-import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.js";
-import { packageJson } from "../../../src/services/util/package-json.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectStdout } from "../../__support__/output.js";
-import { testDirPath } from "../../__support__/paths.js";
+import { config } from "../../../src/services/config/config.ts";
+import { Directory } from "../../../src/services/filesync/directory.ts";
+import { agentPluginShaPath } from "../../../src/services/output/agent-plugin.ts";
+import { getDistTags, shouldCheckForUpdate, warnIfUpdateAvailable } from "../../../src/services/output/update.ts";
+import { packageJson } from "../../../src/services/util/package-json.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectStdout } from "../../__support__/output.ts";
+import { testDirPath } from "../../__support__/paths.ts";
 
 describe("getDistTags", () => {
   it("returns the dist tags", async () => {

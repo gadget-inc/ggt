@@ -6,15 +6,15 @@ import { waitUntilUsed } from "tcp-port-used";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
 
-import debuggerCommand from "../../src/commands/debugger.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { config } from "../../src/services/config/config.js";
-import { sprint } from "../../src/services/output/sprint.js";
-import { nockTestApps } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { makeSyncScenario, type SyncScenario } from "../__support__/filesync.js";
-import { expectStdout } from "../__support__/output.js";
-import { loginTestUser } from "../__support__/user.js";
+import debuggerCommand from "../../src/commands/debugger.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { config } from "../../src/services/config/config.ts";
+import { sprint } from "../../src/services/output/sprint.ts";
+import { nockTestApps } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { makeSyncScenario, type SyncScenario } from "../__support__/filesync.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 const closeWithTimeout = (ws: WebSocket, ms = 5000): Promise<void> =>
   new Promise((resolve) => {

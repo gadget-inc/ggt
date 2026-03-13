@@ -1,25 +1,25 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import vars from "../../src/commands/var.js";
+import vars from "../../src/commands/var.ts";
 import {
   DELETE_ENVIRONMENT_VARIABLE_MUTATION,
   ENVIRONMENT_VARIABLES_QUERY,
   SET_ENVIRONMENT_VARIABLE_MUTATION,
-} from "../../src/services/app/edit/operation.js";
-import { FlagError } from "../../src/services/command/flag.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { confirm } from "../../src/services/output/confirm.js";
-import { nockTestApps, testApp } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { expectError } from "../__support__/error.js";
-import { writeDir } from "../__support__/files.js";
-import { makeSyncScenario } from "../__support__/filesync.js";
-import { nockEditResponse } from "../__support__/graphql.js";
-import { mockConfirmOnce } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { testDirPath } from "../__support__/paths.js";
-import { loginTestUser } from "../__support__/user.js";
+} from "../../src/services/app/edit/operation.ts";
+import { FlagError } from "../../src/services/command/flag.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { confirm } from "../../src/services/output/confirm.ts";
+import { nockTestApps, testApp } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { expectError } from "../__support__/error.ts";
+import { writeDir } from "../__support__/files.ts";
+import { makeSyncScenario } from "../__support__/filesync.ts";
+import { nockEditResponse } from "../__support__/graphql.ts";
+import { mockConfirmOnce } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { testDirPath } from "../__support__/paths.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 describe("var", () => {
   beforeEach(() => {

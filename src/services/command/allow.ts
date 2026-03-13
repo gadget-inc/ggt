@@ -1,5 +1,5 @@
-import { closestMatch } from "../util/collection.js";
-import { FlagError, type FlagsDefinition } from "./flag.js";
+import { closestMatch } from "../util/collection.ts";
+import { FlagError, type FlagsDefinition } from "./flag.ts";
 
 /**
  * Scans an FlagsDefinition for `--allow-*` flags, returning the matching keys.

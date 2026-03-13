@@ -1,26 +1,26 @@
 import terminalLink from "terminal-link";
 
-import { addAction, resolveActionPath } from "../services/add/action.js";
-import { addEnvironment, generateDefaultEnvName, switchToNewEnvironment } from "../services/add/environment.js";
-import { addFields, parseFieldTarget, parseFieldValues } from "../services/add/field.js";
-import { addModel } from "../services/add/model.js";
-import { addRoute } from "../services/add/route.js";
-import { getGlobalActions, getModels } from "../services/app/app.js";
-import { ClientError } from "../services/app/error.js";
-import { defineCommand } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
-import { FlagError, type FlagsResult } from "../services/command/flag.js";
-import { UnknownDirectoryError } from "../services/filesync/error.js";
-import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import colors from "../services/output/colors.js";
-import { println } from "../services/output/print.js";
-import { GGTError, IsBug } from "../services/output/report.js";
-import { sprint } from "../services/output/sprint.js";
-import { symbol } from "../services/output/symbols.js";
-import { ts } from "../services/output/timestamp.js";
-import { uniq } from "../services/util/collection.js";
-import { isGraphQLErrors } from "../services/util/is.js";
+import { addAction, resolveActionPath } from "../services/add/action.ts";
+import { addEnvironment, generateDefaultEnvName, switchToNewEnvironment } from "../services/add/environment.ts";
+import { addFields, parseFieldTarget, parseFieldValues } from "../services/add/field.ts";
+import { addModel } from "../services/add/model.ts";
+import { addRoute } from "../services/add/route.ts";
+import { getGlobalActions, getModels } from "../services/app/app.ts";
+import { ClientError } from "../services/app/error.ts";
+import { defineCommand } from "../services/command/command.ts";
+import type { Context } from "../services/command/context.ts";
+import { FlagError, type FlagsResult } from "../services/command/flag.ts";
+import { UnknownDirectoryError } from "../services/filesync/error.ts";
+import { FileSync } from "../services/filesync/filesync.ts";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import colors from "../services/output/colors.ts";
+import { println } from "../services/output/print.ts";
+import { GGTError, IsBug } from "../services/output/report.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { symbol } from "../services/output/symbols.ts";
+import { ts } from "../services/output/timestamp.ts";
+import { uniq } from "../services/util/collection.ts";
+import { isGraphQLErrors } from "../services/util/is.ts";
 
 export class AddClientError extends GGTError {
   isBug = IsBug.NO;

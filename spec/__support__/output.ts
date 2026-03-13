@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, type Assertion } from "vitest";
 
-import { mock, mockRestore } from "./mock.js";
+import { mock, mockRestore } from "./mock.ts";
 
 const testStdout: string[] = [];
 
@@ -23,7 +23,7 @@ export const mockStdout = (): void => {
   beforeEach(async () => {
     testStdout.length = 0;
 
-    const { output } = await import("../../src/services/output/output.js");
+    const { output } = await import("../../src/services/output/output.ts");
 
     // reset the state of the output service
     output.lastPrintedLineWasEmpty = true;
@@ -54,7 +54,7 @@ export const expectStderr = (): Assertion<string> => expect(testStderr.join(""))
  */
 export const mockStderr = (): void => {
   beforeEach(async () => {
-    const { output } = await import("../../src/services/output/output.js");
+    const { output } = await import("../../src/services/output/output.ts");
     // @ts-expect-error - _writeStderr is private
     mock(output, "_writeStderr", (data) => {
       testStderr.push(data);
@@ -64,7 +64,7 @@ export const mockStderr = (): void => {
   });
 
   afterEach(async () => {
-    const { output } = await import("../../src/services/output/output.js");
+    const { output } = await import("../../src/services/output/output.ts");
     // @ts-expect-error - _writeStdout is private
     mockRestore(output._writeStdout);
   });

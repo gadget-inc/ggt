@@ -1,5 +1,5 @@
-import type { FlagDef } from "../command/flag.js";
-import type { CommandDef, CompletionData } from "./completions.js";
+import type { FlagDef } from "../command/flag.ts";
+import type { CommandDef, CompletionData } from "./completions.ts";
 
 /**
  * Renders flag specs with trailing backslash continuation, indented for use

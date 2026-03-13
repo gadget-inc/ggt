@@ -4,22 +4,22 @@ import path from "node:path";
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { ClientError } from "../../../src/services/app/error.js";
-import type { Command } from "../../../src/services/command/command.js";
-import { Directory } from "../../../src/services/filesync/directory.js";
+import { ClientError } from "../../../src/services/app/error.ts";
+import type { Command } from "../../../src/services/command/command.ts";
+import { Directory } from "../../../src/services/filesync/directory.ts";
 import {
   TooManyMergeAttemptsError,
   TooManyPushAttemptsError,
   UnknownDirectoryError,
   YarnNotFoundError,
   isFilesVersionMismatchError,
-} from "../../../src/services/filesync/error.js";
-import { SyncJson, SyncJsonFlags } from "../../../src/services/filesync/sync-json.js";
-import { nockTestApps, testEnvironment } from "../../__support__/app.js";
-import { testCtx } from "../../__support__/context.js";
-import { makeFlags } from "../../__support__/flag.js";
-import { mockOnce } from "../../__support__/mock.js";
-import { loginTestUser } from "../../__support__/user.js";
+} from "../../../src/services/filesync/error.ts";
+import { SyncJson, SyncJsonFlags } from "../../../src/services/filesync/sync-json.ts";
+import { nockTestApps, testEnvironment } from "../../__support__/app.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { makeFlags } from "../../__support__/flag.ts";
+import { mockOnce } from "../../__support__/mock.ts";
+import { loginTestUser } from "../../__support__/user.ts";
 
 describe(YarnNotFoundError.name, () => {
   it("renders correctly", () => {

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import whoami from "../../src/commands/whoami.js";
-import { runCommand } from "../../src/services/command/run.js";
-import * as user from "../../src/services/user/user.js";
-import { testCtx } from "../__support__/context.js";
-import { mock } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
+import whoami from "../../src/commands/whoami.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import * as user from "../../src/services/user/user.ts";
+import { testCtx } from "../__support__/context.ts";
+import { mock } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
 
 describe("whoami", () => {
   it("outputs the current user", async () => {

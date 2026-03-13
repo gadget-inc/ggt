@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { notify } from "../../../src/services/output/notify.js";
-import { testCtx } from "../../__support__/context.js";
+import { notify } from "../../../src/services/output/notify.ts";
+import { testCtx } from "../../__support__/context.ts";
 
 describe("notify", () => {
   it("writes BEL to stderr", () => {

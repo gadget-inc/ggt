@@ -1,4 +1,4 @@
-import type { FileSyncEncoding } from "../../__generated__/graphql.js";
+import type { FileSyncEncoding } from "../../__generated__/graphql.ts";
 
 export type File = {
   path: string;

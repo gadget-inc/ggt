@@ -1,10 +1,10 @@
-import type { Context } from "../../command/context.js";
-import type { HttpOptions } from "../../http/http.js";
-import { unthunk, type Thunk } from "../../util/function.js";
-import type { Environment } from "../app.js";
-import { Client } from "../client.js";
-import { getOperationName, type GraphQLQuery } from "../edit/operation.js";
-import { ClientError } from "../error.js";
+import type { Context } from "../../command/context.ts";
+import type { HttpOptions } from "../../http/http.ts";
+import { unthunk, type Thunk } from "../../util/function.ts";
+import type { Environment } from "../app.ts";
+import { Client } from "../client.ts";
+import { getOperationName, type GraphQLQuery } from "../edit/operation.ts";
+import { ClientError } from "../error.ts";
 
 export class Api {
   /**

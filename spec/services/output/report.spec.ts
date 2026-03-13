@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { GGTError, IsBug, UnexpectedError, reportErrorAndExit } from "../../../src/services/output/report.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectStdout } from "../../__support__/output.js";
-import { expectProcessExit } from "../../__support__/process.js";
+import { GGTError, IsBug, UnexpectedError, reportErrorAndExit } from "../../../src/services/output/report.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectStdout } from "../../__support__/output.ts";
+import { expectProcessExit } from "../../__support__/process.ts";
 
 describe("reportErrorAndExit", () => {
   it("renders and reports errors then exits", async () => {

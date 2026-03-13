@@ -5,6 +5,7 @@
   "compilerOptions": {
     /* Type Checking */
     "strict": true,
+    "erasableSyntaxOnly": true,
 
     /* Modules */
     "module": "nodenext",

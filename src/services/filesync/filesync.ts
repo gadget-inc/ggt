@@ -141,7 +141,11 @@ export class FileSync {
    */
   private _syncOperations = new PQueue({ concurrency: 1 });
 
-  constructor(readonly syncJson: SyncJson) {}
+  readonly syncJson: SyncJson;
+
+  constructor(syncJson: SyncJson) {
+    this.syncJson = syncJson;
+  }
 
   async hashes(ctx: Context, { silent = false }: { silent?: boolean } = {}): Promise<FileSyncHashes> {
     const spinner = !silent ? spin({ ensureEmptyLineAbove: true, content: "Calculating file changes." }) : undefined;

@@ -62,43 +62,55 @@ export class SyncJson {
    */
   gitBranch: string | undefined;
 
+  /**
+   * The {@linkcode Context} that was used to initialize this
+   * {@linkcode SyncJson} instance.
+   */
+  readonly ctx: Context;
+
+  /**
+   * The parsed {@linkcode SyncJsonFlags} that the user passed to ggt.
+   */
+  readonly flags: SyncJsonFlagsResult;
+
+  /**
+   * The root directory of the local filesystem, or in other words,
+   * the directory that contains the `.gadget/sync.json` file.
+   */
+  readonly directory: Directory;
+
+  /**
+   * The {@linkcode AppIdentity} of the directory.
+   */
+  readonly appIdentity: AppIdentity;
+
+  /**
+   * The name of the environment the directory was synced to before
+   * it was synced to the current environment.
+   *
+   * This is undefined if the environment didn't change.
+   */
+  readonly previousEnvironment: string | undefined;
+
+  /**
+   * The state of the `.gadget/sync.json` file on the local
+   * filesystem.
+   */
+  readonly state: SyncJsonState;
+
   private constructor(
-    /**
-     * The {@linkcode Context} that was used to initialize this
-     * {@linkcode SyncJson} instance.
-     */
-    readonly ctx: Context,
-
-    /**
-     * The parsed {@linkcode SyncJsonFlags} that the user passed to ggt.
-     */
-    readonly flags: SyncJsonFlagsResult,
-
-    /**
-     * The root directory of the local filesystem, or in other words,
-     * the directory that contains the `.gadget/sync.json` file.
-     */
-    readonly directory: Directory,
-
-    /**
-     * The {@linkcode AppIdentity} of the directory.
-     */
-    readonly appIdentity: AppIdentity,
-
-    /**
-     * The name of the environment the directory was synced to before
-     * it was synced to the current environment.
-     *
-     * This is undefined if the environment didn't change.
-     */
-    readonly previousEnvironment: string | undefined,
-
-    /**
-     * The state of the `.gadget/sync.json` file on the local
-     * filesystem.
-     */
-    readonly state: SyncJsonState,
+    ctx: Context,
+    flags: SyncJsonFlagsResult,
+    directory: Directory,
+    appIdentity: AppIdentity,
+    previousEnvironment: string | undefined,
+    state: SyncJsonState,
   ) {
+    this.flags = flags;
+    this.directory = directory;
+    this.appIdentity = appIdentity;
+    this.previousEnvironment = previousEnvironment;
+    this.state = state;
     this.ctx = ctx.child({
       name: "sync-json",
       fields: () => ({

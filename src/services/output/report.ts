@@ -153,8 +153,9 @@ export abstract class GGTError extends Error {
 export class UnexpectedError extends GGTError {
   isBug = IsBug.YES;
 
-  constructor(override cause: unknown) {
+  constructor(cause: unknown) {
     super("An unexpected error occurred");
+    this.cause = cause;
   }
 
   protected render(): string {
@@ -176,8 +177,9 @@ export class UnexpectedError extends GGTError {
 export class NetworkError extends GGTError {
   isBug = IsBug.MAYBE;
 
-  constructor(override cause: unknown) {
+  constructor(cause: unknown) {
     super("A network error occurred");
+    this.cause = cause;
   }
 
   protected render(): string {
@@ -195,11 +197,11 @@ export class NetworkError extends GGTError {
 export class EdgeCaseError extends GGTError {
   isBug = IsBug.MAYBE;
 
-  constructor(
-    message: string,
-    override cause?: unknown,
-  ) {
+  override cause?: unknown;
+
+  constructor(message: string, cause?: unknown) {
     super(message);
+    this.cause = cause;
   }
 
   protected render(): string {

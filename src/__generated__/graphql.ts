@@ -107,11 +107,13 @@ export type BackgroundActionAttempt = {
   state: BackgroundActionAttemptState;
 };
 
-export enum BackgroundActionAttemptState {
-  Failed = 'FAILED',
-  Running = 'RUNNING',
-  Succeeded = 'SUCCEEDED'
-}
+export const BackgroundActionAttemptState = {
+  Failed: 'FAILED',
+  Running: 'RUNNING',
+  Succeeded: 'SUCCEEDED'
+} as const;
+
+export type BackgroundActionAttemptState = (typeof BackgroundActionAttemptState)[keyof typeof BackgroundActionAttemptState];
 
 export type BackgroundActionBulkResult = {
   __typename?: 'BackgroundActionBulkResult';
@@ -131,15 +133,17 @@ export type BackgroundActionFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export enum BackgroundActionState {
-  Cancelled = 'CANCELLED',
-  Completed = 'COMPLETED',
-  Failed = 'FAILED',
-  Retrying = 'RETRYING',
-  Running = 'RUNNING',
-  Scheduled = 'SCHEDULED',
-  Waiting = 'WAITING'
-}
+export const BackgroundActionState = {
+  Cancelled: 'CANCELLED',
+  Completed: 'COMPLETED',
+  Failed: 'FAILED',
+  Retrying: 'RETRYING',
+  Running: 'RUNNING',
+  Scheduled: 'SCHEDULED',
+  Waiting: 'WAITING'
+} as const;
+
+export type BackgroundActionState = (typeof BackgroundActionState)[keyof typeof BackgroundActionState];
 
 export type ChangeAppDomainResult = {
   __typename?: 'ChangeAppDomainResult';
@@ -231,12 +235,14 @@ export type EnvironmentPublishResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export enum EnvironmentStatus {
-  Active = 'ACTIVE',
-  FatalError = 'FATAL_ERROR',
-  Paused = 'PAUSED',
-  Pending = 'PENDING'
-}
+export const EnvironmentStatus = {
+  Active: 'ACTIVE',
+  FatalError: 'FATAL_ERROR',
+  Paused: 'PAUSED',
+  Pending: 'PENDING'
+} as const;
+
+export type EnvironmentStatus = (typeof EnvironmentStatus)[keyof typeof EnvironmentStatus];
 
 export type EnvironmentSubscriptionResult = {
   __typename?: 'EnvironmentSubscriptionResult';
@@ -248,11 +254,13 @@ export type EnvironmentTreeClientId = {
   id: Scalars['String']['input'];
 };
 
-export enum EnvironmentType {
-  Development = 'DEVELOPMENT',
-  Production = 'PRODUCTION',
-  Test = 'TEST'
-}
+export const EnvironmentType = {
+  Development: 'DEVELOPMENT',
+  Production: 'PRODUCTION',
+  Test: 'TEST'
+} as const;
+
+export type EnvironmentType = (typeof EnvironmentType)[keyof typeof EnvironmentType];
 
 export type ExecutionError = {
   /** The Gadget platform error code for this error. */
@@ -294,10 +302,12 @@ export type FileSyncDeletedEventInput = {
   path: Scalars['String']['input'];
 };
 
-export enum FileSyncEncoding {
-  Base64 = 'base64',
-  Utf8 = 'utf8'
-}
+export const FileSyncEncoding = {
+  Base64: 'base64',
+  Utf8: 'utf8'
+} as const;
+
+export type FileSyncEncoding = (typeof FileSyncEncoding)[keyof typeof FileSyncEncoding];
 
 export type FileSyncFile = {
   __typename?: 'FileSyncFile';
@@ -462,36 +472,38 @@ export type GadgetFieldConfigInterface = {
 };
 
 /** The type of a given field of a model or other in-transit object within Gadget's type system */
-export enum GadgetFieldType {
-  Any = 'Any',
-  Array = 'Array',
-  BelongsTo = 'BelongsTo',
-  Boolean = 'Boolean',
-  Code = 'Code',
-  Color = 'Color',
-  Computed = 'Computed',
-  DateTime = 'DateTime',
-  Email = 'Email',
-  EncryptedString = 'EncryptedString',
-  Enum = 'Enum',
-  File = 'File',
-  HasMany = 'HasMany',
-  HasManyThrough = 'HasManyThrough',
-  HasOne = 'HasOne',
-  Id = 'ID',
-  Json = 'JSON',
-  Money = 'Money',
-  Null = 'Null',
-  Number = 'Number',
-  Object = 'Object',
-  Password = 'Password',
-  RecordState = 'RecordState',
-  RichText = 'RichText',
-  RoleAssignments = 'RoleAssignments',
-  String = 'String',
-  Url = 'URL',
-  Vector = 'Vector'
-}
+export const GadgetFieldType = {
+  Any: 'Any',
+  Array: 'Array',
+  BelongsTo: 'BelongsTo',
+  Boolean: 'Boolean',
+  Code: 'Code',
+  Color: 'Color',
+  Computed: 'Computed',
+  DateTime: 'DateTime',
+  Email: 'Email',
+  EncryptedString: 'EncryptedString',
+  Enum: 'Enum',
+  File: 'File',
+  HasMany: 'HasMany',
+  HasManyThrough: 'HasManyThrough',
+  HasOne: 'HasOne',
+  Id: 'ID',
+  Json: 'JSON',
+  Money: 'Money',
+  Null: 'Null',
+  Number: 'Number',
+  Object: 'Object',
+  Password: 'Password',
+  RecordState: 'RecordState',
+  RichText: 'RichText',
+  RoleAssignments: 'RoleAssignments',
+  String: 'String',
+  Url: 'URL',
+  Vector: 'Vector'
+} as const;
+
+export type GadgetFieldType = (typeof GadgetFieldType)[keyof typeof GadgetFieldType];
 
 export type GadgetFieldUsageExample = {
   __typename?: 'GadgetFieldUsageExample';
@@ -866,10 +878,12 @@ export type MigrateGadgetV1StatusProgressDetails = {
   total: Scalars['Int']['output'];
 };
 
-export enum ModelExportFormat {
-  Csv = 'CSV',
-  Ndjson = 'NDJSON'
-}
+export const ModelExportFormat = {
+  Csv: 'CSV',
+  Ndjson: 'NDJSON'
+} as const;
+
+export type ModelExportFormat = (typeof ModelExportFormat)[keyof typeof ModelExportFormat];
 
 export type Mutation = {
   __typename?: 'Mutation';

@@ -22,6 +22,8 @@ exports[`AppIdentity.load > production environment access > does not allow --env
 
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "logout" 1`] = `[Error: You cannot "ggt logout" your production environment.]`;
 
+exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "model" 1`] = `[Error: You cannot "ggt model" your production environment.]`;
+
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "open" 1`] = `[Error: You cannot "ggt open" your production environment.]`;
 
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "problems" 1`] = `[Error: You cannot "ggt problems" your production environment.]`;

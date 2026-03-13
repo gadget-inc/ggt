@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { Commands, commandGroups, importCommand, resolveCommandAlias, type CommandConfig } from "../../../src/services/command/command.js";
+import { Commands, commandGroups, importCommand, resolveCommandAlias, type CommandConfig } from "../../../src/services/command/command.ts";
 
 describe("commandGroups", () => {
   it("includes every non-hidden command in at least one group", async () => {

@@ -1,6 +1,6 @@
-import { FlagError } from "../command/flag.js";
-import colors from "../output/colors.js";
-import { sprint } from "../output/sprint.js";
+import { FlagError } from "../command/flag.ts";
+import colors from "../output/colors.ts";
+import { sprint } from "../output/sprint.ts";
 
 /**
  * Parses the value of an application argument (-a/--app) and returns

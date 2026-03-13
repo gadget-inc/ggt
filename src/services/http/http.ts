@@ -5,11 +5,11 @@ import { Agent as HttpsAgent } from "node:https";
 import { got, type OptionsInit } from "got";
 import { parseString as parseSetCookieString } from "set-cookie-parser";
 
-import { Context } from "../command/context.js";
-import { config } from "../config/config.js";
-import { sprint } from "../output/sprint.js";
-import { writeSession } from "../user/session.js";
-import { serializeError } from "../util/object.js";
+import { Context } from "../command/context.ts";
+import { config } from "../config/config.ts";
+import { sprint } from "../output/sprint.ts";
+import { writeSession } from "../user/session.ts";
+import { serializeError } from "../util/object.ts";
 import {
   DEFAULT_BACKOFF_LIMIT_MS,
   DEFAULT_JITTER_MS,
@@ -17,7 +17,7 @@ import {
   DEFAULT_RETRYABLE_HTTP_STATUS_CODES,
   DEFAULT_RETRY_LIMIT,
   RETRYABLE_NETWORK_ERROR_CODES,
-} from "../util/retry.js";
+} from "../util/retry.ts";
 
 export type HttpOptions = OptionsInit;
 

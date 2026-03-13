@@ -4,17 +4,17 @@ import getPort from "get-port";
 import open from "open";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import login from "../../src/commands/login.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { config } from "../../src/services/config/config.js";
-import { readSession, writeSession } from "../../src/services/user/session.js";
-import * as user from "../../src/services/user/user.js";
-import { noop } from "../../src/services/util/function.js";
-import { PromiseSignal } from "../../src/services/util/promise.js";
-import { testCtx } from "../__support__/context.js";
-import { mock } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { testUser } from "../__support__/user.js";
+import login from "../../src/commands/login.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { config } from "../../src/services/config/config.ts";
+import { readSession, writeSession } from "../../src/services/user/session.ts";
+import * as user from "../../src/services/user/user.ts";
+import { noop } from "../../src/services/util/function.ts";
+import { PromiseSignal } from "../../src/services/util/promise.ts";
+import { testCtx } from "../__support__/context.ts";
+import { mock } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { testUser } from "../__support__/user.ts";
 
 describe("login", () => {
   let port: number;

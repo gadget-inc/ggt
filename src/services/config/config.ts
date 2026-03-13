@@ -4,9 +4,9 @@ import process from "node:process";
 
 import isWsl from "is-wsl";
 
-import { Level, parseLevel } from "../output/log/level.js";
-import { packageJson } from "../util/package-json.js";
-import { env } from "./env.js";
+import { Level, parseLevel } from "../output/log/level.ts";
+import { packageJson } from "../util/package-json.ts";
+import { env } from "./env.ts";
 
 export const config = {
   get logLevel() {

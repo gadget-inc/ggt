@@ -1,11 +1,11 @@
-import { getApplications, groupByTeam } from "../services/app/app.js";
-import { defineCommand } from "../services/command/command.js";
-import colors from "../services/output/colors.js";
-import { output } from "../services/output/output.js";
-import { println } from "../services/output/print.js";
-import { sprint, sprintln } from "../services/output/sprint.js";
-import { printTable } from "../services/output/table.js";
-import { getUserOrLogin } from "../services/user/user.js";
+import { getApplications, groupByTeam } from "../services/app/app.ts";
+import { defineCommand } from "../services/command/command.ts";
+import colors from "../services/output/colors.ts";
+import { output } from "../services/output/output.ts";
+import { println } from "../services/output/print.ts";
+import { sprint, sprintln } from "../services/output/sprint.ts";
+import { printTable } from "../services/output/table.ts";
+import { getUserOrLogin } from "../services/user/user.ts";
 
 export default defineCommand({
   name: "list",

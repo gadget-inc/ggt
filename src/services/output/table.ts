@@ -2,8 +2,8 @@ import CliTable3 from "cli-table3";
 import indentString from "indent-string";
 import { dedent } from "ts-dedent";
 
-import { println, type PrintOptions } from "./print.js";
-import { sprintln, type SprintOptions } from "./sprint.js";
+import { println, type PrintOptions } from "./print.ts";
+import { sprintln, type SprintOptions } from "./sprint.ts";
 
 export type SprintTableOptions = SprintOptions & {
   /**

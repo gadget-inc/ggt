@@ -2,8 +2,8 @@ import assert from "node:assert";
 
 import { z } from "zod";
 
-import { MemoAllArgs, memo } from "../../util/function.js";
-import { clamp } from "../../util/number.js";
+import { MemoAllArgs, memo } from "../../util/function.ts";
+import { clamp } from "../../util/number.ts";
 
 export type Level = (typeof Level)[keyof typeof Level];
 

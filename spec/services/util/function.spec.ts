@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { debounce, memo } from "../../../src/services/util/function.js";
+import { debounce, memo } from "../../../src/services/util/function.ts";
 
 describe("debounce", () => {
   beforeEach(() => {

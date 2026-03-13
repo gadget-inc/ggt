@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { Level, parseLevel, verbosityToLevel } from "../../../../src/services/output/log/level.js";
+import { Level, parseLevel, verbosityToLevel } from "../../../../src/services/output/log/level.ts";
 
 describe("parseLevel", () => {
   it.each([

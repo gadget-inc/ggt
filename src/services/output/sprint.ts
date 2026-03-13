@@ -2,8 +2,8 @@ import type { Options as BoxenOptions } from "boxen";
 import boxen from "boxen";
 import { dedent } from "ts-dedent";
 
-import { isArray, isString } from "../util/is.js";
-import { omit } from "../util/object.js";
+import { isArray, isString } from "../util/is.ts";
+import { omit } from "../util/object.ts";
 
 /**
  * Aligns multi-line interpolated values to their insertion column.

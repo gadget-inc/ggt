@@ -1,20 +1,20 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import deploy from "../../src/commands/deploy.js";
-import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.js";
-import { ClientError } from "../../src/services/app/error.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { confirm } from "../../src/services/output/confirm.js";
-import { nockTestApps } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { makeSyncScenario } from "../__support__/filesync.js";
-import type { MockEditSubscription } from "../__support__/graphql.js";
-import { makeMockEditSubscriptions } from "../__support__/graphql.js";
-import { mockConfirmOnce } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { expectProcessExit } from "../__support__/process.js";
-import { mockSystemTime } from "../__support__/time.js";
-import { loginTestUser } from "../__support__/user.js";
+import deploy from "../../src/commands/deploy.ts";
+import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.ts";
+import { ClientError } from "../../src/services/app/error.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { confirm } from "../../src/services/output/confirm.ts";
+import { nockTestApps } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { makeSyncScenario } from "../__support__/filesync.ts";
+import type { MockEditSubscription } from "../__support__/graphql.ts";
+import { makeMockEditSubscriptions } from "../__support__/graphql.ts";
+import { mockConfirmOnce } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { expectProcessExit } from "../__support__/process.ts";
+import { mockSystemTime } from "../__support__/time.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 const DEPLOY_PROGRESS_STEPS = [
   "NOT_STARTED",

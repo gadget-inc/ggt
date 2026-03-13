@@ -15,5 +15,5 @@ if (major < 22) {
   process.exit(1);
 }
 
-const { ggt } = await import("./ggt.js");
+const { ggt } = await import("./ggt.ts");
 await ggt();

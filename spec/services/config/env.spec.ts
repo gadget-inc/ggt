@@ -19,14 +19,14 @@ describe("env", () => {
   describe("value", () => {
     it("returns GGT_ENV when set", async () => {
       process.env["GGT_ENV"] = "staging";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.value).toBe("staging");
     });
 
     it("defaults to production when GGT_ENV is not set", async () => {
       delete process.env["GGT_ENV"];
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.value).toBe("production");
     });
@@ -35,28 +35,28 @@ describe("env", () => {
   describe("productionLike", () => {
     it("returns true for production", async () => {
       process.env["GGT_ENV"] = "production";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.productionLike).toBe(true);
     });
 
     it("returns true for staging (non-development, non-test)", async () => {
       process.env["GGT_ENV"] = "staging";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.productionLike).toBe(true);
     });
 
     it("returns false for development", async () => {
       process.env["GGT_ENV"] = "development";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.productionLike).toBe(false);
     });
 
     it("returns false for test", async () => {
       process.env["GGT_ENV"] = "test";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.productionLike).toBe(false);
     });
@@ -65,28 +65,28 @@ describe("env", () => {
   describe("developmentLike", () => {
     it("returns true for development", async () => {
       process.env["GGT_ENV"] = "development";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.developmentLike).toBe(true);
     });
 
     it("returns true for development-local", async () => {
       process.env["GGT_ENV"] = "development-local";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.developmentLike).toBe(true);
     });
 
     it("returns false for production", async () => {
       process.env["GGT_ENV"] = "production";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.developmentLike).toBe(false);
     });
 
     it("returns false for test", async () => {
       process.env["GGT_ENV"] = "test";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.developmentLike).toBe(false);
     });
@@ -95,28 +95,28 @@ describe("env", () => {
   describe("testLike", () => {
     it("returns true for test", async () => {
       process.env["GGT_ENV"] = "test";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.testLike).toBe(true);
     });
 
     it("returns true for test-integration", async () => {
       process.env["GGT_ENV"] = "test-integration";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.testLike).toBe(true);
     });
 
     it("returns false for production", async () => {
       process.env["GGT_ENV"] = "production";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.testLike).toBe(false);
     });
 
     it("returns false for development", async () => {
       process.env["GGT_ENV"] = "development";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.testLike).toBe(false);
     });
@@ -125,21 +125,21 @@ describe("env", () => {
   describe("developmentOrTestLike", () => {
     it("returns true for development", async () => {
       process.env["GGT_ENV"] = "development";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.developmentOrTestLike).toBe(true);
     });
 
     it("returns true for test", async () => {
       process.env["GGT_ENV"] = "test";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.developmentOrTestLike).toBe(true);
     });
 
     it("returns false for production", async () => {
       process.env["GGT_ENV"] = "production";
-      const { env } = await import("../../../src/services/config/env.js");
+      const { env } = await import("../../../src/services/config/env.ts");
 
       expect(env.developmentOrTestLike).toBe(false);
     });

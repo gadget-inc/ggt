@@ -1,10 +1,10 @@
 import stripAnsi from "strip-ansi";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { output } from "../../../src/services/output/output.js";
-import { Prompt } from "../../../src/services/output/prompt.js";
-import { select, type SelectOptions } from "../../../src/services/output/select.js";
-import { mock } from "../../__support__/mock.js";
+import { output } from "../../../src/services/output/output.ts";
+import { Prompt } from "../../../src/services/output/prompt.ts";
+import { select, type SelectOptions } from "../../../src/services/output/select.ts";
+import { mock } from "../../__support__/mock.ts";
 
 /**
  * Simulate a keypress event on process.stdin.

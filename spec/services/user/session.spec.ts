@@ -1,9 +1,9 @@
 import fs from "fs-extra";
 import { describe, expect, it } from "vitest";
 
-import { configPath } from "../../../src/services/config/config.js";
-import { readSession, writeSession } from "../../../src/services/user/session.js";
-import { testCtx } from "../../__support__/context.js";
+import { configPath } from "../../../src/services/config/config.ts";
+import { readSession, writeSession } from "../../../src/services/user/session.ts";
+import { testCtx } from "../../__support__/context.ts";
 
 describe("session", () => {
   describe("readSession", () => {

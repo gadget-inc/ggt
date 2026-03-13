@@ -1,14 +1,14 @@
 import type { Promisable } from "type-fest";
 
-import type { Context } from "../../command/context.js";
-import { type HttpOptions } from "../../http/http.js";
-import { unthunk, type Thunk } from "../../util/function.js";
-import { isStringArray } from "../../util/is.js";
-import type { RetryOptions } from "../../util/retry.js";
-import type { Environment } from "../app.js";
-import { Client, type ClientSubscription } from "../client.js";
-import { AuthenticationError, ClientError } from "../error.js";
-import { getOperationName, type GraphQLMutation, type GraphQLQuery, type GraphQLSubscription } from "./operation.js";
+import type { Context } from "../../command/context.ts";
+import { type HttpOptions } from "../../http/http.ts";
+import { unthunk, type Thunk } from "../../util/function.ts";
+import { isStringArray } from "../../util/is.ts";
+import type { RetryOptions } from "../../util/retry.ts";
+import type { Environment } from "../app.ts";
+import { Client, type ClientSubscription } from "../client.ts";
+import { AuthenticationError, ClientError } from "../error.ts";
+import { getOperationName, type GraphQLMutation, type GraphQLQuery, type GraphQLSubscription } from "./operation.ts";
 
 export class Edit {
   /**

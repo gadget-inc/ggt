@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import status from "../../src/commands/status.js";
-import { FlagError } from "../../src/services/command/flag.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { acquireDevLock } from "../../src/services/filesync/dev-lock.js";
-import { UnknownDirectoryError } from "../../src/services/filesync/error.js";
-import { SyncJson } from "../../src/services/filesync/sync-json.js";
-import { nockTestApps } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { expectError } from "../__support__/error.js";
-import { makeSyncScenario } from "../__support__/filesync.js";
-import { mock } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { mockSystemTime } from "../__support__/time.js";
-import { loginTestUser } from "../__support__/user.js";
+import status from "../../src/commands/status.ts";
+import { FlagError } from "../../src/services/command/flag.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { acquireDevLock } from "../../src/services/filesync/dev-lock.ts";
+import { UnknownDirectoryError } from "../../src/services/filesync/error.ts";
+import { SyncJson } from "../../src/services/filesync/sync-json.ts";
+import { nockTestApps } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { expectError } from "../__support__/error.ts";
+import { makeSyncScenario } from "../__support__/filesync.ts";
+import { mock } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { mockSystemTime } from "../__support__/time.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 describe("status", () => {
   mockSystemTime();

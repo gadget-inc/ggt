@@ -1,9 +1,9 @@
 import fs from "fs-extra";
 
-import type { Context } from "../command/context.js";
-import { configPath } from "../config/config.js";
-import { swallowEnoent } from "../filesync/directory.js";
-import { memo } from "../util/function.js";
+import type { Context } from "../command/context.ts";
+import { configPath } from "../config/config.ts";
+import { swallowEnoent } from "../filesync/directory.ts";
+import { memo } from "../util/function.ts";
 
 /**
  * Reads the session from either the environment variable `GGT_SESSION`

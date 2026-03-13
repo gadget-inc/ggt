@@ -5,7 +5,7 @@ import readline from "node:readline";
 
 import ansiEscapes from "ansi-escapes";
 
-import { output } from "./output.js";
+import { output } from "./output.ts";
 
 /**
  * Inspired by `prompts`:

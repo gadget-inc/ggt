@@ -1,5 +1,5 @@
-import { flagWords, type FlagDef } from "../command/flag.js";
-import { valueFlagNames, type CompletionData } from "./completions.js";
+import { flagWords, type FlagDef } from "../command/flag.ts";
+import { valueFlagNames, type CompletionData } from "./completions.ts";
 
 /**
  * Generates a complete Bash completion script for ggt.

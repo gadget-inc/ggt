@@ -1,14 +1,14 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { Api } from "../../../../src/services/app/api/api.js";
-import { GADGET_META_MODELS_QUERY } from "../../../../src/services/app/api/operation.js";
-import { ClientError } from "../../../../src/services/app/error.js";
-import { testEnvironment } from "../../../__support__/app.js";
-import { testCtx } from "../../../__support__/context.js";
-import { expectError } from "../../../__support__/error.js";
-import { nockApiResponse } from "../../../__support__/graphql.js";
-import { loginTestUser } from "../../../__support__/user.js";
+import { Api } from "../../../../src/services/app/api/api.ts";
+import { GADGET_META_MODELS_QUERY } from "../../../../src/services/app/api/operation.ts";
+import { ClientError } from "../../../../src/services/app/error.ts";
+import { testEnvironment } from "../../../__support__/app.ts";
+import { testCtx } from "../../../__support__/context.ts";
+import { expectError } from "../../../__support__/error.ts";
+import { nockApiResponse } from "../../../__support__/graphql.ts";
+import { loginTestUser } from "../../../__support__/user.ts";
 
 describe("Api", () => {
   let api: Api;

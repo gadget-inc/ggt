@@ -6,15 +6,15 @@ import fs from "fs-extra";
 import ms from "ms";
 import pMap from "p-map";
 
-import type { Context } from "../command/context.js";
-import { config } from "../config/config.js";
-import { Directory } from "../filesync/directory.js";
-import { http } from "../http/http.js";
-import colors from "./colors.js";
-import { confirm } from "./confirm.js";
-import { output } from "./output.js";
-import { println } from "./print.js";
-import { sprint } from "./sprint.js";
+import type { Context } from "../command/context.ts";
+import { config } from "../config/config.ts";
+import { Directory } from "../filesync/directory.ts";
+import { http } from "../http/http.ts";
+import colors from "./colors.ts";
+import { confirm } from "./confirm.ts";
+import { output } from "./output.ts";
+import { println } from "./print.ts";
+import { sprint } from "./sprint.ts";
 
 const AGENTS_FILE = "AGENTS.md";
 const CLAUDE_FILE = "CLAUDE.md";

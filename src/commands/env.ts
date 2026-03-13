@@ -2,25 +2,25 @@ import path from "node:path";
 
 import fs from "fs-extra";
 
-import { type Application, EnvArg, EnvironmentType, getApplications, type Environment } from "../services/app/app.js";
-import { Edit } from "../services/app/edit/edit.js";
-import { CREATE_ENVIRONMENT_MUTATION, DELETE_ENVIRONMENT_MUTATION, UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
-import { AppIdentityFlags, loadApplication } from "../services/command/app-identity.js";
-import { defineCommand } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
-import { FlagError, type FlagsDefinition } from "../services/command/flag.js";
-import type { Directory } from "../services/filesync/directory.js";
-import { UnknownDirectoryError } from "../services/filesync/error.js";
-import { SyncJsonState } from "../services/filesync/sync-json-state.js";
-import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import colors from "../services/output/colors.js";
-import { confirm } from "../services/output/confirm.js";
-import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
-import { symbol } from "../services/output/symbols.js";
-import { printTable } from "../services/output/table.js";
-import { getUserOrLogin } from "../services/user/user.js";
-import { sortBySimilar } from "../services/util/collection.js";
+import { type Application, EnvArg, EnvironmentType, getApplications, type Environment } from "../services/app/app.ts";
+import { Edit } from "../services/app/edit/edit.ts";
+import { CREATE_ENVIRONMENT_MUTATION, DELETE_ENVIRONMENT_MUTATION, UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.ts";
+import { AppIdentityFlags, loadApplication } from "../services/command/app-identity.ts";
+import { defineCommand } from "../services/command/command.ts";
+import type { Context } from "../services/command/context.ts";
+import { FlagError, type FlagsDefinition } from "../services/command/flag.ts";
+import type { Directory } from "../services/filesync/directory.ts";
+import { UnknownDirectoryError } from "../services/filesync/error.ts";
+import { SyncJsonState } from "../services/filesync/sync-json-state.ts";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import colors from "../services/output/colors.ts";
+import { confirm } from "../services/output/confirm.ts";
+import { println } from "../services/output/print.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { symbol } from "../services/output/symbols.ts";
+import { printTable } from "../services/output/table.ts";
+import { getUserOrLogin } from "../services/user/user.ts";
+import { sortBySimilar } from "../services/util/collection.ts";
 
 const parentFlags = {
   "--application": AppIdentityFlags["--application"],

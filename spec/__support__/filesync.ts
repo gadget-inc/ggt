@@ -11,35 +11,35 @@ import {
   type FileSyncChangedEventInput,
   type FileSyncDeletedEventInput,
   type MutationPublishFileSyncEventsArgs,
-} from "../../src/__generated__/graphql.js";
+} from "../../src/__generated__/graphql.ts";
 import {
   FILE_SYNC_COMPARISON_HASHES_QUERY,
   FILE_SYNC_FILES_QUERY,
   FILE_SYNC_HASHES_QUERY,
   PUBLISH_FILE_SYNC_EVENTS_MUTATION,
   REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
-} from "../../src/services/app/edit/operation.js";
-import { AppIdentity } from "../../src/services/command/app-identity.js";
-import type { Command } from "../../src/services/command/command.js";
-import { Directory, type Hashes } from "../../src/services/filesync/directory.js";
-import type { File } from "../../src/services/filesync/file.js";
-import { FileSync } from "../../src/services/filesync/filesync.js";
-import { isEqualHashes } from "../../src/services/filesync/hashes.js";
-import { SyncJson, SyncJsonFlags, type SyncJsonFlagsResult, type SyncJsonState } from "../../src/services/filesync/sync-json.js";
-import { noop } from "../../src/services/util/function.js";
-import { isNil } from "../../src/services/util/is.js";
-import { defaults } from "../../src/services/util/object.js";
-import type { PartialExcept } from "../../src/services/util/types.js";
-import { testApp, testEnvironment } from "./app.js";
-import { testCtx } from "./context.js";
-import { assertOrFail, log } from "./debug.js";
-import { readDir, writeDir, type Files } from "./files.js";
-import { makeFlags } from "./flag.js";
-import { makeMockEditSubscriptions, nockEditResponse, type MockEditSubscription } from "./graphql.js";
-import { prettyJSON } from "./json.js";
-import { mock, mockRestore } from "./mock.js";
-import { testDirPath } from "./paths.js";
-import { timeoutMs } from "./sleep.js";
+} from "../../src/services/app/edit/operation.ts";
+import { AppIdentity } from "../../src/services/command/app-identity.ts";
+import type { Command } from "../../src/services/command/command.ts";
+import { Directory, type Hashes } from "../../src/services/filesync/directory.ts";
+import type { File } from "../../src/services/filesync/file.ts";
+import { FileSync } from "../../src/services/filesync/filesync.ts";
+import { isEqualHashes } from "../../src/services/filesync/hashes.ts";
+import { SyncJson, SyncJsonFlags, type SyncJsonFlagsResult, type SyncJsonState } from "../../src/services/filesync/sync-json.ts";
+import { noop } from "../../src/services/util/function.ts";
+import { isNil } from "../../src/services/util/is.ts";
+import { defaults } from "../../src/services/util/object.ts";
+import type { PartialExcept } from "../../src/services/util/types.ts";
+import { testApp, testEnvironment } from "./app.ts";
+import { testCtx } from "./context.ts";
+import { assertOrFail, log } from "./debug.ts";
+import { readDir, writeDir, type Files } from "./files.ts";
+import { makeFlags } from "./flag.ts";
+import { makeMockEditSubscriptions, nockEditResponse, type MockEditSubscription } from "./graphql.ts";
+import { prettyJSON } from "./json.ts";
+import { mock, mockRestore } from "./mock.ts";
+import { testDirPath } from "./paths.ts";
+import { timeoutMs } from "./sleep.ts";
 
 export type FileSyncScenarioOptions = {
   /**

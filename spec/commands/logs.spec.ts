@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import logs from "../../src/commands/logs.js";
-import { ENVIRONMENT_LOGS_SUBSCRIPTION, type GraphQLSubscription } from "../../src/services/app/edit/operation.js";
-import { FlagError } from "../../src/services/command/flag.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { nockTestApps } from "../__support__/app.js";
-import { mockContext, testCtx } from "../__support__/context.js";
-import { withEnv } from "../__support__/env.js";
-import { expectError } from "../__support__/error.js";
-import { makeSyncScenario } from "../__support__/filesync.js";
-import { makeMockEditSubscriptions, type MockEditSubscriptions } from "../__support__/graphql.js";
-import { expectStdout, mockStdout } from "../__support__/output.js";
-import { timeoutMs } from "../__support__/sleep.js";
-import { loginTestUser } from "../__support__/user.js";
+import logs from "../../src/commands/logs.ts";
+import { ENVIRONMENT_LOGS_SUBSCRIPTION, type GraphQLSubscription } from "../../src/services/app/edit/operation.ts";
+import { FlagError } from "../../src/services/command/flag.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { nockTestApps } from "../__support__/app.ts";
+import { mockContext, testCtx } from "../__support__/context.ts";
+import { withEnv } from "../__support__/env.ts";
+import { expectError } from "../__support__/error.ts";
+import { makeSyncScenario } from "../__support__/filesync.ts";
+import { makeMockEditSubscriptions, type MockEditSubscriptions } from "../__support__/graphql.ts";
+import { expectStdout, mockStdout } from "../__support__/output.ts";
+import { timeoutMs } from "../__support__/sleep.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 describe("logs", () => {
   mockStdout();

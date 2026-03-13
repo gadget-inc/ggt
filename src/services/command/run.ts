@@ -1,12 +1,12 @@
 import arg from "arg";
 
-import { println } from "../output/print.js";
-import { closestMatch } from "../util/collection.js";
-import { AllowFlags, extractAllowFlags, getAllowFlags, resolveAllowFlags } from "./allow.js";
-import type { CommandConfig, LeafCommandConfig, ParentCommandConfig, PositionalDef } from "./command.js";
-import type { Context } from "./context.js";
-import { aliasName, FlagError, parseFlags, toEntryArray, type FlagsDefinition } from "./flag.js";
-import { renderDetailedUsage, renderShortUsage, renderUsageHint, type UsageInput } from "./usage.js";
+import { println } from "../output/print.ts";
+import { closestMatch } from "../util/collection.ts";
+import { AllowFlags, extractAllowFlags, getAllowFlags, resolveAllowFlags } from "./allow.ts";
+import type { CommandConfig, LeafCommandConfig, ParentCommandConfig, PositionalDef } from "./command.ts";
+import type { Context } from "./context.ts";
+import { aliasName, FlagError, parseFlags, toEntryArray, type FlagsDefinition } from "./flag.ts";
+import { renderDetailedUsage, renderShortUsage, renderUsageHint, type UsageInput } from "./usage.ts";
 
 /**
  * Runs a command, handling argument parsing, subcommand routing,

@@ -9,20 +9,20 @@ import type { Duplex } from "node:stream";
 import stripJsonComments from "strip-json-comments";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 
-import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
-import { defineCommand } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
-import { FlagError } from "../services/command/flag.js";
-import { config } from "../services/config/config.js";
-import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { loadAuthHeaders } from "../services/http/auth.js";
-import { http } from "../services/http/http.js";
-import colors from "../services/output/colors.js";
-import { println } from "../services/output/print.js";
-import { reportErrorAndExit } from "../services/output/report.js";
-import { spin } from "../services/output/spinner.js";
-import { sprint } from "../services/output/sprint.js";
-import { symbol } from "../services/output/symbols.js";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.ts";
+import { defineCommand } from "../services/command/command.ts";
+import type { Context } from "../services/command/context.ts";
+import { FlagError } from "../services/command/flag.ts";
+import { config } from "../services/config/config.ts";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import { loadAuthHeaders } from "../services/http/auth.ts";
+import { http } from "../services/http/http.ts";
+import colors from "../services/output/colors.ts";
+import { println } from "../services/output/print.ts";
+import { reportErrorAndExit } from "../services/output/report.ts";
+import { spin } from "../services/output/spinner.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { symbol } from "../services/output/symbols.ts";
 
 const parseJsonc = (text: string): unknown => {
   return JSON.parse(stripJsonComments(text, { trailingCommas: true }));
@@ -690,7 +690,7 @@ export default defineCommand({
       valueName: "editor",
       details: "Generates .vscode/launch.json and tasks.json for one-click attach debugging. Works with both VS Code and Cursor.",
       complete: async (_ctx, partial) => {
-        const { filterByPrefix } = await import("../services/util/collection.js");
+        const { filterByPrefix } = await import("../services/util/collection.ts");
         return filterByPrefix([...SupportedEditors], partial);
       },
     },

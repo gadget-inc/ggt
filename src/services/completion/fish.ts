@@ -1,5 +1,5 @@
-import type { FlagDef } from "../command/flag.js";
-import { valueFlagNames, type CompletionData } from "./completions.js";
+import type { FlagDef } from "../command/flag.ts";
+import { valueFlagNames, type CompletionData } from "./completions.ts";
 
 /**
  * Generates a complete Fish completion script for ggt.

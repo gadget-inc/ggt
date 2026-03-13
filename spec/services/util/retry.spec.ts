@@ -13,7 +13,7 @@ import {
   isRetryableNetworkErrorCode,
   NON_RETRYABLE_CLOSE_CODES,
   RETRYABLE_NETWORK_ERROR_CODES,
-} from "../../../src/services/util/retry.js";
+} from "../../../src/services/util/retry.ts";
 
 describe("RETRYABLE_NETWORK_ERROR_CODES", () => {
   it("includes EADDRINUSE", () => {

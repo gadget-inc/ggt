@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isSprintOptions, sprint, sprintln } from "../../../src/services/output/sprint.js";
+import { isSprintOptions, sprint, sprintln } from "../../../src/services/output/sprint.ts";
 
 describe("sprint", () => {
   describe("string overload", () => {

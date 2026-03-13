@@ -3,9 +3,9 @@ import type {
   GadgetMetaGlobalActionsQueryVariables,
   GadgetMetaModelsQuery,
   GadgetMetaModelsQueryVariables,
-} from "../../../__generated__/graphql.js";
-import { sprint } from "../../output/sprint.js";
-import type { GraphQLQuery } from "../edit/operation.js";
+} from "../../../__generated__/graphql.ts";
+import { sprint } from "../../output/sprint.ts";
+import type { GraphQLQuery } from "../edit/operation.ts";
 
 export const GADGET_META_MODELS_QUERY = sprint(/* GraphQL */ `
   query GadgetMetaModels {

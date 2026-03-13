@@ -3,11 +3,11 @@ import { randomUUID } from "node:crypto";
 import nock from "nock";
 import { expect, vi } from "vitest";
 
-import { config } from "../../src/services/config/config.js";
-import { loadCookie } from "../../src/services/http/auth.js";
-import { readToken, writeSession } from "../../src/services/user/session.js";
-import type { User } from "../../src/services/user/user.js";
-import { testCtx } from "./context.js";
+import { config } from "../../src/services/config/config.ts";
+import { loadCookie } from "../../src/services/http/auth.ts";
+import { readToken, writeSession } from "../../src/services/user/session.ts";
+import type { User } from "../../src/services/user/user.ts";
+import { testCtx } from "./context.ts";
 
 /**
  * A test user to use in tests.

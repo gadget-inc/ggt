@@ -1,20 +1,20 @@
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import * as app from "../../../src/services/app/app.js";
-import { AppIdentity, AppIdentityFlags, type AppIdentityFlagsResult } from "../../../src/services/command/app-identity.js";
-import { Commands, type Command } from "../../../src/services/command/command.js";
-import { FlagError } from "../../../src/services/command/flag.js";
-import { Directory } from "../../../src/services/filesync/directory.js";
-import { nockTestApps, testApp, testApp2 } from "../../__support__/app.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectError } from "../../__support__/error.js";
-import { makeFlags } from "../../__support__/flag.js";
-import { mockOnce, mockSelectOnce } from "../../__support__/mock.js";
-import { expectStdout } from "../../__support__/output.js";
-import { testDirPath } from "../../__support__/paths.js";
-import { expectProcessExit } from "../../__support__/process.js";
-import { loginTestUser } from "../../__support__/user.js";
+import * as app from "../../../src/services/app/app.ts";
+import { AppIdentity, AppIdentityFlags, type AppIdentityFlagsResult } from "../../../src/services/command/app-identity.ts";
+import { Commands, type Command } from "../../../src/services/command/command.ts";
+import { FlagError } from "../../../src/services/command/flag.ts";
+import { Directory } from "../../../src/services/filesync/directory.ts";
+import { nockTestApps, testApp, testApp2 } from "../../__support__/app.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectError } from "../../__support__/error.ts";
+import { makeFlags } from "../../__support__/flag.ts";
+import { mockOnce, mockSelectOnce } from "../../__support__/mock.ts";
+import { expectStdout } from "../../__support__/output.ts";
+import { testDirPath } from "../../__support__/paths.ts";
+import { expectProcessExit } from "../../__support__/process.ts";
+import { loginTestUser } from "../../__support__/user.ts";
 
 describe("AppIdentity.load", () => {
   let command: Command;

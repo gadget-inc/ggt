@@ -3,12 +3,12 @@ import path from "node:path";
 import { findUp } from "find-up";
 import fs from "fs-extra";
 
-import { defineCommand } from "../services/command/command.js";
-import { Directory } from "../services/filesync/directory.js";
-import { installAgentsMdScaffold, installGadgetSkillsIntoProject } from "../services/output/agent-plugin.js";
-import colors from "../services/output/colors.js";
-import { confirm } from "../services/output/confirm.js";
-import { sprint } from "../services/output/sprint.js";
+import { defineCommand } from "../services/command/command.ts";
+import { Directory } from "../services/filesync/directory.ts";
+import { installAgentsMdScaffold, installGadgetSkillsIntoProject } from "../services/output/agent-plugin.ts";
+import colors from "../services/output/colors.ts";
+import { confirm } from "../services/output/confirm.ts";
+import { sprint } from "../services/output/sprint.ts";
 
 const resolveProjectRoot = async (): Promise<Directory> => {
   const cwd = process.cwd();

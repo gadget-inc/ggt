@@ -2,9 +2,9 @@ import assert from "node:assert";
 
 import { HTTPError, type OptionsInit } from "got";
 
-import type { Context } from "../command/context.js";
-import { config } from "../config/config.js";
-import { readSession, readToken } from "../user/session.js";
+import type { Context } from "../command/context.ts";
+import { config } from "../config/config.ts";
+import { readSession, readToken } from "../user/session.ts";
 
 /**
  * Determines whether the given request options are for a Gadget

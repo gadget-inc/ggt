@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { formatJson } from "../../../../../src/services/output/log/format/json.js";
-import { Level } from "../../../../../src/services/output/log/level.js";
+import { formatJson } from "../../../../../src/services/output/log/format/json.ts";
+import { Level } from "../../../../../src/services/output/log/level.ts";
 
 describe("formatJson", () => {
   it("formats a basic log entry", () => {

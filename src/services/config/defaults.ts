@@ -1,11 +1,11 @@
 import fs from "fs-extra";
 
-import type { Context } from "../command/context.js";
-import { swallowEnoent } from "../filesync/directory.js";
-import { output } from "../output/output.js";
-import { println } from "../output/print.js";
-import { select } from "../output/select.js";
-import { config } from "./config.js";
+import type { Context } from "../command/context.ts";
+import { swallowEnoent } from "../filesync/directory.ts";
+import { output } from "../output/output.ts";
+import { println } from "../output/print.ts";
+import { select } from "../output/select.ts";
+import { config } from "./config.ts";
 
 export type DefaultsConfigData = {
   telemetry?: boolean;

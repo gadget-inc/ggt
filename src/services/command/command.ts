@@ -2,10 +2,10 @@ import assert from "node:assert";
 
 import type { Promisable } from "type-fest";
 
-import colors from "../output/colors.js";
-import { memo, MemoFirstCall } from "../util/function.js";
-import type { Context } from "./context.js";
-import type { FlagsDefinition, FlagsResult, ParseFlagsOptions } from "./flag.js";
+import colors from "../output/colors.ts";
+import { memo, MemoFirstCall } from "../util/function.ts";
+import type { Context } from "./context.ts";
+import type { FlagsDefinition, FlagsResult, ParseFlagsOptions } from "./flag.ts";
 
 /**
  * The list of available commands.
@@ -190,67 +190,67 @@ export const importCommand = async (cmd: Command): Promise<CommandConfig> => {
   let module;
   switch (cmd) {
     case "dev":
-      module = await import("../../commands/dev.js");
+      module = await import("../../commands/dev.ts");
       break;
     case "deploy":
-      module = await import("../../commands/deploy.js");
+      module = await import("../../commands/deploy.ts");
       break;
     case "status":
-      module = await import("../../commands/status.js");
+      module = await import("../../commands/status.ts");
       break;
     case "problems":
-      module = await import("../../commands/problems.js");
+      module = await import("../../commands/problems.ts");
       break;
     case "push":
-      module = await import("../../commands/push.js");
+      module = await import("../../commands/push.ts");
       break;
     case "pull":
-      module = await import("../../commands/pull.js");
+      module = await import("../../commands/pull.ts");
       break;
     case "var":
-      module = await import("../../commands/var.js");
+      module = await import("../../commands/var.ts");
       break;
     case "env":
-      module = await import("../../commands/env.js");
+      module = await import("../../commands/env.ts");
       break;
     case "add":
-      module = await import("../../commands/add.js");
+      module = await import("../../commands/add.ts");
       break;
     case "open":
-      module = await import("../../commands/open.js");
+      module = await import("../../commands/open.ts");
       break;
     case "list":
-      module = await import("../../commands/list.js");
+      module = await import("../../commands/list.ts");
       break;
     case "login":
-      module = await import("../../commands/login.js");
+      module = await import("../../commands/login.ts");
       break;
     case "logout":
-      module = await import("../../commands/logout.js");
+      module = await import("../../commands/logout.ts");
       break;
     case "logs":
-      module = await import("../../commands/logs.js");
+      module = await import("../../commands/logs.ts");
       break;
     case "debugger":
-      module = await import("../../commands/debugger.js");
+      module = await import("../../commands/debugger.ts");
       break;
     case "whoami":
-      module = await import("../../commands/whoami.js");
+      module = await import("../../commands/whoami.ts");
       break;
     case "configure":
-      module = await import("../../commands/configure.js");
+      module = await import("../../commands/configure.ts");
       break;
     case "agent-plugin":
-      module = await import("../../commands/agent-plugin.js");
+      module = await import("../../commands/agent-plugin.ts");
       break;
     case "eval":
-      module = await import("../../commands/eval.js");
+      module = await import("../../commands/eval.ts");
       break;
     case "version":
-      module = await import("../../commands/version.js");
+      module = await import("../../commands/version.ts");
       break;
     case "completion":
-      module = await import("../../commands/completion.js");
+      module = await import("../../commands/completion.ts");
       break;
   }
 

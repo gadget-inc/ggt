@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { config } from "../../../src/services/config/config.js";
+import { config } from "../../../src/services/config/config.ts";
 
 describe("domains", () => {
   beforeEach(() => {

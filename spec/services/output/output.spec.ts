@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { output } from "../../../src/services/output/output.js";
-import { expectStdout } from "../../__support__/output.js";
+import { output } from "../../../src/services/output/output.ts";
+import { expectStdout } from "../../__support__/output.ts";
 
 describe("output", () => {
   it("strips leading newlines if the last line was empty", () => {

@@ -5,21 +5,21 @@ import vm from "node:vm";
 
 import fs from "fs-extra";
 
-import type { Application, Environment } from "../services/app/app.js";
-import { Edit } from "../services/app/edit/edit.js";
-import { UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.js";
-import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
-import { defineCommand } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
-import { FlagError } from "../services/command/flag.js";
-import { config } from "../services/config/config.js";
-import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { loadAuthHeaders } from "../services/http/auth.js";
-import { http } from "../services/http/http.js";
-import colors from "../services/output/colors.js";
-import { output } from "../services/output/output.js";
-import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
+import type { Application, Environment } from "../services/app/app.ts";
+import { Edit } from "../services/app/edit/edit.ts";
+import { UNPAUSE_ENVIRONMENT_MUTATION } from "../services/app/edit/operation.ts";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.ts";
+import { defineCommand } from "../services/command/command.ts";
+import type { Context } from "../services/command/context.ts";
+import { FlagError } from "../services/command/flag.ts";
+import { config } from "../services/config/config.ts";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import { loadAuthHeaders } from "../services/http/auth.ts";
+import { http } from "../services/http/http.ts";
+import colors from "../services/output/colors.ts";
+import { output } from "../services/output/output.ts";
+import { println } from "../services/output/print.ts";
+import { sprint } from "../services/output/sprint.ts";
 
 const loadClient = async (
   ctx: Context,

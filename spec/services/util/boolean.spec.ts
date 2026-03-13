@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseBoolean } from "../../../src/services/util/boolean.js";
+import { parseBoolean } from "../../../src/services/util/boolean.ts";
 
 describe("parseBoolean", () => {
   it.each(["1", "true", "True", "TRUE"])("parses %s as true", (value) => {

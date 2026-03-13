@@ -1,5 +1,5 @@
-import { workspacePath } from "../../src/services/util/paths.js";
-import { getCurrentTest } from "./debug.js";
+import { workspacePath } from "../../src/services/util/paths.ts";
+import { getCurrentTest } from "./debug.ts";
 
 /**
  * Returns the path to a test directory within tmp/spec/ based on the

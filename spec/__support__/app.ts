@@ -1,8 +1,8 @@
 import nock from "nock";
 
-import { EnvironmentType, type Application, type Environment } from "../../src/services/app/app.js";
-import { config } from "../../src/services/config/config.js";
-import { matchAuthHeader } from "./user.js";
+import { EnvironmentType, type Application, type Environment } from "../../src/services/app/app.ts";
+import { config } from "../../src/services/config/config.ts";
+import { matchAuthHeader } from "./user.ts";
 
 /**
  * A Gadget app to use in tests.

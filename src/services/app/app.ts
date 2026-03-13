@@ -2,17 +2,17 @@ import { findUp } from "find-up";
 import fs from "fs-extra";
 import { z } from "zod";
 
-import type { Context } from "../command/context.js";
-import { allFlagNames, type FlagsDefinition } from "../command/flag.js";
-import { config } from "../config/config.js";
-import { SyncJsonState } from "../filesync/sync-json-state.js";
-import { maybeLoadAuthHeaders } from "../http/auth.js";
-import { http } from "../http/http.js";
-import { sprint } from "../output/sprint.js";
-import { filterByPrefix, uniq } from "../util/collection.js";
-import { Api } from "./api/api.js";
-import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "./api/operation.js";
-import { AppSlug } from "./arg.js";
+import type { Context } from "../command/context.ts";
+import { allFlagNames, type FlagsDefinition } from "../command/flag.ts";
+import { config } from "../config/config.ts";
+import { SyncJsonState } from "../filesync/sync-json-state.ts";
+import { maybeLoadAuthHeaders } from "../http/auth.ts";
+import { http } from "../http/http.ts";
+import { sprint } from "../output/sprint.ts";
+import { filterByPrefix, uniq } from "../util/collection.ts";
+import { Api } from "./api/api.ts";
+import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "./api/operation.ts";
+import { AppSlug } from "./arg.ts";
 
 export const EnvironmentType = Object.freeze({
   Development: "development",

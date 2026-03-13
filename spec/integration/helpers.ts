@@ -5,8 +5,8 @@ import { execa, type ResultPromise } from "execa";
 import fs from "fs-extra";
 import { vi } from "vitest";
 
-import { workspacePath } from "../../src/services/util/paths.js";
-import { timeoutMs } from "../__support__/sleep.js";
+import { workspacePath } from "../../src/services/util/paths.ts";
+import { timeoutMs } from "../__support__/sleep.ts";
 
 /**
  * Check if the integration test token is available.

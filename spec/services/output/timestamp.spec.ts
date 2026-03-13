@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ts } from "../../../src/services/output/timestamp.js";
+import { ts } from "../../../src/services/output/timestamp.ts";
 
 describe("ts", () => {
   it("returns a formatted time string", () => {

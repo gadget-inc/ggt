@@ -3,21 +3,21 @@ import process from "node:process";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import * as root from "../../src/commands/root.js";
-import * as command from "../../src/services/command/command.js";
-import { importCommand, type CommandConfig, type ParentCommandConfig } from "../../src/services/command/command.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { config } from "../../src/services/config/config.js";
-import { Level } from "../../src/services/output/log/level.js";
-import * as update from "../../src/services/output/update.js";
-import { noop, noopThis } from "../../src/services/util/function.js";
-import { testCtx } from "../__support__/context.js";
-import { withEnv } from "../__support__/env.js";
-import { waitForReportErrorAndExit } from "../__support__/error.js";
-import { makeRootFlags } from "../__support__/flag.js";
-import { mock } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { expectProcessExit } from "../__support__/process.js";
+import * as root from "../../src/commands/root.ts";
+import * as command from "../../src/services/command/command.ts";
+import { importCommand, type CommandConfig, type ParentCommandConfig } from "../../src/services/command/command.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { config } from "../../src/services/config/config.ts";
+import { Level } from "../../src/services/output/log/level.ts";
+import * as update from "../../src/services/output/update.ts";
+import { noop, noopThis } from "../../src/services/util/function.ts";
+import { testCtx } from "../__support__/context.ts";
+import { withEnv } from "../__support__/env.ts";
+import { waitForReportErrorAndExit } from "../__support__/error.ts";
+import { makeRootFlags } from "../__support__/flag.ts";
+import { mock } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { expectProcessExit } from "../__support__/process.ts";
 
 const parentCommands = new Set<string>();
 const parentSubcommands = new Map<string, string[]>();

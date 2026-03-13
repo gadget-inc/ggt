@@ -1,8 +1,8 @@
-import { config } from "../config/config.js";
-import { isString } from "../util/is.js";
-import type { Field } from "./log/field.js";
-import { output } from "./output.js";
-import { isSprintOptions, sprint, type SprintOptionsWithContent } from "./sprint.js";
+import { config } from "../config/config.ts";
+import { isString } from "../util/is.ts";
+import type { Field } from "./log/field.ts";
+import { output } from "./output.ts";
+import { isSprintOptions, sprint, type SprintOptionsWithContent } from "./sprint.ts";
 
 export type PrintOptions = SprintOptionsWithContent & {
   /**

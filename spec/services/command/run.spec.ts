@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { defineCommand } from "../../../src/services/command/command.js";
-import { FlagError, type FlagsDefinition } from "../../../src/services/command/flag.js";
-import { runCommand } from "../../../src/services/command/run.js";
-import { noop } from "../../../src/services/util/function.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectError } from "../../__support__/error.js";
-import { expectStdout } from "../../__support__/output.js";
-import { expectProcessExit } from "../../__support__/process.js";
+import { defineCommand } from "../../../src/services/command/command.ts";
+import { FlagError, type FlagsDefinition } from "../../../src/services/command/flag.ts";
+import { runCommand } from "../../../src/services/command/run.ts";
+import { noop } from "../../../src/services/util/function.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectError } from "../../__support__/error.ts";
+import { expectStdout } from "../../__support__/output.ts";
+import { expectProcessExit } from "../../__support__/process.ts";
 
 // -- test fixtures --
 

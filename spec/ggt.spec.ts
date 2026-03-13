@@ -2,19 +2,19 @@ import { inspect } from "node:util";
 
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as root from "../src/commands/root.js";
-import { ggt } from "../src/ggt.js";
-import * as command from "../src/services/command/command.js";
-import * as report from "../src/services/output/report.js";
-import { noop } from "../src/services/util/function.js";
-import { isAbortError } from "../src/services/util/is.js";
-import * as json from "../src/services/util/json.js";
-import { PromiseSignal } from "../src/services/util/promise.js";
-import type { AnyFunction } from "../src/services/util/types.js";
-import { testCtx } from "./__support__/context.js";
-import { mock } from "./__support__/mock.js";
-import { expectStdout } from "./__support__/output.js";
-import { expectProcessExit } from "./__support__/process.js";
+import * as root from "../src/commands/root.ts";
+import { ggt } from "../src/ggt.ts";
+import * as command from "../src/services/command/command.ts";
+import * as report from "../src/services/output/report.ts";
+import { noop } from "../src/services/util/function.ts";
+import { isAbortError } from "../src/services/util/is.ts";
+import * as json from "../src/services/util/json.ts";
+import { PromiseSignal } from "../src/services/util/promise.ts";
+import type { AnyFunction } from "../src/services/util/types.ts";
+import { testCtx } from "./__support__/context.ts";
+import { mock } from "./__support__/mock.ts";
+import { expectStdout } from "./__support__/output.ts";
+import { expectProcessExit } from "./__support__/process.ts";
 
 describe("ggt", () => {
   beforeEach(() => {

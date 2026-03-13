@@ -1,10 +1,10 @@
-import { defineCommand } from "../services/command/command.js";
-import { generateBashCompletions } from "../services/completion/bash.js";
-import { getCompletionData } from "../services/completion/completions.js";
-import { generateFishCompletions } from "../services/completion/fish.js";
-import { generateZshCompletions } from "../services/completion/zsh.js";
-import colors from "../services/output/colors.js";
-import { sprint } from "../services/output/sprint.js";
+import { defineCommand } from "../services/command/command.ts";
+import { generateBashCompletions } from "../services/completion/bash.ts";
+import { getCompletionData } from "../services/completion/completions.ts";
+import { generateFishCompletions } from "../services/completion/fish.ts";
+import { generateZshCompletions } from "../services/completion/zsh.ts";
+import colors from "../services/output/colors.ts";
+import { sprint } from "../services/output/sprint.ts";
 
 export default defineCommand({
   name: "completion",

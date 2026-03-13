@@ -1,8 +1,8 @@
 import chalk, { Chalk } from "chalk";
 
-import { config } from "../config/config.js";
-import { env } from "../config/env.js";
-import { Level } from "./log/level.js";
+import { config } from "../config/config.ts";
+import { env } from "../config/env.ts";
+import { Level } from "./log/level.ts";
 
 const color = new Chalk({
   // we always turn off colors in tests (FORCE_COLOR=0) so that we get

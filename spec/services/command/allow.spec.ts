@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { extractAllowFlags, getAllowFlags, resolveAllowFlags } from "../../../src/services/command/allow.js";
-import { FlagError } from "../../../src/services/command/flag.js";
+import { extractAllowFlags, getAllowFlags, resolveAllowFlags } from "../../../src/services/command/allow.ts";
+import { FlagError } from "../../../src/services/command/flag.ts";
 
 describe("getAllowFlags", () => {
   it("returns allow-* keys from a flags definition", () => {

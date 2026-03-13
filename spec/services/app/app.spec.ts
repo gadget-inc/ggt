@@ -1,12 +1,12 @@
 import nock from "nock";
 import { describe, expect, it } from "vitest";
 
-import { getApplications } from "../../../src/services/app/app.js";
-import { config } from "../../../src/services/config/config.js";
-import { loadCookie } from "../../../src/services/http/auth.js";
-import { testApp } from "../../__support__/app.js";
-import { testCtx } from "../../__support__/context.js";
-import { loginTestUser, matchAuthHeader } from "../../__support__/user.js";
+import { getApplications } from "../../../src/services/app/app.ts";
+import { config } from "../../../src/services/config/config.ts";
+import { loadCookie } from "../../../src/services/http/auth.ts";
+import { testApp } from "../../__support__/app.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { loginTestUser, matchAuthHeader } from "../../__support__/user.ts";
 
 describe("getApplications", () => {
   it("returns the available apps if the session is set", async () => {

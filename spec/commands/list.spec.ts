@@ -1,14 +1,14 @@
 import { beforeEach, describe, it } from "vitest";
 
-import list from "../../src/commands/list.js";
-import * as app from "../../src/services/app/app.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { output } from "../../src/services/output/output.js";
-import { nockTestApps } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { mock, mockOnce } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { loginTestUser } from "../__support__/user.js";
+import list from "../../src/commands/list.ts";
+import * as app from "../../src/services/app/app.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { output } from "../../src/services/output/output.ts";
+import { nockTestApps } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { mock, mockOnce } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 describe("list", () => {
   beforeEach(() => {

@@ -1,10 +1,10 @@
-import { EnvArg } from "../services/app/app.js";
-import { defineCommand } from "../services/command/command.js";
-import { FlagError } from "../services/command/flag.js";
-import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
+import { EnvArg } from "../services/app/app.ts";
+import { defineCommand } from "../services/command/command.ts";
+import { FlagError } from "../services/command/flag.ts";
+import { FileSync } from "../services/filesync/filesync.ts";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import { println } from "../services/output/print.ts";
+import { sprint } from "../services/output/sprint.ts";
 
 export default defineCommand({
   name: "pull",

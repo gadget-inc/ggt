@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import logout from "../../src/commands/logout.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { readSession, writeSession } from "../../src/services/user/session.js";
-import { testCtx } from "../__support__/context.js";
-import { expectStdout } from "../__support__/output.js";
+import logout from "../../src/commands/logout.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { readSession, writeSession } from "../../src/services/user/session.ts";
+import { testCtx } from "../__support__/context.ts";
+import { expectStdout } from "../__support__/output.ts";
 
 describe("logout", () => {
   it("deletes the session from disk", async () => {

@@ -2,19 +2,19 @@ import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { Directory } from "../../../src/services/filesync/directory.js";
+import { Directory } from "../../../src/services/filesync/directory.ts";
 import {
   agentPluginShaPath,
   installAgentsMdScaffold,
   installGadgetSkillsIntoProject,
   maybePromptAgentsMd,
   maybePromptGadgetSkills,
-} from "../../../src/services/output/agent-plugin.js";
-import { output } from "../../../src/services/output/output.js";
-import { testCtx } from "../../__support__/context.js";
-import { mock, mockConfirm } from "../../__support__/mock.js";
-import { expectStdout } from "../../__support__/output.js";
-import { testDirPath } from "../../__support__/paths.js";
+} from "../../../src/services/output/agent-plugin.ts";
+import { output } from "../../../src/services/output/output.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { mock, mockConfirm } from "../../__support__/mock.ts";
+import { expectStdout } from "../../__support__/output.ts";
+import { testDirPath } from "../../__support__/paths.ts";
 
 const makeProject = async (name: string, { empty = false }: { empty?: boolean } = {}): Promise<Directory> => {
   const dir = testDirPath(name);

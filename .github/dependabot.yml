@@ -36,7 +36,6 @@ updates:
           - "rolldown"
           - "rimraf"
           - "typescript"
-          - "ts-node"
           - "@changesets/*"
       graphql:
         patterns:

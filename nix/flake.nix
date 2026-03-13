@@ -21,7 +21,7 @@
           mkcert = pkgs.mkcert;
           nix-direnv = pkgs.nix-direnv;
           nixpkgs-fmt = pkgs.nixpkgs-fmt;
-          nodejs = pkgs.nodejs_20;
+          nodejs = pkgs.nodejs_22;
           yarn = pkgs.yarn.override { nodejs = flake.packages.nodejs; };
           zsh = pkgs.zsh;
 

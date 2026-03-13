@@ -28,8 +28,8 @@
     "verbatimModuleSyntax": true,
 
     /* Language and Environment */
-    "lib": ["es2021"],
-    "target": "es2021",
+    "lib": ["es2023"],
+    "target": "es2023",
     "useDefineForClassFields": true,
 
     /* Completeness */

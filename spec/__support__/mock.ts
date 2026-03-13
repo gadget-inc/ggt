@@ -162,7 +162,6 @@ export const mockSideEffects = (): void => {
   // mock these dependencies with consistent/no-op implementations
   vi.mock("execa", () => ({ execa: vi.fn().mockName("execa").mockResolvedValue({}) }));
   vi.mock("get-port", () => ({ default: vi.fn().mockName("getPort").mockResolvedValue(1234) }));
-  vi.mock("node-notifier", () => ({ default: { notify: vi.fn().mockName("notify") } }));
   vi.mock("open", () => ({ default: vi.fn().mockName("open") }));
   vi.mock("which", () => ({ default: vi.fn().mockName("which").mockResolvedValue("/path/to/yarn") }));
   vi.mock("simple-git", () => ({

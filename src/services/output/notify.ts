@@ -1,44 +1,18 @@
-import notifier, { type Notification } from "node-notifier";
-import type WindowsBalloon from "node-notifier/notifiers/balloon.js";
-import type Growl from "node-notifier/notifiers/growl.js";
-import type NotificationCenter from "node-notifier/notifiers/notificationcenter.js";
-import type NotifySend from "node-notifier/notifiers/notifysend.js";
-import type WindowsToaster from "node-notifier/notifiers/toaster.js";
-
 import type { Context } from "../command/context.js";
-import { assetsPath } from "../util/paths.js";
-import type { Field } from "./log/field.js";
+
+export type NotifyOptions = {
+  subtitle?: string;
+  message: string;
+};
 
 /**
- * Sends a native OS notification to the user.
+ * Alerts the user by writing a terminal bell character (BEL) to stderr.
  *
- * @see {@link https://www.npmjs.com/package/node-notifier node-notifier}
+ * This triggers the terminal's native attention mechanism — dock bounce on
+ * macOS, taskbar flash on Linux/Windows — without any platform-specific
+ * code or external dependencies.
  */
-export const notify = (
-  ctx: Context,
-  notification:
-    | Notification
-    | NotificationCenter.Notification
-    | NotifySend.Notification
-    | WindowsToaster.Notification
-    | WindowsBalloon.Notification
-    | Growl.Notification,
-): void => {
-  ctx.log.info("notifying user", { notification: notification as Field });
-
-  notifier.notify(
-    {
-      title: "Gadget",
-      contentImage: assetsPath("favicon-128@4x.png"),
-      icon: assetsPath("favicon-128@4x.png"),
-      sound: true,
-      timeout: false,
-      ...notification,
-    },
-    (error) => {
-      if (error) {
-        ctx.log.warn("error notifying user", { notification: notification as Field });
-      }
-    },
-  );
+export const notify = (ctx: Context, notification: NotifyOptions): void => {
+  ctx.log.info("notifying user", { subtitle: notification.subtitle, message: notification.message });
+  process.stderr.write("\x07");
 };

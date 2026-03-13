@@ -296,6 +296,25 @@ describe("FileSync._writeToLocalFilesystem", () => {
     expect(filesync.syncJson.filesVersion).toBe(1n);
   });
 
+  it("does not throw ENOENT errors when chmod races with file deletion", async () => {
+    if (!supportsPermissions) {
+      return;
+    }
+
+    const enoentError = Object.assign(new Error("ENOENT: no such file or directory, chmod"), { code: "ENOENT" });
+    mockOnce(fs, "chmod", () => {
+      throw enoentError;
+    });
+
+    await writeToLocalFilesystem(testCtx, {
+      filesVersion: 1n,
+      files: [makeFile({ path: "file.js", content: "foo", mode: 0o644 })],
+      delete: [],
+    });
+
+    expect(filesync.syncJson.filesVersion).toBe(1n);
+  });
+
   it("deletes files before writing files", async () => {
     await writeDir(localDir, {
       "foo/": "",

@@ -56,12 +56,14 @@ export class Directory {
    */
   private _lastIgnoreFileLoadTime = 0;
 
-  private constructor(
-    /**
-     * An absolute path to the directory that is being synced.
-     */
-    readonly path: string,
-  ) {}
+  /**
+   * An absolute path to the directory that is being synced.
+   */
+  readonly path: string;
+
+  private constructor(path: string) {
+    this.path = path;
+  }
 
   /**
    * Initializes a directory to be synced.

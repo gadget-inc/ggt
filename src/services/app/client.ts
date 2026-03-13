@@ -35,11 +35,13 @@ export type ClientSubscription<Subscription extends GraphQLSubscription> = {
   resubscribe(variables?: Thunk<Subscription["Variables"]> | null): void;
 };
 
-enum ConnectionStatus {
-  CONNECTED,
-  DISCONNECTED,
-  RECONNECTING,
-}
+const ConnectionStatus = {
+  CONNECTED: 0,
+  DISCONNECTED: 1,
+  RECONNECTING: 2,
+} as const;
+
+type ConnectionStatus = (typeof ConnectionStatus)[keyof typeof ConnectionStatus];
 
 /**
  * Client is a GraphQL client connected to a Gadget application's
@@ -47,19 +49,19 @@ enum ConnectionStatus {
  */
 export class Client {
   // assume the client is going to connect
-  status = ConnectionStatus.CONNECTED;
+  status: ConnectionStatus = ConnectionStatus.CONNECTED;
 
   readonly ctx: Context;
+  readonly environment: Environment;
+  readonly endpoint: string;
 
   private _graphqlWsClient: ReturnType<typeof createClient>;
   private _sessionUpdateInterval: NodeJS.Timeout | undefined;
 
-  constructor(
-    ctx: Context,
-    readonly environment: Environment,
-    readonly endpoint: string,
-  ) {
+  constructor(ctx: Context, environment: Environment, endpoint: string) {
     this.ctx = ctx.child({ name: "client" });
+    this.environment = environment;
+    this.endpoint = endpoint;
 
     this._graphqlWsClient = createClient({
       url: `wss://${environment.application.slug}.${config.domains.app}/edit/api/graphql-ws`, // FIXME: this assumes this is an Edit client

@@ -21,8 +21,11 @@ export type DevLockData = z.infer<typeof DevLockData>;
 export class DevAlreadyRunningError extends GGTError {
   isBug = IsBug.NO;
 
-  constructor(readonly details: { pid: number; directory: string }) {
+  readonly details: { pid: number; directory: string };
+
+  constructor(details: { pid: number; directory: string }) {
     super(`Another ggt dev process is already running (PID ${details.pid})`);
+    this.details = details;
   }
 
   protected render(): string {

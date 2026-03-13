@@ -32,8 +32,11 @@ export class YarnNotFoundError extends GGTError {
 export class UnknownDirectoryError extends GGTError {
   isBug = IsBug.NO;
 
-  constructor(readonly details: { command: Command; directory: Directory; flags: SyncJsonFlagsResult }) {
+  readonly details: { command: Command; directory: Directory; flags: SyncJsonFlagsResult };
+
+  constructor(details: { command: Command; directory: Directory; flags: SyncJsonFlagsResult }) {
     super('The ".gadget/sync.json" file was invalid or not found');
+    this.details = details;
   }
 
   protected render(): string {
@@ -86,9 +89,11 @@ export class UnknownDirectoryError extends GGTError {
 
 export class TooManyMergeAttemptsError extends GGTError {
   isBug = IsBug.MAYBE;
+  readonly attempts: number;
 
-  constructor(readonly attempts: number) {
+  constructor(attempts: number) {
     super(`Failed to synchronize files after ${attempts} attempts.`);
+    this.attempts = attempts;
   }
 
   protected render(): string {
@@ -104,11 +109,13 @@ export class TooManyMergeAttemptsError extends GGTError {
 export class TooManyPushAttemptsError extends GGTError {
   isBug = IsBug.MAYBE;
 
-  constructor(
-    readonly attempts: number,
-    readonly command: Command,
-  ) {
+  readonly attempts: number;
+  readonly command: Command;
+
+  constructor(attempts: number, command: Command) {
     super(`Failed to push local changes to environment after ${pluralize("attempt", attempts, true)}.`);
+    this.attempts = attempts;
+    this.command = command;
   }
 
   protected render(): string {
@@ -124,8 +131,11 @@ export class TooManyPushAttemptsError extends GGTError {
 export class DeployDisallowedError extends GGTError {
   isBug = IsBug.MAYBE;
 
-  constructor(readonly fatalErrors: Problems) {
+  readonly fatalErrors: Problems;
+
+  constructor(fatalErrors: Problems) {
     super("This application is not allowed to be deployed due to fatal errors.");
+    this.fatalErrors = fatalErrors;
   }
 
   protected render(): string {

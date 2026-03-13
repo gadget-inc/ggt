@@ -38,30 +38,33 @@ export class AppIdentity {
    */
   readonly edit: Edit;
 
-  private constructor(
-    /**
-     * The {@linkcode Context} that was used to initialize this
-     * {@linkcode AppIdentity} instance.
-     */
-    readonly ctx: Context,
+  /**
+   * The {@linkcode Context} that was used to initialize this
+   * {@linkcode AppIdentity} instance.
+   */
+  readonly ctx: Context;
 
-    /**
-     * The parsed {@linkcode AppIdentityFlags} that the user passed to ggt.
-     */
-    readonly flags: AppIdentityFlagsResult,
+  /**
+   * The parsed {@linkcode AppIdentityFlags} that the user passed to ggt.
+   */
+  readonly flags: AppIdentityFlagsResult;
 
-    /**
-     * The {@linkcode Environment} we are working with.
-     */
-    readonly environment: Environment,
+  /**
+   * The {@linkcode Environment} we are working with.
+   */
+  readonly environment: Environment;
 
-    /**
-     * The state of the `.gadget/sync.json` file on the local
-     * filesystem, if found.
-     */
-    readonly syncJsonState?: SyncJsonState,
-  ) {
+  /**
+   * The state of the `.gadget/sync.json` file on the local
+   * filesystem, if found.
+   */
+  readonly syncJsonState?: SyncJsonState;
+
+  private constructor(ctx: Context, flags: AppIdentityFlagsResult, environment: Environment, syncJsonState?: SyncJsonState) {
     this.ctx = ctx.child({ name: "app-identity" });
+    this.flags = flags;
+    this.environment = environment;
+    this.syncJsonState = syncJsonState;
 
     this.edit = new Edit(this.ctx, this.environment);
   }

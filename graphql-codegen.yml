@@ -18,6 +18,7 @@ generates:
       - "typescript"
       - "typescript-operations"
     config:
+      enumsAsTypes: true
       useIndexSignature: true
       scalars:
         ID: "bigint"

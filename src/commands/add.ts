@@ -353,7 +353,6 @@ export default defineCommand({
         await switchToNewEnvironment(ctx, {
           envName: newEnvName,
           command: "pull",
-          _flags: flags,
         });
       },
     }),

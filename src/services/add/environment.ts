@@ -59,11 +59,9 @@ export const switchToNewEnvironment = async (
   {
     envName,
     command,
-    _flags,
   }: {
     envName: string;
     command: string;
-    _flags: Record<string, unknown>;
   },
 ): Promise<void> => {
   const pullFromNewEnvSyncJson = await SyncJson.load(ctx, {

@@ -1,10 +1,10 @@
-import type { CreateRouteMutation } from "../../__generated__/graphql.js";
-import { AddClientError } from "../../commands/add.js";
-import { CREATE_ROUTE_MUTATION } from "../app/edit/operation.js";
-import { ClientError } from "../app/error.js";
-import type { Context } from "../command/context.js";
-import type { FileSync } from "../filesync/filesync.js";
-import type { SyncJson } from "../filesync/sync-json.js";
+import type { CreateRouteMutation } from "../../__generated__/graphql.ts";
+import { AddClientError } from "../../commands/add.ts";
+import { CREATE_ROUTE_MUTATION } from "../app/edit/operation.ts";
+import { ClientError } from "../app/error.ts";
+import type { Context } from "../command/context.ts";
+import type { FileSync } from "../filesync/filesync.ts";
+import type { SyncJson } from "../filesync/sync-json.ts";
 
 export type AddRouteResult = {
   method: string;

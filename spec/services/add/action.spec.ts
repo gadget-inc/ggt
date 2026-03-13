@@ -1,16 +1,16 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AddClientError } from "../../../src/commands/add.js";
-import { addAction, resolveActionPath } from "../../../src/services/add/action.js";
-import type { GlobalActionApiIdentifier, ModelApiIdentifier } from "../../../src/services/app/app.js";
-import { CREATE_ACTION_MUTATION } from "../../../src/services/app/edit/operation.js";
-import { nockTestApps } from "../../__support__/app.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectError } from "../../__support__/error.js";
-import { makeSyncScenario } from "../../__support__/filesync.js";
-import { nockEditResponse } from "../../__support__/graphql.js";
-import { loginTestUser } from "../../__support__/user.js";
+import { AddClientError } from "../../../src/commands/add.ts";
+import { addAction, resolveActionPath } from "../../../src/services/add/action.ts";
+import type { GlobalActionApiIdentifier, ModelApiIdentifier } from "../../../src/services/app/app.ts";
+import { CREATE_ACTION_MUTATION } from "../../../src/services/app/edit/operation.ts";
+import { nockTestApps } from "../../__support__/app.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectError } from "../../__support__/error.ts";
+import { makeSyncScenario } from "../../__support__/filesync.ts";
+import { nockEditResponse } from "../../__support__/graphql.ts";
+import { loginTestUser } from "../../__support__/user.ts";
 
 vi.mock("../../../src/services/output/select.js", () => ({
   select: vi.fn().mockResolvedValue("models"),

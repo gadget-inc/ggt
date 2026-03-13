@@ -3,6 +3,8 @@
   "plugins": ["unicorn", "typescript", "oxc"],
   "categories": {},
   "options": {
+    "denyWarnings": true,
+    "reportUnusedDisableDirectives": "warn",
     "typeAware": true,
     "typeCheck": true
   },
@@ -199,6 +201,10 @@
               {
                 "group": ["spec/"],
                 "message": "src files cannot import spec files"
+              },
+              {
+                "group": ["./**/*.js", "../**/*.js"],
+                "message": "use .ts extension instead of .js for relative imports"
               }
             ]
           }
@@ -220,6 +226,10 @@
               {
                 "group": ["/spec"],
                 "message": "spec files must be imported relatively (e.g. ../../spec)"
+              },
+              {
+                "group": ["./**/*.js", "../**/*.js"],
+                "message": "use .ts extension instead of .js for relative imports"
               }
             ]
           }

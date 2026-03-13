@@ -1,16 +1,16 @@
-import type { CreateActionMutation } from "../../__generated__/graphql.js";
-import { AddClientError } from "../../commands/add.js";
-import type { ModelApiIdentifier, GlobalActionApiIdentifier } from "../app/app.js";
-import { CREATE_ACTION_MUTATION } from "../app/edit/operation.js";
-import { ClientError } from "../app/error.js";
-import type { Context } from "../command/context.js";
-import type { FileSync } from "../filesync/filesync.js";
-import type { SyncJson } from "../filesync/sync-json.js";
-import colors from "../output/colors.js";
-import { println } from "../output/print.js";
-import { select } from "../output/select.js";
-import { sprint } from "../output/sprint.js";
-import { symbol } from "../output/symbols.js";
+import type { CreateActionMutation } from "../../__generated__/graphql.ts";
+import { AddClientError } from "../../commands/add.ts";
+import type { ModelApiIdentifier, GlobalActionApiIdentifier } from "../app/app.ts";
+import { CREATE_ACTION_MUTATION } from "../app/edit/operation.ts";
+import { ClientError } from "../app/error.ts";
+import type { Context } from "../command/context.ts";
+import type { FileSync } from "../filesync/filesync.ts";
+import type { SyncJson } from "../filesync/sync-json.ts";
+import colors from "../output/colors.ts";
+import { println } from "../output/print.ts";
+import { select } from "../output/select.ts";
+import { sprint } from "../output/sprint.ts";
+import { symbol } from "../output/symbols.ts";
 
 export type AddActionResult = {
   path: string;

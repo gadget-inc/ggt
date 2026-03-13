@@ -1,5 +1,175 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`root > when action is given > prints the usage for add when --help is passed 1`] = `
+"Add an action to your app
+
+Without --model, adds a global action. With --model,
+adds an action to an existing model.
+
+USAGE
+  ggt action add <name> [flags]
+
+ARGUMENTS
+  name
+        Action API identifier. Can include namespaces as folders (for example
+        notifications/sendWelcomeEmail).
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+      --model <value>
+        Add a model action to the specified model. Model API identifier. Can
+        include namespaces (for example billing/invoice).
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt action add sendWelcomeEmail
+  $ ggt action add notifications/sendWelcomeEmail
+  $ ggt action add publish --model post
+  $ ggt action add fulfill --model shopifyOrder
+"
+`;
+
+exports[`root > when action is given > prints the usage for add when -h is passed 1`] = `
+"Add an action to your app
+
+USAGE
+  ggt action add <name> [flags]
+
+ARGUMENTS
+  name        Action API identifier
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+      --model <value>             Add a model action to the specified model
+
+EXAMPLES
+  $ ggt action add sendWelcomeEmail
+  $ ggt action add notifications/sendWelcomeEmail
+  $ ggt action add publish --model post
+  $ ggt action add fulfill --model shopifyOrder
+
+Run ggt action add --help for more information.
+"
+`;
+
+exports[`root > when action is given > prints the usage when --help is passed 1`] = `
+"Add and manage actions
+
+Actions run server-side code in your app. Add global actions for reusable
+logic, or add model actions that run in the context of a specific model.
+
+USAGE
+  ggt action <command> [flags]
+
+COMMANDS
+  add    Add an action to your app
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt action add sendWelcomeEmail
+  $ ggt action add notifications/sendWelcomeEmail
+  $ ggt action add publish --model post
+  $ ggt action add fulfill --model shopifyOrder
+"
+`;
+
+exports[`root > when action is given > prints the usage when -h is passed 1`] = `
+"Add and manage actions
+
+USAGE
+  ggt action <command> [flags]
+
+COMMANDS
+  add    Add an action to your app
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt action add sendWelcomeEmail
+  $ ggt action add notifications/sendWelcomeEmail
+  $ ggt action add publish --model post
+  $ ggt action add fulfill --model shopifyOrder
+
+Run ggt action --help for more information.
+"
+`;
+
+exports[`root > when action is given > shows help when invoked without a subcommand 1`] = `
+"Add and manage actions
+
+USAGE
+  ggt action <command> [flags]
+
+COMMANDS
+  add    Add an action to your app
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt action add sendWelcomeEmail
+  $ ggt action add notifications/sendWelcomeEmail
+  $ ggt action add publish --model post
+  $ ggt action add fulfill --model shopifyOrder
+
+Run ggt action --help for more information.
+"
+`;
+
 exports[`root > when add is given > prints the usage for action when --help is passed 1`] = `
 "Add an action to a model or as a global action
 

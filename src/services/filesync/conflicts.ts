@@ -1,7 +1,7 @@
 import chalk from "chalk";
 
-import { printTable } from "../output/table.js";
-import { ChangesWithHash, isEqualHash, type ChangeWithHash } from "./hashes.js";
+import { printTable } from "../output/table.ts";
+import { ChangesWithHash, isEqualHash, type ChangeWithHash } from "./hashes.ts";
 
 /**
  * A map of conflicting changes made between the user's local filesystem

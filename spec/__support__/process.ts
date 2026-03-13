@@ -1,6 +1,6 @@
 import { expect } from "vitest";
 
-import { mock } from "./mock.js";
+import { mock } from "./mock.ts";
 
 /**
  * Expects a process to exit with a specific code when the given

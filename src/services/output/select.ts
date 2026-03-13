@@ -4,13 +4,13 @@ import process from "node:process";
 import chalk from "chalk";
 import indentString from "indent-string";
 
-import { defaults } from "../util/object.js";
-import type { XOR } from "../util/types.js";
-import { output } from "./output.js";
-import { println } from "./print.js";
-import { entriesToDisplay, Prompt, type StdinKey } from "./prompt.js";
-import { sprintln, type SprintOptionsWithContent } from "./sprint.js";
-import { symbol } from "./symbols.js";
+import { defaults } from "../util/object.ts";
+import type { XOR } from "../util/types.ts";
+import { output } from "./output.ts";
+import { println } from "./print.ts";
+import { entriesToDisplay, Prompt, type StdinKey } from "./prompt.ts";
+import { sprintln, type SprintOptionsWithContent } from "./sprint.ts";
+import { symbol } from "./symbols.ts";
 
 type BaseSelectOptions<Choice extends string> = SprintOptionsWithContent & {
   formatChoice?: (choice: Choice) => string;

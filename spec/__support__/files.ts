@@ -5,7 +5,7 @@ import fs, { type Stats } from "fs-extra";
 import normalizePath from "normalize-path";
 import { expect } from "vitest";
 
-import { Directory } from "../../src/services/filesync/directory.js";
+import { Directory } from "../../src/services/filesync/directory.ts";
 
 /**
  * A map of file paths to file contents.

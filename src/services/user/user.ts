@@ -2,16 +2,16 @@ import assert from "node:assert";
 
 import { z } from "zod";
 
-import loginCommand from "../../commands/login.js";
-import type { Command } from "../command/command.js";
-import type { Context } from "../command/context.js";
-import { runCommand } from "../command/run.js";
-import { config } from "../config/config.js";
-import { maybeLoadAuthHeaders, swallowUnauthorized } from "../http/auth.js";
-import { http } from "../http/http.js";
-import { confirm } from "../output/confirm.js";
-import { println } from "../output/print.js";
-import { setSentryUser } from "../output/sentry.js";
+import loginCommand from "../../commands/login.ts";
+import type { Command } from "../command/command.ts";
+import type { Context } from "../command/context.ts";
+import { runCommand } from "../command/run.ts";
+import { config } from "../config/config.ts";
+import { maybeLoadAuthHeaders, swallowUnauthorized } from "../http/auth.ts";
+import { http } from "../http/http.ts";
+import { confirm } from "../output/confirm.ts";
+import { println } from "../output/print.ts";
+import { setSentryUser } from "../output/sentry.ts";
 
 const User = z.object({
   id: z.union([z.string(), z.number()]).transform(Number),

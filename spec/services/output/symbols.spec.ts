@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { symbol } from "../../../src/services/output/symbols.js";
+import { symbol } from "../../../src/services/output/symbols.ts";
 
 describe("symbol", () => {
   it("has a tick symbol", () => {

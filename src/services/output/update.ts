@@ -9,15 +9,15 @@ import ms from "ms";
 import semver from "semver";
 import { z } from "zod";
 
-import type { Context } from "../command/context.js";
-import { config } from "../config/config.js";
-import { Directory } from "../filesync/directory.js";
-import { http } from "../http/http.js";
-import { packageJson } from "../util/package-json.js";
-import { agentPluginShaPath, SKILLS_REPO } from "./agent-plugin.js";
-import colors from "./colors.js";
-import { println } from "./print.js";
-import { sprint } from "./sprint.js";
+import type { Context } from "../command/context.ts";
+import { config } from "../config/config.ts";
+import { Directory } from "../filesync/directory.ts";
+import { http } from "../http/http.ts";
+import { packageJson } from "../util/package-json.ts";
+import { agentPluginShaPath, SKILLS_REPO } from "./agent-plugin.ts";
+import colors from "./colors.ts";
+import { println } from "./print.ts";
+import { sprint } from "./sprint.ts";
 
 const UPDATE_CHECK_FREQUENCY = ms("12 hours");
 

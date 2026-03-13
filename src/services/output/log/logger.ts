@@ -1,5 +1,5 @@
-import { unthunk } from "../../util/function.js";
-import { createStructuredLogger, type StructuredLogger, type StructuredLoggerOptions } from "./structured.js";
+import { unthunk } from "../../util/function.ts";
+import { createStructuredLogger, type StructuredLogger, type StructuredLoggerOptions } from "./structured.ts";
 
 export type Logger = StructuredLogger & {
   /**

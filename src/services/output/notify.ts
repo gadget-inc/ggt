@@ -1,4 +1,4 @@
-import type { Context } from "../command/context.js";
+import type { Context } from "../command/context.ts";
 
 export type NotifyOptions = {
   subtitle?: string;

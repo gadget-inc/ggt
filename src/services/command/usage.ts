@@ -1,6 +1,6 @@
-import colors from "../output/colors.js";
-import type { PositionalDef, StoredSubcommand } from "./command.js";
-import { extractFlags, type FlagsDefinition, type FlagDef } from "./flag.js";
+import colors from "../output/colors.ts";
+import type { PositionalDef, StoredSubcommand } from "./command.ts";
+import { extractFlags, type FlagsDefinition, type FlagDef } from "./flag.ts";
 
 /**
  * Help text style conventions for all commands and shared flags:

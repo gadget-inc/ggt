@@ -1,7 +1,7 @@
 import arg from "arg";
 
-import { flags as rootFlagsDef } from "../../commands/root.js";
-import { withAllowFlags } from "../command/allow.js";
+import { flags as rootFlagsDef } from "../../commands/root.ts";
+import { withAllowFlags } from "../command/allow.ts";
 import {
   type CommandConfig,
   type ParentCommandConfig,
@@ -9,10 +9,10 @@ import {
   importCommand,
   isCommand,
   resolveCommandAlias,
-} from "../command/command.js";
-import type { Context } from "../command/context.js";
-import { extractFlags, flagWords, aliasName, toEntryArray, type FlagsDefinition } from "../command/flag.js";
-import { filterByPrefix } from "../util/collection.js";
+} from "../command/command.ts";
+import type { Context } from "../command/context.ts";
+import { extractFlags, flagWords, aliasName, toEntryArray, type FlagsDefinition } from "../command/flag.ts";
+import { filterByPrefix } from "../util/collection.ts";
 
 /**
  * Handles a `ggt --__complete <tokens...>` request.

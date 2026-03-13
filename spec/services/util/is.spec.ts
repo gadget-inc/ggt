@@ -19,7 +19,7 @@ import {
   isString,
   isStringArray,
   isTypeScriptFile,
-} from "../../../src/services/util/is.js";
+} from "../../../src/services/util/is.ts";
 
 describe("isNil", () => {
   it("returns true for null", () => {

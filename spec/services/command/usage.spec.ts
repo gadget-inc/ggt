@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { Commands, importCommand, renderCommandList } from "../../../src/services/command/command.js";
-import type { FlagDef } from "../../../src/services/command/flag.js";
+import { Commands, importCommand, renderCommandList } from "../../../src/services/command/command.ts";
+import type { FlagDef } from "../../../src/services/command/flag.ts";
 import {
   flagLeft,
   formatFlag,
@@ -10,8 +10,8 @@ import {
   renderShortUsage,
   renderUsageHint,
   type UsageInput,
-} from "../../../src/services/command/usage.js";
-import { noop } from "../../../src/services/util/function.js";
+} from "../../../src/services/command/usage.ts";
+import { noop } from "../../../src/services/util/function.ts";
 
 describe("formatFlag", () => {
   it("formats a flag with aliases", () => {

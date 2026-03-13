@@ -2,8 +2,8 @@
 import figures, { mainSymbols } from "figures";
 import isUnicodeSupported from "is-unicode-supported";
 
-import { config } from "../config/config.js";
-import { env } from "../config/env.js";
+import { config } from "../config/config.ts";
+import { env } from "../config/env.ts";
 
 // we always use main symbols in tests rather than figures so that our
 // tests are consistent across platforms (particularly Windows)

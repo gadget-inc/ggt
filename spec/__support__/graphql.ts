@@ -3,22 +3,22 @@ import type { Promisable } from "type-fest";
 import { expect, vi } from "vitest";
 import { z } from "zod";
 
-import type { Application, Environment } from "../../src/services/app/app.js";
-import { Client } from "../../src/services/app/client.js";
-import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.js";
-import type { ClientError } from "../../src/services/app/error.js";
-import { ClientError as ClientErrorClass } from "../../src/services/app/error.js";
-import { config } from "../../src/services/config/config.js";
-import { loadCookie } from "../../src/services/http/auth.js";
-import { noop, unthunk, type Thunk } from "../../src/services/util/function.js";
-import { isFunction } from "../../src/services/util/is.js";
-import { PromiseSignal } from "../../src/services/util/promise.js";
-import { calculateBackoffDelay, DEFAULT_RETRY_LIMIT, isRetryableErrorCause } from "../../src/services/util/retry.js";
-import { testEnvironment } from "./app.js";
-import { testCtx } from "./context.js";
-import { log } from "./debug.js";
-import { mock } from "./mock.js";
-import { matchAuthHeader } from "./user.js";
+import type { Application, Environment } from "../../src/services/app/app.ts";
+import { Client } from "../../src/services/app/client.ts";
+import type { GraphQLMutation, GraphQLQuery, GraphQLSubscription } from "../../src/services/app/edit/operation.ts";
+import type { ClientError } from "../../src/services/app/error.ts";
+import { ClientError as ClientErrorClass } from "../../src/services/app/error.ts";
+import { config } from "../../src/services/config/config.ts";
+import { loadCookie } from "../../src/services/http/auth.ts";
+import { noop, unthunk, type Thunk } from "../../src/services/util/function.ts";
+import { isFunction } from "../../src/services/util/is.ts";
+import { PromiseSignal } from "../../src/services/util/promise.ts";
+import { calculateBackoffDelay, DEFAULT_RETRY_LIMIT, isRetryableErrorCause } from "../../src/services/util/retry.ts";
+import { testEnvironment } from "./app.ts";
+import { testCtx } from "./context.ts";
+import { log } from "./debug.ts";
+import { mock } from "./mock.ts";
+import { matchAuthHeader } from "./user.ts";
 
 export type NockGraphQLResponseOptions<Operation extends GraphQLQuery | GraphQLMutation> = {
   /**

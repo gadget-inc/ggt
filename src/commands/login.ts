@@ -4,13 +4,13 @@ import http, { type Server } from "node:http";
 import getPort from "get-port";
 import open from "open";
 
-import { defineCommand } from "../services/command/command.js";
-import { config } from "../services/config/config.js";
-import colors from "../services/output/colors.js";
-import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
-import { writeSession } from "../services/user/session.js";
-import { getUser } from "../services/user/user.js";
+import { defineCommand } from "../services/command/command.ts";
+import { config } from "../services/config/config.ts";
+import colors from "../services/output/colors.ts";
+import { println } from "../services/output/print.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { writeSession } from "../services/user/session.ts";
+import { getUser } from "../services/user/user.ts";
 
 export default defineCommand({
   name: "login",

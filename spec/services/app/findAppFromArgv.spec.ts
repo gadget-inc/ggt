@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-import { findAppFromArgv } from "../../../src/services/app/app.js";
-import { testApp, testApp2 } from "../../__support__/app.js";
+import { findAppFromArgv } from "../../../src/services/app/app.ts";
+import { testApp, testApp2 } from "../../__support__/app.ts";
 
 describe("findAppFromArgv", () => {
   it("finds app by --app slug form", () => {

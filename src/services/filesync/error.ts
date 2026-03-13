@@ -1,15 +1,15 @@
 import pluralize from "pluralize";
 
-import { ClientError } from "../app/error.js";
-import { type Command } from "../command/command.js";
-import type { Context } from "../command/context.js";
-import colors from "../output/colors.js";
-import { sprintProblems, type Problems } from "../output/problems.js";
-import { GGTError, IsBug } from "../output/report.js";
-import { sprint, sprintln } from "../output/sprint.js";
-import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.js";
-import type { Directory } from "./directory.js";
-import type { SyncJsonFlagsResult } from "./sync-json.js";
+import { ClientError } from "../app/error.ts";
+import { type Command } from "../command/command.ts";
+import type { Context } from "../command/context.ts";
+import colors from "../output/colors.ts";
+import { sprintProblems, type Problems } from "../output/problems.ts";
+import { GGTError, IsBug } from "../output/report.ts";
+import { sprint, sprintln } from "../output/sprint.ts";
+import { isGraphQLErrors, isGraphQLResult, isObject, isString } from "../util/is.ts";
+import type { Directory } from "./directory.ts";
+import type { SyncJsonFlagsResult } from "./sync-json.ts";
 
 export class YarnNotFoundError extends GGTError {
   isBug = IsBug.NO;

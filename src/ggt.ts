@@ -1,15 +1,15 @@
 import chalk from "chalk";
 import ms from "ms";
 
-import * as root from "./commands/root.js";
-import { Context } from "./services/command/context.js";
-import { parseFlags } from "./services/command/flag.js";
-import { loadDefaultsConfig } from "./services/config/defaults.js";
-import { output } from "./services/output/output.js";
-import { println } from "./services/output/print.js";
-import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.js";
-import { clearAllSpinners, spin } from "./services/output/spinner.js";
-import { installJsonExtensions } from "./services/util/json.js";
+import * as root from "./commands/root.ts";
+import { Context } from "./services/command/context.ts";
+import { parseFlags } from "./services/command/flag.ts";
+import { loadDefaultsConfig } from "./services/config/defaults.ts";
+import { output } from "./services/output/output.ts";
+import { println } from "./services/output/print.ts";
+import { installErrorHandlers, reportErrorAndExit } from "./services/output/report.ts";
+import { clearAllSpinners, spin } from "./services/output/spinner.ts";
+import { installJsonExtensions } from "./services/util/json.ts";
 
 export const ggt = async (ctx = Context.init({ name: "ggt" })): Promise<void> => {
   if (process.env["GADGET_EDITOR_TERMINAL_SESSION_ID"]) {

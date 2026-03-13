@@ -1,6 +1,6 @@
 import { beforeEach } from "vitest";
 
-import { Context } from "../../src/services/command/context.js";
+import { Context } from "../../src/services/command/context.ts";
 
 /**
  * A {@linkcode Context} that is set up before each test.

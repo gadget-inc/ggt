@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "fs-extra";
 import { describe, expect, it, onTestFailed, onTestFinished, vi } from "vitest";
 
-import { timeoutMs } from "../__support__/sleep.js";
+import { timeoutMs } from "../__support__/sleep.ts";
 import {
   type TestDirs,
   KNOWN_REMOTE_FILE,
@@ -16,7 +16,7 @@ import {
   runGgt,
   startGgt,
   waitForFile,
-} from "./helpers.js";
+} from "./helpers.ts";
 
 describe.skipIf(!hasIntegrationToken())("integration", () => {
   it("whoami prints the logged-in user", async () => {

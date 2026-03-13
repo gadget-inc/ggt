@@ -3,25 +3,25 @@ import assert from "node:assert";
 import indentString from "indent-string";
 import terminalLink from "terminal-link";
 
-import { EnvArg } from "../services/app/app.js";
-import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.js";
-import { defineCommand } from "../services/command/command.js";
-import { env } from "../services/config/env.js";
-import { deletedSymbol, updatedSymbol } from "../services/filesync/changes.js";
-import { DeployDisallowedError } from "../services/filesync/error.js";
-import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import colors from "../services/output/colors.js";
-import { confirm } from "../services/output/confirm.js";
-import { output } from "../services/output/output.js";
-import { println } from "../services/output/print.js";
-import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.js";
-import { UnexpectedError, reportErrorAndExit } from "../services/output/report.js";
-import { spin, type spinner } from "../services/output/spinner.js";
-import { sprint } from "../services/output/sprint.js";
-import { ts } from "../services/output/timestamp.js";
-import { unreachable } from "../services/util/assert.js";
-import { parseGraphQLErrors } from "../services/util/is.js";
+import { EnvArg } from "../services/app/app.ts";
+import { PUBLISH_STATUS_SUBSCRIPTION } from "../services/app/edit/operation.ts";
+import { defineCommand } from "../services/command/command.ts";
+import { env } from "../services/config/env.ts";
+import { deletedSymbol, updatedSymbol } from "../services/filesync/changes.ts";
+import { DeployDisallowedError } from "../services/filesync/error.ts";
+import { FileSync } from "../services/filesync/filesync.ts";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import colors from "../services/output/colors.ts";
+import { confirm } from "../services/output/confirm.ts";
+import { output } from "../services/output/output.ts";
+import { println } from "../services/output/print.ts";
+import { ProblemSeverity, printProblems, publishIssuesToProblems } from "../services/output/problems.ts";
+import { UnexpectedError, reportErrorAndExit } from "../services/output/report.ts";
+import { spin, type spinner } from "../services/output/spinner.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { ts } from "../services/output/timestamp.ts";
+import { unreachable } from "../services/util/assert.ts";
+import { parseGraphQLErrors } from "../services/util/is.ts";
 
 const AppDeploymentSteps = Object.freeze({
   NOT_STARTED: "NOT_STARTED",

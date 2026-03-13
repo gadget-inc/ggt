@@ -1,16 +1,16 @@
-import type { Environment } from "../../app/app.js";
-import { hidden, type FlagsDefinition, type FlagsResult } from "../../command/flag.js";
-import { config } from "../../config/config.js";
-import { env } from "../../config/env.js";
-import { filterByPrefix } from "../../util/collection.js";
-import { unthunk, type Thunk } from "../../util/function.js";
-import { serializeError } from "../../util/object.js";
-import { output } from "../output.js";
-import { addSentryBreadcrumb } from "../sentry.js";
-import { sprint } from "../sprint.js";
-import type { Fields } from "./field.js";
-import { formatters } from "./format/format.js";
-import { Level, levels, parseLevel } from "./level.js";
+import type { Environment } from "../../app/app.ts";
+import { hidden, type FlagsDefinition, type FlagsResult } from "../../command/flag.ts";
+import { config } from "../../config/config.ts";
+import { env } from "../../config/env.ts";
+import { filterByPrefix } from "../../util/collection.ts";
+import { unthunk, type Thunk } from "../../util/function.ts";
+import { serializeError } from "../../util/object.ts";
+import { output } from "../output.ts";
+import { addSentryBreadcrumb } from "../sentry.ts";
+import { sprint } from "../sprint.ts";
+import type { Fields } from "./field.ts";
+import { formatters } from "./format/format.ts";
+import { Level, levels, parseLevel } from "./level.ts";
 
 export const LoggingFlags = {
   "--log-level": {

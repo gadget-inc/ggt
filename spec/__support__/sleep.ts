@@ -3,8 +3,8 @@ import process from "node:process";
 
 import ms from "ms";
 
-import { parseBoolean } from "../../src/services/util/boolean.js";
-import { isString } from "../../src/services/util/is.js";
+import { parseBoolean } from "../../src/services/util/boolean.ts";
+import { isString } from "../../src/services/util/is.ts";
 
 /**
  * Suspends the execution of the current async function for the given

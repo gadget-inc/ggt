@@ -3,16 +3,16 @@ import process from "node:process";
 import nock from "nock";
 import { describe, expect, it, vi } from "vitest";
 
-import login from "../../../src/commands/login.js";
-import { config } from "../../../src/services/config/config.js";
-import { loadCookie } from "../../../src/services/http/auth.js";
-import { confirm } from "../../../src/services/output/confirm.js";
-import { readSession, writeSession } from "../../../src/services/user/session.js";
-import { getUser, getUserOrLogin } from "../../../src/services/user/user.js";
-import { testCtx } from "../../__support__/context.js";
-import { mock, mockConfirmOnce } from "../../__support__/mock.js";
-import { expectProcessExit } from "../../__support__/process.js";
-import { loginTestUser, loginTestUserWithCookie, testUser } from "../../__support__/user.js";
+import login from "../../../src/commands/login.ts";
+import { config } from "../../../src/services/config/config.ts";
+import { loadCookie } from "../../../src/services/http/auth.ts";
+import { confirm } from "../../../src/services/output/confirm.ts";
+import { readSession, writeSession } from "../../../src/services/user/session.ts";
+import { getUser, getUserOrLogin } from "../../../src/services/user/user.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { mock, mockConfirmOnce } from "../../__support__/mock.ts";
+import { expectProcessExit } from "../../__support__/process.ts";
+import { loginTestUser, loginTestUserWithCookie, testUser } from "../../__support__/user.ts";
 
 describe("loadUser", () => {
   it("returns the user if the session is set", async () => {

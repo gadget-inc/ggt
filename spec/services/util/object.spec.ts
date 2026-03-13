@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { defaults, mapValues, omit, pick } from "../../../src/services/util/object.js";
+import { defaults, mapValues, omit, pick } from "../../../src/services/util/object.ts";
 
 describe("defaults", () => {
   it("merges the properties of the input and default values", () => {

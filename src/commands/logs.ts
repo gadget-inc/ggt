@@ -1,12 +1,12 @@
 import ms from "ms";
 
-import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
-import { defineCommand } from "../services/command/command.js";
-import { FlagError } from "../services/command/flag.js";
-import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.js";
-import { LoggingFlags } from "../services/output/log/structured.js";
-import { sprint } from "../services/output/sprint.js";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.ts";
+import { defineCommand } from "../services/command/command.ts";
+import { FlagError } from "../services/command/flag.ts";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import { subscribeToEnvironmentLogs } from "../services/logs/subscribeToEnvironmentLogs.ts";
+import { LoggingFlags } from "../services/output/log/structured.ts";
+import { sprint } from "../services/output/sprint.ts";
 
 const ONE_SHOT_INITIAL_TIMEOUT_MS = ms("3s");
 const ONE_SHOT_SILENCE_TIMEOUT_MS = 100;

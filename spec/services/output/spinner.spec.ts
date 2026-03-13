@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { output } from "../../../src/services/output/output.js";
-import { activeSpinner, clearAllSpinners, spin } from "../../../src/services/output/spinner.js";
-import { mock } from "../../__support__/mock.js";
-import { expectStdout } from "../../__support__/output.js";
+import { output } from "../../../src/services/output/output.ts";
+import { activeSpinner, clearAllSpinners, spin } from "../../../src/services/output/spinner.ts";
+import { mock } from "../../__support__/mock.ts";
+import { expectStdout } from "../../__support__/output.ts";
 
 describe("spin", () => {
   afterEach(() => {

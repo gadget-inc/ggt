@@ -2,28 +2,28 @@ import fs from "fs-extra";
 import terminalLink from "terminal-link";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import * as app from "../../../src/services/app/app.js";
-import { type Command } from "../../../src/services/command/command.js";
-import { FlagError } from "../../../src/services/command/flag.js";
-import { Directory } from "../../../src/services/filesync/directory.js";
-import { UnknownDirectoryError } from "../../../src/services/filesync/error.js";
+import * as app from "../../../src/services/app/app.ts";
+import { type Command } from "../../../src/services/command/command.ts";
+import { FlagError } from "../../../src/services/command/flag.ts";
+import { Directory } from "../../../src/services/filesync/directory.ts";
+import { UnknownDirectoryError } from "../../../src/services/filesync/error.ts";
 import {
   EphemeralSyncJson,
   SyncJson,
   SyncJsonFlags,
   type AnySyncJsonState,
   type SyncJsonFlagsResult,
-} from "../../../src/services/filesync/sync-json.js";
-import { nockTestApps, testApp, testApp2 } from "../../__support__/app.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectError } from "../../__support__/error.js";
-import { makeSyncScenario } from "../../__support__/filesync.js";
-import { makeFlags } from "../../__support__/flag.js";
-import { mockOnce } from "../../__support__/mock.js";
-import { expectStdout } from "../../__support__/output.js";
-import { testDirPath } from "../../__support__/paths.js";
-import { expectProcessExit } from "../../__support__/process.js";
-import { loginTestUser } from "../../__support__/user.js";
+} from "../../../src/services/filesync/sync-json.ts";
+import { nockTestApps, testApp, testApp2 } from "../../__support__/app.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectError } from "../../__support__/error.ts";
+import { makeSyncScenario } from "../../__support__/filesync.ts";
+import { makeFlags } from "../../__support__/flag.ts";
+import { mockOnce } from "../../__support__/mock.ts";
+import { expectStdout } from "../../__support__/output.ts";
+import { testDirPath } from "../../__support__/paths.ts";
+import { expectProcessExit } from "../../__support__/process.ts";
+import { loginTestUser } from "../../__support__/user.ts";
 
 describe("SyncJson.loadOrInit", () => {
   let command: Command;

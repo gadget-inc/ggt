@@ -4,25 +4,25 @@ import fs from "fs-extra";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { EnvironmentStatus } from "../../src/__generated__/graphql.js";
-import envCommand from "../../src/commands/env.js";
+import { EnvironmentStatus } from "../../src/__generated__/graphql.ts";
+import envCommand from "../../src/commands/env.ts";
 import {
   CREATE_ENVIRONMENT_MUTATION,
   DELETE_ENVIRONMENT_MUTATION,
   UNPAUSE_ENVIRONMENT_MUTATION,
-} from "../../src/services/app/edit/operation.js";
-import { FlagError } from "../../src/services/command/flag.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { config } from "../../src/services/config/config.js";
-import { confirm } from "../../src/services/output/confirm.js";
-import { nockTestApps, testApp, testApp2 } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { expectError } from "../__support__/error.js";
-import { nockEditResponse } from "../__support__/graphql.js";
-import { mockConfirmOnce } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { testDirPath } from "../__support__/paths.js";
-import { loginTestUser, loginTestUserWithCookie, matchAuthHeader } from "../__support__/user.js";
+} from "../../src/services/app/edit/operation.ts";
+import { FlagError } from "../../src/services/command/flag.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { config } from "../../src/services/config/config.ts";
+import { confirm } from "../../src/services/output/confirm.ts";
+import { nockTestApps, testApp, testApp2 } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { expectError } from "../__support__/error.ts";
+import { nockEditResponse } from "../__support__/graphql.ts";
+import { mockConfirmOnce } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { testDirPath } from "../__support__/paths.ts";
+import { loginTestUser, loginTestUserWithCookie, matchAuthHeader } from "../__support__/user.ts";
 
 describe("env", () => {
   beforeEach(() => {

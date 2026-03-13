@@ -2,9 +2,9 @@ import { randomUUID } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
 
-import { getNecessaryChanges, isEqualHash, isEqualHashes, withoutUnnecessaryChanges } from "../../../src/services/filesync/hashes.js";
-import { testCtx } from "../../__support__/context.js";
-import { makeHashes } from "../../__support__/filesync.js";
+import { getNecessaryChanges, isEqualHash, isEqualHashes, withoutUnnecessaryChanges } from "../../../src/services/filesync/hashes.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { makeHashes } from "../../__support__/filesync.ts";
 
 describe("getChanges", () => {
   it("returns no changes if hashes are equal", async () => {

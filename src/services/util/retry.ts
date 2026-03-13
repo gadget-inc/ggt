@@ -2,7 +2,7 @@ import type { GraphQLError } from "graphql";
 import ms from "ms";
 import type { CloseEvent, ErrorEvent } from "ws";
 
-import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isObject, isStringArray } from "./is.js";
+import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isObject, isStringArray } from "./is.ts";
 
 /**
  * Network error codes that indicate transient failures worth retrying.

@@ -1,12 +1,12 @@
 import chalk from "chalk";
 import pluralize from "pluralize";
 
-import type { Problem as FileSyncProblem, PublishIssue } from "../../__generated__/graphql.js";
-import { compact } from "../util/collection.js";
-import { isGellyFile, isJavaScriptFile, isTypeScriptFile } from "../util/is.js";
-import colors from "./colors.js";
-import { println } from "./print.js";
-import { sprint, sprintln, type SprintOptions } from "./sprint.js";
+import type { Problem as FileSyncProblem, PublishIssue } from "../../__generated__/graphql.ts";
+import { compact } from "../util/collection.ts";
+import { isGellyFile, isJavaScriptFile, isTypeScriptFile } from "../util/is.ts";
+import colors from "./colors.ts";
+import { println } from "./print.ts";
+import { sprint, sprintln, type SprintOptions } from "./sprint.ts";
 
 export type Problems = Record<string, Problem[]>;
 

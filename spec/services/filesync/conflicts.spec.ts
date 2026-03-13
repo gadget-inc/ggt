@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { Conflicts, getConflicts, printConflicts, withoutConflictingChanges } from "../../../src/services/filesync/conflicts.js";
-import { getNecessaryChanges } from "../../../src/services/filesync/hashes.js";
-import { testCtx } from "../../__support__/context.js";
-import { makeHashes } from "../../__support__/filesync.js";
-import { expectStdout } from "../../__support__/output.js";
+import { Conflicts, getConflicts, printConflicts, withoutConflictingChanges } from "../../../src/services/filesync/conflicts.ts";
+import { getNecessaryChanges } from "../../../src/services/filesync/hashes.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { makeHashes } from "../../__support__/filesync.ts";
+import { expectStdout } from "../../__support__/output.ts";
 
 describe("getConflicts", () => {
   it("returns conflicting changes", async () => {

@@ -3,14 +3,14 @@ import os from "node:os";
 import type * as SentryModule from "@sentry/node";
 import ms from "ms";
 
-import type { RootFlagsResult } from "../../commands/root.js";
-import type { Context } from "../command/context.js";
-import { config } from "../config/config.js";
-import { env } from "../config/env.js";
-import { serializeError } from "../util/object.js";
-import { packageJson } from "../util/package-json.js";
-import type { FieldPrimitive } from "./log/field.js";
-import type { GGTError } from "./report.js";
+import type { RootFlagsResult } from "../../commands/root.ts";
+import type { Context } from "../command/context.ts";
+import { config } from "../config/config.ts";
+import { env } from "../config/env.ts";
+import { serializeError } from "../util/object.ts";
+import { packageJson } from "../util/package-json.ts";
+import type { FieldPrimitive } from "./log/field.ts";
+import type { GGTError } from "./report.ts";
 
 let Sentry: typeof SentryModule | undefined;
 

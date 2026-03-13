@@ -1,7 +1,7 @@
-import { defineCommand } from "../services/command/command.js";
-import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
-import { readSession, writeSession } from "../services/user/session.js";
+import { defineCommand } from "../services/command/command.ts";
+import { println } from "../services/output/print.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { readSession, writeSession } from "../services/user/session.ts";
 
 export default defineCommand({
   name: "logout",

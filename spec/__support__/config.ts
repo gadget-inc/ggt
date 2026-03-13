@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, type MockInstance } from "vitest";
 
-import { config } from "../../src/services/config/config.js";
-import { packageJson } from "../../src/services/util/package-json.js";
-import { mock } from "./mock.js";
-import { testDirPath } from "./paths.js";
+import { config } from "../../src/services/config/config.ts";
+import { packageJson } from "../../src/services/util/package-json.ts";
+import { mock } from "./mock.ts";
+import { testDirPath } from "./paths.ts";
 
 export const mockPackageJson = (): void => {
   let actualVersion: string;

@@ -3,16 +3,16 @@ import { randomUUID } from "node:crypto";
 import cleanStack from "clean-stack";
 import terminalLink from "terminal-link";
 
-import type { RootFlagsResult } from "../../commands/root.js";
-import type { Context } from "../command/context.js";
-import { env } from "../config/env.js";
-import { isAbortError, isObject } from "../util/is.js";
-import { serializeError } from "../util/object.js";
-import { workspaceRoot } from "../util/paths.js";
-import { isRetryableNetworkErrorCode } from "../util/retry.js";
-import { println } from "./print.js";
-import { initSentry, sendErrorToSentry } from "./sentry.js";
-import { sprint, sprintln, type SprintOptions } from "./sprint.js";
+import type { RootFlagsResult } from "../../commands/root.ts";
+import type { Context } from "../command/context.ts";
+import { env } from "../config/env.ts";
+import { isAbortError, isObject } from "../util/is.ts";
+import { serializeError } from "../util/object.ts";
+import { workspaceRoot } from "../util/paths.ts";
+import { isRetryableNetworkErrorCode } from "../util/retry.ts";
+import { println } from "./print.ts";
+import { initSentry, sendErrorToSentry } from "./sentry.ts";
+import { sprint, sprintln, type SprintOptions } from "./sprint.ts";
 
 export const reportErrorAndExit = async (ctx: Context, cause: unknown): Promise<never> => {
   if (isAbortError(cause)) {

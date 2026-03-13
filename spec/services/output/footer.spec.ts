@@ -1,7 +1,7 @@
 import { describe, it } from "vitest";
 
-import { footer } from "../../../src/services/output/footer.js";
-import { expectStdout } from "../../__support__/output.js";
+import { footer } from "../../../src/services/output/footer.ts";
+import { expectStdout } from "../../__support__/output.ts";
 
 describe("footer", () => {
   it("writes text to stdout in non-interactive mode", () => {

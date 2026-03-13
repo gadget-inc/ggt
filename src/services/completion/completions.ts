@@ -1,7 +1,7 @@
-import { flags as rootFlagsDef } from "../../commands/root.js";
-import { withAllowFlags } from "../command/allow.js";
-import { Commands, importCommand } from "../command/command.js";
-import { extractFlags, type FlagDef } from "../command/flag.js";
+import { flags as rootFlagsDef } from "../../commands/root.ts";
+import { withAllowFlags } from "../command/allow.ts";
+import { Commands, importCommand } from "../command/command.ts";
+import { extractFlags, type FlagDef } from "../command/flag.ts";
 
 /**
  * Collects all flag names and aliases for flags that take a value (string or number).

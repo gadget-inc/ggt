@@ -4,14 +4,14 @@ import type { GraphQLError } from "graphql";
 import pluralize from "pluralize";
 import type { CloseEvent, ErrorEvent } from "ws";
 
-import { GGTError, IsBug } from "../output/report.js";
-import { sprint } from "../output/sprint.js";
-import { uniq } from "../util/collection.js";
-import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString, isStringArray } from "../util/is.js";
-import { serializeError } from "../util/object.js";
-import { isRetryableNetworkErrorCode } from "../util/retry.js";
-import type { GraphQLOperation } from "./edit/operation.js";
-import { getOperationName } from "./edit/operation.js";
+import { GGTError, IsBug } from "../output/report.ts";
+import { sprint } from "../output/sprint.ts";
+import { uniq } from "../util/collection.ts";
+import { isCloseEvent, isError, isErrorEvent, isGraphQLErrors, isString, isStringArray } from "../util/is.ts";
+import { serializeError } from "../util/object.ts";
+import { isRetryableNetworkErrorCode } from "../util/retry.ts";
+import type { GraphQLOperation } from "./edit/operation.ts";
+import { getOperationName } from "./edit/operation.ts";
 
 export class ClientError extends GGTError {
   public isBug: IsBug;

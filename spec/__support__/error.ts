@@ -1,8 +1,8 @@
 import { expect } from "vitest";
 
-import * as report from "../../src/services/output/report.js";
-import { PromiseSignal } from "../../src/services/util/promise.js";
-import { mock } from "./mock.js";
+import * as report from "../../src/services/output/report.ts";
+import { PromiseSignal } from "../../src/services/util/promise.ts";
+import { mock } from "./mock.ts";
 
 /**
  * Executes a function that is expected to throw an error and returns

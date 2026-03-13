@@ -1,7 +1,7 @@
 import { HTTPError } from "got";
 import { describe, expect, it, vi } from "vitest";
 
-import { config } from "../../../src/services/config/config.js";
+import { config } from "../../../src/services/config/config.ts";
 import {
   isGadgetServicesRequest,
   isUnauthorizedError,
@@ -9,9 +9,9 @@ import {
   loadCookie,
   maybeLoadAuthHeaders,
   swallowUnauthorized,
-} from "../../../src/services/http/auth.js";
-import { writeSession } from "../../../src/services/user/session.js";
-import { mockContext, testCtx } from "../../__support__/context.js";
+} from "../../../src/services/http/auth.ts";
+import { writeSession } from "../../../src/services/user/session.ts";
+import { mockContext, testCtx } from "../../__support__/context.ts";
 
 /**
  * Creates a mock HTTPError for testing without requiring all the

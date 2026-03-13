@@ -1,25 +1,25 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { EnvironmentStatus } from "../../src/__generated__/graphql.js";
-import add, { AddClientError } from "../../src/commands/add.js";
-import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.js";
+import { EnvironmentStatus } from "../../src/__generated__/graphql.ts";
+import add, { AddClientError } from "../../src/commands/add.ts";
+import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.ts";
 import {
   CREATE_ACTION_MUTATION,
   CREATE_ENVIRONMENT_MUTATION,
   CREATE_MODEL_FIELDS_MUTATION,
   CREATE_MODEL_MUTATION,
   CREATE_ROUTE_MUTATION,
-} from "../../src/services/app/edit/operation.js";
-import { ClientError } from "../../src/services/app/error.js";
-import { FlagError } from "../../src/services/command/flag.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { nockTestApps } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { expectError } from "../__support__/error.js";
-import { makeSyncScenario } from "../__support__/filesync.js";
-import { nockApiResponse, nockEditResponse } from "../__support__/graphql.js";
-import { mockSystemTime } from "../__support__/time.js";
-import { loginTestUser } from "../__support__/user.js";
+} from "../../src/services/app/edit/operation.ts";
+import { ClientError } from "../../src/services/app/error.ts";
+import { FlagError } from "../../src/services/command/flag.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { nockTestApps } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { expectError } from "../__support__/error.ts";
+import { makeSyncScenario } from "../__support__/filesync.ts";
+import { nockApiResponse, nockEditResponse } from "../__support__/graphql.ts";
+import { mockSystemTime } from "../__support__/time.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 describe("AddClientError", () => {
   it("does not double-bullet messages that already have a bullet prefix", () => {

@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { workspacePath } from "../src/services/util/paths.js";
+import { workspacePath } from "../src/services/util/paths.ts";
 
 describe("main", () => {
   describe("node version check", () => {
@@ -15,9 +15,8 @@ describe("main", () => {
       `;
 
       try {
-        execFileSync(process.execPath, ["--input-type=module", "--loader=ts-node/esm", "--eval", script], {
+        execFileSync(process.execPath, ["--input-type=module", "--eval", script], {
           encoding: "utf-8",
-          env: { ...process.env, NODE_NO_WARNINGS: "1" },
           timeout: 10_000,
         });
         expect.fail("Expected process to exit with code 1");

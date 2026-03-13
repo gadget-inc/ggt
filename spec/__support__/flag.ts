@@ -1,8 +1,8 @@
 import { expect } from "vitest";
 
-import * as root from "../../src/commands/root.js";
-import { Commands, type Command } from "../../src/services/command/command.js";
-import { parseFlags, type FlagsDefinition, type FlagsResult } from "../../src/services/command/flag.js";
+import * as root from "../../src/commands/root.ts";
+import { Commands, type Command } from "../../src/services/command/command.ts";
+import { parseFlags, type FlagsDefinition, type FlagsResult } from "../../src/services/command/flag.ts";
 
 export const makeRootFlags = (...argv: string[]): root.RootFlagsResult => {
   return parseFlags(root.flags, { argv, permissive: true });

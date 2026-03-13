@@ -1,5 +1,5 @@
-import { output } from "./output.js";
-import { sprintln, type SprintOptionsWithContent } from "./sprint.js";
+import { output } from "./output.ts";
+import { sprintln, type SprintOptionsWithContent } from "./sprint.ts";
 
 export type footer = {
   (str: string | SprintOptionsWithContent): void;

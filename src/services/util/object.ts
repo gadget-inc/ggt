@@ -5,7 +5,7 @@ import { RequestError } from "got";
 import { serializeError as baseSerializeError, isErrorLike, type ErrorObject } from "serialize-error";
 import type { Simplify } from "type-fest";
 
-import { workspaceRoot } from "./paths.js";
+import { workspaceRoot } from "./paths.ts";
 
 /**
  * Returns a new object with the properties of the input object merged

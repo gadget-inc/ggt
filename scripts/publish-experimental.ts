@@ -1,12 +1,12 @@
-#!/usr/bin/env node --loader=ts-node/esm --no-warnings
+#!/usr/bin/env node
 
 import { $ } from "execa";
 import fs from "fs-extra";
 
-import { println } from "../src/services/output/print.js";
-import { spin } from "../src/services/output/spinner.js";
-import { packageJson } from "../src/services/util/package-json.js";
-import { workspacePath } from "../src/services/util/paths.js";
+import { println } from "../src/services/output/print.ts";
+import { spin } from "../src/services/output/spinner.ts";
+import { packageJson } from "../src/services/util/package-json.ts";
+import { workspacePath } from "../src/services/util/paths.ts";
 
 const status = await $`git status --porcelain`;
 if (status.stdout.trim() !== "") {

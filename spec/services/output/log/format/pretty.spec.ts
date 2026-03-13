@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { Application, Environment } from "../../../../../src/services/app/app.js";
-import { formatPretty, getEnvironmentLogsUrl } from "../../../../../src/services/output/log/format/pretty.js";
-import { Level } from "../../../../../src/services/output/log/level.js";
-import { withEnv } from "../../../../__support__/env.js";
-import { mockSystemTime } from "../../../../__support__/time.js";
+import type { Application, Environment } from "../../../../../src/services/app/app.ts";
+import { formatPretty, getEnvironmentLogsUrl } from "../../../../../src/services/output/log/format/pretty.ts";
+import { Level } from "../../../../../src/services/output/log/level.ts";
+import { withEnv } from "../../../../__support__/env.ts";
+import { mockSystemTime } from "../../../../__support__/time.ts";
 
 const makeEnvironment = (type: string, name: string): Environment => {
   const app: Application = {

@@ -1,16 +1,16 @@
 import pluralize from "pluralize";
 
-import type { Context } from "../command/context.js";
-import { config } from "../config/config.js";
-import colors from "../output/colors.js";
-import { Level } from "../output/log/level.js";
-import { println } from "../output/print.js";
-import { sprintln } from "../output/sprint.js";
-import { symbol } from "../output/symbols.js";
-import { sprintTable, type SprintTableOptions } from "../output/table.js";
-import { memo } from "../util/function.js";
-import { isNever, isString } from "../util/is.js";
-import type { ChangesWithHash } from "./hashes.js";
+import type { Context } from "../command/context.ts";
+import { config } from "../config/config.ts";
+import colors from "../output/colors.ts";
+import { Level } from "../output/log/level.ts";
+import { println } from "../output/print.ts";
+import { sprintln } from "../output/sprint.ts";
+import { symbol } from "../output/symbols.ts";
+import { sprintTable, type SprintTableOptions } from "../output/table.ts";
+import { memo } from "../util/function.ts";
+import { isNever, isString } from "../util/is.ts";
+import type { ChangesWithHash } from "./hashes.ts";
 
 export type Create = { type: "create"; oldPath?: string };
 export type Update = { type: "update" };

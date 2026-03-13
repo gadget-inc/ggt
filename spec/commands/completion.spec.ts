@@ -5,22 +5,22 @@ import fs from "fs-extra";
 import type { MockInstance } from "vitest";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import completion from "../../src/commands/completion.js";
-import dev from "../../src/commands/dev.js";
-import { usage } from "../../src/commands/root.js";
-import { AppArg, EnvArg } from "../../src/services/app/app.js";
-import { Commands, importCommand } from "../../src/services/command/command.js";
-import type { FlagDef } from "../../src/services/command/flag.js";
-import { generateBashCompletions } from "../../src/services/completion/bash.js";
-import { type CompletionData, getCompletionData } from "../../src/services/completion/completions.js";
-import { generateFishCompletions } from "../../src/services/completion/fish.js";
-import { handleCompletionRequest } from "../../src/services/completion/handler.js";
-import { generateZshCompletions } from "../../src/services/completion/zsh.js";
-import { nockTestApps, testApp } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { mock } from "../__support__/mock.js";
-import { testDirPath } from "../__support__/paths.js";
-import { loginTestUser } from "../__support__/user.js";
+import completion from "../../src/commands/completion.ts";
+import dev from "../../src/commands/dev.ts";
+import { usage } from "../../src/commands/root.ts";
+import { AppArg, EnvArg } from "../../src/services/app/app.ts";
+import { Commands, importCommand } from "../../src/services/command/command.ts";
+import type { FlagDef } from "../../src/services/command/flag.ts";
+import { generateBashCompletions } from "../../src/services/completion/bash.ts";
+import { type CompletionData, getCompletionData } from "../../src/services/completion/completions.ts";
+import { generateFishCompletions } from "../../src/services/completion/fish.ts";
+import { handleCompletionRequest } from "../../src/services/completion/handler.ts";
+import { generateZshCompletions } from "../../src/services/completion/zsh.ts";
+import { nockTestApps, testApp } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { mock } from "../__support__/mock.ts";
+import { testDirPath } from "../__support__/paths.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -887,8 +887,8 @@ describe("completion", () => {
 
     it("excludes hidden commands from completion candidates", async () => {
       const origImport = importCommand;
-      const { mock: mockFn, mockRestore: restoreFn } = await import("../__support__/mock.js");
-      const commandModule = await import("../../src/services/command/command.js");
+      const { mock: mockFn, mockRestore: restoreFn } = await import("../__support__/mock.ts");
+      const commandModule = await import("../../src/services/command/command.ts");
 
       mockFn(commandModule, "importCommand", async (...args: Parameters<typeof origImport>) => {
         const result = await origImport(...args);

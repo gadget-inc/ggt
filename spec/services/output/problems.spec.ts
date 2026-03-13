@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import type { Problem as FileSyncProblem, PublishIssue } from "../../../src/__generated__/graphql.js";
+import type { Problem as FileSyncProblem, PublishIssue } from "../../../src/__generated__/graphql.ts";
 import {
   filesyncProblemsToProblems,
   filetype,
   publishIssuesToProblems,
   sprintProblems,
   type Problems,
-} from "../../../src/services/output/problems.js";
+} from "../../../src/services/output/problems.ts";
 
 describe("sprintProblems", () => {
   it("formats a single file with a single problem", () => {

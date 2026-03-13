@@ -1,12 +1,12 @@
-import { PUBLISH_ISSUES_QUERY } from "../services/app/edit/operation.js";
-import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.js";
-import { defineCommand } from "../services/command/command.js";
-import { FlagError } from "../services/command/flag.js";
-import { loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import colors from "../services/output/colors.js";
-import { println } from "../services/output/print.js";
-import { printProblems, publishIssuesToProblems } from "../services/output/problems.js";
-import { sprint } from "../services/output/sprint.js";
+import { PUBLISH_ISSUES_QUERY } from "../services/app/edit/operation.ts";
+import { AppIdentity, AppIdentityFlags } from "../services/command/app-identity.ts";
+import { defineCommand } from "../services/command/command.ts";
+import { FlagError } from "../services/command/flag.ts";
+import { loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import colors from "../services/output/colors.ts";
+import { println } from "../services/output/print.ts";
+import { printProblems, publishIssuesToProblems } from "../services/output/problems.ts";
+import { sprint } from "../services/output/sprint.ts";
 
 export default defineCommand({
   name: "problems",

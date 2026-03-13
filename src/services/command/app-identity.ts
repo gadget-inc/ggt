@@ -1,20 +1,20 @@
 import fs from "fs-extra";
 
-import { AppArg, Application, EnvArg, EnvironmentType, getApplications, groupByTeam, type Environment } from "../app/app.js";
-import { Edit } from "../app/edit/edit.js";
-import type { Directory } from "../filesync/directory.js";
-import { SyncJsonState } from "../filesync/sync-json-state.js";
-import colors from "../output/colors.js";
-import { select } from "../output/select.js";
-import { setSentryTags } from "../output/sentry.js";
-import { sprint } from "../output/sprint.js";
-import { getUserOrLogin } from "../user/user.js";
-import { sortBySimilar } from "../util/collection.js";
-import type { Command } from "./command.js";
-import type { Context } from "./context.js";
-import { FlagError, type FlagsDefinition, type FlagsResult } from "./flag.js";
+import { AppArg, Application, EnvArg, EnvironmentType, getApplications, groupByTeam, type Environment } from "../app/app.ts";
+import { Edit } from "../app/edit/edit.ts";
+import type { Directory } from "../filesync/directory.ts";
+import { SyncJsonState } from "../filesync/sync-json-state.ts";
+import colors from "../output/colors.ts";
+import { select } from "../output/select.ts";
+import { setSentryTags } from "../output/sentry.ts";
+import { sprint } from "../output/sprint.ts";
+import { getUserOrLogin } from "../user/user.ts";
+import { sortBySimilar } from "../util/collection.ts";
+import type { Command } from "./command.ts";
+import type { Context } from "./context.ts";
+import { FlagError, type FlagsDefinition, type FlagsResult } from "./flag.ts";
 
-export { AppArg, EnvArg } from "../app/app.js";
+export { AppArg, EnvArg } from "../app/app.ts";
 
 /**
  * Combined flags definition for --app and --env flags used by commands

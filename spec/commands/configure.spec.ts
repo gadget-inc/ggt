@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
-import configure from "../../src/commands/configure.js";
-import { FlagError } from "../../src/services/command/flag.js";
-import { runCommand } from "../../src/services/command/run.js";
-import * as defaults from "../../src/services/config/defaults.js";
-import { noop } from "../../src/services/util/function.js";
-import { testCtx } from "../__support__/context.js";
-import { expectError } from "../__support__/error.js";
-import { mock } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { expectProcessExit } from "../__support__/process.js";
+import configure from "../../src/commands/configure.ts";
+import { FlagError } from "../../src/services/command/flag.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import * as defaults from "../../src/services/config/defaults.ts";
+import { noop } from "../../src/services/util/function.ts";
+import { testCtx } from "../__support__/context.ts";
+import { expectError } from "../__support__/error.ts";
+import { mock } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { expectProcessExit } from "../__support__/process.ts";
 
 describe("configure", () => {
   it("can show configuration", async () => {

@@ -4,9 +4,9 @@ import path from "node:path";
 import cleanStack from "clean-stack";
 import { expect } from "vitest";
 
-import { createLogger } from "../../src/services/output/log/logger.js";
-import { workspaceRoot } from "../../src/services/util/paths.js";
-import { mockRestore } from "./mock.js";
+import { createLogger } from "../../src/services/output/log/logger.ts";
+import { workspaceRoot } from "../../src/services/util/paths.ts";
+import { mockRestore } from "./mock.ts";
 
 /**
  * A logger just for tests.

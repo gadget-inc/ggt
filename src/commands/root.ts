@@ -1,20 +1,20 @@
 import arg from "arg";
 
-import { Commands, importCommand, isCommand, renderCommandList, resolveCommandAlias } from "../services/command/command.js";
-import type { Context } from "../services/command/context.js";
-import { extractFlags, hidden, type FlagsDefinition, type FlagsResult, type FlagDef } from "../services/command/flag.js";
-import { runCommand } from "../services/command/run.js";
-import { flagLeft, flagNamePrefix, flagValueSuffix, formatFlag, wrapText } from "../services/command/usage.js";
-import colors from "../services/output/colors.js";
-import { verbosityToLevel } from "../services/output/log/level.js";
-import { println } from "../services/output/print.js";
-import { reportErrorAndExit } from "../services/output/report.js";
-import { setSentryTags } from "../services/output/sentry.js";
-import { sprint } from "../services/output/sprint.js";
-import { shouldCheckForUpdate } from "../services/output/update.js";
-import { closestMatch } from "../services/util/collection.js";
-import { isNil } from "../services/util/is.js";
-import { packageJson } from "../services/util/package-json.js";
+import { Commands, importCommand, isCommand, renderCommandList, resolveCommandAlias } from "../services/command/command.ts";
+import type { Context } from "../services/command/context.ts";
+import { extractFlags, hidden, type FlagsDefinition, type FlagsResult, type FlagDef } from "../services/command/flag.ts";
+import { runCommand } from "../services/command/run.ts";
+import { flagLeft, flagNamePrefix, flagValueSuffix, formatFlag, wrapText } from "../services/command/usage.ts";
+import colors from "../services/output/colors.ts";
+import { verbosityToLevel } from "../services/output/log/level.ts";
+import { println } from "../services/output/print.ts";
+import { reportErrorAndExit } from "../services/output/report.ts";
+import { setSentryTags } from "../services/output/sentry.ts";
+import { sprint } from "../services/output/sprint.ts";
+import { shouldCheckForUpdate } from "../services/output/update.ts";
+import { closestMatch } from "../services/util/collection.ts";
+import { isNil } from "../services/util/is.ts";
+import { packageJson } from "../services/util/package-json.ts";
 
 export type RootFlags = typeof flags;
 export type RootFlagsResult = FlagsResult<RootFlags>;
@@ -109,7 +109,7 @@ export const run = async (parent: Context, rootFlags: RootFlagsResult): Promise<
   const ctx = parent.child({ name: "root" });
 
   if (rootFlags["--__complete"]) {
-    const { handleCompletionRequest } = await import("../services/completion/handler.js");
+    const { handleCompletionRequest } = await import("../services/completion/handler.ts");
     await handleCompletionRequest(ctx, rootFlags._);
     process.exit(0);
   }
@@ -128,7 +128,7 @@ export const run = async (parent: Context, rootFlags: RootFlagsResult): Promise<
   }
 
   if (await shouldCheckForUpdate(ctx)) {
-    const { warnIfUpdateAvailable } = await import("../services/output/update.js");
+    const { warnIfUpdateAvailable } = await import("../services/output/update.ts");
     await warnIfUpdateAvailable(ctx);
   }
 

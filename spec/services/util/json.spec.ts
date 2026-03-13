@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { installJsonExtensions, uninstallJsonExtensions } from "../../../src/services/util/json.js";
+import { installJsonExtensions, uninstallJsonExtensions } from "../../../src/services/util/json.ts";
 
 describe("installJsonExtensions", () => {
   beforeEach(() => {

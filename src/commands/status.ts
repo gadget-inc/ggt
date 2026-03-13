@@ -1,13 +1,13 @@
-import { defineCommand } from "../services/command/command.js";
-import { FlagError } from "../services/command/flag.js";
-import { getConflicts, printConflicts } from "../services/filesync/conflicts.js";
-import { getDevStatus } from "../services/filesync/dev-lock.js";
-import { UnknownDirectoryError } from "../services/filesync/error.js";
-import { FileSync } from "../services/filesync/filesync.js";
-import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.js";
-import colors from "../services/output/colors.js";
-import { println } from "../services/output/print.js";
-import { sprint } from "../services/output/sprint.js";
+import { defineCommand } from "../services/command/command.ts";
+import { FlagError } from "../services/command/flag.ts";
+import { getConflicts, printConflicts } from "../services/filesync/conflicts.ts";
+import { getDevStatus } from "../services/filesync/dev-lock.ts";
+import { UnknownDirectoryError } from "../services/filesync/error.ts";
+import { FileSync } from "../services/filesync/filesync.ts";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import colors from "../services/output/colors.ts";
+import { println } from "../services/output/print.ts";
+import { sprint } from "../services/output/sprint.ts";
 
 export default defineCommand({
   name: "status",

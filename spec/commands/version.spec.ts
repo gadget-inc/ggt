@@ -1,9 +1,9 @@
 import { describe, it } from "vitest";
 
-import version from "../../src/commands/version.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { testCtx } from "../__support__/context.js";
-import { expectStdout } from "../__support__/output.js";
+import version from "../../src/commands/version.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { testCtx } from "../__support__/context.ts";
+import { expectStdout } from "../__support__/output.ts";
 
 describe("version", () => {
   it("prints the version", async () => {

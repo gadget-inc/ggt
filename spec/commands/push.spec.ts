@@ -1,17 +1,17 @@
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import push from "../../src/commands/push.js";
-import { FlagError } from "../../src/services/command/flag.js";
-import { runCommand } from "../../src/services/command/run.js";
-import { confirm } from "../../src/services/output/confirm.js";
-import { nockTestApps } from "../__support__/app.js";
-import { testCtx } from "../__support__/context.js";
-import { expectError } from "../__support__/error.js";
-import { makeSyncScenario } from "../__support__/filesync.js";
-import { mockConfirmOnce } from "../__support__/mock.js";
-import { expectStdout } from "../__support__/output.js";
-import { loginTestUser } from "../__support__/user.js";
+import push from "../../src/commands/push.ts";
+import { FlagError } from "../../src/services/command/flag.ts";
+import { runCommand } from "../../src/services/command/run.ts";
+import { confirm } from "../../src/services/output/confirm.ts";
+import { nockTestApps } from "../__support__/app.ts";
+import { testCtx } from "../__support__/context.ts";
+import { expectError } from "../__support__/error.ts";
+import { makeSyncScenario } from "../__support__/filesync.ts";
+import { mockConfirmOnce } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
+import { loginTestUser } from "../__support__/user.ts";
 
 describe("push", () => {
   beforeEach(() => {

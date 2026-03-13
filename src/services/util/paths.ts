@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { packageJsonPath } from "./package-json.js";
+import { packageJsonPath } from "./package-json.ts";
 
 /**
  * The root directory of the ggt package.

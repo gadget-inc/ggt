@@ -1786,6 +1786,309 @@ Run ggt logs --help for more information.
 "
 `;
 
+exports[`root > when model is given > prints the usage for add when --help is passed 1`] = `
+"Add a model to your app
+
+USAGE
+  ggt model add <name> [field:type ...] [flags]
+
+ARGUMENTS
+  name
+        Model path
+
+  field:type ...
+        Optional field definitions
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt model add post
+  $ ggt model add blog/post
+  $ ggt model add post title:string body:string
+"
+`;
+
+exports[`root > when model is given > prints the usage for add when -h is passed 1`] = `
+"Add a model to your app
+
+USAGE
+  ggt model add <name> [field:type ...] [flags]
+
+ARGUMENTS
+  name              Model path
+  field:type ...    Optional field definitions
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt model add post
+  $ ggt model add blog/post
+  $ ggt model add post title:string body:string
+
+Run ggt model add --help for more information.
+"
+`;
+
+exports[`root > when model is given > prints the usage for remove when --help is passed 1`] = `
+"Remove a model from your app
+
+USAGE
+  ggt model remove <name> [flags]
+
+ARGUMENTS
+  name
+        Model path
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+  -f, --force
+        Skip confirmation
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt model remove post
+  $ ggt model remove post --force
+"
+`;
+
+exports[`root > when model is given > prints the usage for remove when -h is passed 1`] = `
+"Remove a model from your app
+
+USAGE
+  ggt model remove <name> [flags]
+
+ARGUMENTS
+  name        Model path
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+  -f, --force                     Skip confirmation
+
+EXAMPLES
+  $ ggt model remove post
+  $ ggt model remove post --force
+
+Run ggt model remove --help for more information.
+"
+`;
+
+exports[`root > when model is given > prints the usage for rename when --help is passed 1`] = `
+"Rename a model
+
+USAGE
+  ggt model rename <name> <new-name> [flags]
+
+ARGUMENTS
+  name
+        Current model path
+
+  new-name
+        New model path
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt model rename post article
+  $ ggt model rename blog/post blog/article
+"
+`;
+
+exports[`root > when model is given > prints the usage for rename when -h is passed 1`] = `
+"Rename a model
+
+USAGE
+  ggt model rename <name> <new-name> [flags]
+
+ARGUMENTS
+  name        Current model path
+  new-name    New model path
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt model rename post article
+  $ ggt model rename blog/post blog/article
+
+Run ggt model rename --help for more information.
+"
+`;
+
+exports[`root > when model is given > prints the usage when --help is passed 1`] = `
+"Add and manage models in your app
+
+Model commands sync local files with the environment before making schema
+changes. Use add to scaffold models, remove for destructive deletion, and
+rename to move a model path.
+
+USAGE
+  ggt model <command> [flags]
+
+COMMANDS
+  add       Add a model to your app
+  remove    Remove a model from your app
+  rename    Rename a model
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt model add post
+  $ ggt model remove post --force
+  $ ggt model rename post article
+"
+`;
+
+exports[`root > when model is given > prints the usage when -h is passed 1`] = `
+"Add and manage models in your app
+
+USAGE
+  ggt model <command> [flags]
+
+COMMANDS
+  add       Add a model to your app
+  remove    Remove a model from your app
+  rename    Rename a model
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt model add post
+  $ ggt model remove post --force
+  $ ggt model rename post article
+
+Run ggt model --help for more information.
+"
+`;
+
+exports[`root > when model is given > shows help when invoked without a subcommand 1`] = `
+"Add and manage models in your app
+
+USAGE
+  ggt model <command> [flags]
+
+COMMANDS
+  add       Add a model to your app
+  remove    Remove a model from your app
+  rename    Rename a model
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt model add post
+  $ ggt model remove post --force
+  $ ggt model rename post article
+
+Run ggt model --help for more information.
+"
+`;
+
 exports[`root > when open is given > prints the usage when --help is passed 1`] = `
 "Open your app in a browser
 

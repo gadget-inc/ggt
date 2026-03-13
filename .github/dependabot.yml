@@ -14,9 +14,6 @@ updates:
       timezone: America/Toronto
     labels:
       - dependencies
-    commit-message:
-      prefix: "chore(deps):"
-      include: scope
     groups:
       linters:
         patterns:
@@ -68,8 +65,6 @@ updates:
       timezone: America/Toronto
     labels:
       - dependencies
-    commit-message:
-      prefix: "ci(deps):"
     groups:
       github-actions:
         patterns:

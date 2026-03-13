@@ -1,13 +1,11 @@
 import terminalLink from "terminal-link";
 
+import { addAction, resolveActionPath } from "../services/add/action.js";
+import { addEnvironment, generateDefaultEnvName, switchToNewEnvironment } from "../services/add/environment.js";
+import { addFields, parseFieldTarget, parseFieldValues } from "../services/add/field.js";
+import { addModel } from "../services/add/model.js";
+import { addRoute } from "../services/add/route.js";
 import { getGlobalActions, getModels } from "../services/app/app.js";
-import {
-  CREATE_ACTION_MUTATION,
-  CREATE_ENVIRONMENT_MUTATION,
-  CREATE_MODEL_FIELDS_MUTATION,
-  CREATE_MODEL_MUTATION,
-  CREATE_ROUTE_MUTATION,
-} from "../services/app/edit/operation.js";
 import { ClientError } from "../services/app/error.js";
 import { defineCommand } from "../services/command/command.js";
 import type { Context } from "../services/command/context.js";
@@ -18,7 +16,6 @@ import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/file
 import colors from "../services/output/colors.js";
 import { println } from "../services/output/print.js";
 import { GGTError, IsBug } from "../services/output/report.js";
-import { select } from "../services/output/select.js";
 import { sprint } from "../services/output/sprint.js";
 import { symbol } from "../services/output/symbols.js";
 import { ts } from "../services/output/timestamp.js";
@@ -56,7 +53,7 @@ export class AddClientError extends GGTError {
 
 type AddFlagsResult = FlagsResult<typeof SyncJsonFlags>;
 
-const setupAddSync = async (ctx: Context, flags: AddFlagsResult): Promise<{ filesync: FileSync }> => {
+const setupAddSync = async (ctx: Context, flags: AddFlagsResult): Promise<{ filesync: FileSync; syncJson: SyncJson }> => {
   const directory = await loadSyncJsonDirectory(process.cwd());
   const syncJson = await SyncJson.load(ctx, { command: "add", flags, directory });
   if (!syncJson) {
@@ -77,23 +74,7 @@ const setupAddSync = async (ctx: Context, flags: AddFlagsResult): Promise<{ file
 
   println({ ensureEmptyLineAbove: true, content: `${colors.created(symbol.tick)} Sync completed ${ts()}` });
 
-  return { filesync };
-};
-
-const parseFieldValues = (fields: string[]): [{ name: string; fieldType: string }[], problems: string[]] => {
-  const problems: string[] = [];
-  const modelFields: { name: string; fieldType: string }[] = [];
-
-  for (const field of fields) {
-    const matches = /^(.*):+(.*)$/.exec(field);
-    if (!matches || matches.length !== 3 || !matches[1] || !matches[2]) {
-      problems.push(sprint`${field} is not a valid field definition`);
-    } else {
-      modelFields.push({ name: matches[1].replace(/:+/g, ""), fieldType: matches[2] });
-    }
-  }
-
-  return [modelFields, problems];
+  return { filesync, syncJson };
 };
 
 export default defineCommand({
@@ -156,12 +137,11 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync } = await setupAddSync(ctx, flags);
-        const syncJson = filesync.syncJson;
+        const { filesync, syncJson } = await setupAddSync(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const modelApiIdentifier = flags._[0]!;
 
-        const modelFieldsList: { name: string; fieldType: string }[] = [];
+        let modelFieldsList: { name: string; fieldType: string }[] = [];
         if (flags._.length > 1) {
           const [modelFields, problems] = parseFieldValues(flags._.slice(1));
 
@@ -176,32 +156,15 @@ export default defineCommand({
             );
           }
 
-          modelFieldsList.push(...modelFields);
+          modelFieldsList = modelFields;
         }
 
-        let result;
-
-        try {
-          result = (
-            await syncJson.edit.mutate({
-              mutation: CREATE_MODEL_MUTATION,
-              variables: {
-                path: modelApiIdentifier,
-                fields: modelFieldsList.map((fields) => ({ name: fields.name, fieldType: fields.fieldType })),
-              },
-            })
-          ).createModel;
-        } catch (error) {
-          if (error instanceof ClientError) {
-            throw new AddClientError(error);
-          } else {
-            throw error;
-          }
-        }
-
-        println({ ensureEmptyLineAbove: true, content: colors.subdued("New model created in environment.") });
-
-        await filesync.writeToLocalFilesystem(ctx, { filesVersion: result.remoteFilesVersion, files: result.changed, delete: [] });
+        await addModel(ctx, {
+          syncJson,
+          filesync,
+          modelApiIdentifier,
+          fields: modelFieldsList,
+        });
 
         const modelPrintout = terminalLink.isSupported
           ? terminalLink(
@@ -210,6 +173,7 @@ export default defineCommand({
             )
           : modelApiIdentifier;
 
+        println({ ensureEmptyLineAbove: true, content: colors.subdued("New model created in environment.") });
         println({
           ensureEmptyLineAbove: true,
           content: `${colors.created(symbol.tick)} Model ${colors.code(modelPrintout)} added successfully.`,
@@ -235,76 +199,20 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync } = await setupAddSync(ctx, flags);
-        const syncJson = filesync.syncJson;
+        const { filesync, syncJson } = await setupAddSync(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const path = flags._[0]!;
 
         const models = await getModels(ctx, syncJson.environment);
         const globalActions = await getGlobalActions(ctx, syncJson.environment);
-        const splitPath = path.split("/");
 
-        let overrideContextAction: "models" | "actions" | undefined;
+        const resolved = await resolveActionPath(path, models, globalActions);
 
-        const parsedPaths = splitPath.length > 1 ? splitPath.slice(0, splitPath.length - 1) : splitPath;
-        const parsedAction = splitPath[splitPath.length - 1];
-
-        const conflictingModel = models.find((model) => {
-          const modelName = parsedPaths[parsedPaths.length - 1];
-
-          return (
-            model.apiIdentifier.toUpperCase() === modelName.toUpperCase() &&
-            model.namespace?.join("/") === parsedPaths.slice(0, parsedPaths.length - 1).join("/")
-          );
+        await addAction(ctx, {
+          syncJson,
+          filesync,
+          path: resolved.path,
         });
-
-        const conflictingActionNamespace = globalActions.find((action) => {
-          return action.namespace?.join("/") === parsedPaths.join("/");
-        });
-
-        if (conflictingModel && conflictingActionNamespace) {
-          const joinedParsedPaths = parsedPaths.join("/");
-          overrideContextAction = await select({
-            choices: ["models", "actions"] as const,
-            content: sprint`
-              ${colors.header("Namespace Conflict:")} The action '${parsedAction}.js' cannot be automatically added due to a namespace conflict.
-
-              How would you like to proceed?:
-            `,
-            formatChoice: (choice) => {
-              switch (choice) {
-                case "models": {
-                  return `As a Model action in ${colors.subdued(`models/${joinedParsedPaths}/${parsedAction}.js`)}`;
-                }
-                case "actions": {
-                  return `As an Action in ${colors.subdued(`actions/${joinedParsedPaths}/${parsedAction}.js`)}`;
-                }
-              }
-            },
-          });
-
-          println({
-            ensureEmptyLineAbove: true,
-            content: sprint`${colors.renamed(symbol.info)} You can override the context of the action by specifying the context in the path. For example: ${colors.subdued(`ggt add action ${overrideContextAction}/${path}`)}`,
-          });
-        }
-
-        try {
-          const result = (
-            await syncJson.edit.mutate({
-              mutation: CREATE_ACTION_MUTATION,
-              variables: { path: overrideContextAction ? `${overrideContextAction}/` + path : path },
-            })
-          ).createAction;
-
-          await filesync.writeToLocalFilesystem(ctx, { filesVersion: result.remoteFilesVersion, files: result.changed, delete: [] });
-        } catch (error) {
-          if (error instanceof ClientError) {
-            throw new AddClientError(error);
-          } else {
-            throw error;
-          }
-        }
 
         println({ ensureEmptyLineAbove: true, content: `Action ${colors.code(path)} added successfully.` });
       },
@@ -336,26 +244,18 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync } = await setupAddSync(ctx, flags);
-        const syncJson = filesync.syncJson;
+        const { filesync, syncJson } = await setupAddSync(ctx, flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const routeMethod = flags._[0]!;
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const routePath = flags._[1]!;
 
-        try {
-          const result = (
-            await syncJson.edit.mutate({ mutation: CREATE_ROUTE_MUTATION, variables: { method: routeMethod, path: routePath } })
-          ).createRoute;
-
-          await filesync.writeToLocalFilesystem(ctx, { filesVersion: result.remoteFilesVersion, files: result.changed, delete: [] });
-        } catch (error) {
-          if (error instanceof ClientError) {
-            throw new AddClientError(error);
-          } else {
-            throw error;
-          }
-        }
+        await addRoute(ctx, {
+          syncJson,
+          filesync,
+          method: routeMethod,
+          path: routePath,
+        });
 
         println({ ensureEmptyLineAbove: true, content: `Route ${colors.code(routePath)} added successfully.` });
       },
@@ -382,55 +282,37 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync } = await setupAddSync(ctx, flags);
-        const syncJson = filesync.syncJson;
+        const { filesync, syncJson } = await setupAddSync(ctx, flags);
 
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const splitPathAndField = flags._[0]!.split("/");
+        const input = flags._[0]!;
 
-        const modelFieldsList: { name: string; fieldType: string }[] = [];
+        const parsed = parseFieldTarget(input);
 
-        if (splitPathAndField[1]) {
-          const [modelFields, problems] = parseFieldValues([splitPathAndField[1]]);
-
-          if (problems.length > 0) {
-            throw new FlagError(
-              sprint`
-                Failed to add field:
-
-                  ${problems.map((p) => `• ${p}`).join("\n")}
-              `,
-              { usageHint: false },
-            );
-          }
-
-          modelFieldsList.push(...modelFields);
-        } else {
+        // Handle missing field definition case with original error message
+        if (parsed.problems.includes("Missing field definition")) {
           throw new FlagError("Failed to add field, invalid field definition", { usageHint: false });
         }
 
-        try {
-          const result = (
-            await syncJson.edit.mutate({
-              mutation: CREATE_MODEL_FIELDS_MUTATION,
-              variables: {
-                // oxlint-disable-next-line no-non-null-assertion
-                path: splitPathAndField[0]!,
-                fields: modelFieldsList.map((field) => ({ name: field.name, fieldType: field.fieldType })),
-              },
-            })
-          ).createModelFields;
+        if (parsed.problems.length > 0) {
+          throw new FlagError(
+            sprint`
+              Failed to add field:
 
-          await filesync.writeToLocalFilesystem(ctx, { filesVersion: result.remoteFilesVersion, files: result.changed, delete: [] });
-        } catch (error) {
-          if (error instanceof ClientError) {
-            throw new AddClientError(error);
-          } else {
-            throw error;
-          }
+                ${parsed.problems.map((p) => `• ${p}`).join("\n")}
+            `,
+            { usageHint: false },
+          );
         }
 
-        println({ ensureEmptyLineAbove: true, content: `Field ${colors.code(modelFieldsList[0]?.name)} added successfully.` });
+        await addFields(ctx, {
+          syncJson,
+          filesync,
+          modelApiIdentifier: parsed.modelApiIdentifier,
+          fields: [{ name: parsed.fieldName, fieldType: parsed.fieldType }],
+        });
+
+        println({ ensureEmptyLineAbove: true, content: `Field ${colors.code(parsed.fieldName)} added successfully.` });
       },
     }),
     environment: sub({
@@ -453,59 +335,25 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync } = await setupAddSync(ctx, flags);
-        const syncJson = filesync.syncJson;
+        const { syncJson } = await setupAddSync(ctx, flags);
+
         let newEnvName = flags._[0];
         if (!newEnvName) {
-          const now = new Date();
-          const pad = (n: number): string => String(n).padStart(2, "0");
-          const date = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}`;
-          // getUTCHours() returns 0 at midnight (yielding "00"), unlike the prior
-          // toLocaleTimeString approach which returned "24:xx".
-          const time = `${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}`;
-          newEnvName = `env-${date}-${time}`;
+          newEnvName = generateDefaultEnvName();
         }
 
-        try {
-          await syncJson.edit.mutate({
-            mutation: CREATE_ENVIRONMENT_MUTATION,
-            variables: { environment: { slug: newEnvName, sourceSlug: syncJson.environment.name } },
-          });
-        } catch (error) {
-          if (error instanceof ClientError) {
-            throw new AddClientError(error);
-          } else {
-            throw error;
-          }
-        }
+        await addEnvironment(ctx, {
+          syncJson,
+          name: newEnvName,
+        });
 
         println({ ensureEmptyLineAbove: true, content: `Environment ${colors.code(newEnvName)} added successfully.` });
 
-        // Try to switch to newly made env
-        const pullFromNewEnvSyncJson = await SyncJson.load(ctx, {
+        // Switch to newly made env
+        await switchToNewEnvironment(ctx, {
+          envName: newEnvName,
           command: "pull",
-          flags: {
-            _: [],
-            "--application": undefined,
-            "--allow-unknown-directory": undefined,
-            "--allow-different-app": undefined,
-            "--environment": newEnvName,
-          },
-          directory: await loadSyncJsonDirectory(process.cwd()),
         });
-        if (pullFromNewEnvSyncJson) {
-          const filesync = new FileSync(pullFromNewEnvSyncJson);
-          const hashes = await filesync.hashes(ctx);
-          if (hashes.environmentChangesToPull.size === 0) {
-            println({ ensureEmptyLineAbove: true, content: "Nothing to pull." });
-            return;
-          }
-          if (hashes.localChangesToPush.size > 0) {
-            // show them the local changes they will discard
-            await filesync.print(ctx, { hashes });
-          }
-          await filesync.pull(ctx, { hashes, force: true });
-        }
       },
     }),
   }),

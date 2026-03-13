@@ -1,4 +1,4 @@
-#!/usr/bin/env node --experimental-transform-types --no-warnings
+#!/usr/bin/env node
 
 import { $ } from "execa";
 import fs from "fs-extra";

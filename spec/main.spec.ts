@@ -15,9 +15,8 @@ describe("main", () => {
       `;
 
       try {
-        execFileSync(process.execPath, ["--input-type=module", "--experimental-transform-types", "--eval", script], {
+        execFileSync(process.execPath, ["--input-type=module", "--eval", script], {
           encoding: "utf-8",
-          env: { ...process.env, NODE_NO_WARNINGS: "1" },
           timeout: 10_000,
         });
         expect.fail("Expected process to exit with code 1");

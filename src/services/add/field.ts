@@ -1,11 +1,11 @@
-import type { CreateModelFieldsMutation } from "../../__generated__/graphql.js";
-import { AddClientError } from "../../commands/add.js";
-import { CREATE_MODEL_FIELDS_MUTATION } from "../app/edit/operation.js";
-import { ClientError } from "../app/error.js";
-import type { Context } from "../command/context.js";
-import type { FileSync } from "../filesync/filesync.js";
-import type { SyncJson } from "../filesync/sync-json.js";
-import { sprint } from "../output/sprint.js";
+import type { CreateModelFieldsMutation } from "../../__generated__/graphql.ts";
+import { AddClientError } from "../../commands/add.ts";
+import { CREATE_MODEL_FIELDS_MUTATION } from "../app/edit/operation.ts";
+import { ClientError } from "../app/error.ts";
+import type { Context } from "../command/context.ts";
+import type { FileSync } from "../filesync/filesync.ts";
+import type { SyncJson } from "../filesync/sync-json.ts";
+import { sprint } from "../output/sprint.ts";
 
 /**
  * Parse field definitions like "name:string" into { name, fieldType } objects.

@@ -141,7 +141,6 @@ const runParent = async (ctx: Context, command: ParentCommandConfig, argv: strin
       const flags = parseFlags(mergedFlags, { argv: extracted.cleanedArgv, ...command.parseOptions });
       resolveAllowFlags(flags, allowFlags, extracted);
       validateRequiredPositionals(sub.positionals, flags._);
-      // oxlint-disable-next-line no-unsafe-call -- sub.run is StoredSubcommand["run"], typed (ctx, never) => Promisable<void>
       await sub.run(ctx, flags as never);
     },
     subCommandPath,

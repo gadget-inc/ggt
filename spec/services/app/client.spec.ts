@@ -64,9 +64,7 @@ describe("Client.subscribe", () => {
     Object.defineProperty(client, "environment", { value: mockEnvironment, writable: true });
     Object.defineProperty(client, "endpoint", { value: "/edit/api/graphql-ws", writable: true });
     Object.defineProperty(client, "status", { value: 0, writable: true }); // ConnectionStatus.CONNECTED
-    // oxlint-disable-next-line no-explicit-any
     (client as any)._graphqlWsClient = fakeGraphqlWsClient;
-    // oxlint-disable-next-line no-explicit-any
     (client as any)._sessionUpdateInterval = undefined;
     return client;
   };

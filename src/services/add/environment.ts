@@ -1,11 +1,11 @@
-import { AddClientError } from "../../commands/add.js";
-import { CREATE_ENVIRONMENT_MUTATION } from "../app/edit/operation.js";
-import { ClientError } from "../app/error.js";
-import type { Context } from "../command/context.js";
-import { FileSync } from "../filesync/filesync.js";
-import { loadSyncJsonDirectory, SyncJson } from "../filesync/sync-json.js";
-import type { SyncJson as SyncJsonType } from "../filesync/sync-json.js";
-import { println } from "../output/print.js";
+import { AddClientError } from "../../commands/add.ts";
+import { CREATE_ENVIRONMENT_MUTATION } from "../app/edit/operation.ts";
+import { ClientError } from "../app/error.ts";
+import type { Context } from "../command/context.ts";
+import { FileSync } from "../filesync/filesync.ts";
+import { loadSyncJsonDirectory, SyncJson } from "../filesync/sync-json.ts";
+import type { SyncJson as SyncJsonType } from "../filesync/sync-json.ts";
+import { println } from "../output/print.ts";
 
 export type AddEnvironmentResult = {
   name: string;

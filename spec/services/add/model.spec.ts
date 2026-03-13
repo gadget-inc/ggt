@@ -1,15 +1,15 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { AddClientError } from "../../../src/commands/add.js";
-import { addModel } from "../../../src/services/add/model.js";
-import { CREATE_MODEL_MUTATION } from "../../../src/services/app/edit/operation.js";
-import { nockTestApps } from "../../__support__/app.js";
-import { testCtx } from "../../__support__/context.js";
-import { expectError } from "../../__support__/error.js";
-import { makeSyncScenario } from "../../__support__/filesync.js";
-import { nockEditResponse } from "../../__support__/graphql.js";
-import { loginTestUser } from "../../__support__/user.js";
+import { AddClientError } from "../../../src/commands/add.ts";
+import { addModel } from "../../../src/services/add/model.ts";
+import { CREATE_MODEL_MUTATION } from "../../../src/services/app/edit/operation.ts";
+import { nockTestApps } from "../../__support__/app.ts";
+import { testCtx } from "../../__support__/context.ts";
+import { expectError } from "../../__support__/error.ts";
+import { makeSyncScenario } from "../../__support__/filesync.ts";
+import { nockEditResponse } from "../../__support__/graphql.ts";
+import { loginTestUser } from "../../__support__/user.ts";
 
 describe("addModel", () => {
   beforeEach(async () => {

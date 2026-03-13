@@ -133,7 +133,7 @@ const loadClient = async (
   });
 
   // Parse the snippet into an executable function
-  // oxlint-disable-next-line no-empty-function, @typescript-eslint/no-unsafe-call
+  // oxlint-disable-next-line no-empty-function
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
   let fn: (...args: unknown[]) => Promise<unknown>;

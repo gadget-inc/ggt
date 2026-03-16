@@ -21,7 +21,7 @@ _ggt_completions() {
   esac
 
   if [[ $COMP_CWORD -eq 1 ]]; then
-    COMPREPLY=($(compgen -W "dev deploy status problems problem push pull var env envs add open list login logout logs log debugger whoami configure agent-plugin eval version completion --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+    COMPREPLY=($(compgen -W "dev deploy status problems problem push pull var env envs add model open list login logout logs log debugger whoami configure agent-plugin eval version completion --help -h --version --verbose -v --telemetry --json" -- "$cur"))
     return
   fi
 
@@ -165,6 +165,43 @@ _ggt_completions() {
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           environment|env)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          *)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+        esac
+      fi
+      ;;
+    model)
+      local sub_cmd=
+      local __skip_next=0
+      for ((i=2; i < COMP_CWORD; i++)); do
+        local w="\${COMP_WORDS[i]}"
+        if [[ $__skip_next -eq 1 ]]; then
+          __skip_next=0
+          continue
+        fi
+        case "$w" in
+          --application|-a|--app|--environment|-e|--env|--allow) __skip_next=1; continue ;;
+        esac
+        if [[ "$w" != -* ]]; then
+          sub_cmd="$w"
+          break
+        fi
+      done
+
+      if [[ -z "$sub_cmd" ]]; then
+        COMPREPLY=($(compgen -W "add remove rename --application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+      else
+        case "$sub_cmd" in
+          add)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          remove)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --force -f --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          rename)
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           *)
@@ -430,6 +467,7 @@ complete -c ggt -n '__fish_use_subcommand' -a 'var' -d 'Manage your app'\\''s en
 complete -c ggt -n '__fish_use_subcommand' -a 'env' -d 'Manage your app'\\''s environments'
 complete -c ggt -n '__fish_use_subcommand' -a 'envs' -d 'Manage your app'\\''s environments'
 complete -c ggt -n '__fish_use_subcommand' -a 'add' -d 'Add resources to your app'
+complete -c ggt -n '__fish_use_subcommand' -a 'model' -d 'Add and manage models in your app'
 complete -c ggt -n '__fish_use_subcommand' -a 'open' -d 'Open your app in a browser'
 complete -c ggt -n '__fish_use_subcommand' -a 'list' -d 'List your Gadget apps'
 complete -c ggt -n '__fish_use_subcommand' -a 'login' -d 'Log in to Gadget'
@@ -685,6 +723,40 @@ complete -c ggt -n '__ggt_seen_subcommand add -- action -- --application -a --ap
 complete -c ggt -n '__ggt_seen_subcommand add -- route -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
 complete -c ggt -n '__ggt_seen_subcommand add -- field -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
 complete -c ggt -n '__ggt_seen_subcommand add -- environment env -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
+
+# model
+complete -c ggt -n '__fish_seen_subcommand_from model' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l app -rfa '(__ggt_complete)' -d 'Gadget app to use'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l environment -s e -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l env -rfa '(__ggt_complete)' -d 'Environment to use'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l allow-different-app -d 'Allow syncing with a different app'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l allow-unknown-directory -d 'Allow syncing to an existing directory'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l allow -x -d 'Enable allow flags (comma-separated)'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l allow-all -d 'Enable all --allow-* flags'
+complete -c ggt -n '__ggt_needs_subcommand model -- --application -a --app --environment -e --env --allow' -a 'add' -d 'Add a model to your app'
+complete -c ggt -n '__ggt_needs_subcommand model -- --application -a --app --environment -e --env --allow' -a 'remove' -d 'Remove a model from your app'
+complete -c ggt -n '__ggt_needs_subcommand model -- --application -a --app --environment -e --env --allow' -a 'rename' -d 'Rename a model'
+complete -c ggt -n '__ggt_seen_subcommand model -- remove -- --application -a --app --environment -e --env --allow' -l force -s f -d 'Skip confirmation'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand model -- add -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand model -- remove -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand model -- rename -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand model -- add -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand model -- remove -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand model -- rename -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand model -- add -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand model -- remove -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand model -- rename -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand model -- add -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand model -- remove -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand model -- rename -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__fish_seen_subcommand_from model' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand model -- add -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand model -- remove -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand model -- rename -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
 
 # open
 complete -c ggt -n '__fish_seen_subcommand_from open' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
@@ -1235,6 +1307,109 @@ _ggt_add() {
   esac
 }
 
+_ggt_model() {
+  local -a subcommands
+  local state
+
+  _arguments -C \\
+    '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+    '--version[Print the ggt version]' \\
+    '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+    '--telemetry[Enable telemetry]' \\
+    '--json[Output as JSON where supported]' \\
+    '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+    '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+    '--allow-different-app[Allow syncing with a different app]' \\
+    '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+    '--allow[Enable allow flags (comma-separated)]:value: ' \\
+    '--allow-all[Enable all --allow-* flags]' \\
+    '1:subcommand:->subcommand' \\
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      subcommands=(
+        'add:Add a model to your app'
+        'remove:Remove a model from your app'
+        'rename:Rename a model'
+      )
+      _describe -t subcommands 'model subcommand' subcommands
+      ;;
+    args)
+      case $words[1] in
+        add)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+        remove)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]' \\
+            '(--force -f)''--force[Skip confirmation]' \\
+            '(--force -f)''-f[Skip confirmation]'
+          ;;
+        rename)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
 _ggt_configure() {
   local -a subcommands
   local state
@@ -1440,6 +1615,7 @@ _ggt() {
         'env:Manage your app'\\''s environments'
         'envs:Manage your app'\\''s environments'
         'add:Add resources to your app'
+        'model:Add and manage models in your app'
         'open:Open your app in a browser'
         'list:List your Gadget apps'
         'login:Log in to Gadget'
@@ -1606,6 +1782,9 @@ _ggt() {
           ;;
         add)
           _ggt_add
+          ;;
+        model)
+          _ggt_model
           ;;
         open)
           _arguments \\

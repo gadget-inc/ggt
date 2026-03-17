@@ -24,6 +24,7 @@ export const Commands = [
   "env",
   "add",
   "model",
+  "action",
   "open",
   "list",
   "login",
@@ -220,6 +221,9 @@ export const importCommand = async (cmd: Command): Promise<CommandConfig> => {
     case "model":
       module = await import("../../commands/model.ts");
       break;
+    case "action":
+      module = await import("../../commands/action.ts");
+      break;
     case "open":
       module = await import("../../commands/open.ts");
       break;
@@ -267,7 +271,7 @@ export const importCommand = async (cmd: Command): Promise<CommandConfig> => {
 /** Command group definitions for root help display. */
 export const commandGroups: readonly { label: string; commands: readonly Command[] }[] = [
   { label: "Development", commands: ["dev", "deploy", "push", "pull", "status", "logs", "debugger"] },
-  { label: "Resources", commands: ["add", "model", "var", "env", "open"] },
+  { label: "Resources", commands: ["add", "model", "action", "var", "env", "open"] },
   { label: "Account", commands: ["login", "logout", "whoami", "list"] },
   { label: "Diagnostics", commands: ["problems", "eval"] },
   { label: "Configuration", commands: ["configure", "agent-plugin", "completion", "version"] },

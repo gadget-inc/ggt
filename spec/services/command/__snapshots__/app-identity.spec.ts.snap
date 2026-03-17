@@ -1,5 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "action" 1`] = `[Error: You cannot "ggt action" your production environment.]`;
+
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "add" 1`] = `[Error: You cannot "ggt add" your production environment.]`;
 
 exports[`AppIdentity.load > production environment access > does not allow --env=production when the command is "agent-plugin" 1`] = `[Error: You cannot "ggt agent-plugin" your production environment.]`;

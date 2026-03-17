@@ -54,10 +54,10 @@ describe("action", () => {
       nockEditResponse({
         operation: CREATE_ACTION_MUTATION,
         response: { data: { createAction: { remoteFilesVersion: "10", changed: [] } } },
-        expectVariables: { path: "model/shopify/order/fulfill" },
+        expectVariables: { path: "model/mystore/order/fulfill" },
       });
 
-      await runCommand(testCtx, action, "add", "fulfill", "--model", "shopify/order");
+      await runCommand(testCtx, action, "add", "fulfill", "--model", "mystore/order");
     });
 
     it("writes returned action files to the local filesystem", async () => {

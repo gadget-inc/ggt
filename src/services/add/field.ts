@@ -38,14 +38,17 @@ export type AddFieldsResult = {
 export const parseFieldTarget = (
   input: string,
 ): { modelApiIdentifier: string; fieldName: string; fieldType: string; problems: string[] } => {
-  const splitPathAndField = input.split("/");
+  const lastSlashIndex = input.lastIndexOf("/");
   const problems: string[] = [];
 
-  if (!splitPathAndField[1]) {
+  if (lastSlashIndex === -1 || lastSlashIndex === input.length - 1) {
     return { modelApiIdentifier: "", fieldName: "", fieldType: "", problems: ["Missing field definition"] };
   }
 
-  const [modelFields, parseProblems] = parseFieldValues([splitPathAndField[1]]);
+  const modelApiIdentifier = input.slice(0, lastSlashIndex);
+  const fieldDefinition = input.slice(lastSlashIndex + 1);
+
+  const [modelFields, parseProblems] = parseFieldValues([fieldDefinition]);
   problems.push(...parseProblems);
 
   if (problems.length > 0 || modelFields.length === 0) {
@@ -53,7 +56,7 @@ export const parseFieldTarget = (
   }
 
   return {
-    modelApiIdentifier: splitPathAndField[0],
+    modelApiIdentifier,
     fieldName: modelFields[0]?.name ?? "",
     fieldType: modelFields[0]?.fieldType ?? "",
     problems: [],

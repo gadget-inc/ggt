@@ -1806,6 +1806,316 @@ Run ggt eval --help for more information.
 "
 `;
 
+exports[`root > when field is given > prints the usage for add when --help is passed 1`] = `
+"Add a field to an existing model
+
+Uses the format model/field:type to identify the target model and the
+field to add. Supported types include string, number, boolean, datetime,
+json, email, url, vector, richtext, file, enum, and color.
+
+USAGE
+  ggt field add <model/field:type> [flags]
+
+ARGUMENTS
+  model/field:type
+        Model path and field definition. Format is model/field:type (e.g.
+        post/published:boolean).
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt field add post/published:boolean
+  $ ggt field add user/age:number
+  $ ggt field add post/title:string
+  $ ggt field add user/email:email
+"
+`;
+
+exports[`root > when field is given > prints the usage for add when -h is passed 1`] = `
+"Add a field to an existing model
+
+USAGE
+  ggt field add <model/field:type> [flags]
+
+ARGUMENTS
+  model/field:type    Model path and field definition
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt field add post/published:boolean
+  $ ggt field add user/age:number
+  $ ggt field add post/title:string
+  $ ggt field add user/email:email
+
+Run ggt field add --help for more information.
+"
+`;
+
+exports[`root > when field is given > prints the usage for remove when --help is passed 1`] = `
+"Remove a field from a model
+
+USAGE
+  ggt field remove <model/field> [flags]
+
+ARGUMENTS
+  model/field
+        Model and field path
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+  -f, --force
+        Skip confirmation
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt field remove post/title
+  $ ggt field remove post/title --force
+"
+`;
+
+exports[`root > when field is given > prints the usage for remove when -h is passed 1`] = `
+"Remove a field from a model
+
+USAGE
+  ggt field remove <model/field> [flags]
+
+ARGUMENTS
+  model/field    Model and field path
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+  -f, --force                     Skip confirmation
+
+EXAMPLES
+  $ ggt field remove post/title
+  $ ggt field remove post/title --force
+
+Run ggt field remove --help for more information.
+"
+`;
+
+exports[`root > when field is given > prints the usage for rename when --help is passed 1`] = `
+"Rename a field
+
+USAGE
+  ggt field rename <model/field> <new-name> [flags]
+
+ARGUMENTS
+  model/field
+        Current model and field path
+
+  new-name
+        New model and field path
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt field rename post/title post/heading
+  $ ggt field rename mystore/order/note mystore/order/internalNote
+"
+`;
+
+exports[`root > when field is given > prints the usage for rename when -h is passed 1`] = `
+"Rename a field
+
+USAGE
+  ggt field rename <model/field> <new-name> [flags]
+
+ARGUMENTS
+  model/field    Current model and field path
+  new-name       New model and field path
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt field rename post/title post/heading
+  $ ggt field rename mystore/order/note mystore/order/internalNote
+
+Run ggt field rename --help for more information.
+"
+`;
+
+exports[`root > when field is given > prints the usage when --help is passed 1`] = `
+"Add and manage fields on your models
+
+Field commands sync local files with the environment before making schema
+changes. ggt field add mirrors ggt add field behavior,
+while remove and rename are wired command surfaces for
+follow-up implementation.
+
+USAGE
+  ggt field <command> [flags]
+
+COMMANDS
+  add       Add a field to an existing model
+  remove    Remove a field from a model
+  rename    Rename a field
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt field add post/title:string
+  $ ggt field add mystore/order/note:string
+  $ ggt field remove post/title --force
+  $ ggt field rename post/title post/heading
+"
+`;
+
+exports[`root > when field is given > prints the usage when -h is passed 1`] = `
+"Add and manage fields on your models
+
+USAGE
+  ggt field <command> [flags]
+
+COMMANDS
+  add       Add a field to an existing model
+  remove    Remove a field from a model
+  rename    Rename a field
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt field add post/title:string
+  $ ggt field add mystore/order/note:string
+  $ ggt field remove post/title --force
+  $ ggt field rename post/title post/heading
+
+Run ggt field --help for more information.
+"
+`;
+
+exports[`root > when field is given > shows help when invoked without a subcommand 1`] = `
+"Add and manage fields on your models
+
+USAGE
+  ggt field <command> [flags]
+
+COMMANDS
+  add       Add a field to an existing model
+  remove    Remove a field from a model
+  rename    Rename a field
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt field add post/title:string
+  $ ggt field add mystore/order/note:string
+  $ ggt field remove post/title --force
+  $ ggt field rename post/title post/heading
+
+Run ggt field --help for more information.
+"
+`;
+
 exports[`root > when list is given > prints the usage when --help is passed 1`] = `
 "List your Gadget apps
 

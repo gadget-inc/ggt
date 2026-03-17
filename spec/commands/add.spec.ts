@@ -106,6 +106,19 @@ describe("add", () => {
       await runCommand(testCtx, add, "field", "modelA/newField:string");
     });
 
+    it("can add a field on a namespaced model", async () => {
+      nockEditResponse({
+        operation: CREATE_MODEL_FIELDS_MUTATION,
+        response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
+        expectVariables: {
+          path: "mystore/order",
+          fields: [{ name: "newField", fieldType: "string" }],
+        },
+      });
+
+      await runCommand(testCtx, add, "field", "mystore/order/newField:string");
+    });
+
     it("returns an FlagError if there's no input", async () => {
       const error = await expectError(() => runCommand(testCtx, add, "field"));
       expect(error).toBeInstanceOf(FlagError);

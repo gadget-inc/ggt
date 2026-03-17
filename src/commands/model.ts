@@ -6,17 +6,14 @@ import terminalLink from "terminal-link";
 import { parseFieldValues } from "../services/add/field.ts";
 import { addModel } from "../services/add/model.ts";
 import { defineCommand } from "../services/command/command.ts";
-import type { Context } from "../services/command/context.ts";
-import { FlagError, type FlagsResult } from "../services/command/flag.ts";
-import { UnknownDirectoryError } from "../services/filesync/error.ts";
-import { FileSync } from "../services/filesync/filesync.ts";
-import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import { FlagError } from "../services/command/flag.ts";
+import { setupCommandSync } from "../services/filesync/setup-sync.ts";
+import { SyncJson, SyncJsonFlags } from "../services/filesync/sync-json.ts";
 import colors from "../services/output/colors.ts";
 import { confirm } from "../services/output/confirm.ts";
 import { println } from "../services/output/print.ts";
 import { sprint } from "../services/output/sprint.ts";
 import { symbol } from "../services/output/symbols.ts";
-import { ts } from "../services/output/timestamp.ts";
 
 const modelPathToDirectory = (modelPath: string): string => `api/models/${modelPath}`;
 
@@ -54,32 +51,6 @@ const markModelRenameChanges = (
   changes.delete(oldDirectoryPath);
 };
 
-type ModelFlagsResult = FlagsResult<typeof SyncJsonFlags>;
-
-const setupModelSync = async (ctx: Context, flags: ModelFlagsResult): Promise<{ filesync: FileSync; syncJson: SyncJson }> => {
-  const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { command: "model", flags, directory });
-  if (!syncJson) {
-    throw new UnknownDirectoryError({ command: "model", flags, directory });
-  }
-
-  const filesync = new FileSync(syncJson);
-  const hashes = await filesync.hashes(ctx, { silent: true });
-
-  if (!hashes.inSync) {
-    await filesync.merge(ctx, {
-      hashes,
-      printEnvironmentChangesOptions: { limit: 5 },
-      printLocalChangesOptions: { limit: 5 },
-      silent: true,
-    });
-  }
-
-  println({ ensureEmptyLineAbove: true, content: `${colors.created(symbol.tick)} Sync completed ${ts()}` });
-
-  return { filesync, syncJson };
-};
-
 export default defineCommand({
   name: "model",
   description: "Add and manage models in your app",
@@ -106,7 +77,7 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync, syncJson } = await setupModelSync(ctx, flags);
+        const { filesync, syncJson } = await setupCommandSync(ctx, "model", flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const modelApiIdentifier = flags._[0]!;
 
@@ -167,7 +138,7 @@ export default defineCommand({
         },
       },
       run: async (ctx, flags) => {
-        const { filesync, syncJson } = await setupModelSync(ctx, flags);
+        const { filesync, syncJson } = await setupCommandSync(ctx, "model", flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const modelPath = flags._[0]!;
 
@@ -207,7 +178,7 @@ export default defineCommand({
         },
       ],
       run: async (ctx, flags) => {
-        const { filesync, syncJson } = await setupModelSync(ctx, flags);
+        const { filesync, syncJson } = await setupCommandSync(ctx, "model", flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const modelPath = flags._[0]!;
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional

@@ -1,41 +1,10 @@
 import { addAction } from "../services/add/action.ts";
 import { defineCommand } from "../services/command/command.ts";
-import type { Context } from "../services/command/context.ts";
-import type { FlagsResult } from "../services/command/flag.ts";
-import { UnknownDirectoryError } from "../services/filesync/error.ts";
-import { FileSync } from "../services/filesync/filesync.ts";
-import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import { setupCommandSync } from "../services/filesync/setup-sync.ts";
+import { SyncJsonFlags } from "../services/filesync/sync-json.ts";
 import colors from "../services/output/colors.ts";
 import { println } from "../services/output/print.ts";
 import { sprint } from "../services/output/sprint.ts";
-import { symbol } from "../services/output/symbols.ts";
-import { ts } from "../services/output/timestamp.ts";
-
-type ActionFlagsResult = FlagsResult<typeof SyncJsonFlags>;
-
-const setupActionSync = async (ctx: Context, flags: ActionFlagsResult): Promise<{ filesync: FileSync; syncJson: SyncJson }> => {
-  const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { command: "action", flags, directory });
-  if (!syncJson) {
-    throw new UnknownDirectoryError({ command: "action", flags, directory });
-  }
-
-  const filesync = new FileSync(syncJson);
-  const hashes = await filesync.hashes(ctx, { silent: true });
-
-  if (!hashes.inSync) {
-    await filesync.merge(ctx, {
-      hashes,
-      printEnvironmentChangesOptions: { limit: 5 },
-      printLocalChangesOptions: { limit: 5 },
-      silent: true,
-    });
-  }
-
-  println({ ensureEmptyLineAbove: true, content: `${colors.created(symbol.tick)} Sync completed ${ts()}` });
-
-  return { filesync, syncJson };
-};
 
 export default defineCommand({
   name: "action",
@@ -80,7 +49,7 @@ export default defineCommand({
         },
       },
       run: async (ctx, flags) => {
-        const { filesync, syncJson } = await setupActionSync(ctx, flags);
+        const { filesync, syncJson } = await setupCommandSync(ctx, "action", flags);
 
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
         const actionName = flags._[0]!;

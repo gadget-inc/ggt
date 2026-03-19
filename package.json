@@ -117,7 +117,7 @@
     "tcp-port-used": "^1.0.2",
     "terminal-link": "^5.0.0",
     "ts-dedent": "^2.2.0",
-    "type-fest": "^5.4.3",
+    "type-fest": "^5.5.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15",
     "watcher": "^2.3.1",

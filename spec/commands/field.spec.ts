@@ -1,4 +1,3 @@
-import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import field from "../../src/commands/field.ts";
@@ -10,23 +9,7 @@ import { testCtx } from "../__support__/context.ts";
 import { expectError } from "../__support__/error.ts";
 import { makeSyncScenario } from "../__support__/filesync.ts";
 import { nockEditResponse } from "../__support__/graphql.ts";
-import { testDirPath } from "../__support__/paths.ts";
 import { loginTestUser } from "../__support__/user.ts";
-
-const baseFieldFiles = {
-  "api/": "",
-  "api/models/": "",
-  "api/models/post/": "",
-  "api/models/post/schema.gadget.ts": `export default {
-  type: "gadget/model-schema/v2",
-  storageKey: "DataModel-post",
-  fields: {
-    title: { type: "string", storageKey: "title" },
-    body: { type: "string", storageKey: "body" },
-  },
-};
-`,
-};
 
 describe("field", () => {
   beforeEach(async () => {
@@ -89,75 +72,9 @@ describe("field", () => {
     });
   });
 
-  describe("remove", () => {
-    it("requires a model/field argument", async () => {
-      const error = await expectError(() => runCommand(testCtx, field, "remove"));
-      expect(error).toBeInstanceOf(FlagError);
-      expect(error.sprint()).toMatchInlineSnapshot(`
-        "✘ Missing required argument: model/field
-
-        USAGE
-          ggt field remove <model/field> [flags]
-
-        Run ggt field remove -h for more information."
-      `);
-    });
-
-    it("removes a field with --force", async () => {
-      await makeSyncScenario({
-        filesVersion1Files: baseFieldFiles,
-        localFiles: baseFieldFiles,
-        gadgetFiles: baseFieldFiles,
-      });
-
-      await runCommand(testCtx, field, "remove", "post/title", "--force");
-
-      const localSchema = await fs.readFile(testDirPath("local/api/models/post/schema.gadget.ts"), "utf8");
-      const gadgetSchema = await fs.readFile(testDirPath("gadget/api/models/post/schema.gadget.ts"), "utf8");
-
-      expect(localSchema).not.toContain("title:");
-      expect(localSchema).toContain("body:");
-      expect(gadgetSchema).not.toContain("title:");
-      expect(gadgetSchema).toContain("body:");
-    });
-  });
-
-  describe("rename", () => {
-    it("requires source and target field names", async () => {
-      const error = await expectError(() => runCommand(testCtx, field, "rename", "post/title"));
-      expect(error).toBeInstanceOf(FlagError);
-      expect(error.sprint()).toMatchInlineSnapshot(`
-        "✘ Missing required argument: new-name
-
-        USAGE
-          ggt field rename <model/field> <new-name> [flags]
-
-        Run ggt field rename -h for more information."
-      `);
-    });
-
-    it("renames a field", async () => {
-      await makeSyncScenario({
-        filesVersion1Files: baseFieldFiles,
-        localFiles: baseFieldFiles,
-        gadgetFiles: baseFieldFiles,
-      });
-
-      await runCommand(testCtx, field, "rename", "post/title", "post/heading");
-
-      const localSchema = await fs.readFile(testDirPath("local/api/models/post/schema.gadget.ts"), "utf8");
-      const gadgetSchema = await fs.readFile(testDirPath("gadget/api/models/post/schema.gadget.ts"), "utf8");
-
-      expect(localSchema).not.toContain("title:");
-      expect(localSchema).toContain("heading:");
-      expect(gadgetSchema).not.toContain("title:");
-      expect(gadgetSchema).toContain("heading:");
-    });
-  });
-
-  it("throws FlagError for unknown subcommand", async () => {
-    const error = await expectError(() => runCommand(testCtx, field, "bogus"));
+  it.each(["remove", "rename", "bogus"])("throws FlagError for unknown subcommand %s", async (subcommand) => {
+    const error = await expectError(() => runCommand(testCtx, field, subcommand));
     expect(error).toBeInstanceOf(FlagError);
-    expect(error.message).toContain("Unknown subcommand bogus");
+    expect(error.message).toContain(`Unknown subcommand ${subcommand}`);
   });
 });

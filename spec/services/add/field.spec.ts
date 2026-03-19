@@ -90,6 +90,16 @@ describe("parseFieldTarget", () => {
     });
   });
 
+  it("parses namespaced model/field:type", () => {
+    const result = parseFieldTarget("mystore/order/title:string");
+    expect(result).toEqual({
+      modelApiIdentifier: "mystore/order",
+      fieldName: "title",
+      fieldType: "string",
+      problems: [],
+    });
+  });
+
   it("parses different field types", () => {
     expect(parseFieldTarget("user/active:boolean")).toEqual({
       modelApiIdentifier: "user",

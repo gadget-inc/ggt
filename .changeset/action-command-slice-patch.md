@@ -1,5 +1,5 @@
 ---
-"ggt": patch
+"ggt": minor
 ---
 
 Add resource-first `ggt action add` support:

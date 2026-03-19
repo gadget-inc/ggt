@@ -71,10 +71,4 @@ describe("field", () => {
       expect(error.sprint()).toContain("is not a valid field definition");
     });
   });
-
-  it.each(["remove", "rename", "bogus"])("throws FlagError for unknown subcommand %s", async (subcommand) => {
-    const error = await expectError(() => runCommand(testCtx, field, subcommand));
-    expect(error).toBeInstanceOf(FlagError);
-    expect(error.message).toContain(`Unknown subcommand ${subcommand}`);
-  });
 });

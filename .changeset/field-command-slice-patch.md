@@ -2,10 +2,6 @@
 "ggt": patch
 ---
 
-Add resource-first field command surfaces:
-
-- `ggt field add <model>/<field>:<type>`
-- `ggt field remove <model>/<field> [--force]`
-- `ggt field rename <model>/<field> <new-name>`
-
-`ggt field add` matches existing `ggt add field` parsing/behavior.
+Add model field lifecycle management command `ggt field`. `ggt field add` is the
+first subcommand to be supported, and matches existing `ggt add field`
+behaviour.

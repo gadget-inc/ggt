@@ -1879,7 +1879,7 @@ Run ggt field add --help for more information.
 `;
 
 exports[`root > when field is given > prints the usage when --help is passed 1`] = `
-"Add fields to your models
+"Manage fields on your models
 
 Field commands sync local files with the environment before making schema
 changes. ggt field add mirrors ggt add field behavior.
@@ -1924,7 +1924,7 @@ EXAMPLES
 `;
 
 exports[`root > when field is given > prints the usage when -h is passed 1`] = `
-"Add fields to your models
+"Manage fields on your models
 
 USAGE
   ggt field <command> [flags]
@@ -1945,7 +1945,7 @@ Run ggt field --help for more information.
 `;
 
 exports[`root > when field is given > shows help when invoked without a subcommand 1`] = `
-"Add fields to your models
+"Manage fields on your models
 
 USAGE
   ggt field <command> [flags]

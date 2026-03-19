@@ -89,7 +89,7 @@ describe("root", () => {
         add             Add resources to your app
         model           Add and manage models in your app
         action          Add and manage actions
-        field           Add fields to your models
+        field           Manage fields on your models
         var             Manage your app's environment variables
         env             Manage your app's environments
         open            Open your app in a browser
@@ -148,7 +148,7 @@ describe("root", () => {
         add             Add resources to your app
         model           Add and manage models in your app
         action          Add and manage actions
-        field           Add fields to your models
+        field           Manage fields on your models
         var             Manage your app's environment variables
         env             Manage your app's environments
         open            Open your app in a browser

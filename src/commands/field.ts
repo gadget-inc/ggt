@@ -34,7 +34,7 @@ const supportedFieldTypes = [
 
 export default defineCommand({
   name: "field",
-  description: "Add fields to your models",
+  description: "Manage fields on your models",
   details: sprint`
     Field commands sync local files with the environment before making schema
     changes. ${colors.subdued("ggt field add")} mirrors ${colors.subdued("ggt add field")} behavior.

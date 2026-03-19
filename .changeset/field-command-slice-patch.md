@@ -1,5 +1,5 @@
 ---
-"ggt": patch
+"ggt": minor
 ---
 
 Add model field lifecycle management command `ggt field`. `ggt field add` is the

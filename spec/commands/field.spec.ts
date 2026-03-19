@@ -1,3 +1,4 @@
+import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import field from "../../src/commands/field.ts";
@@ -9,7 +10,23 @@ import { testCtx } from "../__support__/context.ts";
 import { expectError } from "../__support__/error.ts";
 import { makeSyncScenario } from "../__support__/filesync.ts";
 import { nockEditResponse } from "../__support__/graphql.ts";
+import { testDirPath } from "../__support__/paths.ts";
 import { loginTestUser } from "../__support__/user.ts";
+
+const baseFieldFiles = {
+  "api/": "",
+  "api/models/": "",
+  "api/models/post/": "",
+  "api/models/post/schema.gadget.ts": `export default {
+  type: "gadget/model-schema/v2",
+  storageKey: "DataModel-post",
+  fields: {
+    title: { type: "string", storageKey: "title" },
+    body: { type: "string", storageKey: "body" },
+  },
+};
+`,
+};
 
 describe("field", () => {
   beforeEach(async () => {
@@ -86,10 +103,22 @@ describe("field", () => {
       `);
     });
 
-    it("returns a not-implemented error", async () => {
-      const error = await expectError(() => runCommand(testCtx, field, "remove", "post/title", "--force"));
-      expect(error).toBeInstanceOf(FlagError);
-      expect(error.message).toContain("field mutation support is not implemented yet");
+    it("removes a field with --force", async () => {
+      await makeSyncScenario({
+        filesVersion1Files: baseFieldFiles,
+        localFiles: baseFieldFiles,
+        gadgetFiles: baseFieldFiles,
+      });
+
+      await runCommand(testCtx, field, "remove", "post/title", "--force");
+
+      const localSchema = await fs.readFile(testDirPath("local/api/models/post/schema.gadget.ts"), "utf8");
+      const gadgetSchema = await fs.readFile(testDirPath("gadget/api/models/post/schema.gadget.ts"), "utf8");
+
+      expect(localSchema).not.toContain("title:");
+      expect(localSchema).toContain("body:");
+      expect(gadgetSchema).not.toContain("title:");
+      expect(gadgetSchema).toContain("body:");
     });
   });
 
@@ -107,10 +136,22 @@ describe("field", () => {
       `);
     });
 
-    it("returns a not-implemented error", async () => {
-      const error = await expectError(() => runCommand(testCtx, field, "rename", "post/title", "post/heading"));
-      expect(error).toBeInstanceOf(FlagError);
-      expect(error.message).toContain("field mutation support is not implemented yet");
+    it("renames a field", async () => {
+      await makeSyncScenario({
+        filesVersion1Files: baseFieldFiles,
+        localFiles: baseFieldFiles,
+        gadgetFiles: baseFieldFiles,
+      });
+
+      await runCommand(testCtx, field, "rename", "post/title", "post/heading");
+
+      const localSchema = await fs.readFile(testDirPath("local/api/models/post/schema.gadget.ts"), "utf8");
+      const gadgetSchema = await fs.readFile(testDirPath("gadget/api/models/post/schema.gadget.ts"), "utf8");
+
+      expect(localSchema).not.toContain("title:");
+      expect(localSchema).toContain("heading:");
+      expect(gadgetSchema).not.toContain("title:");
+      expect(gadgetSchema).toContain("heading:");
     });
   });
 

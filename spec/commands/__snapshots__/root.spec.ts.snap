@@ -1810,8 +1810,7 @@ exports[`root > when field is given > prints the usage for add when --help is pa
 "Add a field to an existing model
 
 Uses the format model/field:type to identify the target model and the
-field to add. Supported types include string, number, boolean, datetime,
-json, email, url, vector, richtext, file, enum, and color.
+field to add. Supported types include number, string, richText, email, url, color, json, enum, boolean, dateTime, vector, file, encryptedString, computed, belongsTo, hasOne, hasMany, hasManyThrough, password, roleList, money, recordState.
 
 USAGE
   ggt field add <model/field:type> [flags]
@@ -2020,8 +2019,8 @@ exports[`root > when field is given > prints the usage when --help is passed 1`]
 
 Field commands sync local files with the environment before making schema
 changes. ggt field add mirrors ggt add field behavior,
-while remove and rename are wired command surfaces for
-follow-up implementation.
+while remove and rename edit your local model schema and
+push the update.
 
 USAGE
   ggt field <command> [flags]

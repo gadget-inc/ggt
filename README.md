@@ -29,6 +29,8 @@
   - [`ggt var`](#ggt-var)
   - [`ggt env`](#ggt-env)
   - [`ggt add`](#ggt-add)
+  - [`ggt model`](#ggt-model)
+  - [`ggt action`](#ggt-action)
   - [`ggt open`](#ggt-open)
   - [`ggt list`](#ggt-list)
   - [`ggt login`](#ggt-login)
@@ -78,6 +80,8 @@ COMMANDS
 
   Resources
   add             Add resources to your app
+  model           Add and manage models in your app
+  action          Add and manage actions
   var             Manage your app's environment variables
   env             Manage your app's environments
   open            Open your app in a browser
@@ -328,6 +332,53 @@ EXAMPLES
   $ ggt add action action/audit
   $ ggt add route GET /hello
   $ ggt add environment staging
+```
+
+### `ggt model`
+
+```sh-session
+$ ggt model -h
+Add and manage models in your app
+
+USAGE
+  ggt model <command> [flags]
+
+COMMANDS
+  add       Add a model to your app
+  remove    Remove a model from your app
+  rename    Rename a model
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt model add post
+  $ ggt model remove post --force
+  $ ggt model rename post article
+```
+
+### `ggt action`
+
+```sh-session
+$ ggt action -h
+Add and manage actions
+
+USAGE
+  ggt action <command> [flags]
+
+COMMANDS
+  add    Add an action to your app
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt action add sendWelcomeEmail
+  $ ggt action add notifications/sendWelcomeEmail
+  $ ggt action add publish --model post
+  $ ggt action add fulfill --model shopifyOrder
 ```
 
 ### `ggt open`

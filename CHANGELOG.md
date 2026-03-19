@@ -1,5 +1,77 @@
 # @gadgetinc/ggt
 
+## 3.0.0
+
+### Major Changes
+
+- d545d86: Require Node.js 22 or later.
+
+  Node.js 20 reaches End-of-Life (EOL) on 2026-04-30:
+  - <https://github.com/nodejs/release#end-of-life-releases>
+
+  This means Node.js 20 will no longer receive security updates and bug fixes.
+
+  ggt runs on your computer, so it's important to use a supported version of Node to ensure you have the latest security updates. **Your Gadget environment will continue to use the Node version specified in your [Framework version](https://docs.gadget.dev/guides/gadget-framework).**
+
+  If you're running an older version, ggt will now print upgrade instructions for common version managers (nvm, fnm, Homebrew) so you can get up and running quickly.
+
+- 7f446cf: `ggt logs` now prints recent logs and exits by default.
+
+  Breaking change: streaming now requires `--follow` / `-f`.
+
+  Also adds one-shot filtering with `--start` and `--log-level`.
+
+### Minor Changes
+
+- 9b872bc: Add resource-first `ggt action add` support:
+  - `ggt action add <name>`
+  - `ggt action add <namespace>/<name>`
+  - `ggt action add <name> --model <model>`
+  - `ggt action add <name> --model <namespace>/<model>`
+
+- 9f8a01f: Add `ggt completion` command for generating shell completion scripts
+
+  Supports Bash, Zsh, and Fish shells. Run `ggt completion <shell>` to generate
+  a completion script, then source it in your shell configuration.
+
+- 0980eb6: Add `--allow` and `--allow-all` shorthands for commands with allow flags
+
+  Commands that define `--allow-*` flags now automatically support `--allow <flag,...>` and `--allow-all` as convenient shorthands. Unknown values suggest the closest match, and a bare `--allow` at end of argv throws a clear error.
+
+- 4e88609: Overhaul CLI help output with consistent, structured formatting
+
+  All commands now display structured help with USAGE, COMMANDS, FLAGS, and ARGUMENTS
+  sections. Two help levels are supported: `-h` shows a compact summary with a footer
+  pointing to `--help`, which shows full details including examples and prose sections.
+
+  Commands are grouped by category (Development, Resources, Account, Diagnostics,
+  Configuration) in the root help output. Flag descriptions are normalized as prose
+  in an expanded layout with bold group headers.
+
+  Internally, all commands have been migrated to a declarative `defineCommand()` API, replacing the previous imperative `usage(ctx)` pattern.
+
+- 42bbd15: Add resource-first `ggt model` subcommands for non-Shopify model management:
+  - `ggt model add <name> [field:type ...]`
+  - `ggt model rename <name> <new-name>`
+  - `ggt model remove <name> [--force]`
+
+### Patch Changes
+
+- af1f83d: Fix chmod ENOENT race condition during file sync
+
+  Handle the case where a file is deleted between `fs.outputFile()` and `fs.chmod()` during sync by swallowing the ENOENT error, matching the existing pattern used elsewhere in the file.
+
+- 26f04ca: Fix `ggt debugger --configure vscode` crashing when existing `.vscode/launch.json` or `tasks.json` contains comments or trailing commas
+- 616e3db: Fix trace_id log URLs to use path-based editor routing (`primaryDomain/edit/{env}/logs`) instead of subdomain-based routing.
+- 69fa2f9: Fix login crash when receiving spurious HTTP requests without a session parameter
+
+  The login callback server now ignores requests that don't include a `session` query parameter (e.g. favicon requests, health checks, port-forwarding probes in GitHub Codespaces) instead of crashing with an `AssertionError`.
+
+- 8140636: Fix `ggt eval` and log URLs using `--production` subdomain for production environments. Production uses just the app slug (e.g. `myapp.gadget.app`), not `myapp--production.gadget.app`.
+- 4c9a37f: Replace node-notifier with terminal bell for crash notifications
+
+  Drop the `node-notifier` dependency and CJS shim in favor of writing a BEL character (`\x07`) to stderr. This triggers the terminal's native attention mechanism (dock bounce on macOS, taskbar flash on Linux/Windows) without any platform-specific code or external dependencies.
+
 ## 2.3.0
 
 ### Minor Changes

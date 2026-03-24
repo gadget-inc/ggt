@@ -81,7 +81,7 @@
     "fs-extra": "^11.3.4",
     "get-port": "^7.1.0",
     "got": "^14.6.6",
-    "graphql": "^16.13.1",
+    "graphql": "^16.13.2",
     "graphql-ws": "^6.0.7",
     "ignore": "^7.0.5",
     "indent-string": "^5.0.0",

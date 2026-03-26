@@ -841,7 +841,13 @@ export class FileSync {
 
       let content = "";
       if (stats.isFile()) {
-        content = await fs.readFile(absolutePath, FileSyncEncoding.Base64);
+        try {
+          content = await fs.readFile(absolutePath, FileSyncEncoding.Base64);
+        } catch (error) {
+          swallowEnoent(error);
+          ctx.log.debug("skipping change because file was deleted after stat", { path: normalizedPath });
+          return;
+        }
       }
 
       let oldPath;

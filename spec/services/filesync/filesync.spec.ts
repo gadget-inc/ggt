@@ -544,6 +544,29 @@ describe("FileSync._sendChangesToEnvironment", () => {
     expect(nock.pendingMocks()).toEqual([]);
   });
 
+  it("skips files deleted between stat and read (race condition)", async () => {
+    const changes = new Changes();
+    changes.set("file.txt", { type: "create" });
+
+    // Simulate the race: stat succeeds, then file is deleted before readFile.
+    // Mock stat to return a file Stats, but don't create the file on disk.
+    const originalStat = fs.stat.bind(fs);
+    // oxlint-disable-next-line no-misused-promises
+    vi.spyOn(fs, "stat").mockImplementation(async (filepath, ...args) => {
+      // For our test file, return a fake stat indicating it's a regular file
+      if (String(filepath).endsWith("file.txt")) {
+        return { isFile: () => true, isDirectory: () => false, mode: 0o644 } as fs.Stats;
+      }
+      return originalStat(filepath, ...args) as unknown as fs.Stats;
+    });
+
+    // Should not throw — the ENOENT should be swallowed
+    await sendChangesToGadget(testCtx, { changes });
+
+    // No GraphQL call should have been made since the only file was skipped
+    expect(nock.pendingMocks()).toEqual([]);
+  });
+
   it("retries failed graphql requests", async () => {
     await writeDir(localDir, {
       "foo.js": "// foo",

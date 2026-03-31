@@ -1,7 +1,7 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { AddClientError } from "../../../src/commands/add.ts";
+import { EditClientError } from "../../../src/commands/add.ts";
 import { addModel } from "../../../src/services/add/model.ts";
 import { CREATE_MODEL_MUTATION } from "../../../src/services/app/edit/operation.ts";
 import { nockTestApps } from "../../__support__/app.ts";
@@ -63,7 +63,7 @@ describe("addModel", () => {
     expect(result.remoteFilesVersion).toBe("10");
   });
 
-  it("throws AddClientError on API error", async () => {
+  it("throws EditClientError on API error", async () => {
     const { syncJson, filesync } = await makeSyncScenario();
 
     nockEditResponse({
@@ -73,6 +73,6 @@ describe("addModel", () => {
     });
 
     const error = await expectError(() => addModel(testCtx, { syncJson, filesync, modelApiIdentifier: "post" }));
-    expect(error).toBeInstanceOf(AddClientError);
+    expect(error).toBeInstanceOf(EditClientError);
   });
 });

@@ -1,7 +1,7 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { AddClientError } from "../../../src/commands/add.ts";
+import { EditClientError } from "../../../src/commands/add.ts";
 import { addFields, parseFieldTarget, parseFieldValues } from "../../../src/services/add/field.ts";
 import { CREATE_MODEL_FIELDS_MUTATION } from "../../../src/services/app/edit/operation.ts";
 import { nockTestApps } from "../../__support__/app.ts";
@@ -138,10 +138,42 @@ describe("parseFieldTarget", () => {
     expect(result.problems[0]).toContain("is not a valid field definition");
   });
 
-  it("reports invalid field definition for field without colon", () => {
+  it("parses field without colon as having no type", () => {
     const result = parseFieldTarget("user/field");
-    expect(result.problems).toHaveLength(1);
-    expect(result.problems[0]).toContain("is not a valid field definition");
+    expect(result).toEqual({ modelApiIdentifier: "user", fieldName: "field", fieldType: undefined, problems: [] });
+  });
+});
+
+describe("parseFieldTarget without type", () => {
+  it("parses model/field without a type", () => {
+    const result = parseFieldTarget("post/title");
+    expect(result).toEqual({ modelApiIdentifier: "post", fieldName: "title", fieldType: undefined, problems: [] });
+  });
+
+  it("parses namespaced model/field without a type", () => {
+    const result = parseFieldTarget("mystore/order/note");
+    expect(result).toEqual({ modelApiIdentifier: "mystore/order", fieldName: "note", fieldType: undefined, problems: [] });
+  });
+
+  it("parses a deeply namespaced path without a type", () => {
+    const result = parseFieldTarget("a/b/c/field");
+    expect(result).toEqual({ modelApiIdentifier: "a/b/c", fieldName: "field", fieldType: undefined, problems: [] });
+  });
+
+  it("returns problems for a bare name with no slash", () => {
+    expect(parseFieldTarget("post").problems).toContain("Missing field definition");
+  });
+
+  it("returns problems for a trailing slash", () => {
+    expect(parseFieldTarget("post/").problems).toContain("Missing field definition");
+  });
+
+  it("returns problems for a leading slash (empty model)", () => {
+    expect(parseFieldTarget("/title").problems).toContain("Missing model identifier");
+  });
+
+  it("returns problems for an empty string", () => {
+    expect(parseFieldTarget("").problems).toContain("Missing field definition");
   });
 });
 
@@ -176,7 +208,7 @@ describe("addFields", () => {
     expect(result.changed).toEqual([]);
   });
 
-  it("throws AddClientError on API error", async () => {
+  it("throws EditClientError on API error", async () => {
     const { syncJson, filesync } = await makeSyncScenario();
 
     nockEditResponse({
@@ -193,6 +225,6 @@ describe("addFields", () => {
         fields: [{ name: "title", fieldType: "string" }],
       }),
     );
-    expect(error).toBeInstanceOf(AddClientError);
+    expect(error).toBeInstanceOf(EditClientError);
   });
 });

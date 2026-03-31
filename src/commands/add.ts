@@ -19,14 +19,19 @@ import { symbol } from "../services/output/symbols.ts";
 import { uniq } from "../services/util/collection.ts";
 import { isGraphQLErrors } from "../services/util/is.ts";
 
-export class AddClientError extends GGTError {
+/**
+ * Strips server error code prefixes like "GGT_BAD_REQUEST: " from GraphQL error messages.
+ */
+const stripErrorCodePrefix = (message: string): string => message.replace(/^GGT_\w+:\s*/, "");
+
+export class EditClientError extends GGTError {
   isBug = IsBug.NO;
 
   constructor(error: ClientError) {
     let template = "";
 
     if (isGraphQLErrors(error.cause)) {
-      const errors = uniq(error.cause.map((x) => x.message));
+      const errors = uniq(error.cause.map((x) => stripErrorCodePrefix(x.message)));
       template = sprint`
         ${errors
           .flatMap((e) => e.split("\n"))
@@ -42,11 +47,13 @@ export class AddClientError extends GGTError {
 
   protected override render(): string {
     return sprint`
-      ${colors.deleted(symbol.cross)} Failed to add:
-       ${this.message}
+      ${colors.deleted(symbol.cross)} ${this.message}
     `;
   }
 }
+
+/** @deprecated Use {@link EditClientError} instead. */
+export const AddClientError = EditClientError;
 
 export default defineCommand({
   name: "add",
@@ -274,6 +281,10 @@ export default defineCommand({
             `,
             { usageHint: false },
           );
+        }
+
+        if (!parsed.fieldType) {
+          throw new FlagError("Failed to add field, invalid field definition", { usageHint: false });
         }
 
         await addFields(ctx, {

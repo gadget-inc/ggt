@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { EnvironmentStatus } from "../../src/__generated__/graphql.ts";
-import add, { AddClientError } from "../../src/commands/add.ts";
+import add, { EditClientError } from "../../src/commands/add.ts";
 import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.ts";
 import {
   CREATE_ACTION_MUTATION,
@@ -21,12 +21,12 @@ import { nockApiResponse, nockEditResponse } from "../__support__/graphql.ts";
 import { mockSystemTime } from "../__support__/time.ts";
 import { loginTestUser } from "../__support__/user.ts";
 
-describe("AddClientError", () => {
+describe("EditClientError", () => {
   it("does not double-bullet messages that already have a bullet prefix", () => {
     const cause = [{ message: "• already bulleted" }, { message: "plain text" }] as unknown as import("graphql").GraphQLError[];
 
     const clientError = new ClientError(undefined, cause);
-    const error = new AddClientError(clientError);
+    const error = new EditClientError(clientError);
 
     // Each line should have exactly one bullet
     expect(error.message).toMatchInlineSnapshot(`
@@ -139,7 +139,13 @@ describe("add", () => {
       expect(error.sprint()).toContain("Failed to add field, invalid field definition");
     });
 
-    it.each(["user/field", "user/field:", "user/:"])("returns missing field type FlagError if the input is %s", async (partialInput) => {
+    it("returns missing field type FlagError if the input is user/field", async () => {
+      const error = await expectError(() => runCommand(testCtx, add, "field", "user/field"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.sprint()).toContain("invalid field definition");
+    });
+
+    it.each(["user/field:", "user/:"])("returns missing field type FlagError if the input is %s", async (partialInput) => {
       const error = await expectError(() => runCommand(testCtx, add, "field", partialInput));
       expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toContain("is not a valid field definition");

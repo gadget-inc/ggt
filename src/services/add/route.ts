@@ -1,5 +1,5 @@
 import type { CreateRouteMutation } from "../../__generated__/graphql.ts";
-import { AddClientError } from "../../commands/add.ts";
+import { EditClientError } from "../../commands/add.ts";
 import { CREATE_ROUTE_MUTATION } from "../app/edit/operation.ts";
 import { ClientError } from "../app/error.ts";
 import type { Context } from "../command/context.ts";
@@ -41,7 +41,7 @@ export const addRoute = async (
     ).createRoute;
   } catch (error) {
     if (error instanceof ClientError) {
-      throw new AddClientError(error);
+      throw new EditClientError(error);
     } else {
       throw error;
     }

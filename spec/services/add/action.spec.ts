@@ -1,10 +1,10 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EditClientError } from "../../../src/commands/add.ts";
 import { addAction, resolveActionPath } from "../../../src/services/add/action.ts";
 import type { GlobalActionApiIdentifier, ModelApiIdentifier } from "../../../src/services/app/app.ts";
 import { CREATE_ACTION_MUTATION } from "../../../src/services/app/edit/operation.ts";
+import { FlagError } from "../../../src/services/command/flag.ts";
 import { nockTestApps } from "../../__support__/app.ts";
 import { testCtx } from "../../__support__/context.ts";
 import { expectError } from "../../__support__/error.ts";
@@ -110,7 +110,7 @@ describe("addAction", () => {
     expect(result.path).toBe("model/post/publish");
   });
 
-  it("throws EditClientError on API error", async () => {
+  it("throws FlagError on API error", async () => {
     const { syncJson, filesync } = await makeSyncScenario();
 
     nockEditResponse({
@@ -120,6 +120,6 @@ describe("addAction", () => {
     });
 
     const error = await expectError(() => addAction(testCtx, { syncJson, filesync, path: "doSomething" }));
-    expect(error).toBeInstanceOf(EditClientError);
+    expect(error).toBeInstanceOf(FlagError);
   });
 });

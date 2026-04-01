@@ -2276,7 +2276,7 @@ ARGUMENTS
         Model path
 
   field:type ...
-        Optional field definitions
+        Optional field definitions (not used with --type shopify)
 
 FLAGS
   -a, --app, --application <app>
@@ -2287,6 +2287,13 @@ FLAGS
   -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
+
+      --resource <key>
+        Shopify model key (e.g. shopifyProduct). Required when the path is not a
+        single segment matching that key
+
+      --type <type>
+        Model type. Use "shopify" to enable a Shopify sync model
 
 ADDITIONAL FLAGS
       --allow <flag,...>
@@ -2309,6 +2316,9 @@ EXAMPLES
   $ ggt model add post
   $ ggt model add blog/post
   $ ggt model add post title:string body:string
+  $ ggt model add shopifyProduct --type shopify
+  $ ggt model add shopify/product --type shopify --resource shopifyProduct
+  $ ggt model add this/is/a/namespace/product --type shopify --resource shopifyProduct
 "
 `;
 
@@ -2320,16 +2330,21 @@ USAGE
 
 ARGUMENTS
   name              Model path
-  field:type ...    Optional field definitions
+  field:type ...    Optional field definitions (not used with --type shopify)
 
 FLAGS
   -a, --app, --application <app>  Gadget app to use
   -e, --env, --environment <env>  Environment to use
+      --resource <key>            Shopify model key (e.g. shopifyProduct). Required when the path is not a single segment matching that key
+      --type <type>               Model type. Use "shopify" to enable a Shopify sync model
 
 EXAMPLES
   $ ggt model add post
   $ ggt model add blog/post
   $ ggt model add post title:string body:string
+  $ ggt model add shopifyProduct --type shopify
+  $ ggt model add shopify/product --type shopify --resource shopifyProduct
+  $ ggt model add this/is/a/namespace/product --type shopify --resource shopifyProduct
 
 Run ggt model add --help for more information.
 "
@@ -2515,6 +2530,7 @@ ADDITIONAL FLAGS
 
 EXAMPLES
   $ ggt model add post
+  $ ggt model add shopifyProduct --type shopify
   $ ggt model remove post --force
   $ ggt model rename post article
 "
@@ -2537,6 +2553,7 @@ FLAGS
 
 EXAMPLES
   $ ggt model add post
+  $ ggt model add shopifyProduct --type shopify
   $ ggt model remove post --force
   $ ggt model rename post article
 
@@ -2561,6 +2578,7 @@ FLAGS
 
 EXAMPLES
   $ ggt model add post
+  $ ggt model add shopifyProduct --type shopify
   $ ggt model remove post --force
   $ ggt model rename post article
 

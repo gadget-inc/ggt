@@ -5,6 +5,8 @@ import terminalLink from "terminal-link";
 
 import { parseFieldValues } from "../services/add/field.ts";
 import { addModel } from "../services/add/model.ts";
+import { ENABLE_SHOPIFY_MODEL_MUTATION } from "../services/app/edit/operation.ts";
+import { ClientError, formatClientErrorForUser } from "../services/app/error.ts";
 import { defineCommand } from "../services/command/command.ts";
 import { FlagError } from "../services/command/flag.ts";
 import { setupCommandSync } from "../services/filesync/setup-sync.ts";
@@ -14,7 +16,6 @@ import { confirm } from "../services/output/confirm.ts";
 import { println } from "../services/output/print.ts";
 import { sprint } from "../services/output/sprint.ts";
 import { symbol } from "../services/output/symbols.ts";
-
 const modelPathToDirectory = (modelPath: string): string => `api/models/${modelPath}`;
 
 const removeEmptyModelParentDirectories = async (syncJson: SyncJson, modelPath: string): Promise<void> => {
@@ -51,6 +52,18 @@ const markModelRenameChanges = (
   changes.delete(oldDirectoryPath);
 };
 
+/** Mirrors backend parseModelPath normalization for user-facing paths. */
+const normalizeModelPath = (modelPath: string): string => {
+  const trimmedPath = modelPath.replace(/^\/+|\/+$/g, "");
+  const splitPath = trimmedPath.split("/");
+
+  if (splitPath[0] === "models" || splitPath[0] === "model") {
+    splitPath.splice(0, 1);
+  }
+
+  return splitPath.join("/");
+};
+
 export default defineCommand({
   name: "model",
   description: "Add and manage models in your app",
@@ -59,12 +72,24 @@ export default defineCommand({
     changes. Use add to scaffold models, remove for destructive deletion, and
     rename to move a model path.
   `,
-  examples: ["ggt model add post", "ggt model remove post --force", "ggt model rename post article"],
+  examples: [
+    "ggt model add post",
+    "ggt model add shopifyProduct --type shopify",
+    "ggt model remove post --force",
+    "ggt model rename post article",
+  ],
   flags: SyncJsonFlags,
   subcommands: (sub) => ({
     add: sub({
       description: "Add a model to your app",
-      examples: ["ggt model add post", "ggt model add blog/post", "ggt model add post title:string body:string"],
+      examples: [
+        "ggt model add post",
+        "ggt model add blog/post",
+        "ggt model add post title:string body:string",
+        "ggt model add shopifyProduct --type shopify",
+        "ggt model add shopify/product --type shopify --resource shopifyProduct",
+        "ggt model add this/is/a/namespace/product --type shopify --resource shopifyProduct",
+      ],
       positionals: [
         {
           name: "name",
@@ -73,13 +98,101 @@ export default defineCommand({
         },
         {
           name: "field:type ...",
-          description: "Optional field definitions",
+          description: "Optional field definitions (not used with --type shopify)",
         },
       ],
+      flags: {
+        "--type": {
+          type: String,
+          description: 'Model type. Use "shopify" to enable a Shopify sync model',
+          valueName: "type",
+        },
+        "--resource": {
+          type: String,
+          description: "Shopify model key (e.g. shopifyProduct). Required when the path is not a single segment matching that key",
+          valueName: "key",
+        },
+      },
       run: async (ctx, flags) => {
         const { filesync, syncJson } = await setupCommandSync(ctx, "model", flags);
         // oxlint-disable-next-line no-non-null-assertion -- framework validates required positional
-        const modelApiIdentifier = flags._[0]!;
+        const inputModelPath = flags._[0]!;
+        const modelApiIdentifier = normalizeModelPath(inputModelPath);
+        const modelType = flags["--type"];
+        const shopifyModelApiIdentifier = flags["--resource"];
+
+        if (modelType !== undefined && modelType !== "shopify") {
+          throw new FlagError(`Unknown model type ${colors.code(modelType)}. Only ${colors.code("shopify")} is supported.`, {
+            usageHint: false,
+          });
+        }
+
+        if (shopifyModelApiIdentifier !== undefined && modelType !== "shopify") {
+          throw new FlagError("The --resource flag can only be used with --type shopify.", { usageHint: false });
+        }
+
+        if (modelType === "shopify") {
+          if (flags._.length > 1) {
+            throw new FlagError("Field definitions are not supported when adding a Shopify model.", { usageHint: false });
+          }
+
+          let result;
+
+          try {
+            result = (
+              await syncJson.edit.mutate({
+                mutation: ENABLE_SHOPIFY_MODEL_MUTATION,
+                variables: {
+                  path: modelApiIdentifier,
+                  shopifyModelApiIdentifier,
+                },
+              })
+            ).enableShopifyModel;
+          } catch (error) {
+            if (error instanceof ClientError) {
+              throw new FlagError(formatClientErrorForUser(error), { usageHint: false });
+            }
+            throw error;
+          }
+
+          const sync = result.remoteFileSyncEvents;
+          await filesync.writeToLocalFilesystem(ctx, {
+            filesVersion: sync.remoteFilesVersion,
+            files: sync.changed,
+            delete: sync.deleted.map((file) => file.path),
+          });
+
+          const modelPrintout = terminalLink.isSupported
+            ? terminalLink(
+                modelApiIdentifier,
+                `https://${syncJson.environment.application.primaryDomain}/edit/${syncJson.environment.name}/model/${modelApiIdentifier}/schema`,
+              )
+            : modelApiIdentifier;
+
+          const changed = sync.changed.length + sync.deleted.length > 0;
+          const outcome = changed ? "Enabled" : "Already enabled";
+          println({
+            ensureEmptyLineAbove: true,
+            content: `${colors.created(symbol.tick)} ${outcome} ${colors.code(modelPrintout)}.`,
+          });
+
+          const changedShopifyTomlPath = sync.changed.find((file) => {
+            const filename = path.basename(file.path);
+            return filename === "shopify.app.toml" || (filename.startsWith("shopify.app.") && filename.endsWith(".toml"));
+          })?.path;
+
+          if (changedShopifyTomlPath) {
+            const environmentName = syncJson.environment.name;
+            const deployCommand =
+              environmentName === "production" ? "shopify app deploy" : `shopify app deploy --config ${environmentName}`;
+
+            println({
+              ensureEmptyLineAbove: true,
+              content: `Updated ${colors.code(changedShopifyTomlPath)}. Run ${colors.code(deployCommand)} to apply the change.`,
+            });
+          }
+          return;
+        }
 
         let fields: { name: string; fieldType: string }[] = [];
         if (flags._.length > 1) {

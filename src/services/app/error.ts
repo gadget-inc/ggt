@@ -99,6 +99,50 @@ export class ClientError extends GGTError {
   }
 }
 
+const stripErrorCodePrefix = (message: string): string => message.replace(/^GGT_\w+:\s*/, "");
+
+const normalizeErrorLine = (line: string): string => line.replace(/^\u2022\s*/, "").trim();
+
+const getFriendlyClientErrorLines = (cause: ClientError["cause"]): string[] => {
+  if (isGraphQLErrors(cause)) {
+    const lines = uniq(cause.map((x) => stripErrorCodePrefix(x.message)))
+      .flatMap((message) => message.split("\n"))
+      .map(normalizeErrorLine)
+      .filter((line) => line.length > 0);
+
+    if (lines.length > 0) {
+      return lines;
+    }
+  }
+
+  if (isString(cause)) return [cause];
+  if (isStringArray(cause)) return cause;
+  if (isError(cause) || isErrorEvent(cause)) return [cause.message];
+  if (isCloseEvent(cause)) return ["The connection to Gadget closed unexpectedly."];
+
+  return [String(cause)];
+};
+
+/**
+ * Formats a low-level ClientError as concise user-facing command text.
+ *
+ * Unlike {@link ClientError#render}, this intentionally omits transport framing
+ * ("while communicating with Gadget", operation names).
+ */
+export const formatClientErrorForUser = (error: ClientError): string => {
+  const lines = getFriendlyClientErrorLines(error.cause);
+
+  if (lines.length <= 1) {
+    return lines[0] ?? error.message;
+  }
+
+  return sprint`
+    ${pluralize("error", lines.length, true)} occurred:
+
+      ${lines.map((line) => `• ${line}`).join("\n")}
+  `;
+};
+
 export class AuthenticationError extends ClientError {
   constructor(operation: GraphQLOperation) {
     super(

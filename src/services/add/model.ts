@@ -1,8 +1,8 @@
 import type { CreateModelMutation } from "../../__generated__/graphql.ts";
-import { EditClientError } from "../../commands/add.ts";
 import { CREATE_MODEL_MUTATION } from "../app/edit/operation.ts";
-import { ClientError } from "../app/error.ts";
+import { ClientError, formatClientErrorForUser } from "../app/error.ts";
 import type { Context } from "../command/context.ts";
+import { FlagError } from "../command/flag.ts";
 import type { FileSync } from "../filesync/filesync.ts";
 import type { SyncJson } from "../filesync/sync-json.ts";
 
@@ -43,10 +43,9 @@ export const addModel = async (
     ).createModel;
   } catch (error) {
     if (error instanceof ClientError) {
-      throw new EditClientError(error);
-    } else {
-      throw error;
+      throw new FlagError(formatClientErrorForUser(error), { usageHint: false });
     }
+    throw error;
   }
 
   await filesync.writeToLocalFilesystem(ctx, { filesVersion: result.remoteFilesVersion, files: result.changed, delete: [] });

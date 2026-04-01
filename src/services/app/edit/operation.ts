@@ -317,6 +317,40 @@ export const CONNECT_SHOPIFY_MUTATION = sprint(/* GraphQL */ `
 
 export type CONNECT_SHOPIFY_MUTATION = typeof CONNECT_SHOPIFY_MUTATION;
 
+type EnableShopifyModelMutation = {
+  enableShopifyModel: {
+    remoteFileSyncEvents: FileSyncMutationResult;
+    addedScopes: string[];
+  };
+};
+
+type EnableShopifyModelMutationVariables = {
+  path: string;
+  shopifyModelApiIdentifier?: string;
+};
+
+export const ENABLE_SHOPIFY_MODEL_MUTATION = sprint(/* GraphQL */ `
+  mutation EnableShopifyModel($path: String!, $shopifyModelApiIdentifier: String) {
+    enableShopifyModel(path: $path, shopifyModelApiIdentifier: $shopifyModelApiIdentifier) {
+      remoteFileSyncEvents {
+        remoteFilesVersion
+        changed {
+          path
+          mode
+          content
+          encoding
+        }
+        deleted {
+          path
+        }
+      }
+      addedScopes
+    }
+  }
+`) as GraphQLMutation<EnableShopifyModelMutation, EnableShopifyModelMutationVariables>;
+
+export type ENABLE_SHOPIFY_MODEL_MUTATION = typeof ENABLE_SHOPIFY_MODEL_MUTATION;
+
 export const CREATE_MODEL_MUTATION = sprint(/* GraphQL */ `
   mutation createModel($path: String!, $fields: [CreateModelFieldsInput!]) {
     createModel(path: $path, fields: $fields) {

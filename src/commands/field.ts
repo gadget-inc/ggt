@@ -1,6 +1,6 @@
 import { addFields, parseFieldTarget } from "../services/add/field.ts";
 import { REMOVE_MODEL_FIELD_MUTATION, RENAME_MODEL_FIELD_MUTATION } from "../services/app/edit/operation.ts";
-import { ClientError } from "../services/app/error.ts";
+import { ClientError, formatClientErrorForUser } from "../services/app/error.ts";
 import { defineCommand } from "../services/command/command.ts";
 import { FlagError } from "../services/command/flag.ts";
 import { setupCommandSync } from "../services/filesync/setup-sync.ts";
@@ -10,7 +10,6 @@ import { confirm } from "../services/output/confirm.ts";
 import { println } from "../services/output/print.ts";
 import { sprint } from "../services/output/sprint.ts";
 import { symbol } from "../services/output/symbols.ts";
-import { EditClientError } from "./add.ts";
 
 const supportedFieldTypes = [
   "number",
@@ -152,7 +151,7 @@ export default defineCommand({
           ).removeModelField;
         } catch (error) {
           if (error instanceof ClientError) {
-            throw new EditClientError(error);
+            throw new FlagError(formatClientErrorForUser(error), { usageHint: false });
           }
           throw error;
         }
@@ -225,7 +224,7 @@ export default defineCommand({
           ).renameModelField;
         } catch (error) {
           if (error instanceof ClientError) {
-            throw new EditClientError(error);
+            throw new FlagError(formatClientErrorForUser(error), { usageHint: false });
           }
           throw error;
         }

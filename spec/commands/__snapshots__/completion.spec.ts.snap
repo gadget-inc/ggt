@@ -16,7 +16,7 @@ _ggt_completions() {
     --from-file)
       COMPREPLY=($(compgen -f -- "$cur"))
       return ;;
-    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--model|--app-name|--shopify-organization-id|--start|--port|-p)
+    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--type|--resource|--model|--app-name|--shopify-organization-id|--start|--port|-p)
       return ;;
   esac
 
@@ -196,7 +196,7 @@ _ggt_completions() {
       else
         case "$sub_cmd" in
           add)
-            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --type --resource --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           remove)
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --force -f --help -h --version --verbose -v --telemetry --json" -- "$cur"))
@@ -838,6 +838,8 @@ complete -c ggt -n '__fish_seen_subcommand_from model' -l allow-all -d 'Enable a
 complete -c ggt -n '__ggt_needs_subcommand model -- --application -a --app --environment -e --env --allow' -a 'add' -d 'Add a model to your app'
 complete -c ggt -n '__ggt_needs_subcommand model -- --application -a --app --environment -e --env --allow' -a 'remove' -d 'Remove a model from your app'
 complete -c ggt -n '__ggt_needs_subcommand model -- --application -a --app --environment -e --env --allow' -a 'rename' -d 'Rename a model'
+complete -c ggt -n '__ggt_seen_subcommand model -- add -- --application -a --app --environment -e --env --allow' -l type -x -d 'Model type. Use "shopify" to enable a Shopify sync model'
+complete -c ggt -n '__ggt_seen_subcommand model -- add -- --application -a --app --environment -e --env --allow' -l resource -x -d 'Shopify model key (e.g. shopifyProduct). Required when the path is not a single segment matching that key'
 complete -c ggt -n '__ggt_seen_subcommand model -- remove -- --application -a --app --environment -e --env --allow' -l force -s f -d 'Skip confirmation'
 complete -c ggt -n '__fish_seen_subcommand_from model' -l help -s h -d 'Show command help'
 complete -c ggt -n '__ggt_seen_subcommand model -- add -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
@@ -1542,7 +1544,9 @@ _ggt_model() {
             '--allow-different-app[Allow syncing with a different app]' \\
             '--allow-unknown-directory[Allow syncing to an existing directory]' \\
             '--allow[Enable allow flags (comma-separated)]:value: ' \\
-            '--allow-all[Enable all --allow-* flags]'
+            '--allow-all[Enable all --allow-* flags]' \\
+            '--type[Model type. Use "shopify" to enable a Shopify sync model]:value: ' \\
+            '--resource[Shopify model key (e.g. shopifyProduct). Required when the path is not a single segment matching that key]:value: '
           ;;
         remove)
           _arguments \\

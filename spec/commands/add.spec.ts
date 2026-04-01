@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { EnvironmentStatus } from "../../src/__generated__/graphql.ts";
-import add, { EditClientError } from "../../src/commands/add.ts";
+import add from "../../src/commands/add.ts";
 import { GADGET_GLOBAL_ACTIONS_QUERY, GADGET_META_MODELS_QUERY } from "../../src/services/app/api/operation.ts";
 import {
   CREATE_ACTION_MUTATION,
@@ -10,7 +10,6 @@ import {
   CREATE_MODEL_MUTATION,
   CREATE_ROUTE_MUTATION,
 } from "../../src/services/app/edit/operation.ts";
-import { ClientError } from "../../src/services/app/error.ts";
 import { FlagError } from "../../src/services/command/flag.ts";
 import { runCommand } from "../../src/services/command/run.ts";
 import { nockTestApps } from "../__support__/app.ts";
@@ -20,21 +19,6 @@ import { makeSyncScenario } from "../__support__/filesync.ts";
 import { nockApiResponse, nockEditResponse } from "../__support__/graphql.ts";
 import { mockSystemTime } from "../__support__/time.ts";
 import { loginTestUser } from "../__support__/user.ts";
-
-describe("EditClientError", () => {
-  it("does not double-bullet messages that already have a bullet prefix", () => {
-    const cause = [{ message: "• already bulleted" }, { message: "plain text" }] as unknown as import("graphql").GraphQLError[];
-
-    const clientError = new ClientError(undefined, cause);
-    const error = new EditClientError(clientError);
-
-    // Each line should have exactly one bullet
-    expect(error.message).toMatchInlineSnapshot(`
-      "• already bulleted
-      • plain text"
-    `);
-  });
-});
 
 mockSystemTime();
 

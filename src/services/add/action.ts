@@ -1,5 +1,5 @@
 import type { CreateActionMutation } from "../../__generated__/graphql.ts";
-import { AddClientError } from "../../commands/add.ts";
+import { EditClientError } from "../../commands/add.ts";
 import type { ModelApiIdentifier, GlobalActionApiIdentifier } from "../app/app.ts";
 import { CREATE_ACTION_MUTATION } from "../app/edit/operation.ts";
 import { ClientError } from "../app/error.ts";
@@ -100,7 +100,7 @@ export const addAction = async (
     ).createAction;
   } catch (error) {
     if (error instanceof ClientError) {
-      throw new AddClientError(error);
+      throw new EditClientError(error);
     } else {
       throw error;
     }

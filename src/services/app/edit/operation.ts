@@ -279,12 +279,18 @@ export const SHOPIFY_ORGANIZATIONS_QUERY = sprint(/* GraphQL */ `
 
 export type SHOPIFY_ORGANIZATIONS_QUERY = typeof SHOPIFY_ORGANIZATIONS_QUERY;
 
+/**
+ * Common return shape for mutations that modify files and return sync events.
+ * Matches the GraphQL `RemoteFileSyncEvents` type.
+ */
+export type FileSyncMutationResult = {
+  remoteFilesVersion: string;
+  changed: { path: string; mode: number; content: string; encoding: FileSyncEncoding }[];
+  deleted: { path: string }[];
+};
+
 type ConnectShopifyMutation = {
-  connectShopify: {
-    remoteFilesVersion: string;
-    changed: { path: string; mode: number; content: string; encoding: FileSyncEncoding }[];
-    deleted: { path: string }[];
-  };
+  connectShopify: FileSyncMutationResult;
 };
 
 type ConnectShopifyMutationVariables = {
@@ -374,6 +380,63 @@ export const CREATE_MODEL_FIELDS_MUTATION = sprint(/* GraphQL */ `
 `) as GraphQLMutation<CreateModelFieldsMutation, CreateModelMutationVariables>;
 
 export type CREATE_MODEL_FIELDS_MUTATION = typeof CREATE_MODEL_FIELDS_MUTATION;
+
+type RemoveModelFieldMutation = {
+  removeModelField: FileSyncMutationResult;
+};
+
+type RemoveModelFieldMutationVariables = {
+  path: string;
+  field: string;
+};
+
+export const REMOVE_MODEL_FIELD_MUTATION = sprint(/* GraphQL */ `
+  mutation removeModelField($path: String!, $field: String!) {
+    removeModelField(path: $path, field: $field) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+      deleted {
+        path
+      }
+    }
+  }
+`) as GraphQLMutation<RemoveModelFieldMutation, RemoveModelFieldMutationVariables>;
+
+export type REMOVE_MODEL_FIELD_MUTATION = typeof REMOVE_MODEL_FIELD_MUTATION;
+
+type RenameModelFieldMutation = {
+  renameModelField: FileSyncMutationResult;
+};
+
+type RenameModelFieldMutationVariables = {
+  path: string;
+  field: string;
+  newName: string;
+};
+
+export const RENAME_MODEL_FIELD_MUTATION = sprint(/* GraphQL */ `
+  mutation renameModelField($path: String!, $field: String!, $newName: String!) {
+    renameModelField(path: $path, field: $field, newName: $newName) {
+      remoteFilesVersion
+      changed {
+        path
+        mode
+        content
+        encoding
+      }
+      deleted {
+        path
+      }
+    }
+  }
+`) as GraphQLMutation<RenameModelFieldMutation, RenameModelFieldMutationVariables>;
+
+export type RENAME_MODEL_FIELD_MUTATION = typeof RENAME_MODEL_FIELD_MUTATION;
 
 export const CREATE_ENVIRONMENT_MUTATION = sprint(/* GraphQL */ `
   mutation CreateEnvironment($environment: EnvironmentInput!) {

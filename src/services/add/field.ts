@@ -1,5 +1,5 @@
 import type { CreateModelFieldsMutation } from "../../__generated__/graphql.ts";
-import { AddClientError } from "../../commands/add.ts";
+import { EditClientError } from "../../commands/add.ts";
 import { CREATE_MODEL_FIELDS_MUTATION } from "../app/edit/operation.ts";
 import { ClientError } from "../app/error.ts";
 import type { Context } from "../command/context.ts";
@@ -33,26 +33,38 @@ export type AddFieldsResult = {
 };
 
 /**
- * Parse a field target string like "modelA/fieldB:string" into its components.
+ * Parse a field target string like "model/field:type" or "model/field" into its components.
+ * When the field part contains a colon, it is split into name and type.
+ * When there is no colon, fieldType is undefined (valid for remove/rename).
  */
 export const parseFieldTarget = (
   input: string,
-): { modelApiIdentifier: string; fieldName: string; fieldType: string; problems: string[] } => {
+): { modelApiIdentifier: string; fieldName: string; fieldType: string | undefined; problems: string[] } => {
   const lastSlashIndex = input.lastIndexOf("/");
   const problems: string[] = [];
 
   if (lastSlashIndex === -1 || lastSlashIndex === input.length - 1) {
-    return { modelApiIdentifier: "", fieldName: "", fieldType: "", problems: ["Missing field definition"] };
+    return { modelApiIdentifier: "", fieldName: "", fieldType: undefined, problems: ["Missing field definition"] };
+  }
+
+  if (lastSlashIndex === 0) {
+    return { modelApiIdentifier: "", fieldName: "", fieldType: undefined, problems: ["Missing model identifier"] };
   }
 
   const modelApiIdentifier = input.slice(0, lastSlashIndex);
-  const fieldDefinition = input.slice(lastSlashIndex + 1);
+  const fieldPart = input.slice(lastSlashIndex + 1);
 
-  const [modelFields, parseProblems] = parseFieldValues([fieldDefinition]);
+  // No colon means just a field name (e.g. "post/title" for remove/rename)
+  if (!fieldPart.includes(":")) {
+    return { modelApiIdentifier, fieldName: fieldPart, fieldType: undefined, problems: [] };
+  }
+
+  // Has colon — parse as name:type (e.g. "post/title:string" for add)
+  const [modelFields, parseProblems] = parseFieldValues([fieldPart]);
   problems.push(...parseProblems);
 
   if (problems.length > 0 || modelFields.length === 0) {
-    return { modelApiIdentifier: "", fieldName: "", fieldType: "", problems };
+    return { modelApiIdentifier: "", fieldName: "", fieldType: undefined, problems };
   }
 
   return {
@@ -94,7 +106,7 @@ export const addFields = async (
     ).createModelFields;
   } catch (error) {
     if (error instanceof ClientError) {
-      throw new AddClientError(error);
+      throw new EditClientError(error);
     } else {
       throw error;
     }

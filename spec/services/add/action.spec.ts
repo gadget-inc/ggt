@@ -1,7 +1,7 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AddClientError } from "../../../src/commands/add.ts";
+import { EditClientError } from "../../../src/commands/add.ts";
 import { addAction, resolveActionPath } from "../../../src/services/add/action.ts";
 import type { GlobalActionApiIdentifier, ModelApiIdentifier } from "../../../src/services/app/app.ts";
 import { CREATE_ACTION_MUTATION } from "../../../src/services/app/edit/operation.ts";
@@ -110,7 +110,7 @@ describe("addAction", () => {
     expect(result.path).toBe("model/post/publish");
   });
 
-  it("throws AddClientError on API error", async () => {
+  it("throws EditClientError on API error", async () => {
     const { syncJson, filesync } = await makeSyncScenario();
 
     nockEditResponse({
@@ -120,6 +120,6 @@ describe("addAction", () => {
     });
 
     const error = await expectError(() => addAction(testCtx, { syncJson, filesync, path: "doSomething" }));
-    expect(error).toBeInstanceOf(AddClientError);
+    expect(error).toBeInstanceOf(EditClientError);
   });
 });

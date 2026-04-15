@@ -9,6 +9,7 @@ import {
   CONNECT_SHOPIFY_MUTATION,
   IMPORT_SHOPIFY_CLI_SESSION_MUTATION,
   SHOPIFY_ORGANIZATIONS_QUERY,
+  SHOPIFY_STATUS_QUERY,
   type ShopifyOrganization,
 } from "../services/app/edit/operation.ts";
 import { defineCommand } from "../services/command/command.ts";
@@ -25,6 +26,7 @@ import { symbol } from "../services/output/symbols.ts";
 import { ts } from "../services/output/timestamp.ts";
 
 const SHOPIFY_AUTH_LOGIN_ERROR_MESSAGE = "Shopify CLI session not found. Run `shopify auth login` and try again.";
+const STATUS_LABEL_WIDTH = 24;
 
 const ConnectFlags = {
   "--app-name": {
@@ -39,11 +41,12 @@ const ConnectFlags = {
 };
 
 type ConnectFlagsResult = FlagsResult<typeof SyncJsonFlags & typeof ConnectFlags>;
+type StatusFlagsResult = FlagsResult<typeof SyncJsonFlags>;
 
 export default defineCommand({
   name: "shopify",
   description: "Manage Shopify connection",
-  examples: ["ggt shopify connect", "ggt shopify connect --app-name my-shop"],
+  examples: ["ggt shopify connect", "ggt shopify status", "ggt shopify connect --app-name my-shop"],
   flags: SyncJsonFlags,
   subcommands: (sub) => ({
     connect: sub({
@@ -60,6 +63,17 @@ export default defineCommand({
       flags: ConnectFlags,
       run: async (ctx, flags) => {
         await runConnect(ctx, flags);
+      },
+    }),
+    status: sub({
+      description: "Show the status of your Shopify connection",
+      details: sprint`
+        Shows your current Shopify API version, enabled Shopify models,
+        authenticated Shopify account, and app/client id details.
+      `,
+      examples: ["ggt shopify status"],
+      run: async (ctx, flags) => {
+        await runStatus(ctx, flags);
       },
     }),
   }),
@@ -147,6 +161,41 @@ const resolveShopifyOrganizationId = async (syncJson: SyncJson, providedOrganiza
   throw new FlagError("Multiple Shopify organizations found. Re-run with --shopify-organization-id <id>.", {
     usageHint: false,
   });
+};
+
+const statusLine = (label: string, value: string): string => `${label.padEnd(STATUS_LABEL_WIDTH)}${value}`;
+
+const runStatus = async (ctx: Context, flags: StatusFlagsResult): Promise<void> => {
+  const directory = await loadSyncJsonDirectory(process.cwd());
+  const syncJson = await SyncJson.load(ctx, { command: "shopify", flags, directory });
+  if (!syncJson) {
+    throw new UnknownDirectoryError({ command: "shopify", flags, directory });
+  }
+
+  const { shopifyIdentityConnectionState: identity, shopifyConnection: conn } = await syncJson.edit.query({
+    query: SHOPIFY_STATUS_QUERY,
+  });
+
+  const apiVersion = conn
+    ? conn.apiVersionUpToDate
+      ? conn.apiVersion
+      : `${conn.apiVersion} (${conn.latestApiVersion} available)`
+    : "Not configured";
+
+  const models = conn && conn.enabledModels.length > 0 ? conn.enabledModels.join(" | ") : "None";
+
+  const account = identity.isConnected ? (identity.email ?? "Connected (email unavailable)") : "Not connected";
+
+  const app = conn?.canonicalApp
+    ? conn.canonicalApp.appName
+      ? `${conn.canonicalApp.appName} (client_id: ${conn.canonicalApp.clientId})`
+      : `client_id: ${conn.canonicalApp.clientId}`
+    : "Not configured";
+
+  println({ ensureEmptyLineAbove: true, content: statusLine("API version:", apiVersion) });
+  println({ content: statusLine("Enabled models:", models) });
+  println({ content: statusLine("Authed partner account:", account) });
+  println({ content: statusLine("App:", app) });
 };
 
 const runConnect = async (ctx: Context, flags: ConnectFlagsResult): Promise<void> => {

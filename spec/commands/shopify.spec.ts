@@ -9,6 +9,7 @@ import {
   CONNECT_SHOPIFY_MUTATION,
   IMPORT_SHOPIFY_CLI_SESSION_MUTATION,
   SHOPIFY_ORGANIZATIONS_QUERY,
+  SHOPIFY_STATUS_QUERY,
 } from "../../src/services/app/edit/operation.ts";
 import { runCommand } from "../../src/services/command/run.ts";
 import { config } from "../../src/services/config/config.ts";
@@ -87,6 +88,14 @@ const mockConnectSuccess = (appName: string, shopifyOrganizationId: string) =>
     expectVariables: { appName, shopifyOrganizationId },
   });
 
+const mockStatusResponse = (response: (typeof SHOPIFY_STATUS_QUERY)["Data"]) =>
+  nockEditResponse({
+    operation: SHOPIFY_STATUS_QUERY,
+    response: {
+      data: response,
+    },
+  });
+
 describe("shopify", () => {
   beforeEach(async () => {
     loginTestUser();
@@ -119,6 +128,26 @@ describe("shopify", () => {
     await runCommand(testCtx, shopify, "connect", "--app-name", "custom-shopify-app", "--shopify-organization-id", "org-2");
 
     expectStdout().toContain("Shopify connection configured successfully");
+  });
+
+  it("prints Shopify status details", async () => {
+    mockStatusResponse({
+      shopifyIdentityConnectionState: { isConnected: true, email: "shardul@gadget.dev" },
+      shopifyConnection: {
+        apiVersion: "2024-04",
+        latestApiVersion: "2026-04",
+        apiVersionUpToDate: false,
+        enabledModels: ["shopifyProduct", "shopifyVariant"],
+        canonicalApp: { appName: "my-gadget-app", clientId: "abc123" },
+      },
+    });
+
+    await runCommand(testCtx, shopify, "status");
+
+    expectStdout().toContain("2024-04 (2026-04 available)");
+    expectStdout().toContain("shopifyProduct | shopifyVariant");
+    expectStdout().toContain("shardul@gadget.dev");
+    expectStdout().toContain("my-gadget-app (client_id: abc123)");
   });
 
   it("errors with auth login guidance when Shopify CLI config is missing", async () => {

@@ -1,9 +1,9 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { EditClientError } from "../../../src/commands/add.ts";
 import { addFields, parseFieldTarget, parseFieldValues } from "../../../src/services/add/field.ts";
 import { CREATE_MODEL_FIELDS_MUTATION } from "../../../src/services/app/edit/operation.ts";
+import { FlagError } from "../../../src/services/command/flag.ts";
 import { nockTestApps } from "../../__support__/app.ts";
 import { testCtx } from "../../__support__/context.ts";
 import { expectError } from "../../__support__/error.ts";
@@ -208,7 +208,7 @@ describe("addFields", () => {
     expect(result.changed).toEqual([]);
   });
 
-  it("throws EditClientError on API error", async () => {
+  it("throws FlagError on API error", async () => {
     const { syncJson, filesync } = await makeSyncScenario();
 
     nockEditResponse({
@@ -225,6 +225,6 @@ describe("addFields", () => {
         fields: [{ name: "title", fieldType: "string" }],
       }),
     );
-    expect(error).toBeInstanceOf(EditClientError);
+    expect(error).toBeInstanceOf(FlagError);
   });
 });

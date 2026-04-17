@@ -1,9 +1,9 @@
 import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { EditClientError } from "../../../src/commands/add.ts";
 import { addRoute } from "../../../src/services/add/route.ts";
 import { CREATE_ROUTE_MUTATION } from "../../../src/services/app/edit/operation.ts";
+import { FlagError } from "../../../src/services/command/flag.ts";
 import { nockTestApps } from "../../__support__/app.ts";
 import { testCtx } from "../../__support__/context.ts";
 import { expectError } from "../../__support__/error.ts";
@@ -50,7 +50,7 @@ describe("addRoute", () => {
     expect(result.path).toBe("/webhooks/stripe");
   });
 
-  it("throws EditClientError on API error", async () => {
+  it("throws FlagError on API error", async () => {
     const { syncJson, filesync } = await makeSyncScenario();
 
     nockEditResponse({
@@ -60,6 +60,6 @@ describe("addRoute", () => {
     });
 
     const error = await expectError(() => addRoute(testCtx, { syncJson, filesync, method: "GET", path: "/hello" }));
-    expect(error).toBeInstanceOf(EditClientError);
+    expect(error).toBeInstanceOf(FlagError);
   });
 });

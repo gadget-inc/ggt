@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import model from "../../src/commands/model.ts";
-import { CREATE_MODEL_MUTATION } from "../../src/services/app/edit/operation.ts";
+import { CREATE_MODEL_MUTATION, ENABLE_SHOPIFY_MODEL_MUTATION } from "../../src/services/app/edit/operation.ts";
 import { FlagError } from "../../src/services/command/flag.ts";
 import { runCommand } from "../../src/services/command/run.ts";
 import { confirm } from "../../src/services/output/confirm.ts";
@@ -12,6 +12,7 @@ import { expectError } from "../__support__/error.ts";
 import { makeSyncScenario } from "../__support__/filesync.ts";
 import { nockEditResponse } from "../__support__/graphql.ts";
 import { mockConfirmOnce } from "../__support__/mock.ts";
+import { expectStdout } from "../__support__/output.ts";
 import { testDirPath } from "../__support__/paths.ts";
 import { loginTestUser } from "../__support__/user.ts";
 
@@ -73,6 +74,167 @@ describe("model", () => {
       const error = await expectError(() => runCommand(testCtx, model, "add", "post", fieldDef));
       expect(error).toBeInstanceOf(FlagError);
       expect(error.message).toContain("is not a valid field definition");
+    });
+
+    it("does not send shopifyModelApiIdentifier when --resource is omitted", async () => {
+      await makeSyncScenario();
+
+      nockEditResponse({
+        operation: ENABLE_SHOPIFY_MODEL_MUTATION,
+        response: {
+          data: {
+            enableShopifyModel: {
+              remoteFileSyncEvents: {
+                remoteFilesVersion: "10",
+                changed: [],
+                deleted: [],
+              },
+              addedScopes: [],
+            },
+          },
+        },
+        expectVariables: { path: "shopifyProduct" },
+      });
+
+      await runCommand(testCtx, model, "add", "shopifyProduct", "--type", "shopify");
+    });
+
+    it("sends shopifyModelApiIdentifier when --resource is provided", async () => {
+      await makeSyncScenario();
+
+      nockEditResponse({
+        operation: ENABLE_SHOPIFY_MODEL_MUTATION,
+        response: {
+          data: {
+            enableShopifyModel: {
+              remoteFileSyncEvents: {
+                remoteFilesVersion: "10",
+                changed: [],
+                deleted: [],
+              },
+              addedScopes: [],
+            },
+          },
+        },
+        expectVariables: { path: "shopify/product", shopifyModelApiIdentifier: "shopifyProduct" },
+      });
+
+      await runCommand(testCtx, model, "add", "shopify/product", "--type", "shopify", "--resource", "shopifyProduct");
+    });
+
+    it("errors when --type is not shopify", async () => {
+      await makeSyncScenario();
+
+      const error = await expectError(() => runCommand(testCtx, model, "add", "post", "--type", "rest"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.message).toContain("Unknown model type");
+    });
+
+    it("errors when --resource is provided without --type shopify", async () => {
+      await makeSyncScenario();
+
+      const error = await expectError(() => runCommand(testCtx, model, "add", "post", "--resource", "shopifyProduct"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.message).toContain("The --resource flag can only be used with --type shopify");
+    });
+
+    it("errors when Shopify model is given field definitions", async () => {
+      await makeSyncScenario();
+
+      const error = await expectError(() => runCommand(testCtx, model, "add", "shopifyProduct", "title:string", "--type", "shopify"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.message).toContain("Field definitions are not supported when adding a Shopify model");
+    });
+
+    it("normalizes model path for Shopify model add requests and output", async () => {
+      await makeSyncScenario();
+
+      nockEditResponse({
+        operation: ENABLE_SHOPIFY_MODEL_MUTATION,
+        response: {
+          data: {
+            enableShopifyModel: {
+              remoteFileSyncEvents: {
+                remoteFilesVersion: "10",
+                changed: [],
+                deleted: [],
+              },
+              addedScopes: [],
+            },
+          },
+        },
+        expectVariables: { path: "shopifyProduct" },
+      });
+
+      await runCommand(testCtx, model, "add", "/model/shopifyProduct/", "--type", "shopify");
+
+      expectStdout().toContain("Already enabled shopifyProduct.");
+      expectStdout().not.toContain("/model/shopifyProduct/");
+    });
+
+    it("prints deploy guidance when Shopify TOML changed", async () => {
+      await makeSyncScenario();
+
+      nockEditResponse({
+        operation: ENABLE_SHOPIFY_MODEL_MUTATION,
+        response: {
+          data: {
+            enableShopifyModel: {
+              remoteFileSyncEvents: {
+                remoteFilesVersion: "10",
+                changed: [
+                  {
+                    path: "shopify.app.development.toml",
+                    mode: 33188,
+                    content: 'client_id = "abc"\n',
+                    encoding: "utf8",
+                  },
+                ],
+                deleted: [],
+              },
+              addedScopes: [],
+            },
+          },
+        },
+        expectVariables: { path: "shopifyProduct" },
+      });
+
+      await runCommand(testCtx, model, "add", "shopifyProduct", "--type", "shopify");
+
+      expectStdout().toContain("Updated shopify.app.development.toml");
+      expectStdout().toContain("Run shopify app deploy --config development");
+    });
+
+    it("does not print deploy guidance when Shopify TOML did not change", async () => {
+      await makeSyncScenario();
+
+      nockEditResponse({
+        operation: ENABLE_SHOPIFY_MODEL_MUTATION,
+        response: {
+          data: {
+            enableShopifyModel: {
+              remoteFileSyncEvents: {
+                remoteFilesVersion: "10",
+                changed: [
+                  {
+                    path: "api/models/shopifyProduct/schema.gadget.ts",
+                    mode: 33188,
+                    content: "export default {};\n",
+                    encoding: "utf8",
+                  },
+                ],
+                deleted: [],
+              },
+              addedScopes: ["read_products"],
+            },
+          },
+        },
+        expectVariables: { path: "shopifyProduct" },
+      });
+
+      await runCommand(testCtx, model, "add", "shopifyProduct", "--type", "shopify");
+
+      expectStdout().not.toContain("Run shopify app deploy");
     });
   });
 

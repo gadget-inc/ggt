@@ -2,9 +2,9 @@ import { GraphQLError } from "graphql";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { EnvironmentStatus } from "../../../src/__generated__/graphql.ts";
-import { EditClientError } from "../../../src/commands/add.ts";
 import { addEnvironment, generateDefaultEnvName } from "../../../src/services/add/environment.ts";
 import { CREATE_ENVIRONMENT_MUTATION } from "../../../src/services/app/edit/operation.ts";
+import { FlagError } from "../../../src/services/command/flag.ts";
 import { nockTestApps } from "../../__support__/app.ts";
 import { testCtx } from "../../__support__/context.ts";
 import { expectError } from "../../__support__/error.ts";
@@ -59,7 +59,7 @@ describe("addEnvironment", () => {
     expect(result.name).toBe(name);
   });
 
-  it("throws EditClientError on API error", async () => {
+  it("throws FlagError on API error", async () => {
     const { syncJson } = await makeSyncScenario();
 
     nockEditResponse({
@@ -69,6 +69,6 @@ describe("addEnvironment", () => {
     });
 
     const error = await expectError(() => addEnvironment(testCtx, { syncJson, name: "staging" }));
-    expect(error).toBeInstanceOf(EditClientError);
+    expect(error).toBeInstanceOf(FlagError);
   });
 });

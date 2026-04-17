@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { FILE_SYNC_HASHES_QUERY, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../../src/services/app/edit/operation.ts";
-import { AuthenticationError, ClientError } from "../../../src/services/app/error.ts";
+import { AuthenticationError, ClientError, formatClientErrorForUser } from "../../../src/services/app/error.ts";
 import { IsBug } from "../../../src/services/output/report.ts";
 
 describe("ClientError", () => {
@@ -304,6 +304,32 @@ describe("ClientError", () => {
       `);
       expect(error.render()).not.toContain("network error");
     });
+  });
+});
+
+describe("formatClientErrorForUser", () => {
+  it("formats single GraphQL errors without bullets", () => {
+    const cause = [{ message: "Single error", extensions: {} }];
+
+    const clientError = new ClientError(undefined, cause);
+
+    expect(formatClientErrorForUser(clientError)).toMatchInlineSnapshot(`"Single error"`);
+  });
+
+  it("formats multiple GraphQL errors as a bulleted list", () => {
+    const cause = [
+      { message: "• already bulleted", extensions: {} },
+      { message: "plain text", extensions: {} },
+    ];
+
+    const clientError = new ClientError(undefined, cause);
+
+    expect(formatClientErrorForUser(clientError)).toMatchInlineSnapshot(`
+      "2 errors occurred:
+
+        • already bulleted
+        • plain text"
+    `);
   });
 });
 

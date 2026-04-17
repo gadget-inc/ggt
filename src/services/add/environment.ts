@@ -1,7 +1,7 @@
-import { EditClientError } from "../../commands/add.ts";
 import { CREATE_ENVIRONMENT_MUTATION } from "../app/edit/operation.ts";
-import { ClientError } from "../app/error.ts";
+import { ClientError, formatClientErrorForUser } from "../app/error.ts";
 import type { Context } from "../command/context.ts";
+import { FlagError } from "../command/flag.ts";
 import { FileSync } from "../filesync/filesync.ts";
 import { loadSyncJsonDirectory, SyncJson } from "../filesync/sync-json.ts";
 import type { SyncJson as SyncJsonType } from "../filesync/sync-json.ts";
@@ -42,10 +42,9 @@ export const addEnvironment = async (
     });
   } catch (error) {
     if (error instanceof ClientError) {
-      throw new EditClientError(error);
-    } else {
-      throw error;
+      throw new FlagError(formatClientErrorForUser(error), { usageHint: false });
     }
+    throw error;
   }
 
   return { name };

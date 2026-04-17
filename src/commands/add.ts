@@ -6,54 +6,14 @@ import { addFields, parseFieldTarget, parseFieldValues } from "../services/add/f
 import { addModel } from "../services/add/model.ts";
 import { addRoute } from "../services/add/route.ts";
 import { getGlobalActions, getModels } from "../services/app/app.ts";
-import { ClientError } from "../services/app/error.ts";
 import { defineCommand } from "../services/command/command.ts";
 import { FlagError } from "../services/command/flag.ts";
 import { setupCommandSync } from "../services/filesync/setup-sync.ts";
 import { SyncJsonFlags } from "../services/filesync/sync-json.ts";
 import colors from "../services/output/colors.ts";
 import { println } from "../services/output/print.ts";
-import { GGTError, IsBug } from "../services/output/report.ts";
 import { sprint } from "../services/output/sprint.ts";
 import { symbol } from "../services/output/symbols.ts";
-import { uniq } from "../services/util/collection.ts";
-import { isGraphQLErrors } from "../services/util/is.ts";
-
-/**
- * Strips server error code prefixes like "GGT_BAD_REQUEST: " from GraphQL error messages.
- */
-const stripErrorCodePrefix = (message: string): string => message.replace(/^GGT_\w+:\s*/, "");
-
-export class EditClientError extends GGTError {
-  isBug = IsBug.NO;
-
-  constructor(error: ClientError) {
-    let template = "";
-
-    if (isGraphQLErrors(error.cause)) {
-      const errors = uniq(error.cause.map((x) => stripErrorCodePrefix(x.message)));
-      template = sprint`
-        ${errors
-          .flatMap((e) => e.split("\n"))
-          .map((line) => (line.startsWith("\u2022 ") ? line : `\u2022 ${line}`))
-          .join("\n")}
-      `;
-    } else {
-      template = sprint`${error.cause}`;
-    }
-
-    super(template);
-  }
-
-  protected override render(): string {
-    return sprint`
-      ${colors.deleted(symbol.cross)} ${this.message}
-    `;
-  }
-}
-
-/** @deprecated Use {@link EditClientError} instead. */
-export const AddClientError = EditClientError;
 
 export default defineCommand({
   name: "add",

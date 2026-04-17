@@ -279,6 +279,42 @@ export const SHOPIFY_ORGANIZATIONS_QUERY = sprint(/* GraphQL */ `
 
 export type SHOPIFY_ORGANIZATIONS_QUERY = typeof SHOPIFY_ORGANIZATIONS_QUERY;
 
+export type ShopifyConnectionStatus = {
+  apiVersion: string;
+  latestApiVersion: string;
+  apiVersionUpToDate: boolean;
+  enabledModels: string[];
+  canonicalApp: { appName: string | null; clientId: string } | null;
+};
+
+type ShopifyStatusQuery = {
+  shopifyIdentityConnectionState: { isConnected: boolean; email: string | null };
+  shopifyConnection: ShopifyConnectionStatus | null;
+};
+
+type ShopifyStatusQueryVariables = Record<string, never>;
+
+export const SHOPIFY_STATUS_QUERY = sprint(/* GraphQL */ `
+  query ShopifyStatus {
+    shopifyIdentityConnectionState {
+      isConnected
+      email
+    }
+    shopifyConnection {
+      apiVersion
+      latestApiVersion
+      apiVersionUpToDate
+      enabledModels
+      canonicalApp {
+        appName
+        clientId
+      }
+    }
+  }
+`) as GraphQLQuery<ShopifyStatusQuery, ShopifyStatusQueryVariables>;
+
+export type SHOPIFY_STATUS_QUERY = typeof SHOPIFY_STATUS_QUERY;
+
 /**
  * Common return shape for mutations that modify files and return sync events.
  * Matches the GraphQL `RemoteFileSyncEvents` type.
@@ -295,11 +331,11 @@ type ConnectShopifyMutation = {
 
 type ConnectShopifyMutationVariables = {
   appName: string;
-  shopifyOrganizationId?: string;
+  shopifyOrganizationId: string;
 };
 
 export const CONNECT_SHOPIFY_MUTATION = sprint(/* GraphQL */ `
-  mutation ConnectShopify($appName: String!, $shopifyOrganizationId: String) {
+  mutation ConnectShopify($appName: String!, $shopifyOrganizationId: String!) {
     connectShopify(appName: $appName, shopifyOrganizationId: $shopifyOrganizationId) {
       remoteFilesVersion
       changed {

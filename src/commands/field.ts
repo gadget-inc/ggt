@@ -62,7 +62,17 @@ export default defineCommand({
         "ggt field add user/age:number",
         "ggt field add post/title:string",
         "ggt field add user/email:email",
+        "ggt field add shopifyProduct/spiciness:string --metafield --namespace custom --metafield-type single_line_text_field",
       ],
+      flags: {
+        "--required": { type: Boolean, description: "Mark the field as required" },
+        "--unique": { type: Boolean, description: "Mark the field as unique" },
+        "--metafield": { type: Boolean, description: "Store data from a Shopify metafield" },
+        "--namespace": { type: String, description: "Metafield namespace. Required with --metafield." },
+        "--key": { type: String, description: "Metafield key. Defaults to the field name." },
+        "--metafield-type": { type: String, description: "Shopify metafield type. Required with --metafield." },
+        "--list": { type: Boolean, description: "Store a list of metafield values." },
+      },
       positionals: [
         {
           name: "model/field:type",
@@ -99,11 +109,33 @@ export default defineCommand({
           throw new FlagError("Failed to add field, invalid field definition", { usageHint: false });
         }
 
+        let metafield: { namespace: string; key?: string; type: string; list?: boolean } | undefined;
+        if (flags["--metafield"]) {
+          const namespace = flags["--namespace"];
+          if (!namespace) throw new FlagError("--namespace is required when using --metafield.");
+          const metafieldType = flags["--metafield-type"];
+          if (!metafieldType) throw new FlagError("--metafield-type is required when using --metafield.");
+          metafield = {
+            namespace,
+            key: flags["--key"],
+            type: metafieldType,
+            list: flags["--list"] || undefined,
+          };
+        }
+
         await addFields(ctx, {
           syncJson,
           filesync,
           modelApiIdentifier: parsed.modelApiIdentifier,
-          fields: [{ name: parsed.fieldName, fieldType: parsed.fieldType }],
+          fields: [
+            {
+              name: parsed.fieldName,
+              fieldType: parsed.fieldType,
+              required: flags["--required"] || undefined,
+              unique: flags["--unique"] || undefined,
+              metafield,
+            },
+          ],
         });
 
         println({ ensureEmptyLineAbove: true, content: `Field ${colors.code(parsed.fieldName)} added successfully.` });

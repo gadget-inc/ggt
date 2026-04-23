@@ -126,6 +126,16 @@ type ContributorResult {
 input CreateModelFieldsInput {
   fieldType: String!
   name: String!
+  required: Boolean
+  unique: Boolean
+  metafield: CreateModelFieldsMetafieldInput
+}
+
+input CreateModelFieldsMetafieldInput {
+  namespace: String!
+  key: String
+  type: String!
+  list: Boolean
 }
 
 input CreateModelInput {

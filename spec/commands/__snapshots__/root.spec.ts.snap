@@ -1830,6 +1830,28 @@ FLAGS
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
+      --key <value>
+        Shopify metafield key. Only used with --metafield. Defaults to the field
+        name.
+
+      --list
+        Store a list of Shopify metafield values. Only used with --metafield.
+
+      --metafield
+        Store data from a Shopify metafield
+
+      --metafield-type <value>
+        Shopify metafield type. Required with --metafield.
+
+      --namespace <value>
+        Shopify metafield namespace. Required with --metafield.
+
+      --required
+        Mark the field as required
+
+      --unique
+        Mark the field as unique
+
 ADDITIONAL FLAGS
       --allow <flag,...>
         Enable allow flags (comma-separated)
@@ -1852,6 +1874,7 @@ EXAMPLES
   $ ggt field add user/age:number
   $ ggt field add post/title:string
   $ ggt field add user/email:email
+  $ ggt field add shopifyProduct/spiciness:string --metafield --namespace custom --metafield-type single_line_text_field
 "
 `;
 
@@ -1867,12 +1890,20 @@ ARGUMENTS
 FLAGS
   -a, --app, --application <app>  Gadget app to use
   -e, --env, --environment <env>  Environment to use
+      --key <value>               Shopify metafield key. Only used with --metafield. Defaults to the field name.
+      --list                      Store a list of Shopify metafield values. Only used with --metafield.
+      --metafield                 Store data from a Shopify metafield
+      --metafield-type <value>    Shopify metafield type. Required with --metafield.
+      --namespace <value>         Shopify metafield namespace. Required with --metafield.
+      --required                  Mark the field as required
+      --unique                    Mark the field as unique
 
 EXAMPLES
   $ ggt field add post/published:boolean
   $ ggt field add user/age:number
   $ ggt field add post/title:string
   $ ggt field add user/email:email
+  $ ggt field add shopifyProduct/spiciness:string --metafield --namespace custom --metafield-type single_line_text_field
 
 Run ggt field add --help for more information.
 "

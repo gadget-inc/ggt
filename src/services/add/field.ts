@@ -89,7 +89,18 @@ export const addFields = async (
     syncJson: SyncJson;
     filesync: FileSync;
     modelApiIdentifier: string;
-    fields: Array<{ name: string; fieldType: string }>;
+    fields: Array<{
+      name: string;
+      fieldType: string;
+      required?: boolean;
+      unique?: boolean;
+      metafield?: {
+        namespace: string;
+        key?: string;
+        type: string;
+        list?: boolean;
+      };
+    }>;
   },
 ): Promise<AddFieldsResult> => {
   let result;
@@ -100,7 +111,13 @@ export const addFields = async (
         mutation: CREATE_MODEL_FIELDS_MUTATION,
         variables: {
           path: modelApiIdentifier,
-          fields: fields.map((f) => ({ name: f.name, fieldType: f.fieldType })),
+          fields: fields.map((f) => ({
+            name: f.name,
+            fieldType: f.fieldType,
+            ...(f.required !== undefined && { required: f.required }),
+            ...(f.unique !== undefined && { unique: f.unique }),
+            ...(f.metafield !== undefined && { metafield: f.metafield }),
+          })),
         },
       })
     ).createModelFields;

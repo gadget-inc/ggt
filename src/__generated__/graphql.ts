@@ -168,7 +168,17 @@ export type ContributorResult = {
 
 export type CreateModelFieldsInput = {
   fieldType: Scalars['String']['input'];
+  metafield?: InputMaybe<CreateModelFieldsMetafieldInput>;
   name: Scalars['String']['input'];
+  required?: InputMaybe<Scalars['Boolean']['input']>;
+  unique?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type CreateModelFieldsMetafieldInput = {
+  key?: InputMaybe<Scalars['String']['input']>;
+  list?: InputMaybe<Scalars['Boolean']['input']>;
+  namespace: Scalars['String']['input'];
+  type: Scalars['String']['input'];
 };
 
 export type CreateModelInput = {

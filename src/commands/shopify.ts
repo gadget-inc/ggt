@@ -192,10 +192,16 @@ const runStatus = async (ctx: Context, flags: StatusFlagsResult): Promise<void> 
       : `client_id: ${conn.canonicalApp.clientId}`
     : "Not configured";
 
+  const scopes = conn ? (conn.scopes.length > 0 ? conn.scopes.join(" | ") : "None") : "Not configured";
+
+  const webhookTopics = conn ? (conn.webhookTopics.length > 0 ? conn.webhookTopics.join(" | ") : "None") : "Not configured";
+
   println({ ensureEmptyLineAbove: true, content: statusLine("API version:", apiVersion) });
   println({ content: statusLine("Enabled models:", models) });
   println({ content: statusLine("Authed partner account:", account) });
   println({ content: statusLine("App:", app) });
+  println({ content: statusLine("Scopes:", scopes) });
+  println({ content: statusLine("Webhook topics:", webhookTopics) });
 };
 
 const runConnect = async (ctx: Context, flags: ConnectFlagsResult): Promise<void> => {

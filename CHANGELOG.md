@@ -1,5 +1,40 @@
 # @gadgetinc/ggt
 
+## 3.1.0
+
+### Minor Changes
+
+- 1e22257: Add model field lifecycle management command `ggt field`. `ggt field add` is the
+  first subcommand to be supported, and matches existing `ggt add field`
+  behavior.
+- 53b83ae: Add `ggt field remove` and `ggt field rename` subcommands for managing fields
+  on models.
+- bb160f6: Add Shopify model enable support to `ggt model add`.
+
+  You can now run `ggt model add <path> --type shopify` (with optional
+  `--resource <shopifyModelKey>`) to enable Shopify models.
+
+- 2751e62: Add `ggt shopify connect` to configure a Gadget app's Shopify connection.
+
+  This command imports your local Shopify CLI session, creates the Shopify
+  connection files, and syncs them into your project.
+
+  `ggt shopify connect` only works for apps on framework version 1.7 or newer.
+
+- 6a99f77: Add `ggt shopify status` to show the status of your Gadget app's Shopify connection.
+
+  The command prints your current Shopify API version (and whether a newer
+  version is available), the enabled Shopify models, the authenticated
+  Shopify partner account, and the connected Shopify app's name and client id.
+
+- 3e7de0b: Add requested scopes and webhook topics to `ggt shopify status`.
+
+### Patch Changes
+
+- d13ce10: Fix crash during `ggt dev` when a file is deleted between stat and read
+
+  Handle ENOENT errors from `fs.readFile()` in `_sendChangesToEnvironment` the same way they're already handled for `fs.stat()` — by skipping the file instead of crashing the session.
+
 ## 3.0.0
 
 ### Major Changes

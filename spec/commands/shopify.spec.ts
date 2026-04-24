@@ -139,6 +139,8 @@ describe("shopify", () => {
         apiVersionUpToDate: false,
         enabledModels: ["shopifyProduct", "shopifyVariant"],
         canonicalApp: { appName: "my-gadget-app", clientId: "abc123" },
+        scopes: ["read_orders", "write_products"],
+        webhookTopics: ["app/uninstalled", "orders/create", "orders/updated"],
       },
     });
 
@@ -148,6 +150,8 @@ describe("shopify", () => {
     expectStdout().toContain("shopifyProduct | shopifyVariant");
     expectStdout().toContain("shardul@gadget.dev");
     expectStdout().toContain("my-gadget-app (client_id: abc123)");
+    expectStdout().toContain("read_orders | write_products");
+    expectStdout().toContain("app/uninstalled | orders/create | orders/updated");
   });
 
   it("errors with auth login guidance when Shopify CLI config is missing", async () => {

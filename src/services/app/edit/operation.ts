@@ -285,6 +285,8 @@ export type ShopifyConnectionStatus = {
   apiVersionUpToDate: boolean;
   enabledModels: string[];
   canonicalApp: { appName: string | null; clientId: string } | null;
+  scopes: string[];
+  webhookTopics: string[];
 };
 
 type ShopifyStatusQuery = {
@@ -309,6 +311,8 @@ export const SHOPIFY_STATUS_QUERY = sprint(/* GraphQL */ `
         appName
         clientId
       }
+      scopes
+      webhookTopics
     }
   }
 `) as GraphQLQuery<ShopifyStatusQuery, ShopifyStatusQueryVariables>;

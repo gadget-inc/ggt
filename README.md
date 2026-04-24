@@ -31,6 +31,8 @@
   - [`ggt add`](#ggt-add)
   - [`ggt model`](#ggt-model)
   - [`ggt action`](#ggt-action)
+  - [`ggt field`](#ggt-field)
+  - [`ggt shopify`](#ggt-shopify)
   - [`ggt open`](#ggt-open)
   - [`ggt list`](#ggt-list)
   - [`ggt login`](#ggt-login)
@@ -82,6 +84,8 @@ COMMANDS
   add             Add resources to your app
   model           Add and manage models in your app
   action          Add and manage actions
+  field           Manage fields on your models
+  shopify         Manage Shopify connection
   var             Manage your app's environment variables
   env             Manage your app's environments
   open            Open your app in a browser
@@ -354,6 +358,7 @@ FLAGS
 
 EXAMPLES
   $ ggt model add post
+  $ ggt model add shopifyProduct --type shopify
   $ ggt model remove post --force
   $ ggt model rename post article
 ```
@@ -379,6 +384,54 @@ EXAMPLES
   $ ggt action add notifications/sendWelcomeEmail
   $ ggt action add publish --model post
   $ ggt action add fulfill --model shopifyOrder
+```
+
+### `ggt field`
+
+```sh-session
+$ ggt field -h
+Manage fields on your models
+
+USAGE
+  ggt field <command> [flags]
+
+COMMANDS
+  add       Add a field to an existing model
+  remove    Remove a field from a model
+  rename    Rename a field on a model
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt field add post/title:string
+  $ ggt field add mystore/order/note:string
+  $ ggt field remove post/title
+  $ ggt field rename post/title post/heading
+```
+
+### `ggt shopify`
+
+```sh-session
+$ ggt shopify -h
+Manage Shopify connection
+
+USAGE
+  ggt shopify <command> [flags]
+
+COMMANDS
+  connect    Configure the Shopify connection for your application
+  status     Show the status of your Shopify connection
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+
+EXAMPLES
+  $ ggt shopify connect
+  $ ggt shopify status
+  $ ggt shopify connect --app-name my-shop
 ```
 
 ### `ggt open`

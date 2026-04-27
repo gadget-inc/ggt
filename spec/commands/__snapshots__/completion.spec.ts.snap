@@ -16,7 +16,7 @@ _ggt_completions() {
     --from-file)
       COMPREPLY=($(compgen -f -- "$cur"))
       return ;;
-    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--type|--resource|--model|--app-name|--shopify-organization-id|--start|--port|-p)
+    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--type|--resource|--model|--namespace|--key|--metafield-type|--app-name|--shopify-organization-id|--start|--port|-p)
       return ;;
   esac
 
@@ -264,7 +264,7 @@ _ggt_completions() {
       else
         case "$sub_cmd" in
           add)
-            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --required --unique --metafield --namespace --key --metafield-type --list --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           remove)
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --force -f --help -h --version --verbose -v --telemetry --json" -- "$cur"))
@@ -899,6 +899,13 @@ complete -c ggt -n '__fish_seen_subcommand_from field' -l allow-all -d 'Enable a
 complete -c ggt -n '__ggt_needs_subcommand field -- --application -a --app --environment -e --env --allow' -a 'add' -d 'Add a field to an existing model'
 complete -c ggt -n '__ggt_needs_subcommand field -- --application -a --app --environment -e --env --allow' -a 'remove' -d 'Remove a field from a model'
 complete -c ggt -n '__ggt_needs_subcommand field -- --application -a --app --environment -e --env --allow' -a 'rename' -d 'Rename a field on a model'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l required -d 'Mark the field as required'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l unique -d 'Mark the field as unique'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l metafield -d 'Store data from a Shopify metafield'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l namespace -x -d 'Metafield namespace. Required with --metafield.'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l key -x -d 'Metafield key. Defaults to the field name.'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l metafield-type -x -d 'Shopify metafield type. Required with --metafield.'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l list -d 'Store a list of metafield values.'
 complete -c ggt -n '__ggt_seen_subcommand field -- remove -- --application -a --app --environment -e --env --allow' -l force -s f -d 'Skip confirmation'
 complete -c ggt -n '__fish_seen_subcommand_from field' -l help -s h -d 'Show command help'
 complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
@@ -1718,7 +1725,14 @@ _ggt_field() {
             '--allow-different-app[Allow syncing with a different app]' \\
             '--allow-unknown-directory[Allow syncing to an existing directory]' \\
             '--allow[Enable allow flags (comma-separated)]:value: ' \\
-            '--allow-all[Enable all --allow-* flags]'
+            '--allow-all[Enable all --allow-* flags]' \\
+            '--required[Mark the field as required]' \\
+            '--unique[Mark the field as unique]' \\
+            '--metafield[Store data from a Shopify metafield]' \\
+            '--namespace[Metafield namespace. Required with --metafield.]:value: ' \\
+            '--key[Metafield key. Defaults to the field name.]:value: ' \\
+            '--metafield-type[Shopify metafield type. Required with --metafield.]:value: ' \\
+            '--list[Store a list of metafield values.]'
           ;;
         remove)
           _arguments \\

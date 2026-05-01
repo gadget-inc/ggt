@@ -82,6 +82,78 @@ describe("field", () => {
       expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toContain("is not a valid field definition");
     });
+
+    it("can add a required field", async () => {
+      nockEditResponse({
+        operation: CREATE_MODEL_FIELDS_MUTATION,
+        response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
+        expectVariables: {
+          path: "post",
+          fields: [{ name: "title", fieldType: "string", required: true }],
+        },
+      });
+
+      await runCommand(testCtx, field, "add", "post/title:string", "--required");
+    });
+
+    it("can add a unique field", async () => {
+      nockEditResponse({
+        operation: CREATE_MODEL_FIELDS_MUTATION,
+        response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
+        expectVariables: {
+          path: "post",
+          fields: [{ name: "title", fieldType: "string", unique: true }],
+        },
+      });
+
+      await runCommand(testCtx, field, "add", "post/title:string", "--unique");
+    });
+
+    it("can add a metafield", async () => {
+      nockEditResponse({
+        operation: CREATE_MODEL_FIELDS_MUTATION,
+        response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
+        expectVariables: {
+          path: "shopifyProduct",
+          fields: [
+            {
+              name: "spiciness",
+              fieldType: "string",
+              metafield: { namespace: "custom", key: "spiciness", type: "single_line_text_field", list: true },
+            },
+          ],
+        },
+      });
+
+      await runCommand(
+        testCtx,
+        field,
+        "add",
+        "shopifyProduct/spiciness:string",
+        "--metafield",
+        "--namespace",
+        "custom",
+        "--key",
+        "spiciness",
+        "--metafield-type",
+        "single_line_text_field",
+        "--list",
+      );
+    });
+
+    it("errors if --metafield without --namespace", async () => {
+      const error = await expectError(() => runCommand(testCtx, field, "add", "shopifyProduct/spiciness:string", "--metafield"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.sprint()).toContain("--namespace is required when using --metafield.");
+    });
+
+    it("errors if --metafield without --metafield-type", async () => {
+      const error = await expectError(() =>
+        runCommand(testCtx, field, "add", "shopifyProduct/spiciness:string", "--metafield", "--namespace", "custom"),
+      );
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.sprint()).toContain("--metafield-type is required when using --metafield.");
+    });
   });
 
   describe("remove", () => {

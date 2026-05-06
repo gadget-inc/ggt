@@ -11,6 +11,13 @@ import { println } from "../services/output/print.ts";
 import { sprint } from "../services/output/sprint.ts";
 import { symbol } from "../services/output/symbols.ts";
 
+const relationshipVerbDisplay: Record<string, string> = {
+  belongsTo: "belongs-to",
+  hasOne: "has-one",
+  hasMany: "has-many",
+  hasManyThrough: "has-many-through",
+};
+
 const supportedFieldTypes = [
   "number",
   "string",
@@ -72,6 +79,12 @@ export default defineCommand({
         "--key": { type: String, description: "Shopify metafield key. Only used with --metafield. Defaults to the field name." },
         "--metafield-type": { type: String, description: "Shopify metafield type. Required with --metafield." },
         "--list": { type: Boolean, description: "Store a list of Shopify metafield values. Only used with --metafield." },
+        "--to": { type: String, description: "Target model. Required for relationship fields." },
+        "--through": { type: String, description: "Through model. Required for has-many-through relationships." },
+        "--inverse-field": {
+          type: String,
+          description: "Name for the auto-created inverse field on the related model. Defaults to the current model's name.",
+        },
       },
       positionals: [
         {
@@ -109,6 +122,25 @@ export default defineCommand({
           throw new FlagError("Failed to add field, invalid field definition", { usageHint: false });
         }
 
+        const relationshipFieldTypes = ["belongsTo", "hasOne", "hasMany", "hasManyThrough"];
+        const isRelationship = relationshipFieldTypes.includes(parsed.fieldType);
+
+        if (isRelationship && !flags["--to"]) {
+          throw new FlagError(`--to is required for ${parsed.fieldType} relationship fields.`);
+        }
+        if (parsed.fieldType === "hasManyThrough" && !flags["--through"]) {
+          throw new FlagError("--through is required for has-many-through relationship fields.");
+        }
+        if (flags["--through"] && parsed.fieldType !== "hasManyThrough") {
+          throw new FlagError("--through is only valid for has-many-through fields. Use :hasManyThrough.");
+        }
+        if (flags["--to"] && !isRelationship) {
+          throw new FlagError("--to is only valid for relationship fields.");
+        }
+        if (flags["--inverse-field"] && !isRelationship) {
+          throw new FlagError("--inverse-field is only valid for relationship fields.");
+        }
+
         let metafield: { namespace: string; key?: string; type: string; list?: boolean } | undefined;
         if (flags["--metafield"]) {
           const namespace = flags["--namespace"];
@@ -123,6 +155,16 @@ export default defineCommand({
           };
         }
 
+        let relationship: { relatedModel: string; joinModel?: string; inverseField?: string } | undefined;
+        if (isRelationship) {
+          relationship = {
+            // oxlint-disable-next-line no-non-null-assertion -- validated above: --to is required for relationship fields
+            relatedModel: flags["--to"]!,
+            joinModel: flags["--through"],
+            inverseField: flags["--inverse-field"],
+          };
+        }
+
         await addFields(ctx, {
           syncJson,
           filesync,
@@ -134,11 +176,27 @@ export default defineCommand({
               required: flags["--required"] || undefined,
               unique: flags["--unique"] || undefined,
               metafield,
+              relationship,
             },
           ],
         });
 
-        println({ ensureEmptyLineAbove: true, content: `Field ${colors.code(parsed.fieldName)} added successfully.` });
+        if (relationship) {
+          const verb = relationshipVerbDisplay[parsed.fieldType] ?? parsed.fieldType;
+          const summary = relationship.joinModel
+            ? `${parsed.modelApiIdentifier} ${verb} ${relationship.relatedModel} via ${relationship.joinModel}`
+            : `${parsed.modelApiIdentifier} ${verb} ${relationship.relatedModel}`;
+          println({
+            ensureEmptyLineAbove: true,
+            content: sprint`
+              ${colors.created(symbol.tick)} Added relationship.
+
+                ${summary}
+            `,
+          });
+        } else {
+          println({ ensureEmptyLineAbove: true, content: `Field ${colors.code(parsed.fieldName)} added successfully.` });
+        }
       },
     }),
     remove: sub({

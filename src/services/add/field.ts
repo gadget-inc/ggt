@@ -100,6 +100,11 @@ export const addFields = async (
         type: string;
         list?: boolean;
       };
+      relationship?: {
+        relatedModel: string;
+        joinModel?: string;
+        inverseField?: string;
+      };
     }>;
   },
 ): Promise<AddFieldsResult> => {
@@ -117,6 +122,7 @@ export const addFields = async (
             ...(f.required !== undefined && { required: f.required }),
             ...(f.unique !== undefined && { unique: f.unique }),
             ...(f.metafield !== undefined && { metafield: f.metafield }),
+            ...(f.relationship !== undefined && { relationship: f.relationship }),
           })),
         },
       })

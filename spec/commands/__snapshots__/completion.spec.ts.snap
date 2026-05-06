@@ -16,7 +16,7 @@ _ggt_completions() {
     --from-file)
       COMPREPLY=($(compgen -f -- "$cur"))
       return ;;
-    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--type|--resource|--model|--namespace|--key|--metafield-type|--app-name|--shopify-organization-id|--start|--port|-p)
+    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--type|--resource|--model|--namespace|--key|--metafield-type|--to|--through|--inverse-field|--app-name|--shopify-organization-id|--start|--port|-p)
       return ;;
   esac
 
@@ -264,7 +264,7 @@ _ggt_completions() {
       else
         case "$sub_cmd" in
           add)
-            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --required --unique --metafield --namespace --key --metafield-type --list --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --required --unique --metafield --namespace --key --metafield-type --list --to --through --inverse-field --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           remove)
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --force -f --help -h --version --verbose -v --telemetry --json" -- "$cur"))
@@ -906,6 +906,9 @@ complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app
 complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l key -x -d 'Shopify metafield key. Only used with --metafield. Defaults to the field name.'
 complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l metafield-type -x -d 'Shopify metafield type. Required with --metafield.'
 complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l list -d 'Store a list of Shopify metafield values. Only used with --metafield.'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l to -x -d 'Target model. Required for relationship fields.'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l through -x -d 'Through model. Required for has-many-through relationships.'
+complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l inverse-field -x -d 'Name for the auto-created inverse field on the related model. Defaults to the current model'\\''s name.'
 complete -c ggt -n '__ggt_seen_subcommand field -- remove -- --application -a --app --environment -e --env --allow' -l force -s f -d 'Skip confirmation'
 complete -c ggt -n '__fish_seen_subcommand_from field' -l help -s h -d 'Show command help'
 complete -c ggt -n '__ggt_seen_subcommand field -- add -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
@@ -1732,7 +1735,10 @@ _ggt_field() {
             '--namespace[Shopify metafield namespace. Required with --metafield.]:value: ' \\
             '--key[Shopify metafield key. Only used with --metafield. Defaults to the field name.]:value: ' \\
             '--metafield-type[Shopify metafield type. Required with --metafield.]:value: ' \\
-            '--list[Store a list of Shopify metafield values. Only used with --metafield.]'
+            '--list[Store a list of Shopify metafield values. Only used with --metafield.]' \\
+            '--to[Target model. Required for relationship fields.]:value: ' \\
+            '--through[Through model. Required for has-many-through relationships.]:value: ' \\
+            '--inverse-field[Name for the auto-created inverse field on the related model. Defaults to the current model'\\''s name.]:value: '
           ;;
         remove)
           _arguments \\

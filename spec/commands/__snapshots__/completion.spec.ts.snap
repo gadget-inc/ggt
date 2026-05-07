@@ -16,7 +16,7 @@ _ggt_completions() {
     --from-file)
       COMPREPLY=($(compgen -f -- "$cur"))
       return ;;
-    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--type|--resource|--model|--namespace|--key|--metafield-type|--to|--through|--inverse-field|--app-name|--shopify-organization-id|--start|--port|-p)
+    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--type|--resource|--model|--namespace|--key|--metafield-type|--to|--through|--inverse-field|--app-name|--shopify-organization-id|--store|--shop-ids|--models|--since|--start|--port|-p)
       return ;;
   esac
 
@@ -297,7 +297,7 @@ _ggt_completions() {
       done
 
       if [[ -z "$sub_cmd" ]]; then
-        COMPREPLY=($(compgen -W "connect status --application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+        COMPREPLY=($(compgen -W "connect status sync --application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
       else
         case "$sub_cmd" in
           connect)
@@ -305,6 +305,9 @@ _ggt_completions() {
             ;;
           status)
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            ;;
+          sync)
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --store --shop-ids --models --since --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           *)
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
@@ -942,23 +945,33 @@ complete -c ggt -n '__fish_seen_subcommand_from shopify' -l allow -x -d 'Enable 
 complete -c ggt -n '__fish_seen_subcommand_from shopify' -l allow-all -d 'Enable all --allow-* flags'
 complete -c ggt -n '__ggt_needs_subcommand shopify -- --application -a --app --environment -e --env --allow' -a 'connect' -d 'Configure the Shopify connection for your application'
 complete -c ggt -n '__ggt_needs_subcommand shopify -- --application -a --app --environment -e --env --allow' -a 'status' -d 'Show the status of your Shopify connection'
+complete -c ggt -n '__ggt_needs_subcommand shopify -- --application -a --app --environment -e --env --allow' -a 'sync' -d 'Sync Shopify data to your app'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- connect -- --application -a --app --environment -e --env --allow' -l app-name -x -d 'Shopify app name override'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- connect -- --application -a --app --environment -e --env --allow' -l shopify-organization-id -x -d 'Shopify organization ID to use when your account has multiple organizations'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l store -x -d 'Sync a specific installed store only'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l shop-ids -x -d 'Comma-separated Shopify shop record IDs to sync'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l models -x -d 'Comma-separated Shopify models to sync'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l since -x -d 'Sync records updated since this date'
 complete -c ggt -n '__fish_seen_subcommand_from shopify' -l help -s h -d 'Show command help'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- connect -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- status -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
 complete -c ggt -n '__fish_seen_subcommand_from shopify' -l version -d 'Print the ggt version'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- connect -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- status -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l version -d 'Print the ggt version'
 complete -c ggt -n '__fish_seen_subcommand_from shopify' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- connect -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- status -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l verbose -s v -d 'Increase output verbosity (-vv for debug, -vvv for trace)'
 complete -c ggt -n '__fish_seen_subcommand_from shopify' -l telemetry -d 'Enable telemetry'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- connect -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- status -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l telemetry -d 'Enable telemetry'
 complete -c ggt -n '__fish_seen_subcommand_from shopify' -l json -d 'Output as JSON where supported'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- connect -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- status -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l json -d 'Output as JSON where supported'
 
 # open
 complete -c ggt -n '__fish_seen_subcommand_from open' -l application -s a -rfa '(__ggt_complete)' -d 'Gadget app to use'
@@ -1817,6 +1830,7 @@ _ggt_shopify() {
       subcommands=(
         'connect:Configure the Shopify connection for your application'
         'status:Show the status of your Shopify connection'
+        'sync:Sync Shopify data to your app'
       )
       _describe -t subcommands 'shopify subcommand' subcommands
       ;;
@@ -1863,6 +1877,30 @@ _ggt_shopify() {
             '--allow-unknown-directory[Allow syncing to an existing directory]' \\
             '--allow[Enable allow flags (comma-separated)]:value: ' \\
             '--allow-all[Enable all --allow-* flags]'
+          ;;
+        sync)
+          _arguments \\
+            '(--help -h)''--help[Show command help]' \\
+            '(--help -h)''-h[Show command help]' \\
+            '--version[Print the ggt version]' \\
+            '(--verbose -v)''--verbose[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '(--verbose -v)''-v[Increase output verbosity (-vv for debug, -vvv for trace)]' \\
+            '--telemetry[Enable telemetry]' \\
+            '--json[Output as JSON where supported]' \\
+            '(--application -a --app)''--application[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''-a[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--application -a --app)''--app[Gadget app to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--environment[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''-e[Environment to use]:value:_ggt_dynamic' \\
+            '(--environment -e --env)''--env[Environment to use]:value:_ggt_dynamic' \\
+            '--allow-different-app[Allow syncing with a different app]' \\
+            '--allow-unknown-directory[Allow syncing to an existing directory]' \\
+            '--allow[Enable allow flags (comma-separated)]:value: ' \\
+            '--allow-all[Enable all --allow-* flags]' \\
+            '--store[Sync a specific installed store only]:value: ' \\
+            '--shop-ids[Comma-separated Shopify shop record IDs to sync]:value: ' \\
+            '--models[Comma-separated Shopify models to sync]:value: ' \\
+            '--since[Sync records updated since this date]:value: '
           ;;
       esac
       ;;

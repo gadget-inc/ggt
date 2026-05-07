@@ -39,6 +39,8 @@ import type {
   RemoteFileSyncEventsSubscriptionVariables,
   SetEnvironmentVariableMutation,
   SetEnvironmentVariableMutationVariables,
+  TriggerRunShopifySyncMutation,
+  TriggerRunShopifySyncMutationVariables,
   UnpauseEnvironmentMutation,
   UnpauseEnvironmentMutationVariables,
 } from "../../../__generated__/graphql.ts";
@@ -319,6 +321,21 @@ export const SHOPIFY_STATUS_QUERY = sprint(/* GraphQL */ `
 `) as GraphQLQuery<ShopifyStatusQuery, ShopifyStatusQueryVariables>;
 
 export type SHOPIFY_STATUS_QUERY = typeof SHOPIFY_STATUS_QUERY;
+
+export const TRIGGER_RUN_SHOPIFY_SYNC_MUTATION = sprint(/* GraphQL */ `
+  mutation TriggerRunShopifySync($shopIds: [String!], $store: String, $models: [String!], $syncSince: DateTime) {
+    triggerRunShopifySync(shopIds: $shopIds, store: $store, models: $models, syncSince: $syncSince) {
+      success
+      successfulShopIds
+      failedShops {
+        shopId
+        failureReason
+      }
+    }
+  }
+`) as GraphQLMutation<TriggerRunShopifySyncMutation, TriggerRunShopifySyncMutationVariables>;
+
+export type TRIGGER_RUN_SHOPIFY_SYNC_MUTATION = typeof TRIGGER_RUN_SHOPIFY_SYNC_MUTATION;
 
 /**
  * Common return shape for mutations that modify files and return sync events.

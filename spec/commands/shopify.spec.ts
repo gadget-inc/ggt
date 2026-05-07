@@ -10,6 +10,7 @@ import {
   IMPORT_SHOPIFY_CLI_SESSION_MUTATION,
   SHOPIFY_ORGANIZATIONS_QUERY,
   SHOPIFY_STATUS_QUERY,
+  TRIGGER_RUN_SHOPIFY_SYNC_MUTATION,
 } from "../../src/services/app/edit/operation.ts";
 import { runCommand } from "../../src/services/command/run.ts";
 import { config } from "../../src/services/config/config.ts";
@@ -93,6 +94,20 @@ const mockStatusResponse = (response: (typeof SHOPIFY_STATUS_QUERY)["Data"]) =>
     operation: SHOPIFY_STATUS_QUERY,
     response: {
       data: response,
+    },
+  });
+
+const mockShopifySyncResponse = (
+  expectVariables: (typeof TRIGGER_RUN_SHOPIFY_SYNC_MUTATION)["Variables"],
+  result: NonNullable<(typeof TRIGGER_RUN_SHOPIFY_SYNC_MUTATION)["Data"]["triggerRunShopifySync"]>,
+) =>
+  nockEditResponse({
+    operation: TRIGGER_RUN_SHOPIFY_SYNC_MUTATION,
+    expectVariables,
+    response: {
+      data: {
+        triggerRunShopifySync: result,
+      },
     },
   });
 
@@ -216,5 +231,152 @@ describe("shopify", () => {
     expectStdout().toContain("Shopify organizations available:");
     expectStdout().toContain("org-1");
     expectStdout().toContain("org-2");
+  });
+
+  it("starts Shopify sync for all installed shops when no selector is passed", async () => {
+    mockShopifySyncResponse(
+      {},
+      {
+        success: true,
+        successfulShopIds: ["1", "2"],
+        failedShops: [],
+      },
+    );
+
+    await runCommand(testCtx, shopify, "sync");
+
+    expectStdout().toContain("Started Shopify sync for 2 shops.");
+  });
+
+  it("starts Shopify sync for a store selector", async () => {
+    mockShopifySyncResponse(
+      { store: "mystore.myshopify.com" },
+      {
+        success: true,
+        successfulShopIds: ["1"],
+        failedShops: [],
+      },
+    );
+
+    await runCommand(testCtx, shopify, "sync", "--store", "mystore.myshopify.com");
+
+    expectStdout().toContain("Started Shopify sync for mystore.myshopify.com.");
+  });
+
+  it("starts Shopify sync for comma-separated shop IDs", async () => {
+    mockShopifySyncResponse(
+      { shopIds: ["1", "2"] },
+      {
+        success: true,
+        successfulShopIds: ["1", "2"],
+        failedShops: [],
+      },
+    );
+
+    await runCommand(testCtx, shopify, "sync", "--shop-ids", "1, 2");
+
+    expectStdout().toContain("Started Shopify sync for 2 shops.");
+  });
+
+  it("trims and ignores empty values in shop ID lists", async () => {
+    mockShopifySyncResponse(
+      { shopIds: ["1", "2", "3"] },
+      {
+        success: true,
+        successfulShopIds: ["1", "2", "3"],
+        failedShops: [],
+      },
+    );
+
+    await runCommand(testCtx, shopify, "sync", "--shop-ids", " 1, , 2 ,, 3 ");
+
+    expectStdout().toContain("Started Shopify sync for 3 shops.");
+  });
+
+  it("errors when shop ID lists have no values", async () => {
+    const error = await expectError(() => runCommand(testCtx, shopify, "sync", "--shop-ids", " , , "));
+    expect(error.message).toContain("--shop-ids must include at least one value");
+  });
+
+  it("passes models and since filters to Shopify sync", async () => {
+    mockShopifySyncResponse(
+      {
+        models: ["shopifyProduct", "shopifyOrder"],
+        syncSince: "2024-01-01T00:00:00.000Z",
+      },
+      {
+        success: true,
+        successfulShopIds: ["1"],
+        failedShops: [],
+      },
+    );
+
+    await runCommand(testCtx, shopify, "sync", "--models", "shopifyProduct,shopifyOrder", "--since", "2024-01-01");
+
+    expectStdout().toContain("Started Shopify sync for 1 shop.");
+    expectStdout().toContain("models: shopifyProduct, shopifyOrder");
+    expectStdout().toContain("since:  2024-01-01T00:00:00.000Z");
+  });
+
+  it("trims and ignores empty values in model lists", async () => {
+    mockShopifySyncResponse(
+      { models: ["shopifyProduct", "shopifyOrder", "shopifyCustomer"] },
+      {
+        success: true,
+        successfulShopIds: ["1"],
+        failedShops: [],
+      },
+    );
+
+    await runCommand(testCtx, shopify, "sync", "--models", " shopifyProduct, , shopifyOrder ,, shopifyCustomer ");
+
+    expectStdout().toContain("Started Shopify sync for 1 shop.");
+    expectStdout().toContain("models: shopifyProduct, shopifyOrder, shopifyCustomer");
+  });
+
+  it("errors when model lists have no values", async () => {
+    const error = await expectError(() => runCommand(testCtx, shopify, "sync", "--models", " , , "));
+    expect(error.message).toContain("--models must include at least one value");
+  });
+
+  it("prints partial Shopify sync failures", async () => {
+    mockShopifySyncResponse(
+      { shopIds: ["1", "2", "3"] },
+      {
+        success: false,
+        successfulShopIds: ["1", "2"],
+        failedShops: [{ shopId: "3", failureReason: "Shop not found" }],
+      },
+    );
+
+    await runCommand(testCtx, shopify, "sync", "--shop-ids", "1,2,3");
+
+    expectStdout().toContain("Started Shopify sync for 2 shops. Failed for 1 shop.");
+    expectStdout().toContain("Failed shops:");
+    expectStdout().toContain("  3: Shop not found");
+  });
+
+  it("errors when no Shopify shops matched", async () => {
+    mockShopifySyncResponse(
+      { store: "missing.myshopify.com" },
+      {
+        success: false,
+        successfulShopIds: [],
+        failedShops: [],
+      },
+    );
+
+    const error = await expectError(() => runCommand(testCtx, shopify, "sync", "--store", "missing.myshopify.com"));
+    expect(error.message).toContain("No installed Shopify shops matched");
+  });
+
+  it("errors when store and shop IDs are both provided", async () => {
+    const error = await expectError(() => runCommand(testCtx, shopify, "sync", "--store", "one.myshopify.com", "--shop-ids", "1"));
+    expect(error.message).toContain("--store and --shop-ids can't both be provided");
+  });
+
+  it("errors when since is invalid", async () => {
+    const error = await expectError(() => runCommand(testCtx, shopify, "sync", "--since", "not-a-date"));
+    expect(error.message).toContain("Invalid --since value");
   });
 });

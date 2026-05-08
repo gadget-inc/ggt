@@ -1,3 +1,4 @@
+import type { CreateModelFieldsInput } from "../__generated__/graphql.ts";
 import { addFields, parseFieldTarget } from "../services/add/field.ts";
 import { REMOVE_MODEL_FIELD_MUTATION, RENAME_MODEL_FIELD_MUTATION } from "../services/app/edit/operation.ts";
 import { ClientError, formatClientErrorForUser } from "../services/app/error.ts";
@@ -155,14 +156,25 @@ export default defineCommand({
           };
         }
 
-        let relationship: { relatedModel: string; joinModel?: string; inverseField?: string } | undefined;
+        let relationship: CreateModelFieldsInput["relationship"] | undefined;
         if (isRelationship) {
-          relationship = {
-            // oxlint-disable-next-line no-non-null-assertion -- validated above: --to is required for relationship fields
-            relatedModel: flags["--to"]!,
-            joinModel: flags["--through"],
-            inverseField: flags["--inverse-field"],
-          };
+          const targetModel = flags["--to"];
+          if (!targetModel) throw new FlagError(`--to is required for ${parsed.fieldType} relationship fields.`);
+
+          const inverseField = flags["--inverse-field"];
+          if (parsed.fieldType === "belongsTo") {
+            relationship = { belongsTo: { parentModel: targetModel, ...(inverseField && { inverseField }) } };
+          } else if (parsed.fieldType === "hasOne") {
+            relationship = { hasOne: { childModel: targetModel, ...(inverseField && { belongsToField: inverseField }) } };
+          } else if (parsed.fieldType === "hasMany") {
+            relationship = { hasMany: { childModel: targetModel, ...(inverseField && { belongsToField: inverseField }) } };
+          } else if (parsed.fieldType === "hasManyThrough") {
+            const joinModel = flags["--through"];
+            if (!joinModel) throw new FlagError("--through is required for has-many-through relationship fields.");
+            relationship = {
+              hasManyThrough: { siblingModel: targetModel, joinModel, ...(inverseField && { relatedField: inverseField }) },
+            };
+          }
         }
 
         await addFields(ctx, {
@@ -183,9 +195,9 @@ export default defineCommand({
 
         if (relationship) {
           const verb = relationshipVerbDisplay[parsed.fieldType] ?? parsed.fieldType;
-          const summary = relationship.joinModel
-            ? `${parsed.modelApiIdentifier} ${verb} ${relationship.relatedModel} via ${relationship.joinModel}`
-            : `${parsed.modelApiIdentifier} ${verb} ${relationship.relatedModel}`;
+          const summary = flags["--through"]
+            ? `${parsed.modelApiIdentifier} ${verb} ${flags["--to"]} via ${flags["--through"]}`
+            : `${parsed.modelApiIdentifier} ${verb} ${flags["--to"]}`;
           println({
             ensureEmptyLineAbove: true,
             content: sprint`

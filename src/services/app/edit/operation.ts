@@ -7,6 +7,7 @@ import type {
   CreateEnvironmentMutation,
   CreateEnvironmentMutationVariables,
   CreateModelFieldsMutation,
+  CreateModelFieldsMutationVariables,
   CreateModelMutation,
   CreateModelMutationVariables,
   CreateRouteMutation,
@@ -438,32 +439,6 @@ export const CREATE_ROUTE_MUTATION = sprint(/* GraphQL */ `
 `) as GraphQLMutation<CreateRouteMutation, CreateRouteMutationVariables>;
 
 export type CREATE_ROUTE_MUTATION = typeof CREATE_ROUTE_MUTATION;
-
-/**
- * Inline variables type for createModelFields. The generated `CreateModelFieldsInput` from
- * `__generated__/graphql.ts` is currently behind the backend schema (no `relationship` field),
- * so we type the variables locally — same pattern used by REMOVE_MODEL_FIELD_MUTATION below.
- */
-type CreateModelFieldsMutationVariables = {
-  path: string;
-  fields: Array<{
-    name: string;
-    fieldType: string;
-    required?: boolean;
-    unique?: boolean;
-    metafield?: {
-      namespace: string;
-      key?: string;
-      type: string;
-      list?: boolean;
-    };
-    relationship?: {
-      relatedModel: string;
-      joinModel?: string;
-      inverseField?: string;
-    };
-  }>;
-};
 
 export const CREATE_MODEL_FIELDS_MUTATION = sprint(/* GraphQL */ `
   mutation createModelFields($path: String!, $fields: [CreateModelFieldsInput!]!) {

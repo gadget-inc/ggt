@@ -129,6 +129,7 @@ input CreateModelFieldsInput {
   required: Boolean
   unique: Boolean
   metafield: CreateModelFieldsMetafieldInput
+  relationship: CreateModelFieldsRelationshipInput
 }
 
 input CreateModelFieldsMetafieldInput {
@@ -136,6 +137,34 @@ input CreateModelFieldsMetafieldInput {
   key: String
   type: String!
   list: Boolean
+}
+
+input CreateModelFieldsRelationshipInput {
+  belongsTo: CreateModelFieldsBelongsToRelationshipInput
+  hasOne: CreateModelFieldsHasOneRelationshipInput
+  hasMany: CreateModelFieldsHasManyRelationshipInput
+  hasManyThrough: CreateModelFieldsHasManyThroughRelationshipInput
+}
+
+input CreateModelFieldsBelongsToRelationshipInput {
+  parentModel: String!
+  inverseField: String
+}
+
+input CreateModelFieldsHasOneRelationshipInput {
+  childModel: String!
+  belongsToField: String
+}
+
+input CreateModelFieldsHasManyRelationshipInput {
+  childModel: String!
+  belongsToField: String
+}
+
+input CreateModelFieldsHasManyThroughRelationshipInput {
+  siblingModel: String!
+  relatedField: String
+  joinModel: String
 }
 
 input CreateModelInput {

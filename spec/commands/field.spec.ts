@@ -161,7 +161,7 @@ describe("field", () => {
         response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
         expectVariables: {
           path: "post",
-          fields: [{ name: "author", fieldType: "belongsTo", relationship: { relatedModel: "user" } }],
+          fields: [{ name: "author", fieldType: "belongsTo", relationship: { belongsTo: { parentModel: "user" } } }],
         },
       });
 
@@ -174,7 +174,7 @@ describe("field", () => {
         response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
         expectVariables: {
           path: "user",
-          fields: [{ name: "profile", fieldType: "hasOne", relationship: { relatedModel: "profile" } }],
+          fields: [{ name: "profile", fieldType: "hasOne", relationship: { hasOne: { childModel: "profile" } } }],
         },
       });
 
@@ -187,7 +187,7 @@ describe("field", () => {
         response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
         expectVariables: {
           path: "user",
-          fields: [{ name: "posts", fieldType: "hasMany", relationship: { relatedModel: "post" } }],
+          fields: [{ name: "posts", fieldType: "hasMany", relationship: { hasMany: { childModel: "post" } } }],
         },
       });
 
@@ -204,7 +204,7 @@ describe("field", () => {
             {
               name: "tags",
               fieldType: "hasManyThrough",
-              relationship: { relatedModel: "tag", joinModel: "postTag" },
+              relationship: { hasManyThrough: { siblingModel: "tag", joinModel: "postTag" } },
             },
           ],
         },
@@ -213,7 +213,7 @@ describe("field", () => {
       await runCommand(testCtx, field, "add", "post/tags:hasManyThrough", "--to", "tag", "--through", "postTag");
     });
 
-    it("forwards --inverse-field as relationship.inverseField", async () => {
+    it("forwards --inverse-field as the relationship inverse field", async () => {
       nockEditResponse({
         operation: CREATE_MODEL_FIELDS_MUTATION,
         response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
@@ -223,7 +223,7 @@ describe("field", () => {
             {
               name: "author",
               fieldType: "belongsTo",
-              relationship: { relatedModel: "user", inverseField: "authoredPosts" },
+              relationship: { belongsTo: { parentModel: "user", inverseField: "authoredPosts" } },
             },
           ],
         },

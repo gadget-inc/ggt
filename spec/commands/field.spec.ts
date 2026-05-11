@@ -154,6 +154,113 @@ describe("field", () => {
       expect(error).toBeInstanceOf(FlagError);
       expect(error.sprint()).toContain("--metafield-type is required when using --metafield.");
     });
+
+    it("can add a belongs-to relationship field", async () => {
+      nockEditResponse({
+        operation: CREATE_MODEL_FIELDS_MUTATION,
+        response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
+        expectVariables: {
+          path: "post",
+          fields: [{ name: "author", fieldType: "belongsTo", relationship: { belongsTo: { parentModel: "user" } } }],
+        },
+      });
+
+      await runCommand(testCtx, field, "add", "post/author:belongsTo", "--to", "user");
+    });
+
+    it("can add a has-one relationship field", async () => {
+      nockEditResponse({
+        operation: CREATE_MODEL_FIELDS_MUTATION,
+        response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
+        expectVariables: {
+          path: "user",
+          fields: [{ name: "profile", fieldType: "hasOne", relationship: { hasOne: { childModel: "profile" } } }],
+        },
+      });
+
+      await runCommand(testCtx, field, "add", "user/profile:hasOne", "--to", "profile");
+    });
+
+    it("can add a has-many relationship field", async () => {
+      nockEditResponse({
+        operation: CREATE_MODEL_FIELDS_MUTATION,
+        response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
+        expectVariables: {
+          path: "user",
+          fields: [{ name: "posts", fieldType: "hasMany", relationship: { hasMany: { childModel: "post" } } }],
+        },
+      });
+
+      await runCommand(testCtx, field, "add", "user/posts:hasMany", "--to", "post");
+    });
+
+    it("can add a has-many-through relationship field", async () => {
+      nockEditResponse({
+        operation: CREATE_MODEL_FIELDS_MUTATION,
+        response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
+        expectVariables: {
+          path: "post",
+          fields: [
+            {
+              name: "tags",
+              fieldType: "hasManyThrough",
+              relationship: { hasManyThrough: { siblingModel: "tag", joinModel: "postTag" } },
+            },
+          ],
+        },
+      });
+
+      await runCommand(testCtx, field, "add", "post/tags:hasManyThrough", "--to", "tag", "--through", "postTag");
+    });
+
+    it("forwards --inverse-field as the relationship inverse field", async () => {
+      nockEditResponse({
+        operation: CREATE_MODEL_FIELDS_MUTATION,
+        response: { data: { createModelFields: { remoteFilesVersion: "10", changed: [] } } },
+        expectVariables: {
+          path: "post",
+          fields: [
+            {
+              name: "author",
+              fieldType: "belongsTo",
+              relationship: { belongsTo: { parentModel: "user", inverseField: "authoredPosts" } },
+            },
+          ],
+        },
+      });
+
+      await runCommand(testCtx, field, "add", "post/author:belongsTo", "--to", "user", "--inverse-field", "authoredPosts");
+    });
+
+    it("errors if relationship type is missing --to", async () => {
+      const error = await expectError(() => runCommand(testCtx, field, "add", "post/author:belongsTo"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.sprint()).toContain("--to is required for belongsTo relationship fields.");
+    });
+
+    it("errors if has-many-through is missing --through", async () => {
+      const error = await expectError(() => runCommand(testCtx, field, "add", "post/tags:hasManyThrough", "--to", "tag"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.sprint()).toContain("--through is required for has-many-through relationship fields.");
+    });
+
+    it("errors if --through is used with a non-has-many-through field type", async () => {
+      const error = await expectError(() => runCommand(testCtx, field, "add", "post/tags:hasMany", "--to", "tag", "--through", "postTag"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.sprint()).toContain("--through is only valid for has-many-through fields. Use :hasManyThrough.");
+    });
+
+    it("errors if --to is used with a non-relationship field type", async () => {
+      const error = await expectError(() => runCommand(testCtx, field, "add", "post/title:string", "--to", "user"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.sprint()).toContain("--to is only valid for relationship fields.");
+    });
+
+    it("errors if --inverse-field is used with a non-relationship field type", async () => {
+      const error = await expectError(() => runCommand(testCtx, field, "add", "post/title:string", "--inverse-field", "foo"));
+      expect(error).toBeInstanceOf(FlagError);
+      expect(error.sprint()).toContain("--inverse-field is only valid for relationship fields.");
+    });
   });
 
   describe("remove", () => {

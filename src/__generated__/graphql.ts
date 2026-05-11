@@ -166,10 +166,32 @@ export type ContributorResult = {
   isPending: Scalars['Boolean']['output'];
 };
 
+export type CreateModelFieldsBelongsToRelationshipInput = {
+  inverseField?: InputMaybe<Scalars['String']['input']>;
+  parentModel: Scalars['String']['input'];
+};
+
+export type CreateModelFieldsHasManyRelationshipInput = {
+  belongsToField?: InputMaybe<Scalars['String']['input']>;
+  childModel: Scalars['String']['input'];
+};
+
+export type CreateModelFieldsHasManyThroughRelationshipInput = {
+  joinModel?: InputMaybe<Scalars['String']['input']>;
+  relatedField?: InputMaybe<Scalars['String']['input']>;
+  siblingModel: Scalars['String']['input'];
+};
+
+export type CreateModelFieldsHasOneRelationshipInput = {
+  belongsToField?: InputMaybe<Scalars['String']['input']>;
+  childModel: Scalars['String']['input'];
+};
+
 export type CreateModelFieldsInput = {
   fieldType: Scalars['String']['input'];
   metafield?: InputMaybe<CreateModelFieldsMetafieldInput>;
   name: Scalars['String']['input'];
+  relationship?: InputMaybe<CreateModelFieldsRelationshipInput>;
   required?: InputMaybe<Scalars['Boolean']['input']>;
   unique?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -179,6 +201,13 @@ export type CreateModelFieldsMetafieldInput = {
   list?: InputMaybe<Scalars['Boolean']['input']>;
   namespace: Scalars['String']['input'];
   type: Scalars['String']['input'];
+};
+
+export type CreateModelFieldsRelationshipInput = {
+  belongsTo?: InputMaybe<CreateModelFieldsBelongsToRelationshipInput>;
+  hasMany?: InputMaybe<CreateModelFieldsHasManyRelationshipInput>;
+  hasManyThrough?: InputMaybe<CreateModelFieldsHasManyThroughRelationshipInput>;
+  hasOne?: InputMaybe<CreateModelFieldsHasOneRelationshipInput>;
 };
 
 export type CreateModelInput = {

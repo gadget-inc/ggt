@@ -7,6 +7,7 @@ import type {
   CreateEnvironmentMutation,
   CreateEnvironmentMutationVariables,
   CreateModelFieldsMutation,
+  CreateModelFieldsMutationVariables,
   CreateModelMutation,
   CreateModelMutationVariables,
   CreateRouteMutation,
@@ -451,7 +452,7 @@ export const CREATE_MODEL_FIELDS_MUTATION = sprint(/* GraphQL */ `
       }
     }
   }
-`) as GraphQLMutation<CreateModelFieldsMutation, CreateModelMutationVariables>;
+`) as GraphQLMutation<CreateModelFieldsMutation, CreateModelFieldsMutationVariables>;
 
 export type CREATE_MODEL_FIELDS_MUTATION = typeof CREATE_MODEL_FIELDS_MUTATION;
 

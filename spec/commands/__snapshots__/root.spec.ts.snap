@@ -1830,6 +1830,10 @@ FLAGS
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
 
+      --inverse-field <value>
+        Name for the auto-created inverse field on the related model. Defaults
+        to the current model's name.
+
       --key <value>
         Shopify metafield key. Only used with --metafield. Defaults to the field
         name.
@@ -1848,6 +1852,12 @@ FLAGS
 
       --required
         Mark the field as required
+
+      --through <value>
+        Through model. Required for has-many-through relationships.
+
+      --to <value>
+        Target model. Required for relationship fields.
 
       --unique
         Mark the field as unique
@@ -1890,12 +1900,15 @@ ARGUMENTS
 FLAGS
   -a, --app, --application <app>  Gadget app to use
   -e, --env, --environment <env>  Environment to use
+      --inverse-field <value>     Name for the auto-created inverse field on the related model. Defaults to the current model's name.
       --key <value>               Shopify metafield key. Only used with --metafield. Defaults to the field name.
       --list                      Store a list of Shopify metafield values. Only used with --metafield.
       --metafield                 Store data from a Shopify metafield
       --metafield-type <value>    Shopify metafield type. Required with --metafield.
       --namespace <value>         Shopify metafield namespace. Required with --metafield.
       --required                  Mark the field as required
+      --through <value>           Through model. Required for has-many-through relationships.
+      --to <value>                Target model. Required for relationship fields.
       --unique                    Mark the field as unique
 
 EXAMPLES

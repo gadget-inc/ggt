@@ -1,4 +1,4 @@
-import type { CreateModelFieldsMutation } from "../../__generated__/graphql.ts";
+import type { CreateModelFieldsInput, CreateModelFieldsMutation } from "../../__generated__/graphql.ts";
 import { CREATE_MODEL_FIELDS_MUTATION } from "../app/edit/operation.ts";
 import { ClientError, formatClientErrorForUser } from "../app/error.ts";
 import type { Context } from "../command/context.ts";
@@ -89,18 +89,7 @@ export const addFields = async (
     syncJson: SyncJson;
     filesync: FileSync;
     modelApiIdentifier: string;
-    fields: Array<{
-      name: string;
-      fieldType: string;
-      required?: boolean;
-      unique?: boolean;
-      metafield?: {
-        namespace: string;
-        key?: string;
-        type: string;
-        list?: boolean;
-      };
-    }>;
+    fields: CreateModelFieldsInput[];
   },
 ): Promise<AddFieldsResult> => {
   let result;
@@ -117,6 +106,7 @@ export const addFields = async (
             ...(f.required !== undefined && { required: f.required }),
             ...(f.unique !== undefined && { unique: f.unique }),
             ...(f.metafield !== undefined && { metafield: f.metafield }),
+            ...(f.relationship !== undefined && { relationship: f.relationship }),
           })),
         },
       })

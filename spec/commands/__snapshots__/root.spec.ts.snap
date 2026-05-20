@@ -3039,6 +3039,10 @@ exports[`root > when shopify is given > prints the usage for sync when --help is
 Syncs Shopify data from installed shops into your Gadget app. With no
 selector, all valid installed shops are synced.
 
+By default, syncs the last 10 records per
+Shopify model. Use --last to change the limit, or
+--all to sync all matching records.
+
 USAGE
   ggt shopify sync [flags]
 
@@ -3051,6 +3055,13 @@ FLAGS
   -e, --env, --environment <env>
         Environment to use. Defaults to the development environment. Production
         is read-only for most commands.
+
+      --all
+        Sync all matching records instead of the default last 10 records per
+        model
+
+      --last <count>
+        Sync the last N records per model. Defaults to 10
 
       --models <models>
         Comma-separated Shopify models to sync
@@ -3087,6 +3098,8 @@ EXAMPLES
   $ ggt shopify sync --shop-ids 123,456
   $ ggt shopify sync --models shopifyProduct,shopifyOrder
   $ ggt shopify sync --since 2024-01-01
+  $ ggt shopify sync --last 50
+  $ ggt shopify sync --all
 "
 `;
 
@@ -3099,6 +3112,8 @@ USAGE
 FLAGS
   -a, --app, --application <app>  Gadget app to use
   -e, --env, --environment <env>  Environment to use
+      --all                       Sync all matching records instead of the default last 10 records per model
+      --last <count>              Sync the last N records per model. Defaults to 10
       --models <models>           Comma-separated Shopify models to sync
       --shop-ids <ids>            Comma-separated Shopify shop record IDs to sync
       --since <date>              Sync records updated since this date
@@ -3110,6 +3125,8 @@ EXAMPLES
   $ ggt shopify sync --shop-ids 123,456
   $ ggt shopify sync --models shopifyProduct,shopifyOrder
   $ ggt shopify sync --since 2024-01-01
+  $ ggt shopify sync --last 50
+  $ ggt shopify sync --all
 
 Run ggt shopify sync --help for more information.
 "

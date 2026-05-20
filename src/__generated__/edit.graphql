@@ -398,7 +398,7 @@ type Mutation {
   startLogsExport(end: DateTime, query: String!, start: DateTime!): Boolean!
   startNextBackgroundActionAttemptNow(id: String!): BackgroundAction!
   syncToWebflow: Boolean!
-  triggerRunShopifySync(shopIds: [String!], store: String, models: [String!], syncSince: DateTime): TriggerRunShopifySyncResult
+  triggerRunShopifySync(shopIds: [String!], store: String, models: [String!], syncSince: DateTime, syncLast: Int): TriggerRunShopifySyncResult
   uninstallShop(shopId: String!): UninstallShopResult
   unpauseEnvironment: UnpauseEnvironmentResult!
   unregisterWebhooks(apiKeys: [String!], connectionKey: String!, modelKeys: [String!]): UnregisterWebhooksResult

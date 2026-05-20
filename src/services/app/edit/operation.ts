@@ -323,8 +323,8 @@ export const SHOPIFY_STATUS_QUERY = sprint(/* GraphQL */ `
 export type SHOPIFY_STATUS_QUERY = typeof SHOPIFY_STATUS_QUERY;
 
 export const TRIGGER_RUN_SHOPIFY_SYNC_MUTATION = sprint(/* GraphQL */ `
-  mutation TriggerRunShopifySync($shopIds: [String!], $store: String, $models: [String!], $syncSince: DateTime) {
-    triggerRunShopifySync(shopIds: $shopIds, store: $store, models: $models, syncSince: $syncSince) {
+  mutation TriggerRunShopifySync($shopIds: [String!], $store: String, $models: [String!], $syncSince: DateTime, $syncLast: Int) {
+    triggerRunShopifySync(shopIds: $shopIds, store: $store, models: $models, syncSince: $syncSince, syncLast: $syncLast) {
       success
       successfulShopIds
       failedShops {

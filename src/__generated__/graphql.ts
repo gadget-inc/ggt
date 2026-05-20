@@ -1742,6 +1742,7 @@ export type TriggerRunShopifySyncMutationVariables = Exact<{
   store?: InputMaybe<Scalars['String']['input']>;
   models?: InputMaybe<Array<Scalars['String']['input']>>;
   syncSince?: InputMaybe<Scalars['DateTime']['input']>;
+  syncLast?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 export type TriggerRunShopifySyncMutation = {

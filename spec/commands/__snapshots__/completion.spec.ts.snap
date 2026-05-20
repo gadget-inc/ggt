@@ -16,7 +16,7 @@ _ggt_completions() {
     --from-file)
       COMPREPLY=($(compgen -f -- "$cur"))
       return ;;
-    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--type|--resource|--model|--namespace|--key|--metafield-type|--to|--through|--inverse-field|--app-name|--shopify-organization-id|--store|--shop-ids|--models|--since|--start|--port|-p)
+    --file-push-delay|--file-watch-debounce|--file-watch-poll-interval|--file-watch-poll-timeout|--file-watch-rename-timeout|--allow|--type|--resource|--model|--namespace|--key|--metafield-type|--to|--through|--inverse-field|--app-name|--shopify-organization-id|--store|--shop-ids|--models|--since|--last|--start|--port|-p)
       return ;;
   esac
 
@@ -307,7 +307,7 @@ _ggt_completions() {
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           sync)
-            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --store --shop-ids --models --since --help -h --version --verbose -v --telemetry --json" -- "$cur"))
+            COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --store --shop-ids --models --since --last --all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
             ;;
           *)
             COMPREPLY=($(compgen -W "--application -a --app --environment -e --env --allow-different-app --allow-unknown-directory --allow --allow-all --help -h --version --verbose -v --telemetry --json" -- "$cur"))
@@ -952,6 +952,8 @@ complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --
 complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l shop-ids -x -d 'Comma-separated Shopify shop record IDs to sync'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l models -x -d 'Comma-separated Shopify models to sync'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l since -x -d 'Sync records updated since this date'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l last -x -d 'Sync the last N records per model. Defaults to 10'
+complete -c ggt -n '__ggt_seen_subcommand shopify -- sync -- --application -a --app --environment -e --env --allow' -l all -d 'Sync all matching records instead of the default last 10 records per model'
 complete -c ggt -n '__fish_seen_subcommand_from shopify' -l help -s h -d 'Show command help'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- connect -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
 complete -c ggt -n '__ggt_seen_subcommand shopify -- status -- --application -a --app --environment -e --env --allow' -l help -s h -d 'Show command help'
@@ -1900,7 +1902,9 @@ _ggt_shopify() {
             '--store[Sync a specific installed store only]:value: ' \\
             '--shop-ids[Comma-separated Shopify shop record IDs to sync]:value: ' \\
             '--models[Comma-separated Shopify models to sync]:value: ' \\
-            '--since[Sync records updated since this date]:value: '
+            '--since[Sync records updated since this date]:value: ' \\
+            '--last[Sync the last N records per model. Defaults to 10]:value: ' \\
+            '--all[Sync all matching records instead of the default last 10 records per model]'
           ;;
       esac
       ;;

@@ -28,6 +28,7 @@ import { ts } from "../services/output/timestamp.ts";
 
 const SHOPIFY_AUTH_LOGIN_ERROR_MESSAGE = "Shopify CLI session not found. Run `shopify auth login` and try again.";
 const STATUS_LABEL_WIDTH = 24;
+const DEFAULT_SHOPIFY_SYNC_LAST = 10;
 
 const ConnectFlags = {
   "--app-name": {
@@ -84,6 +85,23 @@ const SyncFlags = {
     description: "Sync records updated since this date",
     valueName: "date",
   },
+  "--last": {
+    type: (value: string): number => {
+      const syncLast = Number(value);
+      if (!Number.isInteger(syncLast) || syncLast <= 0) {
+        throw new FlagError(`Invalid --last value ${colors.code(value)}. Use a positive integer like ${colors.code("10")}.`, {
+          usageHint: false,
+        });
+      }
+      return syncLast;
+    },
+    description: `Sync the last N records per model. Defaults to ${DEFAULT_SHOPIFY_SYNC_LAST}`,
+    valueName: "count",
+  },
+  "--all": {
+    type: Boolean,
+    description: `Sync all matching records instead of the default last ${DEFAULT_SHOPIFY_SYNC_LAST} records per model`,
+  },
 };
 
 type ConnectFlagsResult = FlagsResult<typeof SyncJsonFlags & typeof ConnectFlags>;
@@ -128,6 +146,10 @@ export default defineCommand({
       details: sprint`
         Syncs Shopify data from installed shops into your Gadget app. With no
         selector, all valid installed shops are synced.
+
+        By default, syncs the last ${DEFAULT_SHOPIFY_SYNC_LAST} records per
+        Shopify model. Use ${colors.code("--last")} to change the limit, or
+        ${colors.code("--all")} to sync all matching records.
       `,
       examples: [
         "ggt shopify sync",
@@ -135,6 +157,8 @@ export default defineCommand({
         "ggt shopify sync --shop-ids 123,456",
         "ggt shopify sync --models shopifyProduct,shopifyOrder",
         "ggt shopify sync --since 2024-01-01",
+        "ggt shopify sync --last 50",
+        "ggt shopify sync --all",
       ],
       flags: SyncFlags,
       run: async (ctx, flags) => {
@@ -285,15 +309,20 @@ const runSync = async (ctx: Context, flags: SyncFlagsResult): Promise<void> => {
     throw new FlagError("--store and --shop-ids can't both be provided.", { usageHint: false });
   }
 
+  if (flags["--all"] && flags["--last"] !== undefined) {
+    throw new FlagError("--all and --last can't both be provided.", { usageHint: false });
+  }
+
   const shopIds = flags["--shop-ids"];
   const models = flags["--models"];
   const syncSince = flags["--since"]?.toISOString();
+  const syncLast = flags["--all"] ? undefined : (flags["--last"] ?? DEFAULT_SHOPIFY_SYNC_LAST);
 
   const syncJson = await loadShopifySyncJson(ctx, flags);
   const result = (
     await syncJson.edit.mutate({
       mutation: TRIGGER_RUN_SHOPIFY_SYNC_MUTATION,
-      variables: { shopIds, store, models, syncSince },
+      variables: { shopIds, store, models, syncSince, syncLast },
     })
   ).triggerRunShopifySync;
 
@@ -324,6 +353,17 @@ const runSync = async (ctx: Context, flags: SyncFlagsResult): Promise<void> => {
 
   if (syncSince) {
     println({ content: `since:  ${syncSince}` });
+  }
+
+  if (syncLast !== undefined) {
+    println({ content: `last:   ${pluralize("record", syncLast, true)}` });
+  } else if (flags["--all"]) {
+    println({ content: "records: all" });
+  }
+
+  if (successfulShopCount > 0) {
+    const url = `https://${syncJson.environment.application.slug}.${config.domains.app}/edit/${syncJson.environment.name}/model/DataModel-Shopify-Sync/data?sort=Descending&column=createdAt`;
+    println({ content: `View sync records: ${colors.link(url)}` });
   }
 
   if (result.failedShops.length > 0) {

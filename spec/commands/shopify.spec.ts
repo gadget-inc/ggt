@@ -235,7 +235,7 @@ describe("shopify", () => {
 
   it("starts Shopify sync for all installed shops when no selector is passed", async () => {
     mockShopifySyncResponse(
-      {},
+      { syncLast: 10 },
       {
         success: true,
         successfulShopIds: ["1", "2"],
@@ -246,11 +246,14 @@ describe("shopify", () => {
     await runCommand(testCtx, shopify, "sync");
 
     expectStdout().toContain("Started Shopify sync for 2 shops.");
+    expectStdout().toContain("last:   10 records");
+    expectStdout().toContain("View sync records:");
+    expectStdout().toContain("/edit/development/model/DataModel-Shopify-Sync/data?");
   });
 
   it("starts Shopify sync for a store selector", async () => {
     mockShopifySyncResponse(
-      { store: "mystore.myshopify.com" },
+      { store: "mystore.myshopify.com", syncLast: 10 },
       {
         success: true,
         successfulShopIds: ["1"],
@@ -261,11 +264,14 @@ describe("shopify", () => {
     await runCommand(testCtx, shopify, "sync", "--store", "mystore.myshopify.com");
 
     expectStdout().toContain("Started Shopify sync for mystore.myshopify.com.");
+    expectStdout().toContain("last:   10 records");
+    expectStdout().toContain("View sync records:");
+    expectStdout().toContain("/edit/development/model/DataModel-Shopify-Sync/data?");
   });
 
   it("starts Shopify sync for comma-separated shop IDs", async () => {
     mockShopifySyncResponse(
-      { shopIds: ["1", "2"] },
+      { shopIds: ["1", "2"], syncLast: 10 },
       {
         success: true,
         successfulShopIds: ["1", "2"],
@@ -276,11 +282,14 @@ describe("shopify", () => {
     await runCommand(testCtx, shopify, "sync", "--shop-ids", "1, 2");
 
     expectStdout().toContain("Started Shopify sync for 2 shops.");
+    expectStdout().toContain("last:   10 records");
+    expectStdout().toContain("View sync records:");
+    expectStdout().toContain("/edit/development/model/DataModel-Shopify-Sync/data?");
   });
 
   it("trims and ignores empty values in shop ID lists", async () => {
     mockShopifySyncResponse(
-      { shopIds: ["1", "2", "3"] },
+      { shopIds: ["1", "2", "3"], syncLast: 10 },
       {
         success: true,
         successfulShopIds: ["1", "2", "3"],
@@ -291,6 +300,9 @@ describe("shopify", () => {
     await runCommand(testCtx, shopify, "sync", "--shop-ids", " 1, , 2 ,, 3 ");
 
     expectStdout().toContain("Started Shopify sync for 3 shops.");
+    expectStdout().toContain("last:   10 records");
+    expectStdout().toContain("View sync records:");
+    expectStdout().toContain("/edit/development/model/DataModel-Shopify-Sync/data?");
   });
 
   it("errors when shop ID lists have no values", async () => {
@@ -303,6 +315,7 @@ describe("shopify", () => {
       {
         models: ["shopifyProduct", "shopifyOrder"],
         syncSince: "2024-01-01T00:00:00.000Z",
+        syncLast: 10,
       },
       {
         success: true,
@@ -316,11 +329,14 @@ describe("shopify", () => {
     expectStdout().toContain("Started Shopify sync for 1 shop.");
     expectStdout().toContain("models: shopifyProduct, shopifyOrder");
     expectStdout().toContain("since:  2024-01-01T00:00:00.000Z");
+    expectStdout().toContain("last:   10 records");
+    expectStdout().toContain("View sync records:");
+    expectStdout().toContain("/edit/development/model/DataModel-Shopify-Sync/data?");
   });
 
   it("trims and ignores empty values in model lists", async () => {
     mockShopifySyncResponse(
-      { models: ["shopifyProduct", "shopifyOrder", "shopifyCustomer"] },
+      { models: ["shopifyProduct", "shopifyOrder", "shopifyCustomer"], syncLast: 10 },
       {
         success: true,
         successfulShopIds: ["1"],
@@ -332,6 +348,9 @@ describe("shopify", () => {
 
     expectStdout().toContain("Started Shopify sync for 1 shop.");
     expectStdout().toContain("models: shopifyProduct, shopifyOrder, shopifyCustomer");
+    expectStdout().toContain("last:   10 records");
+    expectStdout().toContain("View sync records:");
+    expectStdout().toContain("/edit/development/model/DataModel-Shopify-Sync/data?");
   });
 
   it("errors when model lists have no values", async () => {
@@ -339,9 +358,51 @@ describe("shopify", () => {
     expect(error.message).toContain("--models must include at least one value");
   });
 
+  it("passes an explicit last record limit to Shopify sync", async () => {
+    mockShopifySyncResponse(
+      { syncLast: 25 },
+      {
+        success: true,
+        successfulShopIds: ["1"],
+        failedShops: [],
+      },
+    );
+
+    await runCommand(testCtx, shopify, "sync", "--last", "25");
+
+    expectStdout().toContain("Started Shopify sync for 1 shop.");
+    expectStdout().toContain("last:   25 records");
+  });
+
+  it("omits the last record limit when syncing all records", async () => {
+    mockShopifySyncResponse(
+      {},
+      {
+        success: true,
+        successfulShopIds: ["1"],
+        failedShops: [],
+      },
+    );
+
+    await runCommand(testCtx, shopify, "sync", "--all");
+
+    expectStdout().toContain("Started Shopify sync for 1 shop.");
+    expectStdout().toContain("records: all");
+  });
+
+  it("errors when last record limit is invalid", async () => {
+    const error = await expectError(() => runCommand(testCtx, shopify, "sync", "--last", "0"));
+    expect(error.message).toContain("Invalid --last value");
+  });
+
+  it("errors when all and last are both provided", async () => {
+    const error = await expectError(() => runCommand(testCtx, shopify, "sync", "--all", "--last", "25"));
+    expect(error.message).toContain("--all and --last can't both be provided");
+  });
+
   it("prints partial Shopify sync failures", async () => {
     mockShopifySyncResponse(
-      { shopIds: ["1", "2", "3"] },
+      { shopIds: ["1", "2", "3"], syncLast: 10 },
       {
         success: false,
         successfulShopIds: ["1", "2"],
@@ -352,13 +413,16 @@ describe("shopify", () => {
     await runCommand(testCtx, shopify, "sync", "--shop-ids", "1,2,3");
 
     expectStdout().toContain("Started Shopify sync for 2 shops. Failed for 1 shop.");
+    expectStdout().toContain("last:   10 records");
+    expectStdout().toContain("View sync records:");
+    expectStdout().toContain("/edit/development/model/DataModel-Shopify-Sync/data?");
     expectStdout().toContain("Failed shops:");
     expectStdout().toContain("  3: Shop not found");
   });
 
   it("errors when no Shopify shops matched", async () => {
     mockShopifySyncResponse(
-      { store: "missing.myshopify.com" },
+      { store: "missing.myshopify.com", syncLast: 10 },
       {
         success: false,
         successfulShopIds: [],

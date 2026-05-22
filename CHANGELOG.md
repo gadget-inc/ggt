@@ -1,5 +1,71 @@
 # @gadgetinc/ggt
 
+## 3.1.0
+
+### Minor Changes
+
+- 4ce9d8a: Add `--required`, `--unique`, and `--metafield` flags to `ggt field add`. The
+  `--metafield` flag links a field to a Shopify metafield and accepts
+  `--namespace`, `--key`, `--metafield-type`, and `--list`.
+- 7c09db4: Add `--to`, `--through`, and `--inverse-field` flags to `ggt field add` for
+  creating relationship fields. `--to` is required for any relationship type,
+  `--through` is required for `:hasManyThrough`, and `--inverse-field` overrides
+  the auto-generated inverse field name on the related model.
+
+  ```sh
+  ggt field add post/author:belongsTo --to user
+  ggt field add user/posts:hasMany --to post
+  ggt field add post/tags:hasManyThrough --to tag --through postTag
+  ```
+
+- 1e22257: Add model field lifecycle management command `ggt field`. `ggt field add` is the
+  first subcommand to be supported, and matches existing `ggt add field`
+  behavior.
+- 53b83ae: Add `ggt field remove` and `ggt field rename` subcommands for managing fields
+  on models.
+- bb160f6: Add Shopify model enable support to `ggt model add`.
+
+  You can now run `ggt model add <path> --type shopify` (with optional
+  `--resource <shopifyModelKey>`) to enable Shopify models.
+
+- 2751e62: Add `ggt shopify connect` to configure a Gadget app's Shopify connection.
+
+  This command imports your local Shopify CLI session, creates the Shopify
+  connection files, and syncs them into your project.
+
+  `ggt shopify connect` only works for apps on framework version 1.7 or newer.
+
+- 6a99f77: Add `ggt shopify status` to show the status of your Gadget app's Shopify connection.
+
+  The command prints your current Shopify API version (and whether a newer
+  version is available), the enabled Shopify models, the authenticated
+  Shopify partner account, and the connected Shopify app's name and client id.
+
+- 3e7de0b: Add requested scopes and webhook topics to `ggt shopify status`.
+- f6a0ab6: Add `ggt shopify sync` to start Shopify data syncs for installed shops.
+
+  The command supports `--store`, `--shop-ids`, `--models`, `--since`, and
+  `--last` filters. By default, syncs the last 10 records per Shopify model;
+  use `--all` to sync all matching records.
+
+  Examples:
+
+  ```sh
+  ggt shopify sync
+  ggt shopify sync --store mystore.myshopify.com
+  ggt shopify sync --shop-ids 1,2,3
+  ggt shopify sync --models shopifyProduct,shopifyOrder
+  ggt shopify sync --since 2024-01-01
+  ggt shopify sync --last 50
+  ggt shopify sync --all
+  ```
+
+### Patch Changes
+
+- d13ce10: Fix crash during `ggt dev` when a file is deleted between stat and read
+
+  Handle ENOENT errors from `fs.readFile()` in `_sendChangesToEnvironment` the same way they're already handled for `fs.stat()` — by skipping the file instead of crashing the session.
+
 ## 3.0.0
 
 ### Major Changes

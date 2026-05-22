@@ -3033,6 +3033,105 @@ Run ggt shopify status --help for more information.
 "
 `;
 
+exports[`root > when shopify is given > prints the usage for sync when --help is passed 1`] = `
+"Sync Shopify data to your app
+
+Syncs Shopify data from installed shops into your Gadget app. With no
+selector, all valid installed shops are synced.
+
+By default, syncs the last 10 records per
+Shopify model. Use --last to change the limit, or
+--all to sync all matching records.
+
+USAGE
+  ggt shopify sync [flags]
+
+FLAGS
+  -a, --app, --application <app>
+        Gadget app to use. The app slug is the subdomain portion of your app URL
+        (e.g., my-app from my-app.gadget.app). Can be omitted when
+        .gadget/sync.json already records the app.
+
+  -e, --env, --environment <env>
+        Environment to use. Defaults to the development environment. Production
+        is read-only for most commands.
+
+      --all
+        Sync all matching records instead of the default last 10 records per
+        model
+
+      --last <count>
+        Sync the last N records per model. Defaults to 10
+
+      --models <models>
+        Comma-separated Shopify models to sync
+
+      --shop-ids <ids>
+        Comma-separated Shopify shop record IDs to sync
+
+      --since <date>
+        Sync records updated since this date
+
+      --store <domain>
+        Sync a specific installed store only
+
+ADDITIONAL FLAGS
+      --allow <flag,...>
+        Enable allow flags (comma-separated)
+
+      --allow-all
+        Enable all --allow-* flags
+
+      --allow-different-app
+        Allow syncing with a different app. Overrides the app recorded in
+        .gadget/sync.json with the one specified by --app. Use this when you
+        want to reuse an existing directory for a different app.
+
+      --allow-unknown-directory
+        Allow syncing to an existing directory. Normally, a directory must be
+        empty or already contain .gadget/sync.json. Use this when you want to
+        initialize sync in a directory with existing content.
+
+EXAMPLES
+  $ ggt shopify sync
+  $ ggt shopify sync --store mystore.myshopify.com
+  $ ggt shopify sync --shop-ids 123,456
+  $ ggt shopify sync --models shopifyProduct,shopifyOrder
+  $ ggt shopify sync --since 2024-01-01
+  $ ggt shopify sync --last 50
+  $ ggt shopify sync --all
+"
+`;
+
+exports[`root > when shopify is given > prints the usage for sync when -h is passed 1`] = `
+"Sync Shopify data to your app
+
+USAGE
+  ggt shopify sync [flags]
+
+FLAGS
+  -a, --app, --application <app>  Gadget app to use
+  -e, --env, --environment <env>  Environment to use
+      --all                       Sync all matching records instead of the default last 10 records per model
+      --last <count>              Sync the last N records per model. Defaults to 10
+      --models <models>           Comma-separated Shopify models to sync
+      --shop-ids <ids>            Comma-separated Shopify shop record IDs to sync
+      --since <date>              Sync records updated since this date
+      --store <domain>            Sync a specific installed store only
+
+EXAMPLES
+  $ ggt shopify sync
+  $ ggt shopify sync --store mystore.myshopify.com
+  $ ggt shopify sync --shop-ids 123,456
+  $ ggt shopify sync --models shopifyProduct,shopifyOrder
+  $ ggt shopify sync --since 2024-01-01
+  $ ggt shopify sync --last 50
+  $ ggt shopify sync --all
+
+Run ggt shopify sync --help for more information.
+"
+`;
+
 exports[`root > when shopify is given > prints the usage when --help is passed 1`] = `
 "Manage Shopify connection
 
@@ -3042,6 +3141,7 @@ USAGE
 COMMANDS
   connect    Configure the Shopify connection for your application
   status     Show the status of your Shopify connection
+  sync       Sync Shopify data to your app
 
 FLAGS
   -a, --app, --application <app>
@@ -3073,6 +3173,7 @@ ADDITIONAL FLAGS
 EXAMPLES
   $ ggt shopify connect
   $ ggt shopify status
+  $ ggt shopify sync
   $ ggt shopify connect --app-name my-shop
 "
 `;
@@ -3086,6 +3187,7 @@ USAGE
 COMMANDS
   connect    Configure the Shopify connection for your application
   status     Show the status of your Shopify connection
+  sync       Sync Shopify data to your app
 
 FLAGS
   -a, --app, --application <app>  Gadget app to use
@@ -3094,6 +3196,7 @@ FLAGS
 EXAMPLES
   $ ggt shopify connect
   $ ggt shopify status
+  $ ggt shopify sync
   $ ggt shopify connect --app-name my-shop
 
 Run ggt shopify --help for more information.
@@ -3109,6 +3212,7 @@ USAGE
 COMMANDS
   connect    Configure the Shopify connection for your application
   status     Show the status of your Shopify connection
+  sync       Sync Shopify data to your app
 
 FLAGS
   -a, --app, --application <app>  Gadget app to use
@@ -3117,6 +3221,7 @@ FLAGS
 EXAMPLES
   $ ggt shopify connect
   $ ggt shopify status
+  $ ggt shopify sync
   $ ggt shopify connect --app-name my-shop
 
 Run ggt shopify --help for more information.

@@ -10,6 +10,7 @@ import {
   IMPORT_SHOPIFY_CLI_SESSION_MUTATION,
   SHOPIFY_ORGANIZATIONS_QUERY,
   SHOPIFY_STATUS_QUERY,
+  TRIGGER_RUN_SHOPIFY_SYNC_MUTATION,
   type ShopifyOrganization,
 } from "../services/app/edit/operation.ts";
 import { defineCommand } from "../services/command/command.ts";
@@ -18,7 +19,7 @@ import { FlagError, type FlagsResult } from "../services/command/flag.ts";
 import { config } from "../services/config/config.ts";
 import { UnknownDirectoryError } from "../services/filesync/error.ts";
 import { FileSync } from "../services/filesync/filesync.ts";
-import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory } from "../services/filesync/sync-json.ts";
+import { SyncJson, SyncJsonFlags, loadSyncJsonDirectory, type SyncJsonFlagsResult } from "../services/filesync/sync-json.ts";
 import colors from "../services/output/colors.ts";
 import { println } from "../services/output/print.ts";
 import { sprint, sprintln } from "../services/output/sprint.ts";
@@ -27,6 +28,7 @@ import { ts } from "../services/output/timestamp.ts";
 
 const SHOPIFY_AUTH_LOGIN_ERROR_MESSAGE = "Shopify CLI session not found. Run `shopify auth login` and try again.";
 const STATUS_LABEL_WIDTH = 24;
+const DEFAULT_SHOPIFY_SYNC_LAST = 10;
 
 const ConnectFlags = {
   "--app-name": {
@@ -40,13 +42,76 @@ const ConnectFlags = {
   },
 };
 
+const SyncFlags = {
+  "--store": {
+    type: String,
+    description: "Sync a specific installed store only",
+    valueName: "domain",
+  },
+  "--shop-ids": {
+    type: (value: string): string[] => {
+      const ids = value
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+      if (ids.length === 0) throw new FlagError("--shop-ids must include at least one value.", { usageHint: false });
+      return ids;
+    },
+    description: "Comma-separated Shopify shop record IDs to sync",
+    valueName: "ids",
+  },
+  "--models": {
+    type: (value: string): string[] => {
+      const models = value
+        .split(",")
+        .map((model) => model.trim())
+        .filter(Boolean);
+      if (models.length === 0) throw new FlagError("--models must include at least one value.", { usageHint: false });
+      return models;
+    },
+    description: "Comma-separated Shopify models to sync",
+    valueName: "models",
+  },
+  "--since": {
+    type: (value: string): Date => {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        throw new FlagError(`Invalid --since value ${colors.code(value)}. Use a date like ${colors.code("2024-01-01")}.`, {
+          usageHint: false,
+        });
+      }
+      return date;
+    },
+    description: "Sync records updated since this date",
+    valueName: "date",
+  },
+  "--last": {
+    type: (value: string): number => {
+      const syncLast = Number(value);
+      if (!Number.isInteger(syncLast) || syncLast <= 0) {
+        throw new FlagError(`Invalid --last value ${colors.code(value)}. Use a positive integer like ${colors.code("10")}.`, {
+          usageHint: false,
+        });
+      }
+      return syncLast;
+    },
+    description: `Sync the last N records per model. Defaults to ${DEFAULT_SHOPIFY_SYNC_LAST}`,
+    valueName: "count",
+  },
+  "--all": {
+    type: Boolean,
+    description: `Sync all matching records instead of the default last ${DEFAULT_SHOPIFY_SYNC_LAST} records per model`,
+  },
+};
+
 type ConnectFlagsResult = FlagsResult<typeof SyncJsonFlags & typeof ConnectFlags>;
 type StatusFlagsResult = FlagsResult<typeof SyncJsonFlags>;
+type SyncFlagsResult = FlagsResult<typeof SyncJsonFlags & typeof SyncFlags>;
 
 export default defineCommand({
   name: "shopify",
   description: "Manage Shopify connection",
-  examples: ["ggt shopify connect", "ggt shopify status", "ggt shopify connect --app-name my-shop"],
+  examples: ["ggt shopify connect", "ggt shopify status", "ggt shopify sync", "ggt shopify connect --app-name my-shop"],
   flags: SyncJsonFlags,
   subcommands: (sub) => ({
     connect: sub({
@@ -74,6 +139,30 @@ export default defineCommand({
       examples: ["ggt shopify status"],
       run: async (ctx, flags) => {
         await runStatus(ctx, flags);
+      },
+    }),
+    sync: sub({
+      description: "Sync Shopify data to your app",
+      details: sprint`
+        Syncs Shopify data from installed shops into your Gadget app. With no
+        selector, all valid installed shops are synced.
+
+        By default, syncs the last ${DEFAULT_SHOPIFY_SYNC_LAST} records per
+        Shopify model. Use ${colors.code("--last")} to change the limit, or
+        ${colors.code("--all")} to sync all matching records.
+      `,
+      examples: [
+        "ggt shopify sync",
+        "ggt shopify sync --store mystore.myshopify.com",
+        "ggt shopify sync --shop-ids 123,456",
+        "ggt shopify sync --models shopifyProduct,shopifyOrder",
+        "ggt shopify sync --since 2024-01-01",
+        "ggt shopify sync --last 50",
+        "ggt shopify sync --all",
+      ],
+      flags: SyncFlags,
+      run: async (ctx, flags) => {
+        await runSync(ctx, flags);
       },
     }),
   }),
@@ -165,12 +254,18 @@ const resolveShopifyOrganizationId = async (syncJson: SyncJson, providedOrganiza
 
 const statusLine = (label: string, value: string): string => `${label.padEnd(STATUS_LABEL_WIDTH)}${value}`;
 
-const runStatus = async (ctx: Context, flags: StatusFlagsResult): Promise<void> => {
+const loadShopifySyncJson = async (ctx: Context, flags: SyncJsonFlagsResult): Promise<SyncJson> => {
   const directory = await loadSyncJsonDirectory(process.cwd());
   const syncJson = await SyncJson.load(ctx, { command: "shopify", flags, directory });
   if (!syncJson) {
     throw new UnknownDirectoryError({ command: "shopify", flags, directory });
   }
+
+  return syncJson;
+};
+
+const runStatus = async (ctx: Context, flags: StatusFlagsResult): Promise<void> => {
+  const syncJson = await loadShopifySyncJson(ctx, flags);
 
   const { shopifyIdentityConnectionState: identity, shopifyConnection: conn } = await syncJson.edit.query({
     query: SHOPIFY_STATUS_QUERY,
@@ -204,12 +299,84 @@ const runStatus = async (ctx: Context, flags: StatusFlagsResult): Promise<void> 
   println({ content: statusLine("Webhook topics:", webhookTopics) });
 };
 
-const runConnect = async (ctx: Context, flags: ConnectFlagsResult): Promise<void> => {
-  const directory = await loadSyncJsonDirectory(process.cwd());
-  const syncJson = await SyncJson.load(ctx, { command: "shopify", flags, directory });
-  if (!syncJson) {
-    throw new UnknownDirectoryError({ command: "shopify", flags, directory });
+const runSync = async (ctx: Context, flags: SyncFlagsResult): Promise<void> => {
+  const store = flags["--store"]?.trim();
+  if (flags["--store"] !== undefined && !store) {
+    throw new FlagError("--store must not be empty.", { usageHint: false });
   }
+
+  if (store && flags["--shop-ids"] !== undefined) {
+    throw new FlagError("--store and --shop-ids can't both be provided.", { usageHint: false });
+  }
+
+  if (flags["--all"] && flags["--last"] !== undefined) {
+    throw new FlagError("--all and --last can't both be provided.", { usageHint: false });
+  }
+
+  const shopIds = flags["--shop-ids"];
+  const models = flags["--models"];
+  const syncSince = flags["--since"]?.toISOString();
+  const syncLast = flags["--all"] ? undefined : (flags["--last"] ?? DEFAULT_SHOPIFY_SYNC_LAST);
+
+  const syncJson = await loadShopifySyncJson(ctx, flags);
+  const result = (
+    await syncJson.edit.mutate({
+      mutation: TRIGGER_RUN_SHOPIFY_SYNC_MUTATION,
+      variables: { shopIds, store, models, syncSince, syncLast },
+    })
+  ).triggerRunShopifySync;
+
+  if (!result || (result.successfulShopIds.length === 0 && result.failedShops.length === 0)) {
+    throw new FlagError("No installed Shopify shops matched.", { usageHint: false });
+  }
+
+  const successfulShopCount = result.successfulShopIds.length;
+  const failedShopCount = result.failedShops.length;
+  const successfulShops = pluralize("shop", successfulShopCount, true);
+  const failedShops = pluralize("shop", failedShopCount, true);
+
+  // Print one summary line for the three possible outcomes: all started, none started, or partial success.
+  let summary: string;
+  if (failedShopCount === 0) {
+    summary = `${chalk.greenBright(symbol.tick)} Started Shopify sync for ${store ?? successfulShops}.`;
+  } else if (successfulShopCount === 0) {
+    summary = `${colors.warning(symbol.warning)} Failed to start Shopify sync for ${failedShops}.`;
+  } else {
+    summary = `${colors.warning(symbol.warning)} Started Shopify sync for ${successfulShops}. Failed for ${failedShops}.`;
+  }
+
+  println({ ensureEmptyLineAbove: true, content: summary });
+
+  if (models) {
+    println({ content: `models: ${models.join(", ")}` });
+  }
+
+  if (syncSince) {
+    println({ content: `since:  ${syncSince}` });
+  }
+
+  if (syncLast !== undefined) {
+    println({ content: `last:   ${pluralize("record", syncLast, true)}` });
+  } else if (flags["--all"]) {
+    println({ content: "records: all" });
+  }
+
+  if (successfulShopCount > 0) {
+    const url = `https://${syncJson.environment.application.slug}.${config.domains.app}/edit/${syncJson.environment.name}/model/DataModel-Shopify-Sync/data?sort=Descending&column=createdAt`;
+    println({ content: `View sync records: ${colors.link(url)}` });
+  }
+
+  if (result.failedShops.length > 0) {
+    println({ content: "" });
+    println({ content: "Failed shops:" });
+    for (const failedShop of result.failedShops) {
+      println({ content: `  ${failedShop.shopId}: ${failedShop.failureReason}` });
+    }
+  }
+};
+
+const runConnect = async (ctx: Context, flags: ConnectFlagsResult): Promise<void> => {
+  const syncJson = await loadShopifySyncJson(ctx, flags);
 
   const shopifyCliSessionPayload = await loadShopifyCliSessionPayload();
   const importResult = await syncJson.edit.mutate({

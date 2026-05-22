@@ -1150,7 +1150,10 @@ export type MutationStartNextBackgroundActionAttemptNowArgs = {
 
 
 export type MutationTriggerRunShopifySyncArgs = {
-  shopIds: Array<Scalars['String']['input']>;
+  models?: InputMaybe<Array<Scalars['String']['input']>>;
+  shopIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  store?: InputMaybe<Scalars['String']['input']>;
+  syncSince?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 
@@ -1541,9 +1544,15 @@ export type TeamResult = {
   teamMembers: Array<TeamMember>;
 };
 
+export type TriggerRunShopifySyncFailedShop = {
+  __typename?: 'TriggerRunShopifySyncFailedShop';
+  failureReason: Scalars['String']['output'];
+  shopId: Scalars['String']['output'];
+};
+
 export type TriggerRunShopifySyncResult = {
   __typename?: 'TriggerRunShopifySyncResult';
-  failedShopIds: Array<Scalars['String']['output']>;
+  failedShops: Array<TriggerRunShopifySyncFailedShop>;
   success: Scalars['Boolean']['output'];
   successfulShopIds: Array<Scalars['String']['output']>;
 };
@@ -1727,6 +1736,18 @@ export type SetEnvironmentVariableMutation = { setEnvironmentVariable: { remoteF
 export type DeleteEnvironmentVariableMutationVariables = Exact<{ key: string }>;
 
 export type DeleteEnvironmentVariableMutation = { deleteEnvironmentVariable: { remoteFilesVersion: string } };
+
+export type TriggerRunShopifySyncMutationVariables = Exact<{
+  shopIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  store?: InputMaybe<Scalars['String']['input']>;
+  models?: InputMaybe<Array<Scalars['String']['input']>>;
+  syncSince?: InputMaybe<Scalars['DateTime']['input']>;
+  syncLast?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+export type TriggerRunShopifySyncMutation = {
+  triggerRunShopifySync?: { success: boolean; successfulShopIds: string[]; failedShops: { shopId: string; failureReason: string }[] } | null;
+};
 
 export type DeleteEnvironmentMutationVariables = Exact<{ slug: Scalars['String']['input'] }>;
 

@@ -248,7 +248,7 @@ export class Client {
       }
       retryTimeoutId = setTimeout(() => {
         retryTimeoutId = undefined;
-        clientSubscription.resubscribe();
+        performResubscribe();
       }, delay);
 
       return true;
@@ -319,6 +319,30 @@ export class Client {
       unsubscribe();
     };
 
+    const performResubscribe = (newVariables?: Thunk<Subscription["Variables"]> | null): void => {
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+        retryTimeoutId = undefined;
+      }
+      removeConnectedListener();
+      queue.clear();
+      unsubscribe();
+
+      if (newVariables !== undefined) {
+        currentVariables = newVariables;
+      }
+
+      payload.variables = unthunk(currentVariables);
+      currentCtx.log.info("re-subscribing to graphql subscription");
+
+      removeConnectedListener = addConnectedListener();
+      unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(payload, {
+        next: (response) => void queue.add(() => onResponse(response)).catch((err) => onError(new ClientError(subscription, err))),
+        error: (error) => void queue.add(() => onError(new ClientError(subscription, error))),
+        complete: () => void queue.add(() => onComplete()).catch((err) => onError(new ClientError(subscription, err))),
+      });
+    };
+
     const clientSubscription: ClientSubscription<Subscription> = {
       unsubscribe: () => {
         if (retryTimeoutId) {
@@ -328,27 +352,11 @@ export class Client {
         doUnsubscribe();
       },
       resubscribe: (newVariables) => {
-        if (retryTimeoutId) {
-          clearTimeout(retryTimeoutId);
-          retryTimeoutId = undefined;
-        }
-        removeConnectedListener();
-        queue.clear();
-        unsubscribe();
-
-        if (newVariables !== undefined) {
-          currentVariables = newVariables;
-        }
-
-        payload.variables = unthunk(currentVariables);
-        currentCtx.log.info("re-subscribing to graphql subscription");
-
-        removeConnectedListener = addConnectedListener();
-        unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(payload, {
-          next: (response) => void queue.add(() => onResponse(response)).catch((err) => onError(new ClientError(subscription, err))),
-          error: (error) => void queue.add(() => onError(new ClientError(subscription, error))),
-          complete: () => void queue.add(() => onComplete()).catch((err) => onError(new ClientError(subscription, err))),
-        });
+        // A caller-initiated resubscribe is a fresh start, so it restores the
+        // full retry budget. The automatic retry path uses performResubscribe
+        // directly to keep counting down toward maxAttempts.
+        retryCount = 0;
+        performResubscribe(newVariables);
       },
     };
 

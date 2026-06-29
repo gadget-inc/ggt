@@ -258,7 +258,7 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
       }
       retryTimeoutId = setTimeout(() => {
         retryTimeoutId = undefined;
-        clientSubscription.resubscribe();
+        performResubscribe();
       }, delay);
 
       return true;
@@ -314,6 +314,24 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
     existing.push(currentMockSub);
     subscriptions.set(options.subscription, existing);
 
+    // oxlint-disable-next-line no-redundant-type-constituents -- matches Client.subscribe API signature
+    const performResubscribe = (newVariables?: Thunk<unknown> | null): void => {
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+        retryTimeoutId = undefined;
+      }
+
+      if (newVariables !== undefined) {
+        options.variables = newVariables as typeof options.variables;
+      }
+
+      const variables = unthunk(options.variables);
+      currentMockSub = createMockSubscription(variables);
+      const subs = subscriptions.get(options.subscription) ?? [];
+      subs.push(currentMockSub);
+      subscriptions.set(options.subscription, subs);
+    };
+
     // Return a ClientSubscription object with working resubscribe
     const clientSubscription = {
       unsubscribe: vi.fn().mockImplementation(() => {
@@ -324,20 +342,10 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
       }),
       // oxlint-disable-next-line no-redundant-type-constituents -- matches Client.subscribe API signature
       resubscribe: vi.fn().mockImplementation((newVariables?: Thunk<unknown> | null) => {
-        if (retryTimeoutId) {
-          clearTimeout(retryTimeoutId);
-          retryTimeoutId = undefined;
-        }
-
-        if (newVariables !== undefined) {
-          options.variables = newVariables as typeof options.variables;
-        }
-
-        const variables = unthunk(options.variables);
-        currentMockSub = createMockSubscription(variables);
-        const subs = subscriptions.get(options.subscription) ?? [];
-        subs.push(currentMockSub);
-        subscriptions.set(options.subscription, subs);
+        // A caller-initiated resubscribe restores the full retry budget; the
+        // automatic retry path calls performResubscribe to keep counting down.
+        retryCount = 0;
+        performResubscribe(newVariables);
       }),
     };
 

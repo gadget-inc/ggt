@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import deploy from "../../src/commands/deploy.ts";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.ts";
@@ -13,6 +13,7 @@ import { makeMockEditSubscriptions } from "../__support__/graphql.ts";
 import { mockConfirmOnce } from "../__support__/mock.ts";
 import { expectStdout } from "../__support__/output.ts";
 import { expectProcessExit } from "../__support__/process.ts";
+import { timeoutMs } from "../__support__/sleep.ts";
 import { mockSystemTime } from "../__support__/time.ts";
 import { loginTestUser } from "../__support__/user.ts";
 
@@ -546,6 +547,47 @@ describe("deploy", () => {
       https://github.com/gadget-inc/ggt/issues/new?template=bug_report.yml&error-id=00000000-0000-0000-0000-000000000000
       "
     `);
+  });
+
+  it("retries the subscription after a transient connection error instead of failing the deploy", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditSubscriptions();
+
+    await runCommand(testCtx, deploy);
+
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: null,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
+        },
+      },
+    });
+
+    // a transient transport blip should not tear down the deploy
+    const transientError = new ClientError(
+      PUBLISH_STATUS_SUBSCRIPTION,
+      Object.assign(new Error("Connection reset"), { code: "ECONNRESET" }),
+    );
+    await publishStatus.emitError(transientError);
+
+    // instead it resubscribes to resume watching publish status
+    await vi.waitFor(
+      () => {
+        expect(mockEditGraphQL.getAllSubscriptions(PUBLISH_STATUS_SUBSCRIPTION).length).toBe(2);
+      },
+      { timeout: timeoutMs("5s"), interval: 50 },
+    );
   });
 
   it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {

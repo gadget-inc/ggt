@@ -230,7 +230,9 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
     // Retry state - mirrors the retry logic in Client.subscribe.
     // This duplication is intentional: the mock needs to simulate retry
     // behavior without the full graphql-ws Client infrastructure.
-    const maxRetries = options.retry?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
+    const retryConfig = options.retry === false ? undefined : options.retry;
+    const retryEnabled = options.retry !== false;
+    const maxRetries = retryConfig?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
     let retryCount = 0;
     let retryTimeoutId: NodeJS.Timeout | undefined;
 
@@ -239,7 +241,7 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
      * Returns true if retry was scheduled, false if retry budget exhausted.
      */
     const scheduleRetry = (error: ClientError): boolean => {
-      if (!options.retry || !isRetryableErrorCause(error.cause) || retryCount >= maxRetries) {
+      if (!retryEnabled || !isRetryableErrorCause(error.cause) || retryCount >= maxRetries) {
         return false;
       }
 
@@ -249,7 +251,7 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
       }
       const delay = calculateBackoffDelay(retryCount);
 
-      options.retry.onRetry?.(retryCount, error);
+      retryConfig?.onRetry?.(retryCount, error);
 
       if (retryTimeoutId) {
         clearTimeout(retryTimeoutId);

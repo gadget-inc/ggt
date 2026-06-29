@@ -164,10 +164,14 @@ export class Client {
       onData: (data: Subscription["Data"]) => Promisable<void>;
       onError: (error: ClientError) => Promisable<void>;
       onComplete?: () => Promisable<void>;
-      retry?: RetryOptions;
+      retry?: RetryOptions | false;
     },
   ): ClientSubscription<Subscription> {
-    const maxAttempts = retryOptions?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
+    // Transient errors are retried by default. Callers that want to surface
+    // every error immediately (e.g. deploy) opt out with `retry: false`.
+    const retryConfig = retryOptions === false ? undefined : retryOptions;
+    const retryEnabled = retryOptions !== false;
+    const maxAttempts = retryConfig?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
     let retryCount = 0;
     let retryTimeoutId: NodeJS.Timeout | undefined;
     let currentVariables = initialVariables;
@@ -219,7 +223,7 @@ export class Client {
      * the retry budget prematurely.
      */
     const scheduleRetry = (error: ClientError, logError: unknown): boolean => {
-      if (!retryOptions || !isRetryableErrorCause(error.cause) || retryCount >= maxAttempts) {
+      if (!retryEnabled || !isRetryableErrorCause(error.cause) || retryCount >= maxAttempts) {
         return false;
       }
 
@@ -237,7 +241,7 @@ export class Client {
         delayMs: Math.round(delay),
         error: logError,
       });
-      retryOptions.onRetry?.(retryCount, error);
+      retryConfig?.onRetry?.(retryCount, error);
 
       if (retryTimeoutId) {
         clearTimeout(retryTimeoutId);

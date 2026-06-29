@@ -178,6 +178,11 @@ describe("isRetryableCloseEvent", () => {
       expect(isRetryableCloseEvent(event)).toBe(true);
     }
   });
+
+  it("returns false for a server-signalled internal error close (4500)", () => {
+    const event = { type: "close", code: 4500, reason: "Internal Error", wasClean: true } as CloseEvent;
+    expect(isRetryableCloseEvent(event)).toBe(false);
+  });
 });
 
 describe("isRetryableGraphQLErrors", () => {
@@ -207,6 +212,15 @@ describe("isRetryableGraphQLErrors", () => {
 
   it("returns true when extensions has non-auth code", () => {
     expect(isRetryableGraphQLErrors([{ message: "Error", extensions: { code: "INTERNAL_ERROR" } }])).toBe(true);
+  });
+
+  it("returns false for payment/charge requirement errors", () => {
+    expect(isRetryableGraphQLErrors([{ message: "GGT_PAYMENT_REQUIRED: limit reached", extensions: { requiresUpgrade: true } }])).toBe(
+      false,
+    );
+    expect(
+      isRetryableGraphQLErrors([{ message: "GGT_PAYMENT_REQUIRED: will add a charge", extensions: { requiresAdditionalCharge: true } }]),
+    ).toBe(false);
   });
 
   it("returns false if any error is non-retryable", () => {

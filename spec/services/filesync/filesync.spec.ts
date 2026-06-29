@@ -4,11 +4,11 @@ import { execa } from "execa";
 import fs from "fs-extra";
 import { GraphQLError } from "graphql";
 import nock from "nock";
-import { assert, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FileSyncEncoding } from "../../../src/__generated__/graphql.ts";
 import dev from "../../../src/commands/dev.ts";
-import { PUBLISH_FILE_SYNC_EVENTS_MUTATION } from "../../../src/services/app/edit/operation.ts";
+import { PUBLISH_FILE_SYNC_EVENTS_MUTATION, REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION } from "../../../src/services/app/edit/operation.ts";
 import { config } from "../../../src/services/config/config.ts";
 import { Changes } from "../../../src/services/filesync/changes.ts";
 import { supportsPermissions, type Directory } from "../../../src/services/filesync/directory.ts";
@@ -33,7 +33,7 @@ import {
   type FileSyncScenarioOptions,
 } from "../../__support__/filesync.ts";
 import { makeFlags } from "../../__support__/flag.ts";
-import { nockEditResponse } from "../../__support__/graphql.ts";
+import { makeMockEditSubscriptions, nockEditResponse } from "../../__support__/graphql.ts";
 import { mock, mockConfirmOnce, mockOnce, mockSelectOnce } from "../../__support__/mock.ts";
 import { expectStdout } from "../../__support__/output.ts";
 import { testDirPath } from "../../__support__/paths.ts";
@@ -2682,5 +2682,61 @@ describe("FileSync.print", () => {
       +  environment-file.txt  created
       "
     `);
+  });
+});
+
+describe("FileSync.subscribeToEnvironmentChanges", () => {
+  beforeEach(() => {
+    loginTestUser();
+    nockTestApps();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("retries instead of aborting when Gadget returns a transient subscription error", async () => {
+    const { filesync } = await makeSyncScenario();
+
+    // Re-mock subscriptions so we can observe resubscription. This must
+    // happen after makeSyncScenario, which performs real-timer async setup.
+    const mockSubs = makeMockEditSubscriptions();
+    vi.useFakeTimers();
+
+    const onError = vi.fn();
+    filesync.subscribeToEnvironmentChanges(testCtx, { onError });
+
+    expect(mockSubs.getAllSubscriptions(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).length).toBe(1);
+
+    // The transient error reported in the field: a long-running dev session
+    // periodically receives this even though the connection is otherwise healthy.
+    const subscription = mockSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);
+    await subscription.emitResponse({ errors: [new GraphQLError("No connection established. Last error: null")] });
+
+    // It must not surface the error (which dev turns into ctx.abort).
+    expect(onError).not.toHaveBeenCalled();
+
+    await vi.runAllTimersAsync();
+
+    // Instead it resubscribes, keeping the session alive.
+    expect(mockSubs.getAllSubscriptions(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).length).toBe(2);
+  });
+
+  it("surfaces authentication errors instead of retrying", async () => {
+    const { filesync } = await makeSyncScenario();
+
+    const mockSubs = makeMockEditSubscriptions();
+    vi.useFakeTimers();
+
+    const onError = vi.fn();
+    filesync.subscribeToEnvironmentChanges(testCtx, { onError });
+
+    const subscription = mockSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);
+    await subscription.emitResponse({ errors: [new GraphQLError("Unauthenticated. No authenticated client.")] });
+
+    await vi.runAllTimersAsync();
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(mockSubs.getAllSubscriptions(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).length).toBe(1);
   });
 });

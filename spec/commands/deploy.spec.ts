@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import deploy from "../../src/commands/deploy.ts";
 import { PUBLISH_STATUS_SUBSCRIPTION } from "../../src/services/app/edit/operation.ts";
@@ -13,7 +13,6 @@ import { makeMockEditSubscriptions } from "../__support__/graphql.ts";
 import { mockConfirmOnce } from "../__support__/mock.ts";
 import { expectStdout } from "../__support__/output.ts";
 import { expectProcessExit } from "../__support__/process.ts";
-import { timeoutMs } from "../__support__/sleep.ts";
 import { mockSystemTime } from "../__support__/time.ts";
 import { loginTestUser } from "../__support__/user.ts";
 
@@ -549,7 +548,7 @@ describe("deploy", () => {
     `);
   });
 
-  it("retries the subscription after a transient connection error instead of failing the deploy", async () => {
+  it("surfaces a transient connection error instead of restarting the deploy", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 
     const mockEditGraphQL = makeMockEditSubscriptions();
@@ -574,20 +573,16 @@ describe("deploy", () => {
       },
     });
 
-    // a transient transport blip should not tear down the deploy
+    // Resubscribing would restart the server-side deploy (TERMINATE_IF_RUNNING),
+    // so deploy opts out of automatic retry: a transient error surfaces and exits
+    // rather than spawning a second subscription.
     const transientError = new ClientError(
       PUBLISH_STATUS_SUBSCRIPTION,
       Object.assign(new Error("Connection reset"), { code: "ECONNRESET" }),
     );
-    await publishStatus.emitError(transientError);
+    await expectProcessExit(() => publishStatus.emitError(transientError), 1);
 
-    // instead it resubscribes to resume watching publish status
-    await vi.waitFor(
-      () => {
-        expect(mockEditGraphQL.getAllSubscriptions(PUBLISH_STATUS_SUBSCRIPTION).length).toBe(2);
-      },
-      { timeout: timeoutMs("5s"), interval: 50 },
-    );
+    expect(mockEditGraphQL.getAllSubscriptions(PUBLISH_STATUS_SUBSCRIPTION).length).toBe(1);
   });
 
   it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {

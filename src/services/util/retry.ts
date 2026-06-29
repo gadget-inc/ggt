@@ -66,9 +66,8 @@ const NON_RETRYABLE_AUTH_PATTERNS = [/unauthenticated/i, /unauthorized/i, /forbi
  * - 1008: Policy violation
  * - 4401: Unauthorized
  * - 4403: Forbidden
- * - 4500: Server-signalled internal error (terminal)
  */
-export const NON_RETRYABLE_CLOSE_CODES = [1000, 1008, 4401, 4403, 4500] as const;
+export const NON_RETRYABLE_CLOSE_CODES = [1000, 1008, 4401, 4403] as const;
 
 /**
  * Check if an ErrorEvent contains a retryable error.
@@ -91,11 +90,6 @@ export const isRetryableCloseEvent = (event: CloseEvent): boolean => {
  */
 export const isRetryableGraphQLErrors = (errors: readonly { message: string; extensions?: Record<string, unknown> }[]): boolean => {
   return !errors.some((error) => {
-    // Payment/charge requirements are terminal — retrying never satisfies them
-    if (error.extensions?.["requiresUpgrade"] || error.extensions?.["requiresAdditionalCharge"]) {
-      return true;
-    }
-
     // Check for auth-related error codes in extensions
     const code = error.extensions?.["code"];
     if (code === "UNAUTHENTICATED" || code === "FORBIDDEN" || code === "UNAUTHORIZED") {

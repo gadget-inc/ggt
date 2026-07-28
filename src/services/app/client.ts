@@ -164,10 +164,14 @@ export class Client {
       onData: (data: Subscription["Data"]) => Promisable<void>;
       onError: (error: ClientError) => Promisable<void>;
       onComplete?: () => Promisable<void>;
-      retry?: RetryOptions;
+      retry?: RetryOptions | false;
     },
   ): ClientSubscription<Subscription> {
-    const maxAttempts = retryOptions?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
+    // Transient errors are retried by default. Callers that want to surface
+    // every error immediately (e.g. deploy) opt out with `retry: false`.
+    const retryConfig = retryOptions === false ? undefined : retryOptions;
+    const retryEnabled = retryOptions !== false;
+    const maxAttempts = retryConfig?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
     let retryCount = 0;
     let retryTimeoutId: NodeJS.Timeout | undefined;
     let currentVariables = initialVariables;
@@ -219,7 +223,7 @@ export class Client {
      * the retry budget prematurely.
      */
     const scheduleRetry = (error: ClientError, logError: unknown): boolean => {
-      if (!retryOptions || !isRetryableErrorCause(error.cause) || retryCount >= maxAttempts) {
+      if (!retryEnabled || !isRetryableErrorCause(error.cause) || retryCount >= maxAttempts) {
         return false;
       }
 
@@ -237,14 +241,14 @@ export class Client {
         delayMs: Math.round(delay),
         error: logError,
       });
-      retryOptions.onRetry?.(retryCount, error);
+      retryConfig?.onRetry?.(retryCount, error);
 
       if (retryTimeoutId) {
         clearTimeout(retryTimeoutId);
       }
       retryTimeoutId = setTimeout(() => {
         retryTimeoutId = undefined;
-        clientSubscription.resubscribe();
+        performResubscribe();
       }, delay);
 
       return true;
@@ -315,6 +319,30 @@ export class Client {
       unsubscribe();
     };
 
+    const performResubscribe = (newVariables?: Thunk<Subscription["Variables"]> | null): void => {
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+        retryTimeoutId = undefined;
+      }
+      removeConnectedListener();
+      queue.clear();
+      unsubscribe();
+
+      if (newVariables !== undefined) {
+        currentVariables = newVariables;
+      }
+
+      payload.variables = unthunk(currentVariables);
+      currentCtx.log.info("re-subscribing to graphql subscription");
+
+      removeConnectedListener = addConnectedListener();
+      unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(payload, {
+        next: (response) => void queue.add(() => onResponse(response)).catch((err) => onError(new ClientError(subscription, err))),
+        error: (error) => void queue.add(() => onError(new ClientError(subscription, error))),
+        complete: () => void queue.add(() => onComplete()).catch((err) => onError(new ClientError(subscription, err))),
+      });
+    };
+
     const clientSubscription: ClientSubscription<Subscription> = {
       unsubscribe: () => {
         if (retryTimeoutId) {
@@ -324,27 +352,11 @@ export class Client {
         doUnsubscribe();
       },
       resubscribe: (newVariables) => {
-        if (retryTimeoutId) {
-          clearTimeout(retryTimeoutId);
-          retryTimeoutId = undefined;
-        }
-        removeConnectedListener();
-        queue.clear();
-        unsubscribe();
-
-        if (newVariables !== undefined) {
-          currentVariables = newVariables;
-        }
-
-        payload.variables = unthunk(currentVariables);
-        currentCtx.log.info("re-subscribing to graphql subscription");
-
-        removeConnectedListener = addConnectedListener();
-        unsubscribe = this._graphqlWsClient.subscribe<Subscription["Data"], Subscription["Extensions"]>(payload, {
-          next: (response) => void queue.add(() => onResponse(response)).catch((err) => onError(new ClientError(subscription, err))),
-          error: (error) => void queue.add(() => onError(new ClientError(subscription, error))),
-          complete: () => void queue.add(() => onComplete()).catch((err) => onError(new ClientError(subscription, err))),
-        });
+        // A caller-initiated resubscribe is a fresh start, so it restores the
+        // full retry budget. The automatic retry path uses performResubscribe
+        // directly to keep counting down toward maxAttempts.
+        retryCount = 0;
+        performResubscribe(newVariables);
       },
     };
 

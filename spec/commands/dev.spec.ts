@@ -1274,7 +1274,8 @@ describe("dev", () => {
 
     await runDev();
 
-    const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "test");
+    // a non-retryable error surfaces to the user instead of resubscribing
+    const error = new ClientError(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION, "Unauthorized");
 
     const gadgetChangesSubscription = expectGadgetChangesSubscription();
     await gadgetChangesSubscription.emitError(error);

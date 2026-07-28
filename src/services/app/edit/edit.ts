@@ -138,7 +138,7 @@ export class Edit {
    * @param options.onData - A callback that will be called when data is received from the server.
    * @param options.onError - A callback that will be called when an error is received from the server.
    * @param options.onComplete - A callback that will be called when the subscription ends.
-   * @param options.retry - Optional retry configuration for automatic resubscription on transient errors.
+   * @param options.retry - Retry configuration for automatic resubscription on transient errors. Enabled by default; pass `false` to surface every error immediately.
    * @returns An EditSubscription object to control the subscription.
    */
   subscribe<Subscription extends GraphQLSubscription>({
@@ -154,7 +154,7 @@ export class Edit {
     onData: (data: Subscription["Data"]) => Promisable<void>;
     onError: (error: ClientError) => Promisable<void>;
     onComplete?: () => Promisable<void>;
-    retry?: RetryOptions;
+    retry?: RetryOptions | false;
   }): EditSubscription<Subscription> {
     const name = getOperationName(subscription);
 

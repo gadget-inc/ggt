@@ -217,6 +217,12 @@ export default defineCommand({
     const subscription = syncJson.edit.subscribe({
       subscription: PUBLISH_STATUS_SUBSCRIPTION,
       variables,
+      // Subscribing to publishStatus starts the deploy server-side, and the
+      // workflow uses TERMINATE_IF_RUNNING, so an automatic resubscribe would
+      // terminate and restart the in-flight deploy. Surface errors instead.
+      // The charge-confirmation flow below calls resubscribe() explicitly,
+      // which is safe because that path never started a deploy.
+      retry: false,
       onError: async (error) => {
         ctx.log.error("failed to deploy", { error });
         spinner?.fail(stepToSpinnerStart(syncJson, currentStep) + " " + ts());

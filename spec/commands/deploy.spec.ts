@@ -548,6 +548,43 @@ describe("deploy", () => {
     `);
   });
 
+  it("surfaces a transient connection error instead of restarting the deploy", async () => {
+    await makeSyncScenario({ localFiles: { ".gadget/": "" } });
+
+    const mockEditGraphQL = makeMockEditSubscriptions();
+
+    await runCommand(testCtx, deploy);
+
+    const publishStatus = mockEditGraphQL.expectSubscription(PUBLISH_STATUS_SUBSCRIPTION);
+
+    await publishStatus.emitResponse({
+      data: {
+        publishStatus: {
+          publishStarted: true,
+          remoteFilesVersion: "1",
+          progress: "STARTING",
+          issues: [],
+          status: {
+            code: "Pending",
+            message: null,
+            output: "https://test.gadget.app/url/to/logs/with/traceId",
+          },
+        },
+      },
+    });
+
+    // Resubscribing would restart the server-side deploy (TERMINATE_IF_RUNNING),
+    // so deploy opts out of automatic retry: a transient error surfaces and exits
+    // rather than spawning a second subscription.
+    const transientError = new ClientError(
+      PUBLISH_STATUS_SUBSCRIPTION,
+      Object.assign(new Error("Connection reset"), { code: "ECONNRESET" }),
+    );
+    await expectProcessExit(() => publishStatus.emitError(transientError), 1);
+
+    expect(mockEditGraphQL.getAllSubscriptions(PUBLISH_STATUS_SUBSCRIPTION).length).toBe(1);
+  });
+
   it("exits if the deploy process failed during a deploy step and displays link for logs", async () => {
     await makeSyncScenario({ localFiles: { ".gadget/": "" } });
 

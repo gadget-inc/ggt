@@ -304,7 +304,7 @@ describe("Client.subscribe", () => {
       });
     });
 
-    it("skips retry when no retry option provided", async () => {
+    it("retries by default when no retry option provided", async () => {
       const client = createClientWithFakeWs();
       const onError = vi.fn();
 
@@ -312,7 +312,31 @@ describe("Client.subscribe", () => {
         subscription: mockSubscription,
         onData: vi.fn(),
         onError,
-        // No retry option
+        // No retry option — retry is enabled by default
+      });
+
+      // Emit a retryable error
+      const sink = capturedSinks[0]!;
+      const networkError = Object.assign(new Error("Connection reset"), { code: "ECONNRESET" });
+      sink.error(networkError);
+
+      // Advance timers to trigger the retry timeout
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      // Should have resubscribed instead of surfacing the error
+      expect(onError).not.toHaveBeenCalled();
+      expect(fakeGraphqlWsClient.subscribe).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not retry when retry is false", async () => {
+      const client = createClientWithFakeWs();
+      const onError = vi.fn();
+
+      client.subscribe(testCtx, {
+        subscription: mockSubscription,
+        onData: vi.fn(),
+        onError,
+        retry: false,
       });
 
       // Emit a retryable error
@@ -327,6 +351,35 @@ describe("Client.subscribe", () => {
 
       // Should NOT have resubscribed
       expect(fakeGraphqlWsClient.subscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it("resets the retry budget when a caller manually resubscribes", async () => {
+      const client = createClientWithFakeWs();
+      const onError = vi.fn();
+
+      const clientSub = client.subscribe(testCtx, {
+        subscription: mockSubscription,
+        onData: vi.fn(),
+        onError,
+        retry: { maxAttempts: 1 },
+      });
+
+      // First transient error exhausts the single-attempt budget
+      const networkError = (): Error => Object.assign(new Error("Connection reset"), { code: "ECONNRESET" });
+      capturedSinks[0]!.error(networkError());
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(fakeGraphqlWsClient.subscribe).toHaveBeenCalledTimes(2);
+
+      // A caller-initiated resubscribe (e.g. deploy after a charge prompt) is a fresh start
+      clientSub.resubscribe();
+      expect(fakeGraphqlWsClient.subscribe).toHaveBeenCalledTimes(3);
+
+      // so a subsequent transient error is retried again rather than surfacing
+      capturedSinks[2]!.error(networkError());
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      expect(onError).not.toHaveBeenCalled();
+      expect(fakeGraphqlWsClient.subscribe).toHaveBeenCalledTimes(4);
     });
 
     it("unsubscribe() clears pending retry timeout", async () => {

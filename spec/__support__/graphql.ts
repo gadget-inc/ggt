@@ -230,7 +230,9 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
     // Retry state - mirrors the retry logic in Client.subscribe.
     // This duplication is intentional: the mock needs to simulate retry
     // behavior without the full graphql-ws Client infrastructure.
-    const maxRetries = options.retry?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
+    const retryConfig = options.retry === false ? undefined : options.retry;
+    const retryEnabled = options.retry !== false;
+    const maxRetries = retryConfig?.maxAttempts ?? DEFAULT_RETRY_LIMIT;
     let retryCount = 0;
     let retryTimeoutId: NodeJS.Timeout | undefined;
 
@@ -239,7 +241,7 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
      * Returns true if retry was scheduled, false if retry budget exhausted.
      */
     const scheduleRetry = (error: ClientError): boolean => {
-      if (!options.retry || !isRetryableErrorCause(error.cause) || retryCount >= maxRetries) {
+      if (!retryEnabled || !isRetryableErrorCause(error.cause) || retryCount >= maxRetries) {
         return false;
       }
 
@@ -249,14 +251,14 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
       }
       const delay = calculateBackoffDelay(retryCount);
 
-      options.retry.onRetry?.(retryCount, error);
+      retryConfig?.onRetry?.(retryCount, error);
 
       if (retryTimeoutId) {
         clearTimeout(retryTimeoutId);
       }
       retryTimeoutId = setTimeout(() => {
         retryTimeoutId = undefined;
-        clientSubscription.resubscribe();
+        performResubscribe();
       }, delay);
 
       return true;
@@ -312,6 +314,24 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
     existing.push(currentMockSub);
     subscriptions.set(options.subscription, existing);
 
+    // oxlint-disable-next-line no-redundant-type-constituents -- matches Client.subscribe API signature
+    const performResubscribe = (newVariables?: Thunk<unknown> | null): void => {
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+        retryTimeoutId = undefined;
+      }
+
+      if (newVariables !== undefined) {
+        options.variables = newVariables as typeof options.variables;
+      }
+
+      const variables = unthunk(options.variables);
+      currentMockSub = createMockSubscription(variables);
+      const subs = subscriptions.get(options.subscription) ?? [];
+      subs.push(currentMockSub);
+      subscriptions.set(options.subscription, subs);
+    };
+
     // Return a ClientSubscription object with working resubscribe
     const clientSubscription = {
       unsubscribe: vi.fn().mockImplementation(() => {
@@ -322,20 +342,10 @@ export const makeMockEditSubscriptions = (): MockEditSubscriptions => {
       }),
       // oxlint-disable-next-line no-redundant-type-constituents -- matches Client.subscribe API signature
       resubscribe: vi.fn().mockImplementation((newVariables?: Thunk<unknown> | null) => {
-        if (retryTimeoutId) {
-          clearTimeout(retryTimeoutId);
-          retryTimeoutId = undefined;
-        }
-
-        if (newVariables !== undefined) {
-          options.variables = newVariables as typeof options.variables;
-        }
-
-        const variables = unthunk(options.variables);
-        currentMockSub = createMockSubscription(variables);
-        const subs = subscriptions.get(options.subscription) ?? [];
-        subs.push(currentMockSub);
-        subscriptions.set(options.subscription, subs);
+        // A caller-initiated resubscribe restores the full retry budget; the
+        // automatic retry path calls performResubscribe to keep counting down.
+        retryCount = 0;
+        performResubscribe(newVariables);
       }),
     };
 

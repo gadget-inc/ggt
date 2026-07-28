@@ -393,7 +393,7 @@ describe("Edit.subscribe retry", () => {
     expect(mockSubs.getAllSubscriptions(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).length).toBe(1);
   });
 
-  it("does not retry without retry option", async () => {
+  it("retries by default without a retry option", async () => {
     const mockSubs = makeMockEditSubscriptions();
     const onData = vi.fn();
     const onError = vi.fn();
@@ -405,7 +405,31 @@ describe("Edit.subscribe retry", () => {
       variables: { localFilesVersion: "1" },
       onData,
       onError,
-      // No retry option
+      // No retry option — retry is enabled by default
+    });
+
+    const sub = mockSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);
+    await sub.emitResponse({ errors: [new GraphQLError("Internal server error")] });
+
+    await vi.runAllTimersAsync();
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(mockSubs.getAllSubscriptions(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION).length).toBe(2);
+  });
+
+  it("does not retry when retry is false", async () => {
+    const mockSubs = makeMockEditSubscriptions();
+    const onData = vi.fn();
+    const onError = vi.fn();
+
+    const edit = new Edit(testCtx, testEnvironment);
+
+    edit.subscribe({
+      subscription: REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION,
+      variables: { localFilesVersion: "1" },
+      onData,
+      onError,
+      retry: false,
     });
 
     const sub = mockSubs.expectSubscription(REMOTE_FILE_SYNC_EVENTS_SUBSCRIPTION);

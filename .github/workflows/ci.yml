@@ -124,20 +124,3 @@ jobs:
         run: pnpm run test:integration
         env:
           INTEGRATION_TEST_TOKEN: ${{ secrets.INTEGRATION_TEST_TOKEN }}
-
-  dependabot:
-    needs: [lint, build, test]
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'gadget-inc/ggt'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Dependabot metadata
-        id: dependabot-metadata
-        uses: dependabot/fetch-metadata@v3
-      - name: Merge dependabot PR
-        run: gh pr merge --auto --squash "$PR_URL"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}

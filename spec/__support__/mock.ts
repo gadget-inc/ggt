@@ -32,7 +32,7 @@ export type Mock = {
   <
     Target extends object,
     Property extends FunctionPropertyNames<Target>,
-    Fn extends Target[Property] extends (...args: any[]) => any ? Target[Property] : never,
+    Fn extends (Target[Property] extends (...args: any[]) => any ? Target[Property] : never),
   >(
     target: Target,
     property: Property,

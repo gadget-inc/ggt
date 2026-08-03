@@ -536,6 +536,7 @@ export class FileSync {
       }
     } while (attempt < maxAttempts);
 
+    // oxlint-disable-next-line no-unreachable -- reachable via the catch block's `continue` once attempt reaches maxAttempts
     throw new TooManyPushAttemptsError(maxAttempts, command);
   }
 

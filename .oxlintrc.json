@@ -72,8 +72,6 @@
     "use-isnan": "warn",
     "valid-typeof": "warn",
 
-    "jsdoc/require-jsdoc": "warn",
-
     "oxc/bad-array-method-on-arguments": "warn",
     "oxc/bad-char-at-comparison": "warn",
     "oxc/bad-comparison-sequence": "warn",
@@ -245,9 +243,7 @@
         "typescript/no-unsafe-call": ["off"],
         "typescript/no-unsafe-member-access": ["off"],
         "typescript/unbound-method": "off",
-        "typescript/no-base-to-string": "off",
-
-        "unicorn/template-indent": ["off"]
+        "typescript/no-base-to-string": "off"
       }
     }
   ]

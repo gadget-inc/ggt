@@ -145,7 +145,7 @@ const activateEnvironment = async (application: Application, envName: string): P
 
       const previousEnv = state.environment;
       state.environment = envName;
-      if (!state.environments[envName]) {
+      if (!(envName in state.environments)) {
         state.environments[envName] = { filesVersion: "0" };
       }
 

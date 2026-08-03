@@ -123,7 +123,7 @@ export const http = got.extend({
           const cookies = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader];
           cookies.forEach((cookieString) => {
             const cookie = parseSetCookieString(cookieString);
-            if (cookie.name === "session" && (cookie.domain === "gadget.dev" || cookie.domain === "ggt.dev")) {
+            if (cookie?.name === "session" && (cookie.domain === "gadget.dev" || cookie.domain === "ggt.dev")) {
               writeSession(ctx, cookie.value);
             }
           });

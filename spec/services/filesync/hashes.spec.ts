@@ -198,4 +198,11 @@ describe("isEqualHashes", () => {
     expect(isEqualHashes(testCtx, { "file.txt": { sha1 } }, { "file.txt": { sha1: otherSha1, permissions: 0o644 } })).toBe(false);
     expect(isEqualHashes(testCtx, { "file.txt": { sha1, permissions: 0o644 } }, { "file.txt": { sha1: otherSha1 } })).toBe(false);
   });
+
+  it("returns false when a path named like an Object.prototype property exists on only one side", () => {
+    const sha1 = randomUUID();
+
+    expect(isEqualHashes(testCtx, {}, { toString: { sha1 } })).toBe(false);
+    expect(isEqualHashes(testCtx, { toString: { sha1 } }, {})).toBe(false);
+  });
 });

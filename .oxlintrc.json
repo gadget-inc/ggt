@@ -159,16 +159,6 @@
       "formComponents": [],
       "linkComponents": []
     },
-    "jsdoc": {
-      "ignorePrivate": false,
-      "ignoreInternal": false,
-      "ignoreReplacesDocs": true,
-      "overrideReplacesDocs": true,
-      "augmentsExtendsReplacesDocs": false,
-      "implementsReplacesDocs": false,
-      "exemptDestructuredRootsFromChecks": false,
-      "tagNamePreference": {}
-    },
     "vitest": {
       "typecheck": false
     }

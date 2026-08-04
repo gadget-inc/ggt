@@ -242,7 +242,7 @@ export class SyncJson {
       // update the state to the new environment
       previousEnvironment = state.environment;
       state.environment = appIdentity.environment.name;
-      if (!(appIdentity.environment.name in state.environments)) {
+      if (!Object.hasOwn(state.environments, appIdentity.environment.name)) {
         // the user has never synced to this environment before
         state.environments[appIdentity.environment.name] = { filesVersion: "0" };
       }

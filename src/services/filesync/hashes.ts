@@ -93,7 +93,7 @@ export const getNecessaryChanges = (
       continue;
     }
 
-    if (!(targetPath in source)) {
+    if (!Object.hasOwn(source, targetPath)) {
       // the targetPath doesn't exist in source, so it's been created
       const targetHash = target[targetPath];
       assert(targetHash, "targetHash should exist");
@@ -181,7 +181,7 @@ export const isEqualHashes = (ctx: Context, a: Hashes, b: Hashes): boolean => {
   }
 
   for (const bPath of Object.keys(b)) {
-    if (!(bPath in a)) {
+    if (!Object.hasOwn(a, bPath)) {
       ctx.log.debug("hashes are not equal", { path: bPath, aHash: undefined, bHash: b[bPath] });
       return false;
     }

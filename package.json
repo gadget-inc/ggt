@@ -98,7 +98,7 @@
     "oxlint-tsgolint": "^7.0.2001",
     "p-map": "^7.0.3",
     "p-queue": "^9.0.0",
-    "p-retry": "^7.1.0",
+    "p-retry": "^8.0.0",
     "p-timeout": "^7.0.1",
     "pluralize": "^8.0.0",
     "remark": "^15.0.1",

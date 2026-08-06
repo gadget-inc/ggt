@@ -1,5 +1,13 @@
 # @gadgetinc/ggt
 
+## 3.1.1
+
+### Patch Changes
+
+- 712585f: Fix the changelog link in the update-available message
+
+  The link now points to the GitHub release tagged `ggt@<version>`, matching the tags releases are published under.
+
 ## 3.1.0
 
 ### Minor Changes
@@ -77,6 +85,7 @@
 - d545d86: Require Node.js 22 or later.
 
   Node.js 20 reaches End-of-Life (EOL) on 2026-04-30:
+
   - <https://github.com/nodejs/release#end-of-life-releases>
 
   This means Node.js 20 will no longer receive security updates and bug fixes.
@@ -94,6 +103,7 @@
 ### Minor Changes
 
 - 9b872bc: Add resource-first `ggt action add` support:
+
   - `ggt action add <name>`
   - `ggt action add <namespace>/<name>`
   - `ggt action add <name> --model <model>`
@@ -249,6 +259,7 @@
 - e917012: Require Node.js 20 or later.
 
   Node.js 18 reached End-of-Life (EOL) on 2025-04-30:
+
   - https://github.com/nodejs/release#end-of-life-releases
   - https://nodejs.org/en/blog/announcements/node-18-eol-support
 
@@ -367,6 +378,7 @@
 ### Minor Changes
 
 - fcb272f: Add more `--env` aliases.
+
   - `ggt pull` now accepts `--from` as an alias for `--env`
   - `ggt push` now accepts `--to` as an alias for `--env`
 
@@ -422,6 +434,7 @@
   ![CleanShot 2024-10-02 at 16 10 53](https://github.com/user-attachments/assets/e5e2b172-c7a7-43b3-b329-d84600f9f8ab)
 
   No worries if the verbose output isn't your thing, we've got you covered:
+
   - `--no-logs` - completely turns off this new feature
   - `--my-logs` - same as the editor logs boolean for only showing my logs/events
   - `--log-level` - Set the log level for incoming application logs, `debug, info, error`
@@ -569,6 +582,7 @@
   ## `ggt` requires Node 18 or later to run
 
   Node 16 reached End-of-Life (EOL) on 2023-09-11:
+
   - https://github.com/nodejs/release#end-of-life-releases
   - https://nodejs.org/en/blog/announcements/nodejs16-eol
 
@@ -697,6 +711,7 @@
   ```
 
   There are 2 common causes for this error:
+
   - You make a change that causes Gadget to generate files and you don't receive those files before sending more changes to Gadget.
   - Multiple people are syncing at the same time and one person sends changes to Gadget before receiving another persons changes.
 
@@ -775,9 +790,11 @@
   Previously, we were using the `debug` package to log messages. This was good at first, but now that we're adding more features to `ggt` we need more control over our logs. We want to be able to output structured logs, control the verbosity, and output them as JSON so that we can pipe them to another tool or parse them in a script.
 
   To accomplish this, we've added 2 new flags:
+
   - `-v, --verbose` to output structured logs
 
     This replaces the `--debug` flag, which was a boolean flag that would print out all logs. This new flag is a counter, so you can use it multiple times to increase the verbosity of the logs. Currently, there are 3 levels of verbosity:
+
     - `-v` = INFO
     - `-vv` = DEBUG
     - `-vvv` = TRACE
@@ -793,6 +810,7 @@
   `ggt sync` can now detect all discrepancies between your local filesystem and your Gadget environment's filesystem. Previously, if a file was deleted locally while `ggt sync` was not running, `ggt sync` could not detect that the file was deleted and would not delete the file in your Gadget environment.
 
   Now, `ggt sync` can detect the following discrepancies:
+
   - Files that exist locally but not in your Gadget environment
   - Files that exist in your Gadget environment but not locally
   - Files that exist locally and in your Gadget environment but have different contents
@@ -802,6 +820,7 @@
   When `ggt sync` starts, it will compare your local filesystem to your Gadget environment's filesystem and calculate the changes that have occurred since the last time `ggt sync` was run.
 
   You will be prompted to resolve conflicts if:
+
   - Both filesystems updated the same file with different contents
   - One filesystem updated a file and the other deleted it
 
@@ -1064,6 +1083,7 @@
 - 18784ba: Bump which from 3.0.0 to 3.0.1
 - 7614f50: Bump @oclif/plugin-warn-if-update-available from 2.0.35 to 2.0.36
 - f5e1a3f: Improve the list command by
+
   - Prompting the user to log in if they aren't already (similar to `ggt sync`)
   - Linking them to `https://gadget.new` if they don't have any applications
 
@@ -1160,6 +1180,7 @@
 - 32f4fbe: Bump @oclif/plugin-not-found from 2.3.11 to 2.3.13
 - 8d9e6d4: Bump @oclif/core from 1.22.0 to 1.23.1
 - 43918ce: Improve sync output
+
   - Show the name and relevant links of the synced app
   - Inform the user that it's watching for file changes and how to stop it
   - Show whether a file was changed or deleted when sending/receiving it

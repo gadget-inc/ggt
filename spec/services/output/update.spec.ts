@@ -83,13 +83,13 @@ describe("warnIfUpdateAvailable", () => {
     await expect(shouldCheckForUpdate(testCtx)).resolves.toBeFalsy();
 
     expectStdout().toMatchInlineSnapshot(`
-      "╭──────────────────────────────────────────────────────────────────────╮
-      │                                                                      │
-      │                   Update available! 1.0.0 → 1.0.1                    │
-      │   Changelog: https://github.com/gadget-inc/ggt/releases/tag/v1.0.1   │
-      │                 Run "npm install -g ggt" to update.                  │
-      │                                                                      │
-      ╰──────────────────────────────────────────────────────────────────────╯
+      "╭───────────────────────────────────────────────────────────────────────────╮
+      │                                                                           │
+      │                      Update available! 1.0.0 → 1.0.1                      │
+      │   Changelog: https://github.com/gadget-inc/ggt/releases/tag/ggt%401.0.1   │
+      │                    Run "npm install -g ggt" to update.                    │
+      │                                                                           │
+      ╰───────────────────────────────────────────────────────────────────────────╯
       "
     `);
   });

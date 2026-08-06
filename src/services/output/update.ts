@@ -88,7 +88,7 @@ export const warnIfUpdateAvailable = async (ctx: Context): Promise<void> => {
       updateAvailable = semver.lt(packageJson.version, latest);
       updateMessage = sprint`
         Update available! ${colors.error(packageJson.version)} → ${colors.success(latest)}
-        Changelog: https://github.com/gadget-inc/ggt/releases/tag/v${latest}
+        Changelog: https://github.com/gadget-inc/ggt/releases/tag/ggt%40${latest}
         Run "npm install -g ${packageJson.name}" to update.
       `;
     }

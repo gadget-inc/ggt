@@ -93,7 +93,7 @@
     "normalize-package-data": "^9.0.0",
     "normalize-path": "^3.0.0",
     "open": "^11.0.0",
-    "oxfmt": "^0.61.0",
+    "oxfmt": "^0.62.0",
     "oxlint": "^1.76.0",
     "oxlint-tsgolint": "^7.0.2001",
     "p-map": "^7.0.3",

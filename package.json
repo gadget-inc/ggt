@@ -44,7 +44,7 @@
     "version": "changeset version && oxfmt CHANGELOG.md && node scripts/generate-readme.ts"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.8",
+    "@changesets/cli": "^3.0.0",
     "@graphql-codegen/add": "^7.1.0",
     "@graphql-codegen/cli": "^7.2.0",
     "@graphql-codegen/typescript": "^6.1.0",

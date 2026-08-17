@@ -41,7 +41,7 @@ jobs:
         run: pnpm install
 
       - name: Create release PR or publish to NPM
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         id: changesets
         with:
           title: Release

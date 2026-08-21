@@ -94,7 +94,7 @@
     "normalize-path": "^3.0.0",
     "open": "^11.0.0",
     "oxfmt": "^0.63.0",
-    "oxlint": "^1.76.0",
+    "oxlint": "^1.79.0",
     "oxlint-tsgolint": "^7.0.2001",
     "p-map": "^7.0.3",
     "p-queue": "^9.0.0",

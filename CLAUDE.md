@@ -39,4 +39,4 @@ Recommended flow:
 
 ## Before committing
 
-MUST run `pnpm run lint:fix` to auto-fix formatting and lint issues, then `pnpm run lint` to verify all checks pass (formatting, linting, spelling, types). Run `pnpm test` on affected test files. Fix any remaining issues before committing.
+MUST run `pnpm run lint:fix` to auto-fix formatting and lint issues, then `pnpm run lint` to verify all checks pass (formatting, linting, spelling, types). Type checking runs inside `lint:oxlint` via `typeCheck` in `.oxlintrc.json`, so there is no separate `tsc` script. Run `pnpm test` on affected test files. Fix any remaining issues before committing.

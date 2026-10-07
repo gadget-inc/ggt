@@ -821,7 +821,7 @@ describe("completion", () => {
         expect(result.exitCode, `fish = syntax failed:\n${result.stderr}`).toBe(0);
       });
 
-      it("-v offers verbose or version flags", async () => {
+      it("-v completes as a flag, not a flag value", async () => {
         const scriptFile = await writeCompletionFile("fish", generateFishCompletions(data));
         const result = await run("fish", ["-c", `source '${scriptFile}'; complete -C 'ggt -v'`]);
         expect(result.exitCode, `fish -v completion failed:\n${result.stderr}`).toBe(0);
@@ -829,8 +829,9 @@ describe("completion", () => {
           .split("\n")
           .filter(Boolean)
           .map((line) => line.split("\t")[0]!);
-        // Should offer long forms like --verbose or --version, not -v as a value
-        expect(completions.some((c) => c === "--verbose" || c === "--version")).toBe(true);
+        // fish only offers the short option group -vh when -v takes no value; a value flag would complete -v<value>.
+        // (fish < 4.7 also fuzzy-matches --verbose/--version here, fish >= 4.7 does not, so don't assert on those.)
+        expect(completions).toContain("-vh");
       });
     });
   });

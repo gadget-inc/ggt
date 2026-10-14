@@ -49,7 +49,7 @@
     "@graphql-codegen/cli": "^7.2.0",
     "@graphql-codegen/typescript": "^6.1.0",
     "@graphql-codegen/typescript-operations": "^6.1.2",
-    "@sentry/node": "^10.45.0",
+    "@sentry/node": "^10.71.0",
     "@types/fast-levenshtein": "^0.0.4",
     "@types/fs-extra": "^11.0.4",
     "@types/ms": "^2.1.0",

@@ -189,3 +189,19 @@ export const isEqualHashes = (ctx: Context, a: Hashes, b: Hashes): boolean => {
 
   return true;
 };
+
+/**
+ * Returns a copy of `hashes` without any path that starts with one of
+ * the given prefixes.
+ *
+ * @param hashes - The hashes to filter.
+ * @param prefixes - Normalized directory paths (with a trailing slash).
+ */
+export const withoutPathsUnder = (hashes: Hashes, prefixes: Iterable<string>): Hashes => {
+  const prefixList = Array.from(prefixes);
+  if (prefixList.length === 0) {
+    return hashes;
+  }
+
+  return Object.fromEntries(Object.entries(hashes).filter(([filepath]) => !prefixList.some((prefix) => filepath.startsWith(prefix))));
+};

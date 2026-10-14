@@ -40,7 +40,7 @@ import { getConflicts, printConflicts, withoutConflictingChanges } from "./confl
 import { supportsPermissions, swallowEnoent, type Hashes } from "./directory.ts";
 import { isFilesVersionMismatchError, swallowFilesVersionMismatch, TooManyMergeAttemptsError, TooManyPushAttemptsError } from "./error.ts";
 import type { File } from "./file.ts";
-import { getNecessaryChanges, isEqualHashes, type ChangesWithHash } from "./hashes.ts";
+import { getNecessaryChanges, isEqualHashes, withoutPathsUnder, type ChangesWithHash } from "./hashes.ts";
 import { MergeConflictPreference } from "./strategy.ts";
 import { type SyncJson } from "./sync-json.ts";
 
@@ -141,6 +141,11 @@ export class FileSync {
    */
   private _syncOperations = new PQueue({ concurrency: 1 });
 
+  /**
+   * Nested git worktrees we've already told the user we're skipping.
+   */
+  private _announcedWorktreeRoots = new Set<string>();
+
   readonly syncJson: SyncJson;
 
   constructor(syncJson: SyncJson) {
@@ -151,7 +156,10 @@ export class FileSync {
     const spinner = !silent ? spin({ ensureEmptyLineAbove: true, content: "Calculating file changes." }) : undefined;
 
     try {
-      const [localHashes, { localFilesVersionHashes, environmentHashes, environmentFilesVersion }] = await Promise.all([
+      const [
+        localHashes,
+        { localFilesVersionHashes: allLocalFilesVersionHashes, environmentHashes: allEnvironmentHashes, environmentFilesVersion },
+      ] = await Promise.all([
         // get the hashes of our local files
         this.syncJson.directory.hashes(),
         // get the hashes of our local filesVersion and the latest filesVersion
@@ -185,6 +193,14 @@ export class FileSync {
           return { localFilesVersionHashes, environmentHashes, environmentFilesVersion };
         })(),
       ]);
+
+      // gadget never receives .git files, so it can't tell which of its
+      // files belong to a nested worktree. drop them here so that copies
+      // synced before ggt ignored worktrees aren't pulled over the
+      // worktree's files or pushed as deletes
+      const worktreeRoots = this.syncJson.directory.nestedWorktreeRoots();
+      const localFilesVersionHashes = withoutPathsUnder(allLocalFilesVersionHashes, worktreeRoots);
+      const environmentHashes = withoutPathsUnder(allEnvironmentHashes, worktreeRoots);
 
       const inSync = isEqualHashes(ctx, localHashes, environmentHashes);
 
@@ -232,6 +248,21 @@ export class FileSync {
         } else {
           spinner.succeed(`Calculated file changes. ${ts()}`);
         }
+      }
+
+      const unannouncedWorktreeRoots = Array.from(worktreeRoots)
+        .filter((root) => !this._announcedWorktreeRoots.has(root))
+        .sort();
+
+      if (!silent && unannouncedWorktreeRoots.length > 0) {
+        for (const root of unannouncedWorktreeRoots) {
+          this._announcedWorktreeRoots.add(root);
+        }
+
+        println({
+          ensureEmptyLineAbove: true,
+          content: colors.subdued(unannouncedWorktreeRoots.map((root) => `Skipping nested git worktree ${root}`).join("\n")),
+        });
       }
 
       return {
@@ -587,6 +618,21 @@ export class FileSync {
       files: options.files.map((file) => file.path),
       delete: options.delete,
     });
+
+    // never write gadget's copy of a file over a nested worktree's files
+    const outsideNestedWorktree = (filepath: string): boolean => {
+      const inside = this.syncJson.directory.insideNestedWorktree(filepath, filepath.endsWith("/"));
+      if (inside) {
+        ctx.log.warn("skipping write because path is inside a nested git worktree", { path: filepath });
+      }
+      return !inside;
+    };
+
+    options = {
+      ...options,
+      files: options.files.filter((file) => outsideNestedWorktree(file.path)),
+      delete: options.delete.filter(outsideNestedWorktree),
+    };
 
     const changes = new Changes();
     const directoriesWithDeletedFiles = new Set<string>();

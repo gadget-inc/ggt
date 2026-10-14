@@ -74,3 +74,4 @@ vflags
 vitest
 worktree
 worktrees
+gitdir

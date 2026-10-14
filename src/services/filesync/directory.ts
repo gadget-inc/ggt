@@ -16,6 +16,8 @@ import type { Ignore } from "ignore";
 import ignore from "ignore";
 import normalizePath from "normalize-path";
 
+import { NestedWorktrees } from "./worktree.ts";
+
 /**
  * Paths that are never ignored, regardless of the contents of the `.ignore` file.
  */
@@ -29,7 +31,10 @@ export const ALWAYS_IGNORE_PATHS = [".DS_Store", "node_modules", ".git", ".shopi
 /**
  * Paths that are ignored when hashing the directory.
  *
- * NOTE: This is the _only_ thing that is allowed to be different between gadget and ggt.
+ * NOTE: This and nested worktree detection ({@linkcode NestedWorktrees})
+ * are the _only_ things that are allowed to be different between gadget
+ * and ggt. Worktree detection looks for `.git` files, which are never
+ * synced, so it would never match anything in gadget.
  */
 export const HASHING_IGNORE_PATHS = [".gadget/sync.json", ".gadget/dev-lock.json", ".gadget/backup", "yarn-error.log"] as const;
 
@@ -57,12 +62,19 @@ export class Directory {
   private _lastIgnoreFileLoadTime = 0;
 
   /**
+   * Linked git worktrees nested inside this directory, which are never
+   * synced.
+   */
+  private _nestedWorktrees: NestedWorktrees;
+
+  /**
    * An absolute path to the directory that is being synced.
    */
   readonly path: string;
 
   private constructor(path: string) {
     this.path = path;
+    this._nestedWorktrees = new NestedWorktrees(path);
   }
 
   /**
@@ -202,7 +214,36 @@ export class Directory {
       return false;
     }
 
-    return this._ignorer.ignores(filepath);
+    if (this._ignorer.ignores(filepath)) {
+      return true;
+    }
+
+    return this._nestedWorktrees.contains(filepath, isDirectory);
+  }
+
+  /**
+   * Returns true if the filepath is a linked git worktree nested inside
+   * this directory, or is inside one.
+   *
+   * @param filepath - The filepath to check.
+   * @param isDirectory - Whether the filepath is a directory.
+   */
+  insideNestedWorktree(filepath: string, isDirectory: boolean): boolean {
+    filepath = this.relative(filepath);
+    if (filepath === "" || filepath.startsWith("..")) {
+      return false;
+    }
+
+    return this._nestedWorktrees.contains(normalizePath(filepath, false), isDirectory);
+  }
+
+  /**
+   * The normalized paths (with a trailing slash) of the nested git
+   * worktrees found so far. After {@linkcode hashes}, this is exactly
+   * the set of worktrees on disk.
+   */
+  nestedWorktreeRoots(): ReadonlySet<string> {
+    return this._nestedWorktrees.roots;
   }
 
   /**
@@ -241,6 +282,9 @@ export class Directory {
   async hashes(): Promise<Hashes> {
     try {
       this._isHashing = true;
+      // forget worktrees that have since been removed so the walk
+      // below leaves only the ones that are still on disk
+      this._nestedWorktrees.startScan();
       const files = {} as Hashes;
 
       for await (const normalizedPath of this.walk()) {
@@ -251,6 +295,7 @@ export class Directory {
       return files;
     } finally {
       this._isHashing = false;
+      this._nestedWorktrees.endScan();
     }
   }
 

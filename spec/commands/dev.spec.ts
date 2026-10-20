@@ -18,6 +18,7 @@ import { mock, mockSelectOnce } from "../__support__/mock.ts";
 import { testDirPath } from "../__support__/paths.ts";
 import { sleep, timeoutMs } from "../__support__/sleep.ts";
 import { loginTestUser } from "../__support__/user.ts";
+import { makeWorktreeGitDir } from "../__support__/worktree.ts";
 
 describe("dev", () => {
   let defaultArgv: string[];
@@ -1134,6 +1135,121 @@ describe("dev", () => {
           },
         }
       `);
+  });
+
+  it("doesn't send changes inside a nested git worktree to gadget", { retry: 3 }, async () => {
+    const { dotGit } = await makeWorktreeGitDir(testDirPath("local", "wt"));
+    const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario({
+      localFiles: {
+        "wt/.git": dotGit,
+        "wt/app.js": "// app",
+      },
+    });
+
+    await runDev();
+
+    // update a file
+    await fs.outputFile(localDir.absolute("wt/app.js"), "// app v2");
+
+    // add a file
+    await fs.outputFile(localDir.absolute("wt/new.js"), "// new");
+
+    // delete a file
+    await fs.remove(localDir.absolute("wt/new.js"));
+
+    // add a directory
+    await fs.mkdir(localDir.absolute("wt/directory"));
+
+    // add a file outside the worktree so we know the watcher is running
+    await fs.outputFile(localDir.absolute("app.js"), "// app");
+    await waitUntilGadgetFilesVersion(2n);
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "app.js": "// app",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "app.js": "// app",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
+          "app.js": "// app",
+          "wt/": "",
+          "wt/.git": "gitdir: ../../repo/.git/worktrees/wt
+      ",
+          "wt/app.js": "// app v2",
+          "wt/directory/": "",
+        },
+      }
+    `);
+  });
+
+  it("doesn't send a nested git worktree created while running to gadget", { retry: 3 }, async () => {
+    const { dotGit } = await makeWorktreeGitDir(testDirPath("local", "wt"));
+    const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario({ localFiles: {} });
+
+    // push slowly enough that the worktree's .git file exists by the
+    // time the directory's create event is pushed
+    defaultArgv[defaultArgv.indexOf("--file-push-delay") + 1] = String(ms("1s"));
+
+    await runDev();
+
+    // wait for the watcher to start so the worktree isn't part of its initial scan
+    await fs.outputFile(localDir.absolute("app.js"), "// app");
+    await waitUntilGadgetFilesVersion(2n);
+
+    // `git worktree add` creates the directory before its .git file.
+    // wait long enough for the watcher to see the directory while it
+    // still looks like a regular directory
+    await fs.mkdir(localDir.absolute("wt"));
+    await sleep("600ms");
+
+    await fs.outputFile(localDir.absolute("wt/.git"), dotGit);
+    await fs.outputFile(localDir.absolute("wt/app.js"), "// app");
+    await fs.outputFile(localDir.absolute("wt/api/models/user/schema.gadget.ts"), "// schema");
+
+    // give the push delay a chance to pass
+    await sleep(timeoutMs("2s"));
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+          },
+          "2": {
+            ".gadget/": "",
+            "app.js": "// app",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "app.js": "// app",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
+          "app.js": "// app",
+          "wt/": "",
+          "wt/.git": "gitdir: ../../repo/.git/worktrees/wt
+      ",
+          "wt/api/": "",
+          "wt/api/models/": "",
+          "wt/api/models/user/": "",
+          "wt/api/models/user/schema.gadget.ts": "// schema",
+          "wt/app.js": "// app",
+        },
+      }
+    `);
   });
 
   it("doesn't send changes from the local filesystem to gadget if the directory matches a directory-only ignore pattern", async () => {

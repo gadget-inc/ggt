@@ -18,6 +18,7 @@ import { mock, mockSelectOnce } from "../__support__/mock.ts";
 import { testDirPath } from "../__support__/paths.ts";
 import { sleep, timeoutMs } from "../__support__/sleep.ts";
 import { loginTestUser } from "../__support__/user.ts";
+import { makeWorktreeGitDir } from "../__support__/worktree.ts";
 
 describe("dev", () => {
   let defaultArgv: string[];
@@ -1137,9 +1138,10 @@ describe("dev", () => {
   });
 
   it("doesn't send changes inside a nested git worktree to gadget", { retry: 3 }, async () => {
+    const { dotGit } = await makeWorktreeGitDir(testDirPath("local", "wt"));
     const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario({
       localFiles: {
-        "wt/.git": "gitdir: /Users/jane/app/.git/worktrees/wt\n",
+        "wt/.git": dotGit,
         "wt/app.js": "// app",
       },
     });
@@ -1182,7 +1184,7 @@ describe("dev", () => {
           ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
           "app.js": "// app",
           "wt/": "",
-          "wt/.git": "gitdir: /Users/jane/app/.git/worktrees/wt
+          "wt/.git": "gitdir: ../../repo/.git/worktrees/wt
       ",
           "wt/app.js": "// app v2",
           "wt/directory/": "",
@@ -1192,6 +1194,7 @@ describe("dev", () => {
   });
 
   it("doesn't send a nested git worktree created while running to gadget", { retry: 3 }, async () => {
+    const { dotGit } = await makeWorktreeGitDir(testDirPath("local", "wt"));
     const { localDir, waitUntilGadgetFilesVersion, expectDirs } = await makeSyncScenario({ localFiles: {} });
 
     // push slowly enough that the worktree's .git file exists by the
@@ -1210,7 +1213,7 @@ describe("dev", () => {
     await fs.mkdir(localDir.absolute("wt"));
     await sleep("600ms");
 
-    await fs.outputFile(localDir.absolute("wt/.git"), "gitdir: /Users/jane/app/.git/worktrees/wt\n");
+    await fs.outputFile(localDir.absolute("wt/.git"), dotGit);
     await fs.outputFile(localDir.absolute("wt/app.js"), "// app");
     await fs.outputFile(localDir.absolute("wt/api/models/user/schema.gadget.ts"), "// schema");
 
@@ -1237,7 +1240,7 @@ describe("dev", () => {
           ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
           "app.js": "// app",
           "wt/": "",
-          "wt/.git": "gitdir: /Users/jane/app/.git/worktrees/wt
+          "wt/.git": "gitdir: ../../repo/.git/worktrees/wt
       ",
           "wt/api/": "",
           "wt/api/models/": "",

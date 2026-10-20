@@ -75,3 +75,4 @@ vitest
 worktree
 worktrees
 gitdir
+commondir

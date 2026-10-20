@@ -8,40 +8,53 @@ import fs from "fs-extra";
 const GITDIR_LINE = /^gitdir:\s*(.+?)\s*$/m;
 
 /**
- * Matches a gitdir that belongs to a linked worktree. Linked worktrees
- * keep their git metadata in `<common git dir>/worktrees/<name>`, so
- * `worktrees` must be the parent of the last segment. This rules out
- * submodules (`.git/modules/<name>`), including submodules checked out
- * inside a linked worktree (`.git/worktrees/<wt>/modules/<name>`).
- */
-const LINKED_WORKTREE_GITDIR = /(?:^|[\\/])worktrees[\\/][^\\/]+[\\/]?$/;
-
-/**
- * Returns true if the directory at the given absolute path is the root
- * of a linked git worktree (one created by `git worktree add`).
+ * Returns the absolute path to the git directory of the linked worktree
+ * rooted at the given directory, or undefined if it isn't the root of a
+ * linked worktree (one created by `git worktree add`).
  *
- * A linked worktree's `.git` is a file rather than a directory, and its
- * `gitdir:` line points into the main repository's `worktrees/` folder.
- * Nested full clones (`.git` is a directory) and submodules (`gitdir:`
- * points into `modules/`) are not linked worktrees.
+ * A linked worktree's `.git` is a file whose `gitdir:` line points at
+ * the worktree's admin directory inside the main repository
+ * (`.git/worktrees/<name>`), and only an admin directory contains a
+ * `commondir` file. Nested full clones (`.git` is a directory),
+ * submodules, and repositories made with `git init --separate-git-dir`
+ * (whose git directories have no `commondir`) are not linked worktrees.
  *
  * @param absoluteDir - The absolute path to the directory to check.
  */
-export const isLinkedWorktreeRoot = (absoluteDir: string): boolean => {
+export const linkedWorktreeGitDir = (absoluteDir: string): string | undefined => {
   const dotGit = path.join(absoluteDir, ".git");
 
   try {
     const stats = fs.statSync(dotGit, { throwIfNoEntry: false });
     if (!stats?.isFile()) {
-      return false;
+      return undefined;
     }
 
     const gitdir = GITDIR_LINE.exec(fs.readFileSync(dotGit, "utf8"))?.[1];
-    return !!gitdir && LINKED_WORKTREE_GITDIR.test(gitdir);
+    if (!gitdir) {
+      return undefined;
+    }
+
+    const absoluteGitDir = path.resolve(absoluteDir, gitdir);
+    if (!fs.statSync(path.join(absoluteGitDir, "commondir"), { throwIfNoEntry: false })?.isFile()) {
+      return undefined;
+    }
+
+    return absoluteGitDir;
   } catch {
     // ENOTDIR, EACCES, etc. mean this isn't a worktree we can see into
-    return false;
+    return undefined;
   }
+};
+
+/**
+ * Returns true if the directory at the given absolute path is the root
+ * of a linked git worktree. See {@linkcode linkedWorktreeGitDir}.
+ *
+ * @param absoluteDir - The absolute path to the directory to check.
+ */
+export const isLinkedWorktreeRoot = (absoluteDir: string): boolean => {
+  return linkedWorktreeGitDir(absoluteDir) !== undefined;
 };
 
 /**
@@ -61,14 +74,16 @@ export class NestedWorktrees {
   readonly root: string;
 
   /**
-   * Normalized paths (with a trailing slash) of the worktree roots seen
-   * so far.
+   * The worktree roots seen so far, keyed by their normalized path (with
+   * a trailing slash), with the absolute path to each one's git
+   * directory.
    *
-   * A root stays here after its `.git` file disappears so that the
-   * delete events from `git worktree remove` are still recognized as
-   * belonging to a worktree.
+   * `git worktree remove` can delete a worktree's `.git` file before
+   * its other files, but it deletes the git directory last. A root stays
+   * here while its git directory exists so the rest of the removal is
+   * still recognized as belonging to a worktree.
    */
-  private _roots = new Set<string>();
+  private _roots = new Map<string, string>();
 
   /**
    * Directories known not to be worktree roots. Only kept during a
@@ -85,16 +100,24 @@ export class NestedWorktrees {
    * The normalized paths of the worktree roots seen so far.
    */
   get roots(): ReadonlySet<string> {
-    return this._roots;
+    return new Set(this._roots.keys());
   }
 
   /**
-   * Forgets every worktree root seen so far and caches which directories
+   * Forgets worktree roots that are gone and caches which directories
    * aren't roots until {@linkcode endScan} is called. Use this around a
    * full walk of the directory.
+   *
+   * A root that's still on disk with its git directory intact is kept,
+   * because it's either still a worktree or in the middle of being
+   * removed.
    */
   startScan(): void {
-    this._roots.clear();
+    for (const [root, gitDir] of this._roots) {
+      if (!fs.existsSync(path.join(this.root, root)) || !fs.existsSync(gitDir)) {
+        this._roots.delete(root);
+      }
+    }
     this._scannedNonRoots = new Set();
   }
 
@@ -124,14 +147,15 @@ export class NestedWorktrees {
       const candidate = `${segments.slice(0, i).join("/")}/`;
       const absoluteCandidate = path.join(this.root, candidate);
 
-      if (this._roots.has(candidate)) {
-        if (isLinkedWorktreeRoot(absoluteCandidate)) {
+      const knownGitDir = this._roots.get(candidate);
+      if (knownGitDir) {
+        if (isLinkedWorktreeRoot(absoluteCandidate) || fs.existsSync(knownGitDir)) {
+          // still a worktree, or git is still removing it
           return true;
         }
 
         if (!fs.existsSync(path.join(this.root, normalizedPath))) {
-          // the worktree is being removed and this path is already
-          // gone, so it's a delete event from the removal
+          // the removal finished and this is a late delete event from it
           return true;
         }
 
@@ -140,16 +164,26 @@ export class NestedWorktrees {
         continue;
       }
 
-      if (this._scannedNonRoots?.has(candidate)) {
+      // only cache answers about ancestors. `git worktree add` creates
+      // the directory before its .git file and git directory, so a walk
+      // can check the directory itself too early. it checks out files
+      // only after both exist, so a check made for a file inside the
+      // directory is never too early
+      const isAncestor = i < segments.length;
+
+      if (isAncestor && this._scannedNonRoots?.has(candidate)) {
         continue;
       }
 
-      if (isLinkedWorktreeRoot(absoluteCandidate)) {
-        this._roots.add(candidate);
+      const gitDir = linkedWorktreeGitDir(absoluteCandidate);
+      if (gitDir) {
+        this._roots.set(candidate, gitDir);
         return true;
       }
 
-      this._scannedNonRoots?.add(candidate);
+      if (isAncestor) {
+        this._scannedNonRoots?.add(candidate);
+      }
     }
 
     return false;

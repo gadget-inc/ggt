@@ -57,6 +57,7 @@ export default defineCommand({
           • .git
           • .shopify
           • node_modules
+          • git worktrees nested inside the app folder
       `,
     },
     {
@@ -319,7 +320,17 @@ export default defineCommand({
           spinner.succeed();
         }
 
-        const changes = new Changes(localChangesBuffer.entries());
+        const changes = new Changes();
+        for (const [normalizedPath, change] of localChangesBuffer) {
+          // `git worktree add` creates the directory before its .git
+          // file, so the watcher can see the directory before it looks
+          // like a worktree. by now it does
+          if (syncJson.directory.insideNestedWorktree(normalizedPath, normalizedPath.endsWith("/"))) {
+            ctx.log.trace("dropping change inside nested git worktree", { path: normalizedPath });
+            continue;
+          }
+          changes.set(normalizedPath, change);
+        }
         localChangesBuffer.clear();
 
         await filesync.mergeChangesWithEnvironment(ctx, { changes });

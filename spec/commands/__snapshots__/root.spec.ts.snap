@@ -1361,6 +1361,7 @@ IGNORING FILES
     • .git
     • .shopify
     • node_modules
+    • git worktrees nested inside the app folder
 
 LIMITATIONS
   • Only syncs with development environments.

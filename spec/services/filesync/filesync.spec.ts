@@ -40,6 +40,7 @@ import { testDirPath } from "../../__support__/paths.ts";
 import { expectProcessExit } from "../../__support__/process.ts";
 import { mockSystemTime } from "../../__support__/time.ts";
 import { loginTestUser, matchAuthHeader } from "../../__support__/user.ts";
+import { makeWorktreeGitDir } from "../../__support__/worktree.ts";
 
 describe("FileSync._writeToLocalFilesystem", () => {
   // let testCtx: Context<SyncJsonFlags>;
@@ -455,6 +456,31 @@ describe("FileSync._writeToLocalFilesystem", () => {
 
     assert(vi.isMockFunction(execa));
     expect(execa.mock.lastCall).toEqual(["yarn", ["install", "--check-files"], { cwd: localDir.path }]);
+  });
+
+  it("doesn't write or delete files inside a nested git worktree", async () => {
+    const { dotGit } = await makeWorktreeGitDir(localDir.absolute("wt"));
+    await writeDir(localDir.path, {
+      "wt/.git": dotGit,
+      "wt/live.js": "// live",
+      "wt/keep.js": "// keep",
+    });
+
+    await writeToLocalFilesystem(testCtx, {
+      filesVersion: 1n,
+      files: [makeFile({ path: "wt/live.js", content: "// stale" }), makeFile({ path: "file.js", content: "foo" })],
+      delete: ["wt/keep.js"],
+    });
+
+    await expectDir(localDir, {
+      ".gadget/": "",
+      ".gadget/sync.json": expectSyncJson(filesync),
+      "file.js": "foo",
+      "wt/": "",
+      "wt/.git": dotGit,
+      "wt/keep.js": "// keep",
+      "wt/live.js": "// live",
+    });
   });
 });
 
@@ -958,6 +984,53 @@ describe("FileSync.sync", () => {
     `);
 
     await expectLocalAndGadgetHashesMatch();
+  });
+
+  it("ignores the environment's copies of files inside a nested git worktree", async () => {
+    const { dotGit } = await makeWorktreeGitDir(testDirPath("local", "wt"));
+    const { filesync, expectDirs } = await makeSyncScenario({
+      filesVersion1Files: {
+        "wt/": "",
+        "wt/app.js": "// stale",
+      },
+      localFiles: {
+        "wt/.git": dotGit,
+        "wt/app.js": "// live",
+        "wt/new.js": "// new",
+      },
+      gadgetFiles: {
+        "wt/": "",
+        "wt/app.js": "// stale",
+      },
+    });
+
+    await filesync.merge(testCtx);
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "wt/": "",
+            "wt/app.js": "// stale",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "wt/": "",
+          "wt/app.js": "// stale",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"1"}}}",
+          "wt/": "",
+          "wt/.git": "gitdir: ../../repo/.git/worktrees/wt
+      ",
+          "wt/app.js": "// live",
+          "wt/new.js": "// new",
+        },
+      }
+    `);
   });
 
   it("automatically merges changes if none are conflicting", async () => {
@@ -2533,6 +2606,60 @@ describe("FileSync.pull", () => {
     await expectLocalAndGadgetHashesMatch();
   });
 
+  it("doesn't pull the environment's copies of files over a nested git worktree", async () => {
+    const { dotGit } = await makeWorktreeGitDir(testDirPath("local", "wt"));
+    const { filesync, expectDirs } = await makeSyncScenario({
+      filesVersion1Files: {
+        "wt/": "",
+        "wt/app.js": "// stale",
+      },
+      localFiles: {
+        "wt/.git": dotGit,
+        "wt/app.js": "// live",
+      },
+      gadgetFiles: {
+        "wt/": "",
+        "wt/app.js": "// stale",
+        "gadget-file.js": "// gadget",
+      },
+    });
+
+    await filesync.pull(testCtx, { force: true });
+
+    await expectDirs().resolves.toMatchInlineSnapshot(`
+      {
+        "filesVersionDirs": {
+          "1": {
+            ".gadget/": "",
+            "wt/": "",
+            "wt/app.js": "// stale",
+          },
+          "2": {
+            ".gadget/": "",
+            "gadget-file.js": "// gadget",
+            "wt/": "",
+            "wt/app.js": "// stale",
+          },
+        },
+        "gadgetDir": {
+          ".gadget/": "",
+          "gadget-file.js": "// gadget",
+          "wt/": "",
+          "wt/app.js": "// stale",
+        },
+        "localDir": {
+          ".gadget/": "",
+          ".gadget/sync.json": "{"application":"test","environment":"development","environments":{"development":{"filesVersion":"2"}}}",
+          "gadget-file.js": "// gadget",
+          "wt/": "",
+          "wt/.git": "gitdir: ../../repo/.git/worktrees/wt
+      ",
+          "wt/app.js": "// live",
+        },
+      }
+    `);
+  });
+
   it("discards local .gadget/ changes without confirmation", async () => {
     const { filesync, expectDirs, expectLocalAndGadgetHashesMatch } = await makeSyncScenario({
       filesVersion1Files: {},
@@ -2612,6 +2739,30 @@ describe("FileSync.print", () => {
 
     expectStdout().toMatchInlineSnapshot(`
       "⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
+      "
+    `);
+  });
+
+  it("tells the user once that it's skipping a nested git worktree", async () => {
+    const { dotGit } = await makeWorktreeGitDir(testDirPath("local", "wt"));
+    const { filesync } = await makePrintScenario({
+      localFiles: {
+        "wt/.git": dotGit,
+        "wt/app.js": "// live",
+      },
+    });
+
+    await filesync.print(testCtx);
+    await filesync.print(testCtx);
+
+    expectStdout().toMatchInlineSnapshot(`
+      "⠙ Calculating file changes.
+      ✔ Your files are up to date. 12:00:00 AM
+
+      Skipping nested git worktree wt/
+
+      ⠙ Calculating file changes.
       ✔ Your files are up to date. 12:00:00 AM
       "
     `);
